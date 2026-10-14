@@ -1,0 +1,13 @@
+id: EV-r3ah78
+type: approve.task
+at: 2026-10-14T20:26:05.35806Z
+contributor: allen
+command: approve task T-1hqhru
+targets:
+    - T-1hqhru
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/guards/task.yml

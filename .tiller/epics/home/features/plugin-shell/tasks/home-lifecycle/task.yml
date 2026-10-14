@@ -1,7 +1,17 @@
 id: T-o490lt
 key: home/plugin-shell/home-lifecycle
 title: A placeholder home over the file browser, closed with it, signalling its paint
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:9937ff41ed049a1d9f832a105ad16171d2547d3d
+        path: .tiller/epics/home/features/plugin-shell/tasks/home-lifecycle/task.md
+        observed_at: 2026-10-14T20:26:05.299679Z
+    commit:
+        kind: git_commit
+        value: git:bd30ec7
+        observed_at: 2026-10-14T20:26:05.318466Z

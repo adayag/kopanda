@@ -1,0 +1,13 @@
+id: EV-sga3xa
+type: approve.feature
+at: 2026-10-14T20:26:05.299258Z
+contributor: allen
+command: approve feature F-yrw3g6
+targets:
+    - F-yrw3g6
+before:
+    status: specced
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/plugin-shell/feature.yml

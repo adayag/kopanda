@@ -1,9 +1,19 @@
 id: T-1hqhru
 key: home/plugin-shell/guards
 title: Coexistence refusal, boot guard and the runtime state file
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-o490lt
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:a5d8bd7d7fcba7cdd523cf0e3c827e21d6916b9c
+        path: .tiller/epics/home/features/plugin-shell/tasks/guards/task.md
+        observed_at: 2026-10-14T20:26:05.33822Z
+    commit:
+        kind: git_commit
+        value: git:bd30ec7
+        observed_at: 2026-10-14T20:26:05.357986Z

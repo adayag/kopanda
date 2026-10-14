@@ -1,0 +1,13 @@
+id: EV-8aqj4h
+type: approve.task
+at: 2026-10-14T20:26:05.318563Z
+contributor: allen
+command: approve task T-o490lt
+targets:
+    - T-o490lt
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/home-lifecycle/task.yml

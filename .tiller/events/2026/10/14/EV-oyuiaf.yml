@@ -1,0 +1,13 @@
+id: EV-oyuiaf
+type: approve.task
+at: 2026-10-14T20:26:05.377393Z
+contributor: allen
+command: approve task T-j9jdiw
+targets:
+    - T-j9jdiw
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/entry-points/task.yml
