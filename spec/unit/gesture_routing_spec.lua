@@ -90,6 +90,15 @@ describe("gestures on the KoPanda home", function()
         assert.equals(home, harness.top())
     end)
 
+    it("leaves a swipe up from mid-screen, outside the bottom edge band, alone", function()
+        fm_with_home()
+        local home = Home.shown
+        local size = Screen:getSize()
+        send(swipe(size.w / 2, size.h / 2, "north"))
+        assert.is_nil(settings_message())
+        assert.equals(home, harness.top())
+    end)
+
     it("opens the file manager's menu over the home on a tap at the top centre", function()
         local fm = fm_with_home()
         local home = Home.shown
@@ -139,6 +148,28 @@ describe("gestures on the KoPanda home", function()
         assert.equals(page, fm.file_chooser.page)
         assert.equals(home, harness.top())
         assert.equals(home, Home.shown)
+    end)
+
+    it("passes a west swipe in the bottom edge band to a zone registered there", function()
+        local fm = fm_with_home()
+        local received
+        -- As the Gestures plugin registers its bottom edge swipes (gestures main.lua:963-968, :1026-1029,
+        -- :1189-1195).
+        fm:registerTouchZones{ {
+            id = "kopanda_spec_bottom_edge_swipe",
+            ges = "swipe",
+            screen_zone = { ratio_x = 0, ratio_y = 7 / 8, ratio_w = 1, ratio_h = 1 / 8 },
+            handler = function(ges)
+                received = ges
+                return true
+            end,
+            overrides = { "filemanager_swipe" },
+        } }
+        local size = Screen:getSize()
+        local ges = swipe(size.w / 2, size.h * 15 / 16, "west")
+        send(ges)
+        assert.equals(ges, received)
+        assert.equals(Home.shown, harness.top())
     end)
 
     it("passes a gesture it doesn't use to a zone registered on the file manager", function()
@@ -193,6 +224,76 @@ describe("gestures on the KoPanda home", function()
         send(harness.gesture("tap", size.w / 2, size.h / 2))
         assert.is_nil(Home.shown)
         assert.equals(fm, harness.top())
+    end)
+
+    it("passes a tap to the file manager's zones only, not to the file chooser beneath", function()
+        local fm = fm_with_home()
+        local size = Screen:getSize()
+        -- Close the placeholder and paint the file chooser, so its items have their places, then
+        -- bring the home back over it.
+        send(harness.gesture("tap", size.w / 2, size.h / 2))
+        UIManager:forceRePaint()
+        require("dispatcher"):execute({ kopanda_home = true })
+        harness.tick(2)
+        assert.is_not_nil(Home.shown)
+        assert.equals(Home.shown, harness.top())
+        local item
+        for _, row in ipairs(fm.file_chooser.layout) do
+            local dimen = row[1].dimen
+            if dimen and dimen.y and dimen.y > size.h / 4 then
+                item = row[1]
+                break
+            end
+        end
+        assert.is_not_nil(item)
+        local selected = false
+        fm.file_chooser.onMenuSelect = function()
+            selected = true
+            return true
+        end
+        send(harness.gesture("tap", item.dimen.x + item.dimen.w / 2, item.dimen.y + item.dimen.h / 2))
+        harness.tick(2)
+        assert.is_false(selected)
+        assert.is_nil(Home.shown)
+        assert.equals(fm, harness.top())
+    end)
+
+    -- KOReader's touch lock, the toggle_touch_input action (inputcontainer.lua:297-350).
+    it("honours KOReader's ignore touch input", function()
+        local InputContainer = require("ui/widget/container/inputcontainer")
+        local always_active = InputContainer.isGestureAlwaysActive
+        local fm = fm_with_home()
+        local home = Home.shown
+        UIManager:setIgnoreTouchInput(true)
+        finally(function()
+            UIManager:setIgnoreTouchInput(false)
+            InputContainer.isGestureAlwaysActive = always_active
+        end)
+        local size = Screen:getSize()
+        send(swipe(size.w / 2, size.h * 15 / 16, "north"))
+        assert.is_nil(settings_message())
+        assert.equals(home, harness.top())
+        send(harness.gesture("tap", size.w / 2, size.h / 2))
+        assert.equals(home, Home.shown)
+        assert.equals(home, harness.top())
+        -- A zone the Gestures plugin reports always active still gets its gesture.
+        local received
+        fm:registerTouchZones{ {
+            id = "kopanda_spec_always_active_tap",
+            ges = "tap",
+            screen_zone = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = 1 },
+            handler = function(ges)
+                received = ges
+                return true
+            end,
+        } }
+        InputContainer.isGestureAlwaysActive = function(_, id)
+            return id == "kopanda_spec_always_active_tap"
+        end
+        local ges = harness.gesture("tap", size.w / 2, size.h / 2)
+        send(ges)
+        assert.equals(ges, received)
+        assert.equals(home, harness.top())
     end)
 
     it("opens no settings on a swipe up from the bottom edge in the file browser", function()

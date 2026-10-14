@@ -124,7 +124,8 @@ Upgrading KOReader walks this list.
   (`DSWIPE_ZONE_LEFT_EDGE`, `DSWIPE_ZONE_RIGHT_EDGE`, `DSWIPE_ZONE_TOP_EDGE`,
   `DSWIPE_ZONE_BOTTOM_EDGE`); read through `G_defaults:readSetting` as
   `frontend/apps/filemanager/filemanagermenu.lua:74-75` reads them, against `Screen:getSize()`
-  at gesture time, so a rotation needs nothing re-registered.
+  at gesture time. The home's own zones (touch lock entry below) cover the screen at the home's
+  build size and test these bands in their handlers.
 - Screen ratios. A tap inside the top menu zones leaves the placeholder up. The swipe up that
   opens the settings stub starts in the bottom edge band and outside the left and right bands,
   where Gestures binds frontlight and warmth swipes by default
@@ -200,6 +201,24 @@ Upgrading KOReader walks this list.
 - The Gestures plugin registers its zones on the file manager (`plugins/gestures.koplugin/main.lua:1287-1288`,
   `self.ui:registerTouchZones`) and binds one-finger west and east swipes only in the top and
   bottom edge bands (`:1168-1195`); its actions run `Dispatcher:execute` (`:1327`).
+
+### KOReader's touch lock: `setIgnoreTouchInput`, `_onGestureFiltered`, `isGestureAlwaysActive`
+
+- `frontend/ui/widget/container/inputcontainer.lua:287-295` (`isGestureAlwaysActive`, false
+  unless the Gestures plugin replaces it, `plugins/gestures.koplugin/main.lua:196-223`, by zone
+  id), `:297-309` (`_onGestureFiltered`: only zones it approves, no `ges_events`), `:322-350`
+  (`setIgnoreTouchInput` swaps `InputContainer.onGesture` for `_onGestureFiltered` and back;
+  its comment at `:311-321` notes that a subclass overriding `onGesture` escapes the swap);
+  `frontend/ui/uimanager.lua:142-145` (`UIManager:setIgnoreTouchInput`), `:268-271` (`show`
+  lifts the lock for the widget shown).
+- The home overrides `onGesture`, so its own steps, the swipe up to the settings stub and the
+  closing tap, are touch zones on the home (`kopanda_home_swipe_up`, `kopanda_home_tap`) run
+  through `InputContainer.onGesture(self, ges)`: under the lock they match nothing and the
+  settings message, whose `show` would lift the lock, never shows. A zone's handler only records
+  its step; `routeGesture` runs it in place, the closing tap after the forwarded steps. The
+  forwarded steps go through `InputContainer.onGesture` too, so under the lock the file
+  manager's zones the Gestures plugin marks always active still run. The lock's state is read
+  nowhere: `UIManager._input_gestures_disabled` is private.
 
 ### `Dispatcher.execute`, the dispatch bridge
 
