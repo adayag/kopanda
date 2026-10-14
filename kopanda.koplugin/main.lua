@@ -5,6 +5,7 @@
 -- Every KoPanda module is required here, at load time: KOReader prepends the plugin root to
 -- package.path only while it dofile()s this file (frontend/pluginloader.lua:242, :269-270),
 -- so a later require could resolve to another plugin's same-named file (:283-286).
+local Guards = require("guards")
 local Home = require("home")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -19,7 +20,16 @@ local KoPanda = WidgetContainer:extend{
 function KoPanda:init()
     local ok, err = pcall(function()
         -- The file manager makes instances with { ui = self }; the reader adds `document`.
-        self.in_fm = self.ui ~= nil and self.ui.document == nil
+        local in_fm = self.ui ~= nil and self.ui.document == nil
+        -- With another shell enabled this instance does nothing; every handler checks it first.
+        if Guards.refused() then
+            self.refused = true
+            if in_fm then
+                Guards.notify_once()
+            end
+            return
+        end
+        self.in_fm = in_fm
     end)
     if not ok then
         logger.err("KoPanda: init failed:", err)
@@ -42,6 +52,9 @@ end
 -- KOReader shows synchronously after showFiles (history, favorites, folder shortcuts).
 -- Returns nothing: a true return would stop Show reaching later modules.
 function KoPanda:onShow()
+    if self.refused then
+        return
+    end
     if not self.in_fm then
         return
     end
@@ -59,6 +72,9 @@ end
 -- The file manager closing (quit, or a book opening) takes the home with it; a home left on
 -- the stack would keep KOReader from quitting.
 function KoPanda:onCloseWidget()
+    if self.refused then
+        return
+    end
     if self.in_fm then
         Home.close()
     end
