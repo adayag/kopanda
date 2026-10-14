@@ -55,6 +55,12 @@ describe("bin/check", function()
         assert.truthy(contains(output, "brew install luacheck"))
     end)
 
+    it("refuses with exit 2 when a named spec file does not exist, naming it", function()
+        local output, status = run("cd '" .. root .. "' && bin/check spec/unit/nope_spec.lua")
+        assert.equals(2, status)
+        assert.truthy(contains(output, "nope_spec.lua"))
+    end)
+
     it("fails the lint stage with exit 1 on a warning, naming the file", function()
         local copy = run("mktemp -d"):gsub("\n$", "")
         local _, setup = run("cp -R '" .. root .. "/bin' '" .. root .. "/spec' '" .. root .. "/.luacheckrc' '" .. copy

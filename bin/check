@@ -79,6 +79,7 @@ elif [[ $# -eq 1 && "$1" == "--lint" ]]; then
 else
     specs=()
     for spec in "$@"; do
+        [[ -f "$spec" ]] || refuse "bin/check: no such spec file: $spec"
         specs+=("$(absolute "$spec")")
     done
     run_busted "${specs[@]}" || exit 1
