@@ -1,0 +1,13 @@
+id: EV-wemb11
+type: claim.task
+at: 2026-10-14T21:00:23.168441Z
+contributor: allen
+command: claim task T-1hqhru
+targets:
+    - T-1hqhru
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/guards/task.yml

@@ -1,0 +1,15 @@
+id: EV-c9e8rv
+type: start.task
+at: 2026-10-14T21:34:54.120166Z
+contributor: allen
+command: start task T-brarld
+targets:
+    - T-brarld
+before:
+    status: ready
+after:
+    branch: tiller/home/plugin-shell/gesture-routing
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/gesture-routing/task.yml

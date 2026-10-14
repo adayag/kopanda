@@ -1,0 +1,15 @@
+id: EV-13akgy
+type: start.task
+at: 2026-10-14T21:00:22.661225Z
+contributor: allen
+command: start task T-o0ptat
+targets:
+    - T-o0ptat
+before:
+    status: ready
+after:
+    branch: tiller/home/plugin-shell/book-close
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/book-close/task.yml

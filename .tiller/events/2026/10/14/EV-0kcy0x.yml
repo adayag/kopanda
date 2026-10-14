@@ -1,0 +1,13 @@
+id: EV-0kcy0x
+type: attest.feature
+at: 2026-10-14T22:44:40.658815Z
+contributor: allen
+command: attest feature F-yrw3g6
+targets:
+    - F-yrw3g6
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/home/features/plugin-shell/feature.yml

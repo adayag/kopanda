@@ -1,0 +1,13 @@
+id: EV-kffcev
+type: check.task
+at: 2026-10-14T21:17:40.310203Z
+contributor: allen
+command: check task T-1hqhru
+targets:
+    - T-1hqhru
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/guards/task.yml

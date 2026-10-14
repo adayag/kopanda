@@ -1,9 +1,10 @@
 id: T-j9jdiw
 key: home/plugin-shell/entry-points
 title: 'Home tab, Tools entries and the KoPanda: home action'
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-o490lt
@@ -18,3 +19,37 @@ accepted_against:
         kind: git_commit
         value: git:bd30ec7
         observed_at: 2026-10-14T20:26:05.377328Z
+branch: tiller/home/plugin-shell/entry-points
+review_ref:
+    branch: tiller/home/plugin-shell/entry-points
+    head:
+        kind: git_commit
+        value: git:350d01c
+        observed_at: 2026-10-14T21:34:06.36107Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T21:33:39.019218Z
+        against:
+            kind: git_commit
+            value: git:0013b07
+            observed_at: 2026-10-14T21:33:39.019211Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-0013b07-out-aaeb88332cf4aebd05a61c341e796c1ad43caeac08ae01a70730f7a2c5aa2536.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T21:33:39.019218Z
+        against:
+            kind: git_commit
+            value: git:0013b07
+            observed_at: 2026-10-14T21:33:39.019211Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-0013b07-out-d4b6567203c6096bf3a5a4c73981492cf78cb8313afb7a55be97a112e6bd2139.txt

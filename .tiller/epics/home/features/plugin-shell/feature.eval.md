@@ -67,7 +67,7 @@ criteria:
     binding: { type: command, run: "grep -q 'settings/kopanda/state.lua' AGENTS.md" }
     required: true
   - id: C14
-    statement: "Every hook fails safe: an error thrown by the home's build, paint, gesture or event handlers, the plugin's init and handlers, the menu-order insert, a menu callback, the state file or the Dispatcher wrapper (when installed) is logged, leaves no home on the stack, and leaves the file manager on top and handling input"
+    statement: "Every hook fails safe: an error thrown by the home's build, paint, gesture or event handlers, the plugin's init and handlers, the menu-order insert, a menu callback or the Dispatcher wrapper (when installed) is logged, leaves no home on the stack, and leaves the file manager on top and handling input; a state-file error (corrupt file, unwritable folder) is logged and costs only the boot guard, and the home still shows"
     polarity: introduce
     binding: { type: test, ref: "spec/unit/failsafe_spec.lua" }
     required: true
