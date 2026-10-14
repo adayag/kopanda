@@ -20,14 +20,14 @@ describe("bin/check", function()
     end
 
     it("exits 1 on a spec with failing tests and names each failing test", function()
-        local output, status = run("cd " .. root .. " && bin/check spec/fixtures/failing_spec.lua")
+        local output, status = run("cd '" .. root .. "' && bin/check spec/fixtures/failing_spec.lua")
         assert.equals(1, status)
         assert.truthy(contains(output, "fails on purpose the first time"))
         assert.truthy(contains(output, "fails on purpose the second time"))
     end)
 
     it("runs only the named specs, without luacheck, and removes its KO_HOME afterwards", function()
-        local output, status = run("cd " .. root .. " && bin/check spec/unit/environment_spec.lua")
+        local output, status = run("cd '" .. root .. "' && bin/check spec/unit/environment_spec.lua")
         assert.equals(0, status)
         assert.falsy(contains(output, "luacheck"))
         local inner_home = output:match("KOPANDA_KO_HOME=([^\n]+)\n")
@@ -38,25 +38,35 @@ describe("bin/check", function()
     end)
 
     it("refuses with exit 2 when the emulator is missing, naming the path", function()
-        local output, status = run("KOPANDA_EMULATOR=/nonexistent " .. check .. " --lint")
+        local output, status = run("KOPANDA_EMULATOR=/nonexistent '" .. check .. "' --lint")
         assert.equals(2, status)
         assert.truthy(contains(output, "/nonexistent"))
     end)
 
     it("refuses with exit 2 when luacheck is missing, naming the brew command", function()
-        local output, status = run("PATH=/usr/bin:/bin " .. check .. " --lint")
+        local output, status = run("PATH=/usr/bin:/bin '" .. check .. "' --lint")
         assert.equals(2, status)
         assert.truthy(contains(output, "brew install luacheck"))
     end)
 
     it("fails the lint stage with exit 1 on a warning, naming the file", function()
         local copy = run("mktemp -d"):gsub("\n$", "")
-        local _, setup = run("cp -R " .. root .. "/bin " .. root .. "/spec " .. root .. "/.luacheckrc " .. copy
-            .. " && mv " .. copy .. "/spec/fixtures/lint-warning.lua " .. copy .. "/spec/unit/")
+        local _, setup = run("cp -R '" .. root .. "/bin' '" .. root .. "/spec' '" .. root .. "/.luacheckrc' '" .. copy
+            .. "' && mv '" .. copy .. "/spec/fixtures/lint-warning.lua' '" .. copy .. "/spec/unit/'")
         assert.equals(0, setup)
-        local output, status = run(copy .. "/bin/check --lint")
-        run("rm -rf " .. copy)
+        local output, status = run("'" .. copy .. "/bin/check' --lint")
+        run("rm -rf '" .. copy .. "'")
         assert.equals(1, status)
         assert.truthy(contains(output, "lint-warning.lua"))
+    end)
+
+    it("runs from a checkout whose path contains a space", function()
+        local copy = run("mktemp -d"):gsub("\n$", "") .. "/with space"
+        local _, setup = run("mkdir '" .. copy .. "' && cp -R '" .. root .. "/bin' '" .. root .. "/spec' '"
+            .. root .. "/.luacheckrc' '" .. copy .. "'")
+        assert.equals(0, setup)
+        local output, status = run("cd '" .. copy .. "' && '" .. copy .. "/bin/check' spec/unit/environment_spec.lua")
+        run("rm -rf '" .. copy .. "'")
+        assert.equals(0, status, output)
     end)
 end)
