@@ -65,7 +65,10 @@ local function log_tail(path)
 end
 
 -- Writes a scratch KO_HOME at dir for the named profile: settings.reader.lua, the plugin
--- copied under plugins/, and the capture patch under patches/.
+-- copied under plugins/, and the capture patch under patches/ with each extra patch (a list
+-- of paths) beside it. An extra patch's name must start with "2-", KOReader's late priority
+-- (frontend/userpatch.lua:13), which reader.lua:190 applies before any plugin code runs, in
+-- natural-sort order of the names (frontend/userpatch.lua:82).
 --
 -- settings.reader.lua is what LuaSettings:open dofile()s (frontend/luasettings.lua:30-33).
 -- color_rendering present suppresses the first-run colour notice (reader.lua:195-203); it
@@ -83,10 +86,15 @@ end
 -- file as a no-op and only compares the version (bookinfomanager.lua:166-169). The seed
 -- runs in the emulator's own luajit: its sqlite binding ffi.cdef()s on load, so a Busted
 -- process can require it once at most, and spec files are insulated from each other.
-function M.write_profile(dir, profile_name, plugin_dir, emulator)
+function M.write_profile(dir, profile_name, plugin_dir, emulator, patches)
     local profile = profiles[profile_name]
     if not profile then
         error("capture: unknown profile " .. tostring(profile_name))
+    end
+    for _, patch in ipairs(patches or {}) do
+        if not basename(patch):match("^2%-") then
+            error("capture: extra patch " .. patch .. " must be named 2-*.lua (late priority)")
+        end
     end
     if not is_dir(dir) then
         assert(lfs.mkdir(dir))
@@ -125,6 +133,11 @@ function M.write_profile(dir, profile_name, plugin_dir, emulator)
     local patch_src = root .. "/spec/emulator/patches/" .. PATCH_NAME
     if not shell("cp " .. quote(patch_src) .. " " .. quote(dir .. "/patches/" .. PATCH_NAME)) then
         error("capture: could not copy " .. patch_src)
+    end
+    for _, patch in ipairs(patches or {}) do
+        if not shell("cp " .. quote(patch) .. " " .. quote(dir .. "/patches/" .. basename(patch))) then
+            error("capture: could not copy " .. patch)
+        end
     end
     return dir
 end
@@ -202,8 +215,10 @@ end
 -- opts: profile (name), plugin_dir, library_dir (default: the fixture library,
 -- spec/fixtures/library/; pass an empty dir for no books), out_dir (default: a fresh dir
 -- under KO_HOME), cap_s (default 20), timeout_s (default 120), emulator_dir (default
--- KOPANDA_EMULATOR). Returns { png, width, height, sidecar, log, scratch }; the scratch
--- profile is removed on success and left in place on failure.
+-- KOPANDA_EMULATOR), patches (extra userpatches, see write_profile), shot_screen (the
+-- KoPandaSettled screen the capture is taken on, default "home"). Returns { png, width,
+-- height, sidecar, log, scratch }; the scratch profile is removed on success and left in place
+-- on failure.
 function M.capture(opts)
     local emulator = opts.emulator_dir or os.getenv("KOPANDA_EMULATOR")
     local profile_name = opts.profile
@@ -231,7 +246,7 @@ function M.capture(opts)
     local timeout_s = opts.timeout_s or 120
     local out_dir = opts.out_dir or fresh_out_dir(profile_name)
     local scratch = M.write_profile(out_dir .. "/profile-" .. profile_name, profile_name, opts.plugin_dir,
-        emulator)
+        emulator, opts.patches)
     local png = out_dir .. "/" .. profile_name .. ".png"
     local log = out_dir .. "/" .. profile_name .. ".log"
     local marker = out_dir .. "/" .. profile_name .. ".timeout"
@@ -246,6 +261,7 @@ function M.capture(opts)
         { "EMULATE_READER_FORCE_PORTRAIT", 1 },
         { "KOPANDA_SHOT", png },
         { "KOPANDA_SHOT_CAP_S", cap_s },
+        { "KOPANDA_SHOT_SCREEN", opts.shot_screen or "home" },
     }
     if not profile.color then
         vars[#vars + 1] = { "EMULATE_BW_SCREEN", 1 }
