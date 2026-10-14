@@ -44,9 +44,9 @@ gates:
     evals:
         required: true
         kind: command
-        status: pending
+        status: pass
         run_by: allen
-        run_at: 2026-10-14T17:03:30.7204Z
+        run_at: 2026-10-14T17:37:39.530528Z
         against:
             kind: git_commit
             value: git:7d4ffa9
@@ -103,7 +103,7 @@ gates:
                     - kind: command_output
                       ref: artifacts/tiller/gates/eval-C10-7d4ffa9-out-a49a16a4c8d3ec0681ccc1f617c3966835c5c8c6e24f35503732b5d61a6390c7.txt
             C11:
-                status: needs_attestation
+                status: pass
     tests:
         required: true
         kind: command
@@ -117,3 +117,11 @@ gates:
         evidence:
             - kind: command_output
               ref: artifacts/tiller/gates/tests-7d4ffa9-out-42f3a28788bafb19a2545fb21ed1f6b73ac21d5ce72d8d68c9cde9a0eaf3cb9a.txt
+attestations:
+    - id: AT-6v16xx
+      target:
+        kind: criterion
+        id: C11
+      status: pass
+      by: allen
+      at: 2026-10-14T17:37:39.530528Z
