@@ -1,0 +1,9 @@
+id: T-1hqhru
+key: home/plugin-shell/guards
+title: Coexistence refusal, boot guard and the runtime state file
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-o490lt

@@ -1,0 +1,14 @@
+id: EV-jhurin
+type: add.task
+at: 2026-10-14T19:18:52.597349Z
+contributor: allen
+command: add task home/plugin-shell/entry-points
+targets:
+    - T-j9jdiw
+after:
+    feature: F-yrw3g6
+    key: home/plugin-shell/entry-points
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/entry-points/task.md
+    - path: .tiller/epics/home/features/plugin-shell/tasks/entry-points/task.yml

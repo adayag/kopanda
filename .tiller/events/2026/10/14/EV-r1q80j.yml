@@ -1,0 +1,16 @@
+id: EV-r1q80j
+type: order.tasks
+at: 2026-10-14T19:18:52.771876Z
+contributor: allen
+command: order task T-o490lt T-o0ptat T-1hqhru T-j9jdiw T-brarld
+targets:
+    - F-yrw3g6
+after:
+    order:
+        - T-o490lt
+        - T-o0ptat
+        - T-1hqhru
+        - T-j9jdiw
+        - T-brarld
+files:
+    - path: .tiller/epics/home/features/plugin-shell/feature.yml

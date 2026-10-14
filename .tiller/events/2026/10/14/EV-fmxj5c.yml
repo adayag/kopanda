@@ -1,0 +1,13 @@
+id: EV-fmxj5c
+type: spec.feature
+at: 2026-10-14T19:39:26.681921Z
+contributor: allen
+command: spec feature F-yrw3g6
+targets:
+    - F-yrw3g6
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/home/features/plugin-shell/feature.yml

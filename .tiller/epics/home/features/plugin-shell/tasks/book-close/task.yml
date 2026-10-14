@@ -1,0 +1,9 @@
+id: T-o0ptat
+key: home/plugin-shell/book-close
+title: Closing a book lands on a pre-built home in one paint
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-o490lt

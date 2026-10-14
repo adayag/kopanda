@@ -1,0 +1,14 @@
+id: EV-dyqs37
+type: add.task
+at: 2026-10-14T19:18:52.692809Z
+contributor: allen
+command: add task home/plugin-shell/gesture-routing
+targets:
+    - T-brarld
+after:
+    feature: F-yrw3g6
+    key: home/plugin-shell/gesture-routing
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/gesture-routing/task.md
+    - path: .tiller/epics/home/features/plugin-shell/tasks/gesture-routing/task.yml

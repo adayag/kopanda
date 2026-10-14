@@ -1,0 +1,14 @@
+id: EV-zfnkvs
+type: add.task
+at: 2026-10-14T19:18:52.42148Z
+contributor: allen
+command: add task home/plugin-shell/book-close
+targets:
+    - T-o0ptat
+after:
+    feature: F-yrw3g6
+    key: home/plugin-shell/book-close
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/book-close/task.md
+    - path: .tiller/epics/home/features/plugin-shell/tasks/book-close/task.yml

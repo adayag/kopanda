@@ -1,0 +1,14 @@
+id: EV-081x9i
+type: add.task
+at: 2026-10-14T19:18:52.342511Z
+contributor: allen
+command: add task home/plugin-shell/home-lifecycle
+targets:
+    - T-o490lt
+after:
+    feature: F-yrw3g6
+    key: home/plugin-shell/home-lifecycle
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/home-lifecycle/task.md
+    - path: .tiller/epics/home/features/plugin-shell/tasks/home-lifecycle/task.yml

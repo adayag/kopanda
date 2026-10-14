@@ -1,0 +1,10 @@
+id: T-j9jdiw
+key: home/plugin-shell/entry-points
+title: 'Home tab, Tools entries and the KoPanda: home action'
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-o490lt
+    - T-1hqhru

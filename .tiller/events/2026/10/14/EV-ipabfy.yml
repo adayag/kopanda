@@ -1,0 +1,14 @@
+id: EV-ipabfy
+type: add.task
+at: 2026-10-14T19:18:52.507214Z
+contributor: allen
+command: add task home/plugin-shell/guards
+targets:
+    - T-1hqhru
+after:
+    feature: F-yrw3g6
+    key: home/plugin-shell/guards
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/guards/task.md
+    - path: .tiller/epics/home/features/plugin-shell/tasks/guards/task.yml
