@@ -1,0 +1,15 @@
+id: EV-216hia
+type: start.task
+at: 2026-10-14T14:13:11.860269Z
+contributor: allen
+command: start task T-5vdqno
+targets:
+    - T-5vdqno
+before:
+    status: ready
+after:
+    branch: tiller/home/dev-loop/fixture-library
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/dev-loop/tasks/fixture-library/task.yml
