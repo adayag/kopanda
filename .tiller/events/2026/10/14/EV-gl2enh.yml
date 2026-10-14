@@ -1,0 +1,13 @@
+id: EV-gl2enh
+type: approve.epic
+at: 2026-10-14T18:04:06.118253Z
+contributor: allen
+command: approve epic E-t7e8xj
+targets:
+    - E-t7e8xj
+before:
+    status: draft
+after:
+    status: ready
+files:
+    - path: .tiller/epics/studio/epic.yml
