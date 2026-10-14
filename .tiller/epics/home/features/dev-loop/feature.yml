@@ -1,7 +1,7 @@
 id: F-xo6obj
 key: home/dev-loop
 title: Lua specs, emulator goldens and bin/check
-status: active
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -28,6 +28,23 @@ accepted_against:
         kind: git_commit
         value: git:2ae9ffe
         observed_at: 2026-10-14T12:35:02.539928Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:c01fd6299a4f3c63ba017dcc0f77ec28f1ef3861
+        path: .tiller/epics/home/features/dev-loop/feature.md
+        observed_at: 2026-10-14T17:43:36.559653Z
+    eval:
+        kind: git_blob
+        value: git:89bb09cad9627fafe7f8185d6467d3b139a7d10d
+        path: .tiller/epics/home/features/dev-loop/feature.eval.md
+        observed_at: 2026-10-14T17:43:36.559653Z
+    commit:
+        kind: git_commit
+        value: git:36bed95
+        observed_at: 2026-10-14T17:43:36.098604Z
+    surfaces: []
+done_basis: rollup
 gates:
     build:
         required: true

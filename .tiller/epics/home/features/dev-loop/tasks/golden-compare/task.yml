@@ -1,7 +1,7 @@
 id: T-y86jjw
 key: home/dev-loop/golden-compare
 title: Golden comparison with masks, deliberate regeneration and committed probe goldens
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:590f3f8
         observed_at: 2026-10-14T17:03:20.739867Z
+done_basis: ancestry
 gates:
     build:
         required: true

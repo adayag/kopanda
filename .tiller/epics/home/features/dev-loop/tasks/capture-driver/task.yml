@@ -1,7 +1,7 @@
 id: T-a70gfj
 key: home/dev-loop/capture-driver
 title: Headless emulator capture per device profile on the plugin's settled signal
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:a95b52e
         observed_at: 2026-10-14T14:11:30.50154Z
+done_basis: ancestry
 gates:
     build:
         required: true

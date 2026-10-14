@@ -1,0 +1,14 @@
+id: EV-txl45y
+type: sync.feature
+at: 2026-10-14T17:43:36.609996Z
+contributor: allen
+command: sync feature F-xo6obj
+targets:
+    - F-xo6obj
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/home/features/dev-loop/feature.yml

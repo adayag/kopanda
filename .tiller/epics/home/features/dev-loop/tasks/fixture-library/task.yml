@@ -1,7 +1,7 @@
 id: T-5vdqno
 key: home/dev-loop/fixture-library
 title: Pinned public-domain fixture books for the emulator library
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:e17c06a
         observed_at: 2026-10-14T17:01:42.700247Z
+done_basis: ancestry
 gates:
     build:
         required: true
