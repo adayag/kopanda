@@ -212,4 +212,73 @@ describe("gestures on the KoPanda home", function()
         send(swipe(size.w / 2, size.h * 15 / 16, "north"))
         assert.is_nil(settings_message())
     end)
+
+    -- A Gestures action runs Dispatcher:execute, which sends its event with UIManager:sendEvent
+    -- (frontend/dispatcher.lua:1549, :1586), to the home first.
+    describe("actions dispatched while the home is up", function()
+        local Dispatcher = require("dispatcher")
+        local PluginLoader = require("pluginloader")
+
+        it("reach the file manager's History, shown over the home", function()
+            local fm = fm_with_home()
+            local home = Home.shown
+            Dispatcher:execute({ history = true })
+            local list = fm.history.booklist_menu
+            assert.is_not_nil(list)
+            assert.equals(list, harness.top())
+            assert.equals(home, harness.top(2))
+            -- Closing the list returns to the home, not the file browser.
+            list.close_callback()
+            assert.equals(home, harness.top())
+            assert.equals(home, Home.shown)
+        end)
+
+        it("reach the file manager with it marked always active for the call only", function()
+            local fm = fm_with_home()
+            local during
+            fm.history.onShowHist = function()
+                during = fm.is_always_active
+                return true
+            end
+            Dispatcher:execute({ history = true })
+            assert.is_true(during)
+            assert.is_nil(fm.is_always_active)
+        end)
+
+        it("go straight through with no home up", function()
+            local fm = fm_with_home()
+            local size = Screen:getSize()
+            send(harness.gesture("tap", size.w / 2, size.h / 2))
+            assert.equals(fm, harness.top())
+            local reached, during = false, nil
+            fm.history.onShowHist = function()
+                reached, during = true, fm.is_always_active
+                return true
+            end
+            Dispatcher:execute({ history = true })
+            assert.is_true(reached)
+            assert.is_nil(during)
+        end)
+
+        it("are bridged by one wrapper per process, whatever the number of file managers", function()
+            local fm = fm_with_home()
+            local wrapped = Dispatcher.execute
+            assert.is_not.equals(harness.dispatcher_execute, wrapped)
+            fm:onClose()
+            harness.show_fm()
+            harness.tick(2)
+            assert.equals(wrapped, Dispatcher.execute)
+            require("apps/filemanager/filemanager").instance:onClose()
+            harness.open_reader()
+            harness.tick(2)
+            assert.equals(wrapped, Dispatcher.execute)
+        end)
+
+        it("are left alone by a refused shell", function()
+            table.insert(PluginLoader.enabled_plugins, { name = "simpleui" })
+            harness.show_fm()
+            harness.tick(2)
+            assert.equals(harness.dispatcher_execute, Dispatcher.execute)
+        end)
+    end)
 end)

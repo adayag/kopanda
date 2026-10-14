@@ -49,13 +49,18 @@ function M.module_names()
     return names
 end
 
+-- Dispatcher.execute as KOReader defines it, before any plugin wraps it.
+M.dispatcher_execute = require("dispatcher").execute
+
 -- Loads the plugin as the only enabled one, with its modules' state and runtime state file
--- fresh (no boot flag left by an earlier spec), and KOReader's require-cached file manager
--- menu order fresh (no Home tab inserted and no user order merged by an earlier spec), and
--- returns the plugin module (the class KOReader makes an instance of per file manager and
--- reader). PluginLoader:_load reads main, meta, path and name (frontend/pluginloader.lua:231-271).
+-- fresh (no boot flag left by an earlier spec), KOReader's require-cached file manager menu
+-- order fresh (no Home tab inserted and no user order merged by an earlier spec), and
+-- Dispatcher.execute unwrapped, as in a new process, and returns the plugin module (the class
+-- KOReader makes an instance of per file manager and reader). PluginLoader:_load reads main,
+-- meta, path and name (frontend/pluginloader.lua:231-271).
 function M.load()
     disable_plugins()
+    require("dispatcher").execute = M.dispatcher_execute
     for _, name in ipairs(M.module_names()) do
         package.unload(name) -- luacheck: ignore 143
     end

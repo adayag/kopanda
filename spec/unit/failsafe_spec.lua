@@ -156,6 +156,68 @@ describe("KoPanda failing safe", function()
         assert.is_true(logged_error("kopanda-test: gesture failed"))
     end)
 
+    describe("the dispatcher wrapper", function()
+        local Dispatcher = require("dispatcher")
+
+        it("re-raises an action's error and leaves the file manager's flag as it was", function()
+            local fm = harness.show_fm()
+            harness.tick(2)
+            assert.equals(Home.shown, harness.top())
+            local failure = { "kopanda-test: action failed" }
+            fm.history.onShowHist = function()
+                error(failure)
+            end
+            local ok, err = pcall(Dispatcher.execute, Dispatcher, { history = true })
+            assert.is_false(ok)
+            assert.equals(failure, err)
+            assert.is_nil(fm.is_always_active)
+        end)
+
+        it("closes the home when a forwarded gesture's action throws", function()
+            local fm = harness.show_fm()
+            harness.tick(2)
+            fm.history.onShowHist = function()
+                error("kopanda-test: forwarded action failed")
+            end
+            fm:registerTouchZones{ {
+                id = "kopanda_test_corner",
+                ges = "tap",
+                screen_zone = { ratio_x = 7 / 8, ratio_y = 7 / 8, ratio_w = 1 / 8, ratio_h = 1 / 8 },
+                handler = function()
+                    Dispatcher:execute({ history = true })
+                    return true
+                end,
+            } }
+            local size = Screen:getSize()
+            local ok = pcall(UIManager.sendEvent, UIManager,
+                Event:new("Gesture", harness.gesture("tap", size.w - 10, size.h - 10)))
+            assert.is_true(ok)
+            assert.is_nil(fm.is_always_active)
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: forwarded action failed"))
+        end)
+
+        it("runs the action unbridged and logs when its own lookup throws", function()
+            harness.show_fm()
+            harness.tick(2)
+            local sent = spy.on(UIManager, "sendEvent")
+            local loaded = package.loaded["apps/filemanager/filemanager"]
+            package.loaded["apps/filemanager/filemanager"] = setmetatable({}, {
+                __index = function()
+                    error("kopanda-test: lookup failed")
+                end,
+            })
+            local ok = pcall(Dispatcher.execute, Dispatcher, { history = true })
+            package.loaded["apps/filemanager/filemanager"] = loaded
+            UIManager.sendEvent:revert()
+            assert.is_true(ok)
+            assert.spy(sent).was.called()
+            assert.equals("onShowHist", sent.calls[1].vals[2].handler)
+            assert.is_nil(FileManager.instance.is_always_active)
+            assert.is_true(logged_error("kopanda-test: lookup failed"))
+        end)
+    end)
+
     it("shows the home and logs when the state file can't be written", function()
         -- A plain file where settings/kopanda should be: the directory can't be made.
         local f = assert(io.open(harness.state_dir, "w"))
