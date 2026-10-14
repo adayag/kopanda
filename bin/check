@@ -9,7 +9,8 @@
 set -euo pipefail
 
 KOPANDA_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
-KOPANDA_EMULATOR="${KOPANDA_EMULATOR:-$HOME/Projects/kodev/koreader/koreader-emulator-arm64-apple-darwin23.5.0-debug/koreader}"
+emulator_default="$HOME/Projects/kodev/koreader/koreader-emulator-arm64-apple-darwin23.5.0-debug"
+KOPANDA_EMULATOR="${KOPANDA_EMULATOR:-$emulator_default/koreader}"
 export KOPANDA_ROOT KOPANDA_EMULATOR
 
 refuse() {
@@ -36,8 +37,11 @@ run_lint() {
 }
 
 run_busted() {
+    local lua_path="?.lua;common/?.lua;frontend/?.lua;spec/front/unit/?.lua"
+    lua_path="$lua_path;spec/rocks/share/lua/5.1/?.lua;spec/rocks/share/lua/5.1/?/init.lua"
+    lua_path="$lua_path;$KOPANDA_ROOT/spec/?.lua;$KOPANDA_ROOT/kopanda.koplugin/?.lua"
     cd "$KOPANDA_EMULATOR"
-    LUA_PATH="?.lua;common/?.lua;frontend/?.lua;spec/front/unit/?.lua;spec/rocks/share/lua/5.1/?.lua;spec/rocks/share/lua/5.1/?/init.lua;$KOPANDA_ROOT/spec/?.lua;$KOPANDA_ROOT/kopanda.koplugin/?.lua" \
+    LUA_PATH="$lua_path" \
     LUA_CPATH='?.so;common/?.so;spec/rocks/lib/lua/5.1/?.so' \
     ./luajit -e 'require "busted.runner" {standalone = false}' /dev/null \
         --output=gtest --sort-files --helper="$KOPANDA_ROOT/spec/helper.lua" --loaders=lua --lazy -- "$@"
