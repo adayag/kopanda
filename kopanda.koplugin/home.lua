@@ -132,8 +132,8 @@ end
 
 -- KOReader's top menu zones (defaults.lua:59-60), read as filemanagermenu.lua:74-75 reads them.
 local function in_menu_zone(pos, dimen)
-    for _, key in ipairs({ "DTAP_ZONE_MENU", "DTAP_ZONE_MENU_EXT" }) do
-        local zone = G_defaults:readSetting(key)
+    local zones = { G_defaults:readSetting("DTAP_ZONE_MENU"), G_defaults:readSetting("DTAP_ZONE_MENU_EXT") }
+    for _, zone in ipairs(zones) do
         local rect = Geom:new{
             x = zone.x * dimen.w,
             y = zone.y * dimen.h,

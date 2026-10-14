@@ -5,6 +5,122 @@ it was read from at KOReader commit `e1fe1ac` (the pinned emulator build). Paths
 to `~/Projects/kodev/koreader/`; `base/` is koreader-base, `plugins/` the bundled plugins.
 Upgrading KOReader walks this list.
 
+## Plugin (`kopanda.koplugin/`)
+
+### The `Show` event and plugin instances
+
+- `frontend/apps/filemanager/filemanager.lua:418-429` (an instance per file manager, with
+  `{ ui = self }`), `:379-389` (`registerModule` makes it an array child);
+  `frontend/apps/reader/readerui.lua:464-478` (an instance per reader, every plugin).
+- `onShow` in a file-manager instance is how the plugin learns the file browser is up; the
+  propagation is the harness entry "The `Show` event reaching plugin instances" below.
+  `onShow` returns nothing, since a true return stops `Show` reaching later modules
+  (`frontend/ui/widget/container/widgetcontainer.lua:80-89`).
+
+### `self.ui.document`, the reader test
+
+- `frontend/apps/filemanager/filemanager.lua:418-429` (no `document`);
+  `frontend/apps/reader/readerui.lua:464-478` (`document` passed).
+- An instance is in the file manager when `self.ui.document == nil`; only there does it show
+  or close a home.
+
+### `package.path` during plugin load
+
+- `frontend/pluginloader.lua:242` (plugin root prepended while `main.lua` is `dofile`d),
+  `:269` (restored), `:283-286` (every enabled plugin's root appended afterwards).
+- `main.lua` requires every KoPanda module at load time so a module name resolves to
+  KoPanda's file, not another plugin's. `package.loaded` is one table per process, so
+  `spec/unit/hooks_doc_spec.lua` checks that no KoPanda module path is also one in
+  `frontend/`, `common/` or a bundled plugin.
+
+### The handler sandbox
+
+- `frontend/pluginloader.lua:117-164` (`HandlerSandbox`, logs and returns false on error),
+  `:263` (applied to every `on*` function of the plugin module), `:479-488`
+  (`createPluginInstance` pcalls `new`).
+- Covers the plugin's own `onShow` and `onCloseWidget`. Nothing else KoPanda runs is
+  protected by KOReader, so `init`, the deferred show and every home handler catch their own
+  errors.
+
+### `FileManager.instance`
+
+- `frontend/apps/filemanager/filemanager.lua:447` (set at the end of `init`), `:839` (cleared
+  in `onCloseWidget`).
+- Read through `package.loaded` as `apps/filemanager/filemanager` when the deferred show runs,
+  since the file manager can close between `Show` and that tick.
+
+### `CloseWidget` on file-manager close
+
+- `frontend/ui/uimanager.lua:300` (`UIManager:close` sends it);
+  `frontend/apps/filemanager/filemanager.lua:819-826` (`onClose`, on quit), `:842-849`
+  (`onShowingReader`, when a book opens).
+- Reaches the plugin instance as an array child; the instance closes the home, which would
+  otherwise keep KOReader from quitting.
+
+### `covers_fullscreen` in `UIManager:_repaint`
+
+- `frontend/ui/uimanager.lua:1305-1316`.
+- `_repaint` skips `paintTo` on every widget beneath the topmost `covers_fullscreen` one, so
+  nothing of the file browser is painted under the home.
+
+### `UIManager:nextTick` and `tickAfterNext`
+
+- `frontend/ui/uimanager.lua:431-433`, `:447-456`.
+- The show runs from `nextTick`, landing over what `reader.lua:291-300` shows synchronously
+  after `showFiles`; the settled signal runs from `tickAfterNext`, past the next repaint (the
+  harness entry for `scheduleIn`, `nextTick` and `tickAfterNext` has the details). A failed
+  paint closes the home from `nextTick`.
+
+### `UIManager:show`, `close` and `isWidgetShown`
+
+- `frontend/ui/uimanager.lua:229` (`show`, which sends `Show` at `:259`), `:290-360`
+  (`close`, which sends `CloseWidget` at `:300`), `:881-888` (`isWidgetShown`).
+- The home is shown and closed with `"full"`; a home that reached the stack before failing
+  is taken off it.
+
+### `UIManager.event_hook`, the settled signal
+
+- `frontend/ui/uimanager.lua:53`; `frontend/ui/hook_container.lua:88-98` (`execute`, which
+  runs nothing with no listener).
+- After the home's first paint the plugin executes `KoPandaSettled` with `{ screen, paint_ms,
+  prebuilt }`, once per home; the capture harness entry below is the listener.
+
+### `G_defaults` keys `DTAP_ZONE_MENU` and `DTAP_ZONE_MENU_EXT`
+
+- `defaults.lua:59-60`; read through `G_defaults:readSetting` as
+  `frontend/apps/filemanager/filemanagermenu.lua:74-75` reads them.
+- KOReader's top menu zones, as screen ratios. A tap inside them leaves the placeholder up.
+
+### `InputContainer` gesture and paint dispatch
+
+- `frontend/ui/widget/container/inputcontainer.lua:52` (`InputContainer`), `:73-99`
+  (`paintTo`), `:266-285` (`onGesture`); `frontend/ui/uimanager.lua:962-1034` (`sendEvent`
+  gives the topmost widget the gesture first).
+- The home overrides `onGesture` and `paintTo`, each calling through a `pcall`: KOReader does
+  not sandbox the home, so an error there would reach the UI loop.
+
+### Widget and support modules
+
+- `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
+  (the plugin's base class).
+- `ui/widget/container/inputcontainer`: `frontend/ui/widget/container/inputcontainer.lua:52`
+  (the home's base class).
+- `ui/widget/container/framecontainer`: `frontend/ui/widget/container/framecontainer.lua:27`
+  (`width`, `height`, `background`), `:104` (`paintTo`).
+- `ui/widget/container/centercontainer`: `frontend/ui/widget/container/centercontainer.lua:7`.
+- `ui/widget/verticalgroup`: `frontend/ui/widget/verticalgroup.lua:8`.
+- `ui/widget/verticalspan`: `frontend/ui/widget/verticalspan.lua:6`.
+- `ui/widget/textwidget`: `frontend/ui/widget/textwidget.lua:27` (`text`, `face`).
+- `ui/font`: `frontend/ui/font.lua:269-276` (`getFace` scales the size by
+  `Screen:scaleBySize` itself).
+- `ui/geometry`: `frontend/ui/geometry.lua:37` (`Geom:new`), `:255-266` (`contains`).
+- `ffi/blitbuffer`: `base/ffi/blitbuffer.lua:2717` (`COLOR_WHITE`).
+- `ui/uimanager`: the entries above.
+- `ui/time`: `frontend/ui/time.lua:149` (`to_ms`), `:249` (`monotonic`).
+- `device`: `frontend/device/generic/device.lua:332` (`Screen:getSize`);
+  `base/ffi/framebuffer.lua:414` (`scaleBySize`).
+- `logger`: `frontend/logger.lua:93-98` (`err`); see the harness entry `logger` below.
+
 ## Capture harness (`spec/emulator/`)
 
 ### `UIManager.event_hook`
