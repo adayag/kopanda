@@ -1,0 +1,13 @@
+id: EV-87vf6w
+type: check.feature
+at: 2026-10-14T22:43:36.541286Z
+contributor: allen
+command: check feature F-yrw3g6
+targets:
+    - F-yrw3g6
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/home/features/plugin-shell/feature.yml
