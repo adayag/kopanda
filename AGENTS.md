@@ -25,7 +25,11 @@ The owner's own interface for KOReader e-readers: a plugin that replaces the she
 
 ## Commands
 
-None yet. Stage 1's first task adds `bin/check` (Busted specs on KOReader's LuaJIT plus luacheck), which is also Tiller's build and tests gate; the studio adds its typecheck, lint and tests to it in stage 2.
+- `bin/check`: the gate. luacheck, then every `spec/unit/*_spec.lua`, then every `spec/emulator/*_spec.lua` on the emulator's LuaJIT under a fresh `KO_HOME`; stops at the first failing stage.
+- `bin/check --lint`: luacheck alone (Tiller's build gate).
+- `bin/check <spec>...`: exactly those spec files, no luacheck.
+
+`bin/check` needs `luacheck` on `PATH` (`brew install luacheck`) and the emulator at `KOPANDA_EMULATOR` (see `.env.example`); it refuses with exit 2 otherwise.
 
 ## Conventions and gotchas
 

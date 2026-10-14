@@ -34,8 +34,8 @@ inputs:
 gates:
   required:
     evals: { kind: command, run: "tiller eval ${node.noun} ${node.id}", on: [feature] }
-    # build: { kind: command, run: "<build command>", on: [feature, task] }
-    # tests: { kind: command, run: "<test command>",  on: [feature, task] }
+    build: { kind: command, run: "bin/check --lint", on: [feature, task] }
+    tests: { kind: command, run: "bin/check", on: [feature, task] }
   optional:
     code_review:          { kind: attestation, on: pr }
     security_review:      { kind: attestation, on: pr }

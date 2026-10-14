@@ -1,0 +1,17 @@
+id: EV-e5pqg7
+type: start.task
+at: 2026-10-14T12:36:19.663314Z
+contributor: allen
+command: start task T-c9q97t
+targets:
+    - T-c9q97t
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/home/dev-loop
+    branch: tiller/home/dev-loop/check-runner
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/dev-loop/tasks/check-runner/task.yml
+    - path: .tiller/epics/home/features/dev-loop/feature.yml
