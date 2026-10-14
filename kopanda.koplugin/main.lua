@@ -5,11 +5,17 @@
 -- Every KoPanda module is required here, at load time: KOReader prepends the plugin root to
 -- package.path only while it dofile()s this file (frontend/pluginloader.lua:242, :269-270),
 -- so a later require could resolve to another plugin's same-named file (:283-286).
+local Guards = require("guards")
 local Home = require("home")
+local InfoMessage = require("ui/widget/infomessage")
+local State = require("state")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
 local time = require("ui/time")
+
+-- The boot guard covers only the first show of a process.
+local first_show_done = false
 
 local KoPanda = WidgetContainer:extend{
     name = "kopanda",
@@ -19,7 +25,16 @@ local KoPanda = WidgetContainer:extend{
 function KoPanda:init()
     local ok, err = pcall(function()
         -- The file manager makes instances with { ui = self }; the reader adds `document`.
-        self.in_fm = self.ui ~= nil and self.ui.document == nil
+        local in_fm = self.ui ~= nil and self.ui.document == nil
+        -- With another shell enabled this instance does nothing; every handler checks it first.
+        if Guards.refused() then
+            self.refused = true
+            if in_fm then
+                Guards.notify_once()
+            end
+            return
+        end
+        self.in_fm = in_fm
     end)
     if not ok then
         logger.err("KoPanda: init failed:", err)
@@ -35,13 +50,49 @@ function KoPanda:showHome()
     if not (FileManager and FileManager.instance) then
         return
     end
-    Home.show{ started = time.monotonic() }
+    local opts = { started = time.monotonic() }
+    if not first_show_done then
+        first_show_done = true
+        -- Still set from the last start: that home never finished drawing. Skip it this once,
+        -- but only once the flag is cleared; a flag that can't be cleared would skip it on every
+        -- start, so then the home shows without a guard.
+        if State.get("boot_pending") then
+            if State.set("boot_pending", false) then
+                UIManager:nextTick(function()
+                    local ok, err = pcall(function()
+                        UIManager:show(InfoMessage:new{
+                            text = "At the last start KoPanda's home stopped before it was drawn, "
+                                .. "so it's left out this once. The Home tab or Tools › KoPanda "
+                                .. "brings it back.",
+                            timeout = 8,
+                        })
+                    end)
+                    if not ok then
+                        logger.err("KoPanda: could not show the boot guard notice:", err)
+                    end
+                end)
+                return
+            end
+            logger.err("KoPanda: could not clear the boot guard flag; showing the home unguarded")
+            Home.show(opts)
+            return
+        end
+        State.set("boot_pending", true)
+        -- Run after the home's first paint, or on a caught failure of its build, show or paint.
+        opts.finished = function()
+            State.set("boot_pending", false)
+        end
+    end
+    Home.show(opts)
 end
 
 -- The file manager's Show. The home goes up from the next tick, so it lands over whatever
 -- KOReader shows synchronously after showFiles (history, favorites, folder shortcuts).
 -- Returns nothing: a true return would stop Show reaching later modules.
 function KoPanda:onShow()
+    if self.refused then
+        return
+    end
     if not self.in_fm then
         return
     end
@@ -59,6 +110,9 @@ end
 -- The file manager closing (quit, or a book opening) takes the home with it; a home left on
 -- the stack would keep KOReader from quitting.
 function KoPanda:onCloseWidget()
+    if self.refused then
+        return
+    end
     if self.in_fm then
         Home.close()
     end
