@@ -1,7 +1,7 @@
 id: T-j9jdiw
 key: home/plugin-shell/entry-points
 title: 'Home tab, Tools entries and the KoPanda: home action'
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -26,6 +26,7 @@ review_ref:
         kind: git_commit
         value: git:350d01c
         observed_at: 2026-10-14T21:34:06.36107Z
+done_basis: ancestry
 gates:
     build:
         required: true

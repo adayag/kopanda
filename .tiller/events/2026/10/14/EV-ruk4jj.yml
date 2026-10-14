@@ -1,0 +1,14 @@
+id: EV-ruk4jj
+type: sync.task
+at: 2026-10-14T22:45:44.049495Z
+contributor: allen
+command: sync task T-o0ptat
+targets:
+    - T-o0ptat
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/book-close/task.yml

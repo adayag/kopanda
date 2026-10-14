@@ -1,7 +1,7 @@
 id: T-o0ptat
 key: home/plugin-shell/book-close
 title: Closing a book lands on a pre-built home in one paint
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:987d7ed
         observed_at: 2026-10-14T22:41:07.327581Z
+done_basis: ancestry
 gates:
     build:
         required: true

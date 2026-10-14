@@ -1,7 +1,7 @@
 id: T-o490lt
 key: home/plugin-shell/home-lifecycle
 title: A placeholder home over the file browser, closed with it, signalling its paint
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:40c2467
         observed_at: 2026-10-14T21:00:12.539479Z
+done_basis: ancestry
 gates:
     build:
         required: true

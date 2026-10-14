@@ -1,7 +1,7 @@
 id: F-yrw3g6
 key: home/plugin-shell
 title: The plugin shows a home over the file browser
-status: active
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -31,6 +31,23 @@ accepted_against:
         kind: git_commit
         value: git:ec58a3a
         observed_at: 2026-10-14T21:11:28.848771Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:869e965c30259def7c7bd45344f1d9014ddf0b25
+        path: .tiller/epics/home/features/plugin-shell/feature.md
+        observed_at: 2026-10-14T22:45:44.396335Z
+    eval:
+        kind: git_blob
+        value: git:06a7c91e0ec8b897a5a12162376b530edca73f39
+        path: .tiller/epics/home/features/plugin-shell/feature.eval.md
+        observed_at: 2026-10-14T22:45:44.396335Z
+    commit:
+        kind: git_commit
+        value: git:025d269
+        observed_at: 2026-10-14T22:45:43.892884Z
+    surfaces: []
+done_basis: rollup
 gates:
     build:
         required: true

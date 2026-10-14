@@ -1,0 +1,14 @@
+id: EV-drx9rq
+type: sync.feature
+at: 2026-10-14T22:45:44.443271Z
+contributor: allen
+command: sync feature F-yrw3g6
+targets:
+    - F-yrw3g6
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/home/features/plugin-shell/feature.yml
