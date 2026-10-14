@@ -31,7 +31,7 @@ trap 'rm -rf "$KO_HOME"' EXIT
 printf 'KOPANDA_KO_HOME=%s\n' "$KO_HOME"
 
 run_lint() {
-    echo "== lint"
+    echo "== lint: luacheck"
     (cd "$KOPANDA_ROOT" && luacheck .)
 }
 
