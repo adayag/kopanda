@@ -1,7 +1,7 @@
 id: T-o490lt
 key: home/plugin-shell/home-lifecycle
 title: A placeholder home over the file browser, closed with it, signalling its paint
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:bd30ec7
         observed_at: 2026-10-14T20:26:05.318466Z
 branch: tiller/home/plugin-shell/home-lifecycle
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T20:59:46.316286Z
+        against:
+            kind: git_commit
+            value: git:af20f6e
+            observed_at: 2026-10-14T20:59:46.316282Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-af20f6e-out-d659491d9be68886f6f3177a269ab29df2ab3aba3659b9887a9f2128ccc5a790.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T20:59:46.316286Z
+        against:
+            kind: git_commit
+            value: git:af20f6e
+            observed_at: 2026-10-14T20:59:46.316282Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-af20f6e-out-faa7f92ec647907f8132f431b0b59e57864bf763dffa2f3382ce429fe553b658.txt
