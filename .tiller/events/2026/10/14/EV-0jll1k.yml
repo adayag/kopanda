@@ -1,0 +1,15 @@
+id: EV-0jll1k
+type: start.task
+at: 2026-10-14T12:58:17.650783Z
+contributor: allen
+command: start task T-a70gfj
+targets:
+    - T-a70gfj
+before:
+    status: ready
+after:
+    branch: tiller/home/dev-loop/capture-driver
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/dev-loop/tasks/capture-driver/task.yml
