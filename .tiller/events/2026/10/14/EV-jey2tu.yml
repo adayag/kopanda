@@ -1,0 +1,16 @@
+id: EV-jey2tu
+type: submit.task
+at: 2026-10-14T22:42:46.160522Z
+contributor: allen
+command: submit task T-brarld
+targets:
+    - T-brarld
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/plugin-shell/gesture-routing
+        head: git:d6b5dcc
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/gesture-routing/task.yml
