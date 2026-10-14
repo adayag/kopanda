@@ -27,6 +27,14 @@ local function dirname(path)
     return path:match("^(.*)/[^/]+$") or "."
 end
 
+local function make_dir(path)
+    if lfs.attributes(path, "mode") == "directory" then
+        return
+    end
+    make_dir(dirname(path))
+    assert(lfs.mkdir(path))
+end
+
 -- The spec file that called into this module, relative to the repo root, for the
 -- regeneration command a missing golden prints.
 local function calling_spec()
@@ -74,11 +82,14 @@ local function update(name, profile, capture_result, png_path, json_path)
 end
 
 -- opts: golden_dir (default <KOPANDA_ROOT>/spec/goldens), update (default true only when
--- KOPANDA_UPDATE_GOLDENS is "1"). Returns { updated = true } after writing the golden, or
+-- KOPANDA_UPDATE_GOLDENS is "1"), artifact_dir (default <KOPANDA_ROOT>/spec/.artifacts/goldens,
+-- where a pixel failure leaves a copy of the capture and the diff image, since bin/check
+-- deletes KO_HOME on exit). Returns { updated = true } after writing the golden, or
 -- compare's result on a match; raises an error naming the files on any failure.
 function M.check(name, profile, capture_result, opts)
     opts = opts or {}
     local golden_dir = opts.golden_dir or (os.getenv("KOPANDA_ROOT") .. "/spec/goldens")
+    local artifact_dir = opts.artifact_dir or (os.getenv("KOPANDA_ROOT") .. "/spec/.artifacts/goldens")
     local do_update = opts.update
     if do_update == nil then
         do_update = os.getenv("KOPANDA_UPDATE_GOLDENS") == "1"
@@ -99,7 +110,9 @@ function M.check(name, profile, capture_result, opts)
     end
     local sidecar = rapidjson.decode(read_file(json_path) or "null")
     local masks = type(sidecar) == "table" and sidecar.masks or nil
-    local diff_png = dirname(capture_result.png) .. "/" .. name .. "-" .. profile .. ".diff.png"
+    make_dir(artifact_dir)
+    local artifact = artifact_dir .. "/" .. name .. "-" .. profile
+    local actual_png, diff_png = artifact .. ".actual.png", artifact .. ".diff.png"
     local result = compare.compare(capture_result.png, png_path, { masks = masks, diff_png = diff_png })
     if result.reason == "size" then
         error(string.format("golden %s-%s: the capture is %d×%d but the golden is %d×%d;"
@@ -108,11 +121,14 @@ function M.check(name, profile, capture_result, opts)
             profile, capture_result.png, png_path), 0)
     end
     if not result.ok then
+        write_file(actual_png, assert(read_file(capture_result.png)))
         error(string.format("golden %s-%s: %.2f %% of compared pixels differ (%d of %d)"
-            .. "\ncapture: %s\ngolden: %s\ndiff: %s",
+            .. "\ngolden: %s\nactual: %s\ndiff: %s",
             name, profile, result.fraction * 100, result.differing, result.compared,
-            capture_result.png, png_path, result.diff_png), 0)
+            png_path, actual_png, result.diff_png), 0)
     end
+    os.remove(actual_png)
+    os.remove(diff_png)
     return result
 end
 

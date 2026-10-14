@@ -55,7 +55,11 @@ describe("probe goldens", function()
     for _, profile in ipairs({ "colorsoft", "paperwhite" }) do
         it("matches the committed probe golden on " .. profile, function()
             local result = driver.capture{ profile = profile, plugin_dir = probe, library_dir = fresh_dir("library") }
-            golden.assert_golden("probe", profile, result)
+            local checked = golden.assert_golden("probe", profile, result)
+            if os.getenv("KOPANDA_UPDATE_GOLDENS") ~= "1" then
+                assert.is_nil(checked.updated)
+                assert.is_true(checked.ok)
+            end
         end)
     end
 
@@ -100,14 +104,18 @@ describe("probe goldens", function()
 
     it("compares against the golden with the sidecar's masks", function()
         local dir = fresh_dir("goldens")
+        local artifacts = fresh_dir("artifacts") .. "/goldens"
         golden.check("probe", "colorsoft", fake_capture("base.png"), { golden_dir = dir, update = true })
         local block = fake_capture("block.png")
-        local err = error_of(golden.check, "probe", "colorsoft", block, { golden_dir = dir, update = false })
-        local diff = block.png:match("^(.*)/[^/]+$") .. "/probe-colorsoft.diff.png"
-        contains(err, block.png)
+        local err = error_of(golden.check, "probe", "colorsoft", block,
+            { golden_dir = dir, update = false, artifact_dir = artifacts })
+        local actual = artifacts .. "/probe-colorsoft.actual.png"
+        local diff = artifacts .. "/probe-colorsoft.diff.png"
         contains(err, dir .. "/probe-colorsoft.png")
+        contains(err, actual)
         contains(err, diff)
         contains(err, "25.00 %")
+        assert.equals(read(block.png), read(actual))
         assert.equals("file", lfs.attributes(diff, "mode"))
 
         local sidecar_path = dir .. "/probe-colorsoft.json"
@@ -115,7 +123,37 @@ describe("probe goldens", function()
         sidecar.masks = { { x = 1, y = 1, w = 2, h = 2 } }
         write(sidecar_path, rapidjson.encode(sidecar))
         assert.is_nil(golden.check("probe", "colorsoft", fake_capture("block.png"),
-            { golden_dir = dir, update = false }).updated)
+            { golden_dir = dir, update = false, artifact_dir = artifacts }).updated)
+    end)
+
+    it("keeps a failing run's capture and diff under spec/.artifacts/goldens by default", function()
+        local dir = fresh_dir("goldens")
+        golden.check("default-artifacts", "colorsoft", fake_capture("base.png"), { golden_dir = dir, update = true })
+        local err = error_of(golden.check, "default-artifacts", "colorsoft", fake_capture("block.png"),
+            { golden_dir = dir, update = false })
+        local artifacts = root .. "/spec/.artifacts/goldens"
+        local actual = artifacts .. "/default-artifacts-colorsoft.actual.png"
+        local diff = artifacts .. "/default-artifacts-colorsoft.diff.png"
+        local actual_mode, diff_mode = lfs.attributes(actual, "mode"), lfs.attributes(diff, "mode")
+        os.remove(actual)
+        os.remove(diff)
+        contains(err, actual)
+        contains(err, diff)
+        assert.equals("file", actual_mode)
+        assert.equals("file", diff_mode)
+    end)
+
+    it("removes a stale capture and diff when the capture matches", function()
+        local dir = fresh_dir("goldens")
+        local artifacts = fresh_dir("artifacts")
+        golden.check("probe", "colorsoft", fake_capture("base.png"), { golden_dir = dir, update = true })
+        write(artifacts .. "/probe-colorsoft.actual.png", "stale")
+        write(artifacts .. "/probe-colorsoft.diff.png", "stale")
+        local result = golden.check("probe", "colorsoft", fake_capture("base.png"),
+            { golden_dir = dir, update = false, artifact_dir = artifacts })
+        assert.is_true(result.ok)
+        assert.is_nil(lfs.attributes(artifacts .. "/probe-colorsoft.actual.png", "mode"))
+        assert.is_nil(lfs.attributes(artifacts .. "/probe-colorsoft.diff.png", "mode"))
     end)
 
     it("fails a capture of the wrong size on its size, pointing at the profile", function()
