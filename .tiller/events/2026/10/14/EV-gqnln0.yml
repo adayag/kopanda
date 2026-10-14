@@ -1,0 +1,13 @@
+id: EV-gqnln0
+type: add.feature
+at: 2026-10-14T03:27:43.834826Z
+contributor: allen
+command: add feature home/featured-book
+targets:
+    - F-e8jz6h
+after:
+    key: home/featured-book
+    status: draft
+files:
+    - path: .tiller/epics/home/features/featured-book/feature.md
+    - path: .tiller/epics/home/features/featured-book/feature.yml

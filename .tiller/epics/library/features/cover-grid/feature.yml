@@ -1,0 +1,10 @@
+id: F-2nt0fx
+key: library/cover-grid
+title: Cover grid with header pickers in both looks
+status: draft
+blocked: false
+source: design/2026-10-13-kopanda-ui-direction.md
+change_type: create
+depends_on:
+    - F-alfeze
+    - F-78e5ij

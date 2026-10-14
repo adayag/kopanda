@@ -1,0 +1,13 @@
+id: EV-ng1g34
+type: add.feature
+at: 2026-10-14T03:27:43.911024Z
+contributor: allen
+command: add feature home/launcher
+targets:
+    - F-ydcqb0
+after:
+    key: home/launcher
+    status: draft
+files:
+    - path: .tiller/epics/home/features/launcher/feature.md
+    - path: .tiller/epics/home/features/launcher/feature.yml

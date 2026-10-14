@@ -1,0 +1,13 @@
+id: EV-ko7zbm
+type: add.feature
+at: 2026-10-14T03:27:44.884045Z
+contributor: allen
+command: add feature bars/title-bar
+targets:
+    - F-iwl43d
+after:
+    key: bars/title-bar
+    status: draft
+files:
+    - path: .tiller/epics/bars/features/title-bar/feature.md
+    - path: .tiller/epics/bars/features/title-bar/feature.yml

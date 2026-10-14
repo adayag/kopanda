@@ -1,0 +1,13 @@
+id: EV-9x6g40
+type: add.feature
+at: 2026-10-14T03:27:44.311636Z
+contributor: allen
+command: add feature studio/studio-shell
+targets:
+    - F-kglqs4
+after:
+    key: studio/studio-shell
+    status: draft
+files:
+    - path: .tiller/epics/studio/features/studio-shell/feature.md
+    - path: .tiller/epics/studio/features/studio-shell/feature.yml

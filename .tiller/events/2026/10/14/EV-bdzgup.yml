@@ -1,0 +1,13 @@
+id: EV-bdzgup
+type: add.epic
+at: 2026-10-14T03:27:44.645309Z
+contributor: allen
+command: add epic nav-bar
+targets:
+    - E-yyznit
+after:
+    key: nav-bar
+    status: draft
+files:
+    - path: .tiller/epics/nav-bar/epic.md
+    - path: .tiller/epics/nav-bar/epic.yml

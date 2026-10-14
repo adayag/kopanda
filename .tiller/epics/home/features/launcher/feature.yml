@@ -1,0 +1,9 @@
+id: F-ydcqb0
+key: home/launcher
+title: Launcher entries, folders and placeholders
+status: draft
+blocked: false
+source: design/2026-10-13-kopanda-ui-direction.md
+change_type: create
+depends_on:
+    - F-wkj9iy

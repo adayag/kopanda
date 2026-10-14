@@ -1,0 +1,20 @@
+id: EV-6nyf1r
+type: link.feature
+at: 2026-10-14T03:27:45.662015Z
+contributor: allen
+command: link feature F-78e5ij
+targets:
+    - F-78e5ij
+before:
+    depends_on: []
+after:
+    added:
+        - F-yrw3g6
+        - F-i2mbn1
+        - F-ydcqb0
+    depends_on:
+        - F-yrw3g6
+        - F-i2mbn1
+        - F-ydcqb0
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/feature.yml

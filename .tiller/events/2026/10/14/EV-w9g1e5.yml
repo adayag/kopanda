@@ -1,0 +1,13 @@
+id: EV-w9g1e5
+type: add.feature
+at: 2026-10-14T03:27:45.114112Z
+contributor: allen
+command: add feature library/book-model
+targets:
+    - F-alfeze
+after:
+    key: library/book-model
+    status: draft
+files:
+    - path: .tiller/epics/library/features/book-model/feature.md
+    - path: .tiller/epics/library/features/book-model/feature.yml

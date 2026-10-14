@@ -1,0 +1,13 @@
+id: EV-4utd4q
+type: add.feature
+at: 2026-10-14T03:27:43.603826Z
+contributor: allen
+command: add feature home/plugin-shell
+targets:
+    - F-yrw3g6
+after:
+    key: home/plugin-shell
+    status: draft
+files:
+    - path: .tiller/epics/home/features/plugin-shell/feature.md
+    - path: .tiller/epics/home/features/plugin-shell/feature.yml

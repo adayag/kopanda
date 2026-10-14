@@ -1,0 +1,10 @@
+id: F-l0kw8m
+key: library/context-menu
+title: Hold on a book, a folder or empty space
+status: draft
+blocked: false
+source: design/2026-10-13-kopanda-ui-direction.md
+change_type: create
+depends_on:
+    - F-2nt0fx
+    - F-3ct1xn

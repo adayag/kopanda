@@ -1,0 +1,13 @@
+id: EV-pl6sck
+type: add.feature
+at: 2026-10-14T03:27:43.678579Z
+contributor: allen
+command: add feature home/looks-and-schema
+targets:
+    - F-i2mbn1
+after:
+    key: home/looks-and-schema
+    status: draft
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/feature.md
+    - path: .tiller/epics/home/features/looks-and-schema/feature.yml

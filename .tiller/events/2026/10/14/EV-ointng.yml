@@ -1,0 +1,13 @@
+id: EV-ointng
+type: add.feature
+at: 2026-10-14T03:27:43.526746Z
+contributor: allen
+command: add feature home/dev-loop
+targets:
+    - F-xo6obj
+after:
+    key: home/dev-loop
+    status: draft
+files:
+    - path: .tiller/epics/home/features/dev-loop/feature.md
+    - path: .tiller/epics/home/features/dev-loop/feature.yml

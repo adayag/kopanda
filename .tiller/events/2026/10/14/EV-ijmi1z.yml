@@ -1,0 +1,16 @@
+id: EV-ijmi1z
+type: link.feature
+at: 2026-10-14T03:27:45.420794Z
+contributor: allen
+command: link feature F-kglqs4
+targets:
+    - F-kglqs4
+before:
+    depends_on: []
+after:
+    added:
+        - F-i2mbn1
+    depends_on:
+        - F-i2mbn1
+files:
+    - path: .tiller/epics/studio/features/studio-shell/feature.yml

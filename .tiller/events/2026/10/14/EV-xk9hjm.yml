@@ -1,0 +1,13 @@
+id: EV-xk9hjm
+type: add.feature
+at: 2026-10-14T03:27:43.760062Z
+contributor: allen
+command: add feature home/home-layout
+targets:
+    - F-wkj9iy
+after:
+    key: home/home-layout
+    status: draft
+files:
+    - path: .tiller/epics/home/features/home-layout/feature.md
+    - path: .tiller/epics/home/features/home-layout/feature.yml

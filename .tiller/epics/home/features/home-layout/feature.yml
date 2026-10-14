@@ -1,0 +1,10 @@
+id: F-wkj9iy
+key: home/home-layout
+title: Rows and columns with date, clock, weather, quote and stats
+status: draft
+blocked: false
+source: design/2026-10-13-kopanda-ui-direction.md
+change_type: create
+depends_on:
+    - F-yrw3g6
+    - F-i2mbn1

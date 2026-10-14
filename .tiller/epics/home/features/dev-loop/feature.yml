@@ -1,0 +1,7 @@
+id: F-xo6obj
+key: home/dev-loop
+title: Lua specs, emulator goldens and bin/check
+status: draft
+blocked: false
+source: design/2026-10-13-kopanda-design.md
+change_type: create

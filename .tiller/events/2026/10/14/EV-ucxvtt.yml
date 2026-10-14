@@ -1,0 +1,13 @@
+id: EV-ucxvtt
+type: add.feature
+at: 2026-10-14T03:27:44.150764Z
+contributor: allen
+command: add feature home/night-mode
+targets:
+    - F-4jh8sz
+after:
+    key: home/night-mode
+    status: draft
+files:
+    - path: .tiller/epics/home/features/night-mode/feature.md
+    - path: .tiller/epics/home/features/night-mode/feature.yml

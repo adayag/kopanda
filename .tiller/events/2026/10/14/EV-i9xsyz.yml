@@ -1,0 +1,13 @@
+id: EV-i9xsyz
+type: add.feature
+at: 2026-10-14T03:27:44.963197Z
+contributor: allen
+command: add feature bars/quick-settings
+targets:
+    - F-rce9ko
+after:
+    key: bars/quick-settings
+    status: draft
+files:
+    - path: .tiller/epics/bars/features/quick-settings/feature.md
+    - path: .tiller/epics/bars/features/quick-settings/feature.yml

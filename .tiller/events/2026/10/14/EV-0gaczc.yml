@@ -1,0 +1,16 @@
+id: EV-0gaczc
+type: link.feature
+at: 2026-10-14T03:27:45.784334Z
+contributor: allen
+command: link feature F-rce9ko
+targets:
+    - F-rce9ko
+before:
+    depends_on: []
+after:
+    added:
+        - F-3ct1xn
+    depends_on:
+        - F-3ct1xn
+files:
+    - path: .tiller/epics/bars/features/quick-settings/feature.yml

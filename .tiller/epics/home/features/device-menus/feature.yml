@@ -1,0 +1,9 @@
+id: F-sn4px5
+key: home/device-menus
+title: Generated settings menu, edit layout and launcher management
+status: draft
+blocked: false
+source: design/2026-10-13-kopanda-ui-direction.md
+change_type: create
+depends_on:
+    - F-3ct1xn

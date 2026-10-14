@@ -1,0 +1,13 @@
+id: EV-l3f3ig
+type: add.epic
+at: 2026-10-14T03:27:44.229966Z
+contributor: allen
+command: add epic studio
+targets:
+    - E-t7e8xj
+after:
+    key: studio
+    status: draft
+files:
+    - path: .tiller/epics/studio/epic.md
+    - path: .tiller/epics/studio/epic.yml

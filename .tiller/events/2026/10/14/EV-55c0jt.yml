@@ -1,0 +1,13 @@
+id: EV-55c0jt
+type: add.epic
+at: 2026-10-14T03:27:45.041993Z
+contributor: allen
+command: add epic library
+targets:
+    - E-cnq4d0
+after:
+    key: library
+    status: draft
+files:
+    - path: .tiller/epics/library/epic.md
+    - path: .tiller/epics/library/epic.yml

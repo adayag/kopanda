@@ -1,0 +1,16 @@
+id: EV-xcgl92
+type: link.feature
+at: 2026-10-14T03:27:45.848169Z
+contributor: allen
+command: link feature F-alfeze
+targets:
+    - F-alfeze
+before:
+    depends_on: []
+after:
+    added:
+        - F-e8jz6h
+    depends_on:
+        - F-e8jz6h
+files:
+    - path: .tiller/epics/library/features/book-model/feature.yml

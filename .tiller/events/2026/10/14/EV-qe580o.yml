@@ -1,0 +1,13 @@
+id: EV-qe580o
+type: add.epic
+at: 2026-10-14T03:27:44.802433Z
+contributor: allen
+command: add epic bars
+targets:
+    - E-ze7s9x
+after:
+    key: bars
+    status: draft
+files:
+    - path: .tiller/epics/bars/epic.md
+    - path: .tiller/epics/bars/epic.yml

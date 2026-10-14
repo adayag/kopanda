@@ -1,0 +1,10 @@
+id: F-yaihx9
+key: library/series-and-authors
+title: Series and Authors screens replace the placeholders
+status: draft
+blocked: false
+source: design/2026-10-13-kopanda-ui-direction.md
+change_type: create
+depends_on:
+    - F-alfeze
+    - F-ydcqb0

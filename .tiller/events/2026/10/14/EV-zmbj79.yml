@@ -1,0 +1,18 @@
+id: EV-zmbj79
+type: link.feature
+at: 2026-10-14T03:27:46.048149Z
+contributor: allen
+command: link feature F-yaihx9
+targets:
+    - F-yaihx9
+before:
+    depends_on:
+        - F-alfeze
+after:
+    added:
+        - F-ydcqb0
+    depends_on:
+        - F-alfeze
+        - F-ydcqb0
+files:
+    - path: .tiller/epics/library/features/series-and-authors/feature.yml

@@ -1,0 +1,13 @@
+id: EV-jdmr3m
+type: add.feature
+at: 2026-10-14T03:27:45.196344Z
+contributor: allen
+command: add feature library/cover-grid
+targets:
+    - F-2nt0fx
+after:
+    key: library/cover-grid
+    status: draft
+files:
+    - path: .tiller/epics/library/features/cover-grid/feature.md
+    - path: .tiller/epics/library/features/cover-grid/feature.yml

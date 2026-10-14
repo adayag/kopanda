@@ -1,0 +1,13 @@
+id: EV-pleo1f
+type: add.feature
+at: 2026-10-14T03:27:43.99254Z
+contributor: allen
+command: add feature home/sheets
+targets:
+    - F-3ct1xn
+after:
+    key: home/sheets
+    status: draft
+files:
+    - path: .tiller/epics/home/features/sheets/feature.md
+    - path: .tiller/epics/home/features/sheets/feature.yml

@@ -1,0 +1,13 @@
+id: EV-3ry415
+type: add.feature
+at: 2026-10-14T03:27:44.722017Z
+contributor: allen
+command: add feature nav-bar/nav-bar
+targets:
+    - F-78e5ij
+after:
+    key: nav-bar/nav-bar
+    status: draft
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/feature.md
+    - path: .tiller/epics/nav-bar/features/nav-bar/feature.yml

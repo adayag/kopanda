@@ -1,0 +1,13 @@
+id: EV-1br6uj
+type: add.epic
+at: 2026-10-14T03:27:43.440231Z
+contributor: allen
+command: add epic home
+targets:
+    - E-ao5nga
+after:
+    key: home
+    status: draft
+files:
+    - path: .tiller/epics/home/epic.md
+    - path: .tiller/epics/home/epic.yml

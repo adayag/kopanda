@@ -1,0 +1,9 @@
+id: F-alfeze
+key: library/book-model
+title: Book index keyed by id with cover and metadata cache
+status: draft
+blocked: false
+source: design/2026-10-13-kopanda-design.md
+change_type: create
+depends_on:
+    - F-e8jz6h

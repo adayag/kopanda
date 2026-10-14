@@ -1,0 +1,13 @@
+id: EV-iz1lli
+type: add.feature
+at: 2026-10-14T03:27:45.346804Z
+contributor: allen
+command: add feature library/series-and-authors
+targets:
+    - F-yaihx9
+after:
+    key: library/series-and-authors
+    status: draft
+files:
+    - path: .tiller/epics/library/features/series-and-authors/feature.md
+    - path: .tiller/epics/library/features/series-and-authors/feature.yml

@@ -1,0 +1,11 @@
+id: E-cnq4d0
+key: library
+title: KoPanda's library replaces the file browser
+status: draft
+blocked: false
+source: design/2026-10-13-kopanda-design.md
+order:
+    - F-alfeze
+    - F-2nt0fx
+    - F-l0kw8m
+    - F-yaihx9

@@ -1,0 +1,13 @@
+id: EV-q9qkpj
+type: add.feature
+at: 2026-10-14T03:27:44.073072Z
+contributor: allen
+command: add feature home/device-menus
+targets:
+    - F-sn4px5
+after:
+    key: home/device-menus
+    status: draft
+files:
+    - path: .tiller/epics/home/features/device-menus/feature.md
+    - path: .tiller/epics/home/features/device-menus/feature.yml

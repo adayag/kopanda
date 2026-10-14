@@ -1,0 +1,9 @@
+questions:
+    - id: Q-irxgmk
+      title: Quick settings entry point
+      statement: 'Where does the quick-settings sheet open from: the home sheet, a launcher entry, a hold on the nav bar''s Settings tab, or more than one of these?'
+      owner: allen
+      blocks:
+        - F-rce9ko
+      status: open
+      source: design/2026-10-13-kopanda-ui-direction.md

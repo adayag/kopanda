@@ -1,0 +1,9 @@
+id: F-4jh8sz
+key: home/night-mode
+title: Night palettes under KOReader's inversion
+status: draft
+blocked: false
+source: design/2026-10-13-kopanda-ui-direction.md
+change_type: create
+depends_on:
+    - F-wkj9iy
