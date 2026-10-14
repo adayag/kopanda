@@ -108,7 +108,8 @@ Upgrading KOReader walks this list.
 - `ui/widget/infomessage`: `frontend/ui/widget/infomessage.lua:47` (the class), `:52-53`
   (`text`, `timeout`), `:263-292` (`onShow` schedules the close when `timeout` is set).
 - Shown from `UIManager:nextTick`. The refusal message has no timeout and is raised once per
-  process from a file-manager instance. The boot guard's notice has a timeout of 8 s.
+  process from a file-manager instance. The boot guard's notice has a timeout of 8 s. The
+  settings stub (`settings_menu.lua`) shows one with no timeout.
 
 ### The runtime state file, `settings/kopanda/state.lua`
 
@@ -135,6 +136,83 @@ Upgrading KOReader walks this list.
   gives the topmost widget the gesture first).
 - The home overrides `onGesture` and `paintTo`, each calling through a `pcall`: KOReader does
   not sandbox the home, so an error there would reach the UI loop.
+
+### Main menu registration, both apps
+
+- `frontend/apps/filemanager/filemanagermenu.lua:1136-1143` and
+  `frontend/apps/reader/modules/readermenu.lua:560` (`registerToMainMenu`);
+  `frontend/apps/filemanager/filemanagermenu.lua:851-856` and
+  `frontend/apps/reader/modules/readermenu.lua:341` (each registered widget's `addToMainMenu` is
+  pcalled with the `menu_items` table); the pattern of `plugins/hello.koplugin/main.lua:23-30`.
+- An instance that isn't refused registers from `init`; `self.ui.menu` exists by then, since
+  both apps register their menu module before making plugin instances
+  (`frontend/apps/filemanager/filemanager.lua:404`, :418-429;
+  `frontend/apps/reader/readerui.lua:176`, :464-478).
+
+### The cached menu order, `ui/elements/filemanager_menu_order`
+
+- `frontend/apps/filemanager/filemanagermenu.lua:858-862` (`setUpdateItemTable` sorts the menu
+  against the require-cached table); `frontend/ui/plugin/insert_menu.lua:1-19` (cached for
+  inserts like this one); `frontend/ui/elements/filemanager_menu_order.lua:4-11`
+  (`KOMenu:menu_buttons`).
+- `menu_entries.lua` inserts `kopanda_home` at index 2 of `KOMenu:menu_buttons` when absent and
+  sets `kopanda_home = {}` in the table, the empty order entry the reader's file-browser tab
+  has (`frontend/ui/elements/reader_menu_order.lua:228`). Bookshelf inserts its tab the same way
+  (`plugins/bookshelf.koplugin/main.lua:605-618` in the emulator's install; AGPL, read only).
+
+### `ui/menusorter`: the user's order file and orphans
+
+- `frontend/ui/menusorter.lua:22-32` (`MenuSorter:readMSSettings`, which `dofile`s
+  `settings/filemanager_menu_order.lua`), `:34-43` (`mergeAndSort` copies the user's top-level
+  entries into the cached order, `:37-39`), `:60` and `:70-72` (an id with no order entry
+  becomes a plain item), `:139-146` (a top-level item without `sub_item_table` is dropped),
+  `:161-185` (orphans go to the end of their `sorting_hint` menu, or into tab 1 without one).
+- With a user list in that file, the tab is added only when the list names `kopanda_home`,
+  and the user's list is left alone. The file is read at every menu build.
+- `frontend/ui/elements/filemanager_menu_order.lua:122-136` and
+  `frontend/ui/elements/reader_menu_order.lua:176-191`: Tools ends with "More tools", so the
+  KoPanda entry, with `sorting_hint = "tools"` and text, lands after it.
+
+### `filemanagermenu_tab_index`
+
+- `frontend/apps/filemanager/filemanagermenu.lua:1021` and `:1087` (read), `:1051-1052`
+  (saved on close); `:1007-1009` and `:1084-1086` (both readers build the item table first,
+  which runs `addToMainMenu`); `:1083-1100` (`_getTabIndexFromLocation`, far-left and
+  far-right tabs).
+- On the first insert in a profile a saved index of 2 or more is incremented, once, after
+  `menu_tab_shifted` is stored in `settings/kopanda/state.lua`. Not with a user's own order.
+
+### `TouchMenu` tab callbacks and `remember`
+
+- `frontend/ui/widget/touchmenu.lua:776-792` (`switchMenuTab` runs a tab's `callback`, then
+  shows its empty item table, which returns early at `:671-673`), `:452-464` and `:777-779`
+  (`remember = false`: the index is not kept, and a saved index on that tab opens tab 1);
+  `:913-926` (an item's callback runs before the menu closes).
+- The Home tab is `{ icon = "home", remember = false, callback }`, the shape of `plus_menu`
+  (`frontend/apps/filemanager/filemanagermenu.lua:838-849`) and the reader's file-browser tab
+  (`frontend/apps/reader/modules/readermenu.lua:65-74`), with the icon
+  `resources/icons/mdlight/home.svg`. Its callback closes the menu with
+  `FileManagerMenu:onCloseFileManagerMenu` (`frontend/apps/filemanager/filemanagermenu.lua:1049-1056`)
+  and goes home. The Tools items act from `UIManager:nextTick`. Each callback catches its own
+  errors.
+
+### `dispatcher`: the KoPanda: home action
+
+- `frontend/dispatcher.lua:665-671` (`registerAction`, a no-op when the name exists), `:8-32`
+  (fields; `general = true` as the built-in actions at `:65-85` have), `:585-586` and `:645`
+  (`DispatcherRegisterActions` is broadcast once, from `Dispatcher:init`, which Gestures calls
+  from its `init`, `plugins/gestures.koplugin/main.lua:219`), `:751-756` (`getNameFromItem`),
+  `:1586` (a `none` action is sent with `UIManager:sendEvent`).
+- `kopanda_home` sends `KoPandaHome`; it is registered from `init` and from
+  `onDispatcherRegisterActions`, never by a refused instance. `UIManager:sendEvent` offers the
+  event to the topmost widget first (`frontend/ui/uimanager.lua:962-1034`, `:988`), so a home
+  that is up consumes it.
+
+### `ReaderUI:onHome`
+
+- `frontend/apps/reader/readerui.lua:935-940`.
+- In the reader, the action and Tools › KoPanda › Home close the book and show the file
+  manager, whose `Show` brings the home.
 
 ### Widget and support modules
 
