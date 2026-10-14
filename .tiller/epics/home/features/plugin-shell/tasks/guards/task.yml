@@ -1,7 +1,7 @@
 id: T-1hqhru
 key: home/plugin-shell/guards
 title: Coexistence refusal, boot guard and the runtime state file
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:bd30ec7
         observed_at: 2026-10-14T20:26:05.357986Z
 branch: tiller/home/plugin-shell/guards
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T21:17:13.911647Z
+        against:
+            kind: git_commit
+            value: git:df17d19
+            observed_at: 2026-10-14T21:17:13.911638Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-df17d19-out-f75b9093064c6fd7254260980c8808ddf17cce16f25e1aa5df1b6720df1d56ce.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T21:17:13.911647Z
+        against:
+            kind: git_commit
+            value: git:df17d19
+            observed_at: 2026-10-14T21:17:13.911638Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-df17d19-out-cf6288fbaf0d0fbc3e7f43312522a260b0a69bca58a72895e26ee93f0535fd7c.txt
