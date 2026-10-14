@@ -1,0 +1,14 @@
+id: EV-tc126a
+type: add.tweak
+at: 2026-10-14T15:22:38.427049Z
+contributor: allen
+command: add tweak quiet-check-output
+targets:
+    - TW-gs28tx
+after:
+    attached_to: T-c9q97t
+    key: tweaks/quiet-check-output
+    status: proposed
+files:
+    - path: .tiller/tweaks/quiet-check-output/tweak.md
+    - path: .tiller/tweaks/quiet-check-output/tweak.yml
