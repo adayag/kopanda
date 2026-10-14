@@ -1,0 +1,15 @@
+id: EV-kn0hbb
+type: start.task
+at: 2026-10-14T21:00:23.328535Z
+contributor: allen
+command: start task T-1hqhru
+targets:
+    - T-1hqhru
+before:
+    status: ready
+after:
+    branch: tiller/home/plugin-shell/guards
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/guards/task.yml

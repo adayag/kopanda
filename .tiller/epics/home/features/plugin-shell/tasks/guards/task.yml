@@ -1,9 +1,10 @@
 id: T-1hqhru
 key: home/plugin-shell/guards
 title: Coexistence refusal, boot guard and the runtime state file
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-o490lt
@@ -17,3 +18,4 @@ accepted_against:
         kind: git_commit
         value: git:bd30ec7
         observed_at: 2026-10-14T20:26:05.357986Z
+branch: tiller/home/plugin-shell/guards
