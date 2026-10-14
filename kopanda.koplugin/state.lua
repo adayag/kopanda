@@ -37,8 +37,8 @@ end
 
 -- Stores value under key and writes the file at once, so the value survives a crash.
 -- Returns true when written, false otherwise. LuaSettings:flush neither creates the directory
--- nor reports a failed write (frontend/luasettings.lua:270-275), so the directory is made and
--- checked first.
+-- nor reports a failed write (frontend/luasettings.lua:270-275, frontend/util.lua:1131-1133),
+-- so the directory is made and checked first, and the file is read back after.
 function State.set(key, value)
     local ok, err = pcall(function()
         if lfs.attributes(dir(), "mode") ~= "directory" then
@@ -48,6 +48,10 @@ function State.set(key, value)
             error(dir() .. " is not a directory")
         end
         open():saveSetting(key, value):flush()
+        local read_ok, data = pcall(dofile, dir() .. "/state.lua")
+        if not (read_ok and type(data) == "table" and data[key] == value) then
+            error("the file did not take " .. key)
+        end
     end)
     if not ok then
         logger.err("KoPanda: could not write the state file:", err)

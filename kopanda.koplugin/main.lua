@@ -53,21 +53,28 @@ function KoPanda:showHome()
     local opts = { started = time.monotonic() }
     if not first_show_done then
         first_show_done = true
-        -- Still set from the last start: that home never finished drawing. Skip it this once.
+        -- Still set from the last start: that home never finished drawing. Skip it this once,
+        -- but only once the flag is cleared; a flag that can't be cleared would skip it on every
+        -- start, so then the home shows without a guard.
         if State.get("boot_pending") then
-            State.set("boot_pending", false)
-            UIManager:nextTick(function()
-                local ok, err = pcall(function()
-                    UIManager:show(InfoMessage:new{
-                        text = "KoPanda's home was skipped because it didn't finish drawing last time. "
-                            .. "Open it from the Home tab or Tools › KoPanda.",
-                        timeout = 8,
-                    })
+            if State.set("boot_pending", false) then
+                UIManager:nextTick(function()
+                    local ok, err = pcall(function()
+                        UIManager:show(InfoMessage:new{
+                            text = "At the last start KoPanda's home stopped before it was drawn, "
+                                .. "so it's left out this once. The Home tab or Tools › KoPanda "
+                                .. "brings it back.",
+                            timeout = 8,
+                        })
+                    end)
+                    if not ok then
+                        logger.err("KoPanda: could not show the boot guard notice:", err)
+                    end
                 end)
-                if not ok then
-                    logger.err("KoPanda: could not show the boot guard notice:", err)
-                end
-            end)
+                return
+            end
+            logger.err("KoPanda: could not clear the boot guard flag; showing the home unguarded")
+            Home.show(opts)
             return
         end
         State.set("boot_pending", true)

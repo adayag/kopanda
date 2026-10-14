@@ -123,7 +123,10 @@ Upgrading KOReader walks this list.
 - `libs/libkoreader-lfs`: KOReader's LuaFileSystem build (`base/thirdparty/koreader-lfs/CMakeLists.txt:19`);
   `lfs.mkdir` and `lfs.attributes`, as `frontend/util.lua:875` uses them.
 - `state.lua` makes `settings/kopanda/` before each write and checks it is a directory, since
-  `flush` would fail there silently. The boot guard's `boot_pending` lives here, not in the schema.
+  `flush` would fail there silently, and after the write reads the file back with `dofile` (the
+  format `writeToFile` writes with `lua_dofile_ready`, `frontend/util.lua:1125-1128`) to catch a
+  read-only file or folder or a full disk. The boot guard's `boot_pending` lives here, not in the
+  schema.
 
 ### `InputContainer` gesture and paint dispatch
 
