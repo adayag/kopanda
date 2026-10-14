@@ -1,9 +1,10 @@
 id: T-y86jjw
 key: home/dev-loop/golden-compare
 title: Golden comparison with masks, deliberate regeneration and committed probe goldens
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-a70gfj
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:2ae9ffe
         observed_at: 2026-10-14T12:35:02.570206Z
+branch: tiller/home/dev-loop/golden-compare
+review_ref:
+    branch: tiller/home/dev-loop/golden-compare
+    head:
+        kind: git_commit
+        value: git:590f3f8
+        observed_at: 2026-10-14T17:03:20.739867Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T17:02:56.003203Z
+        against:
+            kind: git_commit
+            value: git:ba24cd2
+            observed_at: 2026-10-14T17:02:56.003197Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-ba24cd2-out-34900ee2317c9c596317be75410adb5be7bc5358350a02b4a0a2a5d5bd9da3e3.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T17:02:56.003203Z
+        against:
+            kind: git_commit
+            value: git:ba24cd2
+            observed_at: 2026-10-14T17:02:56.003197Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-ba24cd2-out-e958af737a2afc93f8fbb45e31d97c4e9c1b00a648a498113a5780cc0f578973.txt

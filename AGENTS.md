@@ -25,7 +25,12 @@ The owner's own interface for KOReader e-readers: a plugin that replaces the she
 
 ## Commands
 
-None yet. Stage 1's first task adds `bin/check` (Busted specs on KOReader's LuaJIT plus luacheck), which is also Tiller's build and tests gate; the studio adds its typecheck, lint and tests to it in stage 2.
+- `bin/check`: the gate. luacheck, then every `spec/unit/*_spec.lua`, then every `spec/emulator/*_spec.lua` on the emulator's LuaJIT under a fresh `KO_HOME`; stops at the first failing stage.
+- `bin/check --lint`: luacheck alone (Tiller's build gate).
+- `bin/check <spec>...`: exactly those spec files, no luacheck.
+- `KOPANDA_UPDATE_GOLDENS=1 bin/check <spec>`: writes that spec's captures as its goldens under `spec/goldens/` (PNG plus JSON sidecar; masks and notes in an existing sidecar are kept). Open every regenerated PNG and look at it before committing.
+
+`bin/check` needs `luacheck` on `PATH` (`brew install luacheck`) and the emulator at `KOPANDA_EMULATOR` (see `.env.example`); it refuses with exit 2 otherwise.
 
 ## Conventions and gotchas
 
@@ -39,6 +44,7 @@ None yet. Stage 1's first task adds `bin/check` (Busted specs on KOReader's LuaJ
 
 - TDD, no exceptions: write the failing test first, run it, implement, run again. Every behaviour change ships with a test.
 - Two layers: Busted unit specs on KOReader's LuaJIT under a fresh `KO_HOME` for the pure parts; emulator goldens at Colorsoft resolution, status strip masked, regenerated only deliberately and eyeballed before commit.
+- Emulator captures run on the fixture library `spec/fixtures/library/` (three public-domain EPUBs with covers) unless a spec passes its own `library_dir`. To add a book: a public-domain EPUB under 2 MB with an embedded cover, plus a `manifest.lua` entry whose `sha256` is `shasum -a 256 <file>`; `spec/unit/fixtures_spec.lua` checks the count of three, so change it with the book.
 
 <!-- shared-workflow-start -->
 ## Working with agents
