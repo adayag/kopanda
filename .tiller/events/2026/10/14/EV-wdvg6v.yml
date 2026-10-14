@@ -1,0 +1,13 @@
+id: EV-wdvg6v
+type: approve.task
+at: 2026-10-14T12:35:02.570288Z
+contributor: allen
+command: approve task T-y86jjw
+targets:
+    - T-y86jjw
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/dev-loop/tasks/golden-compare/task.yml

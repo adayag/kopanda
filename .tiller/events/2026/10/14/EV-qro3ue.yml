@@ -1,0 +1,13 @@
+id: EV-qro3ue
+type: approve.feature
+at: 2026-10-14T12:35:02.540345Z
+contributor: allen
+command: approve feature F-xo6obj
+targets:
+    - F-xo6obj
+before:
+    status: specced
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/dev-loop/feature.yml

@@ -1,9 +1,19 @@
 id: T-5vdqno
 key: home/dev-loop/fixture-library
 title: Pinned public-domain fixture books for the emulator library
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-a70gfj
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:037fa934e5d9ead19dc2aed8e52256b885f511f9
+        path: .tiller/epics/home/features/dev-loop/tasks/fixture-library/task.md
+        observed_at: 2026-10-14T12:35:02.570875Z
+    commit:
+        kind: git_commit
+        value: git:2ae9ffe
+        observed_at: 2026-10-14T12:35:02.579175Z

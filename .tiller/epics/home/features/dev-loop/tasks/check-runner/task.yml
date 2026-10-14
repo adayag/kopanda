@@ -1,7 +1,17 @@
 id: T-c9q97t
 key: home/dev-loop/check-runner
 title: bin/check runs luacheck and Busted specs on the emulator's LuaJIT under a fresh KO_HOME
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:b4a5e937f7f5c8d74f834b29336f420034c1faea
+        path: .tiller/epics/home/features/dev-loop/tasks/check-runner/task.md
+        observed_at: 2026-10-14T12:35:02.541659Z
+    commit:
+        kind: git_commit
+        value: git:2ae9ffe
+        observed_at: 2026-10-14T12:35:02.550816Z

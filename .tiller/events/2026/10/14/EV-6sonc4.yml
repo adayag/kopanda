@@ -1,0 +1,13 @@
+id: EV-6sonc4
+type: approve.task
+at: 2026-10-14T12:35:02.579244Z
+contributor: allen
+command: approve task T-5vdqno
+targets:
+    - T-5vdqno
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/dev-loop/tasks/fixture-library/task.yml

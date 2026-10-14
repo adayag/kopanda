@@ -1,9 +1,19 @@
 id: T-y86jjw
 key: home/dev-loop/golden-compare
 title: Golden comparison with masks, deliberate regeneration and committed probe goldens
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-a70gfj
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:13adfe19f90cd66bbf0dadcf57f7b47b8d53a872
+        path: .tiller/epics/home/features/dev-loop/tasks/golden-compare/task.md
+        observed_at: 2026-10-14T12:35:02.561865Z
+    commit:
+        kind: git_commit
+        value: git:2ae9ffe
+        observed_at: 2026-10-14T12:35:02.570206Z
