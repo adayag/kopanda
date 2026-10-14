@@ -1,7 +1,7 @@
 id: T-a70gfj
 key: home/dev-loop/capture-driver
 title: Headless emulator capture per device profile on the plugin's settled signal
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:2ae9ffe
         observed_at: 2026-10-14T12:35:02.561122Z
 branch: tiller/home/dev-loop/capture-driver
+review_ref:
+    branch: tiller/home/dev-loop/capture-driver
+    head:
+        kind: git_commit
+        value: git:a95b52e
+        observed_at: 2026-10-14T14:11:30.50154Z
 gates:
     build:
         required: true
