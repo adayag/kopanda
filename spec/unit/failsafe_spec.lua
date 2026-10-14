@@ -33,11 +33,19 @@ describe("KoPanda failing safe", function()
         return false
     end
 
-    -- The file manager is on top and still takes input: a Show reaches its modules.
+    -- The file manager is on top and still takes input: a tap in KOReader's top menu zone
+    -- opens its menu (filemanagermenu.lua:72-90), which is then closed again.
     local function file_manager_usable()
-        assert.equals(FileManager.instance, harness.top())
+        local fm = FileManager.instance
+        assert.equals(fm, harness.top())
         assert.equals(0, homes_on_stack())
         assert.is_nil(Home.shown)
+        local size = Screen:getSize()
+        UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", size.w / 2, size.h / 16)))
+        assert.is_not_nil(fm.menu.menu_container)
+        assert.equals(fm.menu.menu_container, harness.top())
+        fm.menu:onCloseFileManagerMenu()
+        assert.equals(fm, harness.top())
     end
 
     before_each(function()
