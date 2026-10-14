@@ -12,6 +12,7 @@ order:
     - T-5vdqno
 review_grain: feature
 branch: tiller/reviews/features/home/dev-loop
+pr: 1
 accepted_against:
     spec:
         kind: git_blob
