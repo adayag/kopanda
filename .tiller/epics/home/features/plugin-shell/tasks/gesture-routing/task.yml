@@ -1,9 +1,10 @@
 id: T-brarld
 key: home/plugin-shell/gesture-routing
 title: The home's own gestures, and forwarding the rest to the file manager
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-j9jdiw
@@ -18,3 +19,4 @@ accepted_against:
         kind: git_commit
         value: git:bd30ec7
         observed_at: 2026-10-14T20:26:05.397488Z
+branch: tiller/home/plugin-shell/gesture-routing
