@@ -1,0 +1,11 @@
+id: EV-johrjy
+type: submit.feature
+at: 2026-10-14T22:44:50.91626Z
+contributor: allen
+command: submit feature home/plugin-shell
+targets:
+    - F-yrw3g6
+after:
+    pr: 2
+files:
+    - path: .tiller/epics/home/features/plugin-shell/feature.yml

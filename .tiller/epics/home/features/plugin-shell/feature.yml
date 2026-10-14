@@ -15,6 +15,7 @@ order:
     - T-brarld
 review_grain: feature
 branch: tiller/reviews/features/home/plugin-shell
+pr: 2
 accepted_against:
     spec:
         kind: git_blob
