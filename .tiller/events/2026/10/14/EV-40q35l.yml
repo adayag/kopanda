@@ -1,0 +1,13 @@
+id: EV-40q35l
+type: configure.feature
+at: 2026-10-14T20:35:52.965914Z
+contributor: allen
+command: configure feature home/plugin-shell --review-grain feature
+targets:
+    - F-yrw3g6
+before:
+    review_grain: ""
+after:
+    review_grain: feature
+files:
+    - path: .tiller/epics/home/features/plugin-shell/feature.yml

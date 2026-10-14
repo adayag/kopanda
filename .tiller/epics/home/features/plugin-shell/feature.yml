@@ -13,6 +13,7 @@ order:
     - T-1hqhru
     - T-j9jdiw
     - T-brarld
+review_grain: feature
 accepted_against:
     spec:
         kind: git_blob
