@@ -1,0 +1,16 @@
+id: EV-vybsv2
+type: submit.task
+at: 2026-10-14T21:34:06.361207Z
+contributor: allen
+command: submit task T-j9jdiw
+targets:
+    - T-j9jdiw
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/plugin-shell/entry-points
+        head: git:350d01c
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/entry-points/task.yml
