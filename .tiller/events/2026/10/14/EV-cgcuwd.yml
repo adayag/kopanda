@@ -1,0 +1,16 @@
+id: EV-cgcuwd
+type: submit.task
+at: 2026-10-14T17:03:20.740001Z
+contributor: allen
+command: submit task T-y86jjw
+targets:
+    - T-y86jjw
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/dev-loop/golden-compare
+        head: git:590f3f8
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/dev-loop/tasks/golden-compare/task.yml

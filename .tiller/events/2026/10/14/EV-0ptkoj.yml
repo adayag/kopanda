@@ -1,0 +1,15 @@
+id: EV-0ptkoj
+type: start.task
+at: 2026-10-14T14:11:37.382869Z
+contributor: allen
+command: start task T-y86jjw
+targets:
+    - T-y86jjw
+before:
+    status: ready
+after:
+    branch: tiller/home/dev-loop/golden-compare
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/dev-loop/tasks/golden-compare/task.yml
