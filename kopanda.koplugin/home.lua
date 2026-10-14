@@ -82,20 +82,44 @@ local function settle(home, opts)
     end
 end
 
--- opts: started (time.monotonic() at the start of the show path), prebuilt.
+-- opts: started (time.monotonic() at the start of the show path), prebuilt. On any error the
+-- home is taken off the stack and the file browser beneath is left as it is.
 function Home.show(opts)
-    local home = Home:new{}
-    Home.shown = home
-    UIManager:show(home, "full")
-    -- Lands past the next repaint, so the signal follows the paint.
-    UIManager:tickAfterNext(function()
-        settle(home, opts)
+    local home
+    local ok, err = pcall(function()
+        home = Home:new{}
+        Home.shown = home
+        UIManager:show(home, "full")
+        -- Lands past the next repaint, so the signal follows the paint.
+        UIManager:tickAfterNext(function()
+            settle(home, opts)
+        end)
     end)
+    if not ok then
+        logger.err("KoPanda: could not show the home:", err)
+        if home and UIManager:isWidgetShown(home) then
+            close_home(home)
+        end
+        Home.shown = nil
+    end
 end
 
 function Home.close()
     if Home.shown then
         close_home(Home.shown)
+    end
+end
+
+-- A widget can't be closed from inside the repaint, so a failed paint closes the home from
+-- the next tick, leaving the file browser beneath.
+function Home:paintTo(bb, x, y)
+    local ok, err = pcall(InputContainer.paintTo, self, bb, x, y)
+    if not ok and not self.paint_failed then
+        self.paint_failed = true
+        logger.err("KoPanda: the home failed to paint:", err)
+        UIManager:nextTick(function()
+            close_home(self)
+        end)
     end
 end
 
@@ -132,8 +156,16 @@ function Home:routeGesture(ges)
     return true
 end
 
+-- The home is not a plugin, so KOReader does not sandbox this handler: an error here would
+-- reach the UI loop. A failure closes the home and consumes the gesture.
 function Home:onGesture(ges)
-    return self:routeGesture(ges)
+    local ok, consumed = pcall(self.routeGesture, self, ges)
+    if ok then
+        return consumed
+    end
+    logger.err("KoPanda: the home failed to handle a gesture:", consumed)
+    close_home(self)
+    return true
 end
 
 return Home
