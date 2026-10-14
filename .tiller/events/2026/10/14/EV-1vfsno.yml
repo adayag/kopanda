@@ -1,0 +1,16 @@
+id: EV-1vfsno
+type: submit.task
+at: 2026-10-14T21:18:56.77582Z
+contributor: allen
+command: submit task T-o0ptat
+targets:
+    - T-o0ptat
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/plugin-shell/book-close
+        head: git:de87175
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/book-close/task.yml

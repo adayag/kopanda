@@ -3,6 +3,8 @@
 -- under test signals "KoPandaSettled" on UIManager.event_hook, writes a JSON sidecar next to
 -- the PNG, and quits. A watchdog shoots and quits with exit code 3 if the signal never comes.
 -- Inactive unless KOPANDA_SHOT names the PNG to write; KOPANDA_SHOT_CAP_S bounds the wait.
+-- KOPANDA_SHOT_SCREEN (default "home") is the signal's screen to shoot on; signals for other
+-- screens are ignored.
 local shot = os.getenv("KOPANDA_SHOT")
 if not shot or shot == "" then
     return
@@ -14,6 +16,10 @@ local ok, err = pcall(function()
     local UIManager = require("ui/uimanager")
     local Screen = require("device").screen
     local cap_s = tonumber(os.getenv("KOPANDA_SHOT_CAP_S")) or 20
+    local shot_screen = os.getenv("KOPANDA_SHOT_SCREEN")
+    if not shot_screen or shot_screen == "" then
+        shot_screen = "home"
+    end
     local saved = false
 
     -- The names of the enabled plugins. PluginLoader:loadPlugins() is memoised
@@ -33,30 +39,37 @@ local ok, err = pcall(function()
             error("Screen:shot failed: " .. tostring(shot_err))
         end
         local rapidjson = require("rapidjson")
-        local sidecar = assert(io.open(shot .. ".json", "w"))
-        sidecar:write(rapidjson.encode({
-            screen = args.screen,
-            paint_ms = args.paint_ms,
+        local fields = {
             width = Screen:getWidth(),
             height = Screen:getHeight(),
             color = require("device"):hasColorScreen(),
             plugins = plugin_names(),
             koreader = "e1fe1ac",
-        }))
+        }
+        -- The signal's own scalar arguments join the sidecar, the fields above kept as they are.
+        for key, value in pairs(args) do
+            local kind = type(value)
+            if fields[key] == nil and (kind == "string" or kind == "number" or kind == "boolean") then
+                fields[key] = value
+            end
+        end
+        local sidecar = assert(io.open(shot .. ".json", "w"))
+        sidecar:write(rapidjson.encode(fields))
         sidecar:close()
     end
 
     UIManager.event_hook:register("KoPandaSettled", function(args)
-        if saved then
+        args = args or {}
+        if saved or args.screen ~= shot_screen then
             return
         end
-        local save_ok, save_err = pcall(save, args or {})
+        local save_ok, save_err = pcall(save, args)
         if not save_ok then
             logger.warn("KOPANDA_SHOT: failed", save_err)
             return
         end
         saved = true
-        logger.info("KOPANDA_SHOT: saved " .. shot .. " paint_ms=" .. tostring((args or {}).paint_ms))
+        logger.info("KOPANDA_SHOT: saved " .. shot .. " paint_ms=" .. tostring(args.paint_ms))
         UIManager:scheduleIn(0.5, function() UIManager:quit() end)
     end)
 

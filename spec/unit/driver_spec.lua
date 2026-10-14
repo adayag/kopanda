@@ -164,6 +164,33 @@ describe("the emulator capture driver", function()
             assert.equals("directory", lfs.attributes(dir .. "/plugins/probe.koplugin", "mode"))
             assert.equals("file", lfs.attributes(dir .. "/plugins/probe.koplugin/main.lua", "mode"))
         end)
+
+        local function read(path)
+            local f = assert(io.open(path, "r"))
+            local text = f:read("*a")
+            f:close()
+            return text
+        end
+
+        it("copies each extra patch into patches/", function()
+            local src = fresh_dir("patches")
+            write(src .. "/2-one.lua", "-- one\n")
+            write(src .. "/2-two.lua", "-- two\n")
+            local dir = fresh_dir("profile")
+            driver.write_profile(dir, "colorsoft", probe, nil, { src .. "/2-one.lua", src .. "/2-two.lua" })
+            assert.equals("-- one\n", read(dir .. "/patches/2-one.lua"))
+            assert.equals("-- two\n", read(dir .. "/patches/2-two.lua"))
+            assert.equals("file", lfs.attributes(dir .. "/patches/2-kopanda-capture.lua", "mode"))
+        end)
+
+        it("refuses an extra patch whose name does not start with 2-, naming it", function()
+            local src = fresh_dir("patches")
+            local early = src .. "/1-early.lua"
+            write(early, "-- early\n")
+            local ok, err = pcall(driver.write_profile, fresh_dir("profile"), "colorsoft", probe, nil, { early })
+            assert.is_false(ok)
+            assert.truthy(contains(tostring(err), early), err)
+        end)
     end)
 
     it("reads a PNG's size from its IHDR", function()

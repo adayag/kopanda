@@ -1,0 +1,13 @@
+id: EV-3xarg6
+type: claim.task
+at: 2026-10-14T21:00:22.540448Z
+contributor: allen
+command: claim task T-o0ptat
+targets:
+    - T-o0ptat
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/book-close/task.yml

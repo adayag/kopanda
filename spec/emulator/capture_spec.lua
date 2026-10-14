@@ -84,6 +84,35 @@ describe("capturing the probe plugin on the emulator", function()
         return names
     end
 
+    it("shoots on the shot_screen signal an extra patch sends, copying its arguments", function()
+        local patch = fresh_dir("patch") .. "/2-scenario-marker.lua"
+        local f = assert(io.open(patch, "w"))
+        f:write([[
+local UIManager = require("ui/uimanager")
+UIManager.event_hook:register("KoPandaSettled", function(args)
+    if args.screen == "home" then
+        UIManager:nextTick(function()
+            UIManager.event_hook:execute("KoPandaSettled", {
+                screen = "scenario", marker = "x", count = 2, flag = true,
+                width = 1, koreader = "other", nested = { 1 },
+            })
+        end)
+    end
+end)
+]])
+        f:close()
+        local result = driver.capture{ profile = "colorsoft", plugin_dir = probe, library_dir = fresh_dir("library"),
+            patches = { patch }, shot_screen = "scenario" }
+        assert.equals("scenario", result.sidecar.screen)
+        assert.equals("x", result.sidecar.marker)
+        assert.equals(2, result.sidecar.count)
+        assert.is_true(result.sidecar.flag)
+        assert.is_nil(result.sidecar.nested)
+        assert.equals(driver.profiles.colorsoft.width, result.sidecar.width)
+        assert.equals("e1fe1ac", result.sidecar.koreader)
+        assert.equals(1, count(read(result.log), "KOPANDA_SHOT: saved"))
+    end)
+
     it("captures the probe over the fixture library when library_dir is not given", function()
         local library = root .. "/spec/fixtures/library"
         local before = entries(library)
