@@ -23,20 +23,23 @@ describe("the emulator capture driver", function()
     end
 
     -- A fake emulator dir: ./luajit answers the driver's seeding one-liner (-e) with exit 0
-    -- and, run as the emulator, records its pid and sleeps (exit_now: exits 0 at once;
-    -- ignore_term: ignores SIGTERM first, which survives the exec).
+    -- (seed_fails: prints "no sqlite here" and exits 1) and, run as the emulator, records
+    -- its pid and sleeps (exit_now: exits 0 at once; ignore_term: ignores SIGTERM first,
+    -- which survives the exec).
     local function fake_emulator(opts)
         opts = opts or {}
         local dir = fresh_dir("emu")
         assert(lfs.mkdir(dir .. "/plugins"))
         if not opts.no_luajit then
+            local seed = opts.seed_fails and '{ echo "no sqlite here"; exit 1; }' or "exit 0"
             local body = "echo $$ > '" .. dir .. "/pid'\n"
             if opts.exit_now then
                 body = "exit 0\n"
             elseif opts.ignore_term then
                 body = body .. "trap '' TERM\n"
             end
-            write(dir .. "/luajit", "#!/bin/sh\n[ \"$1\" = -e ] && exit 0\n" .. body .. "exec sleep 30\n", true)
+            write(dir .. "/luajit", "#!/bin/sh\n[ \"$1\" = -e ] && " .. seed .. "\n" .. body .. "exec sleep 30\n",
+                true)
         end
         if opts.kopanda_present then
             assert(lfs.mkdir(dir .. "/plugins/kopanda.koplugin"))
@@ -117,6 +120,13 @@ describe("the emulator capture driver", function()
             assert.equals("SQLite format 3\0", header:sub(1, 16))
             local a, b, c, d = header:byte(61, 64)
             assert.equals(20201210, ((a * 256 + b) * 256 + c) * 256 + d)
+        end)
+
+        it("quotes the seed's output when seeding fails", function()
+            local emu = fake_emulator{ seed_fails = true }
+            local ok, err = pcall(driver.write_profile, fresh_dir("profile"), "colorsoft", probe, emu)
+            assert.is_false(ok)
+            assert.truthy(contains(tostring(err), "no sqlite here"), err)
         end)
 
         it("places the capture patch and the plugin copy", function()

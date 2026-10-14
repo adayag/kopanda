@@ -103,12 +103,15 @@ function M.write_profile(dir, profile_name, plugin_dir, emulator)
     local seed = "require('ffi/loadlib'); local SQ3 = require('lua-ljsqlite3/init');"
         .. " local db = SQ3.open(os.getenv('KOPANDA_SEED'));"
         .. string.format(" db:exec('PRAGMA user_version=%d;'); db:close()", BOOKINFO_DB_VERSION)
-    local seeded = shell("cd " .. quote(emulator or os.getenv("KOPANDA_EMULATOR"))
-        .. " && env KOPANDA_SEED=" .. quote(dir .. "/settings/bookinfo_cache.sqlite3")
+    local seed_db = dir .. "/settings/bookinfo_cache.sqlite3"
+    local pipe = assert(io.popen("cd " .. quote(emulator or os.getenv("KOPANDA_EMULATOR"))
+        .. " && env KOPANDA_SEED=" .. quote(seed_db)
         .. " LUA_PATH='?.lua;common/?.lua;frontend/?.lua' LUA_CPATH='?.so;common/?.so'"
-        .. " ./luajit -e " .. quote(seed) .. " >/dev/null 2>&1")
-    if not seeded then
-        error("capture: could not seed " .. dir .. "/settings/bookinfo_cache.sqlite3")
+        .. " ./luajit -e " .. quote(seed) .. " 2>&1; echo $?"))
+    local seed_output = pipe:read("*a")
+    pipe:close()
+    if tonumber(seed_output:match("(%d+)\n$")) ~= 0 then
+        error("capture: could not seed " .. seed_db .. ":\n" .. seed_output)
     end
 
     assert(lfs.mkdir(dir .. "/plugins"))
@@ -118,7 +121,8 @@ function M.write_profile(dir, profile_name, plugin_dir, emulator)
     end
 
     assert(lfs.mkdir(dir .. "/patches"))
-    local patch_src = os.getenv("KOPANDA_ROOT") .. "/spec/emulator/patches/" .. PATCH_NAME
+    local root = assert(os.getenv("KOPANDA_ROOT"), "capture: KOPANDA_ROOT unset")
+    local patch_src = root .. "/spec/emulator/patches/" .. PATCH_NAME
     if not shell("cp " .. quote(patch_src) .. " " .. quote(dir .. "/patches/" .. PATCH_NAME)) then
         error("capture: could not copy " .. patch_src)
     end
@@ -171,8 +175,8 @@ end
 -- output line is the emulator's exit status; a "timeout" marker file records a kill.
 -- SIGTERM alone cannot stop a hung emulator: SDL3 turns it into SDL_EVENT_QUIT
 -- (base/ffi/SDL3.lua:719-723), serviced only by the input loop, so the killer follows
--- it with SIGKILL 5 s later. When the emulator exits first, pkill ends the killer's
--- sleep and its failing kill (the pid is already reaped) skips the escalation.
+-- it with SIGKILL 5 s later. When the emulator exits first, the killer is stopped
+-- (so it cannot fork another sleep), its sleep is reaped with pkill, and it is killed.
 -- The wrapper's own stderr (the shell's "Terminated"/"Killed" lines) goes to the log.
 local function run_emulator(emulator, vars, library_dir, log, timeout_s, marker)
     local script = table.concat({
@@ -185,7 +189,7 @@ local function run_emulator(emulator, vars, library_dir, log, timeout_s, marker)
         "killer=$!",
         "wait $pid",
         "s=$?",
-        "pkill -P $killer 2>/dev/null; kill $killer 2>/dev/null",
+        "kill -STOP $killer 2>/dev/null; pkill -P $killer 2>/dev/null; kill -9 $killer 2>/dev/null",
         "echo",
         "echo $s",
     }, "\n")
