@@ -1,0 +1,13 @@
+id: EV-56vg7v
+type: spec.feature
+at: 2026-10-14T04:11:29.706689Z
+contributor: allen
+command: spec feature F-xo6obj
+targets:
+    - F-xo6obj
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/home/features/dev-loop/feature.yml

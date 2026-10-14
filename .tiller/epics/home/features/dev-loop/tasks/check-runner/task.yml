@@ -1,0 +1,7 @@
+id: T-c9q97t
+key: home/dev-loop/check-runner
+title: bin/check runs luacheck and Busted specs on the emulator's LuaJIT under a fresh KO_HOME
+status: proposed
+blocked: false
+started: false
+proposed_by: allen

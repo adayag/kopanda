@@ -1,0 +1,9 @@
+id: T-y86jjw
+key: home/dev-loop/golden-compare
+title: Golden comparison with masks, deliberate regeneration and committed probe goldens
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-a70gfj

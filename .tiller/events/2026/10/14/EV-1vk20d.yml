@@ -1,0 +1,14 @@
+id: EV-1vk20d
+type: add.task
+at: 2026-10-14T03:46:10.380871Z
+contributor: allen
+command: add task home/dev-loop/fixture-library
+targets:
+    - T-5vdqno
+after:
+    feature: F-xo6obj
+    key: home/dev-loop/fixture-library
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/dev-loop/tasks/fixture-library/task.md
+    - path: .tiller/epics/home/features/dev-loop/tasks/fixture-library/task.yml

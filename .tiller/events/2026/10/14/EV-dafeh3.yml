@@ -1,0 +1,15 @@
+id: EV-dafeh3
+type: order.tasks
+at: 2026-10-14T03:46:10.464907Z
+contributor: allen
+command: order task T-c9q97t T-a70gfj T-y86jjw T-5vdqno
+targets:
+    - F-xo6obj
+after:
+    order:
+        - T-c9q97t
+        - T-a70gfj
+        - T-y86jjw
+        - T-5vdqno
+files:
+    - path: .tiller/epics/home/features/dev-loop/feature.yml

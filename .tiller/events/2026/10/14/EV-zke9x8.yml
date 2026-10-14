@@ -1,0 +1,14 @@
+id: EV-zke9x8
+type: add.task
+at: 2026-10-14T03:46:10.30095Z
+contributor: allen
+command: add task home/dev-loop/golden-compare
+targets:
+    - T-y86jjw
+after:
+    feature: F-xo6obj
+    key: home/dev-loop/golden-compare
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/dev-loop/tasks/golden-compare/task.md
+    - path: .tiller/epics/home/features/dev-loop/tasks/golden-compare/task.yml

@@ -1,0 +1,9 @@
+id: T-a70gfj
+key: home/dev-loop/capture-driver
+title: Headless emulator capture per device profile on the plugin's settled signal
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-c9q97t

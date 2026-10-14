@@ -1,0 +1,14 @@
+id: EV-bdbhgt
+type: add.task
+at: 2026-10-14T03:46:10.221503Z
+contributor: allen
+command: add task home/dev-loop/capture-driver
+targets:
+    - T-a70gfj
+after:
+    feature: F-xo6obj
+    key: home/dev-loop/capture-driver
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/dev-loop/tasks/capture-driver/task.md
+    - path: .tiller/epics/home/features/dev-loop/tasks/capture-driver/task.yml

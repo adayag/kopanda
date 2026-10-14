@@ -1,0 +1,9 @@
+id: T-5vdqno
+key: home/dev-loop/fixture-library
+title: Pinned public-domain fixture books for the emulator library
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-a70gfj
