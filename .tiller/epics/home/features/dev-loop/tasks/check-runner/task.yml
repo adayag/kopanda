@@ -1,7 +1,7 @@
 id: T-c9q97t
 key: home/dev-loop/check-runner
 title: bin/check runs luacheck and Busted specs on the emulator's LuaJIT under a fresh KO_HOME
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:2ae9ffe
         observed_at: 2026-10-14T12:35:02.550816Z
 branch: tiller/home/dev-loop/check-runner
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T12:56:59.322007Z
+        against:
+            kind: git_commit
+            value: git:50460fc
+            observed_at: 2026-10-14T12:56:59.322004Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-50460fc-out-ee2a7af446093d188a0941b84e2e1ab7dcff787e363d16d815ea5fe0d9d6842f.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T12:56:59.322007Z
+        against:
+            kind: git_commit
+            value: git:50460fc
+            observed_at: 2026-10-14T12:56:59.322004Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-50460fc-out-b0bd2b9b997639e2ac6d7a1a9e53df83b43f0b52b2491a7f957d8b505a63c380.txt
