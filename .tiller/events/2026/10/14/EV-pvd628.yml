@@ -1,0 +1,13 @@
+id: EV-pvd628
+type: approve.feature
+at: 2026-10-14T21:11:28.852552Z
+contributor: allen
+command: approve feature F-yrw3g6
+targets:
+    - F-yrw3g6
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/home/features/plugin-shell/feature.yml

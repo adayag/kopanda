@@ -20,13 +20,13 @@ accepted_against:
         kind: git_blob
         value: git:869e965c30259def7c7bd45344f1d9014ddf0b25
         path: .tiller/epics/home/features/plugin-shell/feature.md
-        observed_at: 2026-10-14T20:26:05.268944Z
+        observed_at: 2026-10-14T21:11:28.766587Z
     eval:
         kind: git_blob
-        value: git:3a62676ff91e83818a096a787dc38eff37311247
+        value: git:06a7c91e0ec8b897a5a12162376b530edca73f39
         path: .tiller/epics/home/features/plugin-shell/feature.eval.md
-        observed_at: 2026-10-14T20:26:05.268944Z
+        observed_at: 2026-10-14T21:11:28.766587Z
     commit:
         kind: git_commit
-        value: git:bd30ec7
-        observed_at: 2026-10-14T20:26:05.299116Z
+        value: git:ec58a3a
+        observed_at: 2026-10-14T21:11:28.848771Z
