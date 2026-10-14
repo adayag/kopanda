@@ -1,0 +1,17 @@
+id: EV-ix84yj
+type: start.task
+at: 2026-10-14T20:35:59.474483Z
+contributor: allen
+command: start task T-o490lt
+targets:
+    - T-o490lt
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/home/plugin-shell
+    branch: tiller/home/plugin-shell/home-lifecycle
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/home-lifecycle/task.yml
+    - path: .tiller/epics/home/features/plugin-shell/feature.yml

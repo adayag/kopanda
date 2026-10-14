@@ -1,7 +1,7 @@
 id: F-yrw3g6
 key: home/plugin-shell
 title: The plugin shows a home over the file browser
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -14,6 +14,7 @@ order:
     - T-j9jdiw
     - T-brarld
 review_grain: feature
+branch: tiller/reviews/features/home/plugin-shell
 accepted_against:
     spec:
         kind: git_blob
