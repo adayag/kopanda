@@ -160,7 +160,11 @@ Upgrading KOReader walks this list.
 - `frontend/ui/uimanager.lua:53`; `frontend/ui/hook_container.lua:34-41` (`register`),
   `:88-98` (`execute`).
 - A `HookContainer`. The capture patch registers a `KoPandaSettled` listener and the plugin
-  under test executes it with `{ screen, paint_ms }`.
+  under test executes it with `{ screen, paint_ms, prebuilt }`. The patch shoots on the first
+  signal whose `screen` is `KOPANDA_SHOT_SCREEN` (default `home`) and copies the signal's
+  string, number and boolean arguments into the sidecar. Listeners run in registration order
+  (`hook_container.lua:94-96`), and a listener may execute the hook again from inside its own
+  call (the book-close scenario sends its `scenario` signal from inside a `home` one).
 
 ### `Screen:shot(path)`
 
@@ -258,7 +262,28 @@ Upgrading KOReader walks this list.
 - `frontend/userpatch.lua:13` (`late` is prefix `2`), `:38` (read from `<KO_HOME>/patches`),
   `:73` (name match), `:89-99` (a failing patch shows an InfoMessage); applied at
   `reader.lua:190` before `showFiles` at `:250`.
-- `2-kopanda-capture.lua` registers its listener before any plugin code runs.
+- `2-kopanda-capture.lua` registers its listener before any plugin code runs. A capture's
+  extra patches (`capture{ patches }`) must also start with `2-`; late patches run in
+  natural-sort order of their names (`frontend/userpatch.lua:82`).
+
+### The book-close scenario (`spec/emulator/scenarios/2-scenario-book-close.lua`)
+
+- `FileManager.paintTo`: `FileManager` defines none and inherits
+  `frontend/ui/widget/container/inputcontainer.lua:73`; the scenario wraps it at patch time
+  with a counter armed from the close to the home's settled signal.
+- `FileManager.instance.file_chooser.path`: `frontend/apps/filemanager/filemanager.lua:138-155`
+  (`path = self.root_path`); the library the scenario takes its one book from.
+- `ReaderUI:showReader(file)`: `frontend/apps/reader/readerui.lua:616`; a fresh profile has no
+  archived sidecar, so no restore prompt (`:643-667`); an unsupported file shows a message and
+  returns to the file manager (`:668-672`), which the scenario's 10 s poll reports as an error.
+- `ReaderUI.instance`: set at the end of `init` (`readerui.lua:546`), cleared in
+  `onCloseWidget` (`:900-908`); polled with its `document` until the book is open.
+- `ReaderUI:onHome()`: `readerui.lua:935-940` (`setSuspendRepaints(false)`, `onClose`,
+  `showFileManager`); called from a scheduled task, as KOReader's end-of-book file-browser
+  action runs from `nextTick` (`frontend/apps/reader/modules/readerstatus.lua:144-148`).
+- `document_metadata_folder`: `frontend/docsettings.lua:102` (default `doc`, the `.sdr`
+  sidecar beside the book), so the spec opens a copy of a fixture book outside
+  `spec/fixtures/library/`.
 
 ### `logger`
 
