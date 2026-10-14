@@ -57,6 +57,37 @@ Upgrading KOReader walks this list.
 - Reaches the plugin instance as an array child; the instance closes the home, which would
   otherwise keep KOReader from quitting.
 
+### `CloseDocument`, the pre-build on book close
+
+- `frontend/apps/reader/readerui.lua:870-900` (`onClose`), `:887` (sends `CloseDocument` to the
+  reader's modules, the plugin instance among them), `:893` (closes the reader); the file
+  browser follows from `ReaderUI:onHome` `:935-940`, `showFileManager` `:581-596` and the
+  reader menu's file-browser tab `frontend/apps/reader/modules/readermenu.lua:65-74`.
+- A reader instance's `onCloseDocument` builds the home into `Home.pending` (not shown) and
+  returns nothing, so the event reaches later modules. The next file-manager `Show` puts the
+  pending home up synchronously, before the UI loop's next `_repaint`
+  (`frontend/ui/uimanager.lua:1537-1564`: `_checkTasks` at `:1543`, `_repaint` at `:1563`). A
+  deferred show would lose when the close runs inside a scheduled task (KOReader's end-of-book
+  file-browser action, `frontend/apps/reader/modules/readerstatus.lua:144-148`): `nextTick`
+  schedules at a fresh `time.now()` (`uimanager.lua:416`), later than the `_now` that
+  `_checkTasks` compares against (`:1082`, `:1090`), so the file browser would be painted first.
+
+### `CloseDocument` with no file browser after: reload, switch, exit
+
+- `frontend/apps/reader/readerui.lua:959` (`reloadDocument`), `:979` (`switchDocument`);
+  `frontend/apps/reader/modules/readermenu.lua:386-393` (`exitOrRestart`).
+- The pre-build happens there too and is wasted. A reader instance's `init` (the new reader of a
+  reload or switch, `readerui.lua:464-478`) drops and frees the pending home; exit drops it with
+  the process.
+
+### `setRotationMode` in `showFiles`
+
+- `frontend/apps/filemanager/filemanager.lua:1322` (`showFiles` resets the rotation before
+  building the file manager), `:63-69` (`setRotationMode`).
+- The screen can have another size at show than at close, so a pending home whose `dimen`
+  differs from `Screen:getSize()` is dropped (`free()`,
+  `frontend/ui/widget/container/widgetcontainer.lua:110-117`) and a fresh one built.
+
 ### `covers_fullscreen` in `UIManager:_repaint`
 
 - `frontend/ui/uimanager.lua:1305-1316`.
@@ -66,8 +97,9 @@ Upgrading KOReader walks this list.
 ### `UIManager:nextTick` and `tickAfterNext`
 
 - `frontend/ui/uimanager.lua:431-433`, `:447-456`.
-- The show runs from `nextTick`, landing over what `reader.lua:291-300` shows synchronously
-  after `showFiles`; the settled signal runs from `tickAfterNext`, past the next repaint (the
+- With no pending home the show runs from `nextTick`, landing over what `reader.lua:291-300`
+  shows synchronously after `showFiles` (a pending home is shown at once, see `CloseDocument`
+  above); the settled signal runs from `tickAfterNext`, past the next repaint (the
   harness entry for `scheduleIn`, `nextTick` and `tickAfterNext` has the details). A failed
   paint closes the home from `nextTick`.
 

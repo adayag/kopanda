@@ -1,6 +1,7 @@
 -- The KoPanda home: a full-screen widget over the file browser. Until home-layout it is a
 -- placeholder, the name and one line, with fixed strings so captures compare equal.
--- Module state: Home.shown, the home on screen or nil.
+-- Module state: Home.shown, the home on screen or nil; Home.pending, a home built on book
+-- close and not yet shown, or nil.
 local Blitbuffer = require("ffi/blitbuffer")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Font = require("ui/font")
@@ -27,6 +28,7 @@ local Home = InputContainer:extend{
 }
 
 Home.shown = nil
+Home.pending = nil
 
 function Home:init()
     self.dimen = Screen:getSize()
@@ -57,6 +59,7 @@ end
 local function close_home(home)
     if Home.shown == home then
         Home.shown = nil
+Home.pending = nil
     end
     local ok, err = pcall(UIManager.close, UIManager, home, "full")
     if not ok then
@@ -83,12 +86,13 @@ local function settle(home, opts)
     end
 end
 
--- opts: started (time.monotonic() at the start of the show path), prebuilt. On any error the
--- home is taken off the stack and the file browser beneath is left as it is.
+-- opts: widget (a pre-built home to show; default: a fresh build), started (time.monotonic()
+-- at the start of the show path), prebuilt. On any error the home is taken off the stack and
+-- the file browser beneath is left as it is.
 function Home.show(opts)
     local home
     local ok, err = pcall(function()
-        home = Home:new{}
+        home = opts.widget or Home:new{}
         Home.shown = home
         UIManager:show(home, "full")
         -- Lands past the next repaint, so the signal follows the paint.
@@ -102,6 +106,7 @@ function Home.show(opts)
             close_home(home)
         end
         Home.shown = nil
+Home.pending = nil
     end
 end
 
@@ -109,6 +114,45 @@ function Home.close()
     if Home.shown then
         close_home(Home.shown)
     end
+end
+
+-- Builds a home and keeps it as Home.pending, not shown. A failed build is logged and leaves
+-- nothing pending, so the next show builds afresh.
+function Home.prebuild()
+    local ok, home = pcall(Home.new, Home, {})
+    if ok then
+        Home.pending = home
+    else
+        logger.err("KoPanda: could not pre-build the home:", home)
+    end
+end
+
+-- Forgets the pending home and frees it.
+function Home.drop_pending()
+    local pending = Home.pending
+    Home.pending = nil
+    if pending then
+        local ok, err = pcall(pending.free, pending)
+        if not ok then
+            logger.err("KoPanda: could not free the pending home:", err)
+        end
+    end
+end
+
+-- Hands over the pending home when it was built at the screen's current size; one of another
+-- size (the screen rotated since) is dropped. Returns the home or nil.
+function Home.take_pending()
+    local pending = Home.pending
+    if not pending then
+        return nil
+    end
+    local size = Screen:getSize()
+    if pending.dimen.w ~= size.w or pending.dimen.h ~= size.h then
+        Home.drop_pending()
+        return nil
+    end
+    Home.pending = nil
+    return pending
 end
 
 -- A widget can't be closed from inside the repaint, so a failed paint closes the home from
@@ -128,6 +172,7 @@ end
 function Home:onCloseWidget()
     if Home.shown == self then
         Home.shown = nil
+Home.pending = nil
     end
 end
 
