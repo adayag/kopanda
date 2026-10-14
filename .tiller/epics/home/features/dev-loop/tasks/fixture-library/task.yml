@@ -1,9 +1,10 @@
 id: T-5vdqno
 key: home/dev-loop/fixture-library
 title: Pinned public-domain fixture books for the emulator library
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-a70gfj
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:2ae9ffe
         observed_at: 2026-10-14T12:35:02.579175Z
+branch: tiller/home/dev-loop/fixture-library
+review_ref:
+    branch: tiller/home/dev-loop/fixture-library
+    head:
+        kind: git_commit
+        value: git:e17c06a
+        observed_at: 2026-10-14T17:01:42.700247Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T17:01:18.40024Z
+        against:
+            kind: git_commit
+            value: git:c2561fa
+            observed_at: 2026-10-14T17:01:18.400237Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-c2561fa-out-9648e0404ba66cdac4ce61042ad5c74aadeaada55ca3302c939118ce70b8f4cf.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T17:01:18.40024Z
+        against:
+            kind: git_commit
+            value: git:c2561fa
+            observed_at: 2026-10-14T17:01:18.400237Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-c2561fa-out-7eab516ba40c746f6086f8ee728e0fd75e9d2f17397d539049687c66a0a45c68.txt

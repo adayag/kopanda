@@ -199,8 +199,9 @@ local function run_emulator(emulator, vars, library_dir, log, timeout_s, marker)
     return tonumber(output:match("(%d+)\n$"))
 end
 
--- opts: profile (name), plugin_dir, library_dir, out_dir (default: a fresh dir under
--- KO_HOME), cap_s (default 20), timeout_s (default 120), emulator_dir (default
+-- opts: profile (name), plugin_dir, library_dir (default: the fixture library,
+-- spec/fixtures/library/; pass an empty dir for no books), out_dir (default: a fresh dir
+-- under KO_HOME), cap_s (default 20), timeout_s (default 120), emulator_dir (default
 -- KOPANDA_EMULATOR). Returns { png, width, height, sidecar, log, scratch }; the scratch
 -- profile is removed on success and left in place on failure.
 function M.capture(opts)
@@ -213,8 +214,10 @@ function M.capture(opts)
     if not opts.plugin_dir or not is_dir(opts.plugin_dir) then
         error("capture: plugin_dir is not a directory: " .. tostring(opts.plugin_dir))
     end
-    if not opts.library_dir or not is_dir(opts.library_dir) then
-        error("capture: library_dir is not a directory: " .. tostring(opts.library_dir))
+    local library_dir = opts.library_dir
+        or assert(os.getenv("KOPANDA_ROOT"), "capture: KOPANDA_ROOT unset") .. "/spec/fixtures/library"
+    if not is_dir(library_dir) then
+        error("capture: library_dir is not a directory: " .. tostring(library_dir))
     end
     if lfs.attributes(emulator .. "/luajit", "mode") ~= "file" then
         error("capture: no emulator luajit at " .. emulator .. "/luajit")
@@ -248,7 +251,7 @@ function M.capture(opts)
         vars[#vars + 1] = { "EMULATE_BW_SCREEN", 1 }
     end
 
-    local status = run_emulator(emulator, vars, opts.library_dir, log, timeout_s, marker)
+    local status = run_emulator(emulator, vars, library_dir, log, timeout_s, marker)
     local function fail(message)
         error(string.format("capture %s: %s\nscratch profile: %s\nlog %s, last lines:\n%s",
             profile_name, message, scratch, log, log_tail(log)))

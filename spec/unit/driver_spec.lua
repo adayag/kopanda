@@ -25,7 +25,8 @@ describe("the emulator capture driver", function()
     -- A fake emulator dir: ./luajit answers the driver's seeding one-liner (-e) with exit 0
     -- (seed_fails: prints "no sqlite here" and exits 1) and, run as the emulator, records
     -- its pid and sleeps (exit_now: exits 0 at once; ignore_term: ignores SIGTERM first,
-    -- which survives the exec).
+    -- which survives the exec; record_args: writes its arguments one per line to <emu>/args
+    -- and exits 0).
     local function fake_emulator(opts)
         opts = opts or {}
         local dir = fresh_dir("emu")
@@ -35,6 +36,8 @@ describe("the emulator capture driver", function()
             local body = "echo $$ > '" .. dir .. "/pid'\n"
             if opts.exit_now then
                 body = "exit 0\n"
+            elseif opts.record_args then
+                body = "printf '%s\\n' \"$@\" > '" .. dir .. "/args'\nexit 0\n"
             elseif opts.ignore_term then
                 body = body .. "trap '' TERM\n"
             end
@@ -47,10 +50,14 @@ describe("the emulator capture driver", function()
         return dir
     end
 
+    -- default_library: leave library_dir unset so the driver picks its own.
     local function capture_error(opts)
         opts.profile = opts.profile or "colorsoft"
         opts.plugin_dir = opts.plugin_dir or probe
-        opts.library_dir = opts.library_dir or fresh_dir("lib")
+        if not opts.default_library then
+            opts.library_dir = opts.library_dir or fresh_dir("lib")
+        end
+        opts.default_library = nil
         opts.out_dir = opts.out_dir or fresh_dir("out")
         local ok, err = pcall(driver.capture, opts)
         assert.is_false(ok)
@@ -78,6 +85,27 @@ describe("the emulator capture driver", function()
         local missing = ko_home .. "/nope.koplugin"
         local err = capture_error{ emulator_dir = emu, plugin_dir = missing }
         assert.truthy(contains(err, missing), err)
+    end)
+
+    local function recorded_args(emu)
+        local args = {}
+        for line in assert(io.open(emu .. "/args")):lines() do
+            args[#args + 1] = line
+        end
+        return args
+    end
+
+    it("runs reader.lua over the fixture library when library_dir is not given", function()
+        local emu = fake_emulator{ record_args = true }
+        capture_error{ emulator_dir = emu, default_library = true }
+        assert.same({ "reader.lua", root .. "/spec/fixtures/library" }, recorded_args(emu))
+    end)
+
+    it("runs reader.lua over an explicit library_dir, even an empty one", function()
+        local emu = fake_emulator{ record_args = true }
+        local empty = fresh_dir("lib")
+        capture_error{ emulator_dir = emu, library_dir = empty }
+        assert.same({ "reader.lua", empty }, recorded_args(emu))
     end)
 
     describe("write_profile", function()

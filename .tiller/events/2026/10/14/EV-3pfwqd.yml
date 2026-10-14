@@ -1,0 +1,13 @@
+id: EV-3pfwqd
+type: claim.task
+at: 2026-10-14T14:13:11.410498Z
+contributor: allen
+command: claim task T-5vdqno
+targets:
+    - T-5vdqno
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/dev-loop/tasks/fixture-library/task.yml

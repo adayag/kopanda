@@ -43,6 +43,7 @@ The owner's own interface for KOReader e-readers: a plugin that replaces the she
 
 - TDD, no exceptions: write the failing test first, run it, implement, run again. Every behaviour change ships with a test.
 - Two layers: Busted unit specs on KOReader's LuaJIT under a fresh `KO_HOME` for the pure parts; emulator goldens at Colorsoft resolution, status strip masked, regenerated only deliberately and eyeballed before commit.
+- Emulator captures run on the fixture library `spec/fixtures/library/` (three public-domain EPUBs with covers) unless a spec passes its own `library_dir`. To add a book: a public-domain EPUB under 2 MB with an embedded cover, plus a `manifest.lua` entry whose `sha256` is `shasum -a 256 <file>`; `spec/unit/fixtures_spec.lua` checks the count of three, so change it with the book.
 
 <!-- shared-workflow-start -->
 ## Working with agents

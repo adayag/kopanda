@@ -1,0 +1,13 @@
+id: EV-4b4o10
+type: check.task
+at: 2026-10-14T17:01:37.600766Z
+contributor: allen
+command: check task T-5vdqno
+targets:
+    - T-5vdqno
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/dev-loop/tasks/fixture-library/task.yml
