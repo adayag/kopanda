@@ -23,32 +23,32 @@ review_ref:
     branch: tiller/home/plugin-shell/book-close
     head:
         kind: git_commit
-        value: git:de87175
-        observed_at: 2026-10-14T21:18:56.775409Z
+        value: git:987d7ed
+        observed_at: 2026-10-14T22:41:07.327581Z
 gates:
     build:
         required: true
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-14T21:18:15.195859Z
+        run_at: 2026-10-14T22:40:37.692631Z
         against:
             kind: git_commit
-            value: git:fdc4d5e
-            observed_at: 2026-10-14T21:18:15.195851Z
+            value: git:ddee902
+            observed_at: 2026-10-14T22:40:37.692625Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/build-fdc4d5e-out-345cdd1971f8459e357385020785518fe43645637552cc7699b68573f26849a7.txt
+              ref: artifacts/tiller/gates/build-ddee902-out-2a08e8d669f773d7a8a6f3c99c6492d21b970590c98d93024eb8009850c524b8.txt
     tests:
         required: true
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-14T21:18:15.195859Z
+        run_at: 2026-10-14T22:40:37.692631Z
         against:
             kind: git_commit
-            value: git:fdc4d5e
-            observed_at: 2026-10-14T21:18:15.195851Z
+            value: git:ddee902
+            observed_at: 2026-10-14T22:40:37.692625Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/tests-fdc4d5e-out-24237d1df4ded0049b567ee52bab67cb4cadbe9f5f51924d8cec37298c1a2914.txt
+              ref: artifacts/tiller/gates/tests-ddee902-out-fffdfdfa34fb3888e999b7342c0f98a168a2a1155273e8aea3a254a6200b73b8.txt

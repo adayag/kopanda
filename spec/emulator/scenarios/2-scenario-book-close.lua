@@ -2,8 +2,9 @@
 -- by spec/emulator/book_close_spec.lua. Once the home is up it opens the one book in the
 -- library, closes it from a scheduled task, and on the next home reports, as a "scenario"
 -- KoPandaSettled signal, how often the file manager was painted between the close and that
--- home's settled signal, whether the home was pre-built, the home's share of the close
--- (home_ms) and the whole close to the home's paint (close_to_paint_ms). Any failure is
+-- home's settled signal, whether the home was pre-built, the home's share of the close to its
+-- paint (home_ms), the home's share to its settled signal (settle_ms) and the whole close to
+-- that signal (close_to_paint_ms). Any failure is
 -- reported as a "scenario" signal with error, so the spec fails with the message.
 local logger = require("logger")
 
@@ -108,6 +109,7 @@ local ok, err = pcall(function()
                 fm_paints = fm_paints,
                 prebuilt = args.prebuilt,
                 home_ms = args.paint_ms,
+                settle_ms = args.settle_ms,
                 close_to_paint_ms = close_to_paint_ms,
                 paint_ms = close_to_paint_ms,
             }
