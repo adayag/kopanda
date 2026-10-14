@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Look A, edit layout</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1c1b19}a:hover{color:#1c1b19}
+</style>
+</helmet>
+<div style="width: 632px; height: 840px; box-sizing: border-box; background: #f3f1ea; color: #1c1b19; font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-direction: column">
+
+  <div style="padding: 40px 40px 16px 40px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #1c1b19">
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <div style="font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #6b6861">Home</div>
+      <div style="font-family: Newsreader, serif; font-size: 34px; line-height: 1; font-weight: 500">Edit layout</div>
+    </div>
+    <button type="button" style="border: 1px solid #1c1b19; background: transparent; padding: 8px 14px; font: inherit; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; color: #1c1b19">Done</button>
+  </div>
+
+  <div style="flex: 1; padding: 18px 40px 0 40px; display: flex; flex-direction: column; gap: 12px">
+
+    <div style="display: flex; align-items: stretch; gap: 14px; border: 1px solid #c9c5b8; padding: 12px 14px">
+      <div style="display: flex; flex-direction: column; justify-content: space-between; width: 28px; flex: none">
+        <button type="button" aria-label="Move row up" style="width: 28px; height: 28px; border: 1px solid #1c1b19; background: transparent; font: inherit; font-size: 14px; color: #1c1b19; padding: 0">▲</button>
+        <button type="button" aria-label="Move row down" style="width: 28px; height: 28px; border: 1px solid #1c1b19; background: transparent; font: inherit; font-size: 14px; color: #1c1b19; padding: 0">▼</button>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6b6861">Row 1 · two columns</div>
+        <div style="display: flex; gap: 8px">
+          <div style="flex: 1; border: 1px solid #1c1b19; padding: 10px 12px; font-size: 15px; font-weight: 500; display: flex; justify-content: space-between"><span>Date</span><span style="color: #6b6861">1/2</span></div>
+          <div style="flex: 1; border: 1px solid #1c1b19; padding: 10px 12px; font-size: 15px; font-weight: 500; display: flex; justify-content: space-between"><span>Clock</span><span style="color: #6b6861">1/2</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: stretch; gap: 14px; border: 1px solid #1c1b19; background: #e9e6dc; padding: 12px 14px">
+      <div style="display: flex; flex-direction: column; justify-content: space-between; width: 28px; flex: none">
+        <button type="button" aria-label="Move row up" style="width: 28px; height: 28px; border: 1px solid #1c1b19; background: transparent; font: inherit; font-size: 14px; color: #1c1b19; padding: 0">▲</button>
+        <button type="button" aria-label="Move row down" style="width: 28px; height: 28px; border: 1px solid #1c1b19; background: transparent; font: inherit; font-size: 14px; color: #1c1b19; padding: 0">▼</button>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6b6861">Row 2 · one column · selected</div>
+        <div style="display: flex; gap: 8px">
+          <div style="flex: 1; border: 1px solid #1c1b19; background: #f3f1ea; padding: 10px 12px; font-size: 15px; font-weight: 500; display: flex; justify-content: space-between"><span>Featured book</span><span style="color: #6b6861">full</span></div>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 2px">
+          <button type="button" style="border: 1px solid #1c1b19; background: transparent; padding: 7px 12px; font: inherit; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: #1c1b19">Add column</button>
+          <button type="button" style="border: 1px solid #1c1b19; background: transparent; padding: 7px 12px; font: inherit; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: #1c1b19">Change widget</button>
+          <button type="button" style="border: 1px solid #c9c5b8; background: transparent; padding: 7px 12px; font: inherit; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: #6b6861">Remove row</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: stretch; gap: 14px; border: 1px solid #c9c5b8; padding: 12px 14px">
+      <div style="display: flex; flex-direction: column; justify-content: space-between; width: 28px; flex: none">
+        <button type="button" aria-label="Move row up" style="width: 28px; height: 28px; border: 1px solid #1c1b19; background: transparent; font: inherit; font-size: 14px; color: #1c1b19; padding: 0">▲</button>
+        <button type="button" aria-label="Move row down" style="width: 28px; height: 28px; border: 1px solid #1c1b19; background: transparent; font: inherit; font-size: 14px; color: #1c1b19; padding: 0">▼</button>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6b6861">Row 3 · one column</div>
+        <div style="display: flex; gap: 8px">
+          <div style="flex: 1; border: 1px solid #1c1b19; padding: 10px 12px; font-size: 15px; font-weight: 500; display: flex; justify-content: space-between"><span>Quote</span><span style="color: #6b6861">full</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: stretch; gap: 14px; border: 1px solid #c9c5b8; padding: 12px 14px">
+      <div style="display: flex; flex-direction: column; justify-content: space-between; width: 28px; flex: none">
+        <button type="button" aria-label="Move row up" style="width: 28px; height: 28px; border: 1px solid #1c1b19; background: transparent; font: inherit; font-size: 14px; color: #1c1b19; padding: 0">▲</button>
+        <button type="button" aria-label="Move row down" style="width: 28px; height: 28px; border: 1px solid #1c1b19; background: transparent; font: inherit; font-size: 14px; color: #1c1b19; padding: 0">▼</button>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6b6861">Row 4 · one column</div>
+        <div style="display: flex; gap: 8px">
+          <div style="flex: 1; border: 1px solid #1c1b19; padding: 10px 12px; font-size: 15px; font-weight: 500; display: flex; justify-content: space-between"><span>Launcher</span><span style="color: #6b6861">full</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: stretch; gap: 14px; border: 1px solid #c9c5b8; padding: 12px 14px">
+      <div style="display: flex; flex-direction: column; justify-content: space-between; width: 28px; flex: none">
+        <button type="button" aria-label="Move row up" style="width: 28px; height: 28px; border: 1px solid #1c1b19; background: transparent; font: inherit; font-size: 14px; color: #1c1b19; padding: 0">▲</button>
+        <button type="button" aria-label="Move row down" style="width: 28px; height: 28px; border: 1px solid #c9c5b8; background: transparent; font: inherit; font-size: 14px; color: #c9c5b8; padding: 0">▼</button>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6b6861">Row 5 · one column</div>
+        <div style="display: flex; gap: 8px">
+          <div style="flex: 1; border: 1px solid #1c1b19; padding: 10px 12px; font-size: 15px; font-weight: 500; display: flex; justify-content: space-between"><span>Reading stats</span><span style="color: #6b6861">full</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 16px 40px 28px 40px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #c9c5b8">
+    <button type="button" style="border: 1px solid #1c1b19; background: transparent; padding: 10px 16px; font: inherit; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; color: #1c1b19">Add row</button>
+    <button type="button" style="border: 0; background: transparent; padding: 10px 0; font: inherit; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; color: #6b6861">Reset to the look’s default</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":632,"height":840}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
