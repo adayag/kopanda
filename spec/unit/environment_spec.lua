@@ -25,7 +25,7 @@ describe("the Busted environment bin/check builds", function()
     it("points KO_HOME at a fresh directory outside the emulator and the repo", function()
         assert.is_string(ko_home)
         assert.equals("directory", lfs.attributes(ko_home, "mode"))
-        assert.not_equals(emulator, ko_home)
+        assert.is_nil(ko_home:find(emulator, 1, true))
         assert.is_nil(ko_home:find(root, 1, true))
     end)
 
