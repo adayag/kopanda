@@ -23,14 +23,20 @@ describe("the emulator capture driver", function()
     end
 
     -- A fake emulator dir: ./luajit answers the driver's seeding one-liner (-e) with exit 0
-    -- and, run as the emulator, records its pid and sleeps.
+    -- and, run as the emulator, records its pid and sleeps (exit_now: exits 0 at once;
+    -- ignore_term: ignores SIGTERM first, which survives the exec).
     local function fake_emulator(opts)
         opts = opts or {}
         local dir = fresh_dir("emu")
         assert(lfs.mkdir(dir .. "/plugins"))
         if not opts.no_luajit then
-            write(dir .. "/luajit", "#!/bin/sh\n[ \"$1\" = -e ] && exit 0\necho $$ > '" .. dir
-                .. "/pid'\nexec sleep 1000\n", true)
+            local body = "echo $$ > '" .. dir .. "/pid'\n"
+            if opts.exit_now then
+                body = "exit 0\n"
+            elseif opts.ignore_term then
+                body = body .. "trap '' TERM\n"
+            end
+            write(dir .. "/luajit", "#!/bin/sh\n[ \"$1\" = -e ] && exit 0\n" .. body .. "exec sleep 30\n", true)
         end
         if opts.kopanda_present then
             assert(lfs.mkdir(dir .. "/plugins/kopanda.koplugin"))
@@ -142,5 +148,22 @@ describe("the emulator capture driver", function()
         assert.truthy(elapsed >= 1 and elapsed <= 6, "took " .. elapsed .. " s")
         local pid = assert(io.open(emu .. "/pid")):read("*n")
         assert.not_equals(0, os.execute("kill -0 " .. pid .. " 2>/dev/null"))
+    end)
+
+    it("escalates to SIGKILL when the emulator ignores SIGTERM", function()
+        local emu = fake_emulator{ ignore_term = true }
+        local started = os.time()
+        local err = capture_error{ emulator_dir = emu, timeout_s = 2 }
+        local elapsed = os.time() - started
+        assert.truthy(contains(err, "timed out after 2 s"), err)
+        assert.truthy(elapsed <= 12, "took " .. elapsed .. " s")
+        local pid = assert(io.open(emu .. "/pid")):read("*n")
+        assert.not_equals(0, os.execute("kill -0 " .. pid .. " 2>/dev/null"))
+    end)
+
+    it("leaves no sleeping killer behind when the emulator exits first", function()
+        local emu = fake_emulator{ exit_now = true }
+        capture_error{ emulator_dir = emu, timeout_s = 777 }
+        assert.not_equals(0, os.execute("pgrep -f 'sleep 77[7]' >/dev/null"))
     end)
 end)

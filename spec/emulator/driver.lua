@@ -169,21 +169,27 @@ end
 
 -- Runs the emulator in the background, killing it after timeout_s. The wrapper's last
 -- output line is the emulator's exit status; a "timeout" marker file records a kill.
+-- SIGTERM alone cannot stop a hung emulator: SDL3 turns it into SDL_EVENT_QUIT
+-- (base/ffi/SDL3.lua:719-723), serviced only by the input loop, so the killer follows
+-- it with SIGKILL 5 s later. When the emulator exits first, pkill ends the killer's
+-- sleep and its failing kill (the pid is already reaped) skips the escalation.
+-- The wrapper's own stderr (the shell's "Terminated"/"Killed" lines) goes to the log.
 local function run_emulator(emulator, vars, library_dir, log, timeout_s, marker)
     local script = table.concat({
-        "cd " .. quote(emulator),
+        "cd " .. quote(emulator) .. " || exit 127",
         "env -u EMULATE_BB_TYPE " .. env_assignments(vars) .. " ./luajit reader.lua " .. quote(library_dir)
             .. " > " .. quote(log) .. " 2>&1 &",
         "pid=$!",
-        "(sleep " .. timeout_s .. "; kill $pid 2>/dev/null && : > " .. quote(marker) .. ") >/dev/null 2>&1 &",
+        "(sleep " .. timeout_s .. "; kill $pid 2>/dev/null && { : > " .. quote(marker)
+            .. "; sleep 5; kill -9 $pid 2>/dev/null; }) >/dev/null 2>&1 &",
         "killer=$!",
         "wait $pid",
         "s=$?",
-        "kill $killer 2>/dev/null",
+        "pkill -P $killer 2>/dev/null; kill $killer 2>/dev/null",
         "echo",
         "echo $s",
     }, "\n")
-    local pipe = assert(io.popen("sh -c " .. quote(script)))
+    local pipe = assert(io.popen("sh -c " .. quote(script) .. " 2>> " .. quote(log)))
     local output = pipe:read("*a")
     pipe:close()
     return tonumber(output:match("(%d+)\n$"))
@@ -243,6 +249,10 @@ function M.capture(opts)
         error(string.format("capture %s: %s\nscratch profile: %s\nlog %s, last lines:\n%s",
             profile_name, message, scratch, log, log_tail(log)))
     end
+    -- The marker is the only evidence of a kill: a responsive KOReader exits 0 on SIGTERM, so
+    -- the exit status cannot tell a kill from a clean quit, and an emulator that exits
+    -- normally in the sub-millisecond window between the timer firing and `wait` reaping it
+    -- is reported as timed out.
     if lfs.attributes(marker, "mode") then
         fail("timed out after " .. timeout_s .. " s")
     end
