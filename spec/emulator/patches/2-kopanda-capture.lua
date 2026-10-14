@@ -39,6 +39,7 @@ local ok, err = pcall(function()
             paint_ms = args.paint_ms,
             width = Screen:getWidth(),
             height = Screen:getHeight(),
+            color = require("device"):hasColorScreen(),
             plugins = plugin_names(),
             koreader = "e1fe1ac",
         }))

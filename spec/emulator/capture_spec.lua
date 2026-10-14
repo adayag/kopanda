@@ -1,5 +1,7 @@
 describe("capturing the probe plugin on the emulator", function()
+    require("commonrequire")
     local lfs = require("libs/libkoreader-lfs")
+    local RenderImage = require("ui/renderimage")
     local driver = require("emulator.driver")
     local root = os.getenv("KOPANDA_ROOT")
     local ko_home = os.getenv("KO_HOME")
@@ -37,6 +39,14 @@ describe("capturing the probe plugin on the emulator", function()
         return false
     end
 
+    -- The probe's corner squares: 40 px, 20 px in from each corner
+    -- (spec/fixtures/probe.koplugin/main.lua).
+    local SQUARE, MARGIN = 40, 20
+
+    local function grey_at(bb, x, y)
+        return bb:getPixel(x, y):getColor8().a
+    end
+
     for _, name in ipairs({ "colorsoft", "paperwhite" }) do
         it("captures the probe at the " .. name .. " size with a settled sidecar", function()
             local profile = driver.profiles[name]
@@ -48,10 +58,15 @@ describe("capturing the probe plugin on the emulator", function()
             assert.truthy(result.sidecar.paint_ms > 0)
             assert.equals(profile.width, result.sidecar.width)
             assert.equals(profile.height, result.sidecar.height)
+            assert.equals(profile.color, result.sidecar.color)
             assert.truthy(has(result.sidecar.plugins, "probe"))
             for _, disabled in ipairs(driver.disabled_plugins) do
                 assert.falsy(has(result.sidecar.plugins, disabled), disabled .. " loaded")
             end
+            local shot = assert(RenderImage:renderImageFile(result.png))
+            assert.equals(0, grey_at(shot, MARGIN + SQUARE / 2, MARGIN + SQUARE / 2))
+            assert.equals(255, grey_at(shot, result.width / 2, MARGIN + SQUARE / 2))
+            shot:free()
             local log = read(result.log)
             assert.equals(1, count(log, "KOPANDA_SHOT: saved"))
             assert.equals(0, count(log, "settle cap"))
@@ -75,7 +90,7 @@ describe("capturing the probe plugin on the emulator", function()
             { profile = "colorsoft", plugin_dir = mute, library_dir = fresh_dir("library"), cap_s = 5 })
         local elapsed = os.time() - started
         assert.is_false(ok)
-        assert.truthy(tostring(err):find("settle cap", 1, true), err)
-        assert.truthy(elapsed < 30, "took " .. elapsed .. " s")
+        assert.truthy(tostring(err):match("^[^\n]*settle cap"), err)
+        assert.truthy(elapsed >= 4 and elapsed <= 12, "took " .. elapsed .. " s")
     end)
 end)

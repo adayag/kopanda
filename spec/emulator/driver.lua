@@ -260,6 +260,9 @@ function M.capture(opts)
     if lfs.attributes(marker, "mode") then
         fail("timed out after " .. timeout_s .. " s")
     end
+    if status == 3 then
+        fail("settle cap: no KoPandaSettled signal within " .. cap_s .. " s (exit 3)")
+    end
     if status ~= 0 then
         fail("emulator exited with status " .. tostring(status))
     end
