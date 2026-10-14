@@ -19,18 +19,24 @@ describe("bin/check", function()
         return text:find(needle, 1, true) ~= nil
     end
 
+    -- The KO_HOME an inner bin/check announced on its first output line.
+    local function inner_ko_home(output)
+        return output:match("KOPANDA_KO_HOME=([^\n]+)\n")
+    end
+
     it("exits 1 on a spec with failing tests and names each failing test", function()
         local output, status = run("cd '" .. root .. "' && bin/check spec/fixtures/failing_spec.lua")
         assert.equals(1, status)
         assert.truthy(contains(output, "fails on purpose the first time"))
         assert.truthy(contains(output, "fails on purpose the second time"))
+        assert.is_nil(lfs.attributes(inner_ko_home(output), "mode"))
     end)
 
     it("runs only the named specs, without luacheck, and removes its KO_HOME afterwards", function()
         local output, status = run("cd '" .. root .. "' && bin/check spec/unit/environment_spec.lua")
         assert.equals(0, status)
         assert.falsy(contains(output, "luacheck"))
-        local inner_home = output:match("KOPANDA_KO_HOME=([^\n]+)\n")
+        local inner_home = inner_ko_home(output)
         assert.is_string(inner_home)
         assert.not_equals(os.getenv("KO_HOME"), inner_home)
         assert.is_nil(lfs.attributes(inner_home, "mode"))
