@@ -73,6 +73,23 @@ describe("the KoPanda home pre-built on book close", function()
         assert.is_number(signals[1].paint_ms)
     end)
 
+    it("times a pending home that the deferred show finds", function()
+        local signals = {}
+        local listener = function(args)
+            signals[#signals + 1] = args
+        end
+        UIManager.event_hook:register("KoPandaSettled", listener)
+        harness.show_fm()
+        Home.prebuild()
+        local pending = Home.pending
+        harness.tick(4)
+        UIManager.event_hook:unregister("KoPandaSettled", listener)
+        assert.equals(pending, harness.top())
+        assert.equals(1, #signals)
+        assert.is_true(signals[1].prebuilt)
+        assert.is_number(signals[1].paint_ms)
+    end)
+
     it("drops a pending home of another size and shows a fresh one", function()
         local reader = harness.open_reader()
         harness.tick(2)

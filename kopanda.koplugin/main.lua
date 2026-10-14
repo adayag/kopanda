@@ -42,11 +42,12 @@ function KoPanda:showHome(started)
     if not (FileManager and FileManager.instance) then
         return
     end
+    started = started or time.monotonic()
     local pending = Home.take_pending()
     if pending then
         Home.show{ widget = pending, started = started, prebuilt = true }
     else
-        Home.show{ started = started or time.monotonic() }
+        Home.show{ started = started }
     end
 end
 
