@@ -75,6 +75,14 @@ describe("capturing the probe plugin on the emulator", function()
         end)
     end
 
+    it("captures the probe over the fixture library when library_dir is not given", function()
+        local result = driver.capture{ profile = "colorsoft", plugin_dir = probe }
+        assert.equals("file", lfs.attributes(result.png, "mode"))
+        assert.equals(driver.profiles.colorsoft.width, result.width)
+        assert.equals(driver.profiles.colorsoft.height, result.height)
+        assert.equals("home", result.sidecar.screen)
+    end)
+
     it("hits the settle cap when the plugin never signals", function()
         local mute = fresh_dir("mute") .. "/probe.koplugin"
         assert.equals(0, os.execute("cp -R '" .. probe .. "' '" .. mute .. "'"))
