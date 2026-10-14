@@ -59,7 +59,6 @@ end
 local function close_home(home)
     if Home.shown == home then
         Home.shown = nil
-Home.pending = nil
     end
     local ok, err = pcall(UIManager.close, UIManager, home, "full")
     if not ok then
@@ -106,7 +105,6 @@ function Home.show(opts)
             close_home(home)
         end
         Home.shown = nil
-Home.pending = nil
     end
 end
 
@@ -172,7 +170,6 @@ end
 function Home:onCloseWidget()
     if Home.shown == self then
         Home.shown = nil
-Home.pending = nil
     end
 end
 
