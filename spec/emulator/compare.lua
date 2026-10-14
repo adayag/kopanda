@@ -80,7 +80,11 @@ function M.compare(actual_png, golden_png, opts)
     local max_fraction = opts.max_fraction or M.defaults.max_fraction
 
     local actual = load(actual_png)
-    local golden = load(golden_png)
+    local loaded, golden = pcall(load, golden_png)
+    if not loaded then
+        actual.bb:free()
+        error(golden, 0)
+    end
     if actual.width ~= golden.width or actual.height ~= golden.height then
         local result = { ok = false, reason = "size",
             actual = { actual.width, actual.height }, golden = { golden.width, golden.height } }
@@ -109,12 +113,16 @@ function M.compare(actual_png, golden_png, opts)
     local compared = w * h - masked
     local fraction = compared > 0 and differing / compared or 0
     local result = { ok = fraction <= max_fraction, differing = differing, compared = compared, fraction = fraction }
+    local written, err = true, nil
     if not result.ok and opts.diff_png then
-        write_diff(opts.diff_png, golden, differs, w, h)
+        written, err = pcall(write_diff, opts.diff_png, golden, differs, w, h)
         result.diff_png = opts.diff_png
     end
     actual.bb:free()
     golden.bb:free()
+    if not written then
+        error(err, 0)
+    end
     return result
 end
 
