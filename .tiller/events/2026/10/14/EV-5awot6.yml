@@ -1,0 +1,13 @@
+id: EV-5awot6
+type: claim.task
+at: 2026-10-14T12:58:17.531056Z
+contributor: allen
+command: claim task T-a70gfj
+targets:
+    - T-a70gfj
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/dev-loop/tasks/capture-driver/task.yml
