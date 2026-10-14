@@ -73,6 +73,48 @@ describe("the KoPanda home pre-built on book close", function()
         assert.is_number(signals[1].paint_ms)
     end)
 
+    -- The settled signal lands a tick after the paint, behind tasks already due then, such as
+    -- coverbrowser's background extraction (covermenu.lua:119), queued before the show. With the
+    -- close run from a task, as the end-of-book action runs it (readerstatus.lua:144-148), that
+    -- task runs after the paint and before the signal. paint_ms stops at the paint.
+    it("times a pre-built home to its paint, not to the settled signal", function()
+        local time = require("ui/time")
+        local monotonic = time.monotonic
+        local clock = monotonic()
+        time.monotonic = function()
+            return clock
+        end
+        local signals = {}
+        local listener = function(args)
+            signals[#signals + 1] = args
+        end
+        UIManager.event_hook:register("KoPandaSettled", listener)
+        local ok, err = pcall(function()
+            local reader = harness.open_reader()
+            harness.tick(2)
+            UIManager:nextTick(function()
+                reader:onClose()
+                local frame = Home.pending[1]
+                local frame_paint = frame.paintTo
+                frame.paintTo = function(...)
+                    clock = clock + time.ms(5)
+                    return frame_paint(...)
+                end
+                UIManager:nextTick(function()
+                    clock = clock + time.ms(300)
+                end)
+                harness.show_fm()
+            end)
+            harness.tick(4)
+        end)
+        UIManager.event_hook:unregister("KoPandaSettled", listener)
+        time.monotonic = monotonic
+        assert(ok, err)
+        assert.equals(1, #signals)
+        assert.equals(5, signals[1].paint_ms)
+        assert.equals(305, signals[1].settle_ms)
+    end)
+
     it("times a pending home that the deferred show finds", function()
         local signals = {}
         local listener = function(args)

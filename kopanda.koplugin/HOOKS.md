@@ -115,7 +115,11 @@ Upgrading KOReader walks this list.
 - `frontend/ui/uimanager.lua:53`; `frontend/ui/hook_container.lua:88-98` (`execute`, which
   runs nothing with no listener).
 - After the home's first paint the plugin executes `KoPandaSettled` with `{ screen, paint_ms,
-  prebuilt }`, once per home; the capture harness entry below is the listener.
+  settle_ms, prebuilt }`, once per home; the capture harness entry below is the listener.
+  `paint_ms` runs from the start of the show path to the end of the home's first `paintTo`;
+  `settle_ms` runs on to the signal, which `tickAfterNext` (`uimanager.lua:447-456`) queues
+  behind tasks already due on the tick after the paint, such as coverbrowser's background
+  extraction (`plugins/coverbrowser.koplugin/covermenu.lua:119`, a fork).
 
 ### `G_defaults` keys `DTAP_ZONE_MENU` and `DTAP_ZONE_MENU_EXT`
 
@@ -160,7 +164,7 @@ Upgrading KOReader walks this list.
 - `frontend/ui/uimanager.lua:53`; `frontend/ui/hook_container.lua:34-41` (`register`),
   `:88-98` (`execute`).
 - A `HookContainer`. The capture patch registers a `KoPandaSettled` listener and the plugin
-  under test executes it with `{ screen, paint_ms, prebuilt }`. The patch shoots on the first
+  under test executes it with `{ screen, paint_ms, settle_ms, prebuilt }`. The patch shoots on the first
   signal whose `screen` is `KOPANDA_SHOT_SCREEN` (default `home`) and copies the signal's
   string, number and boolean arguments into the sidecar. Listeners run in registration order
   (`hook_container.lua:94-96`), and a listener may execute the hook again from inside its own

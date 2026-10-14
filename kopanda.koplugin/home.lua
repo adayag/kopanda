@@ -67,16 +67,20 @@ local function close_home(home)
 end
 
 -- Signals the home's first paint on the dev loop's settled hook, once per home. A home whose
--- paint failed sends nothing: the screen shows the file browser, not the home.
+-- paint failed sends nothing: the screen shows the file browser, not the home. paint_ms runs
+-- from opts.started to the first paint; settle_ms runs on to this signal, which lands behind
+-- whatever other tasks came due after the paint.
 local function settle(home, opts)
     if home.settled or home.paint_failed then
         return
     end
     home.settled = true
     local ok, err = pcall(function()
+        local now = time.monotonic()
         UIManager.event_hook:execute("KoPandaSettled", {
             screen = "home",
-            paint_ms = time.to_ms(time.monotonic() - opts.started),
+            paint_ms = time.to_ms((home.painted_at or now) - opts.started),
+            settle_ms = time.to_ms(now - opts.started),
             prebuilt = opts.prebuilt == true,
         })
     end)
@@ -157,6 +161,9 @@ end
 -- the next tick, leaving the file browser beneath.
 function Home:paintTo(bb, x, y)
     local ok, err = pcall(InputContainer.paintTo, self, bb, x, y)
+    if ok and not self.painted_at then
+        self.painted_at = time.monotonic()
+    end
     if not ok and not self.paint_failed then
         self.paint_failed = true
         logger.err("KoPanda: the home failed to paint:", err)

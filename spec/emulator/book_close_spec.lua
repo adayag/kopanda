@@ -37,9 +37,11 @@ describe("closing a book on the emulator", function()
         assert.is_true(sidecar.prebuilt)
         assert.is_number(sidecar.home_ms)
         assert.truthy(sidecar.home_ms <= 100, "home_ms " .. tostring(sidecar.home_ms))
+        assert.is_number(sidecar.settle_ms)
         assert.is_number(sidecar.close_to_paint_ms)
-        print(string.format("book close: fm_paints=%d home_ms=%s close_to_paint_ms=%s",
-            sidecar.fm_paints, tostring(sidecar.home_ms), tostring(sidecar.close_to_paint_ms)))
+        print(string.format("book close: fm_paints=%d home_ms=%s settle_ms=%s close_to_paint_ms=%s",
+            sidecar.fm_paints, tostring(sidecar.home_ms), tostring(sidecar.settle_ms),
+            tostring(sidecar.close_to_paint_ms)))
         assert.is_true(golden.check("home-placeholder", "colorsoft", result, { update = false }).ok)
     end)
 end)
