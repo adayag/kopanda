@@ -8,6 +8,7 @@ local Font = require("ui/font")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local InputContainer = require("ui/widget/container/inputcontainer")
+local SettingsMenu = require("settings_menu")
 local TextWidget = require("ui/widget/textwidget")
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
@@ -196,30 +197,70 @@ function Home:onKoPandaHome()
     return true
 end
 
--- KOReader's top menu zones (defaults.lua:59-60), read as filemanagermenu.lua:74-75 reads them.
-local function in_menu_zone(pos, dimen)
-    local zones = { G_defaults:readSetting("DTAP_ZONE_MENU"), G_defaults:readSetting("DTAP_ZONE_MENU_EXT") }
-    for _, zone in ipairs(zones) do
-        local rect = Geom:new{
-            x = zone.x * dimen.w,
-            y = zone.y * dimen.h,
-            w = zone.w * dimen.w,
-            h = zone.h * dimen.h,
-        }
-        if rect:contains(pos) then
-            return true
-        end
-    end
-    return false
+-- Whether pos lies in the named G_defaults zone (screen ratios, defaults.lua:59-75), read as
+-- filemanagermenu.lua:74-75 reads its zones, against the screen's size now.
+local function in_zone(name, pos)
+    local zone = G_defaults:readSetting(name)
+    local size = Screen:getSize()
+    return Geom:new{
+        x = zone.x * size.w,
+        y = zone.y * size.h,
+        w = zone.w * size.w,
+        h = zone.h * size.h,
+    }:contains(pos)
 end
 
--- The placeholder's gestures: a tap outside the top menu zones closes the home.
+-- KOReader's top menu zones.
+local function in_menu_zone(pos)
+    return in_zone("DTAP_ZONE_MENU", pos) or in_zone("DTAP_ZONE_MENU_EXT", pos)
+end
+
+-- A one-finger swipe up from the bottom edge band, outside the left and right edge bands, where
+-- Gestures binds frontlight and warmth (plugins/gestures.koplugin/defaults.lua:14-17).
+local function is_swipe_up_from_bottom(ges)
+    return ges.ges == "swipe" and ges.direction == "north"
+        and in_zone("DSWIPE_ZONE_BOTTOM_EDGE", ges.pos)
+        and not in_zone("DSWIPE_ZONE_LEFT_EDGE", ges.pos)
+        and not in_zone("DSWIPE_ZONE_RIGHT_EDGE", ges.pos)
+end
+
+-- A one-finger west or east swipe outside the top and bottom edge bands. Passed on, it would page
+-- the hidden file chooser through the file manager's full-screen swipe zone (filemanager.lua:81-98,
+-- :474-482); Gestures binds these swipes only inside those bands (gestures main.lua:1168-1195).
+local function is_page_swipe(ges)
+    return ges.ges == "swipe" and (ges.direction == "west" or ges.direction == "east")
+        and not in_zone("DSWIPE_ZONE_TOP_EDGE", ges.pos)
+        and not in_zone("DSWIPE_ZONE_BOTTOM_EDGE", ges.pos)
+end
+
+-- The home's gestures, in order, each step stopping at the first that consumes: its own swipe
+-- up; the file manager's menu zones (top-zone tap and swipe down, by KOReader's own rules,
+-- filemanagermenu.lua:71-124, :1102-1114); a page swipe, consumed since there is nothing to
+-- page; the zones registered on the file manager itself, the Gestures plugin's among them
+-- (gestures main.lua:1287-1288); a tap outside the top menu zones closes the placeholder. With
+-- the home on top, UIManager:sendEvent offers the file manager nothing but its screenshot
+-- module (frontend/ui/uimanager.lua:962-1034), hence the forwarding.
 function Home:routeGesture(ges)
-    if ges.ges ~= "tap" or in_menu_zone(ges.pos, self.dimen) then
-        return false
+    if is_swipe_up_from_bottom(ges) then
+        SettingsMenu.open()
+        return true
     end
-    close_home(self)
-    return true
+    local FileManager = package.loaded["apps/filemanager/filemanager"]
+    local fm = FileManager and FileManager.instance
+    if fm and InputContainer.onGesture(fm.menu, ges) then
+        return true
+    end
+    if is_page_swipe(ges) then
+        return true
+    end
+    if fm and InputContainer.onGesture(fm, ges) then
+        return true
+    end
+    if ges.ges == "tap" and not in_menu_zone(ges.pos) then
+        close_home(self)
+        return true
+    end
+    return false
 end
 
 -- The home is not a plugin, so KOReader does not sandbox this handler: an error here would
