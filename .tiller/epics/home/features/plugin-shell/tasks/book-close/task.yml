@@ -1,7 +1,7 @@
 id: T-o0ptat
 key: home/plugin-shell/book-close
 title: Closing a book lands on a pre-built home in one paint
-status: in_review
+status: in_progress
 blocked: false
 started: true
 owner: allen
@@ -29,7 +29,7 @@ gates:
     build:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-14T21:18:15.195859Z
         against:
@@ -42,7 +42,7 @@ gates:
     tests:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-14T21:18:15.195859Z
         against:

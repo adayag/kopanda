@@ -1,0 +1,14 @@
+id: EV-xq4ex4
+type: resume.task
+at: 2026-10-14T22:31:24.684236Z
+contributor: allen
+command: resume task T-o0ptat
+targets:
+    - T-o0ptat
+before:
+    status: in_review
+after:
+    reason: C6 measured onShow to settled, which includes other plugins' next-tick work (coverbrowser's background fork); measure onShow to the home's paint, as C6 states
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/book-close/task.yml
