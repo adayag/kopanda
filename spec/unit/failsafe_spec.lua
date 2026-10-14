@@ -6,8 +6,9 @@ describe("KoPanda failing safe", function()
     local FileManager = require("apps/filemanager/filemanager")
     local InputContainer = require("ui/widget/container/inputcontainer")
     local Screen = require("device").screen
+    local UIManager = require("ui/uimanager")
     local logger = require("logger")
-    local Home, logged
+    local Home, logged, settled_listener
     local original_paint = InputContainer.paintTo
 
     local function homes_on_stack()
@@ -46,6 +47,10 @@ describe("KoPanda failing safe", function()
     end)
 
     after_each(function()
+        if settled_listener then
+            UIManager.event_hook:unregister("KoPandaSettled", settled_listener)
+            settled_listener = nil
+        end
         InputContainer.paintTo = original_paint
         logger.err:revert()
         harness.teardown()
@@ -83,6 +88,24 @@ describe("KoPanda failing safe", function()
         harness.tick(3)
         file_manager_usable()
         assert.is_true(logged_error("kopanda-test: paint failed"))
+    end)
+
+    it("sends no settled signal when the home's paint throws", function()
+        local settled = 0
+        settled_listener = function()
+            settled = settled + 1
+        end
+        UIManager.event_hook:register("KoPandaSettled", settled_listener)
+        InputContainer.paintTo = function(self, ...)
+            if self.name == "kopanda_home" then
+                error("kopanda-test: paint failed")
+            end
+            return original_paint(self, ...)
+        end
+        harness.show_fm()
+        harness.tick(4)
+        file_manager_usable()
+        assert.equals(0, settled)
     end)
 
     it("consumes a gesture and closes the home when the gesture body throws", function()

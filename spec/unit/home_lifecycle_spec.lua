@@ -3,8 +3,10 @@ describe("the KoPanda home over the file browser", function()
     local Event = require("ui/event")
     local UIManager = require("ui/uimanager")
     local FileManager = require("apps/filemanager/filemanager")
+    local InputContainer = require("ui/widget/container/inputcontainer")
     local Screen = require("device").screen
-    local Home
+    local Home, settled_listener
+    local original_paint = InputContainer.paintTo
 
     local function homes_on_stack()
         local count = 0
@@ -22,6 +24,11 @@ describe("the KoPanda home over the file browser", function()
     end)
 
     after_each(function()
+        if settled_listener then
+            UIManager.event_hook:unregister("KoPandaSettled", settled_listener)
+            settled_listener = nil
+        end
+        InputContainer.paintTo = original_paint
         harness.teardown()
     end)
 
@@ -40,6 +47,28 @@ describe("the KoPanda home over the file browser", function()
         assert.is_true(home.covers_fullscreen)
         assert.same(Screen:getSize(), home.dimen)
         assert.equals(FileManager.instance, harness.top(2))
+    end)
+
+    it("sends the settled signal once, after the home's first paint", function()
+        local home_painted = false
+        InputContainer.paintTo = function(self, ...)
+            if self.name == "kopanda_home" then
+                home_painted = true
+            end
+            return original_paint(self, ...)
+        end
+        local signals = {}
+        settled_listener = function(args)
+            signals[#signals + 1] = { args = args, after_paint = home_painted }
+        end
+        UIManager.event_hook:register("KoPandaSettled", settled_listener)
+        harness.show_fm()
+        harness.tick(4)
+        assert.equals(1, #signals)
+        assert.is_true(signals[1].after_paint)
+        assert.equals("home", signals[1].args.screen)
+        assert.is_false(signals[1].args.prebuilt)
+        assert.is_number(signals[1].args.paint_ms)
     end)
 
     it("lands over a history list opened right after showFiles (start_with = history)", function()

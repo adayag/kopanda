@@ -64,9 +64,10 @@ local function close_home(home)
     end
 end
 
--- Signals the home's first paint on the dev loop's settled hook, once per home.
+-- Signals the home's first paint on the dev loop's settled hook, once per home. A home whose
+-- paint failed sends nothing: the screen shows the file browser, not the home.
 local function settle(home, opts)
-    if home.settled then
+    if home.settled or home.paint_failed then
         return
     end
     home.settled = true
