@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# KoPanda's gate: luacheck, then Busted specs on the emulator's LuaJIT under a fresh KO_HOME.
+#
+#   bin/check              lint, unit specs, emulator specs; stops at the first failing stage
+#   bin/check --lint       luacheck alone
+#   bin/check <spec>...    exactly those spec files, no luacheck
+#
+# Exit 0 on success, 1 when a stage fails, 2 when the script refuses to run.
+set -euo pipefail
+
+KOPANDA_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
+KOPANDA_EMULATOR="${KOPANDA_EMULATOR:-$HOME/Projects/kodev/koreader/koreader-emulator-arm64-apple-darwin23.5.0-debug/koreader}"
+export KOPANDA_ROOT KOPANDA_EMULATOR
+
+refuse() {
+    printf '%s\n' "$@" >&2
+    exit 2
+}
+
+if ! command -v luacheck >/dev/null 2>&1; then
+    refuse "bin/check: luacheck is not on PATH" "    brew install luacheck"
+fi
+if [[ ! -x "$KOPANDA_EMULATOR/luajit" ]]; then
+    refuse "bin/check: no luajit at $KOPANDA_EMULATOR/luajit" \
+        "    set KOPANDA_EMULATOR to the emulator's koreader directory"
+fi
+
+KO_HOME="$(mktemp -d)"
+export KO_HOME
+trap 'rm -rf "$KO_HOME"' EXIT
+printf 'KOPANDA_KO_HOME=%s\n' "$KO_HOME"
+
+run_lint() {
+    echo "== lint"
+    (cd "$KOPANDA_ROOT" && luacheck .)
+}
+
+run_busted() {
+    cd "$KOPANDA_EMULATOR"
+    LUA_PATH="?.lua;common/?.lua;frontend/?.lua;spec/front/unit/?.lua;spec/rocks/share/lua/5.1/?.lua;spec/rocks/share/lua/5.1/?/init.lua;$KOPANDA_ROOT/spec/?.lua;$KOPANDA_ROOT/kopanda.koplugin/?.lua" \
+    LUA_CPATH='?.so;common/?.so;spec/rocks/lib/lua/5.1/?.so' \
+    ./luajit -e 'require "busted.runner" {standalone = false}' /dev/null \
+        --output=gtest --sort-files --helper="$KOPANDA_ROOT/spec/helper.lua" --loaders=lua --lazy -- "$@"
+}
+
+# Runs every spec under spec/<layer>/; a missing or empty layer is a clean no-op.
+run_layer() {
+    local layer="$1" dir="$KOPANDA_ROOT/spec/$1" specs=()
+    echo "== $layer"
+    if [[ -d "$dir" ]]; then
+        while IFS= read -r spec; do
+            specs+=("$spec")
+        done < <(find "$dir" -name '*_spec.lua' -type f | sort)
+    fi
+    if [[ ${#specs[@]} -eq 0 ]]; then
+        echo "no specs under spec/$layer"
+        return 0
+    fi
+    run_busted "${specs[@]}"
+}
+
+absolute() {
+    case "$1" in
+        /*) printf '%s\n' "$1" ;;
+        *) printf '%s/%s\n' "$PWD" "$1" ;;
+    esac
+}
+
+if [[ $# -eq 0 ]]; then
+    run_lint || exit 1
+    run_layer unit || exit 1
+    run_layer emulator || exit 1
+elif [[ $# -eq 1 && "$1" == "--lint" ]]; then
+    run_lint || exit 1
+else
+    specs=()
+    for spec in "$@"; do
+        specs+=("$(absolute "$spec")")
+    done
+    run_busted "${specs[@]}" || exit 1
+fi
