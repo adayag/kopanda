@@ -1,0 +1,13 @@
+id: EV-b6n134
+type: check.task
+at: 2026-10-14T21:18:56.324358Z
+contributor: allen
+command: check task T-o0ptat
+targets:
+    - T-o0ptat
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/book-close/task.yml

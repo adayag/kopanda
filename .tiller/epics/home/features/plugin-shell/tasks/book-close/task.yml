@@ -1,7 +1,7 @@
 id: T-o0ptat
 key: home/plugin-shell/book-close
 title: Closing a book lands on a pre-built home in one paint
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:bd30ec7
         observed_at: 2026-10-14T20:26:05.33783Z
 branch: tiller/home/plugin-shell/book-close
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T21:18:15.195859Z
+        against:
+            kind: git_commit
+            value: git:fdc4d5e
+            observed_at: 2026-10-14T21:18:15.195851Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-fdc4d5e-out-345cdd1971f8459e357385020785518fe43645637552cc7699b68573f26849a7.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-14T21:18:15.195859Z
+        against:
+            kind: git_commit
+            value: git:fdc4d5e
+            observed_at: 2026-10-14T21:18:15.195851Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-fdc4d5e-out-24237d1df4ded0049b567ee52bab67cb4cadbe9f5f51924d8cec37298c1a2914.txt
