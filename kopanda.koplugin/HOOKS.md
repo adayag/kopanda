@@ -125,9 +125,10 @@ Upgrading KOReader walks this list.
 
 ### coverbrowser's cache database
 
-- `plugins/coverbrowser.koplugin/main.lua:88-98` (`BookInfoManager:getSetting` at startup;
-  `bookinfomanager.lua:278`, `:297` opens the connection and `:201-206` runs `createDB` on the
-  first open).
+- `plugins/coverbrowser.koplugin/main.lua:88-98` (`BookInfoManager:getSetting` and `saveSetting`
+  at startup; on a seeded profile `getSetting`, `bookinfomanager.lua:278`, opens the connection from
+  `loadSettings` at `:264`; on an unseeded one `saveSetting` from `main.lua:91` opens it at `:297`;
+  either way `:201-206` runs `createDB` on the first open).
 - `plugins/coverbrowser.koplugin/bookinfomanager.lua:22` (`BOOKINFO_DB_VERSION = 20201210`),
   `:134` (`settings/bookinfo_cache.sqlite3`), `:166-195` (`createDB`: schema is a no-op on an
   existing file, a lower `user_version` shows "Book info cache database updated." for 3 s).
