@@ -47,7 +47,8 @@ Upgrading KOReader walks this list.
 - `frontend/apps/filemanager/filemanager.lua:447` (set at the end of `init`), `:839` (cleared
   in `onCloseWidget`).
 - Read through `package.loaded` as `apps/filemanager/filemanager` when the deferred show runs,
-  since the file manager can close between `Show` and that tick.
+  since the file manager can close between `Show` and that tick, and the same way at gesture
+  time by the home and at call time by the dispatcher wrapper.
 
 ### `CloseWidget` on file-manager close
 
@@ -121,11 +122,19 @@ Upgrading KOReader walks this list.
   behind tasks already due on the tick after the paint, such as coverbrowser's background
   extraction (`plugins/coverbrowser.koplugin/covermenu.lua:119`, a fork).
 
-### `G_defaults` keys `DTAP_ZONE_MENU` and `DTAP_ZONE_MENU_EXT`
+### `G_defaults` keys `DTAP_ZONE_MENU`, `DTAP_ZONE_MENU_EXT` and the `DSWIPE_ZONE_*` edges
 
-- `defaults.lua:59-60`; read through `G_defaults:readSetting` as
-  `frontend/apps/filemanager/filemanagermenu.lua:74-75` reads them.
-- KOReader's top menu zones, as screen ratios. A tap inside them leaves the placeholder up.
+- `defaults.lua:59-60` (`DTAP_ZONE_MENU`, `DTAP_ZONE_MENU_EXT`), `:72-75`
+  (`DSWIPE_ZONE_LEFT_EDGE`, `DSWIPE_ZONE_RIGHT_EDGE`, `DSWIPE_ZONE_TOP_EDGE`,
+  `DSWIPE_ZONE_BOTTOM_EDGE`); read through `G_defaults:readSetting` as
+  `frontend/apps/filemanager/filemanagermenu.lua:74-75` reads them, against `Screen:getSize()`
+  at gesture time. The home's own zones (touch lock entry below) cover the screen at the home's
+  build size and test these bands in their handlers.
+- Screen ratios. A tap inside the top menu zones leaves the placeholder up. The swipe up that
+  opens the settings stub starts in the bottom edge band and outside the left and right bands,
+  where Gestures binds frontlight and warmth swipes by default
+  (`plugins/gestures.koplugin/defaults.lua:14-17`; it binds nothing to a bottom-edge swipe up,
+  `:20-21`). A west or east swipe outside the top and bottom bands is consumed.
 
 ### `PluginLoader:loadPlugins()` and plugin names, the coexistence check
 
@@ -172,6 +181,61 @@ Upgrading KOReader walks this list.
   gives the topmost widget the gesture first).
 - The home overrides `onGesture` and `paintTo`, each calling through a `pcall`: KOReader does
   not sandbox the home, so an error there would reach the UI loop.
+
+### Gestures under the home: `sendEvent`, touch zones and the file manager's handlers
+
+- `frontend/ui/uimanager.lua:962-1034` (`sendEvent`: the topmost widget at `:988`, then only
+  `active_widgets` and `is_always_active` widgets down the stack, `:1006-1031`). With the home on
+  top the file manager sees no gesture; its one active widget, the screenshot module
+  (`frontend/apps/filemanager/filemanager.lua:400-403`), still does, since the home returns false
+  for what it does not consume.
+- `frontend/ui/widget/container/inputcontainer.lua:144-181` (`registerTouchZones`, zones per
+  container, ordered by `overrides`), `:266-285` (`onGesture` runs a container's zones, then its
+  `ges_events`). The home calls `InputContainer.onGesture(fm.menu, ges)`, then
+  `InputContainer.onGesture(fm, ges)`.
+- FileManagerMenu's zones: `frontend/apps/filemanager/filemanagermenu.lua:71-124`
+  (`initGesListener`, the top-zone tap and swipe zones registered on the menu module itself),
+  `:1120-1129` (registered from `SetDimensions`, which `FileManager:init` sends,
+  `frontend/apps/filemanager/filemanager.lua:433`, and again on rotation), `:51`
+  (`activate_menu`, read once in `init`), `:1102-1107` (`onTapShowMenu`), `:1109-1114`
+  (`onSwipeShowMenu`, south only), `:1083-1100` (the far-left and far-right tabs).
+- The file manager's own swipe zone: `frontend/apps/filemanager/filemanager.lua:81-98`
+  (full screen), `:474-482` (`onSwipeFM` pages the file chooser; the zone's handler returns
+  nothing, so later zones run too).
+- The Gestures plugin registers its zones on the file manager (`plugins/gestures.koplugin/main.lua:1287-1288`,
+  `self.ui:registerTouchZones`) and binds one-finger west and east swipes only in the top and
+  bottom edge bands (`:1168-1195`); its actions run `Dispatcher:execute` (`:1327`).
+
+### KOReader's touch lock: `setIgnoreTouchInput`, `_onGestureFiltered`, `isGestureAlwaysActive`
+
+- `frontend/ui/widget/container/inputcontainer.lua:287-295` (`isGestureAlwaysActive`, false
+  unless the Gestures plugin replaces it, `plugins/gestures.koplugin/main.lua:196-223`, by zone
+  id), `:297-309` (`_onGestureFiltered`: only zones it approves, no `ges_events`), `:322-350`
+  (`setIgnoreTouchInput` swaps `InputContainer.onGesture` for `_onGestureFiltered` and back;
+  its comment at `:311-321` notes that a subclass overriding `onGesture` escapes the swap);
+  `frontend/ui/uimanager.lua:142-145` (`UIManager:setIgnoreTouchInput`), `:268-271` (`show`
+  lifts the lock for the widget shown).
+- The home overrides `onGesture`, so its own steps, the swipe up to the settings stub and the
+  closing tap, are touch zones on the home (`kopanda_home_swipe_up`, `kopanda_home_tap`) run
+  through `InputContainer.onGesture(self, ges)`: under the lock they match nothing and the
+  settings message, whose `show` would lift the lock, never shows. A zone's handler only records
+  its step; `routeGesture` runs it in place, the closing tap after the forwarded steps. The
+  forwarded steps go through `InputContainer.onGesture` too, so under the lock the file
+  manager's zones the Gestures plugin marks always active still run. The lock's state is read
+  nowhere: `UIManager._input_gestures_disabled` is private.
+
+### `Dispatcher.execute`, the dispatch bridge
+
+- `frontend/dispatcher.lua:1549` (`Dispatcher:execute`), `:1584-1586` (a `none` action's event
+  goes out with `UIManager:sendEvent`); `frontend/ui/uimanager.lua:1021-1027` (`is_always_active`,
+  whose comment names widgets that "listen to Dispatcher events").
+- The emulator showed an action dispatched from the home lost (History, `ShowHist`,
+  `frontend/apps/filemanager/filemanagerhistory.lua:59`). `dispatch_bridge.lua` wraps
+  `Dispatcher.execute` once per process, from the first instance that isn't refused: with a home
+  shown and a live file manager it sets `fm.is_always_active = true` for the call and puts the
+  previous value back after, re-raising an action's error unchanged; otherwise it calls the
+  original straight through. An error in its own work is logged and the original runs.
+  `spec/plugin_harness.lua` puts the unwrapped function back on each load, as a new process has it.
 
 ### Main menu registration, both apps
 
@@ -403,6 +467,22 @@ Upgrading KOReader walks this list.
 - `document_metadata_folder`: `frontend/docsettings.lua:102` (default `doc`, the `.sdr`
   sidecar beside the book), so the spec opens a copy of a fixture book outside
   `spec/fixtures/library/`.
+
+### The gesture-forward scenario (`spec/emulator/scenarios/2-scenario-gesture-forward.lua`)
+
+- The Gestures settings file: `plugins/gestures.koplugin/main.lua:32`
+  (`settings/gestures.lua`), `:227-252` (`loadSettings`: one table per mode, `gesture_fm` for
+  the file manager, and `custom_multiswipes`; a non-empty file is used as it is, `:231`). The
+  patch writes it with `LuaSettings` (`frontend/luasettings.lua:21-48`, `:102`) before any
+  plugin loads, binding `tap_right_bottom_corner` to `history` (`frontend/dispatcher.lua:68`,
+  event `ShowHist`).
+- The tap: a `Gesture` event sent with `UIManager:sendEvent` inside `DTAP_ZONE_BOTTOM_RIGHT`
+  (`defaults.lua:69`), with the fields `GestureRange:match` reads
+  (`frontend/ui/gesturerange.lua:21-51`).
+- `FileManager.instance.history.booklist_menu`: `frontend/apps/filemanager/filemanagerhistory.lua:59-61`
+  (the list `onShowHist` shows), checked with `UIManager:isWidgetShown`
+  (`frontend/ui/uimanager.lua:881-888`); the home with `UIManager:topdown_widgets_iter`
+  (`:846`).
 
 ### `logger`
 

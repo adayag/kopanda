@@ -1,0 +1,13 @@
+id: EV-khq8da
+type: claim.task
+at: 2026-10-14T21:34:53.967387Z
+contributor: allen
+command: claim task T-brarld
+targets:
+    - T-brarld
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/gesture-routing/task.yml

@@ -5,6 +5,7 @@
 -- Every KoPanda module is required here, at load time: KOReader prepends the plugin root to
 -- package.path only while it dofile()s this file (frontend/pluginloader.lua:242, :269-270),
 -- so a later require could resolve to another plugin's same-named file (:283-286).
+local DispatchBridge = require("dispatch_bridge")
 local Dispatcher = require("dispatcher")
 local Guards = require("guards")
 local Home = require("home")
@@ -47,6 +48,8 @@ function KoPanda:init()
         -- :645), which can run before this instance exists, so the action is also registered here.
         self:onDispatcherRegisterActions()
         self.ui.menu:registerToMainMenu(self)
+        -- Once per process; it acts only while a home is shown.
+        DispatchBridge.install()
     end)
     if not ok then
         logger.err("KoPanda: init failed:", err)
