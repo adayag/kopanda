@@ -23,6 +23,15 @@ describe("KoPanda's guards", function()
         return count
     end
 
+    local function contains(list, value)
+        for _, v in ipairs(list) do
+            if v == value then
+                return true
+            end
+        end
+        return false
+    end
+
     before_each(function()
         harness.load()
         Home = require("home")
@@ -105,6 +114,34 @@ describe("KoPanda's guards", function()
             harness.show_fm()
             harness.tick(2)
             assert.equals(0, homes_on_stack())
+        end)
+
+        it("adds no Home tab, Tools entry or action", function()
+            local Dispatcher = require("dispatcher")
+            local register = spy.on(Dispatcher, "registerAction")
+            finally(function()
+                Dispatcher.registerAction:revert()
+            end)
+            enable("simpleui")
+            local fm = harness.show_fm()
+            -- The broadcast Dispatcher:init sends (frontend/dispatcher.lua:645).
+            UIManager:broadcastEvent(Event:new("DispatcherRegisterActions"))
+            fm.menu:onShowMenu()
+            local ids = {}
+            for _, tab in ipairs(fm.menu.tab_item_table) do
+                ids[#ids + 1] = tab.id
+                for _, item in ipairs(tab) do
+                    ids[#ids + 1] = item.id
+                end
+            end
+            local registered = {}
+            for _, call in ipairs(register.calls) do
+                registered[#registered + 1] = call.vals[2]
+            end
+            assert.truthy(#ids > 0)
+            assert.is_false(contains(ids, "kopanda_home"))
+            assert.is_false(contains(ids, "kopanda"))
+            assert.is_false(contains(registered, "kopanda_home"))
         end)
 
         it("shows the home when no other shell is enabled", function()

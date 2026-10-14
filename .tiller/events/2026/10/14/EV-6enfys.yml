@@ -1,0 +1,13 @@
+id: EV-6enfys
+type: check.task
+at: 2026-10-14T21:34:06.138655Z
+contributor: allen
+command: check task T-j9jdiw
+targets:
+    - T-j9jdiw
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/entry-points/task.yml

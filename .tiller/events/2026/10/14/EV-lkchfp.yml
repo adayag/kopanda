@@ -1,0 +1,13 @@
+id: EV-lkchfp
+type: claim.task
+at: 2026-10-14T21:17:51.111216Z
+contributor: allen
+command: claim task T-j9jdiw
+targets:
+    - T-j9jdiw
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/entry-points/task.yml

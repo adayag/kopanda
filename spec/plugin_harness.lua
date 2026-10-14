@@ -50,14 +50,16 @@ function M.module_names()
 end
 
 -- Loads the plugin as the only enabled one, with its modules' state and runtime state file
--- fresh (no boot flag left by an earlier spec), and returns the
--- plugin module (the class KOReader makes an instance of per file manager and reader).
--- PluginLoader:_load reads main, meta, path and name (frontend/pluginloader.lua:231-271).
+-- fresh (no boot flag left by an earlier spec), and KOReader's require-cached file manager
+-- menu order fresh (no Home tab inserted and no user order merged by an earlier spec), and
+-- returns the plugin module (the class KOReader makes an instance of per file manager and
+-- reader). PluginLoader:_load reads main, meta, path and name (frontend/pluginloader.lua:231-271).
 function M.load()
     disable_plugins()
     for _, name in ipairs(M.module_names()) do
         package.unload(name) -- luacheck: ignore 143
     end
+    package.unload("ui/elements/filemanager_menu_order") -- luacheck: ignore 143
     os.remove(M.state_file)
     os.remove(M.state_file .. ".old")
     os.remove(M.state_dir)

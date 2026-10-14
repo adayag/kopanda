@@ -214,4 +214,120 @@ describe("KoPanda failing safe", function()
         assert.equals(1, homes_on_stack())
         assert.is_false(require("luasettings"):open(harness.state_file):readSetting("boot_pending"))
     end)
+
+    describe("the menu entries", function()
+        local PluginLoader = require("pluginloader")
+
+        -- The file manager's tab count with KoPanda refused, the plugin then loaded afresh.
+        local function baseline_tab_count()
+            harness.teardown()
+            harness.load()
+            table.insert(PluginLoader.enabled_plugins, { name = "simpleui" })
+            local fm = harness.show_fm()
+            fm.menu:onShowMenu()
+            local count = #fm.menu.tab_item_table
+            harness.teardown()
+            harness.load()
+            Home = require("home")
+            return count
+        end
+
+        -- Closes the home with a mid-screen tap and opens the file manager's menu.
+        local function menu_without_home()
+            local fm = harness.show_fm()
+            harness.tick(2)
+            local size = Screen:getSize()
+            UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", size.w / 2, size.h / 2)))
+            fm.menu:onShowMenu()
+            return fm
+        end
+
+        it("leaves KOReader's tabs and a clean tab 1 when the order insert throws", function()
+            local baseline = baseline_tab_count()
+            local order = require("ui/elements/filemanager_menu_order")
+            finally(function()
+                setmetatable(order, nil)
+            end)
+            setmetatable(order, {
+                __newindex = function(t, key, value)
+                    if key == "kopanda_home" then
+                        error("kopanda-test: insert failed")
+                    end
+                    rawset(t, key, value)
+                end,
+            })
+            local fm = harness.show_fm()
+            harness.tick(2)
+            fm.menu:onShowMenu()
+            local tabs = fm.menu.tab_item_table
+            assert.equals(baseline, #tabs)
+            for _, tab in ipairs(tabs) do
+                assert.is_not.equals("kopanda_home", tab.id)
+            end
+            for _, item in ipairs(tabs[1]) do
+                assert.is_not.equals("kopanda_home", item.id)
+                assert.truthy(item.text or item.text_func)
+            end
+            -- The failure costs only the tab: the rest of KoPanda's menu entries are there.
+            local kopanda
+            for _, tab in ipairs(tabs) do
+                for _, item in ipairs(tab) do
+                    if item.id == "kopanda" then
+                        kopanda = item
+                    end
+                end
+            end
+            assert.is_table(kopanda)
+            fm.menu:onCloseFileManagerMenu()
+            Home.close()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: insert failed"))
+        end)
+
+        it("closes the menu and leaves the file manager on top when the Home tab throws", function()
+            local KoPanda = PluginLoader.enabled_plugins[1]
+            KoPanda.goHome = function()
+                error("kopanda-test: home tab failed")
+            end
+            local fm = menu_without_home()
+            local menu = fm.menu.menu_container[1]
+            local index
+            for i, tab in ipairs(menu.tab_item_table) do
+                if tab.id == "kopanda_home" then
+                    index = i
+                end
+            end
+            assert.is_number(index)
+            menu:switchMenuTab(index)
+            harness.tick()
+            assert.is_nil(fm.menu.menu_container)
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: home tab failed"))
+        end)
+
+        it("logs and leaves the file manager on top when a Tools entry throws", function()
+            local KoPanda = PluginLoader.enabled_plugins[1]
+            KoPanda.goHome = function()
+                error("kopanda-test: tools home failed")
+            end
+            local fm = menu_without_home()
+            local tools
+            for _, tab in ipairs(fm.menu.tab_item_table) do
+                if tab.id == "tools" then
+                    tools = tab
+                end
+            end
+            local kopanda
+            for _, item in ipairs(tools) do
+                if item.id == "kopanda" then
+                    kopanda = item
+                end
+            end
+            fm.menu:onCloseFileManagerMenu()
+            kopanda.sub_item_table[1].callback()
+            harness.tick()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: tools home failed"))
+        end)
+    end)
 end)

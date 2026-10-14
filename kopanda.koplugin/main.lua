@@ -5,9 +5,12 @@
 -- Every KoPanda module is required here, at load time: KOReader prepends the plugin root to
 -- package.path only while it dofile()s this file (frontend/pluginloader.lua:242, :269-270),
 -- so a later require could resolve to another plugin's same-named file (:283-286).
+local Dispatcher = require("dispatcher")
 local Guards = require("guards")
 local Home = require("home")
 local InfoMessage = require("ui/widget/infomessage")
+local MenuEntries = require("menu_entries")
+local SettingsMenu = require("settings_menu")
 local State = require("state")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -40,6 +43,10 @@ function KoPanda:init()
         if not self.in_fm then
             Home.drop_pending()
         end
+        -- DispatcherRegisterActions is broadcast once, from Dispatcher:init (frontend/dispatcher.lua:585-586,
+        -- :645), which can run before this instance exists, so the action is also registered here.
+        self:onDispatcherRegisterActions()
+        self.ui.menu:registerToMainMenu(self)
     end)
     if not ok then
         logger.err("KoPanda: init failed:", err)
@@ -156,6 +163,86 @@ function KoPanda:onCloseWidget()
     if self.in_fm then
         Home.close()
     end
+end
+
+-- The home from anywhere: in the file manager it goes up (nothing happens when it is up); in
+-- the reader the book closes and the file manager's Show brings the home.
+function KoPanda:goHome()
+    if self.in_fm then
+        self:showHome()
+    else
+        self.ui:onHome()
+    end
+end
+
+-- f wrapped so an error is logged rather than reaching KOReader's menu or UI loop.
+local function guarded(what, f)
+    return function()
+        local ok, err = pcall(f)
+        if not ok then
+            logger.err("KoPanda: " .. what .. " failed:", err)
+        end
+    end
+end
+
+-- A menu item's callback runs before the menu closes (frontend/ui/widget/touchmenu.lua:913-926),
+-- so the item acts from the next tick.
+local function after_menu(what, f)
+    return guarded(what, function()
+        UIManager:nextTick(guarded(what, f))
+    end)
+end
+
+function KoPanda:onDispatcherRegisterActions()
+    if self.refused then
+        return
+    end
+    Dispatcher:registerAction("kopanda_home", {
+        category = "none",
+        event = "KoPandaHome",
+        title = "KoPanda: home",
+        general = true,
+    })
+end
+
+-- The KoPanda: home action. When the home is up it is on top and consumes the event first.
+function KoPanda:onKoPandaHome()
+    if self.refused then
+        return
+    end
+    self:goHome()
+    return true
+end
+
+function KoPanda:addToMainMenu(menu_items)
+    if self.in_fm and MenuEntries.home_tab() then
+        -- A tab that acts on tap (filemanagermenu.lua:841-848). remember = false keeps its index
+        -- from being saved (touchmenu.lua:452-464, :777-779).
+        menu_items.kopanda_home = {
+            icon = "home",
+            remember = false,
+            callback = guarded("the Home tab", function()
+                self.ui.menu:onCloseFileManagerMenu()
+                self:goHome()
+            end),
+        }
+    end
+    menu_items.kopanda = {
+        text = "KoPanda",
+        sorting_hint = "tools",
+        sub_item_table = {
+            {
+                text = "Home",
+                callback = after_menu("Tools › KoPanda › Home", function()
+                    self:goHome()
+                end),
+            },
+            {
+                text = "Settings",
+                callback = after_menu("Tools › KoPanda › Settings", SettingsMenu.open),
+            },
+        },
+    }
 end
 
 return KoPanda

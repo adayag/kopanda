@@ -190,6 +190,12 @@ function Home:onCloseWidget()
     end
 end
 
+-- The KoPanda: home action while the home is up: the home is on top, gets the event first
+-- (frontend/ui/uimanager.lua:988) and consumes it, leaving the one home there is.
+function Home:onKoPandaHome()
+    return true
+end
+
 -- KOReader's top menu zones (defaults.lua:59-60), read as filemanagermenu.lua:74-75 reads them.
 local function in_menu_zone(pos, dimen)
     local zones = { G_defaults:readSetting("DTAP_ZONE_MENU"), G_defaults:readSetting("DTAP_ZONE_MENU_EXT") }
