@@ -1,0 +1,13 @@
+id: EV-mk4eoq
+type: claim.task
+at: 2026-10-14T20:35:59.372433Z
+contributor: allen
+command: claim task T-o490lt
+targets:
+    - T-o490lt
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/home-lifecycle/task.yml

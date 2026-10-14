@@ -1,0 +1,13 @@
+id: EV-rmhx9p
+type: check.task
+at: 2026-10-14T21:00:12.323435Z
+contributor: allen
+command: check task T-o490lt
+targets:
+    - T-o490lt
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/home-lifecycle/task.yml

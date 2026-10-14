@@ -1,0 +1,16 @@
+id: EV-0cengn
+type: submit.task
+at: 2026-10-14T21:00:12.539605Z
+contributor: allen
+command: submit task T-o490lt
+targets:
+    - T-o490lt
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/plugin-shell/home-lifecycle
+        head: git:40c2467
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/plugin-shell/tasks/home-lifecycle/task.yml
