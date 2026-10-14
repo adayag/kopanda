@@ -12,6 +12,9 @@ local M = {}
 M.root = assert(os.getenv("KOPANDA_ROOT"), "plugin_harness: KOPANDA_ROOT unset")
 M.plugin_dir = M.root .. "/kopanda.koplugin"
 M.library = M.root .. "/spec/fixtures/library"
+-- KoPanda's runtime state file (kopanda.koplugin/state.lua) and its directory under KO_HOME.
+M.state_dir = require("datastorage"):getSettingsDir() .. "/kopanda"
+M.state_file = M.state_dir .. "/state.lua"
 
 -- Every .lua file under the plugin, as a path relative to the plugin root, sorted.
 function M.plugin_files()
@@ -46,7 +49,8 @@ function M.module_names()
     return names
 end
 
--- Loads the plugin as the only enabled one, with its modules' state fresh, and returns the
+-- Loads the plugin as the only enabled one, with its modules' state and runtime state file
+-- fresh (no boot flag left by an earlier spec), and returns the
 -- plugin module (the class KOReader makes an instance of per file manager and reader).
 -- PluginLoader:_load reads main, meta, path and name (frontend/pluginloader.lua:231-271).
 function M.load()
@@ -54,6 +58,9 @@ function M.load()
     for _, name in ipairs(M.module_names()) do
         package.unload(name) -- luacheck: ignore 143
     end
+    os.remove(M.state_file)
+    os.remove(M.state_file .. ".old")
+    os.remove(M.state_dir)
     local PluginLoader = require("pluginloader")
     PluginLoader:_load{ {
         main = M.plugin_dir .. "/main.lua",

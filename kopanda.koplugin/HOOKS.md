@@ -108,7 +108,22 @@ Upgrading KOReader walks this list.
 - `ui/widget/infomessage`: `frontend/ui/widget/infomessage.lua:47` (the class), `:52-53`
   (`text`, `timeout`), `:263-292` (`onShow` schedules the close when `timeout` is set).
 - Shown from `UIManager:nextTick`. The refusal message has no timeout and is raised once per
-  process from a file-manager instance.
+  process from a file-manager instance. The boot guard's notice has a timeout of 8 s.
+
+### The runtime state file, `settings/kopanda/state.lua`
+
+- `datastorage`: `datastorage.lua:16-20` (`getDataDir`, `KO_HOME` when set), `:60`
+  (`getSettingsDir`).
+- `luasettings`: `frontend/luasettings.lua:21-48` (`open`: a missing or corrupt file reads as an
+  empty table, after trying `.old`), `:89` (`readSetting`), `:102` (`saveSetting`), `:252-268`
+  (`backup`: renames the file to `.old` when it is older than 60 s), `:270-275` (`flush`, which
+  ignores the write's result).
+- `frontend/util.lua:1124-1143` (`util.writeToFile`: `io.open` on the path, so a missing
+  directory fails, and the failure is only returned).
+- `libs/libkoreader-lfs`: KOReader's LuaFileSystem build (`base/thirdparty/koreader-lfs/CMakeLists.txt:19`);
+  `lfs.mkdir` and `lfs.attributes`, as `frontend/util.lua:875` uses them.
+- `state.lua` makes `settings/kopanda/` before each write and checks it is a directory, since
+  `flush` would fail there silently. The boot guard's `boot_pending` lives here, not in the schema.
 
 ### `InputContainer` gesture and paint dispatch
 

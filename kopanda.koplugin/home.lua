@@ -64,26 +64,42 @@ local function close_home(home)
     end
 end
 
--- Signals the home's first paint on the dev loop's settled hook, once per home. A home whose
--- paint failed sends nothing: the screen shows the file browser, not the home.
-local function settle(home, opts)
-    if home.settled or home.paint_failed then
+-- Runs the show's finished callback (the boot guard's clear), if any.
+local function finish(opts)
+    if not opts.finished then
         return
     end
-    home.settled = true
-    local ok, err = pcall(function()
-        UIManager.event_hook:execute("KoPandaSettled", {
-            screen = "home",
-            paint_ms = time.to_ms(time.monotonic() - opts.started),
-            prebuilt = opts.prebuilt == true,
-        })
-    end)
+    local ok, err = pcall(opts.finished)
     if not ok then
-        logger.err("KoPanda: the settled signal failed:", err)
+        logger.err("KoPanda: the show's finished callback failed:", err)
     end
 end
 
--- opts: started (time.monotonic() at the start of the show path), prebuilt. On any error the
+-- Signals the home's first paint on the dev loop's settled hook, once per home, then runs the
+-- finished callback. A home whose paint failed sends no signal: the screen shows the file
+-- browser, not the home.
+local function settle(home, opts)
+    if home.settled then
+        return
+    end
+    home.settled = true
+    if not home.paint_failed then
+        local ok, err = pcall(function()
+            UIManager.event_hook:execute("KoPandaSettled", {
+                screen = "home",
+                paint_ms = time.to_ms(time.monotonic() - opts.started),
+                prebuilt = opts.prebuilt == true,
+            })
+        end)
+        if not ok then
+            logger.err("KoPanda: the settled signal failed:", err)
+        end
+    end
+    finish(opts)
+end
+
+-- opts: started (time.monotonic() at the start of the show path), prebuilt, finished (called
+-- once, after the first paint's settled signal or on a caught failure). On any error the
 -- home is taken off the stack and the file browser beneath is left as it is.
 function Home.show(opts)
     local home
@@ -102,6 +118,7 @@ function Home.show(opts)
             close_home(home)
         end
         Home.shown = nil
+        finish(opts)
     end
 end
 

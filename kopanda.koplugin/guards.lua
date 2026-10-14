@@ -61,7 +61,12 @@ function Guards.notify_once()
     local text = string.format("KoPanda's home is off while %s %s enabled. "
         .. "Disable %s in Plugin management and restart KOReader.", table.concat(names, " and "), verb, pronoun)
     UIManager:nextTick(function()
-        UIManager:show(InfoMessage:new{ text = text })
+        local ok, err = pcall(function()
+            UIManager:show(InfoMessage:new{ text = text })
+        end)
+        if not ok then
+            logger.err("KoPanda: could not show the refusal message:", err)
+        end
     end)
 end
 

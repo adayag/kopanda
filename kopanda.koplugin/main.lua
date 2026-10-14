@@ -7,10 +7,15 @@
 -- so a later require could resolve to another plugin's same-named file (:283-286).
 local Guards = require("guards")
 local Home = require("home")
+local InfoMessage = require("ui/widget/infomessage")
+local State = require("state")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
 local time = require("ui/time")
+
+-- The boot guard covers only the first show of a process.
+local first_show_done = false
 
 local KoPanda = WidgetContainer:extend{
     name = "kopanda",
@@ -45,7 +50,33 @@ function KoPanda:showHome()
     if not (FileManager and FileManager.instance) then
         return
     end
-    Home.show{ started = time.monotonic() }
+    local opts = { started = time.monotonic() }
+    if not first_show_done then
+        first_show_done = true
+        -- Still set from the last start: that home never finished drawing. Skip it this once.
+        if State.get("boot_pending") then
+            State.set("boot_pending", false)
+            UIManager:nextTick(function()
+                local ok, err = pcall(function()
+                    UIManager:show(InfoMessage:new{
+                        text = "KoPanda's home was skipped because it didn't finish drawing last time. "
+                            .. "Open it from the Home tab or Tools › KoPanda.",
+                        timeout = 8,
+                    })
+                end)
+                if not ok then
+                    logger.err("KoPanda: could not show the boot guard notice:", err)
+                end
+            end)
+            return
+        end
+        State.set("boot_pending", true)
+        -- Run after the home's first paint, or on a caught failure of its build, show or paint.
+        opts.finished = function()
+            State.set("boot_pending", false)
+        end
+    end
+    Home.show(opts)
 end
 
 -- The file manager's Show. The home goes up from the next tick, so it lands over whatever
