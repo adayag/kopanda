@@ -28,6 +28,7 @@ The owner's own interface for KOReader e-readers: a plugin that replaces the she
 - `bin/check`: the gate. luacheck, then every `spec/unit/*_spec.lua`, then every `spec/emulator/*_spec.lua` on the emulator's LuaJIT under a fresh `KO_HOME`; stops at the first failing stage.
 - `bin/check --lint`: luacheck alone (Tiller's build gate).
 - `bin/check <spec>...`: exactly those spec files, no luacheck.
+- `KOPANDA_UPDATE_GOLDENS=1 bin/check <spec>`: writes that spec's captures as its goldens under `spec/goldens/` (PNG plus JSON sidecar; masks and notes in an existing sidecar are kept). Open every regenerated PNG and look at it before committing.
 
 `bin/check` needs `luacheck` on `PATH` (`brew install luacheck`) and the emulator at `KOPANDA_EMULATOR` (see `.env.example`); it refuses with exit 2 otherwise.
 
