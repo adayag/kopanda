@@ -1,0 +1,13 @@
+id: EV-zmc96b
+type: approve.epic
+at: 2026-10-14T03:37:22.386243Z
+contributor: allen
+command: approve epic E-ao5nga
+targets:
+    - E-ao5nga
+before:
+    status: draft
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/epic.yml
