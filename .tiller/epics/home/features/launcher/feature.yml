@@ -1,7 +1,7 @@
 id: F-ydcqb0
 key: home/launcher
 title: Launcher entries, folders and placeholders
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -13,6 +13,7 @@ order:
     - T-asihfm
     - T-j98jk4
 review_grain: feature
+branch: tiller/reviews/features/home/launcher
 accepted_against:
     spec:
         kind: git_blob

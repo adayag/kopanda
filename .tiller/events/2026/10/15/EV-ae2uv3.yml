@@ -1,0 +1,13 @@
+id: EV-ae2uv3
+type: claim.task
+at: 2026-10-15T18:24:23.785676Z
+contributor: allen
+command: claim task T-lv4m58
+targets:
+    - T-lv4m58
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/launcher/tasks/entries/task.yml
