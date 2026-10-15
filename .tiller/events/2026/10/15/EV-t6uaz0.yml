@@ -1,0 +1,17 @@
+id: EV-t6uaz0
+type: start.task
+at: 2026-10-15T02:57:51.975694Z
+contributor: allen
+command: start task T-3qwuor
+targets:
+    - T-3qwuor
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/home/looks-and-schema
+    branch: tiller/home/looks-and-schema/fonts
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/fonts/task.yml
+    - path: .tiller/epics/home/features/looks-and-schema/feature.yml
