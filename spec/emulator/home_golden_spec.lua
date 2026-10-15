@@ -1,7 +1,8 @@
 -- The home goldens (C9): each look on each profile with a known weather cache and reading
 -- history, and each look on the Colorsoft with neither, all at 2026-10-13 08:42 in Chicago.
 -- The home fixture patch freezes the clock and writes the scenario before any plugin runs.
--- Diner scenarios store no look, so they show the schema's default.
+-- Diner scenarios store no look, so they show the schema's default; the look is always passed
+-- (empty for Diner) so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
 describe("the home goldens", function()
     require("commonrequire")
     local driver = require("emulator.driver")
@@ -28,7 +29,7 @@ describe("the home goldens", function()
                 env = {
                     TZ = "America/Chicago",
                     KOPANDA_HOME_FIXTURE = scenario.fixture,
-                    KOPANDA_HOME_LOOK = scenario.look,
+                    KOPANDA_HOME_LOOK = scenario.look or "",
                 },
             }
             assert.equals("home", result.sidecar.screen)

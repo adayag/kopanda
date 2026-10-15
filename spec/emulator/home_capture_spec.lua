@@ -40,7 +40,8 @@ describe("capturing the KoPanda home on the emulator", function()
                 profile = name,
                 plugin_dir = plugin,
                 patches = { fixture },
-                env = { TZ = "America/Chicago", KOPANDA_HOME_FIXTURE = "populated" },
+                -- An empty look so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
+                env = { TZ = "America/Chicago", KOPANDA_HOME_FIXTURE = "populated", KOPANDA_HOME_LOOK = "" },
             }
             assert.equals(profile.width, result.width)
             assert.equals(profile.height, result.height)
