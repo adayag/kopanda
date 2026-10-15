@@ -1,0 +1,14 @@
+id: EV-q0t19q
+type: add.tweak
+at: 2026-10-15T19:47:50.301571Z
+contributor: allen
+command: add tweak flaky-probe-golden-colorsoft
+targets:
+    - TW-ft6azu
+after:
+    attached_to: T-xem8p9
+    key: tweaks/flaky-probe-golden-colorsoft
+    status: proposed
+files:
+    - path: .tiller/tweaks/flaky-probe-golden-colorsoft/tweak.md
+    - path: .tiller/tweaks/flaky-probe-golden-colorsoft/tweak.yml
