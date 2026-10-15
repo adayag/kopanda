@@ -1,0 +1,13 @@
+id: EV-155qor
+type: claim.task
+at: 2026-10-15T21:24:38.493998Z
+contributor: allen
+command: claim task T-8hhlio
+targets:
+    - T-8hhlio
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/folder-sheet/task.yml
