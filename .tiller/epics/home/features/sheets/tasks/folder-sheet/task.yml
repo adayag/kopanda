@@ -1,7 +1,7 @@
 id: T-8hhlio
 key: home/sheets/folder-sheet
 title: The folder sheet from a launcher folder tap
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:78d4d3c
         observed_at: 2026-10-15T20:24:28.05886Z
 branch: tiller/home/sheets/folder-sheet
+review_ref:
+    branch: tiller/home/sheets/folder-sheet
+    head:
+        kind: git_commit
+        value: git:4a08b73
+        observed_at: 2026-10-15T21:34:20.684027Z
 gates:
     build:
         required: true
