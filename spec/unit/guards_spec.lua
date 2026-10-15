@@ -1,5 +1,6 @@
 -- The two safety nets around the shell: KoPanda refuses its home while another shell plugin is
--- enabled (C11), and a home that did not finish drawing last time is skipped once (C12).
+-- enabled (C11), keeping only Tools › KoPanda › Swatches (looks-and-schema C9, C10), and a home
+-- that did not finish drawing last time is skipped once (C12).
 describe("KoPanda's guards", function()
     local harness = require("plugin_harness")
     local Event = require("ui/event")
@@ -65,6 +66,28 @@ describe("KoPanda's guards", function()
             end
         end
 
+        -- Tools › KoPanda in a menu's tabs.
+        local function kopanda_item(tabs)
+            for _, tab in ipairs(tabs) do
+                if tab.id == "tools" then
+                    for _, item in ipairs(tab) do
+                        if item.id == "kopanda" then
+                            return item
+                        end
+                    end
+                end
+            end
+            error("no Tools › KoPanda")
+        end
+
+        local function kopanda_texts(tabs)
+            local list = {}
+            for _, item in ipairs(kopanda_item(tabs).sub_item_table) do
+                list[#list + 1] = item.text
+            end
+            return list
+        end
+
         it("refuses the home and names SimpleUI", function()
             enable("simpleui")
             harness.show_fm()
@@ -116,7 +139,7 @@ describe("KoPanda's guards", function()
             assert.equals(0, homes_on_stack())
         end)
 
-        it("adds no Home tab, Tools entry or action", function()
+        it("adds no Home tab or action, and nothing but Swatches to Tools", function()
             local Dispatcher = require("dispatcher")
             local register = spy.on(Dispatcher, "registerAction")
             finally(function()
@@ -140,9 +163,46 @@ describe("KoPanda's guards", function()
             end
             assert.truthy(#ids > 0)
             assert.is_false(contains(ids, "kopanda_home"))
-            assert.is_false(contains(ids, "kopanda"))
+            assert.same({ "Swatches" }, kopanda_texts(fm.menu.tab_item_table))
             assert.is_false(contains(registered, "kopanda_home"))
+            fm.menu:onCloseFileManagerMenu()
+            fm:onClose()
+            local reader = harness.open_reader()
+            reader.menu:onShowMenu()
+            assert.same({ "Swatches" }, kopanda_texts(reader.menu.tab_item_table))
         end)
+
+        for _, shell in ipairs({ "simpleui", "bookshelf", "ennUI" }) do
+            it("keeps Tools › KoPanda › Swatches alone and working with " .. shell .. " enabled", function()
+                enable(shell)
+                local fm = harness.show_fm()
+                harness.tick(2)
+                -- The refusal message is modal and stays above what follows until dismissed
+                -- (frontend/ui/uimanager.lua:241-253; infomessage.lua:48).
+                assert.equals(InfoMessage, getmetatable(harness.top()))
+                UIManager:close(harness.top())
+                fm.menu:onShowMenu()
+                local item = kopanda_item(fm.menu.tab_item_table)
+                assert.same({ "Swatches" }, kopanda_texts(fm.menu.tab_item_table))
+                item.sub_item_table[1].callback()
+                fm.menu:onCloseFileManagerMenu()
+                harness.tick()
+                assert.equals("kopanda_swatch", harness.top().name)
+                assert.equals(0, homes_on_stack())
+                UIManager:close(harness.top())
+                fm:onClose()
+                local reader = harness.open_reader()
+                harness.tick()
+                reader.menu:onShowMenu()
+                item = kopanda_item(reader.menu.tab_item_table)
+                assert.same({ "Swatches" }, kopanda_texts(reader.menu.tab_item_table))
+                item.sub_item_table[1].callback()
+                reader.menu:onCloseReaderMenu()
+                harness.tick()
+                assert.equals("kopanda_swatch", harness.top().name)
+                assert.equals(reader, harness.top(2))
+            end)
+        end
 
         it("shows the home when no other shell is enabled", function()
             enable("hello")

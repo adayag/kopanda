@@ -122,6 +122,32 @@ Upgrading KOReader walks this list.
   behind tasks already due on the tick after the paint, such as coverbrowser's background
   extraction (`plugins/coverbrowser.koplugin/covermenu.lua:119`, a fork).
 
+### The swatch screen
+
+- `G_reader_settings` key `night_mode`: `frontend/device/devicelistener.lua:14-27` (KOReader's
+  night-mode toggle writes it); read with `isTrue` to show the inversion note.
+- `base/ffi/blitbuffer.lua:1704-1724` (`paintRect` greys any colour through `getColor8`),
+  `:1827` (`paintRectRGB32`), `:2118-2126` (`paintBorderRGB32`): the panel fills and chips paint
+  through the RGB32 variants.
+- `frontend/ui/widget/textboxwidget.lua:854-906` (an RGB `fgcolor` or `bgcolor` gets an RGB32
+  buffer on a colour screen, the glyphs blitted with `colorblitFromRGB32`), `:50` (`bgcolor`
+  white by default), `:861-864` (the buffer filled with it): text in a palette's ink goes
+  through `TextBoxWidget` with the panel's paper as `bgcolor`.
+  `frontend/ui/widget/textwidget.lua:345-375` (`colorblitFrom`, which greys) is why not `TextWidget`.
+- `frontend/ui/widget/iconwidget.lua:58-62` (given `file`, an `IconWidget` is a plain
+  `ImageWidget`); `frontend/ui/widget/imagewidget.lua:202-226` (without `alpha` an icon is
+  flattened onto white), `:518-557` (`paintTo` alpha-blends with `alpha`).
+- `Screen:isColorEnabled` (`frontend/device/generic/device.lua:265-271`): when false every token
+  is drawn as its `getColor8` luminance grey (`base/ffi/blitbuffer.lua:464-467`), as a grey
+  panel's 8-bit framebuffer would show it; the emulator's grey profile keeps an RGB32
+  framebuffer (`base/ffi/framebuffer_SDL3.lua:20-23`, `:85-86`), where an RGB32 paint keeps its hue.
+- `frontend/ui/widget/verticalgroup.lua:15-31` (`getSize` fixes the layout on first call), so
+  the swatch measures each group once it is complete.
+- Shown and closed like the home: `covers_fullscreen`, `UIManager:show`/`close` with `"full"`,
+  a full-screen tap zone through `registerTouchZones`
+  (`frontend/ui/widget/container/inputcontainer.lua:144`), `onGesture` (`:266`) and `paintTo`
+  (`:73`) each in a `pcall`, and the settled signal with `screen = "swatch"` and `paint_ms`.
+
 ### `G_defaults` keys `DTAP_ZONE_MENU`, `DTAP_ZONE_MENU_EXT` and the `DSWIPE_ZONE_*` edges
 
 - `defaults.lua:59-60` (`DTAP_ZONE_MENU`, `DTAP_ZONE_MENU_EXT`), `:72-75`
@@ -262,10 +288,12 @@ Upgrading KOReader walks this list.
   `frontend/apps/filemanager/filemanagermenu.lua:851-856` and
   `frontend/apps/reader/modules/readermenu.lua:341` (each registered widget's `addToMainMenu` is
   pcalled with the `menu_items` table); the pattern of `plugins/hello.koplugin/main.lua:23-30`.
-- An instance that isn't refused registers from `init`; `self.ui.menu` exists by then, since
+- Every instance registers from `init`; `self.ui.menu` exists by then, since
   both apps register their menu module before making plugin instances
   (`frontend/apps/filemanager/filemanager.lua:404`, :418-429;
-  `frontend/apps/reader/readerui.lua:176`, :464-478).
+  `frontend/apps/reader/readerui.lua:176`, :464-478). A refused instance registers too, and its
+  `addToMainMenu` gives Tools › KoPanda the one item Swatches; the Home tab, Home and Settings
+  are left out.
 
 ### The cached menu order, `ui/elements/filemanager_menu_order`
 
@@ -371,6 +399,12 @@ Upgrading KOReader walks this list.
 - `ui/widget/verticalgroup`: `frontend/ui/widget/verticalgroup.lua:8`.
 - `ui/widget/verticalspan`: `frontend/ui/widget/verticalspan.lua:6`.
 - `ui/widget/textwidget`: `frontend/ui/widget/textwidget.lua:27` (`text`, `face`).
+- `ui/widget/textboxwidget`: `frontend/ui/widget/textboxwidget.lua:37` (`text`, `face`,
+  `width`, `fgcolor`, `bgcolor`; the swatch entry above).
+- `ui/widget/horizontalgroup`: `frontend/ui/widget/horizontalgroup.lua:9` (`align`).
+- `ui/widget/horizontalspan`: `frontend/ui/widget/horizontalspan.lua:6` (`width`).
+- `ui/widget/iconwidget`: `frontend/ui/widget/iconwidget.lua:43` (`file`, `width`, `height`,
+  `alpha`; the swatch entry above).
 - `ui/font`: `frontend/ui/font.lua:269-276` (`getFace` scales the size by
   `Screen:scaleBySize` itself).
 - `ui/geometry`: `frontend/ui/geometry.lua:37` (`Geom:new`), `:255-266` (`contains`).
@@ -530,6 +564,15 @@ Upgrading KOReader walks this list.
   (the list `onShowHist` shows), checked with `UIManager:isWidgetShown`
   (`frontend/ui/uimanager.lua:881-888`); the home with `UIManager:topdown_widgets_iter`
   (`:846`).
+
+### The swatch scenario (`spec/emulator/scenarios/2-scenario-swatch.lua`)
+
+- On the first home's settled signal it opens Tools › KoPanda › Swatches as the menu does:
+  `FileManager.instance.menu:onShowMenu()` (`frontend/apps/filemanager/filemanagermenu.lua:1006-1032`,
+  which builds `tab_item_table` at `:1007-1009`, `:862`), the item's `callback`, then `onCloseFileManagerMenu`
+  (`:1049`), the order `frontend/ui/widget/touchmenu.lua:913-926` runs them in. The capture is
+  taken on the swatch's own signal (`shot_screen = "swatch"`); a failure is sent as a `"swatch"`
+  signal with `error`.
 
 ### `logger`
 
