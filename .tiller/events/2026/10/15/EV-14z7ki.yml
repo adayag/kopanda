@@ -1,0 +1,16 @@
+id: EV-14z7ki
+type: submit.task
+at: 2026-10-15T19:49:04.469981Z
+contributor: allen
+command: submit task T-xem8p9
+targets:
+    - T-xem8p9
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/night-mode/palette
+        head: git:22d9966
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/night-mode/tasks/palette/task.yml

@@ -1,7 +1,7 @@
 id: T-xem8p9
 key: home/night-mode/palette
 title: Night variant, the inverted night palette and the home's rebuild on a variant change
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -17,6 +17,12 @@ accepted_against:
         value: git:7d5457c
         observed_at: 2026-10-15T19:24:02.13694Z
 branch: tiller/home/night-mode/palette
+review_ref:
+    branch: tiller/home/night-mode/palette
+    head:
+        kind: git_commit
+        value: git:22d9966
+        observed_at: 2026-10-15T19:49:04.469825Z
 gates:
     build:
         required: true
