@@ -1,5 +1,6 @@
 -- Reading stats from KOReader's Statistics plugin: its database, read-only, for the streak,
--- minutes today and books this month, and its settings, for whether it records at all.
+-- minutes today and books this month and for a book's reading speed, and its settings, for
+-- whether it records at all and its cap on one page's time.
 -- Days are local calendar days, bounded by os.time, which follows the process TZ.
 -- Module state: the last numbers read, which a busy database reads as.
 local DataStorage = require("datastorage")
@@ -72,6 +73,29 @@ local function column(conn, sql, value)
     return values
 end
 
+-- f(conn) run on the database at path, opened read-only and closed after: true and f's result,
+-- or false and the error's first line, logged.
+local function with_db(path, f)
+    local conn
+    local ok, result = pcall(function()
+        -- Required here, once a database exists, rather than at load: the binding ffi.cdef()s
+        -- when it loads, which a process can do once (spec/emulator/driver.lua:87-88), and
+        -- Busted unloads it after each spec file. On a device the require cache holds it.
+        local SQ3 = require("lua-ljsqlite3/init")
+        conn = SQ3.open(path, "ro")
+        return f(conn)
+    end)
+    if conn then
+        pcall(conn.close, conn)
+    end
+    if not ok then
+        -- lj-sqlite3's errors carry a traceback after the first line (lua-ljsqlite3/init.lua:58-61).
+        result = tostring(result):match("^[^\n]*")
+        logger.err("KoPanda: could not read the Statistics database:", result)
+    end
+    return ok, result
+end
+
 local function query(conn, now)
     local t = os.date("*t", now)
     local month = os.time{ year = t.year, month = t.month, day = 1, hour = 0 }
@@ -113,23 +137,11 @@ function ReadingStats.read(now)
         if not util.fileExists(path) then
             return empty(now)
         end
-        local conn
-        local read_ok, numbers = pcall(function()
-            -- Required here, once a database exists, rather than at load: the binding ffi.cdef()s
-            -- when it loads, which a process can do once (spec/emulator/driver.lua:87-88), and
-            -- Busted unloads it after each spec file. On a device the require cache holds it.
-            local SQ3 = require("lua-ljsqlite3/init")
-            conn = SQ3.open(path, "ro")
+        local read_ok, numbers = with_db(path, function(conn)
             return query(conn, now)
         end)
-        if conn then
-            pcall(conn.close, conn)
-        end
         if not read_ok then
-            -- lj-sqlite3's errors carry a traceback after the first line (lua-ljsqlite3/init.lua:58-61).
-            local message = tostring(numbers):match("^[^\n]*")
-            logger.err("KoPanda: could not read the Statistics database:", message)
-            local busy = message:find("ljsqlite3%[busy%]") or message:find("ljsqlite3%[locked%]")
+            local busy = numbers:find("ljsqlite3%[busy%]") or numbers:find("ljsqlite3%[locked%]")
             if busy and last then
                 return last
             end
@@ -147,6 +159,68 @@ function ReadingStats.read(now)
         return empty(now)
     end
     return result
+end
+
+-- The Statistics plugin's cap on one page's reading time, in seconds: max_sec from its settings,
+-- read without a default, else its default of 120 (plugins/statistics.koplugin/main.lua:30,
+-- :83, :143).
+local function max_sec()
+    local settings = G_reader_settings:readSetting("statistics")
+    if type(settings) == "table" and type(settings.max_sec) == "number" then
+        return settings.max_sec
+    end
+    return 120
+end
+
+-- The book row's id and pages for md5, the most recently opened row winning: md5 alone isn't
+-- unique (main.lua:462-484). Then the plugin's capped average over the pages read
+-- (main.lua:40-49), from the page_stat view, which rescales every row to the book row's pages
+-- (main.lua:422-452).
+local function rate(conn, md5)
+    local stmt = conn:prepare("SELECT id, pages FROM book WHERE md5 = ? ORDER BY last_open DESC LIMIT 1")
+    local book = stmt:bind(md5):step()
+    stmt:close()
+    if not book then
+        return nil
+    end
+    local id, pages = book[1], tonumber(book[2])
+    stmt = conn:prepare("SELECT count(*), sum(durations) FROM (SELECT min(sum(duration), ?) AS durations "
+        .. "FROM page_stat WHERE id_book = ? GROUP BY page)")
+    local row = stmt:bind(max_sec(), id):step()
+    stmt:close()
+    local count = row and tonumber(row[1])
+    if not count or count == 0 then
+        return nil
+    end
+    return { tonumber(row[2]) / count, pages }
+end
+
+-- The Statistics plugin's reading speed for the book whose partial md5 is md5, as seconds per
+-- page, and the pages its book row holds; nil when Statistics doesn't record, there is no
+-- database, the book has no row or no page read, or the read fails (logged). The database is
+-- opened read-only and only when it exists, as ReadingStats.read opens it. Never raises.
+function ReadingStats.seconds_per_page(md5)
+    local ok, result = pcall(function()
+        if off() then
+            return nil
+        end
+        local path = db_path()
+        if not util.fileExists(path) then
+            return nil
+        end
+        local read_ok, found = with_db(path, function(conn)
+            return rate(conn, md5)
+        end)
+        return read_ok and found or nil
+    end)
+    if not ok then
+        logger.err("KoPanda: could not read the reading speed:", result)
+        return nil
+    end
+    if result then
+        return result[1], result[2]
+    end
+    return nil
 end
 
 return ReadingStats

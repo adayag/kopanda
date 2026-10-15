@@ -371,6 +371,65 @@ describe("Settings", function()
         end)
     end)
 
+    describe("featured.pinned", function()
+        local entry = require("schema").keys[8]
+
+        it("is false by default", function()
+            assert.equals("featured.pinned", entry.id)
+            assert.is_false(Settings.get("featured.pinned"))
+        end)
+
+        it("refuses anything but false or an absolute path and leaves the file byte-identical", function()
+            local text = 'return { ["featured.pinned"] = "/mnt/us/a.epub" }'
+            store(text)
+            local refused = {
+                ["true"] = true,
+                ["a number"] = 5,
+                ["a table"] = { "/mnt/us/a.epub" },
+                ["an empty string"] = "",
+                ["the root alone"] = "/",
+                ["a relative path"] = "rel/a.epub",
+            }
+            for what, value in pairs(refused) do
+                local ok, reason = Settings.set("featured.pinned", value)
+                assert.is_false(ok, what)
+                assert.is_string(reason, what)
+                assert.equals(text, read(file), what)
+            end
+        end)
+
+        it("never raises in its validator", function()
+            for _, value in ipairs({ true, 5, {}, "", "/", "rel/a.epub", print }) do
+                local ok, valid = pcall(Settings.validators.path, entry, value)
+                assert.is_true(ok, tostring(value) .. ": " .. tostring(valid))
+                assert.is_false(valid, tostring(value))
+            end
+            local ok, valid = pcall(Settings.validators.path, entry, nil)
+            assert.is_true(ok, tostring(valid))
+            assert.is_false(valid)
+        end)
+
+        it("accepts false, an absolute path and a path to a missing file, each surviving a reopen", function()
+            local missing = harness.state_dir .. "/no-such-book.epub"
+            assert.is_nil(lfs.attributes(missing, "mode"))
+            for _, value in ipairs({ "/mnt/us/a.epub", missing, false }) do
+                assert.is_true(Settings.set("featured.pinned", value), tostring(value))
+                Settings._reset()
+                assert.equals(value, Settings.get("featured.pinned"), tostring(value))
+            end
+        end)
+
+        it("reads a stored true or relative path as false without raising", function()
+            for _, lua in ipairs({ "true", '"rel/a.epub"' }) do
+                Settings._reset()
+                store('return { ["featured.pinned"] = ' .. lua .. ' }')
+                local ok, value = pcall(Settings.get, "featured.pinned")
+                assert.is_true(ok, lua .. ": " .. tostring(value))
+                assert.is_false(value, lua)
+            end
+        end)
+    end)
+
     describe("schema_version", function()
         it("reads a file with no version as version 1 and stamps it on the first write", function()
             local text = 'return { look = "editorial" }'

@@ -83,5 +83,14 @@ return {
             label = "Show reading stats",
             group = "stats",
         },
+        {
+            -- A book to feature on the home in place of the last one opened; false features the
+            -- last one.
+            id = "featured.pinned",
+            type = "path",
+            default = false,
+            label = "Featured book",
+            group = "featured",
+        },
     },
 }

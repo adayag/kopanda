@@ -64,7 +64,8 @@ Upgrading KOReader walks this list.
   reader's modules, the plugin instance among them), `:893` (closes the reader); the file
   browser follows from `ReaderUI:onHome` `:935-940`, `showFileManager` `:581-596` and the
   reader menu's file-browser tab `frontend/apps/reader/modules/readermenu.lua:65-74`.
-- A reader instance's `onCloseDocument` builds the home into `Home.pending` (not shown) and
+- A reader instance's `onCloseDocument` first records the book's chapter for the featured book
+  (the featured book entry below), then builds the home into `Home.pending` (not shown) and
   returns nothing, so the event reaches later modules. The next file-manager `Show` puts the
   pending home up synchronously, before the UI loop's next `_repaint`
   (`frontend/ui/uimanager.lua:1537-1564`: `_checkTasks` at `:1543`, `_repaint` at `:1563`). A
@@ -465,6 +466,18 @@ Upgrading KOReader walks this list.
   `start_time` index `:419`; `start_time` is `os.time()` epoch seconds (`:2584`), `duration` whole
   seconds (`:2604`). The plugin's `createDB` makes it WAL where `Device:canUseWAL()`
   (`main.lua:455-460`, `frontend/device/generic/device.lua:131`); a read-only connection reads it.
+- The `book` table and its columns `id`, `md5`, `pages`, `last_open`: `main.lua:462-482`; the unique
+  index is on `(title, authors, md5)` (`:483`), so one md5 can have several rows and
+  `seconds_per_page` takes the one with the latest `last_open`. `md5` is the sidecar's
+  `partial_md5_checksum` (`main.lua:2737`).
+- The `page_stat` view: `main.lua:422-451` (with its `numbers` table), which rescales every
+  `page_stat_data` row to the book row's `pages` (`:438-451`; the rescale on a page-count change,
+  `:422-452`). `seconds_per_page` runs the plugin's capped-average query on it
+  (`STATISTICS_SQL_BOOK_CAPPED_TOTALS_QUERY`, `main.lua:40-49`) with the cap bound as a parameter;
+  the time left is the stats popup's sum over the book row's pages (`main.lua:1579`).
+- `max_sec`, the cap on one page's time: a field of the plugin's `statistics` settings table,
+  default `DEFAULT_MAX_READ_SEC` 120 (`main.lua:30`, `:83`, the read `:143`); `reading_stats.lua`
+  reads the table without a default and takes 120 when `max_sec` is absent.
 - `G_reader_settings` key `plugins_disabled`: `frontend/pluginloader.lua:175` (read keyed by folder
   name, `:212`); `statistics` in it reads as off.
 - `G_reader_settings` key `statistics`, the plugin's own table (`main.lua:61` `settings_key`, `:85`
@@ -478,6 +491,50 @@ Upgrading KOReader walks this list.
   the emulator KoPanda's handler ran first (module 37 against 64) with the closing session not yet
   in `page_stat_data`, so `Home.take_pending` has the stats widget read its numbers again.
 - `datetime`: `frontend/datetime.lua:29-42` (`longMonthTranslation`, the month name).
+
+### The featured book: reading history, sidecars, CoverBrowser and the chapter
+
+- `readhistory`: `frontend/readhistory.lua:15-16` (`ReadHistory.hist`), `:369-373` (read from its
+  file when the module loads), `:332-333` (the opened book inserted at the head, so the list is
+  most recent first), `:82` (at most `history_size`, 500, entries). Entries are built at `:25-36`:
+  `file` is the realpath (`:26`) and `select_enabled` is whether the file existed then, updated
+  only through KOReader (`:226-227`), so `featured_book.lua` re-checks each candidate with
+  `lfs.attributes(file, "mode") == "file"`. Required at call time, never written.
+- `ui/quickstart`: `QuickStart.quickstart_filename`, set by `getQuickStart`
+  (`frontend/ui/quickstart.lua:414-419`, `:470`); the QuickStart guide is skipped as
+  `ReaderUI:getLastDirFile` skips it (`frontend/apps/reader/readerui.lua:571-577`).
+- `docsettings`: `DocSettings:findSidecarFile` (`frontend/docsettings.lua:159-175`, the sidecar
+  path or nil, by `getOrderedLocationCandidates` `:101-110` and `getSidecarDir` `:118-135`, in the
+  order the `G_reader_settings` key `document_metadata_folder` gives, `:102`, `:121`;
+  `spec/unit/featured_book_spec.lua` sets it to `dir`) and
+  `DocSettings.openSettingsFile` (`:301-315`: `dofile` in a `pcall`, empty data for nil, a corrupt
+  file or an empty table; it cannot flush). `DocSettings:open` is never called: it removes
+  candidates it finds invalid (`:282-284`). Read through `isTrue` and `readSetting`
+  (`frontend/luasettings.lua:124-126`, `:89-99`, no default passed).
+- The sidecar keys read:
+  - `percent_finished`, 0 to 1 (`frontend/apps/reader/modules/readerrolling.lua:338`,
+    `readerpaging.lua:163`), clamped to 0 to 1, absent as 0;
+  - `summary.status`, `reading`, `abandoned` or `complete`, anything else as `reading`
+    (`frontend/ui/widget/booklist.lua:292-296`, the statuses `:371-378`);
+  - `pagemap_doc_pages` when `pagemap_use_page_labels` is true, else `doc_pages`, else `stats.pages`
+    when it isn't 0 (`booklist.lua:298-306`);
+  - `doc_props.title` and `doc_props.authors` (`frontend/apps/reader/readerui.lua:492-493`);
+  - `partial_md5_checksum` (`readerui.lua:497-501`), the Statistics `book.md5`.
+- `bookinfomanager`, CoverBrowser's cache: its folder is on `package.path` only when the plugin is
+  enabled (`frontend/pluginloader.lua:283-287`), so `pcall(require, "bookinfomanager")` failing
+  means disabled. The module is the initialised instance
+  (`plugins/coverbrowser.koplugin/bookinfomanager.lua:1032-1034`).
+  `BookInfoManager:getBookInfo(file, false)` (`:325-404`) gives the cached `title` and `authors`
+  (several authors newline-separated) without decompressing a cover (`:376-379`), or nil for a
+  book not indexed (`:359-362`).
+- `ffi/util`: `realpath` (`base/ffi/util.lua:171-176`, nil for a missing path), to compare the
+  recorded chapter's file with the featured file.
+- The chapter: `ReaderToc:getTocTitleOfCurrentPage`
+  (`frontend/apps/reader/modules/readertoc.lua:476-480`), the TOC title of `pageno`, `""` when no
+  entry covers the page (`:446-453`), filling an unfilled TOC itself (`:383-384`). Called on
+  `CloseDocument`, which is sent before the document closes (`readerui.lua:887`, `:891`), with
+  `self.ui.document.file`; both go into the runtime state file as `featured_chapter_file` and
+  `featured_chapter`. A raising lookup writes neither.
 
 ### The weather: `NetworkMgr`, `socketutil`, `socket.http`, `rapidjson` and its cache
 

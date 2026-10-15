@@ -1,12 +1,13 @@
 -- Closing a book builds the home before the file browser comes back, and the file manager's
--- show puts that pre-built home up at once.
+-- show puts that pre-built home up at once. Before it builds, the close records the book's
+-- chapter for the featured book (C3).
 describe("the KoPanda home pre-built on book close", function()
     local harness = require("plugin_harness")
     local Event = require("ui/event")
     local Geom = require("ui/geometry")
     local UIManager = require("ui/uimanager")
     local Screen = require("device").screen
-    local Home, new_spy
+    local Home, Plugin, new_spy
 
     -- The home's constructor: Home:new{} resolves Widget:new through Home's metatable, so the
     -- spy sits on Home itself and sees every build.
@@ -16,7 +17,7 @@ describe("the KoPanda home pre-built on book close", function()
     end
 
     before_each(function()
-        harness.load()
+        Plugin = harness.load()
         Home = require("home")
     end)
 
@@ -162,6 +163,99 @@ describe("the KoPanda home pre-built on book close", function()
         harness.open_reader("the-time-machine.epub")
         assert.is_nil(Home.pending)
         assert.spy(freed).was_called()
+    end)
+
+    describe("recording the chapter", function()
+        local logger = require("logger")
+        local State, order, real_set, real_prebuild
+        local file = "/mnt/us/books/frankenstein.epub"
+
+        -- A reader's KoPanda over a stub ui whose TOC answers with toc_title (a function to
+        -- call, or a string to return).
+        local function reader_kopanda(toc_title)
+            return Plugin:new{
+                ui = {
+                    document = { file = file },
+                    toc = {
+                        getTocTitleOfCurrentPage = function()
+                            if type(toc_title) == "function" then
+                                return toc_title()
+                            end
+                            return toc_title
+                        end,
+                    },
+                    menu = { registerToMainMenu = function() end },
+                },
+            }
+        end
+
+        before_each(function()
+            State = package.loaded["state"]
+            order = {}
+            real_set, real_prebuild = State.set, Home.prebuild
+            State.set = function(key, value)
+                order[#order + 1] = "set " .. key
+                return real_set(key, value)
+            end
+            Home.prebuild = function()
+                order[#order + 1] = "prebuild"
+            end
+        end)
+
+        after_each(function()
+            State.set, Home.prebuild = real_set, real_prebuild
+        end)
+
+        it("writes the file and the TOC title to the state before it pre-builds", function()
+            reader_kopanda("Letter IV"):onCloseDocument()
+            assert.same({ "set featured_chapter_file", "set featured_chapter", "prebuild" }, order)
+            assert.equals(file, State.get("featured_chapter_file"))
+            assert.equals("Letter IV", State.get("featured_chapter"))
+        end)
+
+        it("records a TOC with no title for the page as an empty chapter", function()
+            reader_kopanda(nil):onCloseDocument()
+            assert.equals(file, State.get("featured_chapter_file"))
+            assert.equals("", State.get("featured_chapter"))
+        end)
+
+        it("still records with a home already pending, which it doesn't rebuild", function()
+            local kopanda = reader_kopanda("Letter IV")
+            Home.pending = {}
+            kopanda:onCloseDocument()
+            Home.pending = nil
+            assert.same({ "set featured_chapter_file", "set featured_chapter" }, order)
+        end)
+
+        it("writes nothing from a raising TOC, logs it and still pre-builds", function()
+            local errored = spy.on(logger, "err")
+            reader_kopanda(function()
+                error("toc broke on purpose")
+            end):onCloseDocument()
+            logger.err:revert()
+            assert.same({ "prebuild" }, order)
+            assert.is_nil(State.get("featured_chapter_file"))
+            assert.is_nil(State.get("featured_chapter"))
+            assert.spy(errored).was_called()
+        end)
+
+        it("writes nothing with no document, and still pre-builds", function()
+            local kopanda = reader_kopanda("Letter IV")
+            kopanda.ui.document = nil
+            kopanda:onCloseDocument()
+            assert.same({ "prebuild" }, order)
+            assert.is_nil(State.get("featured_chapter_file"))
+        end)
+
+        it("records a real reader's book on its close", function()
+            Home.prebuild = real_prebuild
+            local reader = harness.open_reader()
+            harness.tick(2)
+            reader:onClose()
+            assert.equals(harness.library .. "/frankenstein.epub", State.get("featured_chapter_file"))
+            assert.is_string(State.get("featured_chapter"))
+            assert.is_not_nil(Home.pending)
+        end)
     end)
 
     it("builds nothing more on a second CloseDocument while a home is pending", function()

@@ -47,6 +47,26 @@ describe("reading stats", function()
                 FOREIGN KEY(id_book) REFERENCES book(id)
             );]],
         "CREATE INDEX IF NOT EXISTS page_stat_data_start_time ON page_stat_data(start_time);",
+        -- The numbers table and page_stat view (main.lua:422-451).
+        "CREATE TABLE IF NOT EXISTS numbers (number INTEGER PRIMARY KEY);",
+        [[WITH RECURSIVE counter AS
+            (
+                SELECT 1 as N UNION ALL
+                SELECT N + 1 FROM counter WHERE N < 1000
+            )
+            INSERT INTO numbers SELECT N AS number FROM counter;]],
+        [[CREATE VIEW IF NOT EXISTS page_stat AS
+            SELECT id_book, first_page + idx - 1 AS page, start_time,
+                duration / (last_page - first_page + 1) AS duration
+            FROM (
+                SELECT id_book, page, total_pages, pages, start_time, duration,
+                    ((page - 1) * pages) / total_pages + 1 AS first_page,
+                    max(((page - 1) * pages) / total_pages + 1, (page * pages) / total_pages) AS last_page,
+                    idx
+                FROM page_stat_data
+                JOIN book ON book.id = id_book
+                JOIN (SELECT number as idx FROM numbers) AS N ON idx <= (last_page - first_page + 1)
+            );]],
         "PRAGMA user_version = 20221111;",
     }
 
@@ -97,6 +117,28 @@ describe("reading stats", function()
         os.remove(db_path)
         os.remove(db_path .. "-wal")
         os.remove(db_path .. "-shm")
+    end
+
+    -- A Statistics database at db_path holding books { id, md5, pages, last_open } and page
+    -- rows { id_book, page, start_time, duration, total_pages }.
+    local function make_books_db(books, rows)
+        remove_db()
+        local conn = SQ3.open(db_path)
+        conn:exec("PRAGMA journal_mode=WAL;")
+        for _, sql in ipairs(DDL) do
+            conn:exec(sql)
+        end
+        local book_stmt = conn:prepare("INSERT INTO book (id, title, md5, pages, last_open) VALUES (?, ?, ?, ?, ?);")
+        for _, book in ipairs(books) do
+            book_stmt:reset():bind(book[1], "Book " .. book[1], book[2], book[3], book[4]):step()
+        end
+        book_stmt:close()
+        local stmt = conn:prepare("INSERT INTO page_stat_data VALUES (?, ?, ?, ?, ?);")
+        for _, row in ipairs(rows) do
+            stmt:reset():bind(row[1], row[2], row[3], row[4], row[5]):step()
+        end
+        stmt:close()
+        conn:close()
     end
 
     local function logged_error()
@@ -431,6 +473,98 @@ describe("reading stats", function()
             corrupt, stats = read_capturing()
             assert.equals("empty", stats.state)
             assert.is_true(corrupt._closed)
+        end)
+    end)
+
+    describe("seconds_per_page", function()
+        it("reads the most recently opened book row of an md5, with its pages", function()
+            make_books_db({
+                { 1, "abc", 50, 100 },
+                { 2, "abc", 80, 200 },
+                { 3, "def", 80, 300 },
+            }, {
+                { 1, 1, 1000, 10, 50 },
+                { 2, 1, 2000, 30, 80 },
+                { 2, 2, 2100, 50, 80 },
+                { 3, 1, 3000, 90, 80 },
+            })
+            local rate, pages = ReadingStats.seconds_per_page("abc")
+            assert.equals(40, rate)
+            assert.equals(80, pages)
+        end)
+
+        it("caps each page's summed time at max_sec, 120 when the settings hold none", function()
+            -- Page 1 is read twice, 200 s and 100 s: 300 s in all, over either cap.
+            make_books_db({ { 1, "abc", 100, 100 } }, {
+                { 1, 1, 1000, 200, 100 },
+                { 1, 1, 5000, 100, 100 },
+                { 1, 2, 1300, 20, 100 },
+            })
+            local rate, pages = ReadingStats.seconds_per_page("abc")
+            assert.equals((120 + 20) / 2, rate)
+            assert.equals(100, pages)
+            assert.is_nil(G_reader_settings:readSetting("statistics"))
+            G_reader_settings:saveSetting("statistics", { max_sec = 60 })
+            assert.equals((60 + 20) / 2, (ReadingStats.seconds_per_page("abc")))
+            G_reader_settings:saveSetting("statistics", { min_sec = 5 })
+            assert.equals((120 + 20) / 2, (ReadingStats.seconds_per_page("abc")))
+        end)
+
+        it("gives nil for an unknown md5", function()
+            make_books_db({ { 1, "abc", 100, 100 } }, { { 1, 1, 1000, 20, 100 } })
+            assert.is_nil(ReadingStats.seconds_per_page("zzz"))
+        end)
+
+        it("gives nil for a book with no page times", function()
+            make_books_db({ { 1, "abc", 100, 100 }, { 2, "def", 100, 200 } }, { { 2, 1, 1000, 20, 100 } })
+            assert.is_nil(ReadingStats.seconds_per_page("abc"))
+        end)
+
+        it("gives nil for a missing file without creating it or logging an error", function()
+            assert.is_nil(ReadingStats.seconds_per_page("abc"))
+            assert.is_nil(lfs.attributes(db_path, "mode"))
+            assert.is_false(logged_error())
+        end)
+
+        it("gives nil with the plugin disabled or not recording", function()
+            make_books_db({ { 1, "abc", 100, 100 } }, { { 1, 1, 1000, 20, 100 } })
+            assert.equals(20, (ReadingStats.seconds_per_page("abc")))
+            G_reader_settings:saveSetting("plugins_disabled", { statistics = true })
+            assert.is_nil(ReadingStats.seconds_per_page("abc"))
+            G_reader_settings:delSetting("plugins_disabled")
+            G_reader_settings:saveSetting("statistics", { is_enabled = false })
+            assert.is_nil(ReadingStats.seconds_per_page("abc"))
+        end)
+
+        it("gives nil for a corrupt file, and logs it", function()
+            local f = assert(io.open(db_path, "wb"))
+            f:write(string.rep("not a database ", 100))
+            f:close()
+            assert.is_nil(ReadingStats.seconds_per_page("abc"))
+            assert.is_true(logged_error())
+        end)
+
+        it("opens the database read-only and closes it", function()
+            make_books_db({ { 1, "abc", 100, 100 } }, { { 1, 1, 1000, 20, 100 } })
+            local real_open = SQ3.open
+            local calls, conn = {}, nil
+            SQ3.open = function(...)
+                calls[#calls + 1] = { ... }
+                conn = real_open(...)
+                return conn
+            end
+            local ok, err = pcall(ReadingStats.seconds_per_page, "abc")
+            SQ3.open = real_open
+            assert(ok, err)
+            assert.same({ { db_path, "ro" } }, calls)
+            assert.is_true(conn._closed)
+        end)
+
+        it("leaves both settings unset when it reads them", function()
+            make_books_db({ { 1, "abc", 100, 100 } }, { { 1, 1, 1000, 20, 100 } })
+            ReadingStats.seconds_per_page("abc")
+            assert.is_nil(G_reader_settings:readSetting("plugins_disabled"))
+            assert.is_nil(G_reader_settings:readSetting("statistics"))
         end)
     end)
 
