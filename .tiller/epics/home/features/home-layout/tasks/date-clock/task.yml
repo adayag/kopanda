@@ -1,9 +1,19 @@
 id: T-b8dgbr
 key: home/home-layout/date-clock
 title: Date and clock widgets in both looks
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-ds0hab
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:2d219579e68ad85e989a395d682b751eca6047f4
+        path: .tiller/epics/home/features/home-layout/tasks/date-clock/task.md
+        observed_at: 2026-10-15T12:44:30.741337Z
+    commit:
+        kind: git_commit
+        value: git:b9f66a1
+        observed_at: 2026-10-15T12:44:30.762495Z

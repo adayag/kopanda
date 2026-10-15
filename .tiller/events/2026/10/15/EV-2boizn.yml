@@ -1,0 +1,13 @@
+id: EV-2boizn
+type: approve.task
+at: 2026-10-15T12:44:30.741039Z
+contributor: allen
+command: approve task T-ds0hab
+targets:
+    - T-ds0hab
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/row-engine/task.yml

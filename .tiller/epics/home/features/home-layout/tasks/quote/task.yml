@@ -1,9 +1,19 @@
 id: T-x42jhm
 key: home/home-layout/quote
 title: Quote of the day from a shipped public-domain file
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-ds0hab
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:4a99561a8768c157dbc9d477a7c1cba128d0e1db
+        path: .tiller/epics/home/features/home-layout/tasks/quote/task.md
+        observed_at: 2026-10-15T12:44:30.763246Z
+    commit:
+        kind: git_commit
+        value: git:b9f66a1
+        observed_at: 2026-10-15T12:44:30.785454Z

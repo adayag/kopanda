@@ -1,7 +1,7 @@
 id: T-ltupc3
 key: home/home-layout/goldens-and-budget
 title: Home goldens in both looks and the paint budget
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
@@ -10,3 +10,13 @@ depends_on:
     - T-x42jhm
     - T-wgis3w
     - T-xv2jpg
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:60e01d8ab4c22ec06f8bcd2a425f4ec338f06fdf
+        path: .tiller/epics/home/features/home-layout/tasks/goldens-and-budget/task.md
+        observed_at: 2026-10-15T12:44:30.831361Z
+    commit:
+        kind: git_commit
+        value: git:b9f66a1
+        observed_at: 2026-10-15T12:44:30.851875Z

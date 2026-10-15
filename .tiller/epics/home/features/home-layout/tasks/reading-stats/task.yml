@@ -1,9 +1,19 @@
 id: T-wgis3w
 key: home/home-layout/reading-stats
 title: Reading stats from KOReader's Statistics database
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-ds0hab
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:a841964a189a9b48e747af81103ceaeebc552cef
+        path: .tiller/epics/home/features/home-layout/tasks/reading-stats/task.md
+        observed_at: 2026-10-15T12:44:30.785842Z
+    commit:
+        kind: git_commit
+        value: git:b9f66a1
+        observed_at: 2026-10-15T12:44:30.80903Z

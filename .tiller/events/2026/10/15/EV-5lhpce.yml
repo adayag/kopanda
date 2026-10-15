@@ -1,0 +1,13 @@
+id: EV-5lhpce
+type: approve.task
+at: 2026-10-15T12:44:30.831004Z
+contributor: allen
+command: approve task T-xv2jpg
+targets:
+    - T-xv2jpg
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/weather/task.yml

@@ -1,0 +1,13 @@
+id: EV-v3sk49
+type: approve.task
+at: 2026-10-15T12:44:30.762757Z
+contributor: allen
+command: approve task T-b8dgbr
+targets:
+    - T-b8dgbr
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/date-clock/task.yml

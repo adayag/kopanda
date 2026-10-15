@@ -1,0 +1,13 @@
+id: EV-b9yt6w
+type: approve.feature
+at: 2026-10-15T12:44:30.716625Z
+contributor: allen
+command: approve feature F-wkj9iy
+targets:
+    - F-wkj9iy
+before:
+    status: specced
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/home-layout/feature.yml

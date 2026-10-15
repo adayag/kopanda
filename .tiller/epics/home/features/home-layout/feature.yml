@@ -1,7 +1,7 @@
 id: F-wkj9iy
 key: home/home-layout
 title: Rows and columns with date, clock, weather, quote and stats
-status: specced
+status: ready
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -15,3 +15,18 @@ order:
     - T-wgis3w
     - T-xv2jpg
     - T-ltupc3
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:4b97463b74a324bf23b876e425a1dba192b7bbee
+        path: .tiller/epics/home/features/home-layout/feature.md
+        observed_at: 2026-10-15T12:44:30.683887Z
+    eval:
+        kind: git_blob
+        value: git:2b3ac5ad010f0502bc769815d3545b12156fd7b4
+        path: .tiller/epics/home/features/home-layout/feature.eval.md
+        observed_at: 2026-10-15T12:44:30.683887Z
+    commit:
+        kind: git_commit
+        value: git:b9f66a1
+        observed_at: 2026-10-15T12:44:30.716433Z

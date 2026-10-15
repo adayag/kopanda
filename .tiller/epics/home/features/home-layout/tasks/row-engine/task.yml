@@ -1,7 +1,17 @@
 id: T-ds0hab
 key: home/home-layout/row-engine
 title: Row engine over layout.rows and text_size, with header and footer chrome
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:5680ccb38b231d1093bacc8ae2cefba218a11fe9
+        path: .tiller/epics/home/features/home-layout/tasks/row-engine/task.md
+        observed_at: 2026-10-15T12:44:30.717094Z
+    commit:
+        kind: git_commit
+        value: git:b9f66a1
+        observed_at: 2026-10-15T12:44:30.740941Z
