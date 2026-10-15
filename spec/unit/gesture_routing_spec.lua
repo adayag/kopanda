@@ -570,7 +570,8 @@ describe("gestures on the KoPanda home", function()
             finally(function()
                 open:revert()
             end)
-            hold(centre_of("weather"))
+            local x, y = centre_of("weather")
+            assert.is_true(Home.shown:onGesture(harness.gesture("hold", x, y)))
             assert.spy(open).was.called(1)
             assert.equals(0, sheets_on_stack())
             assert.equals(settings_message(), harness.top())
@@ -703,13 +704,24 @@ describe("gestures on the KoPanda home", function()
         end)
 
         it("starts the paint_ms at the hold when the held slot's hold returns false", function()
-            local quote_hold = recording(false)
-            stubs_with({ quote = quote_hold })
+            -- The held slot's hold notes the clock on entry and spins until it moves on, so a
+            -- start taken after that hold is later than the entry.
+            local hold_entered
+            stubs_with({
+                quote = function()
+                    hold_entered = time.monotonic()
+                    while time.monotonic() <= hold_entered do
+                    end
+                    return false
+                end,
+            })
             fm_with_home()
             local seen = timings()
             hold(centre_of("quote"))
             assert.equals(1, #seen.started)
             assert.is_number(seen.started[1])
+            assert.is_number(hold_entered)
+            assert.truthy(seen.started[1] <= hold_entered)
             assert.truthy(seen.started[1] <= seen.entered[1])
         end)
     end)

@@ -124,6 +124,10 @@ describe("the home sheet", function()
         }, rows)
         -- Every row was laid out.
         assert.equals(6, #Sheet.shown.rows)
+        -- Only Refresh weather and Wi-Fi carry a detail while every action is available.
+        for _, label in ipairs({ "Edit layout", "Open the file browser", "KoPanda settings", "Sleep" }) do
+            assert.is_nil(row(label).detail, label)
+        end
     end)
 
     describe("Edit layout", function()
@@ -274,12 +278,21 @@ describe("the home sheet", function()
             assert.is_nil(Sheet.shown)
         end)
 
-        it("is muted with not available when the dispatcher lists no suspend", function()
+        it("is muted with not available when the dispatcher lists no suspend, and a tap only says so", function()
             no_actions()
             open_sheet()
             local r = row("Sleep")
             assert.is_true(r.muted)
             assert.equals("not available", r.detail)
+            local execute = spy.on(Dispatcher, "execute")
+            cleanup(function()
+                execute:revert()
+            end)
+            tap("Sleep")
+            assert.spy(execute).was_not.called()
+            local note = message()
+            assert.is_not_nil(note)
+            assert.equals("Sleep isn't available here.", note.text)
         end)
     end)
 end)

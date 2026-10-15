@@ -406,6 +406,7 @@ describe("weather", function()
         it("counts whole days from 48 hours", function()
             assert.equals("2 d ago", aged(48 * 3600))
             assert.equals("9 d ago", aged(9 * 86400))
+            assert.equals("2 d ago", aged(3 * 86400 - 1))
         end)
     end)
 
