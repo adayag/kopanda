@@ -42,21 +42,32 @@ function Layout.columns(content_w, slots, gap)
 end
 
 -- The placement without logging; see Layout.place.
-local function place(row_heights, avail_h, margins, row_gap, free_space, footer_h)
+local function place(row_heights, avail_h, margins, row_gap, free_space, footer_h, first_gap)
     local top, bottom = scale(margins.top), scale(margins.bottom)
     local gap, footer = scale(row_gap), scale(footer_h)
     local space = avail_h - top - bottom - footer
 
+    -- The gap above a row with a height whose previous row with a height is prev, or 0 for the
+    -- first row with a height.
+    local function gap_after(prev)
+        if not prev then
+            return 0
+        elseif prev == 1 and first_gap then
+            return scale(first_gap)
+        end
+        return gap
+    end
+
     -- The height rows 1 to n take, with a gap between each two that have a height.
     local function stacked(n)
-        local sum, tall = 0, 0
+        local sum, prev = 0, nil
         for i = 1, n do
             if row_heights[i] > 0 then
-                sum = sum + row_heights[i]
-                tall = tall + 1
+                sum = sum + gap_after(prev) + row_heights[i]
+                prev = i
             end
         end
-        return sum + math.max(tall - 1, 0) * gap
+        return sum
     end
 
     local kept = #row_heights
@@ -72,9 +83,7 @@ local function place(row_heights, avail_h, margins, row_gap, free_space, footer_
     for i = 1, kept do
         local h = row_heights[i]
         if h > 0 then
-            if tall > 0 then
-                y = y + gap
-            end
+            y = y + gap_after(last)
             tall = tall + 1
             last = i
         end
@@ -97,10 +106,11 @@ end
 -- the rows overflow avail_h less the margins and footer_h, rows are dropped from the end until
 -- the rest fit, each drop logged. free_space "before_last_row" moves the last row down onto
 -- the bottom margin when two or more rows have a height; "before_footer" leaves the rows
--- together at the top. row_heights and avail_h are device pixels; margins ({ top, bottom }),
--- row_gap and footer_h are board pixels.
-function Layout.place(row_heights, avail_h, margins, row_gap, free_space, footer_h)
-    local ys, dropped = place(row_heights, avail_h, margins, row_gap, free_space, footer_h)
+-- together at the top. first_gap, when given, is the gap below row 1 in place of row_gap.
+-- row_heights and avail_h are device pixels; margins ({ top, bottom }), row_gap, footer_h and
+-- first_gap are board pixels.
+function Layout.place(row_heights, avail_h, margins, row_gap, free_space, footer_h, first_gap)
+    local ys, dropped = place(row_heights, avail_h, margins, row_gap, free_space, footer_h, first_gap)
     for _, i in ipairs(dropped) do
         logger.warn("KoPanda: home row " .. i .. " doesn't fit the screen and is left out")
     end
@@ -119,12 +129,14 @@ end
 -- height): every row's height, the rows that fit with their slots measured and placed, the
 -- dropped row indexes, and the header and footer chrome, in device pixels. Row 1 carries the
 -- header: a band (full width) or a box between the side margins, its padding around the slots,
--- then its bottom edge or its rule. A slot whose widget has no module, or whose height raises,
--- measures 0; slot.module is the module and slot.error the height's error. rows is not changed.
+-- then its bottom edge, or its rule with rule_space above and below and no row gap after. A slot
+-- whose widget has no module, or whose height raises, measures 0; slot.module is the module and
+-- slot.error the height's error. rows is not changed. The home is sized by Layout.screen, the
+-- screen its lengths are scaled for.
 local function arrange(rows, ctx, placer)
     local home = ctx.look.home
     local header = home.header
-    local width, height = ctx.screen:getWidth(), ctx.screen:getHeight()
+    local width, height = Layout.screen:getWidth(), Layout.screen:getHeight()
     local side = scale(home.margin.side)
 
     local measured, heights = {}, {}
@@ -155,14 +167,16 @@ local function arrange(rows, ctx, placer)
             chrome_top = scale(header.padding.top)
             chrome = chrome_top + scale(header.padding.bottom) + scale(header.edge_width)
             if header.rule_color then
-                chrome = chrome + scale(header.rule_space) + scale(header.rule_width)
+                chrome = chrome + 2 * scale(header.rule_space) + scale(header.rule_width)
             end
         end
         measured[i] = { slots = slots, h = content_h + chrome, content_top = chrome_top, content_h = content_h }
         heights[i] = content_h + chrome
     end
 
-    local ys, dropped = placer(heights, height, home.margin, home.row_gap, home.free_space, footer_height(home))
+    local first_gap = header.rule_color and 0 or nil
+    local ys, dropped = placer(heights, height, home.margin, home.row_gap, home.free_space, footer_height(home),
+        first_gap)
     local arranged = { width = width, height = height, heights = heights, rows = {}, dropped = dropped, header = {} }
     for i, y in ipairs(ys) do
         local row = measured[i]
@@ -186,7 +200,12 @@ local function arrange(rows, ctx, placer)
         end
         if header.rule_color then
             local rule = scale(header.rule_width)
-            arranged.header.rule = { x = side, y = bottom - rule, w = width - 2 * side, h = rule }
+            arranged.header.rule = {
+                x = side,
+                y = bottom - scale(header.rule_space) - rule,
+                w = width - 2 * side,
+                h = rule,
+            }
         end
     end
     local footer = footer_height(home)
@@ -198,6 +217,8 @@ local function arrange(rows, ctx, placer)
             w = width,
             h = h,
             edge = scale(home.footer.edge_width),
+            line = scale(home.footer.line_width),
+            pitch = scale(home.footer.line_pitch),
         }
     end
     return arranged

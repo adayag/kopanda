@@ -436,8 +436,8 @@ Upgrading KOReader walks this list.
 - `ui/time`: `frontend/ui/time.lua:149` (`to_ms`), `:249` (`monotonic`).
 - `device`: `frontend/device/generic/device.lua:332` (`Screen:getSize`), `:265-271`
   (`Screen:isColorEnabled`, the looks entry above);
-  `base/ffi/framebuffer.lua:414` (`scaleBySize`).
-- `logger`: `frontend/logger.lua:93-98` (`err`); see the harness entry `logger` below.
+  `base/ffi/framebuffer.lua:348` (`getWidth`), `:352` (`getHeight`), `:414` (`scaleBySize`).
+- `logger`: `frontend/logger.lua:96` (`warn`), `:97` (`err`); see the harness entry `logger` below.
 
 ## Capture harness (`spec/emulator/`)
 

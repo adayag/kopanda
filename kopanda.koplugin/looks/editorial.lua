@@ -135,7 +135,7 @@ return {
         row_gap = 28, -- the quote's top margin (Main.dc.html:56)
         column_gap = 16, -- the header row's gap (Main.dc.html:19)
         free_space = "before_last_row", -- the stats row's margin-top: auto (Main.dc.html:87)
-        -- The main rule under row 1, with space above it; the row gap follows it.
+        -- The main rule under row 1, with rule_space above and below it and no row gap after.
         header = {
             band_color = false,
             edge_width = 0,
@@ -168,7 +168,8 @@ return {
         clock = { face = "display", size = 36, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
         -- The weather line (Main.dc.html:25).
         weather = { face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted" },
-        -- The quote, CSS line height 1.4 (Main.dc.html:56).
+        -- The quote, CSS line height 1.4 (Main.dc.html:56). The board draws it in #2f2e2b, which no
+        -- Editorial role holds, so ink stands in for it.
         quote = { face = "quote", size = 18, uppercase = false, tracking = 0, line_height = 0.4, color = "ink" },
         -- The reading stats (Main.dc.html:87).
         stats = { face = "text", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "muted" },

@@ -162,6 +162,15 @@ describe("Layout", function()
             assert.same({ 44, 800 - 36 - 300 }, ys)
         end)
 
+        it("takes first_gap below row 1 in place of the row gap, a zero-height row 1 taking none", function()
+            local ys = Layout.place({ 100, 50, 80 }, 800, margins, 28, "before_footer", 0, 0)
+            assert.same({ 44, 144, 222 }, ys)
+            ys = Layout.place({ 0, 50, 80 }, 800, margins, 28, "before_footer", 0, 0)
+            assert.same({ 44, 44, 122 }, ys)
+            local _, dropped = Layout.place({ 360, 360 }, 800, margins, 28, "before_footer", 0, 0)
+            assert.same({}, dropped)
+        end)
+
         it("scales the margins, gap and footer once by the screen", function()
             Layout.screen = screen(1264, 1680)
             local s = function(px) return Layout.screen:scaleBySize(px) end
@@ -211,14 +220,14 @@ describe("Layout", function()
             local c = ctx(editorial, 1264, 1680)
             local s = function(px) return Layout.screen:scaleBySize(px) end
             local arranged = Layout.arrange(default, c)
-            assert.same({ 60 + s(22) + s(2), 100, 30 }, arranged.heights)
+            assert.same({ 60 + s(22) + s(2) + s(22), 100, 30 }, arranged.heights)
             c = ctx(diner, 1264, 1680)
             arranged = Layout.arrange(default, c)
             assert.same({ s(36) + 60 + s(28) + s(4), 100, 30 }, arranged.heights)
         end)
 
         it("lays row 1's slots inside the band's padding for Diner and the margins for Editorial", function()
-            heights = { date = 60, clock = 50 }
+            heights = { date = 60, clock = 50, quote = 100, stats = 30 }
             local s = function(px) return Layout.screen:scaleBySize(px) end
             local arranged = Layout.arrange(default, ctx(diner, 1264, 1680))
             local row = arranged.rows[1]
@@ -233,6 +242,36 @@ describe("Layout", function()
             assert.is_nil(arranged.header.band)
             assert.same({ x = s(40), y = s(44) + 60 + s(22), w = 1264 - 2 * s(40), h = s(2) },
                 arranged.header.rule)
+            -- 22 px below the rule as above it (Main.dc.html:30), no row gap after.
+            assert.equals(arranged.header.rule.y + s(2) + s(22), arranged.rows[2].y)
+        end)
+
+        it("puts Diner's footer on the bottom edge with its stripe scaled, and Editorial none", function()
+            heights = { date = 60, clock = 50, quote = 100 }
+            local s = function(px) return Layout.screen:scaleBySize(px) end
+            local arranged = Layout.arrange(default, ctx(diner, 1264, 1680))
+            assert.same({ x = 0, y = 1680 - s(26), w = 1264, h = s(26), edge = s(4), line = s(2), pitch = s(10) },
+                arranged.footer)
+            arranged = Layout.arrange(default, ctx(editorial, 1264, 1680))
+            assert.is_nil(arranged.footer)
+        end)
+
+        it("draws no header chrome when row 1 measures 0", function()
+            heights = { quote = 100 }
+            for _, look in ipairs({ editorial, diner }) do
+                local arranged = Layout.arrange(default, ctx(look, 1264, 1680))
+                assert.equals(0, arranged.heights[1])
+                assert.same({}, arranged.header)
+            end
+        end)
+
+        it("sizes the home by the screen it scales by", function()
+            heights = { quote = 100 }
+            local c = ctx(diner, 1264, 1680)
+            c.screen = screen(600, 800)
+            local arranged = Layout.arrange(default, c)
+            assert.equals(1264, arranged.width)
+            assert.equals(1680, arranged.height)
         end)
 
         it("gives a widget its slot's width and a missing module no height", function()
@@ -288,8 +327,9 @@ describe("Layout", function()
                     local arranged = Layout.arrange(default, c)
                     local home = look.home
                     local footer = home.footer.height > 0 and home.footer.height + home.footer.edge_width or 0
+                    local first_gap = home.header.rule_color and 0 or nil
                     local _, dropped = Layout.place(arranged.heights, 1680, home.margin, home.row_gap,
-                        home.free_space, footer)
+                        home.free_space, footer, first_gap)
                     local fits = Layout.fits(default, c)
                     assert.equals(#dropped == 0, fits, quote)
                     assert.same(dropped, arranged.dropped, quote)

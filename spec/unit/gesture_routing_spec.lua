@@ -230,6 +230,92 @@ describe("gestures on the KoPanda home", function()
         assert.equals(fm, harness.top())
     end)
 
+    -- Registers a stub widget with tap for every id of the default layout, each slot height
+    -- tall[id] (60 when unset), and returns a function giving the taps so far.
+    local function tappable_stubs(tall)
+        local Widget = require("ui/widget/widget")
+        local Geom = require("ui/geometry")
+        local taps = 0
+        local stubs = {}
+        for _, id in ipairs({ "date", "clock", "quote", "weather", "stats" }) do
+            local h = tall[id] or 60
+            stubs[id] = {
+                id = id,
+                height = function()
+                    return h
+                end,
+                build = function(width)
+                    return Widget:new{ dimen = Geom:new{ w = width, h = h } }
+                end,
+                tap = function()
+                    taps = taps + 1
+                end,
+            }
+        end
+        package.loaded["widgets"].get = function(id)
+            return stubs[id]
+        end
+        return function()
+            return taps
+        end
+    end
+
+    local function slot_of(id)
+        for _, slot in ipairs(Home.shown.slots) do
+            if slot.widget == id then
+                return slot
+            end
+        end
+    end
+
+    local function point(x, y)
+        return require("ui/geometry"):new{ x = x, y = y, w = 0, h = 0 }
+    end
+
+    it("opens the file manager's menu on a tap in the top menu zone over a tappable slot", function()
+        local taps = tappable_stubs({})
+        local fm = fm_with_home()
+        local home = Home.shown
+        local size = Screen:getSize()
+        local rect = slot_of("date").rect
+        local x, y = rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2)
+        -- Inside the slot and inside DTAP_ZONE_MENU, the top eighth (defaults.lua:59).
+        assert.is_true(rect:contains(point(x, y)))
+        assert.truthy(y < size.h / 8)
+        send(harness.gesture("tap", x, y))
+        assert.equals(0, taps())
+        assert.is_not_nil(fm.menu.menu_container)
+        assert.equals(fm.menu.menu_container, harness.top())
+        assert.equals(home, harness.top(2))
+    end)
+
+    it("lets a corner zone on the file manager win over a tappable slot under it", function()
+        local size = Screen:getSize()
+        local tall = math.floor(size.h * 0.67)
+        local taps = tappable_stubs({ quote = 20, weather = tall, stats = tall })
+        local fm = fm_with_home()
+        local received
+        fm:registerTouchZones{ {
+            id = "kopanda_spec_corner_tap",
+            ges = "tap",
+            screen_zone = { ratio_x = 7 / 8, ratio_y = 7 / 8, ratio_w = 1 / 8, ratio_h = 1 / 8 },
+            handler = function(ges)
+                received = ges
+                return true
+            end,
+        } }
+        local home = Home.shown
+        local rect = slot_of("stats").rect
+        local x, y = rect.x + rect.w - 5, rect.y + rect.h - 5
+        assert.is_true(rect:contains(point(x, y)))
+        assert.truthy(x >= size.w * 7 / 8 and y >= size.h * 7 / 8)
+        local ges = harness.gesture("tap", x, y)
+        send(ges)
+        assert.equals(ges, received)
+        assert.equals(0, taps())
+        assert.equals(home, harness.top())
+    end)
+
     it("still closes on a tap outside every tappable slot", function()
         local fm = fm_with_home()
         local size = Screen:getSize()

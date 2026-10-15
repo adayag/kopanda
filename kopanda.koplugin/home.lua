@@ -133,7 +133,7 @@ local function chrome(arranged, look, color)
         local tokens = look.home.footer
         add(footer, tokens.gap_color)
         add({ x = footer.x, y = footer.y, w = footer.w, h = footer.edge }, tokens.edge_color)
-        local line, pitch = Screen:scaleBySize(tokens.line_width), Screen:scaleBySize(tokens.line_pitch)
+        local line, pitch = footer.line, footer.pitch
         if line > 0 and pitch > 0 then
             for x = footer.x, footer.x + footer.w - 1, pitch do
                 add({
