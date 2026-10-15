@@ -347,6 +347,18 @@ Upgrading KOReader walks this list.
 - `base/ffi/freetype.lua:207-225` (`newFaceSize` has no variation-axis calls), so the fonts ship
   as static instances: a variable font would render its default instance only.
 
+### The looks: `Screen:isColorEnabled` and `Blitbuffer.colorFromString`
+
+- `frontend/device/generic/device.lua:265-271` (`isColorEnabled`: the user's `color_rendering`
+  setting when present, the panel's `isColorScreen` otherwise). `looks.lua` draws the grey palette
+  when it is false, so a colour panel with colour rendering off gets grey too; the plugin never
+  reads `color_rendering` itself.
+- `base/ffi/blitbuffer.lua:2653-2683` (`colorFromString`: `#rrggbbaa`, `#rrggbb` or `#vv`, nil
+  for any other length; non-hex digits or a non-string raise), which `looks.lua` calls in a
+  `pcall`. The look files hold palette colours as `#rrggbb` only.
+- `base/ffi/blitbuffer.lua:464-467` (a colour greyed by luminance, `getColor8`): two hues can land
+  on the same grey, so each look's `grey` palette names an explicit grey per role.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
@@ -362,10 +374,12 @@ Upgrading KOReader walks this list.
 - `ui/font`: `frontend/ui/font.lua:269-276` (`getFace` scales the size by
   `Screen:scaleBySize` itself).
 - `ui/geometry`: `frontend/ui/geometry.lua:37` (`Geom:new`), `:255-266` (`contains`).
-- `ffi/blitbuffer`: `base/ffi/blitbuffer.lua:2717` (`COLOR_WHITE`).
+- `ffi/blitbuffer`: `base/ffi/blitbuffer.lua:2717` (`COLOR_WHITE`), `:2653-2683`
+  (`colorFromString`, the looks entry above).
 - `ui/uimanager`: the entries above.
 - `ui/time`: `frontend/ui/time.lua:149` (`to_ms`), `:249` (`monotonic`).
-- `device`: `frontend/device/generic/device.lua:332` (`Screen:getSize`);
+- `device`: `frontend/device/generic/device.lua:332` (`Screen:getSize`), `:265-271`
+  (`Screen:isColorEnabled`, the looks entry above);
   `base/ffi/framebuffer.lua:414` (`scaleBySize`).
 - `logger`: `frontend/logger.lua:93-98` (`err`); see the harness entry `logger` below.
 

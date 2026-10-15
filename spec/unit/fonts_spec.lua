@@ -169,6 +169,21 @@ describe("fonts", function()
         assert.truthy(face.ftsize)
     end)
 
+    it("ships and loads every face a look names", function()
+        local named = 0
+        for _, id in ipairs({ "editorial", "diner" }) do
+            for role, face in pairs(package.loaded["looks/" .. id].faces) do
+                if face.file then
+                    named = named + 1
+                    local where = id .. " " .. role .. ": " .. face.file
+                    assert.equals("file", lfs.attributes(harness.plugin_dir .. "/" .. face.file, "mode"), where)
+                    assert.truthy(Fonts.face(face.file, 20), where)
+                end
+            end
+        end
+        assert.equals(5, named)
+    end)
+
     it("returns nil for a missing file without raising", function()
         local ok, face = pcall(Fonts.face, "fonts/nope/missing.ttf", 20)
         assert.is_true(ok, tostring(face))
