@@ -1,0 +1,14 @@
+id: EV-pm4062
+type: sync.tweak
+at: 2026-10-15T21:00:14.854325Z
+contributor: allen
+command: sync tweak TW-l2ibo3
+targets:
+    - TW-l2ibo3
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/split-home-lua/tweak.yml

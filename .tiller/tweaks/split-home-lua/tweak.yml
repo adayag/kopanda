@@ -1,7 +1,7 @@
 id: TW-l2ibo3
 key: tweaks/split-home-lua
 title: Split home.lua past the 500-line signal
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,7 @@ accepted_against:
         observed_at: 2026-10-15T20:34:36.278805Z
 branch: tiller/tweaks/split-home-lua
 pr: 8
+done_basis: ancestry
 gates:
     build:
         required: true
