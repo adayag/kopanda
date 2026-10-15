@@ -1,7 +1,7 @@
 id: T-x42jhm
 key: home/home-layout/quote
 title: Quote of the day from a shipped public-domain file
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:ba161f3
         observed_at: 2026-10-15T14:38:47.926928Z
+done_basis: ancestry
 gates:
     build:
         required: true

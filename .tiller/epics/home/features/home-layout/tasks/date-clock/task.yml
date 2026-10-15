@@ -1,7 +1,7 @@
 id: T-b8dgbr
 key: home/home-layout/date-clock
 title: Date and clock widgets in both looks
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:59b0bc0
         observed_at: 2026-10-15T14:43:59.968252Z
+done_basis: ancestry
 gates:
     build:
         required: true

@@ -1,0 +1,14 @@
+id: EV-tsj7kg
+type: sync.task
+at: 2026-10-15T15:13:38.860921Z
+contributor: allen
+command: sync task T-wgis3w
+targets:
+    - T-wgis3w
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/reading-stats/task.yml

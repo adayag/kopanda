@@ -1,7 +1,7 @@
 id: T-xv2jpg
 key: home/home-layout/weather
 title: Open-Meteo weather with a cached line, once per session and on tap
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:03212bb
         observed_at: 2026-10-15T14:42:33.326241Z
+done_basis: ancestry
 gates:
     build:
         required: true

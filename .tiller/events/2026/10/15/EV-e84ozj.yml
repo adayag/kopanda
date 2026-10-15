@@ -1,0 +1,14 @@
+id: EV-e84ozj
+type: sync.task
+at: 2026-10-15T15:13:38.604582Z
+contributor: allen
+command: sync task T-ds0hab
+targets:
+    - T-ds0hab
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/row-engine/task.yml

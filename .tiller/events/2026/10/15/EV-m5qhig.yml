@@ -1,0 +1,14 @@
+id: EV-m5qhig
+type: sync.task
+at: 2026-10-15T15:13:38.94114Z
+contributor: allen
+command: sync task T-xv2jpg
+targets:
+    - T-xv2jpg
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/weather/task.yml

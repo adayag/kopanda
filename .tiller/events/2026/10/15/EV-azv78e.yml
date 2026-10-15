@@ -1,0 +1,14 @@
+id: EV-azv78e
+type: sync.task
+at: 2026-10-15T15:13:38.77967Z
+contributor: allen
+command: sync task T-x42jhm
+targets:
+    - T-x42jhm
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/quote/task.yml

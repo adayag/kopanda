@@ -1,7 +1,7 @@
 id: T-ltupc3
 key: home/home-layout/goldens-and-budget
 title: Home goldens in both looks and the paint budget
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -28,6 +28,7 @@ review_ref:
         kind: git_commit
         value: git:f54530f
         observed_at: 2026-10-15T15:05:01.808989Z
+done_basis: ancestry
 gates:
     build:
         required: true

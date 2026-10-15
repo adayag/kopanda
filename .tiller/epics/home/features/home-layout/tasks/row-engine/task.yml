@@ -1,7 +1,7 @@
 id: T-ds0hab
 key: home/home-layout/row-engine
 title: Row engine over layout.rows and text_size, with header and footer chrome
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:a0fda99
         observed_at: 2026-10-15T14:16:18.699309Z
+done_basis: ancestry
 gates:
     build:
         required: true
