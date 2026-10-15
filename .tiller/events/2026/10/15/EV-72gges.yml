@@ -1,0 +1,17 @@
+id: EV-72gges
+type: start.task
+at: 2026-10-15T19:25:05.071597Z
+contributor: allen
+command: start task T-xem8p9
+targets:
+    - T-xem8p9
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/home/night-mode
+    branch: tiller/home/night-mode/palette
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/night-mode/tasks/palette/task.yml
+    - path: .tiller/epics/home/features/night-mode/feature.yml

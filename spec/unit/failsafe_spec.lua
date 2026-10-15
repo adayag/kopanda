@@ -152,6 +152,38 @@ describe("KoPanda failing safe", function()
         assert.is_true(logged_error("kopanda-test: rebuild failed"))
     end)
 
+    -- The rebuild a variant change brings runs inside the paint (night mode's C10).
+    it("closes the home on the next tick when its rebuild for night mode throws in the paint", function()
+        local had = G_reader_settings:has("color_rendering")
+        local previous = G_reader_settings:readSetting("color_rendering")
+        local night_mode = rawget(Screen, "night_mode")
+        finally(function()
+            Screen.night_mode = night_mode
+            if had then
+                G_reader_settings:saveSetting("color_rendering", previous)
+            else
+                G_reader_settings:delSetting("color_rendering")
+            end
+        end)
+        G_reader_settings:saveSetting("color_rendering", true)
+        Screen.night_mode = false
+        harness.show_fm()
+        harness.tick(2)
+        local home = Home.shown
+        assert.equals(home, harness.top())
+        Home.build = function()
+            error("kopanda-test: night rebuild failed")
+        end
+        Screen.night_mode = true
+        UIManager:setDirty("all", "full")
+        local ok = pcall(harness.tick, 1)
+        assert.is_true(ok)
+        assert.is_true(home.paint_failed)
+        assert.is_true(logged_error("kopanda-test: night rebuild failed"))
+        harness.tick(2)
+        file_manager_usable()
+    end)
+
     it("consumes a gesture and closes the home when the gesture body throws", function()
         harness.show_fm()
         harness.tick(2)

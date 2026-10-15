@@ -1,5 +1,6 @@
 -- The two looks' token tables (looks/editorial.lua, looks/diner.lua) and looks.lua, which picks
--- the active look and the palette variant (C5).
+-- the active look, the palette variant (C5) and the palette to draw with, night inverted (night
+-- mode's C1, C2).
 describe("looks", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
@@ -402,14 +403,17 @@ describe("looks", function()
         end)
 
         describe("variant", function()
-            local had, previous, is_color_screen
+            local had, previous, is_color_screen, night_mode
             before_each(function()
                 had = G_reader_settings:has("color_rendering")
                 previous = G_reader_settings:readSetting("color_rendering")
                 is_color_screen = require("device").screen.isColorScreen
+                night_mode = rawget(require("device").screen, "night_mode")
+                require("device").screen.night_mode = false
             end)
             after_each(function()
                 require("device").screen.isColorScreen = is_color_screen
+                require("device").screen.night_mode = night_mode
                 if had then
                     G_reader_settings:saveSetting("color_rendering", previous)
                 else
@@ -436,6 +440,90 @@ describe("looks", function()
                 assert.equals("day", Looks.variant())
                 screen.isColorScreen = function() return false end
                 assert.equals("grey", Looks.variant())
+            end)
+
+            it("is night when night mode is on and colour rendering is on", function()
+                G_reader_settings:saveSetting("color_rendering", true)
+                require("device").screen.night_mode = true
+                assert.equals("night", Looks.variant())
+            end)
+
+            it("stays grey with night mode on when colour rendering is off", function()
+                G_reader_settings:saveSetting("color_rendering", false)
+                require("device").screen.night_mode = true
+                assert.equals("grey", Looks.variant())
+            end)
+
+            it("stays grey with night mode on a panel without colour", function()
+                G_reader_settings:delSetting("color_rendering")
+                local screen = require("device").screen
+                screen.isColorScreen = function() return false end
+                screen.night_mode = true
+                assert.equals("grey", Looks.variant())
+            end)
+        end)
+
+        describe("palette", function()
+            -- The per-channel inverse of a #rrggbb, lower case.
+            local function inverse(hex)
+                local r, g, b = hex:match("^#(%x%x)(%x%x)(%x%x)$")
+                return string.format("#%02x%02x%02x", 255 - tonumber(r, 16), 255 - tonumber(g, 16),
+                    255 - tonumber(b, 16))
+            end
+
+            it("is the look's own day and grey palette", function()
+                for _, id in ipairs(ids) do
+                    local look = Looks.get(id)
+                    assert.equals(look.palettes.day, Looks.palette(look, "day"), id)
+                    assert.equals(look.palettes.grey, Looks.palette(look, "grey"), id)
+                end
+            end)
+
+            it("inverts each night colour per channel and keeps false roles false", function()
+                for _, id in ipairs(ids) do
+                    local look = Looks.get(id)
+                    local night = Looks.palette(look, "night")
+                    assert.is_not.equals(look.palettes.night, night, id)
+                    assert.same(keys(look.palettes.night), keys(night), id)
+                    for role, designed in pairs(look.palettes.night) do
+                        local where = id .. " night " .. role
+                        if designed == false then
+                            assert.is_false(night[role], where)
+                        else
+                            assert.truthy(night[role]:match("^#%x%x%x%x%x%x$"), where)
+                            assert.equals(designed:lower(), inverse(night[role]), where)
+                        end
+                    end
+                end
+                assert.equals("#eae9e5", Looks.palette(Looks.get("editorial"), "night").paper)
+                assert.equals("#d0949a", Looks.palette(Looks.get("diner"), "night").teal)
+            end)
+
+            it("builds the night palette once per look", function()
+                for _, id in ipairs(ids) do
+                    local look = Looks.get(id)
+                    assert.equals(Looks.palette(look, "night"), Looks.palette(look, "night"), id)
+                end
+            end)
+
+            it("passes a night value that is not #rrggbb through unchanged", function()
+                local look = { palettes = { night = { short = "#abc", gone = false, ink = "#102030" } } }
+                local night = Looks.palette(look, "night")
+                assert.same({ short = "#abc", gone = false, ink = "#efdfcf" }, night)
+                assert.is_nil(Looks.color(night.short))
+            end)
+
+            it("leaves each look's palettes and its file as they were", function()
+                for _, id in ipairs(ids) do
+                    local look = Looks.get(id)
+                    Looks.palette(look, "night")
+                    Looks.palette(look, "day")
+                    Looks.palette(look, "grey")
+                    assert.same({ "day", "grey", "night" }, keys(look.palettes), id)
+                    assert.same(looks[id].palettes, look.palettes, id)
+                    assert.same(load_look(id).palettes.night, look.palettes.night, id)
+                    assert.same(load_look(id), look, id)
+                end
             end)
         end)
 

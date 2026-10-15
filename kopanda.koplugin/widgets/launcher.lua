@@ -141,7 +141,7 @@ local function icon_of(view, size, ctx, unknown)
         return nil
     end
     local role = view.state == "unavailable" and "muted" or "ink"
-    return TintedIcon:new{ file = path, size = size, color = Looks.color(ctx.look.palettes[ctx.variant][role]) }
+    return TintedIcon:new{ file = path, size = size, color = Looks.color(Looks.palette(ctx.look, ctx.variant)[role]) }
 end
 
 -- The grid for the entries' views at width under ctx.
@@ -153,7 +153,7 @@ local function make(width, ctx)
     end
     local look = ctx.look
     local tokens = look.launcher
-    local palette = look.palettes[ctx.variant]
+    local palette = Looks.palette(look, ctx.variant)
     local function color(role)
         return role and palette[role] and Looks.color(palette[role]) or nil
     end
