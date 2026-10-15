@@ -144,6 +144,9 @@ return {
             rule_width = 2, -- stroke.rule
             rule_space = 22, -- the rule's margin (Main.dc.html:30)
             padding = { top = 0, side = 0, bottom = 0 },
+            -- Its slots on its bottom, the clock's baseline level with the date's last line
+            -- (Main.dc.html:19, align-items: flex-end).
+            align = "bottom",
         },
         footer = {
             height = 0, -- Editorial has no footer

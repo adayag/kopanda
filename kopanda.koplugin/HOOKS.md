@@ -424,6 +424,14 @@ Upgrading KOReader walks this list.
   off (`frontend/ui/widget/horizontalgroup.lua:11`). A line too wide for its column falls back
   to one TextWidget with `max_width`, which KOReader cuts with an ellipsis
   (`frontend/ui/widget/textwidget.lua:36-37`, `:202-238`).
+- Line height: TextWidget's `forced_height` and `forced_baseline`
+  (`frontend/ui/widget/textwidget.lua:43-44`), which `getSize` reports (`:298`) and the xtext
+  paint draws at (`:362`); `getBaseline` (`:312`) gives the face's baseline, not a forced one.
+  `typeset.lua` sets a part whose `line_height` isn't 0 at `(1 + line_height)` em, rounded, as
+  TextBoxWidget sizes a line (`frontend/ui/widget/textboxwidget.lua:151`), and centres the face's
+  height from `face.ftsize:getHeightAndAscender()` (`base/ffi/freetype.lua:154-159`, the call
+  textboxwidget.lua:153-158 makes) in it. `Typeset.baseline` gives the home row the line's
+  baseline.
 
 ### Widget and support modules
 
@@ -435,9 +443,11 @@ Upgrading KOReader walks this list.
   (`width`, `height`, `background`), `:104` (`paintTo`).
 - `ui/widget/container/centercontainer`: `frontend/ui/widget/container/centercontainer.lua:7`.
 - `ui/widget/container/leftcontainer`: `frontend/ui/widget/container/leftcontainer.lua:8-10`
-  (`allow_mirroring`), `:12-26` (`paintTo` centres its content in `dimen`); the date's column.
+  (`allow_mirroring`), `:12-26` (`paintTo` aligns its content left and centres it vertically in
+  `dimen`, `:19-23`); the date's column.
 - `ui/widget/container/rightcontainer`: `frontend/ui/widget/container/rightcontainer.lua:8-10`,
-  `:12-26`; the clock's column.
+  `:12-26` (`paintTo` aligns its content right and centres it vertically in `dimen`, `:19-23`);
+  the clock's column.
 - `ui/widget/verticalgroup`: `frontend/ui/widget/verticalgroup.lua:8`.
 - `ui/widget/verticalspan`: `frontend/ui/widget/verticalspan.lua:6`.
 - `ui/widget/widget`: `frontend/ui/widget/widget.lua:40` (`new`), `:70` (`paintTo` draws nothing),

@@ -251,6 +251,59 @@ describe("the date and clock widgets", function()
             assert.truthy(clock.widget:getSize().w < plain_clock:getSize().w)
         end)
 
+        it("keep a widget measured under one ctx from a build under another", function()
+            local width = 260
+            local a = ctx_for("editorial")
+            local b = ctx_for("editorial", { now = at(2026, 10, 13, 20, 42) })
+            Clock.height(width, a)
+            assert.same({ "20:42" }, drawn(Clock.build(width, b)))
+            local large = ctx_for("editorial", { now = at(2026, 10, 13, 20, 42), text_size = "large" })
+            Clock.height(width, a)
+            local built = Clock.build(width, large)
+            assert.same({ "20:42" }, drawn(built))
+            assert_styled(lines(built)[1], "clock", large)
+            local h_large = Clock.build(width, ctx_for("editorial", { text_size = "large" })):getSize().h
+            assert.is_not.equals(Clock.height(width, a), h_large)
+            Clock.height(width, a)
+            assert.equals(h_large, Clock.height(width, large))
+        end)
+
+        it("set the clock at its part's line height: Diner's CSS 0.9, Editorial's the face's own", function()
+            for _, text_size in ipairs({ "small", "medium", "large" }) do
+                local diner = Clock.build(260, ctx_for("diner", { text_size = text_size }))
+                local face = lines(diner)[1].glyphs[1].face
+                assert.equals(math.floor(0.9 * face.size + 0.5), diner:getSize().h, text_size)
+                local editorial = Clock.build(260, ctx_for("editorial", { text_size = text_size }))
+                local line = lines(editorial)[1]
+                local plain = TextWidget:new{ text = line.text, face = line.glyphs[1].face }
+                assert.equals(plain:getSize().h, editorial:getSize().h, text_size)
+            end
+        end)
+
+        it("draw the date at its column's left and the clock at its column's right", function()
+            local bb = Blitbuffer.new(700, 200, Blitbuffer.TYPE_BBRGB32)
+            -- The x each built widget paints its content at, and the content's width.
+            local function content_x(built)
+                local content, x = built[1], nil
+                local paint = content.paintTo
+                content.paintTo = function(self, buffer, px, py)
+                    x = px
+                    return paint(self, buffer, px, py)
+                end
+                built:paintTo(bb, 100, 0)
+                return x, content:getSize().w
+            end
+            for _, id in ipairs({ "editorial", "diner" }) do
+                local date_x, date_w = content_x(Date.build(520, ctx_for(id)))
+                assert.truthy(date_w < 520, id)
+                assert.equals(100, date_x, id .. " date")
+                local clock_x, clock_w = content_x(Clock.build(520, ctx_for(id)))
+                assert.truthy(clock_w < 520, id)
+                assert.equals(100 + 520 - clock_w, clock_x, id .. " clock")
+            end
+            bb:free()
+        end)
+
         it("paint", function()
             local bb = Blitbuffer.new(600, 200, Blitbuffer.TYPE_BBRGB32)
             each_ctx(function(ctx)

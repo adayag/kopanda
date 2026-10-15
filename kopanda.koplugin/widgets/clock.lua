@@ -28,9 +28,9 @@ local function make(width, ctx)
         dimen = Geom:new{ w = width, h = content:getSize().h },
         allow_mirroring = false,
         content,
-    }
+    }, Typeset.baseline(content)
 end
 
-Clock.height, Clock.build = Typeset.measured(make)
+Clock.height, Clock.build, Clock.baseline = Typeset.measured(make)
 
 return Clock

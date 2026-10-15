@@ -38,25 +38,26 @@ end
 local function make(width, ctx)
     local styles = ctx.look.type
     local lines = Date.lines(ctx.look, ctx.now)
-    local content
-    if #lines == 1 then
-        content = Typeset.line(styles.date, lines[1], width, ctx)
-    else
+    local last = Typeset.line(styles.date, lines[#lines], width, ctx)
+    local content = last
+    if #lines == 2 then
         content = VerticalGroup:new{
             align = "left",
             allow_mirroring = false,
             Typeset.line(styles.date_label, lines[1], width, ctx),
             VerticalSpan:new{ width = ctx.screen:scaleBySize(LABEL_GAP) },
-            Typeset.line(styles.date, lines[2], width, ctx),
+            last,
         }
     end
+    -- The last line is the content's bottom.
+    local h = content:getSize().h
     return LeftContainer:new{
-        dimen = Geom:new{ w = width, h = content:getSize().h },
+        dimen = Geom:new{ w = width, h = h },
         allow_mirroring = false,
         content,
-    }
+    }, h - last:getSize().h + Typeset.baseline(last)
 end
 
-Date.height, Date.build = Typeset.measured(make)
+Date.height, Date.build, Date.baseline = Typeset.measured(make)
 
 return Date

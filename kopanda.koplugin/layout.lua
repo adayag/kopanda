@@ -125,14 +125,45 @@ local function footer_height(home)
     return 0
 end
 
+-- Bottom-aligns slots measured at their heights in a row content_h tall: sets each slot's
+-- offset, the drop of its widget from the row's top, and returns the row's height. A slot whose
+-- module gives a baseline (its last line's, from its top) for column width w under ctx sits with
+-- it on the row's one baseline, which lies as low as the deepest drop below a baseline allows,
+-- and the row grows to hold the tallest rise above it; any other slot with a height sits on the
+-- row's bottom.
+local function align_bottom(slots, content_h, ctx)
+    local above, below = 0, 0
+    for _, slot in ipairs(slots) do
+        if slot.h > 0 and slot.module.baseline then
+            local ok, baseline = pcall(slot.module.baseline, slot.w, ctx)
+            if ok and type(baseline) == "number" then
+                slot.baseline = baseline
+                above = math.max(above, baseline)
+                below = math.max(below, slot.h - baseline)
+            end
+        end
+    end
+    content_h = math.max(content_h, above + below)
+    for _, slot in ipairs(slots) do
+        if slot.baseline then
+            slot.offset = content_h - below - slot.baseline
+        elseif slot.h > 0 then
+            slot.offset = content_h - slot.h
+        end
+    end
+    return content_h
+end
+
 -- The whole home for layout rows under ctx ({ look, screen, ... }, passed on to each widget's
 -- height): every row's height, the rows that fit with their slots measured and placed, the
 -- dropped row indexes, and the header and footer chrome, in device pixels. Row 1 carries the
 -- header: a band (full width) or a box between the side margins, its padding around the slots,
--- then its bottom edge, or its rule with rule_space above and below and no row gap after. A slot
--- whose widget has no module, or whose height raises, measures 0; slot.module is the module and
--- slot.error the height's error. rows is not changed. The home is sized by Layout.screen, the
--- screen its lengths are scaled for.
+-- then its bottom edge, or its rule with rule_space above and below and no row gap after; with
+-- the header's align "bottom", its slots are bottom-aligned on one baseline (align_bottom). A
+-- slot is { widget, module, x, y, w, h, offset, error }, h its row's content height and offset
+-- the drop of its widget from y (0 but in an aligned row). A slot whose widget has no module, or
+-- whose height raises, measures 0; slot.error is the height's error. rows is not changed. The
+-- home is sized by Layout.screen, the screen its lengths are scaled for.
 local function arrange(rows, ctx, placer)
     local home = ctx.look.home
     local header = home.header
@@ -147,7 +178,7 @@ local function arrange(rows, ctx, placer)
         end
         local slots, content_h = {}, 0
         for j, column in ipairs(Layout.columns(width - 2 * inset, row, home.column_gap)) do
-            local slot = { widget = row[j].widget, x = inset + column.x, w = column.w, h = 0 }
+            local slot = { widget = row[j].widget, x = inset + column.x, w = column.w, h = 0, offset = 0 }
             slot.module = Widgets.get(slot.widget)
             if slot.module then
                 local ok, h = pcall(slot.module.height, column.w, ctx)
@@ -161,6 +192,9 @@ local function arrange(rows, ctx, placer)
             end
             content_h = math.max(content_h, slot.h)
             slots[j] = slot
+        end
+        if i == 1 and header.align == "bottom" then
+            content_h = align_bottom(slots, content_h, ctx)
         end
         local chrome_top, chrome = 0, 0
         if i == 1 and content_h > 0 then

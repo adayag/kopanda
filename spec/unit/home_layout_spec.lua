@@ -143,6 +143,111 @@ describe("the home's rows", function()
         assert.same(before, entry.default)
     end)
 
+    -- The header row aligns its slots to the bottom (Main.dc.html:19, HomeRetro.dc.html:19
+    -- align-items: flex-end), the clock's baseline level with the date's last line.
+    it("sets the date's last line and the clock on one baseline at the header's bottom, other rows at their top",
+            function()
+        local TextWidget = require("ui/widget/textwidget")
+        local Blitbuffer = require("ffi/blitbuffer")
+        local Settings = package.loaded["settings"]
+        stubs.date = require("widgets/date")
+        stubs.clock = require("widgets/clock")
+        stubs.stats = stub("stats", 30)
+        local paint = TextWidget.paintTo
+        local painted
+        TextWidget.paintTo = function(self, bb, x, y)
+            painted[#painted + 1] = { x = x, baseline = y + (self.forced_baseline or self:getBaseline()) }
+            return paint(self, bb, x, y)
+        end
+        finally(function()
+            TextWidget.paintTo = paint
+        end)
+        local bb = Blitbuffer.new(Screen:getWidth(), Screen:getHeight(), Blitbuffer.TYPE_BBRGB32)
+        for _, case in ipairs({ { "editorial", "small" }, { "editorial", "large" }, { "diner", "small" },
+                { "diner", "medium" }, { "diner", "large" } }) do
+            local id = case[1] .. " " .. case[2]
+            Settings.set("look", case[1])
+            Settings.set("text_size", case[2])
+            local home = Home:new{}
+            local rows = home[1]
+            local function place(id_)
+                local slot = slot_of(home, id_)
+                for i, widget in ipairs(rows) do
+                    if widget == slot.built then
+                        return rows.places[i], slot
+                    end
+                end
+            end
+            painted = {}
+            rows:paintTo(bb, 0, 0)
+            -- The baselines painted in a slot's column, lowest last; the other slots are stubs
+            -- that paint no text.
+            local function baselines(id_)
+                local rect = slot_of(home, id_).rect
+                local found = {}
+                for _, p in ipairs(painted) do
+                    if p.x >= rect.x and p.x < rect.x + rect.w then
+                        found[#found + 1] = p.baseline
+                    end
+                end
+                table.sort(found)
+                return found
+            end
+            local date, clock = baselines("date"), baselines("clock")
+            assert.truthy(#date > 0 and #clock > 0, id)
+            assert.equals(clock[1], clock[#clock], id .. " clock glyphs on one baseline")
+            assert.equals(date[#date], clock[1], id .. " date's last line and clock")
+            -- The lower of the two sits on the header row's bottom.
+            local bottom = 0
+            for _, id_ in ipairs({ "date", "clock" }) do
+                local at, slot = place(id_)
+                bottom = math.max(bottom, at.y + slot.built:getSize().h)
+            end
+            local header = slot_of(home, "date").rect
+            assert.equals(header.y + header.h, bottom, id)
+            -- Row 3's shorter weather stays at its row's top.
+            for _, id_ in ipairs({ "weather", "stats" }) do
+                local at, slot = place(id_)
+                assert.equals(slot.rect.y, at.y, id .. " " .. id_)
+            end
+            home:free()
+        end
+        bb:free()
+    end)
+
+    it("grows the header row to hold its slots on one baseline, and sets a slot with no baseline on its bottom",
+            function()
+        -- The date drops 20 below its baseline at 40, the clock 5 below its baseline at 45: the
+        -- row's baseline lies 45 down, 20 above its bottom.
+        stubs.date.baseline = function()
+            return 40
+        end
+        stubs.clock.baseline = function()
+            return 45
+        end
+        local home = Home:new{}
+        local function top(id)
+            local slot = slot_of(home, id)
+            for i, widget in ipairs(home[1]) do
+                if widget == slot.built then
+                    return home[1].places[i].y - slot.rect.y, slot.rect.h
+                end
+            end
+        end
+        local date_top, row_h = top("date")
+        assert.equals(65, row_h)
+        assert.equals(5, date_top)
+        assert.equals(0, (top("clock")))
+        home:free()
+        stubs.clock.baseline = nil
+        home = Home:new{}
+        date_top, row_h = top("date")
+        assert.equals(60, row_h)
+        assert.equals(0, date_top)
+        assert.equals(10, (top("clock")))
+        home:free()
+    end)
+
     it("leaves a blank slot of its column width, logged, for a widget with no module", function()
         stubs.quote = nil
         local _, home = show_home()

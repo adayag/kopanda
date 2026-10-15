@@ -174,6 +174,8 @@ describe("looks", function()
                         assert.equals("hatch_135", value, where)
                     elseif key == "free_space" then
                         assert.truthy(value == "before_last_row" or value == "before_footer", where .. " = " .. value)
+                    elseif key == "align" then
+                        assert.truthy(value == "top" or value == "bottom", where .. " = " .. value)
                     else
                         error(where .. " is a string that is neither a role, a face nor a marker: " .. value)
                     end
@@ -199,6 +201,11 @@ describe("looks", function()
                     assert.is_number(entry.line_height, where)
                 end
             end
+        end)
+
+        it("align both looks' header row to its bottom", function()
+            assert.equals("bottom", looks.editorial.home.header.align)
+            assert.equals("bottom", looks.diner.home.header.align)
         end)
 
         it("put the free height before Editorial's last row and before Diner's footer", function()
