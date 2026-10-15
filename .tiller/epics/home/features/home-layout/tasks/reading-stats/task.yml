@@ -1,7 +1,7 @@
 id: T-wgis3w
 key: home/home-layout/reading-stats
 title: Reading stats from KOReader's Statistics database
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:b9f66a1
         observed_at: 2026-10-15T12:44:30.80903Z
 branch: tiller/home/home-layout/reading-stats
+review_ref:
+    branch: tiller/home/home-layout/reading-stats
+    head:
+        kind: git_commit
+        value: git:31ba6ca
+        observed_at: 2026-10-15T14:41:48.79004Z
 gates:
     build:
         required: true

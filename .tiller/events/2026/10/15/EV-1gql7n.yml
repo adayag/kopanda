@@ -1,0 +1,16 @@
+id: EV-1gql7n
+type: submit.task
+at: 2026-10-15T14:41:48.790412Z
+contributor: allen
+command: submit task T-wgis3w
+targets:
+    - T-wgis3w
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/home-layout/reading-stats
+        head: git:31ba6ca
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/reading-stats/task.yml
