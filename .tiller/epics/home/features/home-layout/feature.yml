@@ -108,9 +108,9 @@ gates:
                     - kind: command_output
                       ref: artifacts/tiller/gates/eval-C10-b218f9c-out-cb6505982443031f2d4123e67f0329af81bec325e3fa6fcd55fecdb5def0536a.txt
             C11:
-                status: needs_attestation
+                status: pass
             C12:
-                status: needs_attestation
+                status: pass
             C13:
                 status: pass
                 evidence:
@@ -149,3 +149,18 @@ gates:
         evidence:
             - kind: command_output
               ref: artifacts/tiller/gates/tests-b218f9c-out-6087e7b8d87d87213f724ac585faabe3c58d4eccae1cd5b41883e86eb1ae5071.txt
+attestations:
+    - id: AT-pmz69g
+      target:
+        kind: criterion
+        id: C11
+      status: pass
+      by: allen
+      at: 2026-10-15T15:08:19.065159Z
+    - id: AT-0gehcu
+      target:
+        kind: criterion
+        id: C12
+      status: pass
+      by: allen
+      at: 2026-10-15T15:08:55.703721Z
