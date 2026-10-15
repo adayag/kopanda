@@ -1,0 +1,501 @@
+-- The swatch screen (C8): Tools › KoPanda › Swatches in the file manager and the reader shows
+-- every look's palettes, faces and the icon registry full screen; a tap closes it, and a failure
+-- in its build, paint or gestures leaves the app it was opened from on top and usable.
+describe("the swatch screen", function()
+    local harness = require("plugin_harness")
+    local Blitbuffer = require("ffi/blitbuffer")
+    local Event = require("ui/event")
+    local FileManager = require("apps/filemanager/filemanager")
+    local InputContainer = require("ui/widget/container/inputcontainer")
+    local Screen = require("device").screen
+    local UIManager = require("ui/uimanager")
+    local logger = require("logger")
+    local Fonts, Icons, Looks, Swatch, logged, settled_listener
+    local original_paint = InputContainer.paintTo
+    local original_color_enabled = Screen.isColorEnabled
+
+    local function swatches_on_stack()
+        local count = 0
+        for _, widget in ipairs(harness.stack()) do
+            if widget.name == "kopanda_swatch" then
+                count = count + 1
+            end
+        end
+        return count
+    end
+
+    local function find(list, id)
+        for _, item in ipairs(list) do
+            if item.id == id then
+                return item
+            end
+        end
+    end
+
+    local function texts(items)
+        local list = {}
+        for _, item in ipairs(items) do
+            list[#list + 1] = item.text
+        end
+        return list
+    end
+
+    -- Tools › KoPanda in a menu's tabs.
+    local function kopanda_item(tabs)
+        local tools = find(tabs, "tools")
+        assert.is_table(tools)
+        local item = find(tools, "kopanda")
+        assert.is_table(item)
+        return item
+    end
+
+    local function swatches_item(tabs)
+        for _, item in ipairs(kopanda_item(tabs).sub_item_table) do
+            if item.text == "Swatches" then
+                return item
+            end
+        end
+        error("no Swatches item")
+    end
+
+    local function tap_mid()
+        local size = Screen:getSize()
+        UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", size.w / 2, size.h / 2)))
+    end
+
+    local function tap_top()
+        local size = Screen:getSize()
+        UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", size.w / 2, size.h / 16)))
+    end
+
+    -- The file manager with its home closed by a mid-screen tap.
+    local function fm_without_home()
+        local fm = harness.show_fm()
+        harness.tick(2)
+        tap_mid()
+        assert.equals(fm, harness.top())
+        return fm
+    end
+
+    -- Runs Tools › KoPanda › Swatches as the menu does: the callback, the menu closing, then the
+    -- callback's next tick.
+    local function open_from_fm()
+        local fm = fm_without_home()
+        fm.menu:onShowMenu()
+        local item = swatches_item(fm.menu.tab_item_table)
+        item.callback()
+        fm.menu:onCloseFileManagerMenu()
+        harness.tick()
+        return fm
+    end
+
+    local function open_from_reader()
+        local reader = harness.open_reader()
+        harness.tick()
+        reader.menu:onShowMenu()
+        local item = swatches_item(reader.menu.tab_item_table)
+        item.callback()
+        reader.menu:onCloseReaderMenu()
+        harness.tick()
+        return reader
+    end
+
+    local function logged_error(text)
+        for _, call in ipairs(logged.calls) do
+            for _, arg in ipairs(call.vals) do
+                if tostring(arg):find(text, 1, true) then
+                    return true
+                end
+            end
+        end
+        return false
+    end
+
+    -- The file manager is on top with no swatch and takes a tap: one in the top menu zone opens
+    -- its menu (filemanagermenu.lua:72-90).
+    local function file_manager_usable()
+        local fm = FileManager.instance
+        assert.equals(0, swatches_on_stack())
+        assert.equals(fm, harness.top())
+        tap_top()
+        assert.is_not_nil(fm.menu.menu_container)
+        assert.equals(fm.menu.menu_container, harness.top())
+        fm.menu:onCloseFileManagerMenu()
+        assert.equals(fm, harness.top())
+    end
+
+    -- The reader is on top with no swatch and takes a tap: one in the top menu zone opens its
+    -- menu (readermenu.lua:95-107, :495-502).
+    local function reader_usable(reader)
+        assert.equals(0, swatches_on_stack())
+        assert.equals(reader, harness.top())
+        tap_top()
+        assert.is_not_nil(reader.menu.menu_container)
+        reader.menu:onCloseReaderMenu()
+    end
+
+    -- Every widget under widget, depth first in child order, widget itself first.
+    local function walk(widget, visit)
+        visit(widget)
+        for _, child in ipairs(widget) do
+            walk(child, visit)
+        end
+    end
+
+    local function collect(widget, pred)
+        local found = {}
+        walk(widget, function(w)
+            if pred(w) then
+                found[#found + 1] = w
+            end
+        end)
+        return found
+    end
+
+    local function named(name)
+        return function(w)
+            return w.name == name
+        end
+    end
+
+    local function has_text(w)
+        return type(w.text) == "string"
+    end
+
+    local function same_color(a, b)
+        a, b = a:getColorRGB32(), b:getColorRGB32()
+        return a.r == b.r and a.g == b.g and a.b == b.b
+    end
+
+    local function sorted_keys(t)
+        local keys = {}
+        for key in pairs(t) do
+            keys[#keys + 1] = key
+        end
+        table.sort(keys)
+        return keys
+    end
+
+    before_each(function()
+        harness.load()
+        Fonts = require("fonts")
+        Icons = require("icons")
+        Looks = require("looks")
+        Swatch = require("swatch")
+        logged = spy.on(logger, "err")
+    end)
+
+    after_each(function()
+        if settled_listener then
+            UIManager.event_hook:unregister("KoPandaSettled", settled_listener)
+            settled_listener = nil
+        end
+        InputContainer.paintTo = original_paint
+        Screen.isColorEnabled = original_color_enabled
+        G_reader_settings:delSetting("night_mode")
+        logger.err:revert()
+        harness.teardown()
+    end)
+
+    describe("Tools › KoPanda › Swatches", function()
+        it("follows Home and Settings in the file manager's and the reader's Tools", function()
+            local fm = harness.show_fm()
+            fm.menu:onShowMenu()
+            assert.same({ "Home", "Settings", "Swatches" }, texts(kopanda_item(fm.menu.tab_item_table).sub_item_table))
+            fm.menu:onCloseFileManagerMenu()
+            fm:onClose()
+            local reader = harness.open_reader()
+            reader.menu:onShowMenu()
+            assert.same({ "Home", "Settings", "Swatches" },
+                texts(kopanda_item(reader.menu.tab_item_table).sub_item_table))
+        end)
+
+        it("shows a full-screen swatch over the file manager that a tap closes", function()
+            local fm = open_from_fm()
+            local top = harness.top()
+            assert.equals("kopanda_swatch", top.name)
+            assert.is_true(top.covers_fullscreen)
+            assert.equals(1, swatches_on_stack())
+            tap_mid()
+            assert.equals(0, swatches_on_stack())
+            assert.equals(fm, harness.top())
+        end)
+
+        it("shows a full-screen swatch over the book that a tap closes", function()
+            local reader = open_from_reader()
+            local top = harness.top()
+            assert.equals("kopanda_swatch", top.name)
+            assert.is_true(top.covers_fullscreen)
+            tap_mid()
+            assert.equals(0, swatches_on_stack())
+            assert.equals(reader, harness.top())
+        end)
+
+        it("announces its first paint with the settled signal on screen swatch", function()
+            local events = {}
+            settled_listener = function(args)
+                events[#events + 1] = args
+            end
+            UIManager.event_hook:register("KoPandaSettled", settled_listener)
+            open_from_fm()
+            harness.tick(2)
+            local swatch_events = {}
+            for _, args in ipairs(events) do
+                if args.screen == "swatch" then
+                    swatch_events[#swatch_events + 1] = args
+                end
+            end
+            assert.equals(1, #swatch_events)
+            assert.is_number(swatch_events[1].paint_ms)
+            assert.is_truthy(harness.top().painted_at)
+        end)
+    end)
+
+    -- Screen:isColorEnabled as the device answers it (frontend/device/generic/device.lua:265-271).
+    local function color_enabled(on)
+        Screen.isColorEnabled = function()
+            return on
+        end
+    end
+
+    describe("its content", function()
+        local swatch
+
+        before_each(function()
+            color_enabled(true)
+            open_from_fm()
+            swatch = harness.top()
+            assert.equals("kopanda_swatch", swatch.name)
+        end)
+
+        it("has six panels, the looks across and day, night and grey down", function()
+            local panels = collect(swatch, named("kopanda_swatch_panel"))
+            local order = {}
+            for _, panel in ipairs(panels) do
+                order[#order + 1] = panel.look .. " " .. panel.variant
+            end
+            local expected = {}
+            for _, variant in ipairs({ "day", "night", "grey" }) do
+                for _, id in ipairs(Looks.ids()) do
+                    expected[#expected + 1] = id .. " " .. variant
+                end
+            end
+            assert.same(expected, order)
+        end)
+
+        it("fills each panel with its paper and labels a chip per colour role with role and hex in ink", function()
+            for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+                local palette = Looks.get(panel.look).palettes[panel.variant]
+                local ink = Looks.color(palette.ink)
+                assert.is_true(same_color(Looks.color(palette.paper), panel.color))
+                local chips = collect(panel, named("kopanda_swatch_chip"))
+                local labels = collect(panel, has_text)
+                local roles = {}
+                for _, role in ipairs(sorted_keys(palette)) do
+                    local hex = palette[role]
+                    if hex then
+                        roles[#roles + 1] = role
+                        local chip
+                        for _, c in ipairs(chips) do
+                            if c.role == role then
+                                chip = c
+                            end
+                        end
+                        assert.is_table(chip, panel.look .. " " .. panel.variant .. " " .. role)
+                        assert.is_true(same_color(Looks.color(hex), chip.color))
+                        assert.is_true(same_color(ink, chip.border_color))
+                        local label
+                        for _, w in ipairs(labels) do
+                            if w.text == role .. " " .. hex then
+                                label = w
+                            end
+                        end
+                        assert.is_table(label, panel.look .. " " .. panel.variant .. " " .. role)
+                        assert.is_true(same_color(ink, label.fgcolor))
+                        assert.is_true(same_color(Looks.color(palette.paper), label.bgcolor))
+                    end
+                end
+                assert.equals(#roles, #chips)
+            end
+        end)
+
+        it("draws a line per face in that face, naming it", function()
+            for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+                local faces = Looks.get(panel.look).faces
+                local lines = collect(panel, named("kopanda_swatch_face"))
+                local expected = 0
+                for _, role in ipairs(sorted_keys(faces)) do
+                    local face = faces[role]
+                    if face.file then
+                        expected = expected + 1
+                        local line
+                        for _, w in ipairs(lines) do
+                            if w.face.realname == Fonts.path(face.file) then
+                                line = w
+                            end
+                        end
+                        assert.is_table(line, panel.look .. " " .. role)
+                        assert.truthy(line.text:find(face.label, 1, true))
+                    end
+                end
+                assert.equals(expected, #lines)
+            end
+        end)
+
+        it("draws every registered icon with its id beneath", function()
+            local icons = collect(swatch, named("kopanda_swatch_icon"))
+            assert.equals(#Icons.entries, #icons)
+            for i, entry in ipairs(Icons.entries) do
+                local cell = icons[i]
+                assert.equals(entry.id, cell.icon_id)
+                local images = collect(cell, function(w)
+                    return w.file ~= nil
+                end)
+                assert.equals(1, #images)
+                assert.equals(Icons.path(entry.id), images[1].file)
+                assert.is_true(images[1].alpha)
+                local ids = collect(cell, function(w)
+                    return w.text == entry.id
+                end)
+                assert.equals(1, #ids)
+            end
+        end)
+
+        it("has no night mode note with night mode off", function()
+            local notes = collect(swatch, function(w)
+                return has_text(w) and w.text:find("Night mode", 1, true) ~= nil
+            end)
+            assert.same({}, notes)
+        end)
+    end)
+
+    -- The emulator's grey profile keeps an RGB32 framebuffer (base/ffi/framebuffer_SDL3.lua:20-23,
+    -- :85-86), where an RGB32 paint keeps its hue; a grey panel's BB8 framebuffer would grey it by
+    -- luminance. The swatch draws those greys itself, so both show what the panel does.
+    it("draws every colour in KOReader's luminance grey when colour is off", function()
+        color_enabled(false)
+        open_from_fm()
+        local swatch = harness.top()
+        local panels = collect(swatch, named("kopanda_swatch_panel"))
+        assert.equals(6, #panels)
+        local function grey_of(hex)
+            return Looks.color(hex):getColor8()
+        end
+        for _, panel in ipairs(panels) do
+            local palette = Looks.get(panel.look).palettes[panel.variant]
+            assert.is_true(Blitbuffer.isColor8(panel.color))
+            assert.equals(grey_of(palette.paper).a, panel.color.a)
+            for _, chip in ipairs(collect(panel, named("kopanda_swatch_chip"))) do
+                assert.is_true(Blitbuffer.isColor8(chip.color))
+                assert.equals(grey_of(palette[chip.role]).a, chip.color.a)
+                assert.equals(grey_of(palette.ink).a, chip.border_color.a)
+            end
+            for _, w in ipairs(collect(panel, has_text)) do
+                assert.equals(grey_of(palette.ink).a, w.fgcolor.a)
+                assert.equals(grey_of(palette.paper).a, w.bgcolor.a)
+            end
+        end
+    end)
+
+    it("still opens, in KOReader's UI font, with a face that won't load, and says so", function()
+        Fonts.face = function()
+            return nil
+        end
+        open_from_fm()
+        local swatch = harness.top()
+        assert.equals("kopanda_swatch", swatch.name)
+        local lines = collect(swatch, named("kopanda_swatch_face"))
+        assert.truthy(#lines > 0)
+        for _, line in ipairs(lines) do
+            assert.truthy(line.text:find("(did not load)", 1, true))
+        end
+    end)
+
+    it("says above the panels that night mode inverts the colours when it is on", function()
+        G_reader_settings:saveSetting("night_mode", true)
+        open_from_fm()
+        local swatch = harness.top()
+        local notes = collect(swatch, function(w)
+            return has_text(w) and w.text:find("Night mode is on", 1, true) ~= nil
+        end)
+        assert.equals(1, #notes)
+        assert.truthy(notes[1].text:find("Turn it off to judge them", 1, true))
+        -- Above the panels: met before the first panel in child order.
+        local seen_note, note_first = false, nil
+        walk(swatch, function(w)
+            if w == notes[1] then
+                seen_note = true
+            elseif w.name == "kopanda_swatch_panel" and note_first == nil then
+                note_first = seen_note
+            end
+        end)
+        assert.is_true(note_first)
+    end)
+
+    describe("failing safe", function()
+        local function paint_fails()
+            InputContainer.paintTo = function(self, ...)
+                if self.name == "kopanda_swatch" then
+                    error("kopanda-test: swatch paint failed")
+                end
+                return original_paint(self, ...)
+            end
+        end
+
+        it("leaves the file manager on top when the build throws", function()
+            Swatch.init = function()
+                error("kopanda-test: swatch build failed")
+            end
+            open_from_fm()
+            harness.tick(2)
+            assert.is_true(logged_error("kopanda-test: swatch build failed"))
+            file_manager_usable()
+        end)
+
+        it("closes over the file manager when the paint throws", function()
+            paint_fails()
+            open_from_fm()
+            harness.tick(3)
+            assert.is_true(logged_error("kopanda-test: swatch paint failed"))
+            file_manager_usable()
+        end)
+
+        it("closes over the file manager when the tap handler throws", function()
+            open_from_fm()
+            harness.top().close = function()
+                error("kopanda-test: swatch tap failed")
+            end
+            tap_mid()
+            assert.is_true(logged_error("kopanda-test: swatch tap failed"))
+            file_manager_usable()
+        end)
+
+        it("leaves the reader on top when the build throws", function()
+            Swatch.init = function()
+                error("kopanda-test: swatch build failed")
+            end
+            local reader = open_from_reader()
+            harness.tick(2)
+            assert.is_true(logged_error("kopanda-test: swatch build failed"))
+            reader_usable(reader)
+        end)
+
+        it("closes over the reader when the paint throws", function()
+            paint_fails()
+            local reader = open_from_reader()
+            harness.tick(3)
+            assert.is_true(logged_error("kopanda-test: swatch paint failed"))
+            reader_usable(reader)
+        end)
+
+        it("closes over the reader when the tap handler throws", function()
+            local reader = open_from_reader()
+            harness.top().close = function()
+                error("kopanda-test: swatch tap failed")
+            end
+            tap_mid()
+            assert.is_true(logged_error("kopanda-test: swatch tap failed"))
+            reader_usable(reader)
+        end)
+    end)
+end)
