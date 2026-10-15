@@ -417,9 +417,10 @@ Upgrading KOReader walks this list.
 - The toggle's path: KOReader's menu broadcasts `ToggleNightMode`
   (`frontend/ui/elements/common_settings_menu_table.lua:266-271`); a gesture goes through
   `Dispatcher`'s `night_mode` action (`frontend/dispatcher.lua:138`, `ToggleNightMode`) or
-  `set_night_mode` (`:139`, `SetNightMode`). Either reaches the home before `DeviceListener`
-  toggles the screen and calls `setDirty("all", "full")`
-  (`frontend/device/devicelistener.lua:14-27`), so the home handles neither event: its `paintTo`
+  `set_night_mode` (`:139`, `SetNightMode`). `DeviceListener:onSetNightMode` calls
+  `onToggleNightMode` only when the state differs (`frontend/device/devicelistener.lua:29-34`).
+  Either reaches the home before `DeviceListener` toggles the screen and calls
+  `setDirty("all", "full")` (`:14-27`), so the home handles neither event: its `paintTo`
   compares the variant it was built with against `Looks.variant()` and rebuilds inside that
   repaint, inside its paint `pcall`, with no `setDirty` of its own. `Home.take_pending` drops a
   pre-built home of another variant.
@@ -1076,5 +1077,5 @@ Upgrading KOReader walks this list.
   the rasteriser unpremultiplies its output (`nanosvgrast.h:1206`, `:1450`), so a black stroke's
   anti-aliased edge stays R = G = B = 0.
 - `spec/unit/icons_spec.lua` renders every registered icon at 48×48 and reads each pixel with
-  `Blitbuffer:getPixel` (`base/ffi/blitbuffer.lua:819-826`; a `ColorRGB32` has `r`, `g`, `b`,
+  `Blitbuffer:getPixel` (`base/ffi/blitbuffer.lua:819-827`; a `ColorRGB32` has `r`, `g`, `b`,
   `alpha`, `:54-59`). The plugin itself only names icon files, through `icons.lua`.

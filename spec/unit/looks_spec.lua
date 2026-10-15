@@ -522,6 +522,7 @@ describe("looks", function()
                     assert.same({ "day", "grey", "night" }, keys(look.palettes), id)
                     assert.same(looks[id].palettes, look.palettes, id)
                     assert.same(load_look(id).palettes.night, look.palettes.night, id)
+                    assert.same(load_look(id), look, id)
                 end
             end)
         end)
