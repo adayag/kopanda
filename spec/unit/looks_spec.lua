@@ -103,7 +103,11 @@ describe("looks", function()
                     "launcher.row_gap", "launcher.icon_size", "launcher.icon_gap", "launcher.padding.x",
                     "launcher.padding.y", "launcher.tile_height", "launcher.accent_1_color",
                     "launcher.accent_2_color", "launcher.accent_3_color", "launcher.suffix_gap",
-                    "launcher.suffix_below", "type.launcher_label.face", "type.launcher_suffix.tracking" }) do
+                    "launcher.suffix_below", "type.launcher_label.face", "type.launcher_suffix.tracking",
+                    "sheet.inset.side", "sheet.book_band_color", "sheet.header_padding.top",
+                    "sheet.book_header_padding.bottom", "sheet.row_rule_color", "sheet.status_chip_color",
+                    "sheet.chip_padding.x", "type.sheet_heading.face", "type.sheet_aside.color",
+                    "type.sheet_chip.size" }) do
                 local found = false
                 for _, path in ipairs(diner) do
                     found = found or path == wanted
@@ -119,7 +123,8 @@ describe("looks", function()
                 assert.same({ "day", "grey", "night" }, keys(palettes), id)
                 local roles = keys(palettes.day)
                 for _, role in ipairs({ "paper", "ink", "muted", "text", "hairline", "hairline_light",
-                        "teal", "pink", "mustard", "outline", "shadow", "on_band", "cover", "on_cover" }) do
+                        "teal", "pink", "mustard", "outline", "shadow", "on_band", "cover", "on_cover",
+                        "on_accent" }) do
                     assert.is_not_nil(palettes.day[role], id .. " has no " .. role)
                 end
                 assert.same(roles, keys(palettes.night), id .. " night")
@@ -234,6 +239,17 @@ describe("looks", function()
                     assert.same(pair, { palette.cover, palette.on_cover }, id .. " " .. variant)
                 end
             end
+        end)
+
+        -- The text on Diner's accent fills: the boards' ink on the band (HoldBookC:31-36), the night
+        -- paper (no board), ink on the grey tiles (PWRetro:19). Editorial has no accent fills.
+        it("give on_accent Diner's day, night and grey values and Editorial none", function()
+            local palettes = looks.diner.palettes
+            assert.same({ "#2f2e2b", "#1e1c1a", "#111111" },
+                { palettes.day.on_accent, palettes.night.on_accent, palettes.grey.on_accent })
+            palettes = looks.editorial.palettes
+            assert.same({ false, false, false },
+                { palettes.day.on_accent, palettes.night.on_accent, palettes.grey.on_accent })
         end)
 
         it("size the cover box 2:3 and draw the placeholder's text in on_cover and its empty frame in muted", function()

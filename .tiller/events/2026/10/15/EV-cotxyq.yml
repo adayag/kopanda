@@ -1,0 +1,13 @@
+id: EV-cotxyq
+type: check.task
+at: 2026-10-15T21:23:01.454326Z
+contributor: allen
+command: check task T-b26ryy
+targets:
+    - T-b26ryy
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/sheet/task.yml

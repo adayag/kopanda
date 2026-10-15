@@ -157,13 +157,13 @@ local function panel(id, variant, w, h)
     local header_face = face_or_fallback(look.faces.text.file, HEADER_SIZE)
     local content = VerticalGroup:new{ align = "left" }
     local name = id:gsub("^%l", string.upper)
-    content[#content + 1] = ink_text(name .. " · " .. variant, header_face, content_w, ink, paper)
-    content[#content + 1] = VerticalSpan:new{ width = gap }
+    local heading = name .. " · " .. variant
 
     -- The chips of the roles the look has in two columns, in role order down the first and then
-    -- the second. The roles it lacks (false) are named on one line: in the second column's empty
-    -- last cell, from its chip x, when the chip count is odd and the line fits the cell's width;
-    -- otherwise full width after the chips.
+    -- the second. The roles it lacks (false) are named on one line, in a cell as wide as the
+    -- second column, from its chip x, when the line fits that width: the column's empty last
+    -- cell when the chip count is odd, the heading's line when it is even; otherwise full width
+    -- after the chips. The heading's line keeps the chips' rows when there is no empty cell.
     local roles, lacks = {}, {}
     for _, role in ipairs(sorted_keys(palette)) do
         if palette[role] then
@@ -175,8 +175,8 @@ local function panel(id, variant, w, h)
     local column_w = math.floor((content_w - gap) / 2)
     local rows = math.ceil(#roles / 2)
     local lacks_text = "lacks: " .. table.concat(lacks, ", ")
-    local lacks_cell
-    if #lacks > 0 and #roles % 2 == 1 then
+    local lacks_cell, beside_heading
+    if #lacks > 0 then
         local text = ink_text(lacks_text, label_face, column_w, ink, paper, "kopanda_swatch_lacks")
         if #text.vertical_string_list == 1 then
             lacks_cell = text
@@ -184,6 +184,23 @@ local function panel(id, variant, w, h)
             text:free()
         end
     end
+    if lacks_cell and #roles % 2 == 0 then
+        local title = ink_text(heading, header_face, column_w, ink, paper)
+        if #title.vertical_string_list == 1 then
+            beside_heading = HorizontalGroup:new{
+                align = "bottom",
+                title,
+                HorizontalSpan:new{ width = gap },
+                lacks_cell,
+            }
+        else
+            title:free()
+            lacks_cell:free()
+            lacks_cell = nil
+        end
+    end
+    content[#content + 1] = beside_heading or ink_text(heading, header_face, content_w, ink, paper)
+    content[#content + 1] = VerticalSpan:new{ width = gap }
     local columns = HorizontalGroup:new{ align = "top" }
     for c = 1, 2 do
         local column = VerticalGroup:new{ align = "left" }
@@ -196,7 +213,7 @@ local function panel(id, variant, w, h)
                 column[#column + 1] = chip(role, palette[role], column_w, ink, paper, label_face)
             end
         end
-        if c == 2 and lacks_cell then
+        if c == 2 and lacks_cell and not beside_heading then
             if #column > 0 then
                 column[#column + 1] = VerticalSpan:new{ width = scaled(ROW_GAP) }
             end
