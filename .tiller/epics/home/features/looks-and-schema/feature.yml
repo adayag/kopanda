@@ -14,6 +14,7 @@ order:
     - T-q3nem8
     - T-wj05yo
     - T-6nbln8
+review_grain: feature
 accepted_against:
     spec:
         kind: git_blob
