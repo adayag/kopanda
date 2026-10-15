@@ -17,6 +17,7 @@ order:
     - T-ltupc3
 review_grain: feature
 branch: tiller/reviews/features/home/home-layout
+pr: 4
 accepted_against:
     spec:
         kind: git_blob
