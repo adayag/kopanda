@@ -503,6 +503,14 @@ Upgrading KOReader walks this list.
 - `ui/quickstart`: `QuickStart.quickstart_filename`, set by `getQuickStart`
   (`frontend/ui/quickstart.lua:414-419`, `:470`); the QuickStart guide is skipped as
   `ReaderUI:getLastDirFile` skips it (`frontend/apps/reader/readerui.lua:571-577`).
+  A known limitation, kept as specified: the field is set only in a process that called
+  `getQuickStart`, which `reader.lua:257-261` does at boot only while `QuickStart:isShown()` is
+  false (`quickstart.lua:400-403`, the first run of a version), so on later boots it is nil. When
+  set, it is built on `DataStorage:getDataDir()` (`quickstart.lua:414`, `:418`), which is the
+  relative `"."` with `KO_HOME` unset and no platform folder applying (`datastorage.lua:19-42`,
+  the fallback at `:41-42`), while history
+  holds realpaths (`frontend/readhistory.lua:26`). Either way the comparison misses, and the
+  guide is featured when it is the newest history entry.
 - `docsettings`: `DocSettings:findSidecarFile` (`frontend/docsettings.lua:159-175`, the sidecar
   path or nil, by `getOrderedLocationCandidates` `:101-110` and `getSidecarDir` `:118-135`, in the
   order the `G_reader_settings` key `document_metadata_folder` gives, `:102`, `:121`;
@@ -534,7 +542,8 @@ Upgrading KOReader walks this list.
   entry covers the page (`:446-453`), filling an unfilled TOC itself (`:383-384`). Called on
   `CloseDocument`, which is sent before the document closes (`readerui.lua:887`, `:891`), with
   `self.ui.document.file`; both go into the runtime state file as `featured_chapter_file` and
-  `featured_chapter`. A raising lookup writes neither.
+  `featured_chapter`. A raising lookup is logged and records the chapter as `""`, and a failed
+  write clears `featured_chapter`, so no earlier chapter survives either.
 
 ### The weather: `NetworkMgr`, `socketutil`, `socket.http`, `rapidjson` and its cache
 

@@ -174,17 +174,27 @@ end
 -- featured book. The document is still open: CloseDocument is broadcast before closeDocument()
 -- (frontend/apps/reader/readerui.lua:887, :891). The lookup fills an unfilled TOC itself and is
 -- "" when no entry covers the page (frontend/apps/reader/modules/readertoc.lua:383-384,
--- :446-453, :476-480). A failure is logged and writes neither key.
+-- :446-453, :476-480). A failed lookup is logged and records the chapter as "", so the book
+-- keeps no chapter from an earlier close. A failed write is logged and the chapter cleared, so
+-- an old chapter never pairs with a new file.
 local function record_chapter(ui)
     if not (ui and ui.document and ui.toc) then
         return
     end
-    local ok, err = pcall(function()
-        local chapter = ui.toc:getTocTitleOfCurrentPage() or ""
-        State.set("featured_chapter_file", ui.document.file)
-        State.set("featured_chapter", chapter)
-    end)
+    local ok, chapter = pcall(ui.toc.getTocTitleOfCurrentPage, ui.toc)
     if not ok then
+        logger.err("KoPanda: could not look up the chapter:", chapter)
+        chapter = ""
+    end
+    local set_ok, err = pcall(function()
+        local file_written = State.set("featured_chapter_file", ui.document.file)
+        local chapter_written = State.set("featured_chapter", chapter or "")
+        if not (file_written and chapter_written) then
+            logger.err("KoPanda: could not record the chapter, clearing it")
+            State.set("featured_chapter", "")
+        end
+    end)
+    if not set_ok then
         logger.err("KoPanda: could not record the chapter:", err)
     end
 end

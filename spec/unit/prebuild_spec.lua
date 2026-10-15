@@ -170,12 +170,12 @@ describe("the KoPanda home pre-built on book close", function()
         local State, order, real_set, real_prebuild
         local file = "/mnt/us/books/frankenstein.epub"
 
-        -- A reader's KoPanda over a stub ui whose TOC answers with toc_title (a function to
-        -- call, or a string to return).
-        local function reader_kopanda(toc_title)
+        -- A reader's KoPanda over a stub ui reading book (default: file) whose TOC answers with
+        -- toc_title (a function to call, or a string to return).
+        local function reader_kopanda(toc_title, book)
             return Plugin:new{
                 ui = {
-                    document = { file = file },
+                    document = { file = book or file },
                     toc = {
                         getTocTitleOfCurrentPage = function()
                             if type(toc_title) == "function" then
@@ -227,16 +227,48 @@ describe("the KoPanda home pre-built on book close", function()
             assert.same({ "set featured_chapter_file", "set featured_chapter" }, order)
         end)
 
-        it("writes nothing from a raising TOC, logs it and still pre-builds", function()
+        -- C3: a raising lookup on a re-close leaves no chapter, not the one recorded before.
+        it("clears the chapter of a re-closed book whose TOC raises, logs it and pre-builds", function()
+            local FeaturedBook = package.loaded["featured_book"]
+            local saved_history = package.loaded["readhistory"]
+            local real = harness.library .. "/frankenstein.epub"
+            package.loaded["readhistory"] = { hist = { { file = real, select_enabled = true } } }
+            reader_kopanda("Letter IV", real):onCloseDocument()
+            assert.equals("Letter IV", State.get("featured_chapter"))
+            order = {}
             local errored = spy.on(logger, "err")
             reader_kopanda(function()
                 error("toc broke on purpose")
-            end):onCloseDocument()
+            end, real):onCloseDocument()
             logger.err:revert()
-            assert.same({ "prebuild" }, order)
-            assert.is_nil(State.get("featured_chapter_file"))
-            assert.is_nil(State.get("featured_chapter"))
+            local featured = FeaturedBook.current()
+            package.loaded["readhistory"] = saved_history
+            assert.equals(real, State.get("featured_chapter_file"))
+            assert.equals("", State.get("featured_chapter"))
+            assert.equals(real, featured.file)
+            assert.is_nil(featured.chapter)
             assert.spy(errored).was_called()
+            assert.equals("prebuild", order[#order])
+        end)
+
+        it("clears the chapter when the file's write fails, logs it and pre-builds", function()
+            reader_kopanda("Letter IV"):onCloseDocument()
+            order = {}
+            local errored = spy.on(logger, "err")
+            local logged_set = State.set
+            State.set = function(key, value)
+                if key == "featured_chapter_file" then
+                    order[#order + 1] = "set " .. key
+                    return false
+                end
+                return logged_set(key, value)
+            end
+            reader_kopanda("Letter V"):onCloseDocument()
+            State.set = logged_set
+            logger.err:revert()
+            assert.equals("", State.get("featured_chapter"))
+            assert.spy(errored).was_called()
+            assert.equals("prebuild", order[#order])
         end)
 
         it("writes nothing with no document, and still pre-builds", function()

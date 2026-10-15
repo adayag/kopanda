@@ -340,6 +340,15 @@ describe("FeaturedBook", function()
             assert.same({ "abc" }, asked)
         end)
 
+        -- 62.6 of 100 pages read rounds to 63, leaving 37 pages; flooring would leave 38.
+        it("rounds the pages read to the nearest page", function()
+            sidecar(a, '{ percent_finished = 0.626, partial_md5_checksum = "abc" }')
+            ReadingStats.seconds_per_page = function()
+                return 2, 100
+            end
+            assert.equals(74, FeaturedBook.current().seconds_left)
+        end)
+
         it("is nil with no rate", function()
             sidecar(a, '{ percent_finished = 0.62, partial_md5_checksum = "abc" }')
             ReadingStats.seconds_per_page = function()
