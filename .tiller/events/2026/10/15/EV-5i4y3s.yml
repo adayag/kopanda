@@ -1,0 +1,14 @@
+id: EV-5i4y3s
+type: add.tweak
+at: 2026-10-15T15:07:01.440297Z
+contributor: allen
+command: add tweak flaky-probe-golden-paperwhite
+targets:
+    - TW-4ae71f
+after:
+    attached_to: T-ltupc3
+    key: tweaks/flaky-probe-golden-paperwhite
+    status: proposed
+files:
+    - path: .tiller/tweaks/flaky-probe-golden-paperwhite/tweak.md
+    - path: .tiller/tweaks/flaky-probe-golden-paperwhite/tweak.yml
