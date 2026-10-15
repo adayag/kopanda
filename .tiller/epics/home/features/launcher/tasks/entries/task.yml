@@ -1,7 +1,7 @@
 id: T-lv4m58
 key: home/launcher/entries
 title: Launcher entries in the schema, resolved and run
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -17,6 +17,12 @@ accepted_against:
         value: git:00dc9e2
         observed_at: 2026-10-15T18:23:57.002059Z
 branch: tiller/home/launcher/entries
+review_ref:
+    branch: tiller/home/launcher/entries
+    head:
+        kind: git_commit
+        value: git:a524adf
+        observed_at: 2026-10-15T18:38:01.121508Z
 gates:
     build:
         required: true
