@@ -1,0 +1,13 @@
+id: EV-dsni3f
+type: check.tweak
+at: 2026-10-15T20:46:01.300705Z
+contributor: allen
+command: check tweak TW-l2ibo3
+targets:
+    - TW-l2ibo3
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/split-home-lua/tweak.yml
