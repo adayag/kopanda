@@ -1,0 +1,15 @@
+id: EV-18j5nv
+type: start.task
+at: 2026-10-15T14:16:46.749849Z
+contributor: allen
+command: start task T-b8dgbr
+targets:
+    - T-b8dgbr
+before:
+    status: ready
+after:
+    branch: tiller/home/home-layout/date-clock
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/date-clock/task.yml

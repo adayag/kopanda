@@ -1,9 +1,10 @@
 id: T-b8dgbr
 key: home/home-layout/date-clock
 title: Date and clock widgets in both looks
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-ds0hab
@@ -17,3 +18,4 @@ accepted_against:
         kind: git_commit
         value: git:b9f66a1
         observed_at: 2026-10-15T12:44:30.762495Z
+branch: tiller/home/home-layout/date-clock
