@@ -33,6 +33,7 @@ require("settings")
 require("typeset")
 require("widgets")
 require("widgets/quote")
+require("widgets/stats")
 
 -- The boot guard covers only the first show of a process.
 local first_show_done = false

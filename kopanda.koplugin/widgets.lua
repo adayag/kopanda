@@ -1,8 +1,9 @@
 -- The home's widget registry: a widget id from layout.rows to its module under widgets/. A
--- module is { id, settings_prefix, height(width, ctx), build(width, ctx), tap(ctx)? }: build
--- returns a KOReader widget exactly width wide, height its height there, and tap, when present,
--- is what a tap inside the slot does. ctx carries the look, the palette variant, the text size,
--- the time of the build, the screen and the home.
+-- module is { id, settings_prefix, height(width, ctx), build(width, ctx), tap(ctx)?,
+-- refresh(built, ctx)? }: build returns a KOReader widget exactly width wide, height its height
+-- there, tap, when present, is what a tap inside the slot does, and refresh, when present,
+-- updates a built widget in place when a pre-built home is shown. ctx carries the look, the
+-- palette variant, the text size, the time of the build, the screen and the home.
 -- Each module is also required from main.lua, so it loads while the plugin root is on
 -- package.path.
 local Widgets = {}
@@ -11,6 +12,7 @@ local Widgets = {}
 -- requires this registry, so none can be required while it loads.
 local modules = {
     quote = "widgets/quote",
+    stats = "widgets/stats",
 }
 
 -- The module for id, or nil when this plugin has none.

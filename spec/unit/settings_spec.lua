@@ -247,6 +247,36 @@ describe("Settings", function()
         end)
     end)
 
+    describe("stats.show", function()
+        it("is true by default, takes false and true, and keeps them across a reopen", function()
+            assert.is_true(Settings.get("stats.show"))
+            assert.is_true(Settings.set("stats.show", false))
+            Settings._reset()
+            assert.is_false(Settings.get("stats.show"))
+            assert.is_true(Settings.set("stats.show", true))
+            Settings._reset()
+            assert.is_true(Settings.get("stats.show"))
+        end)
+
+        it("refuses anything but a boolean and leaves the file byte-identical", function()
+            local text = 'return { ["stats.show"] = false }'
+            store(text)
+            for _, value in ipairs({ "true", "false", 1, 0, {}, { true } }) do
+                local ok, reason = Settings.set("stats.show", value)
+                assert.is_false(ok, tostring(value))
+                assert.is_string(reason, tostring(value))
+                assert.equals(text, read(file), tostring(value))
+            end
+            assert.is_false((Settings.set("stats.show", nil)))
+            assert.equals(text, read(file))
+        end)
+
+        it("reads a stored non-boolean as the default", function()
+            store('return { ["stats.show"] = "no" }')
+            assert.is_true(Settings.get("stats.show"))
+        end)
+    end)
+
     describe("schema_version", function()
         it("reads a file with no version as version 1 and stamps it on the first write", function()
             local text = 'return { look = "editorial" }'

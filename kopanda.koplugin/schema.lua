@@ -56,5 +56,12 @@ return {
             label = "Quote source",
             group = "quote",
         },
+        {
+            id = "stats.show",
+            type = "boolean",
+            default = true,
+            label = "Show reading stats",
+            group = "stats",
+        },
     },
 }

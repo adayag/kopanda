@@ -58,6 +58,9 @@ end
 -- One validator per type a schema key uses: validate(entry, value) is true when value is
 -- allowed for entry. Settings.get calls them on whatever the file holds, so none raises.
 Settings.validators = {
+    boolean = function(_, value)
+        return type(value) == "boolean"
+    end,
     choice = function(entry, value)
         for _, choice in ipairs(entry.choices) do
             if choice.value == value then
