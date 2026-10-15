@@ -30,15 +30,16 @@ local Screen = require("device").screen
 -- Font:getFace scales them itself (frontend/ui/font.lua:276).
 local MARGIN = 8
 local GAP = 4
+local ROW_GAP = 2 -- between chip rows, tighter than GAP so every role and face fits a panel
 local PADDING = 6
-local CHIP = 14
+local CHIP = 12
 local CHIP_BORDER = 1
 local ICON = 16
 local TITLE_SIZE = 11
 local NOTE_SIZE = 9
 local HEADER_SIZE = 10
 local LABEL_SIZE = 9
-local FACE_SIZE = 13
+local FACE_SIZE = 11
 local ICON_LABEL_SIZE = 7
 
 local VARIANTS = { "day", "night", "grey" }
@@ -177,7 +178,7 @@ local function panel(id, variant, w, h)
             local role = roles[(c - 1) * rows + r]
             if role then
                 if r > 1 then
-                    column[#column + 1] = VerticalSpan:new{ width = gap }
+                    column[#column + 1] = VerticalSpan:new{ width = scaled(ROW_GAP) }
                 end
                 column[#column + 1] = chip(role, palette[role], column_w, ink, paper, label_face)
             end
@@ -189,7 +190,7 @@ local function panel(id, variant, w, h)
     end
     content[#content + 1] = columns
 
-    content[#content + 1] = VerticalSpan:new{ width = gap * 2 }
+    content[#content + 1] = VerticalSpan:new{ width = gap }
     for _, role in ipairs(sorted_keys(look.faces)) do
         local face = look.faces[role]
         if face.file then
