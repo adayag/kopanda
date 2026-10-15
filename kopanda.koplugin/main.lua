@@ -27,9 +27,12 @@ require("looks")
 require("looks/diner")
 require("looks/editorial")
 require("migrations")
+require("quotes")
 require("schema")
 require("settings")
+require("typeset")
 require("widgets")
+require("widgets/quote")
 
 -- The boot guard covers only the first show of a process.
 local first_show_done = false

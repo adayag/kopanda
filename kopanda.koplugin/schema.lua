@@ -45,5 +45,16 @@ return {
             label = "Layout",
             group = "home",
         },
+        {
+            -- Where the quote of the day comes from: builtin is quotes.lua.
+            id = "quote.source",
+            type = "choice",
+            choices = {
+                { value = "builtin", label = "Built-in" },
+            },
+            default = "builtin",
+            label = "Quote source",
+            group = "quote",
+        },
     },
 }
