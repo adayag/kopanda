@@ -1,0 +1,13 @@
+id: EV-zpf343
+type: check.feature
+at: 2026-10-15T19:13:52.47562Z
+contributor: allen
+command: check feature F-ydcqb0
+targets:
+    - F-ydcqb0
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/home/features/launcher/feature.yml
