@@ -1,0 +1,15 @@
+id: EV-l06exa
+type: start.task
+at: 2026-10-15T21:24:38.051878Z
+contributor: allen
+command: start task T-odbt4w
+targets:
+    - T-odbt4w
+before:
+    status: ready
+after:
+    branch: tiller/home/sheets/hold-and-home-sheet
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/hold-and-home-sheet/task.yml
