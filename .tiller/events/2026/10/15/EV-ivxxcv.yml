@@ -1,0 +1,13 @@
+id: EV-ivxxcv
+type: approve.tweak
+at: 2026-10-15T20:34:36.278947Z
+contributor: allen
+command: approve tweak TW-l2ibo3
+targets:
+    - TW-l2ibo3
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/tweaks/split-home-lua/tweak.yml

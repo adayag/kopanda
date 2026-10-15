@@ -1,9 +1,19 @@
 id: TW-l2ibo3
 key: tweaks/split-home-lua
 title: Split home.lua past the 500-line signal
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 attached_to: F-4jh8sz
 source: .tiller/epics/home/features/night-mode/tasks/palette/task.md#L104-L106
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:8d8607c79e861750676703d7bba84ecb3b9324f3
+        path: .tiller/tweaks/split-home-lua/tweak.md
+        observed_at: 2026-10-15T20:34:36.256681Z
+    commit:
+        kind: git_commit
+        value: git:2f0b4bf
+        observed_at: 2026-10-15T20:34:36.278805Z
