@@ -1,9 +1,10 @@
 id: T-2axtyg
 key: home/featured-book/goldens
 title: Home goldens with the featured row and the paint budgets
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-hftuq7
@@ -17,3 +18,4 @@ accepted_against:
         kind: git_commit
         value: git:33474c1
         observed_at: 2026-10-15T15:18:53.122203Z
+branch: tiller/home/featured-book/goldens
