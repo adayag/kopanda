@@ -1,0 +1,13 @@
+id: EV-4u195o
+type: check.task
+at: 2026-10-15T19:48:59.067262Z
+contributor: allen
+command: check task T-xem8p9
+targets:
+    - T-xem8p9
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/night-mode/tasks/palette/task.yml
