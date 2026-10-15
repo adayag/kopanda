@@ -1,0 +1,14 @@
+id: EV-p1vhfw
+type: add.tweak
+at: 2026-10-15T17:14:38.267287Z
+contributor: allen
+command: add tweak shared-paint-helpers
+targets:
+    - TW-a7nfpr
+after:
+    attached_to: F-e8jz6h
+    key: tweaks/shared-paint-helpers
+    status: proposed
+files:
+    - path: .tiller/tweaks/shared-paint-helpers/tweak.md
+    - path: .tiller/tweaks/shared-paint-helpers/tweak.yml

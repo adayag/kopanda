@@ -1,0 +1,14 @@
+id: EV-p52hcz
+type: add.tweak
+at: 2026-10-15T17:14:38.189277Z
+contributor: allen
+command: add tweak cover-placeholder-word-split
+targets:
+    - TW-w4mx7i
+after:
+    attached_to: T-ew6y91
+    key: tweaks/cover-placeholder-word-split
+    status: proposed
+files:
+    - path: .tiller/tweaks/cover-placeholder-word-split/tweak.md
+    - path: .tiller/tweaks/cover-placeholder-word-split/tweak.yml
