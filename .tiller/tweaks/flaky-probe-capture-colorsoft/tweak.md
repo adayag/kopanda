@@ -5,8 +5,12 @@
 `spec/emulator/capture_spec.lua:51`, "captures the probe at the colorsoft size with a settled sidecar",
 failed once during a full `bin/check` on branch `tiller/home/launcher/entries` (2026-10-15, commit
 `bd0a16b`). That commit changes no capture, driver or probe code. The file then passed 5/5 alone, and
-the next full run passed 28/28 emulator tests. The output filter dropped the failure message, so which
-assertion failed (size, `screen`, `paint_ms` or a capture error) is not known.
+the next full run passed 28/28 emulator tests. The output filter dropped that failure message.
+
+It failed again twice on `tiller/home/launcher/goldens` (2026-10-15, before commit `955b18e`): first on
+paperwhite in a full run, then on colorsoft with the file run alone, both at `capture_spec.lua:58`,
+`assert.truthy(result.sidecar.paint_ms > 0)`: the probe's sidecar recorded `paint_ms` 0. The file then
+passed 5/5 alone and the next full run passed 30/30.
 
 This is the second flaky probe test. `tweaks/flaky-probe-golden-paperwhite` (TW-4ae71f, for
 `golden_spec.lua:56`) records the first. Both capture the probe plugin through `spec/emulator/driver.lua`,
