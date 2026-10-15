@@ -1,0 +1,17 @@
+id: EV-nlekdl
+type: start.task
+at: 2026-10-15T18:24:23.905266Z
+contributor: allen
+command: start task T-lv4m58
+targets:
+    - T-lv4m58
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/home/launcher
+    branch: tiller/home/launcher/entries
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/launcher/tasks/entries/task.yml
+    - path: .tiller/epics/home/features/launcher/feature.yml

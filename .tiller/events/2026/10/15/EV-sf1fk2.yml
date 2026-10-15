@@ -1,0 +1,11 @@
+id: EV-sf1fk2
+type: submit.feature
+at: 2026-10-15T19:18:08.434191Z
+contributor: allen
+command: submit feature home/launcher
+targets:
+    - F-ydcqb0
+after:
+    pr: 6
+files:
+    - path: .tiller/epics/home/features/launcher/feature.yml

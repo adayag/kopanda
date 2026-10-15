@@ -55,6 +55,81 @@ local function is_slot(entry, slot, seen)
     return false
 end
 
+-- Whether t is a table whose keys are exactly names.
+local function has_exactly(t, names)
+    if type(t) ~= "table" then
+        return false
+    end
+    local fields = 0
+    for _ in pairs(t) do
+        fields = fields + 1
+    end
+    if fields ~= #names then
+        return false
+    end
+    for _, name in ipairs(names) do
+        if t[name] == nil then
+            return false
+        end
+    end
+    return true
+end
+
+local function is_name(v)
+    return type(v) == "string" and v ~= ""
+end
+
+-- The fields of each kind of launcher entry, kind first; every one but a folder's entries is a
+-- non-empty string.
+local ENTRY_FIELDS = {
+    kopanda = { "kind", "target" },
+    koreader = { "kind", "target" },
+    plugin = { "kind", "plugin", "action", "label", "icon" },
+    action = { "kind", "action", "label", "icon" },
+    directory = { "kind", "path", "label" },
+    folder = { "kind", "label", "entries" },
+}
+
+-- Whether e is a launcher entry for entry (the schema's launcher.entries); a folder only when
+-- not in_folder, so folders don't nest.
+local function is_entry(entry, e, in_folder)
+    if type(e) ~= "table" or type(e.kind) ~= "string" then
+        return false
+    end
+    local kind = e.kind
+    local fields = ENTRY_FIELDS[kind]
+    if not fields or (kind == "folder" and in_folder) or not has_exactly(e, fields) then
+        return false
+    end
+    for i = 2, #fields do
+        local field = fields[i]
+        if field ~= "entries" and not is_name(e[field]) then
+            return false
+        end
+    end
+    if kind == "kopanda" or kind == "koreader" then
+        for _, target in ipairs(entry.targets[kind]) do
+            if target == e.target then
+                return true
+            end
+        end
+        return false
+    elseif kind == "directory" then
+        return e.path:sub(1, 1) == "/" and #e.path > 1
+    elseif kind == "folder" then
+        local count = list_length(e.entries)
+        if not count or count == 0 then
+            return false
+        end
+        for _, inner in ipairs(e.entries) do
+            if not is_entry(entry, inner, true) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
 -- One validator per type a schema key uses: validate(entry, value) is true when value is
 -- allowed for entry. Settings.get calls them on whatever the file holds, so none raises.
 Settings.validators = {
@@ -105,6 +180,20 @@ Settings.validators = {
         return fields == 3 and type(name) == "string" and name ~= ""
             and type(latitude) == "number" and latitude >= -90 and latitude <= 90
             and type(longitude) == "number" and longitude >= -180 and longitude <= 180
+    end,
+    -- A list of 0 to entry.max_entries launcher entries, each exactly the fields of its kind
+    -- (is_entry above).
+    launcher = function(entry, value)
+        local count = list_length(value)
+        if not count or count > entry.max_entries then
+            return false
+        end
+        for _, e in ipairs(value) do
+            if not is_entry(entry, e, false) then
+                return false
+            end
+        end
+        return true
     end,
     -- false, or an absolute path: a string starting with / and longer than /. The disk is not
     -- checked, so a path to a file that has gone stays a valid value.

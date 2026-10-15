@@ -649,6 +649,79 @@ Upgrading KOReader walks this list.
 - The first run's button keeps its rectangle on the screen when it paints, and a tap inside it is
   tested with `Geom:contains` (`frontend/ui/geometry.lua:255-266`), which takes the far edges in.
 
+### The launcher's entries: plugins, dispatcher ids, Wi-Fi, `changeToPath` and notes
+
+- `pluginloader`: `PluginLoader:isPluginLoaded(name)` (`frontend/pluginloader.lua:567-569`), true
+  when `loaded_plugins` holds the name. `loaded_plugins` fills as instances are made
+  (`createPluginInstance`, `:479-488`) and is emptied by `finalize` (`:578-580`), which the file
+  manager's `onClose` calls (`frontend/apps/filemanager/filemanager.lua:821`); the file manager
+  instantiates every enabled plugin that isn't `is_doc_only` (`:418-423`), the reader every
+  enabled plugin (`frontend/apps/reader/readerui.lua:464-465`). A plugin whose `main.lua`
+  returned `{ disabled = true }` is never instantiated (`plugins/SSH.koplugin/main.lua:21-23`),
+  so its entry reads "plugin missing". Read at call time from `launcher_entries.lua`.
+- `dispatcher`: `Dispatcher.getDisplayList(settings)` (`frontend/dispatcher.lua:866-890`) lists
+  an id only when `isAvailable(settingsList[id])` (`:689-696`); it calls `getNameFromItem`
+  (`:751-758`), which reads `settingsList`. An entry is available when
+  `#getDisplayList({ [id] = true }) == 1`. `execute` skips an id it doesn't know without a word
+  (`:1569`, `:1435-1448`), hence the check. `registerAction` and `removeAction` (`:665-684`) are
+  how the spec adds and drops an action.
+- The `koreader` targets' dispatcher ids, all `category = "none"` with no `arg`, so `execute`
+  sends `Event:new(event)` (`:1583-1587`) through the dispatch bridge above:
+  - `history` (`:68`, `ShowHist`): `FileManagerHistory:onShowHist`
+    (`frontend/apps/filemanager/filemanagerhistory.lua:59`), its list kept as `booklist_menu`;
+  - `favorites` (`:70`, `ShowColl`): `FileManagerCollection:onShowColl`
+    (`frontend/apps/filemanager/filemanagercollection.lua:76`);
+  - `collections` (`:71`, `ShowCollList`): `onShowCollList` (`filemanagercollection.lua:845`);
+  - `toggle_wifi` (`:124`, `ToggleWifi`, registered only with `Device:hasWifiToggle()`):
+    `NetworkListener:onToggleWifi` (`frontend/ui/network/networklistener.lua:54-60`), registered
+    on the file manager as `networklistener` (`filemanager.lua:415`, `:379-381`).
+- `ui/network/manager`: `NetworkMgr:isWifiOn()` (`frontend/ui/network/manager.lua:182-186`,
+  true without a Wi-Fi toggle); on the Kindle `sysfsWifiOn`
+  (`frontend/device/kindle/device.lua:523`), a stat of `/sys/class/net/<interface>`
+  (`manager.lua:205-208`); in the emulator the `emulator_fake_wifi_connected` setting
+  (`frontend/device/sdl/device.lua:497-499`). Read at call time; false draws Wi-Fi off.
+- `FileChooser:changeToPath(path)` (`frontend/ui/widget/filechooser.lua:341-371`): climbs
+  silently to the nearest existing ancestor (`:342-346`), so a directory entry is checked with
+  `lfs.attributes(path, "mode")` first and again at tap time; it fires `PathChanged`
+  (`:367-369`), which updates the file manager's title bar (`filemanager.lua:108-114`).
+- `FileManager:onHome()` (`filemanager.lua:865-870`), as the featured widget's entry above: the
+  Library entry closes the home, then calls it.
+- `ffi/util`: `template` (`base/ffi/util.lua:785`), the folder and unavailable notes.
+- `ui/widget/infomessage`: `timeout` defaults to nil (`frontend/ui/widget/infomessage.lua:53`)
+  and only a set one schedules a close (`:283-290`); `dismissable` defaults to true (`:67`), a
+  full-screen `TapClose` (`:88-100`). The launcher's notes set neither, so no timer runs and a
+  tap anywhere dismisses them.
+
+### The launcher widget: tinted icons, its taps and the network events
+
+- `ui/renderimage`: `RenderImage:renderSVGImageFile(file, size, size)`
+  (`frontend/ui/renderimage.lua:338-344`) returns a `TYPE_BBRGB32` buffer with straight alpha
+  (`:390-393`), or nothing for a file NanoSVG can't open, logged by KOReader (`:355-358`).
+  `tinted_icon.lua` calls it in `pcall` and draws nothing on either failure.
+- `ffi/blitbuffer`, the tinted icon's mask: `Blitbuffer.new(size, size, TYPE_BB8)`
+  (`base/ffi/blitbuffer.lua:2591`), `fill(COLOR_WHITE)` (`:1506`), `alphablitFrom` the render
+  onto it (`:1318`, straight alpha), then `invertRect` (`:1567`): the ink is white, the ground
+  black. At paint, `colorblitFrom(mask, ..., color)` for a `Color8` (`:1405-1420`) and
+  `colorblitFromRGB32` for a colour (`:1422-1437`), split by `Blitbuffer.isColor8` (`:2712`)
+  as `home.lua` fills; both take the mask's 8-bit value as the colour's alpha
+  (`setPixelColorize`, `:990-1006`; `setPixelColorizeRGB32`, `:1009-1027`). The mask is built
+  once per build and freed with the widget (`free`).
+- This replaces `ImageWidget`'s `dim`, which only lightens and assumes a white ground; the note at
+  `frontend/ui/widget/imagewidget.lua:570-579` proposes the mask method used here.
+- The tiles and rows: `paintRect` and `paintRectRGB32`, `paintBorder` and `paintBorderRGB32`, as
+  the quote's tile above.
+- A tap reaches the widget as `tap(ctx, ges, built)` from `Home:routeGesture`, `ges.pos` in screen
+  coordinates; the grid keeps the origin it was last painted at and tests each entry's
+  rectangle with `Geom:contains` (`frontend/ui/geometry.lua:255-266`).
+- `NetworkDisconnected`: broadcast from `disableWifi`'s callback
+  (`frontend/ui/network/manager.lua:406-408`); `NetworkConnected` as the weather's entry above.
+  The home's handlers for both ask each slot's `stale` and rebuild once, and return nothing, so
+  the broadcast reaches every window. In the emulator both come 2 s after the fake toggle
+  (`frontend/device/sdl/device.lua:477-501`: `turnOnWifi` and `turnOffWifi` flip
+  `emulator_fake_wifi_connected` and schedule the broadcast, and `isWifiOn` reads it).
+- `ui/network/manager`: `NetworkMgr:isWifiOn()` (the launcher's entries above), read at call
+  time by the launcher's `stale`.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
@@ -914,8 +987,14 @@ Upgrading KOReader walks this list.
   `extractBookInfo` points crengine's cache at CoverBrowser's `tmpcr3cache` for the rest of the run
   (`:423-439`); the home draws nothing with crengine. All of it runs before the file manager's
   `Show`, where KoPanda's `paint_ms` clock starts, so `paint_ms` never includes it.
-- With a look, it writes `kopanda/settings.lua` with `look` and `schema_version = 1`
-  (`frontend/luasettings.lua:102` `saveSetting`), as `kopanda.koplugin/settings.lua` stores it.
+- It opens `kopanda/settings.lua` once and writes the keys its scenario sets with
+  `schema_version = 1` (`frontend/luasettings.lua:21` `open`, `:102` `saveSetting`, `:270`
+  `flush`), as `kopanda.koplugin/settings.lua` stores them: `look` when a look is given, and,
+  empty, `launcher.entries` as the schema's default five without Settings and a sixth
+  `{ kind = "plugin", plugin = "kopanda_absent", action = "terminal", label = "Terminal", icon = "terminal" }`.
+  No plugin has that name, so `PluginLoader:isPluginLoaded` (`frontend/pluginloader.lua:567-569`,
+  a lookup in `loaded_plugins`) is false on every profile and the entry shows "plugin missing",
+  whatever plugins the emulator's own `plugins/` holds.
 - Any failure logs `KOPANDA_SCENARIO: home fixture failed` and exits with status 4, which the
   driver reports with the log tail.
 

@@ -1,7 +1,7 @@
 -- The home built from layout.rows (C4, the engine part): one slot per entry at its column width,
 -- blank slots for a missing or failing widget, taps routed to a slot's widget, rebuilds on
--- Resume and TimeFormatChanged, and nothing left in UIManager's task queue. The widgets are
--- stubs registered for the spec.
+-- Resume and TimeFormatChanged and on a network change a widget's stale reports, and nothing
+-- left in UIManager's task queue. The widgets are stubs registered for the spec.
 describe("the home's rows", function()
     local harness = require("plugin_harness")
     local Event = require("ui/event")
@@ -95,6 +95,7 @@ describe("the home's rows", function()
             weather = stub("weather", 20),
             stats = stub("stats", 20),
             featured = stub("featured", 100),
+            launcher = stub("launcher", 80),
         }
         Widgets.get = function(id)
             return stubs[id]
@@ -115,9 +116,10 @@ describe("the home's rows", function()
         -- margin are both 40, so each row is 520 wide; two columns share it less a 14 px gap.
         assert.equals(1, Screen:scaleBySize(1))
         assert.equals(600, Screen:getWidth())
-        assert.same({ date = 253, clock = 253, featured = 520, quote = 520, weather = 253, stats = 253 }, widths)
-        assert.same({ date = 1, clock = 1, featured = 1, quote = 1, weather = 1, stats = 1 }, builds)
-        assert.equals(6, #home.slots)
+        assert.same({ date = 253, clock = 253, featured = 520, quote = 520, launcher = 520, weather = 253,
+            stats = 253 }, widths)
+        assert.same({ date = 1, clock = 1, featured = 1, quote = 1, launcher = 1, weather = 1, stats = 1 }, builds)
+        assert.equals(7, #home.slots)
     end)
 
     it("passes each build the look, variant, text size, time, screen and home", function()
@@ -257,7 +259,7 @@ describe("the home's rows", function()
         assert.equals(520, slot.built:getSize().w)
         assert.is_nil(slot.built.stub)
         assert.is_true(logged("quote"))
-        assert.same({ date = 1, clock = 1, featured = 1, weather = 1, stats = 1 }, builds)
+        assert.same({ date = 1, clock = 1, featured = 1, launcher = 1, weather = 1, stats = 1 }, builds)
     end)
 
     it("leaves a blank slot, logged, for a widget whose height raises", function()
@@ -384,6 +386,103 @@ describe("the home's rows", function()
         assert.is_falsy((home:handleEvent(Event:new("Resume"))))
         assert.is_falsy((home:handleEvent(Event:new("TimeFormatChanged"))))
         assert.equals(home, harness.top())
+    end)
+
+    -- A network change asks each slot's stale (widgets.lua) and rebuilds the home once when any
+    -- says its widget is out of date; NetworkConnected after the weather's own handler.
+    describe("on a network change", function()
+        local Weather, on_connected, order
+
+        before_each(function()
+            Weather = package.loaded["weather"]
+            on_connected = Weather.on_connected
+            order = {}
+            Weather.on_connected = function()
+                order[#order + 1] = "weather"
+            end
+        end)
+
+        after_each(function()
+            Weather.on_connected = on_connected
+        end)
+
+        -- stale for a stub that records its call and answers with answer (a function raises).
+        local function stale_answering(answer)
+            return function(built, ctx)
+                order[#order + 1] = { built = built, ctx = ctx }
+                if type(answer) == "function" then
+                    return answer()
+                end
+                return answer
+            end
+        end
+
+        for _, name in ipairs({ "NetworkConnected", "NetworkDisconnected" }) do
+            it("rebuilds a shown home once on " .. name .. " when slots' stale say so, leaving it to others",
+                    function()
+                stubs.quote.stale = stale_answering(true)
+                stubs.launcher.stale = stale_answering(true)
+                local _, home = show_home()
+                assert.equals(1, builds.date)
+                assert.is_falsy((home:handleEvent(Event:new(name))))
+                assert.equals(2, builds.date)
+                local quote, launcher = slot_of(home, "quote"), slot_of(home, "launcher")
+                assert.is_true(builds.quote == 2 and builds.launcher == 2)
+                assert.equals(home, Home.shown)
+                UIManager:broadcastEvent(Event:new(name))
+                assert.equals(3, builds.date)
+                assert.equals(home, harness.top())
+                -- The first check had the built widgets and the ctx of the build before it.
+                local checks = {}
+                for _, call in ipairs(order) do
+                    if type(call) == "table" then
+                        checks[#checks + 1] = call
+                    end
+                end
+                assert.is_true(#checks >= 1)
+                assert.is_true(checks[1].built ~= quote.built and checks[1].built ~= launcher.built)
+                assert.is_table(checks[1].ctx.look)
+            end)
+
+            it("doesn't rebuild on " .. name .. " when every stale is false", function()
+                stubs.quote.stale = stale_answering(false)
+                stubs.launcher.stale = stale_answering(false)
+                local _, home = show_home()
+                assert.is_falsy((home:handleEvent(Event:new(name))))
+                assert.equals(1, builds.date)
+                assert.equals(2, #order - (name == "NetworkConnected" and 1 or 0))
+            end)
+
+            it("logs a raising stale on " .. name .. ", counts it not stale and keeps the home up", function()
+                stubs.quote.stale = stale_answering(function()
+                    error("kopanda-test: stale failed")
+                end)
+                local _, home = show_home()
+                assert.is_falsy((home:handleEvent(Event:new(name))))
+                assert.equals(1, builds.date)
+                assert.is_true(logged("kopanda-test: stale failed"))
+                assert.equals(home, Home.shown)
+                assert.equals(home, harness.top())
+            end)
+        end
+
+        it("asks stale on NetworkConnected after the weather's handler", function()
+            stubs.launcher.stale = stale_answering(false)
+            local _, home = show_home()
+            home:handleEvent(Event:new("NetworkConnected"))
+            assert.equals("weather", order[1])
+            assert.is_table(order[2])
+            assert.equals(slot_of(home, "launcher").built, order[2].built)
+            assert.equals(home.ctx, order[2].ctx)
+        end)
+
+        it("does nothing on a network change once the home has closed", function()
+            stubs.launcher.stale = stale_answering(true)
+            local _, home = show_home()
+            Home.close()
+            home:handleEvent(Event:new("NetworkDisconnected"))
+            assert.equals(1, builds.date)
+        end)
     end)
 
     it("rebuilds on refresh", function()

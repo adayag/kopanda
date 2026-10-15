@@ -236,6 +236,30 @@ return {
         featured_button = {
             face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "ink",
         },
+        -- A launcher tile's label (HomeRetro.dc.html:56, weight 800).
+        launcher_label = {
+            face = "display", size = 14, uppercase = false, tracking = 0, line_height = 0, color = "ink",
+        },
+        -- Its suffix, "off" or "plugin missing": no board; the look's label style (label above).
+        launcher_suffix = {
+            face = "display", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "muted",
+        },
+    },
+
+    -- The launcher: a grid of outlined tiles with the tile shadow, the first three on accents.
+    launcher = {
+        columns = 3, -- HomeRetro.dc.html:55
+        column_gap = 14, -- HomeRetro.dc.html:55
+        row_gap = 14, -- HomeRetro.dc.html:55
+        icon_size = 28, -- HomeRetro.dc.html:57
+        icon_gap = false, -- the icon sits above the label, not beside it
+        padding = { x = 14, y = 12 }, -- HomeRetro.dc.html:56
+        tile_height = 104, -- HomeRetro.dc.html:56
+        accent_1_color = "mustard", -- HomeRetro.dc.html:56
+        accent_2_color = "pink", -- HomeRetro.dc.html:60
+        accent_3_color = "teal", -- HomeRetro.dc.html:64
+        suffix_gap = 6, -- no board; unused while the suffix is below
+        suffix_below = true, -- no board: "Terminal PLUGIN MISSING" doesn't fit a third on one line
     },
 
     -- The featured book's cover box.

@@ -35,12 +35,13 @@ return {
             -- may hold.
             id = "layout.rows",
             type = "rows",
-            widgets = { "date", "clock", "weather", "quote", "stats", "featured" },
+            widgets = { "date", "clock", "weather", "quote", "stats", "featured", "launcher" },
             max_columns = 3,
             default = {
                 { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
                 { { widget = "featured", share = 1 } },
                 { { widget = "quote", share = 1 } },
+                { { widget = "launcher", share = 1 } },
                 { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
             },
             label = "Layout",
@@ -92,6 +93,28 @@ return {
             default = false,
             label = "Featured book",
             group = "featured",
+        },
+        {
+            -- The home's launcher, in order: KoPanda and KOReader screens, plugin and dispatcher
+            -- actions, folders on disk and folders of entries. max_entries is the most the
+            -- launcher holds; targets lists the screens a kopanda or koreader entry may name.
+            id = "launcher.entries",
+            type = "launcher",
+            max_entries = 6,
+            targets = {
+                kopanda = { "library", "series", "authors", "settings" },
+                koreader = { "history", "favorites", "collections", "wifi" },
+            },
+            default = {
+                { kind = "kopanda", target = "library" },
+                { kind = "kopanda", target = "series" },
+                { kind = "kopanda", target = "authors" },
+                { kind = "koreader", target = "history" },
+                { kind = "koreader", target = "wifi" },
+                { kind = "kopanda", target = "settings" },
+            },
+            label = "Launcher",
+            group = "launcher",
         },
     },
 }
