@@ -1,0 +1,16 @@
+id: EV-z55z7w
+type: submit.task
+at: 2026-10-15T20:07:40.88329Z
+contributor: allen
+command: submit task T-x4x0f3
+targets:
+    - T-x4x0f3
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/night-mode/goldens
+        head: git:e0cb741
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/night-mode/tasks/goldens/task.yml
