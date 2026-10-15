@@ -1,7 +1,7 @@
 id: T-x4x0f3
 key: home/night-mode/goldens
 title: Night goldens, the Paperwhite inverse check, the toggle scenario and the night paint budget
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:7d5457c
         observed_at: 2026-10-15T19:24:02.158289Z
 branch: tiller/home/night-mode/goldens
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T20:06:31.346646Z
+        against:
+            kind: git_commit
+            value: git:dadf133
+            observed_at: 2026-10-15T20:06:31.34664Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-dadf133-out-e72355bbc62569624b9acfab81003e801643c3997dea4e1cc211db6601cabe61.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T20:06:31.346646Z
+        against:
+            kind: git_commit
+            value: git:dadf133
+            observed_at: 2026-10-15T20:06:31.34664Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-dadf133-out-cb221bd10128c95bdff7e5b68c71fe828e33111e459bc57543bd640492b02200.txt

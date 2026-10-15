@@ -1,0 +1,13 @@
+id: EV-435tuu
+type: check.task
+at: 2026-10-15T20:07:36.410883Z
+contributor: allen
+command: check task T-x4x0f3
+targets:
+    - T-x4x0f3
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/night-mode/tasks/goldens/task.yml
