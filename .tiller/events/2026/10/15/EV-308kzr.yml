@@ -1,0 +1,14 @@
+id: EV-308kzr
+type: resume.task
+at: 2026-10-15T04:17:50.728925Z
+contributor: allen
+command: resume task T-puj6su
+targets:
+    - T-puj6su
+before:
+    status: in_review
+after:
+    reason: 'owner: icon stroke width 2 (Diner''s weight), not 1.6'
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/icons/task.yml

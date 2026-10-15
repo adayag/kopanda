@@ -1,0 +1,16 @@
+id: EV-em6ot1
+type: submit.task
+at: 2026-10-15T04:19:15.449304Z
+contributor: allen
+command: submit task T-puj6su
+targets:
+    - T-puj6su
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/looks-and-schema/icons
+        head: git:ef5f826
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/icons/task.yml
