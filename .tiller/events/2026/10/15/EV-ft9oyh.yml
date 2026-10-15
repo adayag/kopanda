@@ -1,0 +1,13 @@
+id: EV-ft9oyh
+type: claim.task
+at: 2026-10-15T16:36:43.868595Z
+contributor: allen
+command: claim task T-hftuq7
+targets:
+    - T-hftuq7
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/widget/task.yml
