@@ -34,7 +34,7 @@ describe("schema.lua", function()
         assert.same({ "schema.keys.1.check" }, functions_in({ keys = { { check = print } } }, "schema"))
     end)
 
-    it("is version 1 with look as its one key", function()
+    it("is version 1 with look, text_size and layout.rows, in that order", function()
         local schema = load_bare()
         assert.equals(1, schema.version)
         assert.same({
@@ -49,7 +49,38 @@ describe("schema.lua", function()
                 label = "Look",
                 group = "appearance",
             },
+            {
+                id = "text_size",
+                type = "choice",
+                choices = {
+                    { value = "small", label = "Small" },
+                    { value = "medium", label = "Medium" },
+                    { value = "large", label = "Large" },
+                },
+                default = "medium",
+                label = "Text size",
+                group = "appearance",
+            },
+            {
+                id = "layout.rows",
+                type = "rows",
+                widgets = { "date", "clock", "weather", "quote", "stats" },
+                max_columns = 3,
+                default = {
+                    { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                    { { widget = "quote", share = 1 } },
+                    { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
+                },
+                label = "Layout",
+                group = "home",
+            },
         }, schema.keys)
+    end)
+
+    it("has no clock.twenty_four_hour key", function()
+        for _, entry in ipairs(load_bare().keys) do
+            assert.is_not.equals("clock.twenty_four_hour", entry.id)
+        end
     end)
 
     it("gives every entry an id, type, default, label and group, with unique ids", function()

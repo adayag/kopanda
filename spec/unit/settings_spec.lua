@@ -132,6 +132,121 @@ describe("Settings", function()
         end)
     end)
 
+    describe("layout.rows", function()
+        local Schema = require("schema")
+        local default
+        for _, entry in ipairs(Schema.keys) do
+            if entry.id == "layout.rows" then
+                default = entry.default
+            end
+        end
+
+        local function slot(widget, share)
+            return { widget = widget, share = share }
+        end
+
+        -- Every layout the rows type refuses, by what is wrong with it.
+        local refused = {
+            ["a string"] = "date",
+            ["a number"] = 1,
+            ["a boolean"] = true,
+            ["no rows"] = {},
+            ["rows under string keys"] = { top = { slot("date", 1) } },
+            ["a row with a hole"] = { { slot("date", 1) }, nil, { slot("quote", 1) } },
+            ["a row that is a string"] = { "date" },
+            ["a row with no slot"] = { {} },
+            ["a row of four"] = { { slot("date", 1), slot("clock", 1), slot("weather", 1), slot("quote", 1) } },
+            ["a slot that is a string"] = { { "date" } },
+            ["a widget not in the list"] = { { slot("calendar", 1) } },
+            ["a widget that is not a string"] = { { slot(1, 1) } },
+            ["a widget twice in a row"] = { { slot("date", 1), slot("date", 1) } },
+            ["a widget twice across rows"] = { { slot("date", 1) }, { slot("date", 2) } },
+            ["share 0"] = { { slot("date", 0) } },
+            ["share 4"] = { { slot("date", 4) } },
+            ["share 1.5"] = { { slot("date", 1.5) } },
+            ["share as a string"] = { { slot("date", "1") } },
+            ["share infinite"] = { { slot("date", math.huge) } },
+            ["share NaN"] = { { slot("date", 0 / 0) } },
+            ["a slot with no share"] = { { { widget = "date" } } },
+            ["a slot with no widget"] = { { { share = 1 } } },
+            ["a slot with an extra field"] = { { { widget = "date", share = 1, align = "left" } } },
+        }
+
+        local accepted = {
+            ["the default"] = default,
+            ["two columns"] = { { slot("date", 2), slot("clock", 1) } },
+            ["one column"] = { { slot("quote", 1) }, { slot("stats", 3) } },
+            ["three columns"] = { { slot("date", 1), slot("clock", 2), slot("weather", 3) }, { slot("quote", 1) } },
+        }
+
+        it("refuses every malformed layout and leaves the file byte-identical", function()
+            local text = 'return { look = "editorial" }'
+            store(text)
+            for what, value in pairs(refused) do
+                local ok, reason = Settings.set("layout.rows", value)
+                assert.is_false(ok, what)
+                assert.is_string(reason, what)
+                assert.equals(text, read(file), what)
+            end
+        end)
+
+        it("never raises in its validator", function()
+            local validate = Settings.validators.rows
+            local entry = Schema.keys[3]
+            for what, value in pairs(refused) do
+                local ok, valid = pcall(validate, entry, value)
+                assert.is_true(ok, what .. ": " .. tostring(valid))
+                assert.is_false(valid, what)
+            end
+        end)
+
+        it("accepts the default and one, two and three column layouts, which survive a reopen", function()
+            for what, value in pairs(accepted) do
+                assert.is_true(Settings.set("layout.rows", value), what)
+                Settings._reset()
+                assert.same(value, Settings.get("layout.rows"), what)
+            end
+        end)
+
+        it("reads a stored malformed layout as the default without raising", function()
+            local stored = {
+                ["a string"] = '"date"',
+                ["a row of four"] = '{ { { widget = "date", share = 1 }, { widget = "clock", share = 1 }, '
+                    .. '{ widget = "weather", share = 1 }, { widget = "quote", share = 1 } } }',
+                ["an unknown id"] = '{ { { widget = "calendar", share = 1 } } }',
+                ["a repeated id"] = '{ { { widget = "date", share = 1 } }, { { widget = "date", share = 1 } } }',
+                ["share 0"] = '{ { { widget = "date", share = 0 } } }',
+                ["share 1.5"] = '{ { { widget = "date", share = 1.5 } } }',
+            }
+            for what, lua in pairs(stored) do
+                Settings._reset()
+                store('return { ["layout.rows"] = ' .. lua .. ' }')
+                local ok, value = pcall(Settings.get, "layout.rows")
+                assert.is_true(ok, what .. ": " .. tostring(value))
+                assert.equals(default, value, what)
+            end
+        end)
+
+        it("writes a table value that a reopen reads back", function()
+            local value = { { slot("weather", 1), slot("stats", 2) } }
+            assert.is_true(Settings.set("layout.rows", value))
+            assert.same(value, dofile(file)["layout.rows"])
+            Settings._reset()
+            assert.same(value, Settings.get("layout.rows"))
+        end)
+    end)
+
+    describe("text_size", function()
+        it("is medium by default and takes small and large", function()
+            assert.equals("medium", Settings.get("text_size"))
+            assert.is_true(Settings.set("text_size", "small"))
+            assert.is_true(Settings.set("text_size", "large"))
+            Settings._reset()
+            assert.equals("large", Settings.get("text_size"))
+            assert.is_false((Settings.set("text_size", "huge")))
+        end)
+    end)
+
     describe("schema_version", function()
         it("reads a file with no version as version 1 and stamps it on the first write", function()
             local text = 'return { look = "editorial" }'

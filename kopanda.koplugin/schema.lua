@@ -17,5 +17,33 @@ return {
             label = "Look",
             group = "appearance",
         },
+        {
+            id = "text_size",
+            type = "choice",
+            choices = {
+                { value = "small", label = "Small" },
+                { value = "medium", label = "Medium" },
+                { value = "large", label = "Large" },
+            },
+            default = "medium",
+            label = "Text size",
+            group = "appearance",
+        },
+        {
+            -- The home's rows, top to bottom; each row's slots, left to right, take the row's
+            -- width by share. widgets lists the ids a slot may name, max_columns the slots a row
+            -- may hold.
+            id = "layout.rows",
+            type = "rows",
+            widgets = { "date", "clock", "weather", "quote", "stats" },
+            max_columns = 3,
+            default = {
+                { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                { { widget = "quote", share = 1 } },
+                { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
+            },
+            label = "Layout",
+            group = "home",
+        },
     },
 }
