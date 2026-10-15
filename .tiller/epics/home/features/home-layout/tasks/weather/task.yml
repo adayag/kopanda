@@ -1,7 +1,7 @@
 id: T-xv2jpg
 key: home/home-layout/weather
 title: Open-Meteo weather with a cached line, once per session and on tap
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:b9f66a1
         observed_at: 2026-10-15T12:44:30.830913Z
 branch: tiller/home/home-layout/weather
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T14:41:48.660685Z
+        against:
+            kind: git_commit
+            value: git:a447630
+            observed_at: 2026-10-15T14:41:48.660681Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-a447630-out-ca9b19667deaba5a7ac0df73e3f43f1fe617ef36ccee5afc0970f6c6e00328ac.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T14:41:48.660685Z
+        against:
+            kind: git_commit
+            value: git:a447630
+            observed_at: 2026-10-15T14:41:48.660681Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-a447630-out-51805a1d55b2381ea8d1bbe15ed4f93e1d2a89fcc8f9b948b91ed931caf17dcd.txt
