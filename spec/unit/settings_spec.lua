@@ -431,6 +431,116 @@ describe("Settings", function()
         end)
     end)
 
+    describe("launcher.entries", function()
+        local entry = require("schema").keys[9]
+
+        local function kopanda(target)
+            return { kind = "kopanda", target = target }
+        end
+        local function plugin(name)
+            return { kind = "plugin", plugin = name, action = "terminal", label = "Terminal", icon = "terminal" }
+        end
+        local function directory(path)
+            return { kind = "directory", path = path, label = "Downloads" }
+        end
+        local function folder(entries)
+            return { kind = "folder", label = "Tools", entries = entries }
+        end
+
+        local one_of_each = {
+            kopanda("library"),
+            { kind = "koreader", target = "wifi" },
+            plugin("terminal"),
+            { kind = "action", action = "file_search", label = "Search", icon = "search" },
+            directory("/mnt/us/downloads"),
+            folder({ kopanda("series") }),
+        }
+
+        -- Every list the launcher type refuses, by what is wrong with it.
+        local refused = {
+            ["seven top-level entries"] = {
+                kopanda("library"), kopanda("series"), kopanda("authors"), kopanda("settings"),
+                kopanda("library"), kopanda("series"), kopanda("authors"),
+            },
+            ["an unknown kind"] = { { kind = "shortcut", target = "library" } },
+            ["a kopanda target outside targets"] = { kopanda("history") },
+            ["an extra field"] = { { kind = "kopanda", target = "library", label = "Books" } },
+            ["a missing label"] = { { kind = "action", action = "file_search", icon = "search" } },
+            ["an empty-string label"] = { { kind = "action", action = "file_search", label = "", icon = "search" } },
+            ["a number for action"] = { { kind = "action", action = 5, label = "Search", icon = "search" } },
+            ["a relative path"] = { directory("mnt/us/downloads") },
+            ["the root as a path"] = { directory("/") },
+            ["a folder inside a folder"] = { folder({ folder({ kopanda("library") }) }) },
+            ["a folder with no entries"] = { folder({}) },
+            ["a list with a hole"] = { [1] = kopanda("library"), [3] = kopanda("series") },
+            ["a string"] = "library",
+        }
+
+        local accepted = {
+            ["the default"] = entry.default,
+            ["an empty list"] = {},
+            ["six entries, one of each kind"] = one_of_each,
+            ["a folder of three"] = { folder({ kopanda("library"), plugin("terminal"), directory("/mnt/us") }) },
+            ["a plugin that doesn't exist"] = { plugin("no-such-plugin") },
+        }
+
+        it("accepts the default, an empty list, one of each kind, a folder of three and an unknown plugin, "
+            .. "each surviving a reopen", function()
+            for what, value in pairs(accepted) do
+                assert.is_true(Settings.set("launcher.entries", value), what)
+                Settings._reset()
+                assert.same(value, Settings.get("launcher.entries"), what)
+            end
+        end)
+
+        it("refuses every malformed list and leaves the file byte-identical", function()
+            local text = 'return { look = "editorial" }'
+            store(text)
+            for what, value in pairs(refused) do
+                local ok, reason = Settings.set("launcher.entries", value)
+                assert.is_false(ok, what)
+                assert.is_string(reason, what)
+                assert.equals(text, read(file), what)
+            end
+        end)
+
+        it("never raises in its validator", function()
+            local odd = {
+                ["a number"] = 5,
+                ["false"] = false,
+                ["an entry that is a string"] = { "library" },
+                ["a kind that is a table"] = { { kind = {}, target = "library" } },
+                ["a target that is a table"] = { { kind = "koreader", target = {} } },
+                ["entries that is a string"] = { { kind = "folder", label = "Tools", entries = "x" } },
+                ["a function"] = print,
+            }
+            for what, value in pairs(refused) do
+                odd[what] = value
+            end
+            for what, value in pairs(odd) do
+                local ok, valid = pcall(Settings.validators.launcher, entry, value)
+                assert.is_true(ok, what .. ": " .. tostring(valid))
+                assert.is_false(valid, what)
+            end
+        end)
+
+        it("reads a stored invalid list as the default six without raising", function()
+            local stored = {
+                ["a string"] = '"library"',
+                ["an unknown kind"] = '{ { kind = "shortcut", target = "library" } }',
+                ["a nested folder"] = '{ { kind = "folder", label = "A", entries = { { kind = "folder", '
+                    .. 'label = "B", entries = { { kind = "kopanda", target = "library" } } } } } }',
+            }
+            for what, lua in pairs(stored) do
+                Settings._reset()
+                store('return { ["launcher.entries"] = ' .. lua .. ' }')
+                local ok, value = pcall(Settings.get, "launcher.entries")
+                assert.is_true(ok, what .. ": " .. tostring(value))
+                assert.equals(entry.default, value, what)
+            end
+        end)
+    end)
+
     describe("schema_version", function()
         it("reads a file with no version as version 1 and stamps it on the first write", function()
             local text = 'return { look = "editorial" }'

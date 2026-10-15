@@ -649,6 +649,49 @@ Upgrading KOReader walks this list.
 - The first run's button keeps its rectangle on the screen when it paints, and a tap inside it is
   tested with `Geom:contains` (`frontend/ui/geometry.lua:255-266`), which takes the far edges in.
 
+### The launcher's entries: plugins, dispatcher ids, Wi-Fi, `changeToPath` and notes
+
+- `pluginloader`: `PluginLoader:isPluginLoaded(name)` (`frontend/pluginloader.lua:567-569`), true
+  when `loaded_plugins` holds the name. `loaded_plugins` fills as instances are made
+  (`createPluginInstance`, `:479-488`) and is emptied by `finalize` (`:578-580`), which the file
+  manager's `onClose` calls (`frontend/apps/filemanager/filemanager.lua:821`); the file manager
+  instantiates every enabled plugin that isn't `is_doc_only` (`:418-423`), the reader every
+  enabled plugin (`frontend/apps/reader/readerui.lua:464-465`). A plugin whose `main.lua`
+  returned `{ disabled = true }` is never instantiated (`plugins/SSH.koplugin/main.lua:21-23`),
+  so its entry reads "plugin missing". Read at call time from `launcher_entries.lua`.
+- `dispatcher`: `Dispatcher.getDisplayList(settings)` (`frontend/dispatcher.lua:866-890`) lists
+  an id only when `isAvailable(settingsList[id])` (`:689-696`); it calls `getNameFromItem`
+  (`:751-758`), which reads `settingsList`. An entry is available when
+  `#getDisplayList({ [id] = true }) == 1`. `execute` skips an id it doesn't know without a word
+  (`:1569`, `:1435-1448`), hence the check. `registerAction` and `removeAction` (`:665-684`) are
+  how the spec adds and drops an action.
+- The `koreader` targets' dispatcher ids, all `category = "none"` with no `arg`, so `execute`
+  sends `Event:new(event)` (`:1583-1587`) through the dispatch bridge above:
+  - `history` (`:68`, `ShowHist`): `FileManagerHistory:onShowHist`
+    (`frontend/apps/filemanager/filemanagerhistory.lua:59`), its list kept as `booklist_menu`;
+  - `favorites` (`:70`, `ShowColl`): `FileManagerCollection:onShowColl`
+    (`frontend/apps/filemanager/filemanagercollection.lua:76`);
+  - `collections` (`:71`, `ShowCollList`): `onShowCollList` (`filemanagercollection.lua:845`);
+  - `toggle_wifi` (`:124`, `ToggleWifi`, registered only with `Device:hasWifiToggle()`):
+    `NetworkListener:onToggleWifi` (`frontend/ui/network/networklistener.lua:54-60`), registered
+    on the file manager as `networklistener` (`filemanager.lua:415`, `:379-381`).
+- `ui/network/manager`: `NetworkMgr:isWifiOn()` (`frontend/ui/network/manager.lua:182-186`,
+  true without a Wi-Fi toggle); on the Kindle `sysfsWifiOn`
+  (`frontend/device/kindle/device.lua:523`), a stat of `/sys/class/net/<interface>`
+  (`manager.lua:205-208`); in the emulator the `emulator_fake_wifi_connected` setting
+  (`frontend/device/sdl/device.lua:497-499`). Read at call time; false draws Wi-Fi off.
+- `FileChooser:changeToPath(path)` (`frontend/ui/widget/filechooser.lua:341-371`): climbs
+  silently to the nearest existing ancestor (`:342-346`), so a directory entry is checked with
+  `lfs.attributes(path, "mode")` first and again at tap time; it fires `PathChanged`
+  (`:367-369`), which updates the file manager's title bar (`filemanager.lua:108-114`).
+- `FileManager:onHome()` (`filemanager.lua:865-870`), as the featured widget's entry above: the
+  Library entry closes the home, then calls it.
+- `ffi/util`: `template` (`base/ffi/util.lua:785`), the folder and unavailable notes.
+- `ui/widget/infomessage`: `timeout` defaults to nil (`frontend/ui/widget/infomessage.lua:53`)
+  and only a set one schedules a close (`:283-290`); `dismissable` defaults to true (`:67`), a
+  full-screen `TapClose` (`:88-100`). The launcher's notes set neither, so no timer runs and a
+  tap anywhere dismisses them.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`

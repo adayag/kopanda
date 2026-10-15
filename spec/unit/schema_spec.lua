@@ -34,7 +34,7 @@ describe("schema.lua", function()
         assert.same({ "schema.keys.1.check" }, functions_in({ keys = { { check = print } } }, "schema"))
     end)
 
-    it("is version 1 with the eight keys of the Keys tables, in order", function()
+    it("is version 1 with the nine keys of the Keys tables, in order", function()
         local schema = load_bare()
         assert.equals(1, schema.version)
         assert.same({
@@ -117,6 +117,25 @@ describe("schema.lua", function()
                 label = "Featured book",
                 group = "featured",
             },
+            {
+                id = "launcher.entries",
+                type = "launcher",
+                max_entries = 6,
+                targets = {
+                    kopanda = { "library", "series", "authors", "settings" },
+                    koreader = { "history", "favorites", "collections", "wifi" },
+                },
+                default = {
+                    { kind = "kopanda", target = "library" },
+                    { kind = "kopanda", target = "series" },
+                    { kind = "kopanda", target = "authors" },
+                    { kind = "koreader", target = "history" },
+                    { kind = "koreader", target = "wifi" },
+                    { kind = "kopanda", target = "settings" },
+                },
+                label = "Launcher",
+                group = "launcher",
+            },
         }, schema.keys)
     end)
 
@@ -126,6 +145,14 @@ describe("schema.lua", function()
         local pinned = load_bare().keys[8]
         assert.equals("featured.pinned", pinned.id)
         assert.is_true(Settings.validators.path(pinned, pinned.default))
+    end)
+
+    it("validates the launcher type, whose default six are allowed", function()
+        local Settings = require("settings")
+        assert.is_function(Settings.validators.launcher)
+        local launcher = load_bare().keys[9]
+        assert.equals("launcher.entries", launcher.id)
+        assert.is_true(Settings.validators.launcher(launcher, launcher.default))
     end)
 
     it("has no clock.twenty_four_hour key", function()

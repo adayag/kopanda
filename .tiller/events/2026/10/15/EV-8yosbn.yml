@@ -1,0 +1,16 @@
+id: EV-8yosbn
+type: submit.task
+at: 2026-10-15T18:38:01.121681Z
+contributor: allen
+command: submit task T-lv4m58
+targets:
+    - T-lv4m58
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/launcher/entries
+        head: git:a524adf
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/launcher/tasks/entries/task.yml
