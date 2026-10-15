@@ -1,0 +1,16 @@
+id: EV-lp0vg1
+type: submit.task
+at: 2026-10-15T15:05:01.809139Z
+contributor: allen
+command: submit task T-ltupc3
+targets:
+    - T-ltupc3
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/home-layout/goldens-and-budget
+        head: git:f54530f
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/goldens-and-budget/task.yml
