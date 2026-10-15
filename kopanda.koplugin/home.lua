@@ -165,9 +165,10 @@ function Home:init()
 end
 
 -- Builds the rows into self[1] and self.slots (each { widget, rect, module, built }), with
--- self.ctx the context every widget got. A slot whose widget has no module, or whose height or
--- build raises, is left blank at its column width and logged; the rest of the home still
--- builds.
+-- self.ctx the context every widget got. A widget is drawn its slot's offset below the slot's
+-- top (bottom-aligned in the header row, layout.lua). A slot whose widget has no module, or
+-- whose height or build raises, is left blank at its column width and logged; the rest of the
+-- home still builds.
 function Home:build()
     local look = Looks.active()
     local variant = Looks.variant()
@@ -197,7 +198,7 @@ function Home:build()
     local slots = {}
     for _, row in ipairs(arranged.rows) do
         for _, slot in ipairs(row.slots) do
-            local built
+            local built, y = nil, slot.y
             if not slot.module then
                 logger.warn("KoPanda: no home widget named", slot.widget, "; its slot is left blank")
             elseif slot.error then
@@ -206,13 +207,14 @@ function Home:build()
                 local ok, result = pcall(slot.module.build, slot.w, ctx)
                 if ok and result then
                     built = result
+                    y = slot.y + slot.offset
                 else
                     logger.err("KoPanda: the home widget", slot.widget, "failed to build:", result)
                 end
             end
             built = built or Widget:new{ dimen = Geom:new{ w = slot.w, h = slot.h } }
             rows[#rows + 1] = built
-            rows.places[#rows] = { x = slot.x, y = slot.y }
+            rows.places[#rows] = { x = slot.x, y = y }
             slots[#slots + 1] = {
                 widget = slot.widget,
                 rect = Geom:new{ x = slot.x, y = slot.y, w = slot.w, h = slot.h },

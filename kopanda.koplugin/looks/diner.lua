@@ -147,6 +147,9 @@ return {
             rule_width = 0,
             rule_space = 0,
             padding = { top = 36, side = 40, bottom = 28 },
+            -- Its slots on its bottom, the clock's baseline level with the date
+            -- (HomeRetro.dc.html:19, align-items: flex-end).
+            align = "bottom",
         },
         -- 22 px of 2 px ink lines every 10 px on paper, under a 4 px ink edge (HomeRetro.dc.html:82).
         footer = {

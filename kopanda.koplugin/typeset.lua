@@ -1,6 +1,7 @@
--- One line of home text set in a look's type part ({ face, size, uppercase, tracking, color }
--- from look.type): its face at the text size, its palette colour, its case and its tracking.
--- And the height-then-build pairing the text widgets share, so a widget is built once per show.
+-- One line of home text set in a look's type part ({ face, size, uppercase, tracking,
+-- line_height, color } from look.type): its face at the text size, its palette colour, its case,
+-- its tracking and its line height. And the height-then-build pairing the text widgets share, so a
+-- widget is built once per show.
 --
 -- KOReader's TextWidget has no letter spacing, so a tracked line is set glyph by glyph, a
 -- TextWidget per character with the tracking between them. Built and painted on the emulator's
@@ -27,11 +28,28 @@ local function face_of(part, ctx)
     return face
 end
 
+-- The forced height and baseline that set a line at part's line height in face. At line height
+-- 0, none: the face's own height and baseline (frontend/ui/widget/textwidget.lua:112-114).
+-- Otherwise (1 + line_height) em, rounded, as TextBoxWidget sizes its lines
+-- (frontend/ui/widget/textboxwidget.lua:151), with the face's height centred in it, as CSS shares
+-- out the leading whether the line is taller or shorter than the face (TextBoxWidget centres it
+-- only when taller, :153-158). TextWidget reports a forced height and paints at a forced
+-- baseline (textwidget.lua:43-44, :298, :362).
+local function forced(part, face)
+    if part.line_height == 0 then
+        return nil, nil
+    end
+    local height = math.floor((1 + part.line_height) * face.size + 0.5)
+    local face_height, face_ascender = face.ftsize:getHeightAndAscender()
+    return height, math.floor(face_ascender + (height - face_height) / 2)
+end
+
 -- text in part under ctx, at most max_width wide: a TextWidget, or a HorizontalGroup of one
 -- TextWidget per character when the part is tracked.
 function Typeset.line(part, text, max_width, ctx)
     local face = face_of(part, ctx)
     local color = Looks.color(ctx.look.palettes[ctx.variant][part.color])
+    local forced_height, forced_baseline = forced(part, face)
     if part.uppercase then
         text = text:upper()
     end
@@ -44,32 +62,64 @@ function Typeset.line(part, text, max_width, ctx)
             if i > 1 then
                 group[#group + 1] = HorizontalSpan:new{ width = gap }
             end
-            group[#group + 1] = TextWidget:new{ text = char, face = face, fgcolor = color }
+            group[#group + 1] = TextWidget:new{
+                text = char,
+                face = face,
+                fgcolor = color,
+                forced_height = forced_height,
+                forced_baseline = forced_baseline,
+            }
         end
         if group:getSize().w <= max_width then
             return group
         end
         group:free()
     end
-    return TextWidget:new{ text = text, face = face, fgcolor = color, max_width = max_width }
+    return TextWidget:new{
+        text = text,
+        face = face,
+        fgcolor = color,
+        max_width = max_width,
+        forced_height = forced_height,
+        forced_baseline = forced_baseline,
+    }
 end
 
--- A widget module's height and build for make(width, ctx), which builds its widget: height
--- builds and keeps it, and the build for the same width and ctx that follows hands that one
--- over, so the home builds each widget once.
+-- The y of the baseline of a line from Typeset.line, from the line's top. TextWidget:getBaseline
+-- gives the face's baseline, not a forced one (textwidget.lua:312); a tracked line's glyphs share
+-- one height and sit on the line's bottom.
+function Typeset.baseline(line)
+    if getmetatable(line) == TextWidget then
+        return line.forced_baseline or line:getBaseline()
+    end
+    local glyph = line[1]
+    return line:getSize().h - glyph:getSize().h + Typeset.baseline(glyph)
+end
+
+-- A widget module's height, build and baseline for make(width, ctx), which returns its widget
+-- and the y of its last line's baseline from the widget's top: height and baseline build the
+-- widget and keep it, and the build for the same width and ctx that follows hands that one over,
+-- so the home builds each widget once.
 function Typeset.measured(make)
     local kept
     local function keeps(width, ctx)
         return kept and kept.width == width and kept.ctx == ctx
     end
-    local function height(width, ctx)
+    local function keep(width, ctx)
         if not keeps(width, ctx) then
             if kept then
                 kept.widget:free()
             end
-            kept = { width = width, ctx = ctx, widget = make(width, ctx) }
+            local widget, baseline = make(width, ctx)
+            kept = { width = width, ctx = ctx, widget = widget, baseline = baseline }
         end
-        return kept.widget:getSize().h
+        return kept
+    end
+    local function height(width, ctx)
+        return keep(width, ctx).widget:getSize().h
+    end
+    local function baseline(width, ctx)
+        return keep(width, ctx).baseline
     end
     local function build(width, ctx)
         if keeps(width, ctx) then
@@ -77,9 +127,9 @@ function Typeset.measured(make)
             kept = nil
             return widget
         end
-        return make(width, ctx)
+        return (make(width, ctx))
     end
-    return height, build
+    return height, build, baseline
 end
 
 return Typeset

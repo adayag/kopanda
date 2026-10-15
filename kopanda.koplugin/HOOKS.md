@@ -423,6 +423,32 @@ Upgrading KOReader walks this list.
   `:1827` (`paintRectRGB32`): the paper, header band, edge, rule and footer stripe are filled as
   the swatch screen fills its panels.
 
+### The date and clock: `datetime` tables and `twelve_hour_clock`
+
+- `frontend/datetime.lua:29-42` (`longMonthTranslation`, keyed by the English month name
+  `os.date("%B")` gives in the C locale), `:54-62` (`shortDayOfWeekToLongTranslation`, keyed by
+  the English abbreviation `os.date("%a")` gives). `widgets/date.lua` looks both up, so the date
+  follows KOReader's language.
+- `twelve_hour_clock` in `G_reader_settings`: read with `isTrue`, as
+  `frontend/datetime.lua:298-300` reads it, so unset is the 24-hour clock; set by Settings › Time
+  and date › 12-hour clock (`frontend/ui/elements/common_settings_menu_table.lua:76-89`), which
+  broadcasts `TimeFormatChanged` (the home's rows entry above). The 24-hour form is
+  `os.date("%-H:%M")`, KOReader's own on Linux and Kindle (`frontend/datetime.lua:262-264`).
+- Letter spacing: `frontend/ui/widget/textwidget.lua:27-65` (TextWidget has no tracking field),
+  so `typeset.lua` sets a tracked line as one TextWidget per character from
+  `util.splitToChars` (`frontend/util.lua:469`) in a `HorizontalGroup` with `allow_mirroring`
+  off (`frontend/ui/widget/horizontalgroup.lua:11`). A line too wide for its column falls back
+  to one TextWidget with `max_width`, which KOReader cuts with an ellipsis
+  (`frontend/ui/widget/textwidget.lua:36-37`, `:202-238`).
+- Line height: TextWidget's `forced_height` and `forced_baseline`
+  (`frontend/ui/widget/textwidget.lua:43-44`), which `getSize` reports (`:298`) and the xtext
+  paint draws at (`:362`); `getBaseline` (`:312`) gives the face's baseline, not a forced one.
+  `typeset.lua` sets a part whose `line_height` isn't 0 at `(1 + line_height)` em, rounded, as
+  TextBoxWidget sizes a line (`frontend/ui/widget/textboxwidget.lua:151`), and centres the face's
+  height from `face.ftsize:getHeightAndAscender()` (`base/ffi/freetype.lua:154-159`, the call
+  textboxwidget.lua:153-158 makes) in it. `Typeset.baseline` gives the home row the line's
+  baseline.
+
 ### The Statistics plugin's database and settings, the reading stats
 
 - The database: `plugins/statistics.koplugin/main.lua:27` (`DataStorage:getSettingsDir() ..
@@ -494,8 +520,11 @@ Upgrading KOReader walks this list.
   (`width`, `height`, `background`), `:104` (`paintTo`).
 - `ui/widget/container/centercontainer`: `frontend/ui/widget/container/centercontainer.lua:7`.
 - `ui/widget/container/leftcontainer`: `frontend/ui/widget/container/leftcontainer.lua:8-10`
-  (`allow_mirroring`), `:12-26` (`paintTo` places its content at the left, centred vertically,
-  in `dimen`); the weather's line.
+  (`allow_mirroring`), `:12-26` (`paintTo` aligns its content left and centres it vertically in
+  `dimen`, `:19-23`); the date's column and the weather's line.
+- `ui/widget/container/rightcontainer`: `frontend/ui/widget/container/rightcontainer.lua:8-10`,
+  `:12-26` (`paintTo` aligns its content right and centres it vertically in `dimen`, `:19-23`);
+  the clock's column.
 - `ui/widget/verticalgroup`: `frontend/ui/widget/verticalgroup.lua:8`.
 - `ui/widget/verticalspan`: `frontend/ui/widget/verticalspan.lua:6`.
 - `ui/widget/widget`: `frontend/ui/widget/widget.lua:40` (`new`), `:70` (`paintTo` draws nothing),
@@ -507,7 +536,8 @@ Upgrading KOReader walks this list.
 - `ui/widget/horizontalspan`: `frontend/ui/widget/horizontalspan.lua:6` (`width`).
 - `ui/widget/iconwidget`: `frontend/ui/widget/iconwidget.lua:43` (`file`, `width`, `height`,
   `alpha`; the swatch entry above).
-- `util`: `frontend/util.lua:469` (`splitToChars`, a tracked line set a character at a time).
+- `datetime`: `frontend/datetime.lua:29-42`, `:54-62` (the date and clock entry above).
+- `util`: `frontend/util.lua:469` (`splitToChars`, the date and clock entry above).
 - `ui/font`: `frontend/ui/font.lua:269-276` (`getFace` scales the size by
   `Screen:scaleBySize` itself).
 - `ui/geometry`: `frontend/ui/geometry.lua:37` (`Geom:new`), `:255-266` (`contains`).
