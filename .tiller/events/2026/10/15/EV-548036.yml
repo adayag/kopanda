@@ -1,0 +1,15 @@
+id: EV-548036
+type: start.task
+at: 2026-10-15T14:16:47.527165Z
+contributor: allen
+command: start task T-x42jhm
+targets:
+    - T-x42jhm
+before:
+    status: ready
+after:
+    branch: tiller/home/home-layout/quote
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/quote/task.yml

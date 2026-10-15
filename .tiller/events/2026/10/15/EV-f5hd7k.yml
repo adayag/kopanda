@@ -1,0 +1,13 @@
+id: EV-f5hd7k
+type: check.task
+at: 2026-10-15T14:38:27.910167Z
+contributor: allen
+command: check task T-x42jhm
+targets:
+    - T-x42jhm
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/quote/task.yml

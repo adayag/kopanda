@@ -387,6 +387,22 @@ Upgrading KOReader walks this list.
 - `base/ffi/blitbuffer.lua:464-467` (a colour greyed by luminance, `getColor8`): two hues can land
   on the same grey, so each look's `grey` palette names an explicit grey per role.
 
+### The quote: `TextBoxWidget`'s line height and ellipsis
+
+- `frontend/ui/widget/textboxwidget.lua:48` (`line_height` is extra space in em), `:151`
+  (`line_height_px = Math.round((1 + line_height) * face.size)`, `Math.round` at
+  `frontend/optmath.lua:43-45`), `:173-181` (a given `height` holds `floor(height / line_height_px)`
+  lines), `:253-260` (`height_overflow_show_ellipsis` marks the last shown line
+  `line_with_ellipsis`; `height_adjust` shrinks `height` to the lines there are), `:870-887`
+  (that line drawn with the ellipsis, `ellipsis_added`). `widgets/quote.lua` sets `height` to
+  four of `line_height_px` so the quote takes at most four lines and a longer one ends in "…".
+- `spec/unit/quote_spec.lua` reads `vertical_string_list`, `lines_per_page`, `line_with_ellipsis`,
+  `line_height_px`, `height` and `face.orig_size` (`frontend/ui/font.lua:337-344`) on the built
+  text box to count its lines, and counts a quote's characters with `util`'s `splitToChars`
+  (`frontend/util.lua:469`), which `typeset.lua` also uses.
+- `base/ffi/blitbuffer.lua:2096` (`paintBorder`), `:2118-2126` (`paintBorderRGB32`): Diner's tile
+  outline, a colour through the RGB32 variant as the fills.
+
 ### The home's rows: `Resume`, `TimeFormatChanged` and `setDirty`
 
 - `frontend/device/generic/device.lua:1125` (`Resume` broadcast on wake),
@@ -434,6 +450,7 @@ Upgrading KOReader walks this list.
   (`colorFromString`, the looks entry above).
 - `ui/uimanager`: the entries above.
 - `ui/time`: `frontend/ui/time.lua:149` (`to_ms`), `:249` (`monotonic`).
+- `optmath`: `frontend/optmath.lua:43-45` (`Math.round`, the quote entry above).
 - `device`: `frontend/device/generic/device.lua:332` (`Screen:getSize`), `:265-271`
   (`Screen:isColorEnabled`, the looks entry above);
   `base/ffi/framebuffer.lua:348` (`getWidth`), `:352` (`getHeight`), `:414` (`scaleBySize`).

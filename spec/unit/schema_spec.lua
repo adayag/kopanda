@@ -34,7 +34,7 @@ describe("schema.lua", function()
         assert.same({ "schema.keys.1.check" }, functions_in({ keys = { { check = print } } }, "schema"))
     end)
 
-    it("is version 1 with look, text_size and layout.rows, in that order", function()
+    it("is version 1 with look, text_size, layout.rows and quote.source, in that order", function()
         local schema = load_bare()
         assert.equals(1, schema.version)
         assert.same({
@@ -73,6 +73,16 @@ describe("schema.lua", function()
                 },
                 label = "Layout",
                 group = "home",
+            },
+            {
+                id = "quote.source",
+                type = "choice",
+                choices = {
+                    { value = "builtin", label = "Built-in" },
+                },
+                default = "builtin",
+                label = "Quote source",
+                group = "quote",
             },
         }, schema.keys)
     end)

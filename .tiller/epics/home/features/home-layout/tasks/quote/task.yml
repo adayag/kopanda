@@ -1,9 +1,10 @@
 id: T-x42jhm
 key: home/home-layout/quote
 title: Quote of the day from a shipped public-domain file
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-ds0hab
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:b9f66a1
         observed_at: 2026-10-15T12:44:30.785454Z
+branch: tiller/home/home-layout/quote
+review_ref:
+    branch: tiller/home/home-layout/quote
+    head:
+        kind: git_commit
+        value: git:ba161f3
+        observed_at: 2026-10-15T14:38:47.926928Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T14:37:51.363294Z
+        against:
+            kind: git_commit
+            value: git:43b4237
+            observed_at: 2026-10-15T14:37:51.363285Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-43b4237-out-5935b18c77756b731d5a640f3ae656cdfda950d0687e429054c980b2a36039be.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T14:37:51.363294Z
+        against:
+            kind: git_commit
+            value: git:43b4237
+            observed_at: 2026-10-15T14:37:51.363285Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-43b4237-out-0ca44126d912bae38abd399a1c33fd2723bc10408e9b88e2319a6d1fb1309e78.txt
