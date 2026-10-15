@@ -881,6 +881,14 @@ Upgrading KOReader walks this list.
   `spec/plugin_harness.lua` sets it false on each load, so no capture or unit spec fetches the
   weather; a spec that wants a connection stubs `isConnected`.
 
+### `night_mode`
+
+- `frontend/device/generic/device.lua:344-347` (the device toggles night mode before any UI
+  exists when it is set); `base/ffi/framebuffer.lua:566-581` (`Screen:shot` writes what the
+  panel shows in night mode too).
+- Written true only by a capture with `night_mode` (`night_golden_spec.lua`); every other profile
+  leaves it absent, so its `settings.reader.lua` is as before.
+
 ### `EMULATE_BW_SCREEN`
 
 - `base/ffi/framebuffer_SDL3.lua:21-24`.
@@ -964,9 +972,35 @@ Upgrading KOReader walks this list.
   taken on the swatch's own signal (`shot_screen = "swatch"`); a failure is sent as a `"swatch"`
   signal with `error`.
 
+### The night-toggle scenario (`spec/emulator/scenarios/2-scenario-night-toggle.lua`)
+
+- On the first home's settled signal it wraps the home module's `paintTo`
+  (`package.loaded["home"]`, `kopanda.koplugin/home.lua`) to count the paints from then on, and
+  toggles night mode from `nextTick` by `KOPANDA_NIGHT_ROUTE`:
+  - `menu`: `UIManager:broadcastEvent(Event:new("ToggleNightMode"))`
+    (`frontend/ui/uimanager.lua:1042`), what the menu item runs
+    (`frontend/ui/elements/common_settings_menu_table.lua:266-271`);
+  - `dispatcher`: `Dispatcher:execute({ night_mode = true })` (`frontend/dispatcher.lua:138`,
+    `:1549-1598`, sent with `sendEvent`), through the plugin's dispatch bridge.
+- Either reaches the file manager's `DeviceListener` (`frontend/apps/filemanager/filemanager.lua:414`),
+  which toggles the screen and calls `setDirty("all", "full")`
+  (`frontend/device/devicelistener.lua:14-27`). The scenario reports, from `tickAfterNext`
+  (past that repaint), a `"scenario"` signal with `home_paints` and `night_mode`, the screen's
+  `night_mode` (`base/ffi/framebuffer.lua:22`); a failure is reported with `error`.
+
+### The cover-rect scenario (`spec/emulator/scenarios/2-scenario-cover-rect.lua`)
+
+- On the first home's settled signal it finds the featured slot's `ImageWidget` in
+  `package.loaded["home"].shown` (by metatable: `Widget:new` makes the class the instance's metatable,
+  `frontend/ui/widget/widget.lua:26-31`, `:40-48`) and reports the `dimen` its `paintTo` kept
+  (`frontend/ui/widget/imagewidget.lua:518-531`) as `cover_x`, `cover_y`, `cover_w`, `cover_h`
+  in a `"scenario"` signal. That is the rectangle `ImageWidget` inverts again in night mode
+  (`:76-77`, `:583-593`), which `night_golden_spec.lua` compares un-inverted on the Paperwhite.
+
 ### The home fixture (`spec/emulator/scenarios/2-scenario-home-fixture.lua`)
 
-- Read by `home_golden_spec.lua` and `home_capture_spec.lua`, whose captures pass `TZ`,
+- Read by `home_golden_spec.lua`, `home_capture_spec.lua`, `night_golden_spec.lua` and
+  `night_toggle_spec.lua`, whose captures pass `TZ`,
   `KOPANDA_HOME_FIXTURE` (`populated`, `typecover` or `empty`) and, for Editorial,
   `KOPANDA_HOME_LOOK` through the driver's `env` option. Applied at `reader.lua:190`, before any
   plugin code runs.

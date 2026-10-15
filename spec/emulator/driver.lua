@@ -78,7 +78,9 @@ end
 -- plugins/ (frontend/pluginloader.lua:177-188). The quickstart guide needs no setting: the
 -- directory argument capture() passes bypasses it (reader.lua:248-251, 257-261).
 -- emulator_fake_wifi_connected false makes the emulator's NetworkMgr:isConnected() false
--- (frontend/device/sdl/device.lua:478-500), so no capture fetches the weather.
+-- (frontend/device/sdl/device.lua:478-500), so no capture fetches the weather. With
+-- opts.night_mode the file also sets night_mode, which the device turns on before any UI
+-- exists (frontend/device/generic/device.lua:344-347); without it the file is unchanged.
 --
 -- The third first-run prompt is coverbrowser's: on a profile without
 -- settings/bookinfo_cache.sqlite3 its createDB finds user_version 0, below
@@ -88,7 +90,7 @@ end
 -- file as a no-op and only compares the version (bookinfomanager.lua:166-169). The seed
 -- runs in the emulator's own luajit: its sqlite binding ffi.cdef()s on load, so a Busted
 -- process can require it once at most, and spec files are insulated from each other.
-function M.write_profile(dir, profile_name, plugin_dir, emulator, patches)
+function M.write_profile(dir, profile_name, plugin_dir, emulator, patches, opts)
     local profile = profiles[profile_name]
     if not profile then
         error("capture: unknown profile " .. tostring(profile_name))
@@ -105,10 +107,11 @@ function M.write_profile(dir, profile_name, plugin_dir, emulator, patches)
     for _, name in ipairs(M.disabled_plugins) do
         disabled[#disabled + 1] = string.format("[%q] = true", name)
     end
+    local night = opts and opts.night_mode and " [\"night_mode\"] = true," or ""
     write_file(dir .. "/settings.reader.lua", string.format(
-        "return { [\"color_rendering\"] = %s, [\"emulator_fake_wifi_connected\"] = false,"
+        "return { [\"color_rendering\"] = %s, [\"emulator_fake_wifi_connected\"] = false,%s"
             .. " [\"plugins_disabled\"] = { %s } }\n",
-        tostring(profile.color), table.concat(disabled, ", ")))
+        tostring(profile.color), night, table.concat(disabled, ", ")))
 
     assert(lfs.mkdir(dir .. "/settings"))
     local seed = "require('ffi/loadlib'); local SQ3 = require('lua-ljsqlite3/init');"
@@ -221,7 +224,8 @@ end
 -- KOPANDA_EMULATOR), patches (extra userpatches, see write_profile), shot_screen (the
 -- KoPandaSettled screen the capture is taken on, default "home"), env (a table of extra
 -- environment variables for the emulator, name to value, passed after the driver's own in
--- name order, so a scenario patch can read its options). Returns { png, width,
+-- name order, so a scenario patch can read its options), night_mode (start the emulator with
+-- night mode on, see write_profile). Returns { png, width,
 -- height, sidecar, log, scratch }; the scratch profile is removed on success and left in place
 -- on failure.
 function M.capture(opts)
@@ -251,7 +255,7 @@ function M.capture(opts)
     local timeout_s = opts.timeout_s or 120
     local out_dir = opts.out_dir or fresh_out_dir(profile_name)
     local scratch = M.write_profile(out_dir .. "/profile-" .. profile_name, profile_name, opts.plugin_dir,
-        emulator, opts.patches)
+        emulator, opts.patches, { night_mode = opts.night_mode })
     local png = out_dir .. "/" .. profile_name .. ".png"
     local log = out_dir .. "/" .. profile_name .. ".log"
     local marker = out_dir .. "/" .. profile_name .. ".timeout"
