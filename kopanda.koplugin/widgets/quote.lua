@@ -144,7 +144,7 @@ local function compose(width, ctx)
         width = text_w,
         line_height = style.line_height,
         fgcolor = color(style.color),
-        bgcolor = color("paper"),
+        bgcolor = chrome.fill_color or color("paper"),
         height = LINES * line_px,
         height_adjust = true,
         height_overflow_show_ellipsis = true,

@@ -238,8 +238,66 @@ describe("the quote of the day", function()
                 assert.equals(4, box.line_with_ellipsis)
                 assert.is_true(box.vertical_string_list[4].ellipsis_added)
                 assert.equals(4 * box.line_height_px, box.height)
+                -- A line is 1.4 em, CSS line-height 1.4 (Main.dc.html:56), rounded as
+                -- TextBoxWidget rounds it (frontend/ui/widget/textboxwidget.lua:151).
+                assert.equals(require("optmath").round(1.4 * box.face.size), box.line_height_px, look_id)
                 built:free()
             end
+        end)
+
+        it("shrinks to one line for a short text, its height that line and the chrome", function()
+            Quote.sources.builtin = { { text = "Read.", author = "A", work = "W" } }
+            local padding = Screen:scaleBySize(18)
+            for _, look_id in ipairs(Looks.ids()) do
+                local ctx = ctx_for(look_id)
+                local look = ctx.look
+                local chrome
+                if look.tile.box then
+                    chrome = 2 * (Screen:scaleBySize(look.stroke.outline) + padding)
+                        + Screen:scaleBySize(look.shadow.tile.y)
+                else
+                    chrome = 2 * (Screen:scaleBySize(look.stroke.hairline) + padding)
+                end
+                local height = Quote.height(400, ctx)
+                local built = Quote.build(400, ctx)
+                local box = built.text_box
+                assert.equals(1, #box.vertical_string_list, look_id)
+                assert.equals(box.line_height_px, box:getSize().h, look_id)
+                assert.equals(box.line_height_px + chrome, height, look_id)
+                built:free()
+            end
+        end)
+
+        it("insets Diner's text as far from the tile's right edge, short of the shadow, as from its left", function()
+            local ctx = ctx_for("diner")
+            local look = ctx.look
+            local inset = Screen:scaleBySize(look.stroke.outline) + Screen:scaleBySize(18)
+            local built = Quote.build(500, ctx)
+            local tile_w = built:getSize().w - Screen:scaleBySize(look.shadow.tile.x)
+            local box_w = built.text_box:getSize().w
+            assert.equals(inset, built.text_x)
+            assert.equals(inset, tile_w - (built.text_x + box_w))
+            built:free()
+        end)
+
+        it("falls back to KOReader's own face at the quote's size when the look's font won't load", function()
+            local Font = require("ui/font")
+            local Fonts = require("fonts")
+            local real_face = Fonts.face
+            Fonts.face = function() return nil end
+            local ok, err = pcall(function()
+                for _, look_id in ipairs(Looks.ids()) do
+                    local ctx = ctx_for(look_id, "large")
+                    local built = Quote.build(500, ctx)
+                    local face = built.text_box.face
+                    local size = Layout.font_size(18, ctx.text_size)
+                    assert.equals(Font:getFace("cfont", size).hash, face.hash, look_id)
+                    assert.equals(size, face.orig_size, look_id)
+                    built:free()
+                end
+            end)
+            Fonts.face = real_face
+            assert(ok, err)
         end)
 
         it("is exactly the width it was built at, as tall as height says", function()
