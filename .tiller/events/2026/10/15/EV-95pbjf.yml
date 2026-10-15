@@ -1,0 +1,15 @@
+id: EV-95pbjf
+type: start.task
+at: 2026-10-15T22:35:27.886144Z
+contributor: allen
+command: start task T-w3g6jh
+targets:
+    - T-w3g6jh
+before:
+    status: ready
+after:
+    branch: tiller/home/sheets/goldens
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/goldens/task.yml
