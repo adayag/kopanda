@@ -692,6 +692,36 @@ Upgrading KOReader walks this list.
   full-screen `TapClose` (`:88-100`). The launcher's notes set neither, so no timer runs and a
   tap anywhere dismisses them.
 
+### The launcher widget: tinted icons, its taps and the network events
+
+- `ui/renderimage`: `RenderImage:renderSVGImageFile(file, size, size)`
+  (`frontend/ui/renderimage.lua:338-344`) returns a `TYPE_BBRGB32` buffer with straight alpha
+  (`:390-393`), or nothing for a file NanoSVG can't open, logged by KOReader (`:355-358`).
+  `tinted_icon.lua` calls it in `pcall` and draws nothing on either failure.
+- `ffi/blitbuffer`, the tinted icon's mask: `Blitbuffer.new(size, size, TYPE_BB8)`
+  (`base/ffi/blitbuffer.lua:2591`), `fill(COLOR_WHITE)` (`:1506`), `alphablitFrom` the render
+  onto it (`:1318`, straight alpha), then `invertRect` (`:1567`): the ink is white, the ground
+  black. At paint, `colorblitFrom(mask, ..., color)` for a `Color8` (`:1405-1420`) and
+  `colorblitFromRGB32` for a colour (`:1422-1437`), split by `Blitbuffer.isColor8` (`:2712`)
+  as `home.lua` fills; both take the mask's 8-bit value as the colour's alpha
+  (`setPixelColorize`, `:990-1006`; `setPixelColorizeRGB32`, `:1009-1027`). The mask is built
+  once per build and freed with the widget (`free`).
+- This replaces `ImageWidget`'s `dim`, which only lightens and assumes a white ground; the note at
+  `frontend/ui/widget/imagewidget.lua:570-579` proposes the mask method used here.
+- The tiles and rows: `paintRect` and `paintRectRGB32`, `paintBorder` and `paintBorderRGB32`, as
+  the quote's tile above.
+- A tap reaches the widget as `tap(ctx, ges, built)` from `Home:routeGesture`, `ges.pos` in screen
+  coordinates; the grid keeps the origin it was last painted at and tests each entry's
+  rectangle with `Geom:contains` (`frontend/ui/geometry.lua:255-266`).
+- `NetworkDisconnected`: broadcast from `disableWifi`'s callback
+  (`frontend/ui/network/manager.lua:406-408`); `NetworkConnected` as the weather's entry above.
+  The home's handlers for both ask each slot's `stale` and rebuild once, and return nothing, so
+  the broadcast reaches every window. In the emulator both come 2 s after the fake toggle
+  (`frontend/device/sdl/device.lua:477-501`: `turnOnWifi` and `turnOffWifi` flip
+  `emulator_fake_wifi_connected` and schedule the broadcast, and `isWifiOn` reads it).
+- `ui/network/manager`: `NetworkMgr:isWifiOn()` (the launcher's entries above), read at call
+  time by the launcher's `stale`.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`

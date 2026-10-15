@@ -98,7 +98,11 @@ describe("looks", function()
                     "featured.column_padding_y", "featured.title_gap", "featured.chip_outline",
                     "featured.chip_padding.x", "featured.chip_padding.y", "featured.button_padding.x",
                     "featured.button_padding.y", "featured.button_fill_color",
-                    "featured.button_outline_color" }) do
+                    "featured.button_outline_color", "launcher.columns", "launcher.column_gap",
+                    "launcher.row_gap", "launcher.icon_size", "launcher.icon_gap", "launcher.padding.x",
+                    "launcher.padding.y", "launcher.tile_height", "launcher.accent_1_color",
+                    "launcher.accent_2_color", "launcher.accent_3_color", "launcher.suffix_gap",
+                    "launcher.suffix_below", "type.launcher_label.face", "type.launcher_suffix.tracking" }) do
                 local found = false
                 for _, path in ipairs(diner) do
                     found = found or path == wanted
@@ -290,6 +294,39 @@ describe("looks", function()
             assert.same({ x = 14, y = 9 }, editorial.button_padding)
             assert.same({ false, "ink" }, { editorial.button_fill_color, editorial.button_outline_color })
             assert.same({ "mustard", "outline" }, { diner.button_fill_color, diner.button_outline_color })
+        end)
+
+        -- The launcher (Main.dc.html:60-62, HomeRetro.dc.html:55-64, EmptyStates.dc.html:65 under
+        -- .tiller/design/2026-10-13-kopanda-screens/): its block and its two type parts.
+        it("give the launcher block and its parts the boards' values", function()
+            assert.same({
+                columns = 2, column_gap = 32, row_gap = 0, icon_size = 22, icon_gap = 14,
+                padding = { x = 0, y = 15 }, tile_height = false, accent_1_color = false,
+                accent_2_color = false, accent_3_color = false, suffix_gap = 6, suffix_below = false,
+            }, looks.editorial.launcher)
+            assert.same({
+                columns = 3, column_gap = 14, row_gap = 14, icon_size = 28, icon_gap = false,
+                padding = { x = 14, y = 12 }, tile_height = 104, accent_1_color = "mustard",
+                accent_2_color = "pink", accent_3_color = "teal", suffix_gap = 6, suffix_below = true,
+            }, looks.diner.launcher)
+            local wanted = {
+                editorial = {
+                    launcher_label = { "strong", 16, false, 0, 0, "ink" },
+                    launcher_suffix = { "strong", 11, true, 0.1, 0, "muted" },
+                },
+                diner = {
+                    launcher_label = { "display", 14, false, 0, 0, "ink" },
+                    launcher_suffix = { "display", 11, true, 0.1, 0, "muted" },
+                },
+            }
+            for id, parts in pairs(wanted) do
+                for name, value in pairs(parts) do
+                    local part = looks[id].type[name]
+                    assert.is_table(part, id .. " " .. name)
+                    assert.same(value, { part.face, part.size, part.uppercase, part.tracking, part.line_height,
+                        part.color }, id .. " " .. name)
+                end
+            end
         end)
 
         it("align both looks' header row to its bottom", function()

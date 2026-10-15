@@ -272,14 +272,43 @@ function Home:onTimeFormatChanged()
     self:refresh()
 end
 
+-- Asks each slot's widget whose module has stale (widgets.lua) whether its built widget is out
+-- of date, and rebuilds the home once if any is. A raising stale is logged and counts as not
+-- stale; a failed rebuild closes the home (refresh).
+local function refresh_if_stale(home)
+    local any = false
+    for _, slot in ipairs(home.slots or {}) do
+        local stale = slot.module and slot.module.stale
+        if stale then
+            local ok, result = pcall(stale, slot.built, home.ctx)
+            if not ok then
+                logger.err("KoPanda: the home widget", slot.widget, "failed its stale check:", result)
+            elseif result then
+                any = true
+            end
+        end
+    end
+    if any then
+        home:refresh()
+    end
+end
+
 -- Broadcast when Wi-Fi connects, and at start when it is already up
 -- (frontend/ui/network/manager.lua:109, :152-154): the weather fetches if none has succeeded
--- yet. Returns nothing, so the event reaches the other windows.
+-- yet, then a widget showing the network's state is redrawn. Returns nothing, so the event
+-- reaches the other windows.
 function Home:onNetworkConnected()
     local ok, err = pcall(Weather.on_connected, self)
     if not ok then
         logger.err("KoPanda: the weather failed on NetworkConnected:", err)
     end
+    refresh_if_stale(self)
+end
+
+-- Broadcast once Wi-Fi is down (frontend/ui/network/manager.lua:406-408): a widget showing the
+-- network's state is redrawn. Returns nothing, so the event reaches the other windows.
+function Home:onNetworkDisconnected()
+    refresh_if_stale(self)
 end
 
 -- The slot at pos whose widget acts on a tap, or nil.

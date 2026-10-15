@@ -1,9 +1,10 @@
 id: T-asihfm
 key: home/launcher/widget
 title: Launcher widget in both looks with its states and taps
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-lv4m58
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:00dc9e2
         observed_at: 2026-10-15T18:23:57.040711Z
+branch: tiller/home/launcher/widget
+review_ref:
+    branch: tiller/home/launcher/widget
+    head:
+        kind: git_commit
+        value: git:01cfadd
+        observed_at: 2026-10-15T19:00:01.340861Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T18:59:02.916217Z
+        against:
+            kind: git_commit
+            value: git:97660cd
+            observed_at: 2026-10-15T18:59:02.916205Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-97660cd-out-f5b24b96a218dc4a11ac57e94791ff07c8079959346e34bf318c4a99096ec254.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T18:59:02.916217Z
+        against:
+            kind: git_commit
+            value: git:97660cd
+            observed_at: 2026-10-15T18:59:02.916205Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-97660cd-out-961a5ada7b8e46e9abae3f141872030e30b01a6b2451f69b26f721b8c50a9b29.txt
