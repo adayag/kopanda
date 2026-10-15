@@ -1,7 +1,7 @@
 id: T-lv4m58
 key: home/launcher/entries
 title: Launcher entries in the schema, resolved and run
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:a524adf
         observed_at: 2026-10-15T18:38:01.121508Z
+done_basis: ancestry
 gates:
     build:
         required: true

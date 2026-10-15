@@ -1,7 +1,7 @@
 id: T-j98jk4
 key: home/launcher/goldens
 title: Home goldens with the launcher row, the missing plugin and the height budget
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:955b18e
         observed_at: 2026-10-15T19:12:30.244776Z
+done_basis: ancestry
 gates:
     build:
         required: true

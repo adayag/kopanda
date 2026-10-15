@@ -1,0 +1,14 @@
+id: EV-2irlur
+type: sync.feature
+at: 2026-10-15T19:22:46.280575Z
+contributor: allen
+command: sync feature F-ydcqb0
+targets:
+    - F-ydcqb0
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/home/features/launcher/feature.yml

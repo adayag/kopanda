@@ -1,7 +1,7 @@
 id: F-ydcqb0
 key: home/launcher
 title: Launcher entries, folders and placeholders
-status: active
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -30,6 +30,23 @@ accepted_against:
         kind: git_commit
         value: git:00dc9e2
         observed_at: 2026-10-15T18:23:56.964609Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:d4d6713c97fe5565119c68491d3ff050589845c5
+        path: .tiller/epics/home/features/launcher/feature.md
+        observed_at: 2026-10-15T19:22:46.233076Z
+    eval:
+        kind: git_blob
+        value: git:c22bb34e343c521787b0b6a1b4b3e7ee5ea79a9a
+        path: .tiller/epics/home/features/launcher/feature.eval.md
+        observed_at: 2026-10-15T19:22:46.233076Z
+    commit:
+        kind: git_commit
+        value: git:038c1b0
+        observed_at: 2026-10-15T19:22:45.893233Z
+    surfaces: []
+done_basis: rollup
 gates:
     build:
         required: true

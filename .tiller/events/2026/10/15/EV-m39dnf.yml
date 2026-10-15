@@ -1,0 +1,14 @@
+id: EV-m39dnf
+type: sync.task
+at: 2026-10-15T19:22:46.18228Z
+contributor: allen
+command: sync task T-j98jk4
+targets:
+    - T-j98jk4
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/launcher/tasks/goldens/task.yml
