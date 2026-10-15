@@ -1,9 +1,10 @@
 id: T-8hhlio
 key: home/sheets/folder-sheet
 title: The folder sheet from a launcher folder tap
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-b26ryy
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:78d4d3c
         observed_at: 2026-10-15T20:24:28.05886Z
+branch: tiller/home/sheets/folder-sheet
+review_ref:
+    branch: tiller/home/sheets/folder-sheet
+    head:
+        kind: git_commit
+        value: git:4a08b73
+        observed_at: 2026-10-15T21:34:20.684027Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T21:33:06.674776Z
+        against:
+            kind: git_commit
+            value: git:533f9f6
+            observed_at: 2026-10-15T21:33:06.674765Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-533f9f6-out-505dea00e770dbfbd386e0846d4a99d40ee47cdb1cdeb1fe97ad9642efd5d01b.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T21:33:06.674776Z
+        against:
+            kind: git_commit
+            value: git:533f9f6
+            observed_at: 2026-10-15T21:33:06.674765Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-533f9f6-out-e566132c8a8177174da0593a88803cb91c90bc172564e4fb949167b726da8f76.txt

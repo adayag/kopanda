@@ -1,6 +1,7 @@
 -- What a launcher entry (schema.lua's launcher.entries) is and does: resolve reads what it
 -- shows when the home is built, run is what a tap on it does. No widget code: the launcher
--- widget draws from resolve, and a folder sheet can reuse both. Nothing here writes a setting.
+-- widget draws from resolve, and the folder sheet (folder_sheet.lua) reuses both, resolving a
+-- folder's entries when it opens and running them through run. Nothing here writes a setting.
 local Dispatcher = require("dispatcher")
 local Home = require("home")
 local InfoMessage = require("ui/widget/infomessage")
@@ -9,6 +10,7 @@ local UIManager = require("ui/uimanager")
 local T = require("ffi/util").template
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
+local time = require("ui/time")
 
 local LauncherEntries = {}
 
@@ -148,10 +150,11 @@ local function unavailable_note(entry, suffix)
     end
 end
 
--- What a tap on the entry does. Availability is checked again now, so what has gone since the
--- home was built gives its note; a check that raises is logged and reads as not available. ctx is
--- unused today; a folder sheet passes its own. Any other error raises to the caller, so a tap
--- reaches Home:onGesture's pcall, which logs it and closes the home onto the file browser.
+-- What a tap on the entry does under ctx, the home's: a folder opens its sheet, which passes
+-- ctx on to its rows' runs. Availability is checked again now, so what has gone since the home
+-- was built gives its note; a check that raises is logged and reads as not available. Any other
+-- error raises to the caller, so a tap reaches Home:onGesture's pcall, which logs it and closes
+-- the home onto the file browser.
 function LauncherEntries.run(entry, ctx)
     local kind = entry.kind
     if kind == "kopanda" then
@@ -159,9 +162,10 @@ function LauncherEntries.run(entry, ctx)
         return
     end
     if kind == "folder" then
-        local count = #entry.entries
-        note(T("%1 holds %2; folders open in a later update.", label_of(entry),
-            count == 1 and "1 entry" or (count .. " entries")))
+        -- The tap's start, which the sheet's paint_ms runs from. folder_sheet requires this
+        -- module, so it is required here, at call time.
+        local started = time.monotonic()
+        require("folder_sheet").open(entry, ctx, { started = started })
         return
     end
     local available_ok, is_available, suffix = pcall(LauncherEntries.available, entry)

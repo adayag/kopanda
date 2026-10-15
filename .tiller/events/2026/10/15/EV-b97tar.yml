@@ -1,0 +1,15 @@
+id: EV-b97tar
+type: start.task
+at: 2026-10-15T21:24:38.643333Z
+contributor: allen
+command: start task T-8hhlio
+targets:
+    - T-8hhlio
+before:
+    status: ready
+after:
+    branch: tiller/home/sheets/folder-sheet
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/folder-sheet/task.yml
