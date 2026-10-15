@@ -510,6 +510,43 @@ Upgrading KOReader walks this list.
 - The sun and moon go through `IconWidget` (the swatch entry above), which renders an SVG with
   `RenderImage:renderSVGImageFile` (`frontend/ui/widget/imagewidget.lua:175`).
 
+### The featured cover: CoverBrowser's `bookinfomanager`, `ImageWidget` and the bounded check
+
+- `bookinfomanager` (`plugins/coverbrowser.koplugin/bookinfomanager.lua`), reached by
+  `pcall(require, "bookinfomanager")` in `featured_cover.lua`, at call time. The plugin's folder
+  joins `package.path` only for an enabled plugin (`frontend/pluginloader.lua:283-287`); a disabled
+  one loads only its `_meta.lua` (`:208-216`, `plugins_disabled` read at `:175`), so a failed
+  require means CoverBrowser is off and the placeholder is drawn. CoverBrowser is built in and on
+  by default (`pluginloader.lua:37`). The module returns its one `BookInfoManager` table
+  (`bookinfomanager.lua:131`, `:1034`).
+- `getBookInfo(filepath, get_cover)` (`bookinfomanager.lua:325-404`): `nil` for a file not in the
+  database or still being indexed (`:359-361`; `in_progress=0` in the select, `:114-115`); a
+  never-extract row with `ignore_cover` for a file with no document provider (`:333-357`);
+  otherwise the `BOOKINFO_COLS_SET` columns (`:77-103`), flags `'Y'` or nil, `unsupported` a
+  reason string (`:38`), `cover_w` and `cover_h` read even without `get_cover` (`:373-378`), and
+  with it a fresh decompressed `cover_bb` when `has_cover` is set (`:380-396`). The build reads
+  with `true`; the extraction test reads with `false` and its check with `true`.
+- `isCachedCoverInvalid(bookinfo, cover_specs)`, a plain function (`:1013-1030`): true for a row
+  with no `cover_w` (`:1014-1015`), so the never-ask rows are tested before it, in
+  `plugins/coverbrowser.koplugin/mosaicmenu.lua:471-488`'s order. An unusable `cover_bb` is freed,
+  as `mosaicmenu.lua:478-479` does.
+- `extractInBackground(files)` (`:689-745`): terminates earlier jobs, CoverBrowser's own included
+  (`:695`), closes the database connection (`:699`), forks the extraction (`:721`) and returns
+  `true` (`:744`), or `false` when the fork fails (`:724`). Asked at most once per file per
+  process, only from `FeaturedCover.after_show`, never from `build` or `paintTo`.
+- `isExtractingInBackground()` (`:685-687`), the only completion signal, counts CoverBrowser's own
+  jobs too. CoverBrowser polls it once a second (`plugins/coverbrowser.koplugin/covermenu.lua:164-175`);
+  the featured cover does the same through `UIManager:scheduleIn` (`frontend/ui/uimanager.lua:413`)
+  for at most 30 checks, and `FeaturedCover.cancel` drops it with `UIManager:unschedule` (`:518`).
+- `ui/widget/imagewidget`: `frontend/ui/widget/imagewidget.lua:62` (`image_disposable` defaults
+  to true, so the widget frees `cover_bb` in `free`, `:600-606`), `:86-89` and `:320-328`
+  (`scale_factor = 0` fits the image in `width` by `height`, keeping its aspect).
+- The cover box is painted with `base/ffi/blitbuffer.lua:2169-2197` (`paintRoundedRect` and its
+  RGB32 variant) and `:2096-2135` (`paintBorder` with a radius); a real cover is square, as
+  `FrameContainer` rounds its background and border, not its content
+  (`frontend/ui/widget/container/framecontainer.lua:124-139`). The placeholder title is a
+  `TextBoxWidget` with `height_overflow_show_ellipsis` (`frontend/ui/widget/textboxwidget.lua:54`).
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`

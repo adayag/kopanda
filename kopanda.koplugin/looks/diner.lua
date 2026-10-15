@@ -31,6 +31,8 @@ return {
             outline = "#2f2e2b", -- the doc: strokes are ink
             shadow = "#2f2e2b", -- the doc: hard shadows are ink
             on_band = "#f5f1e6", -- the header band's text (HomeRetro.dc.html:19)
+            cover = "#2b4c6f", -- the typographic cover's fill (HomeRetro.dc.html:28)
+            on_cover = "#f5f1e6", -- its title and authors (HomeRetro.dc.html:28)
         },
         night = {
             paper = "#1e1c1a",
@@ -46,6 +48,8 @@ return {
             outline = "#f1ece0", -- the doc: outlines turn cream, the night ink
             shadow = "#f1ece0", -- the doc: hard shadows turn cream, the night ink
             on_band = "#f1ece0", -- NightC.dc.html:19
+            cover = "#2b4c6f", -- NightC.dc.html:28
+            on_cover = "#f5f1e6", -- NightC.dc.html:28
         },
         grey = {
             paper = "#f4f4f4",
@@ -61,6 +65,8 @@ return {
             outline = "#111111", -- implied: strokes are ink
             shadow = "#111111", -- implied: hard shadows are ink
             on_band = "#111111", -- PWRetro.dc.html:19: ink on the grey band
+            cover = "#4a4a4a", -- PWRetro.dc.html:28
+            on_cover = "#f4f4f4", -- PWRetro.dc.html:28
         },
     },
 
@@ -185,5 +191,28 @@ return {
         quote = { face = "quote", size = 18, uppercase = false, tracking = 0, line_height = 0.4, color = "ink" },
         -- The strip's reading stats (HomeRetro.dc.html:47).
         stats = { face = "strong", size = 13, uppercase = true, tracking = 0.06, line_height = 0, color = "ink" },
+        -- The typographic cover's title, CSS line height 1.05 (HomeRetro.dc.html:29). The board's
+        -- Georgia is not a Diner face, so the display face stands in.
+        cover_title = {
+            face = "display", size = 22, uppercase = true, tracking = 0.04, line_height = 0.05, color = "on_cover",
+        },
+        -- Its authors at the foot (HomeRetro.dc.html:30).
+        cover_authors = {
+            face = "text", size = 10, uppercase = true, tracking = 0.12, line_height = 0, color = "on_cover",
+        },
+        -- "No book yet" in the first run's dashed frame. No board draws Diner's first run; Editorial's
+        -- line (EmptyStates.dc.html:33) in Diner's strong face.
+        cover_empty = {
+            face = "strong", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted",
+        },
+    },
+
+    -- The featured book's cover box.
+    featured = {
+        cover_w = 140, -- HomeRetro.dc.html:28
+        cover_h = 210, -- HomeRetro.dc.html:28
+        cover_padding = { x = 12, y = 16 }, -- the placeholder's padding (HomeRetro.dc.html:28)
+        dash = 4, -- the first run's dashed frame, as Editorial's: 4 px dashes
+        dash_gap = 4, -- with 4 px gaps (EmptyStates.dc.html:33)
     },
 }
