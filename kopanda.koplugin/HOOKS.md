@@ -857,8 +857,9 @@ Upgrading KOReader walks this list.
 ### The home fixture (`spec/emulator/scenarios/2-scenario-home-fixture.lua`)
 
 - Read by `home_golden_spec.lua` and `home_capture_spec.lua`, whose captures pass `TZ`,
-  `KOPANDA_HOME_FIXTURE` (`populated` or `empty`) and, for Editorial, `KOPANDA_HOME_LOOK` through
-  the driver's `env` option. Applied at `reader.lua:190`, before any plugin code runs.
+  `KOPANDA_HOME_FIXTURE` (`populated`, `typecover` or `empty`) and, for Editorial,
+  `KOPANDA_HOME_LOOK` through the driver's `env` option. Applied at `reader.lua:190`, before any
+  plugin code runs.
 - `os.time()` and `os.date(format)` with no time argument are replaced for the whole process and
   answer 2026-10-13 08:42 in `TZ` (America/Chicago); calls with a time pass through. KOReader's
   own no-argument callers, such as the log line's stamp (`frontend/logger.lua:73`), read the frozen
@@ -875,6 +876,44 @@ Upgrading KOReader walks this list.
     On a fresh profile `checkInitDatabase` finds the `book` table and creates nothing
     (`main.lua:372-374`); with `convert_to_db` set it compares the version (`:318-319`) and leaves
     a current one as it is.
+- Populated and typecover, it also writes the featured book, `frankenstein.epub` under
+  `$KOPANDA_ROOT/spec/fixtures/library/`, by its realpath (`base/ffi/util.lua:162-171`), the form
+  history stores (`frontend/readhistory.lua:25-26`):
+  - `G_reader_settings` `document_metadata_folder = "dir"`, in memory for the run: `DocSettings`
+    reads it for each lookup and write (`frontend/docsettings.lua:101-111`, `:118-136`,
+    `:317-339`), so the sidecar lands under `<KO_HOME>/docsettings/` (`datastorage.lua:67-69`) and
+    nothing is written into the fixture library;
+  - `<KO_HOME>/history.lua` (`readhistory.lua:12`) in the `{ time, file }` form `_flush` writes
+    (`:89-97`) and `_read` `dofile`s (`:103-119`), through `util.writeToFile`
+    (`frontend/util.lua:1124`). `ReadHistory` reads it when first required (`:369-373`); one already
+    loaded is made to read it again with `reload(true)` (`:359-367`);
+  - the sidecar through `DocSettings:open` (`docsettings.lua:221`), `saveSetting`
+    (`frontend/luasettings.lua:102-105`, chainable) and `flush` (`docsettings.lua:317-339`):
+    `percent_finished` 0.62, `doc_pages` 220, `doc_props` title and authors, `summary.status`
+    `reading` and `partial_md5_checksum` from `util.partialMD5` (`util.lua:1094`), the keys ReaderUI
+    saves (`frontend/apps/reader/modules/readerrolling.lua:338`,
+    `frontend/apps/reader/readerui.lua:493`, `:497-501`);
+  - in `statistics.sqlite3`, a `book` row with that md5 and `pages = 220`, and ten
+    `page_stat_data` rows of 90 s on 2025-01-01 with `total_pages = 220`, so the `page_stat` view
+    keeps them as they are (`plugins/statistics.koplugin/main.lua:438-451`) and each stays under the
+    default 120 s `max_sec` (`:30`): 84 pages left at 90 s is "2 h 6 min left";
+  - `kopanda/state.lua`, KoPanda's runtime state, with `featured_chapter_file` and
+    `featured_chapter = "Letter IV"`, through `LuaSettings`.
+- Typecover adds `coverbrowser` to `G_reader_settings`' `plugins_disabled` in memory, which
+  `PluginLoader:_discover` reads later in `FileManager:init` (`frontend/pluginloader.lua:175`,
+  `:210-216`).
+- Populated wraps `PluginLoader.loadPlugins` (`pluginloader.lua:273-291`). After its first call,
+  which `FileManager:init` makes before it instantiates any plugin
+  (`frontend/apps/filemanager/filemanager.lua:418`) and which puts CoverBrowser's folder on
+  `package.path` (`pluginloader.lua:283-287`), it requires `bookinfomanager` and runs
+  `extractBookInfo(file, { max_cover_w, max_cover_h })`
+  (`plugins/coverbrowser.koplugin/bookinfomanager.lua:422-570`) synchronously, for the featured
+  widget's own full-width box (`featured_cover.lua` `FeaturedCover.box`), so
+  `isCachedCoverInvalid` (`:1013-1030`) passes and the widget asks for no extraction after the
+  show. It then checks `getBookInfo(file, false)` (`:325-404`) for `has_cover`. Run in-process,
+  `extractBookInfo` points crengine's cache at CoverBrowser's `tmpcr3cache` for the rest of the run
+  (`:423-439`); the home draws nothing with crengine. All of it runs before the file manager's
+  `Show`, where KoPanda's `paint_ms` clock starts, so `paint_ms` never includes it.
 - With a look, it writes `kopanda/settings.lua` with `look` and `schema_version = 1`
   (`frontend/luasettings.lua:102` `saveSetting`), as `kopanda.koplugin/settings.lua` stores it.
 - Any failure logs `KOPANDA_SCENARIO: home fixture failed` and exits with status 4, which the
