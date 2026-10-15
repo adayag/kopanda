@@ -1,0 +1,13 @@
+id: EV-of7ads
+type: check.feature
+at: 2026-10-15T15:06:12.518081Z
+contributor: allen
+command: check feature F-wkj9iy
+targets:
+    - F-wkj9iy
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/home/features/home-layout/feature.yml
