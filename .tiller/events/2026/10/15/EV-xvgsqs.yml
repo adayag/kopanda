@@ -1,0 +1,14 @@
+id: EV-xvgsqs
+type: add.task
+at: 2026-10-15T02:34:01.910011Z
+contributor: allen
+command: add task home/looks-and-schema/swatch
+targets:
+    - T-wj05yo
+after:
+    feature: F-i2mbn1
+    key: home/looks-and-schema/swatch
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/swatch/task.md
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/swatch/task.yml

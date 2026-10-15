@@ -1,0 +1,14 @@
+id: EV-1fnapi
+type: add.task
+at: 2026-10-15T02:34:01.102418Z
+contributor: allen
+command: add task home/looks-and-schema/fonts
+targets:
+    - T-3qwuor
+after:
+    feature: F-i2mbn1
+    key: home/looks-and-schema/fonts
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/fonts/task.md
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/fonts/task.yml

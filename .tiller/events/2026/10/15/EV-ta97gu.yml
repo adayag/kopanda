@@ -1,0 +1,18 @@
+id: EV-ta97gu
+type: link.task
+at: 2026-10-15T02:34:02.164473Z
+contributor: allen
+command: link task T-wj05yo
+targets:
+    - T-wj05yo
+before:
+    depends_on:
+        - T-q3nem8
+after:
+    added:
+        - T-puj6su
+    depends_on:
+        - T-q3nem8
+        - T-puj6su
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/swatch/task.yml

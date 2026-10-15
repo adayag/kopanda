@@ -1,9 +1,16 @@
 id: F-i2mbn1
 key: home/looks-and-schema
 title: Schema, settings, looks, icon registry and the swatch screen
-status: draft
+status: specced
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
 depends_on:
     - F-xo6obj
+order:
+    - T-f4vjse
+    - T-3qwuor
+    - T-puj6su
+    - T-q3nem8
+    - T-wj05yo
+    - T-6nbln8

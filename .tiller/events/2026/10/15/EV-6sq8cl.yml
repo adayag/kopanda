@@ -1,0 +1,14 @@
+id: EV-6sq8cl
+type: add.task
+at: 2026-10-15T02:34:01.429053Z
+contributor: allen
+command: add task home/looks-and-schema/icons
+targets:
+    - T-puj6su
+after:
+    feature: F-i2mbn1
+    key: home/looks-and-schema/icons
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/icons/task.md
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/icons/task.yml

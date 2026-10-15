@@ -1,0 +1,18 @@
+id: EV-bbm13f
+type: link.task
+at: 2026-10-15T02:34:01.756961Z
+contributor: allen
+command: link task T-q3nem8
+targets:
+    - T-q3nem8
+before:
+    depends_on:
+        - T-f4vjse
+after:
+    added:
+        - T-3qwuor
+    depends_on:
+        - T-f4vjse
+        - T-3qwuor
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/looks/task.yml

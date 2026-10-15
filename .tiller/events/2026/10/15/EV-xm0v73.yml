@@ -1,0 +1,14 @@
+id: EV-xm0v73
+type: add.task
+at: 2026-10-15T02:34:00.774746Z
+contributor: allen
+command: add task home/looks-and-schema/schema-settings
+targets:
+    - T-f4vjse
+after:
+    feature: F-i2mbn1
+    key: home/looks-and-schema/schema-settings
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/schema-settings/task.md
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/schema-settings/task.yml

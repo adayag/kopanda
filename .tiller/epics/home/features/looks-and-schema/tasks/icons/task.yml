@@ -1,0 +1,9 @@
+id: T-puj6su
+key: home/looks-and-schema/icons
+title: Icon registry with the canvas's default stroke icons
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-3qwuor

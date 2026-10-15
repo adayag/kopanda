@@ -1,0 +1,16 @@
+id: EV-vtl175
+type: link.task
+at: 2026-10-15T02:37:11.978902Z
+contributor: allen
+command: link task T-puj6su
+targets:
+    - T-puj6su
+before:
+    depends_on: []
+after:
+    added:
+        - T-3qwuor
+    depends_on:
+        - T-3qwuor
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/icons/task.yml

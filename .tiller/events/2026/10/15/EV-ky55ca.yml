@@ -1,0 +1,14 @@
+id: EV-ky55ca
+type: add.task
+at: 2026-10-15T02:34:01.629954Z
+contributor: allen
+command: add task home/looks-and-schema/looks
+targets:
+    - T-q3nem8
+after:
+    feature: F-i2mbn1
+    key: home/looks-and-schema/looks
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/looks/task.md
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/looks/task.yml

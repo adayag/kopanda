@@ -1,0 +1,13 @@
+id: EV-gq8fa9
+type: spec.feature
+at: 2026-10-15T02:46:00.709561Z
+contributor: allen
+command: spec feature F-i2mbn1
+targets:
+    - F-i2mbn1
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/feature.yml
