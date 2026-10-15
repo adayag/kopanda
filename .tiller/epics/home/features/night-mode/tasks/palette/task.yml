@@ -17,3 +17,30 @@ accepted_against:
         value: git:7d5457c
         observed_at: 2026-10-15T19:24:02.13694Z
 branch: tiller/home/night-mode/palette
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T19:40:36.814115Z
+        against:
+            kind: git_commit
+            value: git:d7a8e25
+            observed_at: 2026-10-15T19:40:36.814101Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-d7a8e25-out-9c574f5a17143ec1273ee881396f011a23beea2b5939cc691bef18c1cefa707a.txt
+    tests:
+        required: true
+        kind: command
+        status: fail
+        run_by: allen
+        run_at: 2026-10-15T19:40:36.814115Z
+        against:
+            kind: git_commit
+            value: git:d7a8e25
+            observed_at: 2026-10-15T19:40:36.814101Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-d7a8e25-out-845f88ef5101b3b350e3f07d8baae3d6fab722727df1172c93acf690bae28de1.txt
