@@ -18,7 +18,7 @@ describe("the book sheet", function()
     local time = require("ui/time")
     local util = require("util")
     local Screen = require("device").screen
-    local Featured, FeaturedBook, FeaturedCover, Home, Settings, SettingsMenu, Sheet, State
+    local Featured, FeaturedBook, FeaturedCover, Home, HomeRows, Settings, SettingsMenu, Sheet, State
 
     local NOTE = "Authors are coming with the library."
 
@@ -170,6 +170,25 @@ describe("the book sheet", function()
         return count
     end
 
+    -- Spies on logger.err for the rest of the test; returns a function telling whether a call was
+    -- given an argument containing text.
+    local function spy_errors()
+        local errored = spy.on(logger, "err")
+        cleanup(function()
+            logger.err:revert()
+        end)
+        return function(text)
+            for _, call in ipairs(errored.calls) do
+                for _, arg in ipairs(call.vals) do
+                    if tostring(arg):find(text, 1, true) then
+                        return true
+                    end
+                end
+            end
+            return false
+        end
+    end
+
     -- os.time() reads instant while fn runs; os.time with a table is the real one.
     local function at(instant, fn)
         local real = os.time
@@ -202,6 +221,7 @@ describe("the book sheet", function()
         FeaturedBook = require("featured_book")
         FeaturedCover = require("featured_cover")
         Home = require("home")
+        HomeRows = require("home_rows")
         Settings = require("settings")
         SettingsMenu = require("settings_menu")
         Sheet = require("sheet")
@@ -305,6 +325,23 @@ describe("the book sheet", function()
             it("leaves out the chapter when there is none", function()
                 local now = local_time(2026, 10, 15, 15)
                 assert.equals("62% · opened today", meta(now, now - 60))
+            end)
+
+            it("finds the history entry by realpath for a book pinned through a symlink", function()
+                local link = os.getenv("KO_HOME") .. "/book-sheet-link"
+                os.remove(link)
+                assert(lfs.link(books_dir, link, true))
+                cleanup(function()
+                    os.remove(link)
+                end)
+                assert.is_true(Settings.set("featured.pinned", link .. "/a.epub"))
+                local now = local_time(2026, 10, 15, 15)
+                history({ { a, now - 60 } })
+                fm_with_home()
+                assert.equals(link .. "/a.epub", featured_slot().built.book.file)
+                at(now, hold_book)
+                local got = Sheet.shown.spec.header.meta
+                assert.truthy(got:find(" · opened today$"), got)
             end)
 
             it("leaves out opened for a pinned book with no history entry", function()
@@ -603,6 +640,34 @@ describe("the book sheet", function()
             assert.equals(4, data.summary.rating)
             assert.equals(0.4, data.percent_finished)
         end)
+
+        it("reads Reading for a sidecar with no status, ticks nothing, and keeps the note on a tap on Reading",
+            function()
+            sidecar(a, '{ summary = { note = "N" } }')
+            fm_with_home()
+            hold_book()
+            assert.equals("Reading ›", place_of("Read status").row.detail)
+            tap("Read status")
+            assert.same({ { "Reading", false }, { "On hold", false }, { "Finished", false } }, rows())
+            tap("Reading")
+            local summary = sidecar_data(a).summary
+            assert.equals("reading", summary.status)
+            assert.equals("N", summary.note)
+        end)
+
+        it("keeps the note and rating through a status change when BookList's cache says no sidecar", function()
+            sidecar(a, '{ summary = { status = "reading", note = "A note", rating = 4 } }')
+            fm_with_home()
+            hold_book()
+            BookList.book_info_cache[a] = { been_opened = false }
+            tap("Read status")
+            assert.equals("status", Sheet.shown.spec.name)
+            tap("Finished")
+            local summary = sidecar_data(a).summary
+            assert.equals("complete", summary.status)
+            assert.equals("A note", summary.note)
+            assert.equals(4, summary.rating)
+        end)
     end)
 
     describe("the picker", function()
@@ -706,6 +771,49 @@ describe("the book sheet", function()
                 { "Book 8", true },
             }, rows())
             assert.equals("Author 8", Sheet.shown.spec.rows[8].detail)
+        end)
+
+        it("leaves out the pinned book's row and logs when describing it raises", function()
+            assert.is_true(Settings.set("featured.pinned", files[8]))
+            fm_with_home()
+            hold_book()
+            local describe = FeaturedBook.describe
+            replace(FeaturedBook, "describe", function(file)
+                if file == files[8] then
+                    error("describe failed on purpose")
+                end
+                return describe(file)
+            end)
+            local logged = spy_errors()
+            tap("Feature a different book")
+            assert.equals("picker", Sheet.shown.spec.name)
+            assert.same({
+                { "The last one opened", false },
+                { "Book 1", false },
+                { "Book 2", false },
+                { "Book 3", false },
+                { "Book 4", false },
+                { "Book 5", false },
+                { "Book 6", false },
+            }, rows())
+            assert.is_true(logged("describe failed on purpose"))
+        end)
+
+        it("runs no after_show and logs when the refresh after a pick fails and closes the home", function()
+            open_picker()
+            local shown = 0
+            replace(Featured, "after_show", function()
+                shown = shown + 1
+            end)
+            replace(HomeRows, "build", function()
+                error("build failed on purpose")
+            end)
+            local logged = spy_errors()
+            tap("Book 3")
+            assert.equals(ffiutil.realpath(files[3]), pinned())
+            assert.is_nil(Home.shown)
+            assert.equals(0, shown)
+            assert.is_true(logged("build failed on purpose"))
         end)
 
         it("ticks The last one opened for a pin to a file that has gone", function()

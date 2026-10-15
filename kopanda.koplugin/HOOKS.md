@@ -857,9 +857,14 @@ Upgrading KOReader walks this list.
   `DocSettings:open` when given a path, so it is created when there is none, sets
   `summary.modified` to today's `%Y-%m-%d`, saves `summary` and flushes), then
   `BookList.setBookInfoCacheProperty(file, "status", s)`, then the caller's callback, KoPanda's
-  home refresh. The sub-sheet passes the `DocSettings` when `BookList.hasBookBeenOpened(file)`, as
-  the file dialog chooses (`frontend/apps/filemanager/filemanager.lua:255-270`, reached from
-  `onFileHold`, `:171-177`), so a sidecar's other summary fields survive the write.
+  home refresh. The sub-sheet passes the `DocSettings` when `DocSettings:hasSidecarFile(file)`
+  (`frontend/docsettings.lua:151-153`: true when `findSidecarFile`, `:159-175`, finds a sidecar
+  file in any location, or the legacy history file when that location is enabled), so a
+  sidecar's other summary fields survive the write. The file dialog chooses by the cached
+  `BookList.hasBookBeenOpened(file)` instead (`frontend/apps/filemanager/filemanager.lua:255-270`,
+  reached from `onFileHold`, `:171-177`), which a stale cache entry `{ been_opened = false }`
+  answers false while a sidecar exists; a bare path's write then starts from an empty `summary`
+  and wipes the note and rating.
 - `ui/widget/booklist`, required by `book_sheet.lua`: `BookList.hasBookBeenOpened` (whether a
   sidecar exists, cached, `frontend/ui/widget/booklist.lua:348-356`), `getDocSettings`
   (`DocSettings:open`, caching the book's info, `:358-364`), `getBookStatus` (`"new"` for a book

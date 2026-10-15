@@ -4,6 +4,7 @@
 -- KOReader's own three status buttons, which write the sidecar themselves; Feature a different
 -- book opens the picker, which writes featured.pinned. Nothing else here writes.
 local BookList = require("ui/widget/booklist")
+local DocSettings = require("docsettings")
 local Featured = require("widgets/featured")
 local FeaturedBook = require("featured_book")
 local FeaturedCover = require("featured_cover")
@@ -86,13 +87,16 @@ local function show_details(file)
     fm.bookinfo:show(file)
 end
 
--- The read status sub-sheet: KOReader's own status buttons for the book, called as the file
--- dialog calls them (filemanager.lua:255-270), with the sidecar when the book has one, so its
--- other summary fields survive the write, else with the path. Each button writes the status
--- itself, then refreshes the home through the callback given.
+-- The read status sub-sheet: KOReader's own status buttons for the book, with the sidecar when
+-- the book has one on disk, so its other summary fields survive the write, else with the path.
+-- The file dialog asks BookList.hasBookBeenOpened (filemanager.lua:255-270), which a stale
+-- cache can answer false while a sidecar exists, and a bare path's write starts from an empty
+-- summary (filemanagerutil.lua:124-127), wiping the note and rating; so the disk is asked here,
+-- through DocSettings:hasSidecarFile (frontend/docsettings.lua:151-153). Each button writes the
+-- status itself, then refreshes the home through the callback given.
 local function open_status(ctx, book, opts)
     local file = book.file
-    local doc = BookList.hasBookBeenOpened(file) and BookList.getDocSettings(file) or file
+    local doc = DocSettings:hasSidecarFile(file) and BookList.getDocSettings(file) or file
     local buttons = filemanagerutil.genStatusButtonsRow(doc, function()
         ctx.home:refresh()
     end)
@@ -150,9 +154,9 @@ local function book_row(entry, tick, ctx)
 end
 
 -- The picker: The last one opened, then the history's six most recent books, then the pinned
--- book when it is older than those, so the current choice is always listed. The tick follows
--- featured.pinned, compared by realpath; a pin to a file that has gone reads as no pin, as
--- FeaturedBook reads it.
+-- book when it is older than those, so the current choice is always listed unless reading it
+-- raises, which is logged and leaves its row out. The tick follows featured.pinned, compared by
+-- realpath; a pin to a file that has gone reads as no pin, as FeaturedBook reads it.
 local function open_picker(ctx, opts)
     local pinned = Settings.get("featured.pinned")
     local pinned_real = pinned and (ffiutil.realpath(pinned) or pinned)
@@ -173,7 +177,12 @@ local function open_picker(ctx, opts)
         rows[#rows + 1] = book_row(entry, tick, ctx)
     end
     if pin_is_file and not ticked then
-        rows[#rows + 1] = book_row(FeaturedBook.describe(pinned), true, ctx)
+        local described, entry = pcall(FeaturedBook.describe, pinned)
+        if described then
+            rows[#rows + 1] = book_row(entry, true, ctx)
+        else
+            logger.err("KoPanda: could not read the pinned book", pinned, ":", entry)
+        end
     end
     Sheet.show({
         name = "picker",
