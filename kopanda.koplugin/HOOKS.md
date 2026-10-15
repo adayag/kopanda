@@ -987,8 +987,14 @@ Upgrading KOReader walks this list.
   `extractBookInfo` points crengine's cache at CoverBrowser's `tmpcr3cache` for the rest of the run
   (`:423-439`); the home draws nothing with crengine. All of it runs before the file manager's
   `Show`, where KoPanda's `paint_ms` clock starts, so `paint_ms` never includes it.
-- With a look, it writes `kopanda/settings.lua` with `look` and `schema_version = 1`
-  (`frontend/luasettings.lua:102` `saveSetting`), as `kopanda.koplugin/settings.lua` stores it.
+- It opens `kopanda/settings.lua` once and writes the keys its scenario sets with
+  `schema_version = 1` (`frontend/luasettings.lua:21` `open`, `:102` `saveSetting`, `:270`
+  `flush`), as `kopanda.koplugin/settings.lua` stores them: `look` when a look is given, and,
+  empty, `launcher.entries` as the schema's default five without Settings and a sixth
+  `{ kind = "plugin", plugin = "kopanda_absent", action = "terminal", label = "Terminal", icon = "terminal" }`.
+  No plugin has that name, so `PluginLoader:isPluginLoaded` (`frontend/pluginloader.lua:567-569`,
+  a lookup in `loaded_plugins`) is false on every profile and the entry shows "plugin missing",
+  whatever plugins the emulator's own `plugins/` holds.
 - Any failure logs `KOPANDA_SCENARIO: home fixture failed` and exits with status 4, which the
   driver reports with the log tail.
 

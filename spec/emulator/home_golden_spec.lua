@@ -1,10 +1,11 @@
 -- The home goldens (C8): each look on each profile with a known weather cache, reading
--- statistics and a featured book with its real cover; each look on the Colorsoft with none of
--- them, the featured slot in its first-run state; and each look on the Colorsoft with the
--- featured book and CoverBrowser disabled, its typographic cover. All at 2026-10-13 08:42 in
--- Chicago. The home fixture patch freezes the clock and writes the scenario before any plugin runs.
--- Diner scenarios store no look, so they show the schema's default; the look is always passed
--- (empty for Diner) so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
+-- statistics and a featured book with its real cover; each look on each profile with none of
+-- them, the featured slot in its first-run state and the launcher's last entry a plugin that
+-- isn't there; and each look on the Colorsoft with the featured book and CoverBrowser disabled,
+-- its typographic cover. All at 2026-10-13 08:42 in Chicago, and no capture drops a row. The home
+-- fixture patch freezes the clock and writes the scenario before any plugin runs. Diner scenarios
+-- store no look, so they show the schema's default; the look is always passed (empty for Diner)
+-- so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
 describe("the home goldens", function()
     require("commonrequire")
     local driver = require("emulator.driver")
@@ -20,9 +21,18 @@ describe("the home goldens", function()
         { name = "home-editorial", look = "editorial", fixture = "populated", profile = "paperwhite" },
         { name = "home-empty-diner", fixture = "empty", profile = "colorsoft" },
         { name = "home-empty-editorial", look = "editorial", fixture = "empty", profile = "colorsoft" },
+        { name = "home-empty-diner", fixture = "empty", profile = "paperwhite" },
+        { name = "home-empty-editorial", look = "editorial", fixture = "empty", profile = "paperwhite" },
         { name = "home-typecover-diner", fixture = "typecover", profile = "colorsoft" },
         { name = "home-typecover-editorial", look = "editorial", fixture = "typecover", profile = "colorsoft" },
     }
+
+    local function read(path)
+        local f = assert(io.open(path, "r"))
+        local text = f:read("*a")
+        f:close()
+        return text
+    end
 
     local function has(list, value)
         for _, v in ipairs(list) do
@@ -48,6 +58,10 @@ describe("the home goldens", function()
             assert.equals("home", result.sidecar.screen)
             -- The typographic cover is CoverBrowser's absence, not a missing cache entry.
             assert.equals(scenario.fixture ~= "typecover", has(result.sidecar.plugins, "coverbrowser"))
+            -- Every row of the default layout fits: the row engine logs each row it drops
+            -- (kopanda.koplugin/layout.lua, Layout.place).
+            local dropped = read(result.log):match("[^\n]*doesn't fit the screen[^\n]*")
+            assert.is_nil(dropped, dropped)
             local checked = golden.assert_golden(scenario.name, scenario.profile, result)
             if os.getenv("KOPANDA_UPDATE_GOLDENS") ~= "1" then
                 assert.is_true(checked.ok)
