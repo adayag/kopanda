@@ -7,6 +7,7 @@
 -- so a later require could resolve to another plugin's same-named file (:283-286).
 local DispatchBridge = require("dispatch_bridge")
 local Dispatcher = require("dispatcher")
+require("fonts") -- loaded now for the looks and swatch modules, which reach it later
 local Guards = require("guards")
 local Home = require("home")
 local InfoMessage = require("ui/widget/infomessage")
