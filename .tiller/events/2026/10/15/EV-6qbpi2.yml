@@ -1,0 +1,13 @@
+id: EV-6qbpi2
+type: claim.task
+at: 2026-10-15T14:16:48.746049Z
+contributor: allen
+command: claim task T-xv2jpg
+targets:
+    - T-xv2jpg
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/weather/task.yml
