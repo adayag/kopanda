@@ -8,6 +8,7 @@ local HomeGestures = require("home_gestures")
 local HomeRows = require("home_rows")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local Looks = require("looks")
+local Sheet = require("sheet")
 local UIManager = require("ui/uimanager")
 local Weather = require("weather")
 local logger = require("logger")
@@ -126,6 +127,15 @@ end
 function Home:tappableSlotAt(pos)
     for _, slot in ipairs(self.slots) do
         if slot.module and slot.module.tap and slot.rect:contains(pos) then
+            return slot
+        end
+    end
+end
+
+-- The first slot at pos, whatever its widget, or nil.
+function Home:slotAt(pos)
+    for _, slot in ipairs(self.slots) do
+        if slot.rect:contains(pos) then
             return slot
         end
     end
@@ -297,7 +307,7 @@ function Home:paintTo(bb, x, y)
 end
 
 -- KOReader may close the home itself; Home.shown must not outlive it, nor the featured cover's
--- bounded check.
+-- bounded check, nor a sheet shown over it.
 function Home:onCloseWidget()
     if Home.shown == self then
         Home.shown = nil
@@ -305,6 +315,10 @@ function Home:onCloseWidget()
     local ok, err = pcall(FeaturedCover.cancel)
     if not ok then
         logger.err("KoPanda: could not drop the cover check:", err)
+    end
+    local sheet_ok, sheet_err = pcall(Sheet.close)
+    if not sheet_ok then
+        logger.err("KoPanda: could not close the sheet over the home:", sheet_err)
     end
 end
 

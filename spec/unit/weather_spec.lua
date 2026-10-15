@@ -373,6 +373,43 @@ describe("weather", function()
         end)
     end)
 
+    -- The home sheet's Refresh weather detail (sheets' C4).
+    describe("age", function()
+        local now = 1000000
+
+        local function aged(seconds)
+            return Weather.age(reading({ fetched_at = now - seconds }), now)
+        end
+
+        it("says never fetched with no reading", function()
+            assert.equals("never fetched", Weather.age(nil, now))
+        end)
+
+        it("says just now under a minute and for a reading from the future", function()
+            assert.equals("just now", aged(0))
+            assert.equals("just now", aged(59))
+            assert.equals("just now", aged(-30))
+        end)
+
+        it("counts whole minutes under an hour", function()
+            assert.equals("1 min ago", aged(60))
+            assert.equals("59 min ago", aged(59 * 60))
+            assert.equals("59 min ago", aged(3599))
+        end)
+
+        it("counts whole hours under 48 hours", function()
+            assert.equals("1 h ago", aged(3600))
+            assert.equals("47 h ago", aged(47 * 3600))
+            assert.equals("47 h ago", aged(48 * 3600 - 1))
+        end)
+
+        it("counts whole days from 48 hours", function()
+            assert.equals("2 d ago", aged(48 * 3600))
+            assert.equals("9 d ago", aged(9 * 86400))
+            assert.equals("2 d ago", aged(3 * 86400 - 1))
+        end)
+    end)
+
     describe("after_show", function()
         it("fetches once per process when connected, refreshing the home", function()
             network(true)
