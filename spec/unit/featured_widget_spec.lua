@@ -174,7 +174,7 @@ describe("the featured widget", function()
         return n
     end
 
-    local current, file_manager, closed, after_show, loaded, preload, calls
+    local current, file_manager, closed, after_show, real_box, loaded, preload, calls
 
     before_each(function()
         Featured = require("widgets/featured")
@@ -189,7 +189,7 @@ describe("the featured widget", function()
         package.loaded.bookinfomanager = nil
         package.preload.bookinfomanager = function() error("CoverBrowser is disabled") end
         current, file_manager, closed = FeaturedBook.current, FileManager.instance, Home.close
-        after_show = FeaturedCover.after_show
+        after_show, real_box = FeaturedCover.after_show, FeaturedCover.box
         calls = { current = 0, log = {}, opened = {}, after_show = {} }
         FeaturedBook.current = function()
             calls.current = calls.current + 1
@@ -214,7 +214,7 @@ describe("the featured widget", function()
 
     after_each(function()
         FeaturedBook.current, FileManager.instance, Home.close = current, file_manager, closed
-        FeaturedCover.after_show = after_show
+        FeaturedCover.after_show, FeaturedCover.box = after_show, real_box
         package.loaded.bookinfomanager = loaded
         package.preload.bookinfomanager = preload
     end)
@@ -396,6 +396,69 @@ describe("the featured widget", function()
             assert.is_nil(line_of(built, "Part 3, The Prophet"))
             assert.is_table(line_of(built, "Piranesi"))
             built:free()
+        end)
+
+        -- The column's states as its height falls a pixel at a time from 600 to 20, the cover
+        -- box's height replaced so the column's height is free while its width is the real one:
+        -- each state names the lines under the title the column draws, by the text they hold
+        -- however cut, and the title's lines; repeats are folded.
+        local function overflow(id, width, book)
+            local column_h
+            FeaturedCover.box = function(w, ctx)
+                return (real_box(w, ctx)), column_h
+            end
+            local states = {}
+            for h = 600, 20, -1 do
+                column_h = h
+                calls.book = book
+                local built = Featured.build(width, ctx_for(id, { text_size = "large" }))
+                local held, title_lines = {}, nil
+                local function walk(w)
+                    local mt = getmetatable(w)
+                    if mt == TextBoxWidget and w.text == book.title then
+                        title_lines = w.lines_per_page
+                    elseif mt == TextWidget then
+                        held[#held + 1] = w.text
+                    end
+                    for _, child in ipairs(w) do
+                        walk(child)
+                    end
+                end
+                -- The text column, past the cover box and the gap.
+                walk(built[1][3])
+                local all = table.concat(held, "\n")
+                local parts = {}
+                if all:find(book.authors, 1, true) then
+                    parts[#parts + 1] = "authors"
+                end
+                if all:find(book.chapter, 1, true) then
+                    parts[#parts + 1] = "chapter"
+                end
+                parts[#parts + 1] = "title " .. tostring(title_lines)
+                local state = table.concat(parts, ", ")
+                if states[#states] ~= state then
+                    states[#states + 1] = state
+                end
+                built:free()
+            end
+            return states
+        end
+
+        it("in a column too short, drops Editorial's chapter, then its authors, then the title's 2nd line", function()
+            local long = record{
+                title = string.rep("A Very Long Title Indeed ", 6),
+                authors = string.rep("Somebody Withaverylongname, ", 5),
+                chapter = string.rep("Chapter the Endless ", 6),
+            }
+            assert.same({ "authors, chapter, title 2", "authors, title 2", "title 2", "title 1" },
+                overflow("editorial", 253, long))
+        end)
+
+        -- Diner's authors and chapter share one line in one part, so the authors alone are no
+        -- shorter and the line goes whole.
+        it("in a column too short, drops Diner's authors and chapter line, then the title's second line", function()
+            local book = record{ title = string.rep("A Very Long Title Indeed ", 6) }
+            assert.same({ "authors, chapter, title 2", "title 2", "title 1" }, overflow("diner", 253, book))
         end)
     end)
 
