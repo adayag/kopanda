@@ -1,0 +1,13 @@
+id: EV-rdww6r
+type: check.task
+at: 2026-10-15T14:41:42.479307Z
+contributor: allen
+command: check task T-wgis3w
+targets:
+    - T-wgis3w
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/reading-stats/task.yml
