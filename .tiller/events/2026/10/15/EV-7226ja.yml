@@ -1,0 +1,16 @@
+id: EV-7226ja
+type: submit.task
+at: 2026-10-15T03:09:01.147912Z
+contributor: allen
+command: submit task T-f4vjse
+targets:
+    - T-f4vjse
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/looks-and-schema/schema-settings
+        head: git:b09205f
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/schema-settings/task.yml
