@@ -77,6 +77,8 @@ end
 -- (frontend/pluginloader.lua:193-199); present, only the listed paths join KOReader's own
 -- plugins/ (frontend/pluginloader.lua:177-188). The quickstart guide needs no setting: the
 -- directory argument capture() passes bypasses it (reader.lua:248-251, 257-261).
+-- emulator_fake_wifi_connected false makes the emulator's NetworkMgr:isConnected() false
+-- (frontend/device/sdl/device.lua:478-500), so no capture fetches the weather.
 --
 -- The third first-run prompt is coverbrowser's: on a profile without
 -- settings/bookinfo_cache.sqlite3 its createDB finds user_version 0, below
@@ -104,7 +106,8 @@ function M.write_profile(dir, profile_name, plugin_dir, emulator, patches)
         disabled[#disabled + 1] = string.format("[%q] = true", name)
     end
     write_file(dir .. "/settings.reader.lua", string.format(
-        "return { [\"color_rendering\"] = %s, [\"plugins_disabled\"] = { %s } }\n",
+        "return { [\"color_rendering\"] = %s, [\"emulator_fake_wifi_connected\"] = false,"
+            .. " [\"plugins_disabled\"] = { %s } }\n",
         tostring(profile.color), table.concat(disabled, ", ")))
 
     assert(lfs.mkdir(dir .. "/settings"))

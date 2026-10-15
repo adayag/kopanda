@@ -13,6 +13,7 @@ local Widgets = {}
 local modules = {
     quote = "widgets/quote",
     stats = "widgets/stats",
+    weather = "widgets/weather",
 }
 
 -- The module for id, or nil when this plugin has none.

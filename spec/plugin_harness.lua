@@ -17,6 +17,8 @@ M.state_dir = require("datastorage"):getSettingsDir() .. "/kopanda"
 M.state_file = M.state_dir .. "/state.lua"
 -- KoPanda's settings file (kopanda.koplugin/settings.lua), in the same directory.
 M.settings_file = M.state_dir .. "/settings.lua"
+-- KoPanda's weather cache (kopanda.koplugin/weather.lua), in the same directory.
+M.weather_file = M.state_dir .. "/weather.lua"
 
 -- Every .lua file under the plugin, as a path relative to the plugin root, sorted.
 function M.plugin_files()
@@ -61,8 +63,12 @@ M.dispatcher_execute = require("dispatcher").execute
 -- Dispatcher.execute unwrapped, as in a new process, and returns the plugin module (the class
 -- KOReader makes an instance of per file manager and reader). PluginLoader:_load reads main,
 -- meta, path and name (frontend/pluginloader.lua:231-271).
+-- The emulator's fake Wi-Fi is off, so NetworkMgr:isConnected() is false
+-- (frontend/device/sdl/device.lua:478-500) and no home shown by a spec fetches the weather; a
+-- spec that wants a connection stubs isConnected.
 function M.load()
     disable_plugins()
+    G_reader_settings:saveSetting("emulator_fake_wifi_connected", false)
     require("dispatcher").execute = M.dispatcher_execute
     for _, name in ipairs(M.module_names()) do
         package.unload(name) -- luacheck: ignore 143
@@ -72,6 +78,8 @@ function M.load()
     os.remove(M.state_file .. ".old")
     os.remove(M.settings_file)
     os.remove(M.settings_file .. ".old")
+    os.remove(M.weather_file)
+    os.remove(M.weather_file .. ".old")
     os.remove(M.state_dir)
     local PluginLoader = require("pluginloader")
     PluginLoader:_load{ {

@@ -1,0 +1,16 @@
+id: EV-0s0y78
+type: submit.task
+at: 2026-10-15T14:42:33.32671Z
+contributor: allen
+command: submit task T-xv2jpg
+targets:
+    - T-xv2jpg
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/home-layout/weather
+        head: git:03212bb
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/weather/task.yml

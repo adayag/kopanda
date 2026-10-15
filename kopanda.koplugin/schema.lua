@@ -46,6 +46,26 @@ return {
             group = "home",
         },
         {
+            -- Where the weather is for, as coordinates; the device menus and the studio geocode a
+            -- typed place into them.
+            id = "weather.location",
+            type = "location",
+            default = { name = "Chicago, Illinois", latitude = 41.85003, longitude = -87.65005 },
+            label = "Weather location",
+            group = "weather",
+        },
+        {
+            id = "weather.units",
+            type = "choice",
+            choices = {
+                { value = "fahrenheit", label = "Fahrenheit" },
+                { value = "celsius", label = "Celsius" },
+            },
+            default = "fahrenheit",
+            label = "Units",
+            group = "weather",
+        },
+        {
             -- Where the quote of the day comes from: builtin is quotes.lua.
             id = "quote.source",
             type = "choice",

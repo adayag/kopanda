@@ -1,0 +1,13 @@
+id: EV-17znjz
+type: check.task
+at: 2026-10-15T14:42:25.343839Z
+contributor: allen
+command: check task T-xv2jpg
+targets:
+    - T-xv2jpg
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/weather/task.yml

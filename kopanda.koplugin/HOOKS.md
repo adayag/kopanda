@@ -453,6 +453,37 @@ Upgrading KOReader walks this list.
   in `page_stat_data`, so `Home.take_pending` has the stats widget read its numbers again.
 - `datetime`: `frontend/datetime.lua:29-42` (`longMonthTranslation`, the month name).
 
+### The weather: `NetworkMgr`, `socketutil`, `socket.http`, `rapidjson` and its cache
+
+- `ui/network/manager`, required at call time so a spec can stub it:
+  - `frontend/ui/network/manager.lua:187` (`NetworkMgr:isConnected`; on the Kindle
+    `ifHasAnAddress`, `frontend/device/kindle/device.lua:523-524`, with no prompt and no network
+    I/O; in the emulator the `emulator_fake_wifi_connected` setting,
+    `frontend/device/sdl/device.lua:478-500`, which the unit harness and the capture driver turn
+    off). `isOnline` (`manager.lua:641-648`) resolves a hostname, so the plugin never calls it.
+  - `manager.lua:698-709` (`runWhenOnline`: the callback now when online; otherwise
+    `beforeWifiAction`, `:605-618`, which turns Wi-Fi on, waits, or prompts as the user's
+    `wifi_enable_action` says, and drops the callback when connected but not online). Only a tap
+    on the weather calls it.
+  - `NetworkConnected`: broadcast when Wi-Fi comes up (`manager.lua:109`) and at start when it is
+    already up (`:152-154`, from a `nextTick`). The home's handler returns nothing, so the
+    broadcast reaches every window (`frontend/ui/widget/container/widgetcontainer.lua:80-107`).
+- `socketutil`: `frontend/socketutil.lua:52-62` (`set_timeout(5, 10)`), `:64-70`
+  (`reset_timeout`, called on every path, a raising request included), `:91-93` (the timeout
+  codes), `:98-115` (`table_sink`, which stops a body past the total timeout); the pattern of
+  `frontend/ui/wikipedia.lua:146-215`.
+- `socket.http`: `base/build/arm64-apple-darwin23.5.0-debug/common/socket/http.lua:30-41`
+  (`https` through LuaSec), `:432-436` (`request` is `socket.protect`ed, so a failure returns
+  `nil` and the error), `:375`, `:406` (a table request returns `1, code, headers, status`; an
+  HTTP/0.9 reply has no headers). `request` is looked up at call time, not kept in a local.
+- `rapidjson`: `common/rapidjson.so`; `decode` returns `nil` and a message for text that is not
+  JSON (`base/thirdparty/lua-rapidjson/build/downloads/source/API.md:26-34`).
+- The cache, `settings/kopanda/weather.lua`: `luasettings` and `datastorage` as for the runtime
+  state file above, `frontend/luasettings.lua:247-250` (`reset`). Runtime state, not a setting:
+  no schema entry, and the studio never reads it. A failed fetch writes nothing.
+- The sun and moon go through `IconWidget` (the swatch entry above), which renders an SVG with
+  `RenderImage:renderSVGImageFile` (`frontend/ui/widget/imagewidget.lua:175`).
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
@@ -462,6 +493,9 @@ Upgrading KOReader walks this list.
 - `ui/widget/container/framecontainer`: `frontend/ui/widget/container/framecontainer.lua:27`
   (`width`, `height`, `background`), `:104` (`paintTo`).
 - `ui/widget/container/centercontainer`: `frontend/ui/widget/container/centercontainer.lua:7`.
+- `ui/widget/container/leftcontainer`: `frontend/ui/widget/container/leftcontainer.lua:8-10`
+  (`allow_mirroring`), `:12-26` (`paintTo` places its content at the left, centred vertically,
+  in `dimen`); the weather's line.
 - `ui/widget/verticalgroup`: `frontend/ui/widget/verticalgroup.lua:8`.
 - `ui/widget/verticalspan`: `frontend/ui/widget/verticalspan.lua:6`.
 - `ui/widget/widget`: `frontend/ui/widget/widget.lua:40` (`new`), `:70` (`paintTo` draws nothing),
@@ -473,6 +507,7 @@ Upgrading KOReader walks this list.
 - `ui/widget/horizontalspan`: `frontend/ui/widget/horizontalspan.lua:6` (`width`).
 - `ui/widget/iconwidget`: `frontend/ui/widget/iconwidget.lua:43` (`file`, `width`, `height`,
   `alpha`; the swatch entry above).
+- `util`: `frontend/util.lua:469` (`splitToChars`, a tracked line set a character at a time).
 - `ui/font`: `frontend/ui/font.lua:269-276` (`getFace` scales the size by
   `Screen:scaleBySize` itself).
 - `ui/geometry`: `frontend/ui/geometry.lua:37` (`Geom:new`), `:255-266` (`contains`).
@@ -559,6 +594,13 @@ Upgrading KOReader walks this list.
 - `reader.lua:195-203` (first-run notice when absent on a colour screen), `:206-223` (blocking
   ConfirmBox when true on a grey screen); `frontend/device/generic/device.lua:264-270`.
 - Written as the profile's `color`: true on colorsoft, false on paperwhite.
+
+### `emulator_fake_wifi_connected`
+
+- `frontend/device/sdl/device.lua:478-500` (the emulator's `NetworkMgr:isConnected` and
+  `isWifiOn` read it, true when unset). The driver writes it false into every profile and
+  `spec/plugin_harness.lua` sets it false on each load, so no capture or unit spec fetches the
+  weather; a spec that wants a connection stubs `isConnected`.
 
 ### `EMULATE_BW_SCREEN`
 

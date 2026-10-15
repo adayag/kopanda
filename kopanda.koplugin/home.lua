@@ -11,6 +11,7 @@ local Looks = require("looks")
 local Settings = require("settings")
 local SettingsMenu = require("settings_menu")
 local UIManager = require("ui/uimanager")
+local Weather = require("weather")
 local Widget = require("ui/widget/widget")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
@@ -236,8 +237,12 @@ local function close_home(home)
 end
 
 -- Rebuilds the rows and repaints the home, so the time, date and widgets are current. A failure
--- closes the home onto the file browser. Called by the weather fetch through ctx.home.
+-- closes the home onto the file browser. Called by the weather fetch through ctx.home, which may
+-- finish after this home has closed; a home that is not shown is left alone.
 function Home:refresh()
+    if Home.shown ~= self then
+        return
+    end
     local ok, err = pcall(function()
         local old = self[1]
         self:build()
@@ -262,6 +267,16 @@ end
 -- (frontend/ui/elements/common_settings_menu_table.lua:87).
 function Home:onTimeFormatChanged()
     self:refresh()
+end
+
+-- Broadcast when Wi-Fi connects, and at start when it is already up
+-- (frontend/ui/network/manager.lua:109, :152-154): the weather fetches if none has succeeded
+-- yet. Returns nothing, so the event reaches the other windows.
+function Home:onNetworkConnected()
+    local ok, err = pcall(Weather.on_connected, self)
+    if not ok then
+        logger.err("KoPanda: the weather failed on NetworkConnected:", err)
+    end
 end
 
 -- The slot at pos whose widget acts on a tap, or nil.
@@ -306,6 +321,17 @@ local function settle(home, opts)
         if not ok then
             logger.err("KoPanda: the settled signal failed:", err)
         end
+        -- The weather's once-per-process fetch, never before the first paint, and only while
+        -- this home is still the one shown.
+        UIManager:nextTick(function()
+            if Home.shown ~= home then
+                return
+            end
+            local weather_ok, weather_err = pcall(Weather.after_show, home)
+            if not weather_ok then
+                logger.err("KoPanda: the weather failed after the show:", weather_err)
+            end
+        end)
     end
     finish(opts)
 end

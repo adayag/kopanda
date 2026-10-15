@@ -222,11 +222,59 @@ describe("the home's rows", function()
         assert.equals(2, builds.stats)
     end)
 
+    it("neither rebuilds nor repaints on refresh once closed", function()
+        -- A tap's fetch runs once online, which may be after the home has closed.
+        local _, home = show_home()
+        Home.close()
+        assert.is_nil(Home.shown)
+        -- Recorded by hand: a luassert spy deep-copies its arguments, so identity is lost.
+        local set_dirty = UIManager.setDirty
+        local repainted = false
+        UIManager.setDirty = function(self, widget, ...)
+            repainted = repainted or widget == home
+            return set_dirty(self, widget, ...)
+        end
+        finally(function()
+            UIManager.setDirty = set_dirty
+        end)
+        local built = builds.stats
+        home:refresh()
+        assert.equals(built, builds.stats)
+        assert.is_false(repainted)
+    end)
+
     it("leaves no KoPanda task in the task queue after show, settle and resume", function()
         show_home()
         harness.tick(3)
         UIManager:broadcastEvent(Event:new("Resume"))
         harness.tick(3)
+        for _, task in ipairs(UIManager._task_queue) do
+            local source = debug.getinfo(task.action, "S").source
+            assert.is_falsy(source:find("kopanda.koplugin", 1, true), source)
+        end
+    end)
+
+    it("leaves no KoPanda task in the task queue after a weather fetch and its refresh", function()
+        -- Replaced by hand: this file's stub() makes widget modules.
+        local NetworkMgr = require("ui/network/manager")
+        local Weather = package.loaded["weather"]
+        local is_connected, fetch = NetworkMgr.isConnected, Weather.fetch
+        local fetches = 0
+        NetworkMgr.isConnected = function()
+            return true
+        end
+        Weather.fetch = function()
+            fetches = fetches + 1
+            return true
+        end
+        finally(function()
+            NetworkMgr.isConnected = is_connected
+            Weather.fetch = fetch
+        end)
+        show_home()
+        harness.tick(3)
+        assert.equals(1, fetches)
+        assert.equals(2, builds.date)
         for _, task in ipairs(UIManager._task_queue) do
             local source = debug.getinfo(task.action, "S").source
             assert.is_falsy(source:find("kopanda.koplugin", 1, true), source)
