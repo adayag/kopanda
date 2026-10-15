@@ -1,7 +1,7 @@
 id: T-pupoys
 key: home/sheets/book-sheet
 title: The book sheet, its read status sub-sheet and the featured-book picker
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:78d4d3c
         observed_at: 2026-10-15T20:24:28.081869Z
 branch: tiller/home/sheets/book-sheet
+review_ref:
+    branch: tiller/home/sheets/book-sheet
+    head:
+        kind: git_commit
+        value: git:75a32b4
+        observed_at: 2026-10-15T22:35:16.69896Z
 gates:
     build:
         required: true

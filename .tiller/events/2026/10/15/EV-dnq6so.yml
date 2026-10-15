@@ -1,0 +1,16 @@
+id: EV-dnq6so
+type: submit.task
+at: 2026-10-15T22:35:16.699147Z
+contributor: allen
+command: submit task T-pupoys
+targets:
+    - T-pupoys
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/sheets/book-sheet
+        head: git:75a32b4
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/book-sheet/task.yml
