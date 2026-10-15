@@ -143,6 +143,9 @@ Upgrading KOReader walks this list.
   framebuffer (`base/ffi/framebuffer_SDL3.lua:20-23`, `:85-86`), where an RGB32 paint keeps its hue.
 - `frontend/ui/widget/verticalgroup.lua:15-31` (`getSize` fixes the layout on first call), so
   the swatch measures each group once it is complete.
+- `TextBoxWidget.vertical_string_list`, the wrapped lines, one entry per line, filled at init
+  (`frontend/ui/widget/textboxwidget.lua:337`, `:420`): `swatch.lua` reads its length to keep the
+  "lacks" list in the spare cell only when it fits on one line.
 - Shown and closed like the home: `covers_fullscreen`, `UIManager:show`/`close` with `"full"`,
   a full-screen tap zone through `registerTouchZones`
   (`frontend/ui/widget/container/inputcontainer.lua:144`), `onGesture` (`:266`) and `paintTo`
@@ -525,7 +528,11 @@ Upgrading KOReader walks this list.
   otherwise the `BOOKINFO_COLS_SET` columns (`:77-103`), flags `'Y'` or nil, `unsupported` a
   reason string (`:38`), `cover_w` and `cover_h` read even without `get_cover` (`:373-378`), and
   with it a fresh decompressed `cover_bb` when `has_cover` is set (`:380-396`). The build reads
-  with `true`; the extraction test reads with `false` and its check with `true`.
+  with `true`; the extraction test reads with `false`; each check reads with `false` first, and
+  the last check with `true`.
+- A row with `ignore_cover` draws the placeholder even with a cached cover, its bitmap freed, as
+  CoverBrowser draws no cover for it (`plugins/coverbrowser.koplugin/mosaicmenu.lua:508`,
+  `listmenu.lua:272`).
 - `isCachedCoverInvalid(bookinfo, cover_specs)`, a plain function (`:1013-1030`): true for a row
   with no `cover_w` (`:1014-1015`), so the never-ask rows are tested before it, in
   `plugins/coverbrowser.koplugin/mosaicmenu.lua:471-488`'s order. An unusable `cover_bb` is freed,
@@ -538,6 +545,11 @@ Upgrading KOReader walks this list.
   jobs too. CoverBrowser polls it once a second (`plugins/coverbrowser.koplugin/covermenu.lua:164-175`);
   the featured cover does the same through `UIManager:scheduleIn` (`frontend/ui/uimanager.lua:413`)
   for at most 30 checks, and `FeaturedCover.cancel` drops it with `UIManager:unschedule` (`:518`).
+- It turns false only when CoverBrowser's collector reaps the extraction's pid, every
+  `subprocesses_collect_interval` = 10 s (`bookinfomanager.lua:139`; `collectSubprocesses`
+  `:627-650`, first scheduled by `extractInBackground` at `:735-742`), so a cover written at 2 s
+  would wait for it. Each check therefore reads the row first and stops once it holds a cover
+  that fits.
 - `ui/widget/imagewidget`: `frontend/ui/widget/imagewidget.lua:62` (`image_disposable` defaults
   to true, so the widget frees `cover_bb` in `free`, `:600-606`), `:86-89` and `:320-328`
   (`scale_factor = 0` fits the image in `width` by `height`, keeping its aspect).
@@ -546,6 +558,8 @@ Upgrading KOReader walks this list.
   `FrameContainer` rounds its background and border, not its content
   (`frontend/ui/widget/container/framecontainer.lua:124-139`). The placeholder title is a
   `TextBoxWidget` with `height_overflow_show_ellipsis` (`frontend/ui/widget/textboxwidget.lua:54`).
+  `spec/unit/featured_cover_spec.lua` reads its `vertical_string_list`, `lines_per_page` and
+  `line_with_ellipsis`, as `quote_spec.lua` does (the quote widget's entry above).
 
 ### Widget and support modules
 

@@ -273,6 +273,35 @@ describe("the featured cover", function()
             built:free()
         end)
 
+        it("draws the placeholder for an ignored cover and frees its bitmap", function()
+            local freed = 0
+            local cached = { free = function() freed = freed + 1 end }
+            stub(manager{ info = function()
+                local info = usable(cached)
+                info.ignore_cover = "Y"
+                return info
+            end })
+            local ctx = ctx_for("editorial")
+            local built = FeaturedCover.build({ file = BOOK, title = "Piranesi" }, 150, 225, ctx)
+            assert.equals(1, freed)
+            local bb = paint(built, 200, 260)
+            assert.same(rgb(ctx.look.palettes.day.cover), pixel(bb, 75, 112))
+            built:free()
+        end)
+
+        it("cuts a long placeholder title at four lines, the fourth ending in an ellipsis", function()
+            stub(false)
+            local title = string.rep("The Strange Case of the Unending Title ", 5)
+            for _, id in ipairs({ "editorial", "diner" }) do
+                local built = FeaturedCover.build({ file = BOOK, title = title }, 300, 450, ctx_for(id))
+                local box = built[#built]
+                assert.truthy(#box.vertical_string_list > 4, id .. " title fits in four lines")
+                assert.equals(4, box.lines_per_page, id)
+                assert.equals(4, box.line_with_ellipsis, id)
+                built:free()
+            end
+        end)
+
         it("draws the placeholder in cover and on_cover when bookinfomanager won't load, and asks nothing", function()
             local queue = stub(false)
             for _, id in ipairs({ "editorial", "diner" }) do
@@ -371,10 +400,18 @@ describe("the featured cover", function()
             assert.equals(0, #queue)
         end)
 
-        it("checks each second while extracting and refreshes once when the cover arrives", function()
+        it("checks each second while extracting and refreshes once when the cover arrives as it ends", function()
+            -- The cover is written as the extraction ends: the check's first read (get_cover
+            -- false) misses it and its last read (get_cover true) finds it.
             local arrived = false
+            local freed = 0
             local bim = manager{
-                info = function() return arrived and usable({ free = function() end }) or nil end,
+                info = function(_, get_cover)
+                    if arrived and get_cover then
+                        return usable({ free = function() freed = freed + 1 end })
+                    end
+                    return nil
+                end,
                 extracting = { true, true, true, false },
             }
             local queue = stub(bim)
@@ -389,8 +426,37 @@ describe("the featured cover", function()
             assert.equals(1, #queue)
             run_next(queue)
             assert.equals(1, home.refreshes)
+            assert.equals(1, freed)
             assert.equals(0, #queue)
             assert.equals(4, bim.extracting_calls)
+        end)
+
+        it("refreshes at the first check after the cover arrives, while extraction still runs", function()
+            local arrived = false
+            local bim = manager{
+                info = function(_, get_cover)
+                    if not arrived then
+                        return nil
+                    end
+                    local info = usable(nil)
+                    if get_cover then
+                        info.cover_bb = { free = function() end }
+                    end
+                    return info
+                end,
+                extracting = { true },
+            }
+            local queue = stub(bim)
+            local home = shown_home()
+            FeaturedCover.after_show(home, BOOK, SPECS)
+            run_next(queue)
+            run_next(queue)
+            assert.equals(0, home.refreshes)
+            arrived = true
+            run_next(queue)
+            assert.equals(1, home.refreshes)
+            assert.equals(0, #queue)
+            assert.equals(2, bim.extracting_calls)
         end)
 
         it("stops after 30 checks with no refresh when extraction never ends", function()
@@ -405,6 +471,32 @@ describe("the featured cover", function()
                 assert.truthy(checks <= 30, "more than 30 checks")
             end
             assert.equals(30, checks)
+            assert.equals(0, home.refreshes)
+        end)
+
+        it("frees a stale bitmap at the 30th check, with no refresh", function()
+            local freed = 0
+            local bim = manager{
+                info = function(_, get_cover)
+                    local info = { has_cover = "Y", cover_fetched = "Y", cover_w = 50, cover_h = 75,
+                        cover_sizetag = "300x450" }
+                    if get_cover then
+                        info.cover_bb = { free = function() freed = freed + 1 end }
+                    end
+                    return info
+                end,
+                extracting = { true },
+            }
+            local queue = stub(bim)
+            local home = shown_home()
+            FeaturedCover.after_show(home, BOOK, SPECS)
+            local checks = 0
+            while #queue > 0 do
+                run_next(queue)
+                checks = checks + 1
+            end
+            assert.equals(30, checks)
+            assert.equals(1, freed)
             assert.equals(0, home.refreshes)
         end)
 

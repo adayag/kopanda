@@ -50,11 +50,17 @@ local function book_info(bim, file, get_cover)
     return info
 end
 
--- Whether info's cached cover can be drawn in a box of specs: there is one, and it is not too
--- small for the box (bookinfomanager.lua:1013-1030).
-local function is_usable(bim, info, specs)
-    return info ~= nil and info.has_cover and info.cover_bb ~= nil
+-- Whether info's cover, cached or about to be read, suits a box of specs: there is one, the
+-- book's cover is not ignored (CoverBrowser draws none for such rows, mosaicmenu.lua:508,
+-- listmenu.lua:272), and it is not too small for the box (bookinfomanager.lua:1013-1030).
+local function has_fitting_cover(bim, info, specs)
+    return info ~= nil and info.has_cover and not info.ignore_cover
         and not bim.isCachedCoverInvalid(info, specs)
+end
+
+-- Whether info's cached cover bitmap can be drawn in a box of specs.
+local function is_usable(bim, info, specs)
+    return has_fitting_cover(bim, info, specs) and info.cover_bb ~= nil
 end
 
 -- The cached cover of file for a w by h box, or nil. An unusable bitmap is freed, as
@@ -308,8 +314,8 @@ end
 -- After the home's first paint: asks CoverBrowser once per file per process to extract file's
 -- cover for a box of specs when wants_extraction says so, then checks each second while the
 -- extraction runs, at most 30 times. CoverBrowser has no completion event, and polls the same
--- way itself (covermenu.lua:164-175). When the check stops and the cover is there, it refreshes
--- home once.
+-- way itself (covermenu.lua:164-175). A check that finds the cover's row refreshes home once and
+-- stops; so does the last check, when the cover is there.
 function FeaturedCover.after_show(home, file, specs)
     local bim = manager()
     if not bim or not file or asked[file] then
@@ -341,6 +347,13 @@ function FeaturedCover.after_show(home, file, specs)
             runs = runs + 1
             local Home = require("home")
             if Home.shown ~= home then
+                return
+            end
+            -- The cover's row, read without its bitmap: once it is there, stop early, rather than
+            -- wait for the extraction to end, which is noticed only when CoverBrowser reaps the
+            -- process every 10 s (bookinfomanager.lua:139, :627-650).
+            if has_fitting_cover(bim, book_info(bim, file, false), specs) then
+                home:refresh()
                 return
             end
             if runs < MAX_CHECKS and bim:isExtractingInBackground() then
