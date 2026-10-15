@@ -179,6 +179,41 @@ describe("Settings", function()
             assert.same({ 3 }, order)
         end)
 
+        describe("on open of an older file", function()
+            local Schema = require("schema")
+            local Migrations = require("migrations")
+
+            after_each(function()
+                Schema.version = 1
+                Migrations[2] = nil
+            end)
+
+            it("migrates it, stamps the version and writes it at once", function()
+                Schema.version = 2
+                Migrations[2] = function(data)
+                    data.look = "editorial"
+                    return data
+                end
+                store('return { look = "diner" }')
+                Settings._reset()
+                assert.equals("editorial", Settings.get("look"))
+                assert.same({ look = "editorial", schema_version = 2 }, dofile(file))
+            end)
+
+            it("leaves the file untouched and refuses writes when a step raises", function()
+                Schema.version = 2
+                Migrations[2] = function()
+                    error("step failed")
+                end
+                local text = 'return { look = "diner" }'
+                store(text)
+                Settings._reset()
+                assert.equals("diner", Settings.get("look"))
+                assert.is_false((Settings.set("look", "editorial")))
+                assert.equals(text, read(file))
+            end)
+        end)
+
         it("reads a newer file with per-key fallback and refuses every write to it", function()
             local text = 'return { schema_version = 99, look = "editorial" }'
             store(text)
