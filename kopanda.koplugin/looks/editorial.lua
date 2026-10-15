@@ -225,6 +225,30 @@ return {
         featured_button = {
             face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "ink",
         },
+        -- A launcher entry's label (Main.dc.html:61, weight 500, the strong face).
+        launcher_label = {
+            face = "strong", size = 16, uppercase = false, tracking = 0, line_height = 0, color = "ink",
+        },
+        -- Its suffix, "off" or "plugin missing" (EmptyStates.dc.html:65).
+        launcher_suffix = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "muted",
+        },
+    },
+
+    -- The launcher: a grid of text rows, each under a hairline in tile.rule_color.
+    launcher = {
+        columns = 2, -- Main.dc.html:60
+        column_gap = 32, -- Main.dc.html:60
+        row_gap = 0, -- Main.dc.html:60
+        icon_size = 22, -- Main.dc.html:62
+        icon_gap = 14, -- Main.dc.html:61
+        padding = { x = 0, y = 15 }, -- Main.dc.html:61
+        tile_height = false, -- Editorial's entries are rows, not tiles
+        accent_1_color = false, -- Editorial's rows have no fill
+        accent_2_color = false,
+        accent_3_color = false,
+        suffix_gap = 6, -- the suffix's margin-left (EmptyStates.dc.html:65)
+        suffix_below = false, -- the suffix sits on the label's line (EmptyStates.dc.html:65)
     },
 
     -- The featured book's cover box.
