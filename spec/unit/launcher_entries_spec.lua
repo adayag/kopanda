@@ -340,9 +340,9 @@ describe("LauncherEntries", function()
     end)
 
     describe("notes", function()
-        -- Runs entry and returns the notes it showed, checking that it scheduled nothing and
-        -- dispatched nothing.
-        local function run_for_notes(entry)
+        -- Runs entry under ctx (default: an empty one) and returns the notes it showed, checking
+        -- that it scheduled nothing and dispatched nothing.
+        local function run_for_notes(entry, ctx)
             local shown = notes()
             local schedule = spy.on(UIManager, "scheduleIn")
             local execute = spy.on(Dispatcher, "execute")
@@ -350,7 +350,7 @@ describe("LauncherEntries", function()
                 schedule:revert()
                 execute:revert()
             end)
-            LauncherEntries.run(entry, {})
+            LauncherEntries.run(entry, ctx or {})
             assert.spy(schedule).was_not.called()
             assert.spy(execute).was_not.called()
             schedule:revert()
@@ -366,12 +366,19 @@ describe("LauncherEntries", function()
                 run_for_notes({ kind = "kopanda", target = "authors" }))
         end)
 
-        it("name a folder and count its entries", function()
+        it("give a folder none: it shows its sheet, headed with its label and count", function()
             fm_with_home()
-            assert.same({ { text = "Tools holds 3 entries; folders open in a later update." } },
-                run_for_notes(folder_entry(3)))
-            assert.same({ { text = "Tools holds 1 entry; folders open in a later update." } },
-                run_for_notes(folder_entry(1)))
+            local Sheet = require("sheet")
+            for _, case in ipairs({ { 3, "Folder · 3" }, { 1, "Folder · 1" } }) do
+                local shown = run_for_notes(folder_entry(case[1]), Home.shown.ctx)
+                assert.equals(1, #shown)
+                assert.is_nil(shown[1].text)
+                local sheet = shown[1].widget
+                assert.equals(Sheet.shown, sheet)
+                assert.equals("folder", sheet.spec.name)
+                assert.equals("Tools", sheet.spec.header.heading)
+                assert.equals(case[2], sheet.spec.header.aside)
+            end
         end)
 
         it("give each unavailable cause its note and dispatch nothing", function()

@@ -723,7 +723,10 @@ Upgrading KOReader walks this list.
   (`:367-369`), which updates the file manager's title bar (`filemanager.lua:108-114`).
 - `FileManager:onHome()` (`filemanager.lua:865-870`), as the featured widget's entry above: the
   Library entry closes the home, then calls it.
-- `ffi/util`: `template` (`base/ffi/util.lua:785`), the folder and unavailable notes.
+- `ffi/util`: `template` (`base/ffi/util.lua:785`), the unavailable notes.
+- A folder entry's tap opens the folder sheet (`folder_sheet.lua`) through `sheet.lua`, with
+  the `ui/time` `monotonic` it took on the tap as the sheet's start; `folder_sheet` is required
+  at call time, since it requires `launcher_entries`. Its rows run their entries through `run`.
 - `ui/widget/infomessage`: `timeout` defaults to nil (`frontend/ui/widget/infomessage.lua:53`)
   and only a set one schedules a close (`:283-290`); `dismissable` defaults to true (`:67`), a
   full-screen `TapClose` (`:88-100`). The launcher's notes set neither, so no timer runs and a
