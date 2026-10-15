@@ -1,7 +1,7 @@
 id: T-puj6su
 key: home/looks-and-schema/icons
 title: Icon registry with the canvas's default stroke icons
-status: in_review
+status: in_progress
 blocked: false
 started: true
 owner: allen
@@ -29,7 +29,7 @@ gates:
     build:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-15T04:02:31.235457Z
         against:
@@ -42,7 +42,7 @@ gates:
     tests:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-15T04:02:31.235457Z
         against:
