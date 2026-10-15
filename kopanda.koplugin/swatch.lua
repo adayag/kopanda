@@ -1,8 +1,9 @@
 -- The swatch screen: a test pattern of every look's palettes and faces and of the icon registry,
 -- full screen over the file manager or the reader, for settling the token values on a real
 -- panel. Six panels, the looks across and the day, night and grey palettes down, each filled
--- with its paper and holding a chip per colour role and a line per face; the icons below. A tap
--- closes it. It is not part of the shell, so it opens while another shell plugin is enabled.
+-- with its paper and holding a chip per colour role (a role the look lacks named with a dash)
+-- and a line per face; the icons below. A tap closes it. It is not part of the shell, so it
+-- opens while another shell plugin is enabled.
 local Blitbuffer = require("ffi/blitbuffer")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Font = require("ui/font")
@@ -125,10 +126,17 @@ local function ink_text(text, face, width, ink, paper, name)
     }
 end
 
--- One chip: a square of the role's colour outlined in ink, then "role #hex".
+-- One chip: a square of the role's colour outlined in ink, then "role #hex". A role the look
+-- lacks (false) has no square, only "role —" beside the labels.
 local function chip(role, hex, width, ink, paper, face)
     local size = scaled(CHIP)
     local gap = scaled(GAP)
+    if not hex then
+        return HorizontalGroup:new{
+            HorizontalSpan:new{ width = size + gap },
+            ink_text(role .. " —", face, width - size - gap, ink, paper),
+        }
+    end
     return HorizontalGroup:new{
         ColorBox:new{
             name = "kopanda_swatch_chip",
@@ -159,12 +167,7 @@ local function panel(id, variant, w, h)
     content[#content + 1] = VerticalSpan:new{ width = gap }
 
     -- The chips in two columns, in role order down the first and then the second.
-    local roles = {}
-    for _, role in ipairs(sorted_keys(palette)) do
-        if palette[role] then
-            roles[#roles + 1] = role
-        end
-    end
+    local roles = sorted_keys(palette)
     local column_w = math.floor((content_w - gap) / 2)
     local rows = math.ceil(#roles / 2)
     local columns = HorizontalGroup:new{ align = "top" }

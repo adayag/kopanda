@@ -283,39 +283,50 @@ describe("the swatch screen", function()
             assert.same(expected, order)
         end)
 
-        it("fills each panel with its paper and labels a chip per colour role with role and hex in ink", function()
+        -- A role the look lacks (false) is a plain "role —" line with no chip, in its place.
+        it("lists every colour role in order: a chip with role and hex in ink, or role — if absent", function()
             for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
                 local palette = Looks.get(panel.look).palettes[panel.variant]
                 local ink = Looks.color(palette.ink)
                 assert.is_true(same_color(Looks.color(palette.paper), panel.color))
                 local chips = collect(panel, named("kopanda_swatch_chip"))
                 local labels = collect(panel, has_text)
-                local roles = {}
+                local roles, expected_lines, lines = {}, {}, {}
                 for _, role in ipairs(sorted_keys(palette)) do
                     local hex = palette[role]
+                    local text = hex and (role .. " " .. hex) or (role .. " —")
+                    expected_lines[#expected_lines + 1] = text
+                    local chip
+                    for _, c in ipairs(chips) do
+                        if c.role == role then
+                            chip = c
+                        end
+                    end
                     if hex then
                         roles[#roles + 1] = role
-                        local chip
-                        for _, c in ipairs(chips) do
-                            if c.role == role then
-                                chip = c
-                            end
-                        end
                         assert.is_table(chip, panel.look .. " " .. panel.variant .. " " .. role)
                         assert.is_true(same_color(Looks.color(hex), chip.color))
                         assert.is_true(same_color(ink, chip.border_color))
-                        local label
-                        for _, w in ipairs(labels) do
-                            if w.text == role .. " " .. hex then
-                                label = w
-                            end
-                        end
-                        assert.is_table(label, panel.look .. " " .. panel.variant .. " " .. role)
-                        assert.is_true(same_color(ink, label.fgcolor))
-                        assert.is_true(same_color(Looks.color(palette.paper), label.bgcolor))
+                    else
+                        assert.is_nil(chip, panel.look .. " " .. panel.variant .. " " .. role)
                     end
+                    local label
+                    for _, w in ipairs(labels) do
+                        if w.text == text then
+                            label = w
+                        end
+                    end
+                    assert.is_table(label, panel.look .. " " .. panel.variant .. " " .. text)
+                    assert.is_true(same_color(ink, label.fgcolor))
+                    assert.is_true(same_color(Looks.color(palette.paper), label.bgcolor))
                 end
                 assert.equals(#roles, #chips)
+                for _, w in ipairs(labels) do
+                    if palette[w.text:match("^(%S+) ")] ~= nil then
+                        lines[#lines + 1] = w.text
+                    end
+                end
+                assert.same(expected_lines, lines)
             end
         end)
 
