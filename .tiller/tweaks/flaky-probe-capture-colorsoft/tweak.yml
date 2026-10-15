@@ -1,0 +1,7 @@
+id: TW-cbgsdn
+key: tweaks/flaky-probe-capture-colorsoft
+title: The probe capture on colorsoft fails intermittently in a full bin/check
+status: proposed
+blocked: false
+started: false
+proposed_by: allen

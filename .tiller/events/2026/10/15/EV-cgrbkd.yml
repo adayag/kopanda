@@ -1,0 +1,13 @@
+id: EV-cgrbkd
+type: add.tweak
+at: 2026-10-15T18:37:07.328514Z
+contributor: allen
+command: add tweak flaky-probe-capture-colorsoft
+targets:
+    - TW-cbgsdn
+after:
+    key: tweaks/flaky-probe-capture-colorsoft
+    status: proposed
+files:
+    - path: .tiller/tweaks/flaky-probe-capture-colorsoft/tweak.md
+    - path: .tiller/tweaks/flaky-probe-capture-colorsoft/tweak.yml

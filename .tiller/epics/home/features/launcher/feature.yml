@@ -120,9 +120,9 @@ gates:
                     - kind: command_output
                       ref: artifacts/tiller/gates/eval-C13-fc841f6-out-bc8672466d0dc51c52fa77ffaf8bef8f39007c5e9ca21d15f0da92ee2ff919de.txt
             C14:
-                status: needs_attestation
+                status: pass
             C15:
-                status: needs_attestation
+                status: pass
     tests:
         required: true
         kind: command
@@ -136,3 +136,18 @@ gates:
         evidence:
             - kind: command_output
               ref: artifacts/tiller/gates/tests-fc841f6-out-1df7ce2533f7af9475f3e3de52be74555c55591e7d34dcc6f2a745c0f01ffb82.txt
+attestations:
+    - id: AT-kvyjau
+      target:
+        kind: criterion
+        id: C14
+      status: pass
+      by: allen
+      at: 2026-10-15T19:15:23.838104Z
+    - id: AT-p9acj6
+      target:
+        kind: criterion
+        id: C15
+      status: pass
+      by: allen
+      at: 2026-10-15T19:15:55.534171Z
