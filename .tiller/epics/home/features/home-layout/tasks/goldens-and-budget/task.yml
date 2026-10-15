@@ -1,9 +1,10 @@
 id: T-ltupc3
 key: home/home-layout/goldens-and-budget
 title: Home goldens in both looks and the paint budget
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-b8dgbr
@@ -20,3 +21,4 @@ accepted_against:
         kind: git_commit
         value: git:b9f66a1
         observed_at: 2026-10-15T12:44:30.851875Z
+branch: tiller/home/home-layout/goldens-and-budget

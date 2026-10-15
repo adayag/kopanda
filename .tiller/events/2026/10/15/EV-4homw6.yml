@@ -1,0 +1,15 @@
+id: EV-4homw6
+type: start.task
+at: 2026-10-15T14:45:10.855561Z
+contributor: allen
+command: start task T-ltupc3
+targets:
+    - T-ltupc3
+before:
+    status: ready
+after:
+    branch: tiller/home/home-layout/goldens-and-budget
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/goldens-and-budget/task.yml
