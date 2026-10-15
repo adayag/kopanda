@@ -1,0 +1,13 @@
+id: EV-27oi1d
+type: approve.feature
+at: 2026-10-15T19:24:02.115266Z
+contributor: allen
+command: approve feature F-4jh8sz
+targets:
+    - F-4jh8sz
+before:
+    status: specced
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/night-mode/feature.yml

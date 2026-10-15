@@ -1,0 +1,13 @@
+id: EV-vmbesu
+type: approve.task
+at: 2026-10-15T19:24:02.158434Z
+contributor: allen
+command: approve task T-x4x0f3
+targets:
+    - T-x4x0f3
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/night-mode/tasks/goldens/task.yml

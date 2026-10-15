@@ -1,0 +1,13 @@
+id: EV-ufxsi3
+type: configure.feature
+at: 2026-10-15T19:24:01.996935Z
+contributor: allen
+command: configure feature home/night-mode --review-grain feature
+targets:
+    - F-4jh8sz
+before:
+    review_grain: ""
+after:
+    review_grain: feature
+files:
+    - path: .tiller/epics/home/features/night-mode/feature.yml

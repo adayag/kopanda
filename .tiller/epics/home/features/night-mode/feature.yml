@@ -1,7 +1,7 @@
 id: F-4jh8sz
 key: home/night-mode
 title: Night palettes under KOReader's inversion
-status: specced
+status: ready
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -11,3 +11,19 @@ depends_on:
 order:
     - T-xem8p9
     - T-x4x0f3
+review_grain: feature
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:c9d374fad1aa9b2911f7e0850bc1c307c0c751ec
+        path: .tiller/epics/home/features/night-mode/feature.md
+        observed_at: 2026-10-15T19:24:02.079034Z
+    eval:
+        kind: git_blob
+        value: git:f8e44f2a62e0f1a084d9b592767be8a6548c275a
+        path: .tiller/epics/home/features/night-mode/feature.eval.md
+        observed_at: 2026-10-15T19:24:02.079034Z
+    commit:
+        kind: git_commit
+        value: git:7d5457c
+        observed_at: 2026-10-15T19:24:02.114814Z
