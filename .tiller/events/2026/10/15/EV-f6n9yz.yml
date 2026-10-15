@@ -1,0 +1,16 @@
+id: EV-f6n9yz
+type: submit.task
+at: 2026-10-15T15:44:28.004727Z
+contributor: allen
+command: submit task T-gj4d8q
+targets:
+    - T-gj4d8q
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/featured-book/book-data
+        head: git:67f3672
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/book-data/task.yml

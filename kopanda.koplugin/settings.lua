@@ -106,6 +106,12 @@ Settings.validators = {
             and type(latitude) == "number" and latitude >= -90 and latitude <= 90
             and type(longitude) == "number" and longitude >= -180 and longitude <= 180
     end,
+    -- false, or an absolute path: a string starting with / and longer than /. The disk is not
+    -- checked, so a path to a file that has gone stays a valid value.
+    path = function(_, value)
+        return value == false
+            or (type(value) == "string" and value:sub(1, 1) == "/" and #value > 1)
+    end,
 }
 
 -- Whether a and b hold the same values: equal, or tables with the same keys whose values are

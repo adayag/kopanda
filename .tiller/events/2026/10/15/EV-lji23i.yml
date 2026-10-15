@@ -1,0 +1,13 @@
+id: EV-lji23i
+type: claim.task
+at: 2026-10-15T15:19:16.373103Z
+contributor: allen
+command: claim task T-gj4d8q
+targets:
+    - T-gj4d8q
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/book-data/task.yml
