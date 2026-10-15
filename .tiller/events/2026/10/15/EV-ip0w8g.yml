@@ -1,0 +1,13 @@
+id: EV-ip0w8g
+type: claim.task
+at: 2026-10-15T03:10:32.951632Z
+contributor: allen
+command: claim task T-puj6su
+targets:
+    - T-puj6su
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/icons/task.yml
