@@ -1,7 +1,7 @@
 id: T-b26ryy
 key: home/sheets/sheet
 title: The sheet component and its tokens in both looks
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:78d4d3c
         observed_at: 2026-10-15T20:24:28.013319Z
 branch: tiller/home/sheets/sheet
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T21:21:54.803427Z
+        against:
+            kind: git_commit
+            value: git:ed799c9
+            observed_at: 2026-10-15T21:21:54.803421Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-ed799c9-out-c2be2e2ebc6b22c13f32832cd8904bfe8a703fd4e38d866b020e22eafaaa75a2.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T21:21:54.803427Z
+        against:
+            kind: git_commit
+            value: git:ed799c9
+            observed_at: 2026-10-15T21:21:54.803421Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-ed799c9-out-499c7aa3acebfeba6bfaedaf8e7a293f5388ed75399be2ffa46ddbea09b68840.txt
