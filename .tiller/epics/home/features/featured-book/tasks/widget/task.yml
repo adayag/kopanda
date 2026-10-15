@@ -1,7 +1,7 @@
 id: T-hftuq7
 key: home/featured-book/widget
 title: Featured widget in both looks, first-run state and tap
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -20,3 +20,30 @@ accepted_against:
         value: git:33474c1
         observed_at: 2026-10-15T15:18:53.100763Z
 branch: tiller/home/featured-book/widget
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T17:21:11.461615Z
+        against:
+            kind: git_commit
+            value: git:74c594a
+            observed_at: 2026-10-15T17:21:11.461604Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-74c594a-out-d004f25c4f39d90c86a127363bffb1b103fc6fe34cc93b87772e8e4648e61f0c.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T17:21:11.461615Z
+        against:
+            kind: git_commit
+            value: git:74c594a
+            observed_at: 2026-10-15T17:21:11.461604Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-74c594a-out-a518c122e74602ed9a70dea3df08717fa7f17920c0fc021c9715a53127c1764f.txt
