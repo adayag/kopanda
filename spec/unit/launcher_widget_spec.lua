@@ -552,11 +552,39 @@ describe("the launcher widget", function()
                 local ges = harness.gesture("tap", 37 + rect.x + 1, 61 + rect.y + rect.h - 1)
                 assert.is_true(Launcher.tap(ctx, ges, built), "entry " .. i)
                 assert.same(entries[i], ran[#ran].entry, "entry " .. i)
+                ges = harness.gesture("tap", 37 + rect.x + rect.w - 1, 61 + rect.y + rect.h - 1)
+                assert.is_true(Launcher.tap(ctx, ges, built), "far corner of entry " .. i)
+                assert.same(entries[i], ran[#ran].entry, "far corner of entry " .. i)
             end
-            assert.equals(6, #ran)
+            assert.equals(12, #ran)
             -- The grid's own coordinates, unpainted there, are above and left of it.
             assert.is_false(Launcher.tap(ctx, harness.gesture("tap", 5, 5), built))
-            assert.equals(6, #ran)
+            assert.equals(12, #ran)
+            -- Just past each tile's right and bottom edges (Geom:contains counts the edge itself)
+            -- lies the gap or the Diner shadow band: a point there outside every entry runs nothing.
+            local function in_any(x, y)
+                for _, rect in ipairs(built.rects) do
+                    if x >= rect.x and x <= rect.x + rect.w and y >= rect.y and y <= rect.y + rect.h then
+                        return true
+                    end
+                end
+                return false
+            end
+            local gaps = 0
+            for _, rect in ipairs(built.rects) do
+                for _, p in ipairs({
+                    { rect.x + rect.w + 1, rect.y + 1 },
+                    { rect.x + 1, rect.y + rect.h + 1 },
+                }) do
+                    if not in_any(p[1], p[2]) then
+                        gaps = gaps + 1
+                        local ges = harness.gesture("tap", 37 + p[1], 61 + p[2])
+                        assert.is_false(Launcher.tap(ctx, ges, built), "gap at " .. p[1] .. "," .. p[2])
+                    end
+                end
+            end
+            assert.is_true(gaps >= 6)
+            assert.equals(12, #ran)
             bb:free()
             built:free()
         end)
