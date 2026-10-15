@@ -22,3 +22,30 @@ accepted_against:
         value: git:b9f66a1
         observed_at: 2026-10-15T12:44:30.851875Z
 branch: tiller/home/home-layout/goldens-and-budget
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T15:02:26.77832Z
+        against:
+            kind: git_commit
+            value: git:fda430c
+            observed_at: 2026-10-15T15:02:26.778316Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-fda430c-out-c4b5be247b7341d026fb6e92b2e70a129cbf4424b8f60a7dff5dc39a9f5b54f5.txt
+    tests:
+        required: true
+        kind: command
+        status: fail
+        run_by: allen
+        run_at: 2026-10-15T15:02:26.77832Z
+        against:
+            kind: git_commit
+            value: git:fda430c
+            observed_at: 2026-10-15T15:02:26.778316Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-fda430c-out-5642549491a284b701722ec47a42862743250dbde53702ff478961fc9251f605.txt
