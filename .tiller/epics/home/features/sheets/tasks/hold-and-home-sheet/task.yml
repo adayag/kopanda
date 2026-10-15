@@ -1,7 +1,7 @@
 id: T-odbt4w
 key: home/sheets/hold-and-home-sheet
 title: Hold routing on the home and the home sheet
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:78d4d3c
         observed_at: 2026-10-15T20:24:28.036452Z
 branch: tiller/home/sheets/hold-and-home-sheet
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T21:46:53.414901Z
+        against:
+            kind: git_commit
+            value: git:9339919
+            observed_at: 2026-10-15T21:46:53.414899Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-9339919-out-20fbaccf1928c440f146c81a5c865da4303962c6a5568bdb334b54a1a267d69e.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T21:46:53.414901Z
+        against:
+            kind: git_commit
+            value: git:9339919
+            observed_at: 2026-10-15T21:46:53.414899Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-9339919-out-67ddd643d9f25223c73387c777a989408344ecbc1c245fe8552e6101ab825fd1.txt
