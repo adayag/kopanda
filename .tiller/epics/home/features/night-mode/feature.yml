@@ -47,7 +47,7 @@ gates:
         kind: command
         status: pending
         run_by: allen
-        run_at: 2026-10-15T20:07:42.683275Z
+        run_at: 2026-10-15T20:11:08.757022Z
         against:
             kind: git_commit
             value: git:533e976
@@ -114,7 +114,7 @@ gates:
                     - kind: command_output
                       ref: artifacts/tiller/gates/eval-C12-533e976-out-93d520aa0d897278a5568640583b5363c2e807b701e66a85b41fab47d2641484.txt
             C13:
-                status: needs_attestation
+                status: pass
             C14:
                 status: needs_attestation
     tests:
@@ -130,3 +130,11 @@ gates:
         evidence:
             - kind: command_output
               ref: artifacts/tiller/gates/tests-533e976-out-c98b220a93a1f6e8ddb5cb69736cfbe63408898102f162fc767b4e0d655d1b32.txt
+attestations:
+    - id: AT-cwczvl
+      target:
+        kind: criterion
+        id: C13
+      status: pass
+      by: allen
+      at: 2026-10-15T20:11:08.757022Z
