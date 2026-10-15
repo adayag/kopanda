@@ -1,0 +1,13 @@
+id: EV-kbxy4y
+type: check.task
+at: 2026-10-15T12:43:13.170529Z
+contributor: allen
+command: check task T-6nbln8
+targets:
+    - T-6nbln8
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/panel-check/task.yml

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Prints kopanda.koplugin/schema.lua as JSON on stdout, object keys sorted, so two runs are
+# byte-identical. The studio runs it at build time.
+#
+# Exit 0 on success, 1 when the schema fails to load or encode, 2 when the script refuses to run.
+set -euo pipefail
+
+KOPANDA_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
+emulator_default="$HOME/Projects/kodev/koreader/koreader-emulator-arm64-apple-darwin23.5.0-debug"
+KOPANDA_EMULATOR="${KOPANDA_EMULATOR:-$emulator_default/koreader}"
+
+if [[ ! -x "$KOPANDA_EMULATOR/luajit" ]]; then
+    printf '%s\n' "bin/schema-json: no luajit at $KOPANDA_EMULATOR/luajit" \
+        "    set KOPANDA_EMULATOR to the emulator's koreader directory" >&2
+    exit 2
+fi
+
+# luajit would run an argument after -e as a script, so the path goes through the environment.
+SCHEMA="$KOPANDA_ROOT/kopanda.koplugin/schema.lua" \
+LUA_CPATH="$KOPANDA_EMULATOR/common/?.so" \
+"$KOPANDA_EMULATOR/luajit" -e '
+    local rapidjson = require("rapidjson")
+    io.write(rapidjson.encode(dofile(os.getenv("SCHEMA")), { sort_keys = true, pretty = true }), "\n")
+'

@@ -1,0 +1,13 @@
+id: EV-1ur1jp
+type: claim.task
+at: 2026-10-15T02:57:51.870365Z
+contributor: allen
+command: claim task T-3qwuor
+targets:
+    - T-3qwuor
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/fonts/task.yml

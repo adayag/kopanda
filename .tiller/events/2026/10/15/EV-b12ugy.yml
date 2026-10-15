@@ -1,0 +1,13 @@
+id: EV-b12ugy
+type: check.task
+at: 2026-10-15T03:09:34.865082Z
+contributor: allen
+command: check task T-3qwuor
+targets:
+    - T-3qwuor
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/fonts/task.yml

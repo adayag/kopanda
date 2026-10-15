@@ -1,0 +1,15 @@
+id: EV-uimlwu
+type: start.task
+at: 2026-10-15T04:41:34.368048Z
+contributor: allen
+command: start task T-6nbln8
+targets:
+    - T-6nbln8
+before:
+    status: ready
+after:
+    branch: tiller/home/looks-and-schema/panel-check
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/panel-check/task.yml

@@ -122,6 +122,32 @@ Upgrading KOReader walks this list.
   behind tasks already due on the tick after the paint, such as coverbrowser's background
   extraction (`plugins/coverbrowser.koplugin/covermenu.lua:119`, a fork).
 
+### The swatch screen
+
+- `G_reader_settings` key `night_mode`: `frontend/device/devicelistener.lua:14-27` (KOReader's
+  night-mode toggle writes it); read with `isTrue` to show the inversion note.
+- `base/ffi/blitbuffer.lua:1704-1724` (`paintRect` greys any colour through `getColor8`),
+  `:1827` (`paintRectRGB32`), `:2118-2126` (`paintBorderRGB32`): the panel fills and chips paint
+  through the RGB32 variants.
+- `frontend/ui/widget/textboxwidget.lua:854-906` (an RGB `fgcolor` or `bgcolor` gets an RGB32
+  buffer on a colour screen, the glyphs blitted with `colorblitFromRGB32`), `:50` (`bgcolor`
+  white by default), `:861-864` (the buffer filled with it): text in a palette's ink goes
+  through `TextBoxWidget` with the panel's paper as `bgcolor`.
+  `frontend/ui/widget/textwidget.lua:345-375` (`colorblitFrom`, which greys) is why not `TextWidget`.
+- `frontend/ui/widget/iconwidget.lua:58-62` (given `file`, an `IconWidget` is a plain
+  `ImageWidget`); `frontend/ui/widget/imagewidget.lua:202-226` (without `alpha` an icon is
+  flattened onto white), `:518-557` (`paintTo` alpha-blends with `alpha`).
+- `Screen:isColorEnabled` (`frontend/device/generic/device.lua:265-271`): when false every token
+  is drawn as its `getColor8` luminance grey (`base/ffi/blitbuffer.lua:464-467`), as a grey
+  panel's 8-bit framebuffer would show it; the emulator's grey profile keeps an RGB32
+  framebuffer (`base/ffi/framebuffer_SDL3.lua:20-23`, `:85-86`), where an RGB32 paint keeps its hue.
+- `frontend/ui/widget/verticalgroup.lua:15-31` (`getSize` fixes the layout on first call), so
+  the swatch measures each group once it is complete.
+- Shown and closed like the home: `covers_fullscreen`, `UIManager:show`/`close` with `"full"`,
+  a full-screen tap zone through `registerTouchZones`
+  (`frontend/ui/widget/container/inputcontainer.lua:144`), `onGesture` (`:266`) and `paintTo`
+  (`:73`) each in a `pcall`, and the settled signal with `screen = "swatch"` and `paint_ms`.
+
 ### `G_defaults` keys `DTAP_ZONE_MENU`, `DTAP_ZONE_MENU_EXT` and the `DSWIPE_ZONE_*` edges
 
 - `defaults.lua:59-60` (`DTAP_ZONE_MENU`, `DTAP_ZONE_MENU_EXT`), `:72-75`
@@ -173,6 +199,24 @@ Upgrading KOReader walks this list.
   format `writeToFile` writes with `lua_dofile_ready`, `frontend/util.lua:1125-1128`) to catch a
   read-only file or folder or a full disk. The boot guard's `boot_pending` lives here, not in the
   schema.
+
+### The settings file, `settings/kopanda/settings.lua`
+
+- `datastorage` and `libs/libkoreader-lfs` as for the runtime state file above; `settings.lua`
+  makes and checks the directory, writes, and reads the file back the same way.
+- `luasettings`: `frontend/luasettings.lua:21-48` (`open`: a missing file reads as `{}`, a corrupt
+  one falls back to `.old`, then `{}`), `:31-33` (a file returning any truthy non-table is taken
+  as the data; `settings.lua` reads it as `{}` through `reset`, `:247-250`), `:89-99`
+  (`readSetting` with a truthy default writes the default into the data, so `settings.lua` never
+  passes one and falls back to the schema default itself), `:102` (`saveSetting`), `:252-268`
+  (`backup`: the `.old` that `open` falls back to, written when the file is more than 60 s old;
+  KOReader's recovery, kept), `:270-275` (`flush`, which ignores the write's result).
+- `frontend/util.lua:1124-1143` (`util.writeToFile`), as for the state file.
+- The file holds `schema_version` beside the keys. `settings.lua` migrates an older file on open
+  and never writes a newer one, the version stamp included.
+- `Settings._migrate` and `Settings._reset` are KoPanda's own seams for
+  `spec/unit/settings_spec.lua`, not KOReader internals; they are named here because the hooks
+  check flags every underscore access.
 
 ### `InputContainer` gesture and paint dispatch
 
@@ -244,10 +288,12 @@ Upgrading KOReader walks this list.
   `frontend/apps/filemanager/filemanagermenu.lua:851-856` and
   `frontend/apps/reader/modules/readermenu.lua:341` (each registered widget's `addToMainMenu` is
   pcalled with the `menu_items` table); the pattern of `plugins/hello.koplugin/main.lua:23-30`.
-- An instance that isn't refused registers from `init`; `self.ui.menu` exists by then, since
+- Every instance registers from `init`; `self.ui.menu` exists by then, since
   both apps register their menu module before making plugin instances
   (`frontend/apps/filemanager/filemanager.lua:404`, :418-429;
-  `frontend/apps/reader/readerui.lua:176`, :464-478).
+  `frontend/apps/reader/readerui.lua:176`, :464-478). A refused instance registers too, and its
+  `addToMainMenu` gives Tools › KoPanda the one item Swatches; the Home tab, Home and Settings
+  are left out.
 
 ### The cached menu order, `ui/elements/filemanager_menu_order`
 
@@ -314,6 +360,33 @@ Upgrading KOReader walks this list.
 - In the reader, the action and Tools › KoPanda › Home close the book and show the file
   manager, whose `Show` brings the home.
 
+### `Font:getFace` by path, the shipped fonts
+
+- `frontend/ui/font.lua:307-312` (a name starting with `/` or `./` is opened as a path; anything
+  else is looked up under KOReader's `fonts/` folder), `:313-327` (then searched for in the font
+  list), `:329-332` (logs and returns nil when nothing loads), `:276` (scales the size by
+  `Screen:scaleBySize`), `:288-291` (faces cached by path and size).
+- `frontend/pluginloader.lua:24` (`DEFAULT_PLUGIN_PATH = "plugins"`), `:204` (a plugin root is
+  the lookup path joined with the folder name, so relative on a device), `:242` (that root is
+  first in `package.path` while `main.lua` loads), `:248` (the plugin module's `path`).
+- `fonts.lua` takes the plugin folder from its own source path as `require` found it, and its
+  join (KoPanda's own, exposed to `spec/unit/fonts_spec.lua` as Fonts._join) gives a relative
+  folder a `./` prefix so `getFace` treats the file as a path.
+- `base/ffi/freetype.lua:207-225` (`newFaceSize` has no variation-axis calls), so the fonts ship
+  as static instances: a variable font would render its default instance only.
+
+### The looks: `Screen:isColorEnabled` and `Blitbuffer.colorFromString`
+
+- `frontend/device/generic/device.lua:265-271` (`isColorEnabled`: the user's `color_rendering`
+  setting when present, the panel's `isColorScreen` otherwise). `looks.lua` draws the grey palette
+  when it is false, so a colour panel with colour rendering off gets grey too; the plugin never
+  reads `color_rendering` itself.
+- `base/ffi/blitbuffer.lua:2653-2683` (`colorFromString`: `#rrggbbaa`, `#rrggbb` or `#vv`, nil
+  for any other length; non-hex digits or a non-string raise), which `looks.lua` calls in a
+  `pcall`. The look files hold palette colours as `#rrggbb` only.
+- `base/ffi/blitbuffer.lua:464-467` (a colour greyed by luminance, `getColor8`): two hues can land
+  on the same grey, so each look's `grey` palette names an explicit grey per role.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
@@ -326,13 +399,21 @@ Upgrading KOReader walks this list.
 - `ui/widget/verticalgroup`: `frontend/ui/widget/verticalgroup.lua:8`.
 - `ui/widget/verticalspan`: `frontend/ui/widget/verticalspan.lua:6`.
 - `ui/widget/textwidget`: `frontend/ui/widget/textwidget.lua:27` (`text`, `face`).
+- `ui/widget/textboxwidget`: `frontend/ui/widget/textboxwidget.lua:37` (`text`, `face`,
+  `width`, `fgcolor`, `bgcolor`; the swatch entry above).
+- `ui/widget/horizontalgroup`: `frontend/ui/widget/horizontalgroup.lua:9` (`align`).
+- `ui/widget/horizontalspan`: `frontend/ui/widget/horizontalspan.lua:6` (`width`).
+- `ui/widget/iconwidget`: `frontend/ui/widget/iconwidget.lua:43` (`file`, `width`, `height`,
+  `alpha`; the swatch entry above).
 - `ui/font`: `frontend/ui/font.lua:269-276` (`getFace` scales the size by
   `Screen:scaleBySize` itself).
 - `ui/geometry`: `frontend/ui/geometry.lua:37` (`Geom:new`), `:255-266` (`contains`).
-- `ffi/blitbuffer`: `base/ffi/blitbuffer.lua:2717` (`COLOR_WHITE`).
+- `ffi/blitbuffer`: `base/ffi/blitbuffer.lua:2717` (`COLOR_WHITE`), `:2653-2683`
+  (`colorFromString`, the looks entry above).
 - `ui/uimanager`: the entries above.
 - `ui/time`: `frontend/ui/time.lua:149` (`to_ms`), `:249` (`monotonic`).
-- `device`: `frontend/device/generic/device.lua:332` (`Screen:getSize`);
+- `device`: `frontend/device/generic/device.lua:332` (`Screen:getSize`), `:265-271`
+  (`Screen:isColorEnabled`, the looks entry above);
   `base/ffi/framebuffer.lua:414` (`scaleBySize`).
 - `logger`: `frontend/logger.lua:93-98` (`err`); see the harness entry `logger` below.
 
@@ -484,6 +565,15 @@ Upgrading KOReader walks this list.
   (`frontend/ui/uimanager.lua:881-888`); the home with `UIManager:topdown_widgets_iter`
   (`:846`).
 
+### The swatch scenario (`spec/emulator/scenarios/2-scenario-swatch.lua`)
+
+- On the first home's settled signal it opens Tools › KoPanda › Swatches as the menu does:
+  `FileManager.instance.menu:onShowMenu()` (`frontend/apps/filemanager/filemanagermenu.lua:1006-1032`,
+  which builds `tab_item_table` at `:1007-1009`, `:862`), the item's `callback`, then `onCloseFileManagerMenu`
+  (`:1049`), the order `frontend/ui/widget/touchmenu.lua:913-926` runs them in. The capture is
+  taken on the swatch's own signal (`shot_screen = "swatch"`); a failure is sent as a `"swatch"`
+  signal with `error`.
+
 ### `logger`
 
 - `frontend/logger.lua:71-90`.
@@ -511,3 +601,20 @@ Upgrading KOReader walks this list.
 
 - `common/rapidjson.so`.
 - `encode` in the patch, `decode` in the driver.
+- `bin/schema-json` encodes the schema with `sort_keys` and `pretty`
+  (`base/thirdparty/lua-rapidjson/build/downloads/source/API.md:79-80`), so two runs are
+  byte-identical; `spec/unit/schema_json_spec.lua` decodes it. The bundled dkjson orders only the
+  keys it is given and the rest in `pairs` order (`common/dkjson.lua:325-346`).
+
+### `RenderImage:renderSVGImageFile`, the icon check
+
+- `frontend/ui/renderimage.lua:338-345` (`renderSVGImageFile`), `:349` (NanoSVG is the renderer),
+  `:351-393` (a `TYPE_BBRGB32` buffer of the requested size, the drawing centred at its aspect
+  ratio, returned with straight alpha at `:393`).
+- NanoSVG draws a file's own colours; an unknown colour name such as `currentColor` parses to
+  grey 128 (`base/build/arm64-apple-darwin23.5.0-debug/staging/include/nanosvg.h:1446-1457`), and
+  the rasteriser unpremultiplies its output (`nanosvgrast.h:1206`, `:1450`), so a black stroke's
+  anti-aliased edge stays R = G = B = 0.
+- `spec/unit/icons_spec.lua` renders every registered icon at 48×48 and reads each pixel with
+  `Blitbuffer:getPixel` (`base/ffi/blitbuffer.lua:819-827`; a `ColorRGB32` has `r`, `g`, `b`,
+  `alpha`, `:54-59`). The plugin itself only names icon files, through `icons.lua`.

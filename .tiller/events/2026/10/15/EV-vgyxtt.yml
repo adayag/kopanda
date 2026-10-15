@@ -1,0 +1,13 @@
+id: EV-vgyxtt
+type: claim.task
+at: 2026-10-15T02:57:51.215209Z
+contributor: allen
+command: claim task T-f4vjse
+targets:
+    - T-f4vjse
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/schema-settings/task.yml

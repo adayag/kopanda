@@ -1,0 +1,15 @@
+id: EV-awy32y
+type: start.task
+at: 2026-10-15T03:10:32.50293Z
+contributor: allen
+command: start task T-q3nem8
+targets:
+    - T-q3nem8
+before:
+    status: ready
+after:
+    branch: tiller/home/looks-and-schema/looks
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/looks/task.yml

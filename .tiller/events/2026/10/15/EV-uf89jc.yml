@@ -1,0 +1,13 @@
+id: EV-uf89jc
+type: check.task
+at: 2026-10-15T04:41:23.553086Z
+contributor: allen
+command: check task T-wj05yo
+targets:
+    - T-wj05yo
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/swatch/task.yml

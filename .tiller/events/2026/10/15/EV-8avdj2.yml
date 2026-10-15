@@ -1,0 +1,15 @@
+id: EV-8avdj2
+type: start.task
+at: 2026-10-15T03:10:33.163726Z
+contributor: allen
+command: start task T-puj6su
+targets:
+    - T-puj6su
+before:
+    status: ready
+after:
+    branch: tiller/home/looks-and-schema/icons
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/icons/task.yml

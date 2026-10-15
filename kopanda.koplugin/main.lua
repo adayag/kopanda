@@ -7,16 +7,27 @@
 -- so a later require could resolve to another plugin's same-named file (:283-286).
 local DispatchBridge = require("dispatch_bridge")
 local Dispatcher = require("dispatcher")
+require("fonts") -- loaded now for the looks and swatch modules, which reach it later
 local Guards = require("guards")
 local Home = require("home")
 local InfoMessage = require("ui/widget/infomessage")
 local MenuEntries = require("menu_entries")
 local SettingsMenu = require("settings_menu")
 local State = require("state")
+local Swatch = require("swatch")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
 local time = require("ui/time")
+-- Required here only so they load while the plugin root is on package.path; the modules that
+-- use them get them from the require cache.
+require("icons")
+require("looks")
+require("looks/diner")
+require("looks/editorial")
+require("migrations")
+require("schema")
+require("settings")
 
 -- The boot guard covers only the first show of a process.
 local first_show_done = false
@@ -30,12 +41,14 @@ function KoPanda:init()
     local ok, err = pcall(function()
         -- The file manager makes instances with { ui = self }; the reader adds `document`.
         local in_fm = self.ui ~= nil and self.ui.document == nil
-        -- With another shell enabled this instance does nothing; every handler checks it first.
+        -- With another shell enabled this instance does nothing but offer Tools › KoPanda ›
+        -- Swatches, a test pattern rather than part of the shell; every handler checks it first.
         if Guards.refused() then
             self.refused = true
             if in_fm then
                 Guards.notify_once()
             end
+            self.ui.menu:registerToMainMenu(self)
             return
         end
         self.in_fm = in_fm
@@ -218,6 +231,18 @@ function KoPanda:onKoPandaHome()
 end
 
 function KoPanda:addToMainMenu(menu_items)
+    local swatches = {
+        text = "Swatches",
+        callback = after_menu("Tools › KoPanda › Swatches", Swatch.show),
+    }
+    if self.refused then
+        menu_items.kopanda = {
+            text = "KoPanda",
+            sorting_hint = "tools",
+            sub_item_table = { swatches },
+        }
+        return
+    end
     if self.in_fm and MenuEntries.home_tab() then
         -- A tab that acts on tap (filemanagermenu.lua:841-848). remember = false keeps its index
         -- from being saved (touchmenu.lua:452-464, :777-779).
@@ -244,6 +269,7 @@ function KoPanda:addToMainMenu(menu_items)
                 text = "Settings",
                 callback = after_menu("Tools › KoPanda › Settings", SettingsMenu.open),
             },
+            swatches,
         },
     }
 end

@@ -1,0 +1,13 @@
+id: EV-sifwa1
+type: check.feature
+at: 2026-10-15T12:44:16.07351Z
+contributor: allen
+command: check feature F-i2mbn1
+targets:
+    - F-i2mbn1
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/feature.yml

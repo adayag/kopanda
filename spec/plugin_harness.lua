@@ -15,6 +15,8 @@ M.library = M.root .. "/spec/fixtures/library"
 -- KoPanda's runtime state file (kopanda.koplugin/state.lua) and its directory under KO_HOME.
 M.state_dir = require("datastorage"):getSettingsDir() .. "/kopanda"
 M.state_file = M.state_dir .. "/state.lua"
+-- KoPanda's settings file (kopanda.koplugin/settings.lua), in the same directory.
+M.settings_file = M.state_dir .. "/settings.lua"
 
 -- Every .lua file under the plugin, as a path relative to the plugin root, sorted.
 function M.plugin_files()
@@ -52,9 +54,10 @@ end
 -- Dispatcher.execute as KOReader defines it, before any plugin wraps it.
 M.dispatcher_execute = require("dispatcher").execute
 
--- Loads the plugin as the only enabled one, with its modules' state and runtime state file
--- fresh (no boot flag left by an earlier spec), KOReader's require-cached file manager menu
--- order fresh (no Home tab inserted and no user order merged by an earlier spec), and
+-- Loads the plugin as the only enabled one, with its modules' state, runtime state file and
+-- settings file fresh (no boot flag or setting left by an earlier spec), KOReader's
+-- require-cached file manager menu order fresh (no Home tab inserted and no user order merged
+-- by an earlier spec), and
 -- Dispatcher.execute unwrapped, as in a new process, and returns the plugin module (the class
 -- KOReader makes an instance of per file manager and reader). PluginLoader:_load reads main,
 -- meta, path and name (frontend/pluginloader.lua:231-271).
@@ -67,6 +70,8 @@ function M.load()
     package.unload("ui/elements/filemanager_menu_order") -- luacheck: ignore 143
     os.remove(M.state_file)
     os.remove(M.state_file .. ".old")
+    os.remove(M.settings_file)
+    os.remove(M.settings_file .. ".old")
     os.remove(M.state_dir)
     local PluginLoader = require("pluginloader")
     PluginLoader:_load{ {
