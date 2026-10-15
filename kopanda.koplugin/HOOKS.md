@@ -759,6 +759,39 @@ Upgrading KOReader walks this list.
 - `ui/network/manager`: `NetworkMgr:isWifiOn()` (the launcher's entries above), read at call
   time by the launcher's `stale`.
 
+### The sheet: its refreshes, keys, Back and gestures
+
+- `UIManager:show(sheet, "ui", rect)` (`frontend/ui/uimanager.lua:229-273`) schedules the one
+  paint of the panel and its shadow; `UIManager:close(sheet, "flashui", rect)` (`:290-355`)
+  marks every window from the topmost `covers_fullscreen` one up dirty again, the home under
+  the sheet, then refreshes the rectangle. `_repaint` (`:1298-1346`) paints from that window up
+  and every window above a dirty one, so a home refresh repaints the sheet over it. The sheet's
+  `dimen` is the whole screen and it is not `covers_fullscreen`.
+- The refreshes follow `ButtonDialog`'s: `"ui"` on show unless coloured on a Kaleido panel
+  (`frontend/ui/widget/buttondialog.lua:89-90`, `:327-331`) and `"flashui"` on close (`:333-337`).
+  Only Kobo sets `hasKaleidoWfm` (`frontend/device/generic/device.lua:118`,
+  `frontend/device/kobo/device.lua:800`), so on the Kindle it is `"ui"` too.
+- The Back key: `key_events.Close = { { Device.input.group.Back } }` only where `Device:hasKeys()`,
+  as `ButtonDialog` binds it (`buttondialog.lua:98-108`). `hasKeys` is false by default
+  (`frontend/device/generic/device.lua:92`), true in the emulator
+  (`frontend/device/sdl/device.lua:73`), and true on a Kindle only once a frame-tap input is
+  found (`frontend/device/kindle/device.lua:553-556`, `:673-675`). `Device.input.group.Back` is
+  `{ "Back" }` on every device's input (`frontend/device/input.lua:121`); `InputContainer:onKeyPress`
+  matches it with `Key:match` (`frontend/ui/widget/container/inputcontainer.lua:238-250`,
+  `frontend/device/key.lua:60-92`).
+- KOReader's Back: the dispatcher's `fm_back` sends the `Back` event (`frontend/dispatcher.lua:169`)
+  to the top widget, the sheet, whose `onBack` closes it and consumes it.
+- Taps: `ges_events.TapSheet`, one `GestureRange` (`frontend/ui/gesturerange.lua:14`, `:21-51`)
+  over the whole screen, consumed wherever it lands, as `ButtonDialog:onTapClose` consumes a tap
+  (`buttondialog.lua:347-352`), so `sendEvent` offers it to no window below
+  (`frontend/ui/uimanager.lua:988-1031`). Under KOReader's touch lock `ges_events` are filtered as
+  the home's zones are (the touch-lock entry above).
+- Holds: a hold's lift sends `hold_release` to the top widget, by then the sheet
+  (`frontend/device/gesturedetector.lua:1346-1356`); the sheet registers nothing for `hold`,
+  `hold_release`, `hold_pan` or swipes, so they reach only the active widgets below.
+- The settled signal goes from `tickAfterNext` as the home's does (the `nextTick` entry above);
+  one that lands before the sheet's first paint waits for the next.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
@@ -790,6 +823,8 @@ Upgrading KOReader walks this list.
 - `ui/font`: `frontend/ui/font.lua:269-276` (`getFace` scales the size by
   `Screen:scaleBySize` itself).
 - `ui/geometry`: `frontend/ui/geometry.lua:37` (`Geom:new`), `:255-266` (`contains`).
+- `ui/gesturerange`: `frontend/ui/gesturerange.lua:14` (`new`, `ges` and `range`), `:21-51`
+  (`match`); the sheet's tap range.
 - `ffi/blitbuffer`: `base/ffi/blitbuffer.lua:2717` (`COLOR_WHITE`), `:2653-2683`
   (`colorFromString`, the looks entry above).
 - `ui/uimanager`: the entries above.

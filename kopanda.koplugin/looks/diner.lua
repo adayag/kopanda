@@ -31,6 +31,7 @@ return {
             outline = "#2f2e2b", -- the doc: strokes are ink
             shadow = "#2f2e2b", -- the doc: hard shadows are ink
             on_band = "#f5f1e6", -- the header band's text (HomeRetro.dc.html:19)
+            on_accent = "#2f2e2b", -- the text on the sheets' bands and chips, the boards' ink (HoldBookC.dc.html:31-36)
             cover = "#2b4c6f", -- the typographic cover's fill (HomeRetro.dc.html:28)
             on_cover = "#f5f1e6", -- its title and authors (HomeRetro.dc.html:28)
         },
@@ -48,6 +49,8 @@ return {
             outline = "#f1ece0", -- the doc: outlines turn cream, the night ink
             shadow = "#f1ece0", -- the doc: hard shadows turn cream, the night ink
             on_band = "#f1ece0", -- NightC.dc.html:19
+            -- No board gives it: the night paper, since the doc has mustard and pink tiles take dark text.
+            on_accent = "#1e1c1a",
             cover = "#2b4c6f", -- NightC.dc.html:28
             on_cover = "#f5f1e6", -- NightC.dc.html:28
         },
@@ -65,6 +68,7 @@ return {
             outline = "#111111", -- implied: strokes are ink
             shadow = "#111111", -- implied: hard shadows are ink
             on_band = "#111111", -- PWRetro.dc.html:19: ink on the grey band
+            on_accent = "#111111", -- ink on the grey tiles (PWRetro.dc.html:19)
             cover = "#4a4a4a", -- PWRetro.dc.html:28
             on_cover = "#f4f4f4", -- PWRetro.dc.html:28
         },
@@ -107,14 +111,39 @@ return {
         fill_grey = "hatch_135",
     },
 
-    -- An outlined box with an 8 px ink shadow and a coloured header band; the band's colour is
-    -- the sheet's own (pink on the book's, mustard on the home's in the canvas).
+    -- An outlined box with an 8 px ink shadow and a coloured header band; the band's colour is a
+    -- token per sheet, below (pink on the book's, mustard on the home's in the canvas).
     sheet = {
         fill_color = "paper",
         rule_color = false,
         rule_width = 0,
         outline_color = "outline",
         header_band = true,
+        inset = { side = 22, bottom = 22 }, -- HoldBookC.dc.html:30
+        padding = { top = 0, side = 0, bottom = 0 }, -- HoldBookC.dc.html:30
+        book_band_color = "pink", -- HoldBookC.dc.html:31
+        home_band_color = "mustard", -- HoldHomeC.dc.html:31
+        folder_band_color = "teal", -- no board draws Diner's folder sheet
+        header_rule_color = "outline", -- HoldBookC.dc.html:31
+        header_rule_width = 3, -- HoldBookC.dc.html:31
+        header_padding = { top = 16, side = 20, bottom = 16 }, -- HoldHomeC.dc.html:31
+        book_header_padding = { top = 18, side = 20, bottom = 18 }, -- HoldBookC.dc.html:31
+        cover_gap = 16, -- HoldBookC.dc.html:31
+        cover_w = 60, -- HoldBookC.dc.html:32
+        cover_h = 90, -- HoldBookC.dc.html:32
+        line_gap = 3, -- HoldBookC.dc.html:33
+        meta_gap = 4, -- HoldBookC.dc.html:36
+        aside_gap = 12, -- no board: Editorial's (FolderOpen.dc.html:36)
+        row_padding = { x = 20, y = 15 }, -- HoldBookC.dc.html:39
+        row_gap = 14, -- HoldBookC.dc.html:39
+        icon_size = 22, -- HoldBookC.dc.html:40
+        row_rule_color = "outline", -- HoldBookC.dc.html:39
+        row_rule_width = 2, -- HoldBookC.dc.html:39
+        last_row_bottom = 15, -- HoldBookC.dc.html:65
+        status_chip_color = "mustard", -- the read status (HoldBookC.dc.html:52)
+        state_chip_color = "teal", -- the Wi-Fi state (HoldHomeC.dc.html:55)
+        chip_padding = { x = 8, y = 2 }, -- HoldBookC.dc.html:52
+        chip_outline_width = 2, -- HoldBookC.dc.html:52
     },
 
     -- An outlined box on an accent.
@@ -243,6 +272,36 @@ return {
         -- Its suffix, "off" or "plugin missing": no board; the look's label style (label above).
         launcher_suffix = {
             face = "display", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "muted",
+        },
+        -- A sheet's heading on its band, "Home" (HoldHomeC.dc.html:32).
+        sheet_heading = {
+            face = "display", size = 24, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
+        },
+        -- The heading's aside, "KoPanda" (HoldHomeC.dc.html:33).
+        sheet_aside = {
+            face = "accent", size = 22, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
+        },
+        -- The book header's title, CSS line height 1.05 (HoldBookC.dc.html:34).
+        sheet_title = {
+            face = "display", size = 24, uppercase = false, tracking = 0, line_height = 0.05, color = "on_accent",
+        },
+        -- Its author (HoldBookC.dc.html:35).
+        sheet_author = {
+            face = "text", size = 14, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
+        },
+        -- Its meta line, "62% · Part 3 · opened yesterday" (HoldBookC.dc.html:36).
+        sheet_meta = {
+            face = "strong", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
+        },
+        -- A sheet row's label (HoldBookC.dc.html:39).
+        sheet_row = { face = "strong", size = 17, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        -- A row's plain detail, the weather's age (HoldHomeC.dc.html:48).
+        sheet_detail = {
+            face = "strong", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "muted",
+        },
+        -- A row's detail in its chip, the read status (HoldBookC.dc.html:52).
+        sheet_chip = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
         },
     },
 
