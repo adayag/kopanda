@@ -91,6 +91,17 @@ describe("icons", function()
         end
     end)
 
+    -- The owner's weight, chosen from a render at launcher and nav sizes: 1.6 went faint at 40 px.
+    it("strokes every icon at width 2, the check mark at 3", function()
+        for _, file in ipairs(icon_files()) do
+            local widths = {}
+            for width in read(harness.plugin_dir .. "/" .. file):gmatch('stroke%-width="([%d.]+)"') do
+                widths[#widths + 1] = width
+            end
+            assert.are.same({ file == "icons/check.svg" and "3" or "2" }, widths, file)
+        end
+    end)
+
     it("renders every icon through RenderImage in opaque black ink", function()
         assert.truthy(#Icons.entries > 0)
         for _, entry in ipairs(Icons.entries) do
