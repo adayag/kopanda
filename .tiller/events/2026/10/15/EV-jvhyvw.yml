@@ -1,0 +1,13 @@
+id: EV-jvhyvw
+type: claim.task
+at: 2026-10-15T19:52:52.398801Z
+contributor: allen
+command: claim task T-x4x0f3
+targets:
+    - T-x4x0f3
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/night-mode/tasks/goldens/task.yml
