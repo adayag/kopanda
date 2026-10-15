@@ -789,8 +789,11 @@ Upgrading KOReader walks this list.
 - Holds: a hold's lift sends `hold_release` to the top widget, by then the sheet
   (`frontend/device/gesturedetector.lua:1346-1356`); the sheet registers nothing for `hold`,
   `hold_release`, `hold_pan` or swipes, so they reach only the active widgets below.
-- The settled signal goes from `tickAfterNext` as the home's does (the `nextTick` entry above);
-  one that lands before the sheet's first paint waits for the next.
+- The settled signal goes from a `nextTick` (`frontend/ui/uimanager.lua:431-433`) that the
+  sheet's first good `paintTo` schedules: it runs from the next `_checkTasks`, past that
+  `_repaint` (`handleInput` `:1542-1564`). Nothing is scheduled before the paint, so a sheet
+  under a `covers_fullscreen` window waits without a task; polling there would keep
+  `_task_queue_dirty` set and spin `handleInput`'s loop.
 
 ### Widget and support modules
 

@@ -85,7 +85,8 @@ end
 
 -- Lays out the sheet's spec under ctx in variant into a Panel, and returns it with the panel's
 -- rectangle, the rectangle with its shadow, the header's rectangle (or nil) and the rows' places
--- ({ row, rect, label, detail }), all in screen coordinates.
+-- ({ row, rect, label, detail }), all in screen coordinates, and how many rows it left out. A
+-- missing icon is logged once per build.
 local function build(spec, ctx, variant)
     local look = ctx.look
     local tokens = look.sheet
@@ -205,7 +206,7 @@ local function build(spec, ctx, variant)
     local pad_x, pad_y = scale(tokens.row_padding.x), scale(tokens.row_padding.y)
     local icon_size, row_gap = scale(tokens.icon_size), scale(tokens.row_gap)
     local row_w = content_w - 2 * pad_x
-    local built = {}
+    local built, unknown = {}, {}
     for _, row in ipairs(spec.rows or {}) do
         local b = { row = row }
         local ink = row.muted and "muted" or "ink"
@@ -213,7 +214,8 @@ local function build(spec, ctx, variant)
         local file = icon_id and Icons.path(icon_id)
         if file then
             b.icon = TintedIcon:new{ file = file, size = icon_size, color = color(ink) }
-        elseif icon_id then
+        elseif icon_id and not unknown[icon_id] then
+            unknown[icon_id] = true
             logger.warn("KoPanda: the sheet", spec.name, "has no icon", icon_id, "; its place is left blank")
         end
         local room = row_w - icon_size - row_gap
@@ -257,8 +259,8 @@ local function build(spec, ctx, variant)
     while kept > 0 and height(kept) > max_h do
         kept = kept - 1
     end
-    if kept < #built then
-        logger.warn("KoPanda: sheet", spec.name, "leaves out", #built - kept, "rows that don't fit")
+    local left_out = #built - kept
+    if left_out > 0 then
         for i = kept + 1, #built do
             local b = built[i]
             for _, widget in ipairs({ b.icon, b.detail, b.label }) do
@@ -361,6 +363,7 @@ local function build(spec, ctx, variant)
         rect = Geom:new{ x = box_x, y = box_y, w = box_w + shadow_x, h = box_h + shadow_y },
         header = moved(header_rect),
         rows = rows,
+        left_out = left_out,
     }
 end
 
@@ -369,6 +372,10 @@ end
 local function lay_out(sheet, variant)
     local old = sheet.panel_widget
     local laid = build(sheet.spec, sheet.ctx, variant)
+    -- Logged on the first build only: a rebuild for night mode leaves out the same rows.
+    if not old and laid.left_out > 0 then
+        logger.warn("KoPanda: sheet", sheet.spec.name, "leaves out", laid.left_out, "rows that don't fit")
+    end
     sheet.panel_widget = laid.widget
     sheet.panel = laid.panel
     sheet.rect = laid.rect
@@ -421,26 +428,34 @@ local function close_all(sheet)
     end
 end
 
+-- Frees the header's cover, the sheet's to free, once: on close, or after a failed show, which
+-- may or may not have reached the close. A cover that fails to free is logged.
+local function free_cover(sheet)
+    if sheet.cover_freed then
+        return
+    end
+    sheet.cover_freed = true
+    local ok, err = pcall(function()
+        local cover = sheet.spec.header and sheet.spec.header.cover
+        if cover and cover.free then
+            cover:free()
+        end
+    end)
+    if not ok then
+        logger.err("KoPanda: the sheet", sheet.spec.name, "could not free its cover:", err)
+    end
+end
+
 -- A failure anywhere in the sheet: logged, then the sheet and the home closed.
 local function fail(sheet, what, err)
     logger.err("KoPanda: the sheet", sheet.spec and sheet.spec.name, what, err)
     close_all(sheet)
 end
 
--- The settled signal, once, after the first paint, as the home sends its own; none when the
--- paint failed. tickAfterNext lands past the repaint only when the clock has moved on since the
--- tick began (uimanager.lua:447-456), so a sheet not yet painted waits for the next one, while
--- it is still shown.
-local function settle(sheet, started)
+-- The settled signal, once, from the tick after the first paint, which schedules it; a sheet
+-- never painted, or whose paint failed, sends none.
+local function settle(sheet)
     if sheet.settled or sheet.paint_failed then
-        return
-    end
-    if not sheet.painted_at then
-        if UIManager:isWidgetShown(sheet) then
-            UIManager:tickAfterNext(function()
-                settle(sheet, started)
-            end)
-        end
         return
     end
     sheet.settled = true
@@ -448,7 +463,7 @@ local function settle(sheet, started)
         UIManager.event_hook:execute("KoPandaSettled", {
             screen = "sheet",
             name = sheet.spec.name,
-            paint_ms = time.to_ms(sheet.painted_at - started),
+            paint_ms = time.to_ms(sheet.painted_at - sheet.started),
         })
     end)
     if not ok then
@@ -464,16 +479,14 @@ function Sheet.show(spec, ctx, opts)
     local sheet
     local ok, err = pcall(function()
         Sheet.close()
-        sheet = Sheet:new{ spec = spec, ctx = ctx }
+        sheet = Sheet:new{ spec = spec, ctx = ctx, started = started }
         Sheet.shown = sheet
         UIManager:show(sheet, "ui", sheet.rect)
-        -- Lands past the next repaint, so the signal follows the paint.
-        UIManager:tickAfterNext(function()
-            settle(sheet, started)
-        end)
     end)
     if not ok then
-        fail(sheet or { spec = spec }, "could not be shown:", err)
+        sheet = sheet or { spec = spec }
+        fail(sheet, "could not be shown:", err)
+        free_cover(sheet)
     end
 end
 
@@ -495,10 +508,7 @@ function Sheet:onCloseWidget()
     if panel then
         panel:free()
     end
-    local cover = self.spec.header and self.spec.header.cover
-    if cover and cover.free then
-        cover:free()
-    end
+    free_cover(self)
 end
 
 -- Paints the panel, rebuilt first when the variant changed since its build: night mode toggled
@@ -513,11 +523,15 @@ local function paint(sheet, bb, x, y)
 end
 
 -- A widget can't be closed from inside the repaint, so a failed paint closes the sheet and the
--- home from the next tick.
+-- home from the next tick. The first good paint schedules the settled signal for the next tick,
+-- which runs past this repaint.
 function Sheet:paintTo(bb, x, y)
     local ok, err = pcall(paint, self, bb, x, y)
     if ok and not self.painted_at then
         self.painted_at = time.monotonic()
+        UIManager:nextTick(function()
+            settle(self)
+        end)
     end
     if not ok and not self.paint_failed then
         self.paint_failed = true

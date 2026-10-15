@@ -134,6 +134,40 @@ describe("the sheet", function()
         return count
     end
 
+    -- A stand-in for a book's cover widget, counting its paints and frees; get_size, if given,
+    -- replaces its getSize.
+    local function stub_cover(get_size)
+        local cover = { paints = 0, frees = 0 }
+        cover.getSize = get_size or function() return Geom:new{ w = 40, h = 60 } end
+        cover.paintTo = function()
+            cover.paints = cover.paints + 1
+        end
+        cover.free = function()
+            cover.frees = cover.frees + 1
+        end
+        return cover
+    end
+
+    local function book_sheet(cover)
+        local spec = three_rows()
+        spec.band = "book"
+        spec.header = { cover = cover, title = "A book", author = "An author", meta = "12%" }
+        return spec
+    end
+
+    -- How many of the calls spied on logger.warn carry text.
+    local function warnings(warned, text)
+        local count = 0
+        for _, call in ipairs(warned.calls) do
+            for _, arg in ipairs(call.vals) do
+                if tostring(arg):find(text, 1, true) then
+                    count = count + 1
+                end
+            end
+        end
+        return count
+    end
+
     before_each(function()
         harness.load()
         Home = require("home")
@@ -285,7 +319,8 @@ describe("the sheet", function()
             local runs = {}
             Sheet.show(three_rows(runs), ctx_for("editorial"))
             local sheet = Sheet.shown
-            send(harness.gesture("tap", centre(sheet.header_rect)))
+            -- Consumed, so sendEvent offers it to no window below.
+            assert.is_true(sheet:handleEvent(Event:new("Gesture", harness.gesture("tap", centre(sheet.header_rect)))))
             assert.same({}, runs)
             assert.equals(sheet, Sheet.shown)
             assert.equals(sheet, harness.top())
@@ -296,9 +331,11 @@ describe("the sheet", function()
             local home = Home.shown
             local routed = spy.on(home, "routeGesture")
             Sheet.show(three_rows(runs), ctx_for("diner"))
-            local panel = Sheet.shown.panel
+            local sheet = Sheet.shown
+            local panel = sheet.panel
             assert.truthy(panel.y > 10)
-            send(harness.gesture("tap", Screen:getWidth() / 2, math.floor(panel.y / 2)))
+            local tap = harness.gesture("tap", Screen:getWidth() / 2, math.floor(panel.y / 2))
+            assert.is_true(sheet:handleEvent(Event:new("Gesture", tap)))
             assert.same({}, runs)
             assert.is_nil(Sheet.shown)
             assert.spy(routed).was_not_called()
@@ -381,6 +418,53 @@ describe("the sheet", function()
         assert.equals(1, sheets_on_stack())
     end)
 
+    it("frees the first sheet's cover once when a second is shown over it", function()
+        local first = stub_cover()
+        Sheet.show(book_sheet(first), ctx_for("diner"))
+        assert.equals(0, first.frees)
+        local second = stub_cover()
+        Sheet.show(book_sheet(second), ctx_for("diner"))
+        assert.equals(1, first.frees)
+        assert.equals(0, second.frees)
+        Sheet.close()
+        assert.equals(1, first.frees)
+        assert.equals(1, second.frees)
+    end)
+
+    describe("a cover whose show fails", function()
+        local show = UIManager.show
+
+        after_each(function()
+            UIManager.show = show
+        end)
+
+        local function failed_once(cover)
+            Sheet.show(book_sheet(cover), ctx_for("diner"))
+            assert.equals(0, sheets_on_stack())
+            assert.is_nil(Sheet.shown)
+            assert.equals(1, cover.frees)
+        end
+
+        it("is freed once when the build raises", function()
+            failed_once(stub_cover(function() error("kopanda-test: cover size failed") end))
+        end)
+
+        it("is freed once when UIManager:show raises before stacking the sheet", function()
+            UIManager.show = function()
+                error("kopanda-test: show failed")
+            end
+            failed_once(stub_cover())
+        end)
+
+        it("is freed once when UIManager:show raises after stacking the sheet", function()
+            UIManager.show = function(...)
+                show(...)
+                error("kopanda-test: show failed late")
+            end
+            failed_once(stub_cover())
+        end)
+    end)
+
     it("does nothing when closed with no sheet shown", function()
         Sheet.close()
         assert.is_nil(Sheet.shown)
@@ -400,7 +484,7 @@ describe("the sheet", function()
             assert.equals(sheet, dirty[1][2])
             assert.equals("ui", dirty[1][3])
             assert.equals(sheet.rect, dirty[1][4])
-            -- tickAfterNext's two nextTicks, no timer.
+            -- The settled signal's nextTick, no timer.
             assert.truthy(#scheduled > 0)
             for _, call in ipairs(scheduled) do
                 assert.equals(0, call[2])
@@ -465,6 +549,32 @@ describe("the sheet", function()
             Sheet.show(spec, ctx_for("diner"))
             harness.tick(3)
             assert.equals(0, #signals)
+        end)
+
+        it("waits, without polling, under a full-screen window and follows the first paint once", function()
+            local WidgetContainer = require("ui/widget/container/widgetcontainer")
+            Sheet.show(three_rows(), ctx_for("diner"))
+            local cover = WidgetContainer:new{ covers_fullscreen = true, dimen = Screen:getSize() }
+            UIManager:show(cover)
+            -- A sheet that re-arms while unpainted spins handleInput's loop; this ends it in an error.
+            local next_tick, calls = UIManager.nextTick, 0
+            UIManager.nextTick = function(...)
+                calls = calls + 1
+                if calls > 50 then
+                    error("kopanda-test: over 50 nextTicks while covered")
+                end
+                return next_tick(...)
+            end
+            finally(function()
+                UIManager.nextTick = next_tick
+            end)
+            harness.tick(3)
+            assert.is_nil(Sheet.shown.painted_at)
+            assert.equals(0, #signals)
+            UIManager:close(cover)
+            harness.tick(3)
+            assert.equals(1, #signals)
+            assert.equals("test", signals[1].name)
         end)
 
         it("counts paint_ms from opts.started, and from the show without it", function()
@@ -542,6 +652,43 @@ describe("the sheet", function()
             assert.equals(0, day_heading)
         end)
 
+        it("keeps a book header's cover across a night rebuild and frees it once on close", function()
+            local cover = stub_cover()
+            Sheet.show(book_sheet(cover), ctx_for("diner"))
+            local sheet = Sheet.shown
+            local size = Screen:getSize()
+            bb = buffer(size.w, size.h, false)
+            sheet:paintTo(bb, 0, 0)
+            assert.equals(1, cover.paints)
+            Screen.night_mode = true
+            bb:setInverse(1)
+            sheet:paintTo(bb, 0, 0)
+            assert.equals("night", sheet.variant)
+            assert.equals(0, cover.frees)
+            assert.equals(2, cover.paints)
+            Sheet.close()
+            assert.equals(1, cover.frees)
+        end)
+
+        it("logs the rows it leaves out once, not again on a night rebuild", function()
+            local spec = three_rows()
+            for i = 4, 40 do
+                spec.rows[i] = { icon = "list", label = "Entry " .. i, run = function() end }
+            end
+            local warned = spy.on(logger, "warn")
+            Sheet.show(spec, ctx_for("diner"))
+            local sheet = Sheet.shown
+            local size = Screen:getSize()
+            bb = buffer(size.w, size.h, false)
+            sheet:paintTo(bb, 0, 0)
+            Screen.night_mode = true
+            bb:setInverse(1)
+            sheet:paintTo(bb, 0, 0)
+            warned:revert()
+            assert.equals("night", sheet.variant)
+            assert.equals(1, warnings(warned, "leaves out"))
+        end)
+
         it("built by day rebuilds inside the first paint after night mode turns on", function()
             Sheet.show(three_rows(), ctx_for("diner"))
             local sheet = Sheet.shown
@@ -566,33 +713,65 @@ describe("the sheet", function()
         end)
     end)
 
-    it("keeps the rows that fit when too tall for the screen and logs once", function()
-        local warned = spy.on(logger, "warn")
-        local spec = three_rows()
-        spec.rows = {}
-        for i = 1, 40 do
-            spec.rows[i] = { icon = "list", label = "Entry " .. i, detail = "Plugin", run = function() end }
-        end
-        Sheet.show(spec, ctx_for("editorial"))
-        warned:revert()
-        local sheet = Sheet.shown
-        assert.is_not_nil(sheet)
-        assert.truthy(#sheet.rows > 0 and #sheet.rows < 40, #sheet.rows)
-        local size = Screen:getSize()
-        for i, row in ipairs(sheet.rows) do
-            local rect = row.rect
-            assert.truthy(rect.y >= 0 and rect.y + rect.h <= size.h, "row " .. i)
-            assert.equals(spec.rows[i], row.row, "row " .. i .. " out of order")
-        end
-        local logged = 0
-        for _, call in ipairs(warned.calls) do
-            for _, arg in ipairs(call.vals) do
-                if tostring(arg):find("leaves out", 1, true) then
-                    logged = logged + 1
+    it("keeps as many rows as fit when too tall for the screen and logs once", function()
+        -- Screen heights over more than a row's height (114 px at this scale) in 10 px steps, so
+        -- on some of them the room left above the panel is under Diner's foot inset.
+        for step = 0, 12 do
+            local h = 1680 + 10 * step
+            local screen = setmetatable({
+                getWidth = function() return 1264 end,
+                getHeight = function() return h end,
+                getSize = function() return Geom:new{ x = 0, y = 0, w = 1264, h = h } end,
+            }, { __index = Screen })
+            for _, id in ipairs({ "editorial", "diner" }) do
+                local where = id .. " at " .. h
+                local warned = spy.on(logger, "warn")
+                local spec = three_rows()
+                spec.rows = {}
+                for i = 1, 40 do
+                    spec.rows[i] = { icon = "list", label = "Entry " .. i, detail = "Plugin", run = function() end }
                 end
+                Sheet.show(spec, ctx_for(id, screen))
+                warned:revert()
+                local sheet = Sheet.shown
+                assert.is_not_nil(sheet, where)
+                assert.truthy(#sheet.rows > 0 and #sheet.rows < 40, where .. ": " .. #sheet.rows)
+                for i, row in ipairs(sheet.rows) do
+                    local rect = row.rect
+                    assert.truthy(rect.y >= 0 and rect.y + rect.h <= h, where .. " row " .. i)
+                    assert.equals(spec.rows[i], row.row, where .. " row " .. i .. " out of order")
+                end
+                -- The panel stays on the screen, and one more row (its height and a rule) would not.
+                local panel, look = sheet.panel, Looks.get(id)
+                assert.truthy(panel.y >= 0, where .. ": panel.y " .. panel.y)
+                local more = sheet.rows[1].rect.h + screen:scaleBySize(look.sheet.row_rule_width)
+                assert.truthy(panel.y < more, where .. ": " .. panel.y .. " px left, room for a row of " .. more)
+                if id == "diner" then
+                    assert.equals(h - screen:scaleBySize(22), panel.y + panel.h, where)
+                end
+                local logged = 0
+                for _, call in ipairs(warned.calls) do
+                    for _, arg in ipairs(call.vals) do
+                        if tostring(arg):find("leaves out", 1, true) then
+                            logged = logged + 1
+                        end
+                    end
+                end
+                assert.equals(1, logged, where)
+                Sheet.close()
             end
         end
-        assert.equals(1, logged)
+    end)
+
+    it("leaves a missing icon's place blank and logs it once per build", function()
+        local spec = three_rows()
+        spec.rows[1].icon = "kopanda-test-none"
+        spec.rows[2].icon = "kopanda-test-none"
+        local warned = spy.on(logger, "warn")
+        Sheet.show(spec, ctx_for("editorial"))
+        warned:revert()
+        assert.equals(3, #Sheet.shown.rows)
+        assert.equals(1, warnings(warned, "kopanda-test-none"))
     end)
 
     it("draws a header alone, and rows alone with no header", function()
