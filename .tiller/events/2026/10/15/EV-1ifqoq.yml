@@ -1,0 +1,14 @@
+id: EV-1ifqoq
+type: add.tweak
+at: 2026-10-15T17:45:10.214445Z
+contributor: allen
+command: add tweak tighter-home-golden-tolerance
+targets:
+    - TW-i9qml9
+after:
+    attached_to: T-2axtyg
+    key: tweaks/tighter-home-golden-tolerance
+    status: proposed
+files:
+    - path: .tiller/tweaks/tighter-home-golden-tolerance/tweak.md
+    - path: .tiller/tweaks/tighter-home-golden-tolerance/tweak.yml
