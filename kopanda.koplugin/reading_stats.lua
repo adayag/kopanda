@@ -1,6 +1,6 @@
 -- Reading stats from KOReader's Statistics plugin: its database, read-only, for the streak,
 -- minutes today and books this month, and its settings, for whether it records at all.
--- Days are local calendar days: SQLite's 'localtime' and os.date both follow the process TZ.
+-- Days are local calendar days, bounded by os.time, which follows the process TZ.
 -- Module state: the last numbers read, which a busy database reads as.
 local DataStorage = require("datastorage")
 local datetime = require("datetime")
@@ -35,9 +35,28 @@ local function off()
     return type(settings) == "table" and settings.is_enabled == false
 end
 
--- The local date, as SQLite's date() writes it, offset days from the day of t (a *t table).
-local function day_key(t, offset)
-    return os.date("%Y-%m-%d", os.time{ year = t.year, month = t.month, day = t.day - offset, hour = 12 })
+-- The start of the local day offset days before the day of t (a *t table). Each day's start
+-- comes from its calendar date, not from 86400-second steps, so days around a change to or
+-- from daylight saving time keep their 23 or 25 hours.
+local function day_start(t, offset)
+    return os.time{ year = t.year, month = t.month, day = t.day - offset, hour = 0 }
+end
+
+-- The run of consecutive local days with any reading, ending today, or yesterday when nothing
+-- is read yet today, up to MAX_STREAK. One indexed probe per day, newest first, stopping at the
+-- first day without reading.
+local function streak(conn, t)
+    local stmt = conn:prepare("SELECT 1 FROM page_stat_data WHERE start_time >= ? AND start_time < ? LIMIT 1")
+    local function read_on(offset)
+        return stmt:reset():bind(day_start(t, offset), day_start(t, offset - 1)):step() ~= nil
+    end
+    local start = read_on(0) and 0 or 1
+    local days = 0
+    while days < MAX_STREAK and read_on(start + days) do
+        days = days + 1
+    end
+    stmt:close()
+    return days
 end
 
 -- The first column of each row of sql run with the one value bound.
@@ -55,28 +74,14 @@ end
 
 local function query(conn, now)
     local t = os.date("*t", now)
-    local today = os.time{ year = t.year, month = t.month, day = t.day, hour = 0 }
     local month = os.time{ year = t.year, month = t.month, day = 1, hour = 0 }
-    local scan = os.time{ year = t.year, month = t.month, day = t.day - MAX_STREAK, hour = 0 }
 
     local seconds = tonumber(column(conn,
-        "SELECT coalesce(sum(duration), 0) FROM page_stat_data WHERE start_time >= ?", today)[1])
+        "SELECT coalesce(sum(duration), 0) FROM page_stat_data WHERE start_time >= ?", day_start(t, 0))[1])
     local books = tonumber(column(conn,
         "SELECT count(DISTINCT id_book) FROM page_stat_data WHERE start_time >= ?", month)[1])
-    local days = {}
-    for _, day in ipairs(column(conn, "SELECT DISTINCT date(start_time, 'unixepoch', 'localtime') "
-            .. "FROM page_stat_data WHERE start_time >= ? ORDER BY 1 DESC", scan)) do
-        days[day] = true
-    end
-
-    -- From today, or from yesterday when nothing is read yet today.
-    local start = days[day_key(t, 0)] and 0 or 1
-    local streak = 0
-    while streak < MAX_STREAK and days[day_key(t, start + streak)] do
-        streak = streak + 1
-    end
     return {
-        streak = streak,
+        streak = streak(conn, t),
         minutes_today = math.floor(seconds / 60),
         books_month = books,
         month_name = datetime.longMonthTranslation[MONTHS[t.month]],

@@ -55,8 +55,8 @@ describe("reading stats", function()
         return os.time{ year = year, month = month, day = day, hour = hour or 12, min = min or 0 }
     end
 
-    -- Tuesday 13 October 2026, 20:42 in Chicago.
-    local NOW = at(2026, 10, 13, 20, 42)
+    -- Tuesday 13 October 2026, 20:42 in Chicago, set once the spec's TZ is.
+    local NOW
 
     -- A Statistics database at db_path holding rows { id_book, start_time, duration }, each on
     -- its own page, in the journal mode the plugin picks on the emulator and current Kindles
@@ -78,9 +78,11 @@ describe("reading stats", function()
             conn:exec(string.format("INSERT INTO book (id, title) VALUES (%d, 'Book %d');", id, id))
         end
         local stmt = conn:prepare("INSERT INTO page_stat_data VALUES (?, ?, ?, ?, ?);")
+        conn:exec("BEGIN;")
         for i, row in ipairs(rows) do
             stmt:reset():bind(row[1], i, row[2], row[3], 300):step()
         end
+        conn:exec("COMMIT;")
         stmt:close()
         conn:close()
     end
@@ -181,6 +183,7 @@ describe("reading stats", function()
         saved_tz = os.getenv("TZ")
         ffi.C.setenv("TZ", "America/Chicago", 1)
         ffi.C.tzset()
+        NOW = at(2026, 10, 13, 20, 42)
     end)
 
     teardown(function()
@@ -213,6 +216,10 @@ describe("reading stats", function()
     end)
 
     describe("read", function()
+        it("runs at 20:42 on 13 October 2026 in Chicago", function()
+            assert.equals("2026-10-13 20:42 CDT", os.date("%Y-%m-%d %H:%M %Z", NOW))
+        end)
+
         it("floors today's summed durations over 60, leaving out yesterday", function()
             local t = os.date("*t", NOW)
             make_db({
@@ -254,6 +261,59 @@ describe("reading stats", function()
             assert.equals(2, ReadingStats.read(NOW).streak)
         end)
 
+        it("counts a streak by local days across the end of daylight saving time", function()
+            -- Chicago falls back at 02:00 on Sunday 1 November 2026: that day has 25 hours.
+            make_db({
+                { 1, at(2026, 10, 31, 0, 30), 600 },
+                { 1, at(2026, 11, 1, 0, 30), 600 },
+                { 1, at(2026, 11, 2, 9), 600 },
+            })
+            assert.equals(3, ReadingStats.read(at(2026, 11, 2, 20, 42)).streak)
+        end)
+
+        it("counts a streak by local days across the start of daylight saving time", function()
+            -- Chicago springs forward at 02:00 on Sunday 8 March 2026: that day has 23 hours.
+            make_db({
+                { 1, at(2026, 3, 7, 23, 30), 600 },
+                { 1, at(2026, 3, 8, 23, 30), 600 },
+                { 1, at(2026, 3, 9, 0, 30), 600 },
+            })
+            assert.equals(3, ReadingStats.read(at(2026, 3, 9, 20, 42)).streak)
+        end)
+
+        it("reads a streak of 450 days as 400, from today or from yesterday", function()
+            local rows = {}
+            for offset = -450, -1 do
+                rows[#rows + 1] = on_day(offset)
+            end
+            make_db(rows)
+            assert.equals(400, ReadingStats.read(NOW).streak)
+            rows[#rows + 1] = on_day(0)
+            make_db(rows)
+            assert.equals(400, ReadingStats.read(NOW).streak)
+        end)
+
+        -- About a year of heavy reading: 100 page turns a day for 400 days. The streak is read
+        -- twice per book close (pre-build and show), inside the home's share of the budget (C13).
+        it("reads a year of page turns quickly", function()
+            local t = os.date("*t", NOW)
+            local rows = {}
+            for offset = 0, 399 do
+                for turn = 1, 100 do
+                    rows[#rows + 1] = { 1 + turn % 7, at(t.year, t.month, t.day - offset, 8, 0) + turn * 30, 30 }
+                end
+            end
+            make_db(rows)
+            assert.equals(400, ReadingStats.read(NOW).streak)
+            local best = math.huge
+            for _ = 1, 3 do
+                local started = os.clock()
+                ReadingStats.read(NOW)
+                best = math.min(best, os.clock() - started)
+            end
+            assert.truthy(best < 0.010, string.format("%.2f ms", best * 1000))
+        end)
+
         it("reads reading only 401 days ago as no streak and empty", function()
             make_db({ on_day(-401, 3600) })
             local stats = ReadingStats.read(NOW)
@@ -263,14 +323,15 @@ describe("reading stats", function()
 
         it("counts distinct books read since the first of the local month", function()
             make_db({
-                { 1, at(2026, 10, 1, 0, 0), 600 },
-                { 2, at(2026, 10, 5), 600 },
-                { 1, at(2026, 10, 9), 600 },
+                { 5, at(2026, 10, 1, 0, 0), 600 },
+                { 1, at(2026, 10, 5), 600 },
+                { 2, at(2026, 10, 9), 600 },
+                { 1, at(2026, 10, 11), 600 },
                 { 3, at(2026, 10, 13), 600 },
                 { 4, at(2026, 9, 30, 23, 59), 600 },
             })
             local stats = ReadingStats.read(NOW)
-            assert.equals(3, stats.books_month)
+            assert.equals(4, stats.books_month)
             assert.equals("October", stats.month_name)
         end)
 
@@ -340,6 +401,36 @@ describe("reading stats", function()
             ReadingStats.read(NOW)
             SQ3.open:revert()
             assert.spy(open).was.called_with(db_path, "ro")
+        end)
+
+        it("closes the database after a good read and after a failed one", function()
+            -- The connection ReadingStats.read opens, and the read.
+            local function read_capturing()
+                local real_open = SQ3.open
+                local conn
+                SQ3.open = function(...)
+                    conn = real_open(...)
+                    return conn
+                end
+                local ok, stats = pcall(ReadingStats.read, NOW)
+                SQ3.open = real_open
+                assert(ok, stats)
+                return conn, stats
+            end
+            make_db({ on_day(0) })
+            local good, stats = read_capturing()
+            assert.equals("ok", stats.state)
+            -- The binding's own flag, set only once sqlite3_close succeeds (lua-ljsqlite3/init.lua:352-364).
+            assert.is_true(good._closed)
+
+            remove_db()
+            local f = assert(io.open(db_path, "wb"))
+            f:write(string.rep("not a database ", 100))
+            f:close()
+            local corrupt
+            corrupt, stats = read_capturing()
+            assert.equals("empty", stats.state)
+            assert.is_true(corrupt._closed)
         end)
     end)
 
@@ -468,6 +559,36 @@ describe("reading stats", function()
             assert.same({ "1-DAY STREAK · 23 MIN TODAY · 1 BOOK IN " .. os.date("%B", now):upper() },
                 texts(slot.built))
             assert.equals(home.slots[1].built, slot.built)
+            home:free()
+        end)
+
+        it("is still handed over, its stats as built, when reading them again raises", function()
+            local Home = package.loaded["home"]
+            assert.is_true(Settings.set("layout.rows", { { { widget = "stats", share = 1 } } }))
+            local now = os.time()
+            make_db({ { 1, now, 600 } })
+            Home.prebuild()
+            local pending = Home.pending
+            local slot = pending.slots[1]
+            assert.equals("stats", slot.widget)
+            local built, line = slot.built, slot.built[1]
+            local before = texts(built)
+            local conn = SQ3.open(db_path)
+            conn:exec(string.format("INSERT INTO page_stat_data VALUES (1, 99, %d, 780, 300);", now))
+            conn:close()
+            local refresh = Stats.refresh
+            Stats.refresh = function()
+                error("refresh failed on purpose")
+            end
+            local ok, home = pcall(Home.take_pending)
+            Stats.refresh = refresh
+            assert.is_true(ok, tostring(home))
+            assert.equals(pending, home)
+            assert.is_nil(Home.pending)
+            assert.equals(built, home.slots[1].built)
+            assert.equals(line, built[1])
+            assert.same(before, texts(built))
+            assert.is_true(logged_error())
             home:free()
         end)
     end)
