@@ -263,12 +263,13 @@ Upgrading KOReader walks this list.
   its comment at `:311-321` notes that a subclass overriding `onGesture` escapes the swap);
   `frontend/ui/uimanager.lua:142-145` (`UIManager:setIgnoreTouchInput`), `:268-271` (`show`
   lifts the lock for the widget shown).
-- The home overrides `onGesture`, so its own steps, the swipe up to the settings stub and the
-  closing tap, are touch zones on the home (`kopanda_home_swipe_up`, `kopanda_home_tap`, made in
-  `home_gestures.lua`) run through `InputContainer.onGesture(home, ges)`: under the lock they
-  match nothing and the settings message, whose `show` would lift the lock, never shows. A
-  zone's handler only records its step; `HomeGestures.route` runs it in place, the closing tap after
-  the forwarded steps. The forwarded steps go through `InputContainer.onGesture` too, so under
+- The home overrides `onGesture`, so its own steps, the swipe up to the settings stub, the
+  closing tap and the hold, are touch zones on the home (`kopanda_home_swipe_up`,
+  `kopanda_home_tap`, `kopanda_home_hold`, made in `home_gestures.lua`) run through
+  `InputContainer.onGesture(home, ges)`: under the lock they match nothing and the settings
+  message or sheet, whose `show` would lift the lock, never shows. A zone's handler only records
+  its step; `HomeGestures.route` runs it in place, the closing tap and the hold after the
+  forwarded steps. The forwarded steps go through `InputContainer.onGesture` too, so under
   the lock the file manager's zones the Gestures plugin marks always active still run. The
   lock's state is read nowhere: `UIManager._input_gestures_disabled` is private.
 
@@ -794,6 +795,50 @@ Upgrading KOReader walks this list.
   `_repaint` (`handleInput` `:1542-1564`). Nothing is scheduled before the paint, so a sheet
   under a `covers_fullscreen` window waits without a task; polling there would keep
   `_task_queue_dirty` set and spin `handleInput`'s loop.
+- The home closing by any path, KOReader's own close included, closes a shown sheet with it:
+  `UIManager:close` sends `CloseWidget` before it walks the stack (`frontend/ui/uimanager.lua:298-300`),
+  and the home's `onCloseWidget` calls `Sheet.close` in a `pcall`.
+
+### The hold on the home: the `hold` gesture, Gestures' hold corners and the home sheet's rows
+
+- The `hold` gesture fires while the finger is still down, after `HOLD_INTERVAL_MS`, 500 ms
+  (`frontend/device/gesturedetector.lua:63`, `:1276-1287`); the lift sends `hold_release` to the
+  top widget (`:1346-1356`), the sheet's entry above.
+- Nothing under the home took a hold before: the file manager's menu zones are tap and swipe only
+  (`frontend/apps/filemanager/filemanagermenu.lua:76-113`), so the home's hold zone has no
+  menu-zone test, and the file chooser's hold is a menu item's `HoldSelect`
+  (`frontend/ui/widget/menu.lua:124-128`, `frontend/apps/filemanager/filemanager.lua:171-177`),
+  which `InputContainer.onGesture(fm, ges)` never visits, since it runs the file manager's own
+  zones and `ges_events` only (`frontend/ui/widget/container/inputcontainer.lua:266-285`).
+- The hold step runs after the zones registered on the file manager, so the Gestures plugin's
+  four hold-corner zones win when bound: their rectangles come from `DTAP_ZONE_TOP_LEFT` and the
+  other corners (`plugins/gestures.koplugin/main.lua:971-998`; `defaults.lua:66-69` in the
+  KOReader root, each corner an eighth of each side), `hold_top_left_corner` to
+  `hold_bottom_left_corner` are `ges = "hold"` (`main.lua:1124-1139`) with `overrides_hold_corner`
+  (`:1044`), registered through `registerGesture` on the file manager (`:1287-1305`). Unbound, or
+  with `ignore_hold_corners` (`:245`), `gestureAction` returns nothing (`:1316-1320`) and the hold
+  carries on to the home's step.
+- Gestures' default binds `hold_top_right_corner = { refresh_content = true }`
+  (`plugins/gestures.koplugin/defaults.lua:11`): the dispatcher's `refresh_content`
+  (`frontend/dispatcher.lua:162`, `RefreshContent`) reaches `FileManager.onRefreshContent`, the
+  file chooser's `refreshPath` (`frontend/apps/filemanager/filemanager.lua:857-862`). That corner
+  (`DTAP_ZONE_TOP_RIGHT`, `defaults.lua:67`: x from 1106 and y under 210 on the Colorsoft) covers
+  the right end of both looks' clock, so a hold there refreshes the hidden file chooser and opens
+  no sheet.
+- The home sheet's Sleep row is the dispatcher's `suspend` (`frontend/dispatcher.lua:94`, listed
+  only with `Device:canSuspend()`), run through `LauncherEntries.run` and the dispatch bridge as
+  the launcher's action entries are: its `RequestSuspend` reaches the file manager's
+  `devicelistener` (`filemanager.lua:414`), `DeviceListener:onRequestSuspend`
+  (`frontend/device/devicelistener.lua:458-460`), which calls `UIManager:suspend`, which runs the
+  `Suspend` handler on the next tick (`frontend/ui/uimanager.lua:1679-1686`). The emulator can
+  suspend (`frontend/device/sdl/device.lua:165`) by simulation: its `Suspend` handler
+  (`:417-428`) shows the screensaver (`simulateSuspend`, `:462-468`). The Kindle can
+  (`frontend/device/kindle/device.lua:402`).
+- Its Wi-Fi row is the launcher's Wi-Fi entry (the launcher's entries above); its Edit layout note
+  is an `InfoMessage` with no timeout, as the launcher's notes are.
+- "Wi-Fi" takes a plain hyphen: Diner's row face, `fonts/bricolage-grotesque/BricolageGrotesque-Bold.ttf`,
+  has no U+2011 (`face.ftsize:hasGlyph(0x2011)` false, `base/ffi/freetype.lua:75`), so the
+  boards' non-breaking hyphen would come from a fallback font.
 
 ### Widget and support modules
 

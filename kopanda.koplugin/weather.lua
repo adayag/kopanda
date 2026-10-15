@@ -178,6 +178,24 @@ function Weather.line(reading, now, look_id)
     return text
 end
 
+-- How old reading is at now, as the home sheet's Refresh weather row says it: "never fetched"
+-- with none, "just now" under a minute (a reading from the future too), then whole minutes under
+-- an hour, whole hours under 48 and whole days from there, line's thresholds.
+function Weather.age(reading, now)
+    if not reading then
+        return "never fetched"
+    end
+    local age = now - reading.fetched_at
+    if age < 60 then
+        return "just now"
+    elseif age < 3600 then
+        return string.format("%d min ago", math.floor(age / 60))
+    elseif age < 48 * 3600 then
+        return string.format("%d h ago", math.floor(age / 3600))
+    end
+    return string.format("%d d ago", math.floor(age / 86400))
+end
+
 -- NetworkMgr, looked up at call time so a spec can stub it.
 local function network()
     return require("ui/network/manager")

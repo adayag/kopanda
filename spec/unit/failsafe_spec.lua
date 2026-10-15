@@ -200,6 +200,42 @@ describe("KoPanda failing safe", function()
         assert.is_true(logged_error("kopanda-test: gesture failed"))
     end)
 
+    it("closes the home onto the file browser, with no sheet, when a widget's hold throws", function()
+        local Geom = require("ui/geometry")
+        local Widget = require("ui/widget/widget")
+        local quote = {
+            id = "quote",
+            height = function()
+                return 60
+            end,
+            build = function(width)
+                return Widget:new{ dimen = Geom:new{ w = width, h = 60 } }
+            end,
+            hold = function()
+                error("kopanda-test: hold failed")
+            end,
+        }
+        package.loaded["widgets"].get = function(id)
+            return id == "quote" and quote or nil
+        end
+        harness.show_fm()
+        harness.tick(2)
+        local rect
+        for _, slot in ipairs(Home.shown.slots) do
+            if slot.widget == "quote" then
+                rect = slot.rect
+            end
+        end
+        local ok = pcall(UIManager.sendEvent, UIManager, Event:new("Gesture",
+            harness.gesture("hold", rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2))))
+        assert.is_true(ok)
+        for _, widget in ipairs(harness.stack()) do
+            assert.is_not.equals("kopanda_sheet", widget.name)
+        end
+        file_manager_usable()
+        assert.is_true(logged_error("kopanda-test: hold failed"))
+    end)
+
     describe("a sheet", function()
         local Geom = require("ui/geometry")
         local Sheet
