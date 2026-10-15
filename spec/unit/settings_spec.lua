@@ -177,6 +177,7 @@ describe("Settings", function()
             ["two columns"] = { { slot("date", 2), slot("clock", 1) } },
             ["one column"] = { { slot("quote", 1) }, { slot("stats", 3) } },
             ["three columns"] = { { slot("date", 1), slot("clock", 2), slot("weather", 3) }, { slot("quote", 1) } },
+            ["a featured slot"] = { { slot("featured", 1) }, { slot("weather", 1), slot("stats", 2) } },
         }
 
         it("refuses every malformed layout and leaves the file byte-identical", function()

@@ -627,6 +627,28 @@ Upgrading KOReader walks this list.
   `spec/unit/featured_cover_spec.lua` reads its `vertical_string_list`, `lines_per_page` and
   `line_with_ellipsis`, as `quote_spec.lua` does (the quote widget's entry above).
 
+### The featured widget: `FileManager:openFile`, `onHome` and `FrameContainer`'s stripes
+
+- `FileManager:openFile(file)` (`frontend/apps/filemanager/filemanager.lua:1616-1639`): with no
+  provider given it picks one (`DocumentRegistry:getProvider`) and opens a document through
+  `ReaderUI:showReader`, KOReader's own path to the reader, which closes the file manager and the
+  home with it. A tap on the featured book calls it on `FileManager.instance` (the entry above),
+  read through `package.loaded` at tap time.
+- `FileManager:onHome()` (`filemanager.lua:865-870`): resumes repaints and sends the file chooser to
+  the home folder. The first run's "Open the Library" closes the home, then calls it.
+- `FrameContainer`'s `stripe_color` and `stripe_width`
+  (`frontend/ui/widget/container/framecontainer.lua:48-50`): with both set and no `stripe_over`, it
+  hatches its area after its background (`:128-132`) through `hatchRect`
+  (`base/ffi/blitbuffer.lua:2209-2235`), whose stripes run along x + y = constant, on and off of
+  `stripe_width` each measured along x (`:2223`). The C path takes a `Color8`
+  (`blitbuffer.lua:129`, `:2217`), so the grey hatch's ink is passed through `getColor8`. Diner's
+  grey progress fill.
+- The title and the first run's lines are `TextBoxWidget`s with `height_adjust`, which shrinks a
+  box to the lines it holds (`frontend/ui/widget/textboxwidget.lua:53`, `:256-260`), and
+  `height_overflow_show_ellipsis` (`:54`), at line heights as `:151` counts them.
+- The first run's button keeps its rectangle on the screen when it paints, and a tap inside it is
+  tested with `Geom:contains` (`frontend/ui/geometry.lua:255-266`), which takes the far edges in.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`

@@ -91,7 +91,14 @@ describe("looks", function()
                     "palettes.day.cover", "palettes.night.on_cover", "palettes.grey.cover",
                     "type.cover_title.tracking", "type.cover_authors.color", "type.cover_empty.face",
                     "featured.cover_w", "featured.cover_h", "featured.cover_padding.x",
-                    "featured.cover_padding.y", "featured.dash", "featured.dash_gap" }) do
+                    "featured.cover_padding.y", "featured.dash", "featured.dash_gap",
+                    "type.featured_label.face", "type.featured_title.line_height", "type.featured_authors.color",
+                    "type.featured_chapter.size", "type.featured_caption.face", "type.featured_empty_title.size",
+                    "type.featured_empty_body.line_height", "type.featured_button.uppercase", "featured.gap",
+                    "featured.column_padding_y", "featured.title_gap", "featured.chip_outline",
+                    "featured.chip_padding.x", "featured.chip_padding.y", "featured.button_padding.x",
+                    "featured.button_padding.y", "featured.button_fill_color",
+                    "featured.button_outline_color" }) do
                 local found = false
                 for _, path in ipairs(diner) do
                     found = found or path == wanted
@@ -236,6 +243,53 @@ describe("looks", function()
                 assert.is_true(look.type.cover_authors.uppercase, id)
                 assert.is_true(look.type.cover_empty.uppercase, id)
             end
+        end)
+
+        -- The featured text column and first run (Main.dc.html:32-52, HomeRetro.dc.html:27-43,
+        -- EmptyStates.dc.html:32-40 under .tiller/design/2026-10-13-kopanda-screens/): each part's
+        -- face, size, palette role and line height, and the featured block's column entries.
+        it("give the featured parts and the featured block the boards' values", function()
+            local wanted = {
+                editorial = {
+                    featured_label = { "text", 11, "muted", 0 },
+                    featured_title = { "display", 28, "ink", 0.1 },
+                    featured_authors = { "text", 15, "text", 0 },
+                    featured_chapter = { "text", 14, "text", 0 },
+                    featured_caption = { "text", 13, "text", 0 },
+                    featured_empty_title = { "display", 24, "ink", 0.15 },
+                    featured_empty_body = { "text", 15, "text", 0.4 },
+                    featured_button = { "strong", 11, "ink", 0 },
+                },
+                diner = {
+                    featured_label = { "display", 11, "ink", 0 },
+                    featured_title = { "display", 28, "ink", 0.05 },
+                    featured_authors = { "text", 15, "muted", 0 },
+                    featured_chapter = { "text", 15, "muted", 0 },
+                    featured_caption = { "strong", 13, "ink", 0 },
+                    featured_empty_title = { "display", 24, "ink", 0.15 },
+                    featured_empty_body = { "text", 15, "muted", 0.4 },
+                    featured_button = { "strong", 11, "ink", 0 },
+                },
+            }
+            for id, parts in pairs(wanted) do
+                for name, value in pairs(parts) do
+                    local part = looks[id].type[name]
+                    assert.is_table(part, id .. " " .. name)
+                    assert.same(value, { part.face, part.size, part.color, part.line_height }, id .. " " .. name)
+                end
+                for _, name in ipairs({ "featured_label", "featured_button" }) do
+                    assert.is_true(looks[id].type[name].uppercase, id .. " " .. name)
+                end
+            end
+            assert.equals(looks.diner.chip.text_color, looks.diner.type.featured_label.color)
+            local editorial, diner = looks.editorial.featured, looks.diner.featured
+            assert.same({ 24, 0, 6, false }, { editorial.gap, editorial.column_padding_y, editorial.title_gap,
+                editorial.chip_outline })
+            assert.same({ 20, 6, 12, 2 }, { diner.gap, diner.column_padding_y, diner.title_gap, diner.chip_outline })
+            assert.same({ x = 10, y = 3 }, diner.chip_padding)
+            assert.same({ x = 14, y = 9 }, editorial.button_padding)
+            assert.same({ false, "ink" }, { editorial.button_fill_color, editorial.button_outline_color })
+            assert.same({ "mustard", "outline" }, { diner.button_fill_color, diner.button_outline_color })
         end)
 
         it("align both looks' header row to its bottom", function()

@@ -193,6 +193,38 @@ return {
         },
         -- "No book yet" in the first run's dashed frame (EmptyStates.dc.html:33).
         cover_empty = { face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
+        -- "Continue reading" over the featured book (Main.dc.html:39).
+        featured_label = {
+            face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted",
+        },
+        -- The featured book's title, two lines at most, CSS line height 1.1 (Main.dc.html:40).
+        featured_title = {
+            face = "display", size = 28, uppercase = false, tracking = 0, line_height = 0.1, color = "ink",
+        },
+        -- Its authors (Main.dc.html:41).
+        featured_authors = {
+            face = "text", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "text",
+        },
+        -- Its chapter (Main.dc.html:42).
+        featured_chapter = {
+            face = "text", size = 14, uppercase = false, tracking = 0, line_height = 0, color = "text",
+        },
+        -- The percent and the time left under the bar (Main.dc.html:48).
+        featured_caption = {
+            face = "text", size = 13, uppercase = false, tracking = 0, line_height = 0, color = "text",
+        },
+        -- "Nothing open yet.", CSS line height 1.15 (EmptyStates.dc.html:36).
+        featured_empty_title = {
+            face = "display", size = 24, uppercase = false, tracking = 0, line_height = 0.15, color = "ink",
+        },
+        -- The first run's line under it, CSS line height 1.4 (EmptyStates.dc.html:37).
+        featured_empty_body = {
+            face = "text", size = 15, uppercase = false, tracking = 0, line_height = 0.4, color = "text",
+        },
+        -- "Open the Library" (EmptyStates.dc.html:38); the board's weight 600 is the strong face's 500.
+        featured_button = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "ink",
+        },
     },
 
     -- The featured book's cover box.
@@ -202,5 +234,13 @@ return {
         cover_padding = { x = 14, y = 18 }, -- the placeholder's padding (Main.dc.html:33)
         dash = 4, -- the first run's dashed frame: KOReader has no dashed border, so 4 px dashes
         dash_gap = 4, -- with 4 px gaps (EmptyStates.dc.html:33)
+        gap = 24, -- between the cover and the text column (Main.dc.html:32)
+        column_padding_y = 0, -- the text column is unpadded (Main.dc.html:37)
+        title_gap = 6, -- the column's gap between the label and the title (Main.dc.html:38)
+        chip_outline = false, -- the label is plain text, no chip (Main.dc.html:39)
+        chip_padding = { x = false, y = false },
+        button_padding = { x = 14, y = 9 }, -- "Open the Library" (EmptyStates.dc.html:38)
+        button_fill_color = false, -- unfilled (EmptyStates.dc.html:38)
+        button_outline_color = "ink", -- its 1 px ink border, stroke.outline (EmptyStates.dc.html:38)
     },
 }

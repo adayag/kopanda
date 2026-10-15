@@ -325,6 +325,13 @@ describe("gestures on the KoPanda home", function()
     end)
 
     it("passes a tap to the file manager's zones only, not to the file chooser beneath", function()
+        -- A layout with no featured row, so the file chooser's items lie under no slot that acts
+        -- on a tap: the featured book under one would open.
+        assert.is_true(package.loaded["settings"].set("layout.rows", {
+            { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+            { { widget = "quote", share = 1 } },
+            { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
+        }))
         local fm = fm_with_home()
         local size = Screen:getSize()
         -- Close the home and paint the file chooser, so its items have their places, then

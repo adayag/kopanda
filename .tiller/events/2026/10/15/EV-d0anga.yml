@@ -1,0 +1,15 @@
+id: EV-d0anga
+type: start.task
+at: 2026-10-15T16:36:44.033536Z
+contributor: allen
+command: start task T-hftuq7
+targets:
+    - T-hftuq7
+before:
+    status: ready
+after:
+    branch: tiller/home/featured-book/widget
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/widget/task.yml

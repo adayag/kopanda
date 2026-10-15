@@ -4,6 +4,7 @@
 -- Module state: Home.shown, the home on screen or nil; Home.pending, a home built on book
 -- close and not yet shown, or nil.
 local Blitbuffer = require("ffi/blitbuffer")
+local FeaturedCover = require("featured_cover")
 local Geom = require("ui/geometry")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local Layout = require("layout")
@@ -323,8 +324,8 @@ local function settle(home, opts)
         if not ok then
             logger.err("KoPanda: the settled signal failed:", err)
         end
-        -- The weather's once-per-process fetch, never before the first paint, and only while
-        -- this home is still the one shown.
+        -- The weather's once-per-process fetch and each slot's after_show, never before the
+        -- first paint, and only while this home is still the one shown.
         UIManager:nextTick(function()
             if Home.shown ~= home then
                 return
@@ -332,6 +333,15 @@ local function settle(home, opts)
             local weather_ok, weather_err = pcall(Weather.after_show, home)
             if not weather_ok then
                 logger.err("KoPanda: the weather failed after the show:", weather_err)
+            end
+            for _, slot in ipairs(home.slots) do
+                local after_show = slot.module and slot.module.after_show
+                if after_show and Home.shown == home then
+                    local slot_ok, slot_err = pcall(after_show, home.ctx, slot.built)
+                    if not slot_ok then
+                        logger.err("KoPanda: the home widget", slot.widget, "failed after the show:", slot_err)
+                    end
+                end
             end
         end)
     end
@@ -435,10 +445,15 @@ function Home:paintTo(bb, x, y)
     end
 end
 
--- KOReader may close the home itself; Home.shown must not outlive it.
+-- KOReader may close the home itself; Home.shown must not outlive it, nor the featured cover's
+-- bounded check.
 function Home:onCloseWidget()
     if Home.shown == self then
         Home.shown = nil
+    end
+    local ok, err = pcall(FeaturedCover.cancel)
+    if not ok then
+        logger.err("KoPanda: could not drop the cover check:", err)
     end
 end
 
@@ -453,7 +468,8 @@ end
 -- filemanagermenu.lua:71-124, :1102-1114); a page swipe, consumed since there is nothing to
 -- page; the zones registered on the file manager itself, the Gestures plugin's among them
 -- (gestures main.lua:1287-1288); a tap outside the top menu zones runs the tapped slot's widget
--- when it acts on taps, and otherwise closes the home onto the file browser. With
+-- when it acts on taps, and otherwise, or when that tap returns false, closes the home onto the
+-- file browser. With
 -- the home on top, UIManager:sendEvent offers the file manager nothing but its screenshot
 -- module (frontend/ui/uimanager.lua:962-1034), hence the forwarding.
 function Home:routeGesture(ges)
@@ -479,11 +495,10 @@ function Home:routeGesture(ges)
     end
     if own_step == "tap" then
         local slot = self:tappableSlotAt(ges.pos)
-        if slot then
-            slot.module.tap(self.ctx)
-        else
-            close_home(self)
+        if slot and slot.module.tap(self.ctx, ges, slot.built) ~= false then
+            return true
         end
+        close_home(self)
         return true
     end
     return false
