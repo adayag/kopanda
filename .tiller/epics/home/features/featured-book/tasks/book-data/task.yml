@@ -1,7 +1,7 @@
 id: T-gj4d8q
 key: home/featured-book/book-data
 title: Featured book, progress, time left and chapter from KOReader's own records
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:33474c1
         observed_at: 2026-10-15T15:18:53.055531Z
 branch: tiller/home/featured-book/book-data
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T15:43:37.818424Z
+        against:
+            kind: git_commit
+            value: git:5f75b74
+            observed_at: 2026-10-15T15:43:37.818419Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-5f75b74-out-7505672ac4430966fa4322649b0265b9c17061291432f2a660fb158467ef39e6.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T15:43:37.818424Z
+        against:
+            kind: git_commit
+            value: git:5f75b74
+            observed_at: 2026-10-15T15:43:37.818419Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-5f75b74-out-9e666359c44b6666a5cf0ed81eac9a9301de32c2998dd6884fb56ea73b252e11.txt
