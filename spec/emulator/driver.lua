@@ -219,7 +219,9 @@ end
 -- spec/fixtures/library/; pass an empty dir for no books), out_dir (default: a fresh dir
 -- under KO_HOME), cap_s (default 20), timeout_s (default 120), emulator_dir (default
 -- KOPANDA_EMULATOR), patches (extra userpatches, see write_profile), shot_screen (the
--- KoPandaSettled screen the capture is taken on, default "home"). Returns { png, width,
+-- KoPandaSettled screen the capture is taken on, default "home"), env (a table of extra
+-- environment variables for the emulator, name to value, passed after the driver's own in
+-- name order, so a scenario patch can read its options). Returns { png, width,
 -- height, sidecar, log, scratch }; the scratch profile is removed on success and left in place
 -- on failure.
 function M.capture(opts)
@@ -268,6 +270,14 @@ function M.capture(opts)
     }
     if not profile.color then
         vars[#vars + 1] = { "EMULATE_BW_SCREEN", 1 }
+    end
+    local names = {}
+    for name in pairs(opts.env or {}) do
+        names[#names + 1] = name
+    end
+    table.sort(names)
+    for _, name in ipairs(names) do
+        vars[#vars + 1] = { name, opts.env[name] }
     end
 
     local status = run_emulator(emulator, vars, library_dir, log, timeout_s, marker)

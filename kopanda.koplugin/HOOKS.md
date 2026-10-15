@@ -715,6 +715,32 @@ Upgrading KOReader walks this list.
   taken on the swatch's own signal (`shot_screen = "swatch"`); a failure is sent as a `"swatch"`
   signal with `error`.
 
+### The home fixture (`spec/emulator/scenarios/2-scenario-home-fixture.lua`)
+
+- Read by `home_golden_spec.lua` and `home_capture_spec.lua`, whose captures pass `TZ`,
+  `KOPANDA_HOME_FIXTURE` (`populated` or `empty`) and, for Editorial, `KOPANDA_HOME_LOOK` through
+  the driver's `env` option. Applied at `reader.lua:190`, before any plugin code runs.
+- `os.time()` and `os.date(format)` with no time argument are replaced for the whole process and
+  answer 2026-10-13 08:42 in `TZ` (America/Chicago); calls with a time pass through. KOReader's
+  own no-argument callers, such as the log line's stamp (`frontend/logger.lua:73`), read the frozen
+  instant too. `ui/time`'s monotonic clock is untouched, so `paint_ms` stays real.
+- No `NetworkMgr` stub: the driver's `emulator_fake_wifi_connected = false` (the entry above)
+  already makes `isConnected` false, so no fetch runs after the show or from the start-up
+  `NetworkConnected` (`frontend/ui/network/manager.lua:152-154`, sent only when connected).
+- Populated, it writes, from `DataStorage:getSettingsDir()` (`datastorage.lua:60`):
+  - `kopanda/weather.lua`, the cache `kopanda.koplugin/weather.lua` writes, through `LuaSettings`
+    (`frontend/luasettings.lua:21` `open`, `:247` `reset`, `:270` `flush`);
+  - `statistics.sqlite3` (`plugins/statistics.koplugin/main.lua:27`) through the emulator's
+    `lua-ljsqlite3/init` (`base/thirdparty/lua-ljsqlite3/init.lua:331`, `exec` splitting on `;` at
+    `:381-391`), with the plugin's DDL (`main.lua:405-496`) and `user_version` 20221111 (`:35`).
+    On a fresh profile `checkInitDatabase` finds the `book` table and creates nothing
+    (`main.lua:372-374`); with `convert_to_db` set it compares the version (`:318-319`) and leaves
+    a current one as it is.
+- With a look, it writes `kopanda/settings.lua` with `look` and `schema_version = 1`
+  (`frontend/luasettings.lua:102` `saveSetting`), as `kopanda.koplugin/settings.lua` stores it.
+- Any failure logs `KOPANDA_SCENARIO: home fixture failed` and exits with status 4, which the
+  driver reports with the log tail.
+
 ### `logger`
 
 - `frontend/logger.lua:71-90`.
