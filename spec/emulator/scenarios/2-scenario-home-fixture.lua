@@ -120,7 +120,7 @@ local ok, err = pcall(function()
         local PluginLoader = require("pluginloader")
         local load_plugins = PluginLoader.loadPlugins
         local extracted = false
-        PluginLoader.loadPlugins = function(self, ...) -- luacheck: ignore 122
+        PluginLoader.loadPlugins = function(self, ...)
             local enabled, disabled = load_plugins(self, ...)
             if not extracted then
                 extracted = true

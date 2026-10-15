@@ -4,8 +4,9 @@ describe("capturing the KoPanda home on the emulator", function()
     local root = os.getenv("KOPANDA_ROOT")
     local plugin = root .. "/kopanda.koplugin"
     local fixture = root .. "/spec/emulator/scenarios/2-scenario-home-fixture.lua"
-    -- The paint budget (C10): a freshly built populated home paints within this many ms of its
-    -- build starting, in the emulator on this Mac. A regression tripwire, not a device figure.
+    -- The paint budget (featured-book C9, home-layout C10): a freshly built populated home paints
+    -- within this many ms of its build starting, in the emulator on this Mac. A regression tripwire,
+    -- not a device figure.
     local PAINT_BUDGET_MS = 250
 
     local function read(path)
