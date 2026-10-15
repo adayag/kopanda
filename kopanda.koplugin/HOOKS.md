@@ -267,7 +267,7 @@ Upgrading KOReader walks this list.
   closing tap, are touch zones on the home (`kopanda_home_swipe_up`, `kopanda_home_tap`, made in
   `home_gestures.lua`) run through `InputContainer.onGesture(home, ges)`: under the lock they
   match nothing and the settings message, whose `show` would lift the lock, never shows. A
-  zone's handler only records its step; `routeGesture` runs it in place, the closing tap after
+  zone's handler only records its step; `HomeGestures.route` runs it in place, the closing tap after
   the forwarded steps. The forwarded steps go through `InputContainer.onGesture` too, so under
   the lock the file manager's zones the Gestures plugin marks always active still run. The
   lock's state is read nowhere: `UIManager._input_gestures_disabled` is private.
@@ -747,7 +747,7 @@ Upgrading KOReader walks this list.
   `frontend/ui/widget/imagewidget.lua:570-579` proposes the mask method used here.
 - The tiles and rows: `paintRect` and `paintRectRGB32`, `paintBorder` and `paintBorderRGB32`, as
   the quote's tile above.
-- A tap reaches the widget as `tap(ctx, ges, built)` from `Home:routeGesture`, `ges.pos` in screen
+- A tap reaches the widget as `tap(ctx, ges, built)` from `HomeGestures.route` (through `Home:routeGesture`), `ges.pos` in screen
   coordinates; the grid keeps the origin it was last painted at and tests each entry's
   rectangle with `Geom:contains` (`frontend/ui/geometry.lua:255-266`).
 - `NetworkDisconnected`: broadcast from `disableWifi`'s callback
