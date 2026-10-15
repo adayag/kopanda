@@ -158,8 +158,8 @@ Upgrading KOReader walks this list.
   (`DSWIPE_ZONE_LEFT_EDGE`, `DSWIPE_ZONE_RIGHT_EDGE`, `DSWIPE_ZONE_TOP_EDGE`,
   `DSWIPE_ZONE_BOTTOM_EDGE`); read through `G_defaults:readSetting` as
   `frontend/apps/filemanager/filemanagermenu.lua:74-75` reads them, against `Screen:getSize()`
-  at gesture time. The home's own zones (touch lock entry below) cover the screen at the home's
-  build size and test these bands in their handlers.
+  at gesture time, in `home_gestures.lua`. The home's own zones (touch lock entry below) cover
+  the screen at the home's build size and test these bands in their handlers.
 - Screen ratios. A tap inside the top menu zones leaves the home up. The swipe up that
   opens the settings stub starts in the bottom edge band and outside the left and right bands,
   where Gestures binds frontlight and warmth swipes by default
@@ -239,8 +239,8 @@ Upgrading KOReader walks this list.
   for what it does not consume.
 - `frontend/ui/widget/container/inputcontainer.lua:144-181` (`registerTouchZones`, zones per
   container, ordered by `overrides`), `:266-285` (`onGesture` runs a container's zones, then its
-  `ges_events`). The home calls `InputContainer.onGesture(fm.menu, ges)`, then
-  `InputContainer.onGesture(fm, ges)`.
+  `ges_events`). The home's route (`home_gestures.lua`) calls
+  `InputContainer.onGesture(fm.menu, ges)`, then `InputContainer.onGesture(fm, ges)`.
 - FileManagerMenu's zones: `frontend/apps/filemanager/filemanagermenu.lua:71-124`
   (`initGesListener`, the top-zone tap and swipe zones registered on the menu module itself),
   `:1120-1129` (registered from `SetDimensions`, which `FileManager:init` sends,
@@ -264,13 +264,13 @@ Upgrading KOReader walks this list.
   `frontend/ui/uimanager.lua:142-145` (`UIManager:setIgnoreTouchInput`), `:268-271` (`show`
   lifts the lock for the widget shown).
 - The home overrides `onGesture`, so its own steps, the swipe up to the settings stub and the
-  closing tap, are touch zones on the home (`kopanda_home_swipe_up`, `kopanda_home_tap`) run
-  through `InputContainer.onGesture(self, ges)`: under the lock they match nothing and the
-  settings message, whose `show` would lift the lock, never shows. A zone's handler only records
-  its step; `routeGesture` runs it in place, the closing tap after the forwarded steps. The
-  forwarded steps go through `InputContainer.onGesture` too, so under the lock the file
-  manager's zones the Gestures plugin marks always active still run. The lock's state is read
-  nowhere: `UIManager._input_gestures_disabled` is private.
+  closing tap, are touch zones on the home (`kopanda_home_swipe_up`, `kopanda_home_tap`, made in
+  `home_gestures.lua`) run through `InputContainer.onGesture(home, ges)`: under the lock they
+  match nothing and the settings message, whose `show` would lift the lock, never shows. A
+  zone's handler only records its step; `routeGesture` runs it in place, the closing tap after
+  the forwarded steps. The forwarded steps go through `InputContainer.onGesture` too, so under
+  the lock the file manager's zones the Gestures plugin marks always active still run. The
+  lock's state is read nowhere: `UIManager._input_gestures_disabled` is private.
 
 ### `Dispatcher.execute`, the dispatch bridge
 
@@ -461,8 +461,8 @@ Upgrading KOReader walks this list.
   `Layout.font_size` doesn't. `Layout.screen` is the screen it scales by, a seam the spec
   replaces with one of another size.
 - `base/ffi/blitbuffer.lua:2712` (`isColor8`), `:1704-1724` (`paintRect`, which greys a colour),
-  `:1827` (`paintRectRGB32`): the paper, header band, edge, rule and footer stripe are filled as
-  the swatch screen fills its panels.
+  `:1827` (`paintRectRGB32`): the paper, header band, edge, rule and footer stripe are filled by
+  `home_rows.lua` as the swatch screen fills its panels.
 
 ### The date and clock: `datetime` tables and `twelve_hour_clock`
 
@@ -740,7 +740,7 @@ Upgrading KOReader walks this list.
   onto it (`:1318`, straight alpha), then `invertRect` (`:1567`): the ink is white, the ground
   black. At paint, `colorblitFrom(mask, ..., color)` for a `Color8` (`:1405-1420`) and
   `colorblitFromRGB32` for a colour (`:1422-1437`), split by `Blitbuffer.isColor8` (`:2712`)
-  as `home.lua` fills; both take the mask's 8-bit value as the colour's alpha
+  as `home_rows.lua` fills; both take the mask's 8-bit value as the colour's alpha
   (`setPixelColorize`, `:990-1006`; `setPixelColorizeRGB32`, `:1009-1027`). The mask is built
   once per build and freed with the widget (`free`).
 - This replaces `ImageWidget`'s `dim`, which only lightens and assumes a white ground; the note at
