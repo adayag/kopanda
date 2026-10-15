@@ -1,0 +1,14 @@
+id: EV-kemoaa
+type: sync.task
+at: 2026-10-15T18:21:54.051083Z
+contributor: allen
+command: sync task T-2axtyg
+targets:
+    - T-2axtyg
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/goldens/task.yml

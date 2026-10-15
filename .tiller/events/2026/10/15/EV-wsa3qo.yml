@@ -1,0 +1,14 @@
+id: EV-wsa3qo
+type: sync.task
+at: 2026-10-15T18:21:53.876365Z
+contributor: allen
+command: sync task T-ew6y91
+targets:
+    - T-ew6y91
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/cover/task.yml

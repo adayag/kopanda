@@ -1,0 +1,14 @@
+id: EV-j3wu49
+type: sync.feature
+at: 2026-10-15T18:21:54.155718Z
+contributor: allen
+command: sync feature F-e8jz6h
+targets:
+    - F-e8jz6h
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/home/features/featured-book/feature.yml

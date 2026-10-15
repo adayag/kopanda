@@ -1,7 +1,7 @@
 id: F-e8jz6h
 key: home/featured-book
 title: Featured book with cover and progress
-status: active
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -30,6 +30,23 @@ accepted_against:
         kind: git_commit
         value: git:33474c1
         observed_at: 2026-10-15T15:18:53.033497Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:ed805782b514a82ffe5a46a3b18a8993260b7233
+        path: .tiller/epics/home/features/featured-book/feature.md
+        observed_at: 2026-10-15T18:21:54.098286Z
+    eval:
+        kind: git_blob
+        value: git:b1dd19da066e1d396501838d95f4393364907713
+        path: .tiller/epics/home/features/featured-book/feature.eval.md
+        observed_at: 2026-10-15T18:21:54.098286Z
+    commit:
+        kind: git_commit
+        value: git:ad99388
+        observed_at: 2026-10-15T18:21:53.709146Z
+    surfaces: []
+done_basis: rollup
 gates:
     build:
         required: true
