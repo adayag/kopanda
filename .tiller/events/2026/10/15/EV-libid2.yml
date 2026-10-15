@@ -1,0 +1,13 @@
+id: EV-libid2
+type: claim.task
+at: 2026-10-15T19:25:04.956328Z
+contributor: allen
+command: claim task T-xem8p9
+targets:
+    - T-xem8p9
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/night-mode/tasks/palette/task.yml
