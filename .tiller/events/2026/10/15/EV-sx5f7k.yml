@@ -1,0 +1,13 @@
+id: EV-sx5f7k
+type: check.task
+at: 2026-10-15T18:59:57.762098Z
+contributor: allen
+command: check task T-asihfm
+targets:
+    - T-asihfm
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/launcher/tasks/widget/task.yml
