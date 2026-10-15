@@ -1,10 +1,20 @@
 id: T-wj05yo
 key: home/looks-and-schema/swatch
 title: Swatch screen from Tools › KoPanda, reachable beside another shell
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-q3nem8
     - T-puj6su
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:a6c3bc38fe532c2fba762417f7c0e64e4c4f2a7c
+        path: .tiller/epics/home/features/looks-and-schema/tasks/swatch/task.md
+        observed_at: 2026-10-15T02:56:11.977147Z
+    commit:
+        kind: git_commit
+        value: git:75d54ef
+        observed_at: 2026-10-15T02:56:11.999449Z

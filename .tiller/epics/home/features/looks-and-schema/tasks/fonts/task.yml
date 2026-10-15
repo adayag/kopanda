@@ -1,7 +1,17 @@
 id: T-3qwuor
 key: home/looks-and-schema/fonts
 title: Static font instances shipped under the plugin and loaded by path
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:71aacbe2670c11bdadbf4f7e95267339772a1e01
+        path: .tiller/epics/home/features/looks-and-schema/tasks/fonts/task.md
+        observed_at: 2026-10-15T02:56:11.896093Z
+    commit:
+        kind: git_commit
+        value: git:75d54ef
+        observed_at: 2026-10-15T02:56:11.925899Z

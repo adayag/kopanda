@@ -1,0 +1,13 @@
+id: EV-bn3v82
+type: approve.task
+at: 2026-10-15T02:56:11.926021Z
+contributor: allen
+command: approve task T-3qwuor
+targets:
+    - T-3qwuor
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/fonts/task.yml

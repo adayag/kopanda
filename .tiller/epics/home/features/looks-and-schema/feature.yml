@@ -1,7 +1,7 @@
 id: F-i2mbn1
 key: home/looks-and-schema
 title: Schema, settings, looks, icon registry and the swatch screen
-status: specced
+status: ready
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -14,3 +14,18 @@ order:
     - T-q3nem8
     - T-wj05yo
     - T-6nbln8
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:5994786e1d82658845229cb024dfaf2e3e0d2e45
+        path: .tiller/epics/home/features/looks-and-schema/feature.md
+        observed_at: 2026-10-15T02:56:11.828914Z
+    eval:
+        kind: git_blob
+        value: git:efa86c2a8ad27e3ff8f5c842de31d2d5acd87a30
+        path: .tiller/epics/home/features/looks-and-schema/feature.eval.md
+        observed_at: 2026-10-15T02:56:11.828914Z
+    commit:
+        kind: git_commit
+        value: git:75d54ef
+        observed_at: 2026-10-15T02:56:11.865113Z
