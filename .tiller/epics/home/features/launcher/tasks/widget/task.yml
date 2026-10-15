@@ -1,9 +1,19 @@
 id: T-asihfm
 key: home/launcher/widget
 title: Launcher widget in both looks with its states and taps
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-lv4m58
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:912b92ba42cc1858bddeeb7981b1a87ce73e516e
+        path: .tiller/epics/home/features/launcher/tasks/widget/task.md
+        observed_at: 2026-10-15T18:23:57.003861Z
+    commit:
+        kind: git_commit
+        value: git:00dc9e2
+        observed_at: 2026-10-15T18:23:57.040711Z

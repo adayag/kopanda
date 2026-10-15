@@ -1,0 +1,13 @@
+id: EV-33k1kj
+type: approve.task
+at: 2026-10-15T18:23:57.002365Z
+contributor: allen
+command: approve task T-lv4m58
+targets:
+    - T-lv4m58
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/launcher/tasks/entries/task.yml

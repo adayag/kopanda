@@ -1,9 +1,19 @@
 id: T-j98jk4
 key: home/launcher/goldens
 title: Home goldens with the launcher row, the missing plugin and the height budget
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-asihfm
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:e4b7a89067a39f35b1a18f84a80c3ca363e4dfff
+        path: .tiller/epics/home/features/launcher/tasks/goldens/task.md
+        observed_at: 2026-10-15T18:23:57.041126Z
+    commit:
+        kind: git_commit
+        value: git:00dc9e2
+        observed_at: 2026-10-15T18:23:57.066872Z

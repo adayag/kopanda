@@ -1,0 +1,13 @@
+id: EV-i050yr
+type: configure.feature
+at: 2026-10-15T18:23:57.324503Z
+contributor: allen
+command: configure feature home/launcher --review-grain feature
+targets:
+    - F-ydcqb0
+before:
+    review_grain: ""
+after:
+    review_grain: feature
+files:
+    - path: .tiller/epics/home/features/launcher/feature.yml

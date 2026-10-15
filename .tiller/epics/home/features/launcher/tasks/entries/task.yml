@@ -1,7 +1,17 @@
 id: T-lv4m58
 key: home/launcher/entries
 title: Launcher entries in the schema, resolved and run
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:61fddf59a5bfbb988e077b45bb5a08ad492b19a3
+        path: .tiller/epics/home/features/launcher/tasks/entries/task.md
+        observed_at: 2026-10-15T18:23:56.965152Z
+    commit:
+        kind: git_commit
+        value: git:00dc9e2
+        observed_at: 2026-10-15T18:23:57.002059Z
