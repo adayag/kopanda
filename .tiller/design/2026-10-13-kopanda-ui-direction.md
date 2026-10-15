@@ -47,26 +47,33 @@ pixels unless marked "board".
 | Paper | `#f3f1ea` | `#f5f1e6` |
 | Ink | `#1c1b19` | `#2f2e2b` |
 | Muted | `#6b6861` | `#5a5750` |
+| Text | `#4a4843` | ink |
 | Hairline | `#c9c5b8` | none; strokes are ink |
+| Light hairline | `#e2dfd4` (row rules) | none |
 | Accents | none | teal `#6fb3ab`, pink `#e8a59d`, mustard `#e0bd6a` |
+| Band | none | teal (the header band) |
 | Stroke | 1 px hairlines, 2 px for the main rule | 3 px ink outlines, 4 px band edges |
-| Shadow | soft: 2 px right, 3 px down, hairline colour | hard: 4–8 px offset, ink (pink under the cover) |
+| Shadow | soft: 2 px right, 3 px down, hairline colour | hard, ink: 4 px on tiles, 8 px on sheets; 6 px pink under the cover |
 | Corner radius | 3 px on covers, 0 elsewhere | 0 |
 | Tile | text row with a hairline under it | filled box with outline and hard shadow |
-| Progress | 4 px bar, ink on hairline | 14 px outlined bar, mustard fill |
+| Progress | 4 px bar, ink on hairline | 14 px bar, 2 px ink outline, mustard fill on a paper track |
 | Sheet | paper panel from the bottom edge under a 2 px rule | outlined box with 8 px ink shadow and a coloured header band |
-| Chip | small caps, muted | outlined box on an accent |
+| Chip | small caps, muted | outlined uppercase label on pink |
 | Labels | 11 px small caps, 0.14 em tracking (board) | 11 px uppercase, 800, 0.1 em (board) |
 
 Night palettes. Editorial: paper `#15161a`, ink `#e8e6df`, muted `#9b988f`, text `#c4c1b8`, hairline
 `#3a3b40`, light hairline `#2a2b30`; the cover gets a hairline outline instead of a shadow. Diner: paper
-`#1e1c1a`, ink `#f1ece0`, muted `#bdb7a9`, teal `#2f6b65`, pink `#b86f68`, mustard `#b8923c`; outlines
+`#1e1c1a`, ink `#f1ece0`, muted `#bdb7a9`, teal `#2f6b65` (the band too), pink `#b86f68`, mustard
+`#b8923c`; outlines
 and hard shadows turn cream, the greeting reads "Good night", and the weather icon is a moon. Mustard
 and pink tiles take dark text.
 
 Greys for the Paperwhite: paper `#f4f4f4`, ink `#111111`, muted `#444444`/`#555555`, band `#9a9a9a`,
-tiles `#c8c8c8` / `#e0e0e0` / `#b0b0b0`, hairline `#8c8c8c`, light `#d0d0d0`, cover `#4a4a4a`. Diner's
-mustard progress fill becomes a 135° hatch of ink on paper.
+tiles `#c8c8c8` / `#e0e0e0` / `#b0b0b0`, hairline `#8c8c8c`, light `#d0d0d0`, cover `#4a4a4a` (the
+placeholder cover's fill, not a look token). Editorial takes muted `#555555` and text `#444444`, and
+its cover outline and shadow are the hairline `#8c8c8c`. Diner takes muted `#444444`; its accents map
+to the tiles as mustard `#c8c8c8`, pink `#e0e0e0`, teal `#b0b0b0`, and its mustard progress fill
+becomes a 135° hatch of ink on paper.
 
 ## Type sizes on the device (Editorial board values doubled)
 

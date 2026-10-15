@@ -1,9 +1,10 @@
 id: T-6nbln8
 key: home/looks-and-schema/panel-check
 title: Token values settled from the Colorsoft panel
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-wj05yo
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:75d54ef
         observed_at: 2026-10-15T02:56:12.021521Z
+branch: tiller/home/looks-and-schema/panel-check
+review_ref:
+    branch: tiller/home/looks-and-schema/panel-check
+    head:
+        kind: git_commit
+        value: git:c3fc9c5
+        observed_at: 2026-10-15T12:43:16.720287Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T12:42:35.115228Z
+        against:
+            kind: git_commit
+            value: git:c3fc9c5
+            observed_at: 2026-10-15T12:42:35.115218Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-c3fc9c5-out-99d10b757d364e1c834aed8bd5da3d1173f01b0a3c57e9c779143c23a0b6db6f.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T12:42:35.115228Z
+        against:
+            kind: git_commit
+            value: git:c3fc9c5
+            observed_at: 2026-10-15T12:42:35.115218Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-c3fc9c5-out-7292e13182e710cb540b41714d9c0da571e732a7fdfb18a14401dd9a2714b32c.txt

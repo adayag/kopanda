@@ -1,0 +1,13 @@
+id: EV-fodnwp
+type: claim.task
+at: 2026-10-15T04:41:34.229231Z
+contributor: allen
+command: claim task T-6nbln8
+targets:
+    - T-6nbln8
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/panel-check/task.yml
