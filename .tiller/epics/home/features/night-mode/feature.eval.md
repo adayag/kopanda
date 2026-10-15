@@ -17,7 +17,7 @@ criteria:
     binding: { type: test, ref: "spec/unit/night_mode_spec.lua" }
     required: true
   - id: C4
-    statement: "On a colour screen stub with a software-inverted blitbuffer: a home built with night mode on leaves the designed night paper in the buffer's stored pixels at its paper corner, and the designed night ink, not the day ink, in its clock and quote text; a home built by day and painted after night mode turns on rebuilds inside that paint, so its first paint stores the night paper, and it calls no setDirty of its own; turning night mode off again gives the day paper on the next paint; a pre-built home taken after the variant changed is dropped; on a grey screen stub, toggling night mode causes no rebuild"
+    statement: "On a colour screen stub with a software-inverted blitbuffer: a home built with night mode on leaves the designed night paper in the buffer's stored pixels at its paper corner, and in its text the night roles, not the day ones: in the clock (a TextWidget, which KOReader draws in its colour's grey, textwidget.lua:369, blitbuffer.lua:1407) the grey of the designed night ink, and in the quote (a TextBoxWidget, drawn in full colour) the designed night colour of its role; a home built by day and painted after night mode turns on rebuilds inside that paint, so its first paint stores the night paper, and it calls no setDirty of its own; turning night mode off again gives the day paper on the next paint; a pre-built home taken after the variant changed is dropped; on a grey screen stub, toggling night mode causes no rebuild"
     polarity: introduce
     binding: { type: test, ref: "spec/unit/night_mode_spec.lua" }
     required: true
