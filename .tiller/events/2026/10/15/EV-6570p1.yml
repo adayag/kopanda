@@ -1,0 +1,14 @@
+id: EV-6570p1
+type: add.task
+at: 2026-10-15T16:31:55.526276Z
+contributor: allen
+command: add task home/night-mode/palette
+targets:
+    - T-xem8p9
+after:
+    feature: F-4jh8sz
+    key: home/night-mode/palette
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/night-mode/tasks/palette/task.md
+    - path: .tiller/epics/home/features/night-mode/tasks/palette/task.yml

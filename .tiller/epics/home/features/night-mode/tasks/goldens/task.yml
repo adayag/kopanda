@@ -1,0 +1,9 @@
+id: T-x4x0f3
+key: home/night-mode/goldens
+title: Night goldens, the Paperwhite inverse check, the toggle scenario and the night paint budget
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-xem8p9

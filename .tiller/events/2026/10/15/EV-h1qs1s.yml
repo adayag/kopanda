@@ -1,0 +1,14 @@
+id: EV-h1qs1s
+type: add.task
+at: 2026-10-15T16:31:55.61253Z
+contributor: allen
+command: add task home/night-mode/goldens
+targets:
+    - T-x4x0f3
+after:
+    feature: F-4jh8sz
+    key: home/night-mode/goldens
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/night-mode/tasks/goldens/task.md
+    - path: .tiller/epics/home/features/night-mode/tasks/goldens/task.yml
