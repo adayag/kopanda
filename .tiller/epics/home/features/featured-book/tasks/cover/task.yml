@@ -1,7 +1,7 @@
 id: T-ew6y91
 key: home/featured-book/cover
 title: Cover from CoverBrowser's cache, typographic placeholder and bounded extraction
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -17,6 +17,12 @@ accepted_against:
         value: git:33474c1
         observed_at: 2026-10-15T15:18:53.078555Z
 branch: tiller/home/featured-book/cover
+review_ref:
+    branch: tiller/home/featured-book/cover
+    head:
+        kind: git_commit
+        value: git:1010ba3
+        observed_at: 2026-10-15T16:36:24.821122Z
 gates:
     build:
         required: true
