@@ -232,4 +232,31 @@ describe("the home's rows", function()
             assert.is_falsy(source:find("kopanda.koplugin", 1, true), source)
         end
     end)
+
+    it("leaves no KoPanda task in the task queue after a weather fetch and its refresh", function()
+        -- Replaced by hand: this file's stub() makes widget modules.
+        local NetworkMgr = require("ui/network/manager")
+        local Weather = package.loaded["weather"]
+        local is_connected, fetch = NetworkMgr.isConnected, Weather.fetch
+        local fetches = 0
+        NetworkMgr.isConnected = function()
+            return true
+        end
+        Weather.fetch = function()
+            fetches = fetches + 1
+            return true
+        end
+        finally(function()
+            NetworkMgr.isConnected = is_connected
+            Weather.fetch = fetch
+        end)
+        show_home()
+        harness.tick(3)
+        assert.equals(1, fetches)
+        assert.equals(2, builds.date)
+        for _, task in ipairs(UIManager._task_queue) do
+            local source = debug.getinfo(task.action, "S").source
+            assert.is_falsy(source:find("kopanda.koplugin", 1, true), source)
+        end
+    end)
 end)

@@ -34,7 +34,7 @@ describe("schema.lua", function()
         assert.same({ "schema.keys.1.check" }, functions_in({ keys = { { check = print } } }, "schema"))
     end)
 
-    it("is version 1 with look, text_size and layout.rows, in that order", function()
+    it("is version 1 with look, text_size, layout.rows, weather.location and weather.units, in that order", function()
         local schema = load_bare()
         assert.equals(1, schema.version)
         assert.same({
@@ -73,6 +73,24 @@ describe("schema.lua", function()
                 },
                 label = "Layout",
                 group = "home",
+            },
+            {
+                id = "weather.location",
+                type = "location",
+                default = { name = "Chicago, Illinois", latitude = 41.85003, longitude = -87.65005 },
+                label = "Weather location",
+                group = "weather",
+            },
+            {
+                id = "weather.units",
+                type = "choice",
+                choices = {
+                    { value = "fahrenheit", label = "Fahrenheit" },
+                    { value = "celsius", label = "Celsius" },
+                },
+                default = "fahrenheit",
+                label = "Units",
+                group = "weather",
             },
         }, schema.keys)
     end)

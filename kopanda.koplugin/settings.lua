@@ -88,6 +88,21 @@ Settings.validators = {
         end
         return true
     end,
+    -- Exactly { name, latitude, longitude }: a non-empty name, a latitude from -90 to 90 and a
+    -- longitude from -180 to 180.
+    location = function(_, value)
+        if type(value) ~= "table" then
+            return false
+        end
+        local fields = 0
+        for _ in pairs(value) do
+            fields = fields + 1
+        end
+        local name, latitude, longitude = value.name, value.latitude, value.longitude
+        return fields == 3 and type(name) == "string" and name ~= ""
+            and type(latitude) == "number" and latitude >= -90 and latitude <= 90
+            and type(longitude) == "number" and longitude >= -180 and longitude <= 180
+    end,
 }
 
 -- Whether a and b hold the same values: equal, or tables with the same keys whose values are

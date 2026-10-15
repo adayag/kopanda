@@ -154,6 +154,7 @@ return {
             edge_width = 0,
             edge_color = false,
         },
+        weather_icon = { size = 0, gap = 0 }, -- Editorial's weather has no icon (Main.dc.html:25)
     },
 
     -- The home widgets' text, per part: a face role, a size in board pixels (before text_size),

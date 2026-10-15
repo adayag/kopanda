@@ -158,6 +158,8 @@ return {
             edge_width = 4,
             edge_color = "ink",
         },
+        -- The weather's sun or moon before its line, and the gap after it (HomeRetro.dc.html:48-49).
+        weather_icon = { size = 20, gap = 8 },
     },
 
     -- The home widgets' text, per part: a face role, a size in board pixels (before text_size),

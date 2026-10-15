@@ -137,6 +137,15 @@ describe("the emulator capture driver", function()
             assert.is_true(settings:readSetting("color_rendering"))
         end)
 
+        -- Off, the emulator's NetworkMgr:isConnected() is false (frontend/device/sdl/device.lua:478-500),
+        -- so no capture fetches the weather.
+        it("turns the emulator's fake Wi-Fi off", function()
+            local dir = fresh_dir("profile")
+            driver.write_profile(dir, "colorsoft", probe)
+            local settings = LuaSettings:open(dir .. "/settings.reader.lua")
+            assert.is_false(settings:readSetting("emulator_fake_wifi_connected"))
+        end)
+
         -- user_version sits at offset 60 of the SQLite file header, 4 bytes big-endian.
         -- Read raw: the emulator's sqlite binding cannot be required twice in one Busted run.
         it("seeds coverbrowser's cache database at its current schema version", function()

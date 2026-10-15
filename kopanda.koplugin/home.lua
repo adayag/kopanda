@@ -11,6 +11,7 @@ local Looks = require("looks")
 local Settings = require("settings")
 local SettingsMenu = require("settings_menu")
 local UIManager = require("ui/uimanager")
+local Weather = require("weather")
 local Widget = require("ui/widget/widget")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
@@ -264,6 +265,16 @@ function Home:onTimeFormatChanged()
     self:refresh()
 end
 
+-- Broadcast when Wi-Fi connects, and at start when it is already up
+-- (frontend/ui/network/manager.lua:109, :152-154): the weather fetches if none has succeeded
+-- yet. Returns nothing, so the event reaches the other windows.
+function Home:onNetworkConnected()
+    local ok, err = pcall(Weather.on_connected, self)
+    if not ok then
+        logger.err("KoPanda: the weather failed on NetworkConnected:", err)
+    end
+end
+
 -- The slot at pos whose widget acts on a tap, or nil.
 function Home:tappableSlotAt(pos)
     for _, slot in ipairs(self.slots) do
@@ -306,6 +317,17 @@ local function settle(home, opts)
         if not ok then
             logger.err("KoPanda: the settled signal failed:", err)
         end
+        -- The weather's once-per-process fetch, never before the first paint, and only while
+        -- this home is still the one shown.
+        UIManager:nextTick(function()
+            if Home.shown ~= home then
+                return
+            end
+            local weather_ok, weather_err = pcall(Weather.after_show, home)
+            if not weather_ok then
+                logger.err("KoPanda: the weather failed after the show:", weather_err)
+            end
+        end)
     end
     finish(opts)
 end

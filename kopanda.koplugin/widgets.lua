@@ -7,11 +7,16 @@
 -- package.path.
 local Widgets = {}
 
-local modules = {}
+-- Module names by id, required when first asked for: a widget module reaches layout.lua, which
+-- requires this registry, so none can be required while it loads.
+local modules = {
+    weather = "widgets/weather",
+}
 
 -- The module for id, or nil when this plugin has none.
 function Widgets.get(id)
-    return modules[id]
+    local name = modules[id]
+    return name and require(name)
 end
 
 return Widgets
