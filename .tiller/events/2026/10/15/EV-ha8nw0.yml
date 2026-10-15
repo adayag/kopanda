@@ -1,0 +1,14 @@
+id: EV-ha8nw0
+type: add.task
+at: 2026-10-15T06:17:18.308258Z
+contributor: allen
+command: add task home/featured-book/goldens
+targets:
+    - T-2axtyg
+after:
+    feature: F-e8jz6h
+    key: home/featured-book/goldens
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/goldens/task.md
+    - path: .tiller/epics/home/features/featured-book/tasks/goldens/task.yml

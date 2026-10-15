@@ -1,0 +1,14 @@
+id: EV-f57cry
+type: add.task
+at: 2026-10-15T06:17:18.072009Z
+contributor: allen
+command: add task home/featured-book/book-data
+targets:
+    - T-gj4d8q
+after:
+    feature: F-e8jz6h
+    key: home/featured-book/book-data
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/book-data/task.md
+    - path: .tiller/epics/home/features/featured-book/tasks/book-data/task.yml

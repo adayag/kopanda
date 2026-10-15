@@ -1,0 +1,13 @@
+id: EV-sxvy1e
+type: spec.feature
+at: 2026-10-15T06:28:55.968279Z
+contributor: allen
+command: spec feature F-e8jz6h
+targets:
+    - F-e8jz6h
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/home/features/featured-book/feature.yml

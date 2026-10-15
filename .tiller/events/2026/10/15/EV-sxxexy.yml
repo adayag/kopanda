@@ -1,0 +1,14 @@
+id: EV-sxxexy
+type: add.task
+at: 2026-10-15T06:17:18.154648Z
+contributor: allen
+command: add task home/featured-book/cover
+targets:
+    - T-ew6y91
+after:
+    feature: F-e8jz6h
+    key: home/featured-book/cover
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/cover/task.md
+    - path: .tiller/epics/home/features/featured-book/tasks/cover/task.yml

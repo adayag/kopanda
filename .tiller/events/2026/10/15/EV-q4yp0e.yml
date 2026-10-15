@@ -1,0 +1,14 @@
+id: EV-q4yp0e
+type: add.task
+at: 2026-10-15T06:17:18.231405Z
+contributor: allen
+command: add task home/featured-book/widget
+targets:
+    - T-hftuq7
+after:
+    feature: F-e8jz6h
+    key: home/featured-book/widget
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/widget/task.md
+    - path: .tiller/epics/home/features/featured-book/tasks/widget/task.yml
