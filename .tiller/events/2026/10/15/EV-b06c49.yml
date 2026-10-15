@@ -1,0 +1,11 @@
+id: EV-b06c49
+type: claim.tweak
+at: 2026-10-15T20:35:47.725611Z
+contributor: allen
+command: claim tweak tweaks/split-home-lua
+targets:
+    - TW-l2ibo3
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/split-home-lua/tweak.yml

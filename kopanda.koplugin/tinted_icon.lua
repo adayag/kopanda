@@ -37,7 +37,7 @@ function TintedIcon:init()
 end
 
 -- The mask's 8-bit value as the colour's alpha (base/ffi/blitbuffer.lua:1405-1437, :990-1006); a
--- grey through colorblitFrom, a colour through colorblitFromRGB32, as home.lua fills.
+-- grey through colorblitFrom, a colour through colorblitFromRGB32, as home_rows.lua fills.
 function TintedIcon:paintTo(bb, x, y)
     local mask, size = self.mask, self.size
     if not mask then

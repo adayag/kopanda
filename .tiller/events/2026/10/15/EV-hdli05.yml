@@ -1,0 +1,14 @@
+id: EV-hdli05
+type: submit.tweak
+at: 2026-10-15T20:46:24.460251Z
+contributor: allen
+command: submit tweak TW-l2ibo3
+targets:
+    - TW-l2ibo3
+before:
+    status: check
+after:
+    pr: 8
+    status: in_review
+files:
+    - path: .tiller/tweaks/split-home-lua/tweak.yml

@@ -23,6 +23,8 @@ local time = require("ui/time")
 -- use them get them from the require cache.
 require("featured_book")
 require("featured_cover")
+require("home_gestures")
+require("home_rows")
 require("icons")
 require("launcher_entries")
 require("layout")
