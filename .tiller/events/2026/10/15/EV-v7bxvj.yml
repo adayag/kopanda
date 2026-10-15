@@ -1,0 +1,13 @@
+id: EV-v7bxvj
+type: claim.task
+at: 2026-10-15T03:10:32.33874Z
+contributor: allen
+command: claim task T-q3nem8
+targets:
+    - T-q3nem8
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/looks/task.yml
