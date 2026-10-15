@@ -1,0 +1,14 @@
+id: EV-odjei4
+type: add.task
+at: 2026-10-15T20:00:14.018042Z
+contributor: allen
+command: add task home/sheets/sheet
+targets:
+    - T-b26ryy
+after:
+    feature: F-3ct1xn
+    key: home/sheets/sheet
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/sheet/task.md
+    - path: .tiller/epics/home/features/sheets/tasks/sheet/task.yml

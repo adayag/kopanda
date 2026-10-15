@@ -1,0 +1,14 @@
+id: EV-amj5w9
+type: add.task
+at: 2026-10-15T20:00:14.187973Z
+contributor: allen
+command: add task home/sheets/book-sheet
+targets:
+    - T-pupoys
+after:
+    feature: F-3ct1xn
+    key: home/sheets/book-sheet
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/book-sheet/task.md
+    - path: .tiller/epics/home/features/sheets/tasks/book-sheet/task.yml

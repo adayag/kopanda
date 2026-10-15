@@ -1,0 +1,9 @@
+id: T-pupoys
+key: home/sheets/book-sheet
+title: The book sheet, its read status sub-sheet and the featured-book picker
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-odbt4w

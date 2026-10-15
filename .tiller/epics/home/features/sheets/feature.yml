@@ -1,10 +1,17 @@
 id: F-3ct1xn
 key: home/sheets
 title: Tap acts, hold opens a sheet
-status: draft
+status: specced
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
 depends_on:
     - F-e8jz6h
     - F-ydcqb0
+    - F-4jh8sz
+order:
+    - T-b26ryy
+    - T-odbt4w
+    - T-pupoys
+    - T-8hhlio
+    - T-w3g6jh

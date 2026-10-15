@@ -1,0 +1,10 @@
+id: T-w3g6jh
+key: home/sheets/goldens
+title: Sheet goldens in both looks and the sheet paint budget
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-odbt4w
+    - T-pupoys

@@ -1,0 +1,14 @@
+id: EV-5qtgri
+type: add.task
+at: 2026-10-15T20:00:14.271763Z
+contributor: allen
+command: add task home/sheets/folder-sheet
+targets:
+    - T-8hhlio
+after:
+    feature: F-3ct1xn
+    key: home/sheets/folder-sheet
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/folder-sheet/task.md
+    - path: .tiller/epics/home/features/sheets/tasks/folder-sheet/task.yml

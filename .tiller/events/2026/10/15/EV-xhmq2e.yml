@@ -1,0 +1,13 @@
+id: EV-xhmq2e
+type: spec.feature
+at: 2026-10-15T20:23:43.397736Z
+contributor: allen
+command: spec feature F-3ct1xn
+targets:
+    - F-3ct1xn
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/home/features/sheets/feature.yml

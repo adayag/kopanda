@@ -1,0 +1,9 @@
+id: T-8hhlio
+key: home/sheets/folder-sheet
+title: The folder sheet from a launcher folder tap
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-b26ryy

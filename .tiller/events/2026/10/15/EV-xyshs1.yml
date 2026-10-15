@@ -1,0 +1,14 @@
+id: EV-xyshs1
+type: add.task
+at: 2026-10-15T20:00:14.355404Z
+contributor: allen
+command: add task home/sheets/goldens
+targets:
+    - T-w3g6jh
+after:
+    feature: F-3ct1xn
+    key: home/sheets/goldens
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/goldens/task.md
+    - path: .tiller/epics/home/features/sheets/tasks/goldens/task.yml
