@@ -1,0 +1,17 @@
+id: EV-2n0ez2
+type: start.task
+at: 2026-10-15T15:19:21.788252Z
+contributor: allen
+command: start task T-gj4d8q
+targets:
+    - T-gj4d8q
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/home/featured-book
+    branch: tiller/home/featured-book/book-data
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/book-data/task.yml
+    - path: .tiller/epics/home/features/featured-book/feature.yml
