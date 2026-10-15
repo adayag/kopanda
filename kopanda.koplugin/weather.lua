@@ -3,7 +3,7 @@
 -- The cache is runtime state like state.lua: not a setting, no schema entry, never read by the
 -- studio. A fetch blocks the UI for its duration, so it runs only after the home's first paint,
 -- once per process when connected, on NetworkConnected until one succeeds, and on a tap.
--- Module state: whether a fetch was attempted, and whether one succeeded, in this process.
+-- Module state: whether a fetch was attempted in this process, and how many have succeeded.
 local DataStorage = require("datastorage")
 local InfoMessage = require("ui/widget/infomessage")
 local LuaSettings = require("luasettings")
@@ -17,7 +17,7 @@ local socketutil = require("socketutil")
 local Weather = {}
 
 local attempted = false
-local succeeded = false
+local successes = 0
 
 local NO_READING = "Weather needs Wi\u{2011}Fi" -- U+2011, as the board writes it (EmptyStates.dc.html:25)
 
@@ -71,8 +71,9 @@ end
 -- included (frontend/socketutil.lua:52-70; the pattern of frontend/ui/wikipedia.lua:146-215).
 local function get(url)
     local chunks = {}
+    local http = require("socket.http")
     socketutil:set_timeout(5, 10)
-    local ok, _, code, headers = pcall(require("socket.http").request, {
+    local ok, _, code, headers = pcall(http.request, {
         url = url,
         method = "GET",
         sink = socketutil.table_sink(chunks),
@@ -188,7 +189,7 @@ local function run(home)
     if not Weather.fetch() then
         return false
     end
-    succeeded = true
+    successes = successes + 1
     home:refresh()
     return true
 end
@@ -205,7 +206,7 @@ end
 -- On NetworkConnected (frontend/ui/network/manager.lua:109, :154): a fetch while connected,
 -- until one has succeeded this process.
 function Weather.on_connected(home)
-    if succeeded or not network():isConnected() then
+    if successes > 0 or not network():isConnected() then
         return
     end
     run(home)
@@ -213,9 +214,15 @@ end
 
 -- A tap on the weather: a fetch now when connected; otherwise once online, which may ask to
 -- turn Wi-Fi on as the user's wifi_enable_action says (frontend/ui/network/manager.lua:605-618,
--- :698-709). A failed fetch says so for 3 s.
+-- :698-709). NetworkMgr broadcasts NetworkConnected before it runs the callback (:109, :116),
+-- so the callback skips its fetch when one has succeeded since the tap. A failed fetch says so
+-- for 3 s.
 function Weather.tap(home)
+    local successes_at_tap = successes
     local function fetch_now()
+        if successes > successes_at_tap then
+            return
+        end
         if not run(home) then
             UIManager:show(InfoMessage:new{ text = "Couldn't update the weather", timeout = 3 })
         end

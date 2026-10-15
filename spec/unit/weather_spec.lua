@@ -218,6 +218,12 @@ describe("weather", function()
             ["a 500"] = function()
                 serve(500, {}, "oops")
             end,
+            ["a 500 with a valid body"] = function()
+                serve(500, { ["content-type"] = "application/json" }, BODY)
+            end,
+            ["a 404 with a valid body"] = function()
+                serve(404, { ["content-type"] = "application/json" }, BODY)
+            end,
             ["nil headers"] = function()
                 serve(200, nil, BODY)
             end,
@@ -494,6 +500,23 @@ describe("weather", function()
             assert.equals(1, home.refreshed)
         end)
 
+        it("does not fetch again once online when NetworkConnected's fetch succeeded first", function()
+            -- NetworkMgr broadcasts NetworkConnected before it runs runWhenOnline's callback
+            -- (frontend/ui/network/manager.lua:109, :116).
+            local run_when_online = network(false)
+            serve_ok()
+            local home = fake_home()
+            Weather.tap(home)
+            assert.stub(run_when_online).was.called(1)
+            local callback = run_when_online.calls[1].vals[2]
+            network(true)
+            Weather.on_connected(home)
+            assert.equals(1, #requests)
+            callback()
+            assert.equals(1, #requests)
+            assert.equals(1, home.refreshed)
+        end)
+
         it("shows that the update failed, and keeps the cache, on each failure", function()
             network(true)
             local text = cache_text(reading())
@@ -504,6 +527,12 @@ describe("weather", function()
                 end,
                 function()
                     serve(500, {}, "oops")
+                end,
+                function()
+                    serve(500, { ["content-type"] = "application/json" }, BODY)
+                end,
+                function()
+                    serve(404, { ["content-type"] = "application/json" }, BODY)
                 end,
                 function()
                     serve(200, nil, BODY)
@@ -520,7 +549,7 @@ describe("weather", function()
                 assert.equals(0, home.refreshed, "case " .. i)
                 assert.same({ text = "Couldn't update the weather", timeout = 3 }, shown[i], "case " .. i)
             end
-            assert.equals(4, #shown)
+            assert.equals(6, #shown)
         end)
     end)
 

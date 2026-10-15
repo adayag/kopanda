@@ -448,7 +448,8 @@ Upgrading KOReader walks this list.
   (`width`, `height`, `background`), `:104` (`paintTo`).
 - `ui/widget/container/centercontainer`: `frontend/ui/widget/container/centercontainer.lua:7`.
 - `ui/widget/container/leftcontainer`: `frontend/ui/widget/container/leftcontainer.lua:8-10`
-  (`allow_mirroring`), `:12-26` (`paintTo` centres its content in `dimen`); the date's column.
+  (`allow_mirroring`), `:12-26` (`paintTo` places its content at the left, centred vertically,
+  in `dimen`); the weather's line.
 - `ui/widget/verticalgroup`: `frontend/ui/widget/verticalgroup.lua:8`.
 - `ui/widget/verticalspan`: `frontend/ui/widget/verticalspan.lua:6`.
 - `ui/widget/widget`: `frontend/ui/widget/widget.lua:40` (`new`), `:70` (`paintTo` draws nothing),
@@ -460,7 +461,7 @@ Upgrading KOReader walks this list.
 - `ui/widget/horizontalspan`: `frontend/ui/widget/horizontalspan.lua:6` (`width`).
 - `ui/widget/iconwidget`: `frontend/ui/widget/iconwidget.lua:43` (`file`, `width`, `height`,
   `alpha`; the swatch entry above).
-- `util`: `frontend/util.lua:469` (`splitToChars`, the date and clock entry above).
+- `util`: `frontend/util.lua:469` (`splitToChars`, a tracked line set a character at a time).
 - `ui/font`: `frontend/ui/font.lua:269-276` (`getFace` scales the size by
   `Screen:scaleBySize` itself).
 - `ui/geometry`: `frontend/ui/geometry.lua:37` (`Geom:new`), `:255-266` (`contains`).

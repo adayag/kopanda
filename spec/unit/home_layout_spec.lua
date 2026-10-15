@@ -222,6 +222,27 @@ describe("the home's rows", function()
         assert.equals(2, builds.stats)
     end)
 
+    it("neither rebuilds nor repaints on refresh once closed", function()
+        -- A tap's fetch runs once online, which may be after the home has closed.
+        local _, home = show_home()
+        Home.close()
+        assert.is_nil(Home.shown)
+        -- Recorded by hand: a luassert spy deep-copies its arguments, so identity is lost.
+        local set_dirty = UIManager.setDirty
+        local repainted = false
+        UIManager.setDirty = function(self, widget, ...)
+            repainted = repainted or widget == home
+            return set_dirty(self, widget, ...)
+        end
+        finally(function()
+            UIManager.setDirty = set_dirty
+        end)
+        local built = builds.stats
+        home:refresh()
+        assert.equals(built, builds.stats)
+        assert.is_false(repainted)
+    end)
+
     it("leaves no KoPanda task in the task queue after show, settle and resume", function()
         show_home()
         harness.tick(3)

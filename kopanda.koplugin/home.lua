@@ -237,8 +237,12 @@ local function close_home(home)
 end
 
 -- Rebuilds the rows and repaints the home, so the time, date and widgets are current. A failure
--- closes the home onto the file browser. Called by the weather fetch through ctx.home.
+-- closes the home onto the file browser. Called by the weather fetch through ctx.home, which may
+-- finish after this home has closed; a home that is not shown is left alone.
 function Home:refresh()
+    if Home.shown ~= self then
+        return
+    end
     local ok, err = pcall(function()
         local old = self[1]
         self:build()
