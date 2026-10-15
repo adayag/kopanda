@@ -1,7 +1,7 @@
 id: T-x42jhm
 key: home/home-layout/quote
 title: Quote of the day from a shipped public-domain file
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:b9f66a1
         observed_at: 2026-10-15T12:44:30.785454Z
 branch: tiller/home/home-layout/quote
+review_ref:
+    branch: tiller/home/home-layout/quote
+    head:
+        kind: git_commit
+        value: git:ba161f3
+        observed_at: 2026-10-15T14:38:47.926928Z
 gates:
     build:
         required: true
