@@ -1,0 +1,14 @@
+id: EV-g8duue
+type: add.tweak
+at: 2026-10-15T19:24:51.368042Z
+contributor: allen
+command: add tweak split-home-lua
+targets:
+    - TW-l2ibo3
+after:
+    attached_to: F-4jh8sz
+    key: tweaks/split-home-lua
+    status: proposed
+files:
+    - path: .tiller/tweaks/split-home-lua/tweak.md
+    - path: .tiller/tweaks/split-home-lua/tweak.yml
