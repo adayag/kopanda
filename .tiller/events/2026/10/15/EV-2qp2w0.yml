@@ -1,0 +1,13 @@
+id: EV-2qp2w0
+type: claim.task
+at: 2026-10-15T14:16:47.387024Z
+contributor: allen
+command: claim task T-x42jhm
+targets:
+    - T-x42jhm
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/quote/task.yml
