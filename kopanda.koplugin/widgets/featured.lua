@@ -124,7 +124,7 @@ local function scaler(ctx)
 end
 
 local function colorer(ctx)
-    local palette = ctx.look.palettes[ctx.variant]
+    local palette = Looks.palette(ctx.look, ctx.variant)
     return function(role)
         return role and palette[role] and Looks.color(palette[role]) or nil
     end

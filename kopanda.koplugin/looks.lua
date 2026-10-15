@@ -28,14 +28,51 @@ function Looks.active()
     return looks[Settings.get("look")]
 end
 
--- The palette to draw with: grey when the screen renders without colour, day otherwise.
--- isColorEnabled honours the user's color_rendering setting before the panel's capability
--- (frontend/device/generic/device.lua:265-271).
+-- The palette variant to draw with: grey when the screen renders without colour, whatever the
+-- night mode; night when KOReader's night mode is on (Screen.night_mode,
+-- base/ffi/framebuffer.lua:22, :476-477); day otherwise. isColorEnabled honours the user's
+-- color_rendering setting before the panel's capability (frontend/device/generic/device.lua:265-271).
 function Looks.variant()
-    if Device.screen:isColorEnabled() then
-        return "day"
+    if not Device.screen:isColorEnabled() then
+        return "grey"
     end
-    return "grey"
+    if Device.screen.night_mode then
+        return "night"
+    end
+    return "day"
+end
+
+-- Each look's night palette inverted, by look table; never written into the look itself.
+local inverted = setmetatable({}, { __mode = "k" })
+
+-- The per-channel inverse of a #rrggbb; any other value as it is.
+local function invert(value)
+    if type(value) ~= "string" then
+        return value
+    end
+    local r, g, b = value:match("^#(%x%x)(%x%x)(%x%x)$")
+    if not r then
+        return value
+    end
+    return string.format("#%02x%02x%02x", 255 - tonumber(r, 16), 255 - tonumber(g, 16), 255 - tonumber(b, 16))
+end
+
+-- The palette to paint look with in variant. KOReader's night mode inverts everything painted
+-- (base/ffi/framebuffer.lua:476-488), so night paints the night palette inverted and the panel
+-- shows it as designed; day and grey are the look's own.
+function Looks.palette(look, variant)
+    if variant ~= "night" then
+        return look.palettes[variant]
+    end
+    local palette = inverted[look]
+    if not palette then
+        palette = {}
+        for role, value in pairs(look.palettes.night) do
+            palette[role] = invert(value)
+        end
+        inverted[look] = palette
+    end
+    return palette
 end
 
 -- The KOReader colour for a palette token's #rrggbb, or nil when it is not one. colorFromString

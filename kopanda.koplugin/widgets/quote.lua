@@ -100,7 +100,7 @@ local function compose(width, ctx)
         return Widget:new{ dimen = Geom:new{ w = width, h = 0 } }
     end
     local look = ctx.look
-    local palette = look.palettes[ctx.variant]
+    local palette = Looks.palette(look, ctx.variant)
     local function color(role)
         return role and Looks.color(palette[role])
     end
