@@ -1,0 +1,13 @@
+id: EV-cltige
+type: approve.task
+at: 2026-10-15T15:18:53.100842Z
+contributor: allen
+command: approve task T-hftuq7
+targets:
+    - T-hftuq7
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/widget/task.yml

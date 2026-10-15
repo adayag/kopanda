@@ -1,0 +1,13 @@
+id: EV-vb3r9s
+type: approve.task
+at: 2026-10-15T15:18:53.122273Z
+contributor: allen
+command: approve task T-2axtyg
+targets:
+    - T-2axtyg
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/goldens/task.yml

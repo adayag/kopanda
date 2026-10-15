@@ -1,0 +1,13 @@
+id: EV-03r1qz
+type: approve.task
+at: 2026-10-15T15:18:53.055673Z
+contributor: allen
+command: approve task T-gj4d8q
+targets:
+    - T-gj4d8q
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/book-data/task.yml

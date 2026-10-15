@@ -1,10 +1,20 @@
 id: T-hftuq7
 key: home/featured-book/widget
 title: Featured widget in both looks, first-run state and tap
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-gj4d8q
     - T-ew6y91
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:2ec14ea67bc799c75a0ee97220fb6567d46e0326
+        path: .tiller/epics/home/features/featured-book/tasks/widget/task.md
+        observed_at: 2026-10-15T15:18:53.078991Z
+    commit:
+        kind: git_commit
+        value: git:33474c1
+        observed_at: 2026-10-15T15:18:53.100763Z

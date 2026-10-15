@@ -1,0 +1,13 @@
+id: EV-0wc6y6
+type: configure.feature
+at: 2026-10-15T15:18:53.348847Z
+contributor: allen
+command: configure feature home/featured-book --review-grain feature
+targets:
+    - F-e8jz6h
+before:
+    review_grain: ""
+after:
+    review_grain: feature
+files:
+    - path: .tiller/epics/home/features/featured-book/feature.yml

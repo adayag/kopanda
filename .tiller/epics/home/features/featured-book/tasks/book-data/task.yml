@@ -1,7 +1,17 @@
 id: T-gj4d8q
 key: home/featured-book/book-data
 title: Featured book, progress, time left and chapter from KOReader's own records
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:19bf462a9eb029a0cc1dae3fa92b0b0b0428e4b0
+        path: .tiller/epics/home/features/featured-book/tasks/book-data/task.md
+        observed_at: 2026-10-15T15:18:53.034092Z
+    commit:
+        kind: git_commit
+        value: git:33474c1
+        observed_at: 2026-10-15T15:18:53.055531Z

@@ -1,0 +1,13 @@
+id: EV-a1hbup
+type: approve.feature
+at: 2026-10-15T15:18:53.033675Z
+contributor: allen
+command: approve feature F-e8jz6h
+targets:
+    - F-e8jz6h
+before:
+    status: specced
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/featured-book/feature.yml

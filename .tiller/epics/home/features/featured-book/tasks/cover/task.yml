@@ -1,7 +1,17 @@
 id: T-ew6y91
 key: home/featured-book/cover
 title: Cover from CoverBrowser's cache, typographic placeholder and bounded extraction
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:e39135b26bebd97549ada29622eb0c01175a0f3d
+        path: .tiller/epics/home/features/featured-book/tasks/cover/task.md
+        observed_at: 2026-10-15T15:18:53.055991Z
+    commit:
+        kind: git_commit
+        value: git:33474c1
+        observed_at: 2026-10-15T15:18:53.078555Z
