@@ -71,7 +71,8 @@ end
 
 -- opts: masks ({ {x=, y=, w=, h=}, ... } in pixels), tolerance (largest per-channel
 -- difference still counted as equal), max_fraction (of compared pixels allowed to differ),
--- diff_png (path written when the compare fails on pixels).
+-- diff_png (path written when the compare fails on pixels), invert (compare against the golden
+-- with each channel inverted, 255 - v, as a night capture on a grey screen is its day golden).
 -- Returns { ok, differing, compared, fraction, diff_png }, or on a size mismatch
 -- { ok = false, reason = "size", actual = {w, h}, golden = {w, h} }.
 function M.compare(actual_png, golden_png, opts)
@@ -97,13 +98,18 @@ function M.compare(actual_png, golden_png, opts)
     local map, masked = mask_map(opts.masks, w, h)
     local differs = ffi.new("uint8_t[?]", w * h)
     local a, g = actual.data, golden.data
+    -- The reference channel is base + sign × the golden's: itself, or its inverse.
+    local base, sign = 0, 1
+    if opts.invert then
+        base, sign = 255, -1
+    end
     local differing = 0
     for i = 0, w * h - 1 do
         if not map or map[i] == 0 then
             local o = i * 3
-            if math.abs(a[o] - g[o]) > tolerance
-                or math.abs(a[o + 1] - g[o + 1]) > tolerance
-                or math.abs(a[o + 2] - g[o + 2]) > tolerance then
+            if math.abs(a[o] - (base + sign * g[o])) > tolerance
+                or math.abs(a[o + 1] - (base + sign * g[o + 1])) > tolerance
+                or math.abs(a[o + 2] - (base + sign * g[o + 2])) > tolerance then
                 differs[i] = 1
                 differing = differing + 1
             end

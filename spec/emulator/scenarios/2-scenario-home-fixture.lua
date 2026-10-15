@@ -1,6 +1,7 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
--- by spec/emulator/home_golden_spec.lua and home_capture_spec.lua. Applied by reader.lua:190
--- before any plugin code runs, it makes the home deterministic for a golden:
+-- by spec/emulator/home_golden_spec.lua, home_capture_spec.lua, night_golden_spec.lua and
+-- night_toggle_spec.lua. Applied by reader.lua:190 before any plugin code runs, it makes the
+-- home deterministic for a golden:
 --   - os.time() and os.date(format) with no time argument answer 2026-10-13 08:42 in the run's
 --     TZ (a Tuesday, the boards' date); calls with a time pass through, and ui/time's monotonic
 --     clock is untouched, so paint_ms stays real;

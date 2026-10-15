@@ -77,6 +77,10 @@ describe("golden comparison", function()
             return base_rgb(x, y)
         end },
         ["wide.png"] = { 5, 4, 3, base_rgb },
+        ["inverse.png"] = { 4, 4, 3, function(x, y)
+            local r, g, b = base_rgb(x, y)
+            return 255 - r, 255 - g, 255 - b
+        end },
         ["grey.png"] = { 4, 4, 1, base_grey },
         ["grey-rgba.png"] = { 4, 4, 4, function(x, y)
             local v = base_grey(x, y)
@@ -132,6 +136,22 @@ describe("golden comparison", function()
         assert.equals(0, result.differing)
         local tight = compare.compare(fixture("faint-pixel.png"), fixture("base.png"), { tolerance = 5 })
         assert.equals(1, tight.differing)
+    end)
+
+    -- A night capture on a grey screen is the pixel inverse of its day golden.
+    it("compares against the golden inverted per channel when asked", function()
+        local inverted = compare.compare(fixture("inverse.png"), fixture("base.png"), { invert = true, tolerance = 0 })
+        assert.is_true(inverted.ok)
+        assert.equals(0, inverted.differing)
+        assert.equals(16, inverted.compared)
+        local plain = compare.compare(fixture("inverse.png"), fixture("base.png"))
+        assert.is_false(plain.ok)
+        local same = compare.compare(fixture("base.png"), fixture("base.png"), { invert = true })
+        assert.equals(16, same.differing)
+        local masked = compare.compare(fixture("base.png"), fixture("base.png"),
+            { invert = true, masks = { { x = 0, y = 0, w = 4, h = 3 } } })
+        assert.equals(4, masked.compared)
+        assert.equals(4, masked.differing)
     end)
 
     it("skips pixels inside a mask rectangle", function()
