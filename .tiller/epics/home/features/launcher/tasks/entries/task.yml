@@ -1,7 +1,7 @@
 id: T-lv4m58
 key: home/launcher/entries
 title: Launcher entries in the schema, resolved and run
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:00dc9e2
         observed_at: 2026-10-15T18:23:57.002059Z
 branch: tiller/home/launcher/entries
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T18:36:59.608649Z
+        against:
+            kind: git_commit
+            value: git:bd0a16b
+            observed_at: 2026-10-15T18:36:59.608645Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-bd0a16b-out-cb950e0f37c436be9ce4ea7e18c2e9ef0f6c06a2f6a5277ab2599ec942be1f85.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T18:36:59.608649Z
+        against:
+            kind: git_commit
+            value: git:bd0a16b
+            observed_at: 2026-10-15T18:36:59.608645Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-bd0a16b-out-8b40b745a2ebb01bacf1cee18da169910405a260270898921a451d5e1c962f4f.txt

@@ -1,0 +1,13 @@
+id: EV-ysqcn7
+type: check.task
+at: 2026-10-15T18:37:53.901682Z
+contributor: allen
+command: check task T-lv4m58
+targets:
+    - T-lv4m58
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/launcher/tasks/entries/task.yml
