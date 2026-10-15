@@ -843,6 +843,56 @@ Upgrading KOReader walks this list.
   has no U+2011 (`face.ftsize:hasGlyph(0x2011)` false, `base/ffi/freetype.lua:75`), so the
   boards' non-breaking hyphen would come from a fallback font.
 
+### The book sheet: KOReader's status buttons, `BookList`, book details and the history's times
+
+- `apps/filemanager/filemanagerutil`, required by `book_sheet.lua`:
+  `filemanagerutil.genStatusButtonsRow(doc_settings_or_file, caller_callback)`
+  (`frontend/apps/filemanager/filemanagerutil.lua:118-146`) builds the reading, abandoned and
+  complete buttons in that order (`:141-145`). With a `DocSettings` it reads the file from its
+  `doc_path` and the status from its raw `summary.status` (`:120-123`), so a sidecar with no
+  status ticks nothing; with a bare path it starts from an empty `summary` and reads the status
+  through `BookList.getBookStatus` (`:124-127`). The current status's button is the one with
+  `enabled = false` (`:132`), the row the sub-sheet ticks. A button's `callback` sets
+  `summary.status`, then calls `filemanagerutil.saveSummary` (`:106-115`: opens the sidecar with
+  `DocSettings:open` when given a path, so it is created when there is none, sets
+  `summary.modified` to today's `%Y-%m-%d`, saves `summary` and flushes), then
+  `BookList.setBookInfoCacheProperty(file, "status", s)`, then the caller's callback, KoPanda's
+  home refresh. The sub-sheet passes the `DocSettings` when `BookList.hasBookBeenOpened(file)`, as
+  the file dialog chooses (`frontend/apps/filemanager/filemanager.lua:255-270`, reached from
+  `onFileHold`, `:171-177`), so a sidecar's other summary fields survive the write.
+- `ui/widget/booklist`, required by `book_sheet.lua`: `BookList.hasBookBeenOpened` (whether a
+  sidecar exists, cached, `frontend/ui/widget/booklist.lua:348-356`), `getDocSettings`
+  (`DocSettings:open`, caching the book's info, `:358-364`), `getBookStatus` (`"new"` for a book
+  never opened, `:366-369`, through `getBookInfo`, `:337-346`), `getBookStatusString(status, false,
+  true)` (`:386-389`: Reading, On hold, Finished for the single-book strings, `:380-384`, and New
+  from the group strings, `:371-378`) and `setBookInfoCacheProperty` (`:318-326`), with the cache
+  `BookList.book_info_cache` (`:15`). `setBookInfoCache` maps a missing or unknown status to
+  reading (`:293-296`), so the book sheet's detail reads Reading where the sub-sheet ticks nothing.
+- `DocSettings:open` removes a sidecar candidate it finds invalid, empty or not a table
+  (`frontend/docsettings.lua:283-284`). `book_sheet.lua` reaches it through `getBookInfo`
+  (`booklist.lua:337-346`) when the sheet opens, for the Read status detail, and through
+  `getDocSettings` (`:358-364`) when the sub-sheet opens: the path KOReader's own file dialog takes
+  on a hold. `featured_book.lua`'s rule of opening sidecars light (the featured book's entry above)
+  covers that module only.
+- `FileManager.instance.bookinfo:show(file)` (the module registered at
+  `frontend/apps/filemanager/filemanager.lua:406`; `frontend/apps/filemanager/filemanagerbookinfo.lua:71-87`
+  takes a path and opens the sidecar itself when the book has one) shows KOReader's book details
+  page over the home. Its `close_callback` broadcasts `InvalidateMetadataCache` and
+  `BookMetadataChanged` when a property was edited, and `BookMetadataChanged` when the summary was
+  (`filemanagerbookinfo.lua:267-285`); the home handles neither, so an edit shows on the next
+  rebuild. Read through `package.loaded` at tap time, as the featured widget's tap reads the file
+  manager.
+- `ReadHistory.hist[i].time` (`frontend/readhistory.lua:25-35`, the entry's `time` beside its
+  realpath `file`, `:26`): set by `addItem` when a book opens (`:313-339`;
+  `frontend/apps/reader/readerui.lua:510`) and by `updateLastBookTime` when it closes
+  (`readhistory.lua:342-350`; `readerui.lua:882`). The book sheet's "opened" counts local calendar
+  days from it, comparing the book by `ffi/util`'s `realpath`; `readhistory` is required at call
+  time.
+- The small cover is `FeaturedCover.build` at the sheet's `cover_w` by `cover_h`, which reads
+  CoverBrowser's cache and never asks for an extraction; a cached cover too small for the box is
+  left out by `BookInfoManager.isCachedCoverInvalid`
+  (`plugins/coverbrowser.koplugin/bookinfomanager.lua:1013-1030`; the featured cover's entry above).
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
