@@ -1,0 +1,13 @@
+id: EV-fd2yy0
+type: check.task
+at: 2026-10-15T04:03:05.017989Z
+contributor: allen
+command: check task T-puj6su
+targets:
+    - T-puj6su
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/icons/task.yml
