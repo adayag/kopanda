@@ -283,50 +283,70 @@ describe("the swatch screen", function()
             assert.same(expected, order)
         end)
 
-        -- A role the look lacks (false) is a plain "role —" line with no chip, in its place.
-        it("lists every colour role in order: a chip with role and hex in ink, or role — if absent", function()
+        -- A role the look lacks (false) gets no chip and no line of its own.
+        it("draws a chip with role and hex in ink for each role the palette has, in role order", function()
             for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+                local where = panel.look .. " " .. panel.variant
                 local palette = Looks.get(panel.look).palettes[panel.variant]
                 local ink = Looks.color(palette.ink)
                 assert.is_true(same_color(Looks.color(palette.paper), panel.color))
                 local chips = collect(panel, named("kopanda_swatch_chip"))
                 local labels = collect(panel, has_text)
-                local roles, expected_lines, lines = {}, {}, {}
+                local expected_roles, chip_roles, expected_lines, lines = {}, {}, {}, {}
                 for _, role in ipairs(sorted_keys(palette)) do
                     local hex = palette[role]
-                    local text = hex and (role .. " " .. hex) or (role .. " —")
-                    expected_lines[#expected_lines + 1] = text
-                    local chip
-                    for _, c in ipairs(chips) do
-                        if c.role == role then
-                            chip = c
-                        end
-                    end
                     if hex then
-                        roles[#roles + 1] = role
-                        assert.is_table(chip, panel.look .. " " .. panel.variant .. " " .. role)
-                        assert.is_true(same_color(Looks.color(hex), chip.color))
-                        assert.is_true(same_color(ink, chip.border_color))
-                    else
-                        assert.is_nil(chip, panel.look .. " " .. panel.variant .. " " .. role)
+                        expected_roles[#expected_roles + 1] = role
+                        expected_lines[#expected_lines + 1] = role .. " " .. hex
                     end
-                    local label
-                    for _, w in ipairs(labels) do
-                        if w.text == text then
-                            label = w
-                        end
-                    end
-                    assert.is_table(label, panel.look .. " " .. panel.variant .. " " .. text)
-                    assert.is_true(same_color(ink, label.fgcolor))
-                    assert.is_true(same_color(Looks.color(palette.paper), label.bgcolor))
                 end
-                assert.equals(#roles, #chips)
+                for _, chip in ipairs(chips) do
+                    chip_roles[#chip_roles + 1] = chip.role
+                    assert.is_true(same_color(Looks.color(palette[chip.role]), chip.color), where .. " " .. chip.role)
+                    assert.is_true(same_color(ink, chip.border_color))
+                end
+                table.sort(chip_roles)
+                assert.same(expected_roles, chip_roles)
+                -- Every line that starts with a role name: the chip labels, in role order.
                 for _, w in ipairs(labels) do
-                    if palette[w.text:match("^(%S+) ")] ~= nil then
+                    if palette[w.text:match("^(%S+)")] ~= nil then
                         lines[#lines + 1] = w.text
+                        assert.is_true(same_color(ink, w.fgcolor))
+                        assert.is_true(same_color(Looks.color(palette.paper), w.bgcolor))
                     end
                 end
-                assert.same(expected_lines, lines)
+                assert.same(expected_lines, lines, where)
+            end
+        end)
+
+        it("names the roles a palette lacks, in role order, on one line after the chips", function()
+            for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+                local where = panel.look .. " " .. panel.variant
+                local palette = Looks.get(panel.look).palettes[panel.variant]
+                local missing = {}
+                for _, role in ipairs(sorted_keys(palette)) do
+                    if not palette[role] then
+                        missing[#missing + 1] = role
+                    end
+                end
+                assert.truthy(#missing > 0, where .. " lacks nothing; this test needs a lacking role")
+                local lacks = collect(panel, named("kopanda_swatch_lacks"))
+                assert.equals(1, #lacks, where)
+                local line = lacks[1]
+                assert.equals("lacks: " .. table.concat(missing, ", "), line.text)
+                assert.is_true(same_color(Looks.color(palette.ink), line.fgcolor))
+                assert.is_true(same_color(Looks.color(palette.paper), line.bgcolor))
+                assert.equals(1, #line.vertical_string_list, where .. " lacks line wraps")
+                -- After the chips: met after the last chip in child order.
+                local seen_line, chip_after = false, false
+                walk(panel, function(w)
+                    if w == line then
+                        seen_line = true
+                    elseif w.name == "kopanda_swatch_chip" and seen_line then
+                        chip_after = true
+                    end
+                end)
+                assert.is_false(chip_after, where)
             end
         end)
 
@@ -419,6 +439,148 @@ describe("the swatch screen", function()
                 assert.equals(grey_of(palette.paper).a, w.bgcolor.a)
             end
         end
+    end)
+
+    it("draws no lacks line for a palette that lacks nothing", function()
+        local palette = Looks.get("editorial").palettes.day
+        for role, hex in pairs(palette) do
+            if not hex then
+                palette[role] = "#808080"
+            end
+        end
+        color_enabled(true)
+        open_from_fm()
+        local swatch = harness.top()
+        local checked = 0
+        for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+            local lacks = collect(panel, named("kopanda_swatch_lacks"))
+            if panel.look == "editorial" and panel.variant == "day" then
+                checked = checked + 1
+                assert.same({}, lacks)
+                assert.same({}, collect(panel, function(w)
+                    return has_text(w) and w.text:find("lacks", 1, true) ~= nil
+                end))
+            else
+                assert.equals(1, #lacks, panel.look .. " " .. panel.variant)
+            end
+        end
+        assert.equals(1, checked)
+    end)
+
+    describe("where the lacks text goes", function()
+        local TextWidget = require("ui/widget/textwidget")
+
+        -- Editorial's day palette with the first `fill` of its lacking roles given a colour, the
+        -- swatch painted, and that panel with its lacks text, chip labels and face lines in their
+        -- painted places.
+        local function editorial_day(fill)
+            local palette = Looks.get("editorial").palettes.day
+            local filled = 0
+            for _, role in ipairs(sorted_keys(palette)) do
+                if not palette[role] and filled < fill then
+                    palette[role] = "#808080"
+                    filled = filled + 1
+                end
+            end
+            color_enabled(true)
+            open_from_fm()
+            local swatch = harness.top()
+            swatch:paintTo(Blitbuffer.new(Screen:getWidth(), Screen:getHeight(), Blitbuffer.TYPE_BBRGB32), 0, 0)
+            local panel
+            for _, p in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+                if p.look == "editorial" and p.variant == "day" then
+                    panel = p
+                end
+            end
+            local lacks = collect(panel, named("kopanda_swatch_lacks"))
+            assert.equals(1, #lacks)
+            return {
+                panel = panel,
+                chips = #collect(panel, named("kopanda_swatch_chip")),
+                chip_xs = (function()
+                    local xs = {}
+                    for _, c in ipairs(collect(panel, named("kopanda_swatch_chip"))) do
+                        xs[#xs + 1] = c.dimen.x
+                    end
+                    return xs
+                end)(),
+                lacks = lacks[1],
+                labels = collect(panel, function(w)
+                    return has_text(w) and palette[w.text:match("^(%S+)")] ~= nil
+                end),
+                faces = collect(panel, named("kopanda_swatch_face")),
+            }
+        end
+
+        -- The chip labels by column: the right column's x and label width, and each column's
+        -- last label.
+        local function columns(labels)
+            local left_x, right_x = math.huge, -math.huge
+            for _, w in ipairs(labels) do
+                left_x = math.min(left_x, w.dimen.x)
+                right_x = math.max(right_x, w.dimen.x)
+            end
+            local col = { right_x = right_x }
+            for _, w in ipairs(labels) do
+                if w.dimen.x == left_x then
+                    col.last_left = w
+                else
+                    col.last_right = w
+                end
+            end
+            col.right_w = col.last_right.width
+            return col
+        end
+
+        local function text_w(w)
+            return TextWidget:new{ text = w.text, face = w.face }:getSize().w
+        end
+
+        -- A full-width line at the content's left edge, below every chip label, above the faces.
+        local function assert_own_line(placed)
+            local lacks = placed.lacks
+            local bottom = 0
+            for _, w in ipairs(placed.labels) do
+                bottom = math.max(bottom, w.dimen.y + w:getSize().h)
+            end
+            assert.equals(placed.panel.dimen.x + placed.panel.inset, lacks.dimen.x)
+            assert.is_true(lacks.dimen.y >= bottom, "lacks y " .. lacks.dimen.y .. " above " .. bottom)
+            assert.is_true(lacks.dimen.y + lacks:getSize().h <= placed.faces[1].dimen.y)
+            assert.equals(1, #lacks.vertical_string_list)
+        end
+
+        it("goes in the empty last cell, from its chip x, for an odd chip count when it fits", function()
+            local placed = editorial_day(4)
+            assert.equals(1, placed.chips % 2)
+            local col = columns(placed.labels)
+            local lacks = placed.lacks
+            assert.equals("lacks: pink, teal", lacks.text)
+            -- The cell's left edge: the right column's chip x, and the whole cell's width.
+            local chip_x = math.max(unpack(placed.chip_xs))
+            assert.equals(chip_x, lacks.dimen.x)
+            assert.equals(col.last_left.dimen.y, lacks.dimen.y)
+            assert.is_true(lacks.dimen.y > col.last_right.dimen.y)
+            assert.equals(col.right_x - chip_x + col.right_w, lacks.width)
+            assert.equals(1, #lacks.vertical_string_list)
+            assert.is_true(lacks.dimen.y + lacks:getSize().h <= placed.faces[1].dimen.y)
+        end)
+
+        it("goes on its own line after the chips for an even chip count", function()
+            local placed = editorial_day(3)
+            assert.equals(0, placed.chips % 2)
+            assert.equals("lacks: outline, pink, teal", placed.lacks.text)
+            -- It would fit the column: the even count alone puts it on its own line.
+            assert.is_true(text_w(placed.lacks) <= columns(placed.labels).right_w)
+            assert_own_line(placed)
+        end)
+
+        it("goes on its own line after the chips when it is wider than a column's label", function()
+            local placed = editorial_day(0)
+            assert.equals(1, placed.chips % 2)
+            assert.is_true(text_w(placed.lacks) > columns(placed.labels).right_w,
+                "premise: " .. placed.lacks.text .. " fits a column")
+            assert_own_line(placed)
+        end)
     end)
 
     it("still opens, in KOReader's UI font, with a face that won't load, and says so", function()
