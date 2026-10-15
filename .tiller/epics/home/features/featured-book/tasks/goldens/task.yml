@@ -1,0 +1,9 @@
+id: T-2axtyg
+key: home/featured-book/goldens
+title: Home goldens with the featured row and the paint budgets
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-hftuq7

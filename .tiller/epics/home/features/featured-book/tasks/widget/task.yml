@@ -1,0 +1,10 @@
+id: T-hftuq7
+key: home/featured-book/widget
+title: Featured widget in both looks, first-run state and tap
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-gj4d8q
+    - T-ew6y91

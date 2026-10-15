@@ -1,9 +1,14 @@
 id: F-e8jz6h
 key: home/featured-book
 title: Featured book with cover and progress
-status: draft
+status: specced
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
 depends_on:
     - F-wkj9iy
+order:
+    - T-gj4d8q
+    - T-ew6y91
+    - T-hftuq7
+    - T-2axtyg
