@@ -18,13 +18,13 @@ accepted_against:
         kind: git_blob
         value: git:c9d374fad1aa9b2911f7e0850bc1c307c0c751ec
         path: .tiller/epics/home/features/night-mode/feature.md
-        observed_at: 2026-10-15T19:24:02.079034Z
+        observed_at: 2026-10-15T19:52:45.415646Z
     eval:
         kind: git_blob
-        value: git:f8e44f2a62e0f1a084d9b592767be8a6548c275a
+        value: git:f0fe9dc60fa9e026a9f1fdfdf9a1275f8ebb66e6
         path: .tiller/epics/home/features/night-mode/feature.eval.md
-        observed_at: 2026-10-15T19:24:02.079034Z
+        observed_at: 2026-10-15T19:52:45.415646Z
     commit:
         kind: git_commit
-        value: git:7d5457c
-        observed_at: 2026-10-15T19:24:02.114814Z
+        value: git:6b885ac
+        observed_at: 2026-10-15T19:52:45.452779Z
