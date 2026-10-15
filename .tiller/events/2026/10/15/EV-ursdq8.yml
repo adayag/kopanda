@@ -1,0 +1,16 @@
+id: EV-ursdq8
+type: submit.task
+at: 2026-10-15T14:43:59.968471Z
+contributor: allen
+command: submit task T-b8dgbr
+targets:
+    - T-b8dgbr
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/home-layout/date-clock
+        head: git:59b0bc0
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/date-clock/task.yml
