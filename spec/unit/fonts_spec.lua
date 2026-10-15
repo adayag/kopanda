@@ -125,6 +125,13 @@ describe("fonts", function()
         for _, file in ipairs(ttf_files()) do
             local tags = table_tags(read(harness.plugin_dir .. "/" .. file))
             assert.truthy(#tags > 0, file .. " has no tables")
+            -- Every TrueType file has head and cmap: finding them proves the directory was read.
+            local seen = {}
+            for _, tag in ipairs(tags) do
+                seen[tag] = true
+            end
+            assert.is_true(seen["head"], file .. " has no head table")
+            assert.is_true(seen["cmap"], file .. " has no cmap table")
             for _, tag in ipairs(tags) do
                 assert.is_not.equals("fvar", tag, file .. " has an fvar table")
             end
@@ -164,6 +171,12 @@ describe("fonts", function()
 
     it("returns nil for a missing file without raising", function()
         local ok, face = pcall(Fonts.face, "fonts/nope/missing.ttf", 20)
+        assert.is_true(ok, tostring(face))
+        assert.is_nil(face)
+    end)
+
+    it("returns nil for a non-string path without raising", function()
+        local ok, face = pcall(Fonts.face, nil, 20)
         assert.is_true(ok, tostring(face))
         assert.is_nil(face)
     end)

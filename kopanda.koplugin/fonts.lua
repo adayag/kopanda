@@ -32,10 +32,11 @@ end
 -- The KOReader face for the font file at rel at size (unscaled; getFace scales it, font.lua:276),
 -- or nil, logged, when it won't load.
 function Fonts.face(rel, size)
-    local path = Fonts.path(rel)
-    local ok, face = pcall(Font.getFace, Font, path, size)
+    local ok, face = pcall(function()
+        return Font:getFace(Fonts.path(rel), size)
+    end)
     if not ok then
-        logger.err("KoPanda: font failed to load:", path, face)
+        logger.err("KoPanda: font failed to load:", rel, face)
         return nil
     end
     -- getFace logs its own failure and returns nil (font.lua:329-332).
