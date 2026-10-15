@@ -1,0 +1,14 @@
+id: EV-gdeamo
+type: add.task
+at: 2026-10-15T21:39:09.659349Z
+contributor: allen
+command: add task studio/studio-shell/profiles
+targets:
+    - T-n4uwe9
+after:
+    feature: F-kglqs4
+    key: studio/studio-shell/profiles
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/profiles/task.md
+    - path: .tiller/epics/studio/features/studio-shell/tasks/profiles/task.yml

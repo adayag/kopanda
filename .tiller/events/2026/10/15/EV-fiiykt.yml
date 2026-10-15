@@ -1,0 +1,14 @@
+id: EV-fiiykt
+type: add.task
+at: 2026-10-15T21:39:09.496098Z
+contributor: allen
+command: add task studio/studio-shell/check-stage
+targets:
+    - T-q590ja
+after:
+    feature: F-kglqs4
+    key: studio/studio-shell/check-stage
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/check-stage/task.md
+    - path: .tiller/epics/studio/features/studio-shell/tasks/check-stage/task.yml

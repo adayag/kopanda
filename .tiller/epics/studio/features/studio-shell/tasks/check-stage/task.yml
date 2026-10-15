@@ -1,0 +1,9 @@
+id: T-q590ja
+key: studio/studio-shell/check-stage
+title: bin/check gains the studio's typecheck, lint and tests
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-6yxswg

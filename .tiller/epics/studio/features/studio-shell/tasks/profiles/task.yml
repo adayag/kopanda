@@ -1,0 +1,9 @@
+id: T-n4uwe9
+key: studio/studio-shell/profiles
+title: Device profiles on disk, seeded defaults and the profiles API
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-6yxswg

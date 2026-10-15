@@ -1,0 +1,14 @@
+id: EV-o8p48y
+type: add.task
+at: 2026-10-15T21:39:09.576902Z
+contributor: allen
+command: add task studio/studio-shell/schema-contract
+targets:
+    - T-dwsmmb
+after:
+    feature: F-kglqs4
+    key: studio/studio-shell/schema-contract
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/schema-contract/task.md
+    - path: .tiller/epics/studio/features/studio-shell/tasks/schema-contract/task.yml

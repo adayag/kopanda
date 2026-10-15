@@ -1,0 +1,14 @@
+id: EV-rc82j5
+type: add.task
+at: 2026-10-15T21:39:09.408887Z
+contributor: allen
+command: add task studio/studio-shell/scaffold
+targets:
+    - T-6yxswg
+after:
+    feature: F-kglqs4
+    key: studio/studio-shell/scaffold
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/scaffold/task.md
+    - path: .tiller/epics/studio/features/studio-shell/tasks/scaffold/task.yml

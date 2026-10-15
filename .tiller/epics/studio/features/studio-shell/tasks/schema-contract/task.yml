@@ -1,0 +1,9 @@
+id: T-dwsmmb
+key: studio/studio-shell/schema-contract
+title: Checked-in schema JSON, its npm regeneration and the equality spec
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-6yxswg

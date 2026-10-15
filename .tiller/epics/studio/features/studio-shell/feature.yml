@@ -1,9 +1,15 @@
 id: F-kglqs4
 key: studio/studio-shell
 title: Studio app, device profiles and the schema contract
-status: draft
+status: specced
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
 depends_on:
     - F-i2mbn1
+order:
+    - T-6yxswg
+    - T-q590ja
+    - T-dwsmmb
+    - T-n4uwe9
+    - T-txsef1

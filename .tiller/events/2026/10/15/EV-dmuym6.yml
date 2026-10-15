@@ -1,0 +1,14 @@
+id: EV-dmuym6
+type: add.task
+at: 2026-10-15T21:39:09.741758Z
+contributor: allen
+command: add task studio/studio-shell/profile-screens
+targets:
+    - T-txsef1
+after:
+    feature: F-kglqs4
+    key: studio/studio-shell/profile-screens
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/profile-screens/task.md
+    - path: .tiller/epics/studio/features/studio-shell/tasks/profile-screens/task.yml

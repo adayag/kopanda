@@ -1,0 +1,13 @@
+id: EV-n68c07
+type: spec.feature
+at: 2026-10-15T21:41:09.713075Z
+contributor: allen
+command: spec feature F-kglqs4
+targets:
+    - F-kglqs4
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/studio/features/studio-shell/feature.yml

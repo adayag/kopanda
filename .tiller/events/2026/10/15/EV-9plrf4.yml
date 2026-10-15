@@ -1,0 +1,16 @@
+id: EV-9plrf4
+type: order.tasks
+at: 2026-10-15T21:39:09.823551Z
+contributor: allen
+command: order task T-6yxswg T-q590ja T-dwsmmb T-n4uwe9 T-txsef1
+targets:
+    - F-kglqs4
+after:
+    order:
+        - T-6yxswg
+        - T-q590ja
+        - T-dwsmmb
+        - T-n4uwe9
+        - T-txsef1
+files:
+    - path: .tiller/epics/studio/features/studio-shell/feature.yml

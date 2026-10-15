@@ -1,0 +1,9 @@
+id: T-txsef1
+key: studio/studio-shell/profile-screens
+title: First screen lists profiles and opens one
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-n4uwe9
