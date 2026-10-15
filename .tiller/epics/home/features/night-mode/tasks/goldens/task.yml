@@ -1,7 +1,7 @@
 id: T-x4x0f3
 key: home/night-mode/goldens
 title: Night goldens, the Paperwhite inverse check, the toggle scenario and the night paint budget
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:e0cb741
         observed_at: 2026-10-15T20:07:40.883119Z
+done_basis: ancestry
 gates:
     build:
         required: true

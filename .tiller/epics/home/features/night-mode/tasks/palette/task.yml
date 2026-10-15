@@ -1,7 +1,7 @@
 id: T-xem8p9
 key: home/night-mode/palette
 title: Night variant, the inverted night palette and the home's rebuild on a variant change
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:22d9966
         observed_at: 2026-10-15T19:49:04.469825Z
+done_basis: ancestry
 gates:
     build:
         required: true

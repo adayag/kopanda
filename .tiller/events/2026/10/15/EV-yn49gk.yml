@@ -1,0 +1,14 @@
+id: EV-yn49gk
+type: sync.feature
+at: 2026-10-15T20:21:19.653938Z
+contributor: allen
+command: sync feature F-4jh8sz
+targets:
+    - F-4jh8sz
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/home/features/night-mode/feature.yml

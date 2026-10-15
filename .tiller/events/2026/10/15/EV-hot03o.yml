@@ -1,0 +1,14 @@
+id: EV-hot03o
+type: sync.task
+at: 2026-10-15T20:21:19.557253Z
+contributor: allen
+command: sync task T-x4x0f3
+targets:
+    - T-x4x0f3
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/night-mode/tasks/goldens/task.yml
