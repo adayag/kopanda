@@ -1,7 +1,7 @@
 id: T-puj6su
 key: home/looks-and-schema/icons
 title: Icon registry with the canvas's default stroke icons
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:75d54ef
         observed_at: 2026-10-15T02:56:11.952565Z
 branch: tiller/home/looks-and-schema/icons
+review_ref:
+    branch: tiller/home/looks-and-schema/icons
+    head:
+        kind: git_commit
+        value: git:6f6a52c
+        observed_at: 2026-10-15T04:03:05.266634Z
 gates:
     build:
         required: true
