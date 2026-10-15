@@ -1,9 +1,10 @@
 id: T-ew6y91
 key: home/featured-book/cover
 title: Cover from CoverBrowser's cache, typographic placeholder and bounded extraction
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,4 @@ accepted_against:
         kind: git_commit
         value: git:33474c1
         observed_at: 2026-10-15T15:18:53.078555Z
+branch: tiller/home/featured-book/cover

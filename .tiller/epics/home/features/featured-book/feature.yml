@@ -1,7 +1,7 @@
 id: F-e8jz6h
 key: home/featured-book
 title: Featured book with cover and progress
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -13,6 +13,7 @@ order:
     - T-hftuq7
     - T-2axtyg
 review_grain: feature
+branch: tiller/reviews/features/home/featured-book
 accepted_against:
     spec:
         kind: git_blob
