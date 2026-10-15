@@ -1,0 +1,14 @@
+id: EV-xiwipw
+type: add.task
+at: 2026-10-15T04:39:49.572399Z
+contributor: allen
+command: add task home/home-layout/quote
+targets:
+    - T-x42jhm
+after:
+    feature: F-wkj9iy
+    key: home/home-layout/quote
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/quote/task.md
+    - path: .tiller/epics/home/features/home-layout/tasks/quote/task.yml

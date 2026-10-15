@@ -1,0 +1,14 @@
+id: EV-3v0jya
+type: add.task
+at: 2026-10-15T04:39:49.739689Z
+contributor: allen
+command: add task home/home-layout/weather
+targets:
+    - T-xv2jpg
+after:
+    feature: F-wkj9iy
+    key: home/home-layout/weather
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/weather/task.md
+    - path: .tiller/epics/home/features/home-layout/tasks/weather/task.yml

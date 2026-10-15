@@ -1,0 +1,13 @@
+id: EV-lxq6yp
+type: spec.feature
+at: 2026-10-15T04:57:00.752894Z
+contributor: allen
+command: spec feature F-wkj9iy
+targets:
+    - F-wkj9iy
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/home/features/home-layout/feature.yml

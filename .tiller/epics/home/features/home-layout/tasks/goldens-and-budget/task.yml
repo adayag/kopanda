@@ -1,0 +1,12 @@
+id: T-ltupc3
+key: home/home-layout/goldens-and-budget
+title: Home goldens in both looks and the paint budget
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-b8dgbr
+    - T-x42jhm
+    - T-wgis3w
+    - T-xv2jpg

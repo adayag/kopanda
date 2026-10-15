@@ -1,0 +1,14 @@
+id: EV-s6i0ir
+type: add.task
+at: 2026-10-15T04:39:49.83917Z
+contributor: allen
+command: add task home/home-layout/goldens-and-budget
+targets:
+    - T-ltupc3
+after:
+    feature: F-wkj9iy
+    key: home/home-layout/goldens-and-budget
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/goldens-and-budget/task.md
+    - path: .tiller/epics/home/features/home-layout/tasks/goldens-and-budget/task.yml

@@ -1,0 +1,14 @@
+id: EV-k7rcde
+type: add.task
+at: 2026-10-15T04:39:49.39159Z
+contributor: allen
+command: add task home/home-layout/row-engine
+targets:
+    - T-ds0hab
+after:
+    feature: F-wkj9iy
+    key: home/home-layout/row-engine
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/row-engine/task.md
+    - path: .tiller/epics/home/features/home-layout/tasks/row-engine/task.yml

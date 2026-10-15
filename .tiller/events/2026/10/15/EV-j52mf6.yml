@@ -1,0 +1,14 @@
+id: EV-j52mf6
+type: add.task
+at: 2026-10-15T04:39:49.476421Z
+contributor: allen
+command: add task home/home-layout/date-clock
+targets:
+    - T-b8dgbr
+after:
+    feature: F-wkj9iy
+    key: home/home-layout/date-clock
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/date-clock/task.md
+    - path: .tiller/epics/home/features/home-layout/tasks/date-clock/task.yml

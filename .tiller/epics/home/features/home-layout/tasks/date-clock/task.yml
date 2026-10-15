@@ -1,0 +1,9 @@
+id: T-b8dgbr
+key: home/home-layout/date-clock
+title: Date and clock widgets in both looks
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-ds0hab

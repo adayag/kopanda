@@ -1,0 +1,9 @@
+id: T-x42jhm
+key: home/home-layout/quote
+title: Quote of the day from a shipped public-domain file
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-ds0hab

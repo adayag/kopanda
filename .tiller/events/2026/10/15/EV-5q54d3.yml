@@ -1,0 +1,14 @@
+id: EV-5q54d3
+type: add.task
+at: 2026-10-15T04:39:49.656735Z
+contributor: allen
+command: add task home/home-layout/reading-stats
+targets:
+    - T-wgis3w
+after:
+    feature: F-wkj9iy
+    key: home/home-layout/reading-stats
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/reading-stats/task.md
+    - path: .tiller/epics/home/features/home-layout/tasks/reading-stats/task.yml
