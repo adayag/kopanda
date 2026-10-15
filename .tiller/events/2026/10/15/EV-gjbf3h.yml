@@ -1,0 +1,15 @@
+id: EV-gjbf3h
+type: start.task
+at: 2026-10-15T04:20:50.134787Z
+contributor: allen
+command: start task T-wj05yo
+targets:
+    - T-wj05yo
+before:
+    status: ready
+after:
+    branch: tiller/home/looks-and-schema/swatch
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/swatch/task.yml

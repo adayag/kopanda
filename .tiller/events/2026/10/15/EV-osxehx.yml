@@ -1,0 +1,13 @@
+id: EV-osxehx
+type: claim.task
+at: 2026-10-15T04:20:49.944778Z
+contributor: allen
+command: claim task T-wj05yo
+targets:
+    - T-wj05yo
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/swatch/task.yml
