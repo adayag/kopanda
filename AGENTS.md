@@ -88,7 +88,7 @@ The owner's own interface for KOReader e-readers: a plugin that replaces the she
 
 - Specs: every concrete claim about code outside this repo (a KOReader or reference-plugin file, function, key, default, value list or format) cites the `file:line` it was read from, at the pinned commit. An uncheckable claim is marked as an assumption, and the task that depends on it verifies it first.
 - Under Tiller, a `tiller start` or execute instruction covers the whole publication sequence: commit, `tiller check`, push, open the PR, `tiller submit`, commit and push the state. Don't stop to ask before committing; stop at the owner's decisions (PR review and merge, attestation, approval). Task work reaches `main` through a PR the owner merges; `.tiller/`-only state commits go straight to `main`.
-- Under Tiller, a lead session ends at each owner stop (draft PR awaiting attestation, PR awaiting merge). The next step (submission, post-merge closeout) starts in a fresh session from `tiller status` and the readout, not from the earlier transcript, so agent reports and guide text aren't carried across the stop.
+- Under Tiller, a lead session ends when a draft PR awaits attestation. Submission starts in a fresh session from `tiller status` and the readout, not from the earlier transcript, so agent reports and guide text aren't carried across the stop. Post-merge closeout is the exception: when the owner reports the merge, run it in the same session without asking for a new one.
 
 <!-- tiller:begin (managed by `tiller join`; edits inside are overwritten) -->
 ## Tiller
