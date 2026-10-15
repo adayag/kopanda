@@ -34,6 +34,7 @@ Icons.entries = {
       file = "icons/screenshot.svg" },
     { id = "plugin_missing", label = "Plugin missing", used_in = { "launcher", "empty states" },
       file = "icons/plugin_missing.svg" },
+    -- Lucide's `sun` icon, coordinates rounded (ISC; see icons/LICENSE-lucide.txt).
     { id = "sun", label = "Sun (weather, refresh weather)", used_in = { "weather", "home sheet" },
       file = "icons/sun.svg" },
     { id = "moon", label = "Moon (night weather, sleep, night mode)",

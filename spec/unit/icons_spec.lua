@@ -12,12 +12,13 @@ describe("icons", function()
         return data
     end
 
-    -- Every file under icons/, as a path relative to the plugin root, sorted.
+    -- Every SVG file under icons/, as a path relative to the plugin root, sorted. Other files there
+    -- (a licence notice, a stray .DS_Store) are not icons.
     local function icon_files()
         local files = {}
         if lfs.attributes(icons_dir, "mode") == "directory" then
             for entry in lfs.dir(icons_dir) do
-                if entry ~= "." and entry ~= ".." then
+                if entry:match("^[^.].*%.svg$") then
                     files[#files + 1] = "icons/" .. entry
                 end
             end
@@ -47,7 +48,7 @@ describe("icons", function()
         }, ids)
     end)
 
-    it("has one entry per file under icons/ and a file for every entry", function()
+    it("has one entry per svg file under icons/ and a file for every entry", function()
         local registered = {}
         for _, entry in ipairs(Icons.entries) do
             registered[#registered + 1] = entry.file
@@ -90,17 +91,20 @@ describe("icons", function()
         end
     end)
 
-    it("renders every icon through RenderImage in black ink", function()
+    it("renders every icon through RenderImage in opaque black ink", function()
         assert.truthy(#Icons.entries > 0)
         for _, entry in ipairs(Icons.entries) do
             local bb = RenderImage:renderSVGImageFile(Icons.path(entry.id), 48, 48)
             assert.truthy(bb, entry.id .. " did not render")
-            local inked, coloured = 0, 0
+            local inked, coloured, max_alpha = 0, 0, 0
             for y = 0, bb:getHeight() - 1 do
                 for x = 0, bb:getWidth() - 1 do
                     local c = bb:getPixel(x, y)
                     if c.alpha > 0 then
                         inked = inked + 1
+                        if c.alpha > max_alpha then
+                            max_alpha = c.alpha
+                        end
                         if c.r ~= 0 or c.g ~= 0 or c.b ~= 0 then
                             coloured = coloured + 1
                         end
@@ -110,6 +114,7 @@ describe("icons", function()
             bb:free()
             assert.truthy(inked > 0, entry.id .. " rendered no pixels")
             assert.equals(0, coloured, entry.id .. " has non-black pixels")
+            assert.equals(255, max_alpha, entry.id .. " has no fully opaque pixel")
         end
     end)
 
