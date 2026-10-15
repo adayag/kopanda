@@ -1,0 +1,17 @@
+id: EV-qy3ctr
+type: start.task
+at: 2026-10-15T02:57:51.400468Z
+contributor: allen
+command: start task T-f4vjse
+targets:
+    - T-f4vjse
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/home/looks-and-schema
+    branch: tiller/home/looks-and-schema/schema-settings
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/schema-settings/task.yml
+    - path: .tiller/epics/home/features/looks-and-schema/feature.yml

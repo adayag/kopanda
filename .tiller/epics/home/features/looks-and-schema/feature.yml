@@ -1,7 +1,7 @@
 id: F-i2mbn1
 key: home/looks-and-schema
 title: Schema, settings, looks, icon registry and the swatch screen
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -15,6 +15,7 @@ order:
     - T-wj05yo
     - T-6nbln8
 review_grain: feature
+branch: tiller/reviews/features/home/looks-and-schema
 accepted_against:
     spec:
         kind: git_blob
