@@ -1,0 +1,14 @@
+id: EV-rl5nvs
+type: add.task
+at: 2026-10-15T15:43:30.111408Z
+contributor: allen
+command: add task home/launcher/widget
+targets:
+    - T-asihfm
+after:
+    feature: F-ydcqb0
+    key: home/launcher/widget
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/launcher/tasks/widget/task.md
+    - path: .tiller/epics/home/features/launcher/tasks/widget/task.yml

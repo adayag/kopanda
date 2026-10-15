@@ -17,6 +17,8 @@ hold on empty space opens the home's own sheet, and every sheet row is an action
 - Hold on empty space: Edit layout (stub until `device-menus`), Open the file browser, Refresh weather
   with its age, Wi‑Fi with its state, KoPanda settings, Sleep.
 - Hold on any other widget opens that widget's settings (generated, so a stub until `device-menus`).
+- Tapping a launcher folder entry opens a sheet listing its entries by kind; the folder's entries behave
+  as they do on the home.
 - A sheet closes on tap outside, on an action, or on KOReader's back; it paints once and never animates.
 - Goldens of both sheets in both looks on the Colorsoft profile.
 
@@ -24,3 +26,4 @@ hold on empty space opens the home's own sheet, and every sheet row is an action
 
 Assumption to verify first: a hold on the full-screen home widget does not fall through to the file
 manager's own hold handling. "Feature a different book" writes `featured.pinned`.
+`launcher` defines folder entries in `launcher.entries` and draws them; until this sheet, a tap shows a note.

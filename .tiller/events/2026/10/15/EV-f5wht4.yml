@@ -1,0 +1,14 @@
+id: EV-f5wht4
+type: add.task
+at: 2026-10-15T15:43:30.193435Z
+contributor: allen
+command: add task home/launcher/goldens
+targets:
+    - T-j98jk4
+after:
+    feature: F-ydcqb0
+    key: home/launcher/goldens
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/launcher/tasks/goldens/task.md
+    - path: .tiller/epics/home/features/launcher/tasks/goldens/task.yml

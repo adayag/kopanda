@@ -1,0 +1,14 @@
+id: EV-c4u9mn
+type: add.task
+at: 2026-10-15T15:43:30.017445Z
+contributor: allen
+command: add task home/launcher/entries
+targets:
+    - T-lv4m58
+after:
+    feature: F-ydcqb0
+    key: home/launcher/entries
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/launcher/tasks/entries/task.md
+    - path: .tiller/epics/home/features/launcher/tasks/entries/task.yml

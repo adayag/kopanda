@@ -1,0 +1,9 @@
+id: T-j98jk4
+key: home/launcher/goldens
+title: Home goldens with the launcher row, the missing plugin and the height budget
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-asihfm

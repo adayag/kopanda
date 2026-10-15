@@ -1,0 +1,9 @@
+id: T-asihfm
+key: home/launcher/widget
+title: Launcher widget in both looks with its states and taps
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-lv4m58
