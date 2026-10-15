@@ -31,6 +31,8 @@ return {
             outline = "#2f2e2b", -- the doc: strokes are ink
             shadow = "#2f2e2b", -- the doc: hard shadows are ink
             on_band = "#f5f1e6", -- the header band's text (HomeRetro.dc.html:19)
+            cover = "#2b4c6f", -- the typographic cover's fill (HomeRetro.dc.html:28)
+            on_cover = "#f5f1e6", -- its title and authors (HomeRetro.dc.html:28)
         },
         night = {
             paper = "#1e1c1a",
@@ -46,6 +48,8 @@ return {
             outline = "#f1ece0", -- the doc: outlines turn cream, the night ink
             shadow = "#f1ece0", -- the doc: hard shadows turn cream, the night ink
             on_band = "#f1ece0", -- NightC.dc.html:19
+            cover = "#2b4c6f", -- NightC.dc.html:28
+            on_cover = "#f5f1e6", -- NightC.dc.html:28
         },
         grey = {
             paper = "#f4f4f4",
@@ -61,6 +65,8 @@ return {
             outline = "#111111", -- implied: strokes are ink
             shadow = "#111111", -- implied: hard shadows are ink
             on_band = "#111111", -- PWRetro.dc.html:19: ink on the grey band
+            cover = "#4a4a4a", -- PWRetro.dc.html:28
+            on_cover = "#f4f4f4", -- PWRetro.dc.html:28
         },
     },
 
@@ -185,5 +191,69 @@ return {
         quote = { face = "quote", size = 18, uppercase = false, tracking = 0, line_height = 0.4, color = "ink" },
         -- The strip's reading stats (HomeRetro.dc.html:47).
         stats = { face = "strong", size = 13, uppercase = true, tracking = 0.06, line_height = 0, color = "ink" },
+        -- The typographic cover's title, CSS line height 1.05 (HomeRetro.dc.html:29). The board's
+        -- Georgia is not a Diner face, so the display face stands in.
+        cover_title = {
+            face = "display", size = 22, uppercase = true, tracking = 0.04, line_height = 0.05, color = "on_cover",
+        },
+        -- Its authors at the foot (HomeRetro.dc.html:30).
+        cover_authors = {
+            face = "text", size = 10, uppercase = true, tracking = 0.12, line_height = 0, color = "on_cover",
+        },
+        -- "No book yet" in the first run's dashed frame. No board draws Diner's first run; Editorial's
+        -- line (EmptyStates.dc.html:33) in Diner's strong face.
+        cover_empty = {
+            face = "strong", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted",
+        },
+        -- "Now reading" in its chip, in chip.text_color (HomeRetro.dc.html:34).
+        featured_label = {
+            face = "display", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "ink",
+        },
+        -- The featured book's title, two lines at most, CSS line height 1.05 (HomeRetro.dc.html:35).
+        featured_title = {
+            face = "display", size = 28, uppercase = false, tracking = 0, line_height = 0.05, color = "ink",
+        },
+        -- "authors · chapter" (HomeRetro.dc.html:36).
+        featured_authors = {
+            face = "text", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "muted",
+        },
+        -- Not drawn on its own: Diner's chapter joins the authors line (HomeRetro.dc.html:36), in its style.
+        featured_chapter = {
+            face = "text", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "muted",
+        },
+        -- "62% · 2 h 10 min left" under the bar (HomeRetro.dc.html:41).
+        featured_caption = {
+            face = "strong", size = 13, uppercase = false, tracking = 0, line_height = 0, color = "ink",
+        },
+        -- No board draws Diner's first run; Editorial's sizes and line heights
+        -- (EmptyStates.dc.html:36-38) in Diner's faces, the body in muted as its authors line.
+        featured_empty_title = {
+            face = "display", size = 24, uppercase = false, tracking = 0, line_height = 0.15, color = "ink",
+        },
+        featured_empty_body = {
+            face = "text", size = 15, uppercase = false, tracking = 0, line_height = 0.4, color = "muted",
+        },
+        featured_button = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "ink",
+        },
+    },
+
+    -- The featured book's cover box.
+    featured = {
+        cover_w = 140, -- HomeRetro.dc.html:28
+        cover_h = 210, -- HomeRetro.dc.html:28
+        cover_padding = { x = 12, y = 16 }, -- the placeholder's padding (HomeRetro.dc.html:28)
+        dash = 4, -- the first run's dashed frame, as Editorial's: 4 px dashes
+        dash_gap = 4, -- with 4 px gaps (EmptyStates.dc.html:33)
+        gap = 20, -- between the cover and the text column (HomeRetro.dc.html:27)
+        column_padding_y = 6, -- the text column's padding (HomeRetro.dc.html:32)
+        title_gap = 12, -- the column's 6 px gap and the title's 6 px margin (HomeRetro.dc.html:33, :35)
+        chip_outline = 2, -- the "Now reading" chip's border (HomeRetro.dc.html:34)
+        chip_padding = { x = 10, y = 3 }, -- HomeRetro.dc.html:34
+        -- No board draws Diner's first run: the button takes Editorial's padding
+        -- (EmptyStates.dc.html:38) and the Library tile's fill, outline and tile shadow (HomeRetro.dc.html:56).
+        button_padding = { x = 14, y = 9 },
+        button_fill_color = "mustard",
+        button_outline_color = "outline",
     },
 }

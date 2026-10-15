@@ -1,7 +1,7 @@
 id: F-e8jz6h
 key: home/featured-book
 title: Featured book with cover and progress
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -13,6 +13,8 @@ order:
     - T-hftuq7
     - T-2axtyg
 review_grain: feature
+branch: tiller/reviews/features/home/featured-book
+pr: 5
 accepted_against:
     spec:
         kind: git_blob
@@ -28,3 +30,125 @@ accepted_against:
         kind: git_commit
         value: git:33474c1
         observed_at: 2026-10-15T15:18:53.033497Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T17:46:20.058011Z
+        against:
+            kind: git_commit
+            value: git:f140d09
+            observed_at: 2026-10-15T17:46:20.05638Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-f140d09-out-f337867766887520b5791c49e9436e05c8d8c2a869efda1e01747fa9ec1ae622.txt
+    evals:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T18:19:02.953933Z
+        against:
+            kind: git_commit
+            value: git:f140d09
+            observed_at: 2026-10-15T17:46:20.05638Z
+        criteria:
+            C1:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C1-f140d09-out-eb9de2f133c56ba85ef7eb83b60952d4126b0345830f7500928d4b45b9a649ee.txt
+            C2:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C2-f140d09-out-c53896eba8b1f720e9b2c6efd26403baa5f10d00af3b2d071edb185bd6ee4a4a.txt
+            C3:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C3-f140d09-out-02bc70fd0ff96b9b5b65912f10a6ed221c1bd44bd8ea594a4717415a7f9df111.txt
+            C4:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C4-f140d09-out-4710de2ae27f4e4ee627fcd0b46bea3631f9df526184096f044552eea03e6c41.txt
+            C5:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C5-f140d09-out-01f5cd02b73197721f6183a86b8c5caaaf35e9549d221c25f71e2baef6df1918.txt
+            C6:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C6-f140d09-out-7ce08ae16f3b3d977b41b265962f15fc2ea17aa52df9bec30db9ed53ab747124.txt
+            C7:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C7-f140d09-out-719217f27e737d9a07e921dd50df4020d2b10b05b29fa8bbf2b9b797c5dddb0f.txt
+            C8:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C8-f140d09-out-7d8503f7156af4101bd9da6e47c0a5bb54dd6e9239d883265512c2f0eff8d988.txt
+            C9:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C9-f140d09-out-64b3b50501923426c502eec80046c302120778127a891aa6fa4681a5b6980049.txt
+            C10:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C10-f140d09-out-2aa2c5d9c7cb959d029ebb3035b828f30fa710eedf252c8e4296e03c890368ba.txt
+            C11:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C11-f140d09-out-2be7d3a48590b6aede39c0f357a7b6fa7fdb64e86d249280493f9680ee085e66.txt
+            C12:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C12-f140d09-out-707d08bda7483a93995eeaa8f718c87dc3cf6642cb7d554b0f0e4ffd03f2b250.txt
+            C13:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C13-f140d09-out-5e8401299f37ace29bbf47095d6e58781e82ca93e2cf2d9acc0e17f6571c1d53.txt
+            C14:
+                status: pass
+            C15:
+                status: pass
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T17:46:20.058011Z
+        against:
+            kind: git_commit
+            value: git:f140d09
+            observed_at: 2026-10-15T17:46:20.05638Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-f140d09-out-da85217c5b20a9b4e0cf91858e0b7193d34eadb3fe1aff1e994488689d5cbc37.txt
+attestations:
+    - id: AT-71spb9
+      target:
+        kind: criterion
+        id: C14
+      status: pass
+      by: allen
+      at: 2026-10-15T18:19:02.675231Z
+    - id: AT-ayeez4
+      target:
+        kind: criterion
+        id: C15
+      status: pass
+      by: allen
+      at: 2026-10-15T18:19:02.953933Z

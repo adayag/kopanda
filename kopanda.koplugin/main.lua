@@ -21,6 +21,8 @@ local logger = require("logger")
 local time = require("ui/time")
 -- Required here only so they load while the plugin root is on package.path; the modules that
 -- use them get them from the require cache.
+require("featured_book")
+require("featured_cover")
 require("icons")
 require("layout")
 require("looks")
@@ -35,6 +37,7 @@ require("weather")
 require("widgets")
 require("widgets/clock")
 require("widgets/date")
+require("widgets/featured")
 require("widgets/quote")
 require("widgets/stats")
 require("widgets/weather")
@@ -169,12 +172,46 @@ function KoPanda:onShow()
     end
 end
 
--- A reader closing its book: build the home now, so the file browser that usually follows
--- shows it without a build. CloseDocument also fires on reload, switch and exit, with no file
--- browser after; that build is wasted, which is accepted since the home is cheap to build, and
--- the next reader's init drops it. Returns nothing, so the event reaches later modules.
+-- The closing book's file and the TOC title of its current page, into the state for the
+-- featured book. The document is still open: CloseDocument is broadcast before closeDocument()
+-- (frontend/apps/reader/readerui.lua:887, :891). The lookup fills an unfilled TOC itself and is
+-- "" when no entry covers the page (frontend/apps/reader/modules/readertoc.lua:383-384,
+-- :446-453, :476-480). A failed lookup is logged and records the chapter as "", so the book
+-- keeps no chapter from an earlier close. A failed write is logged and the chapter cleared, so
+-- an old chapter never pairs with a new file.
+local function record_chapter(ui)
+    if not (ui and ui.document and ui.toc) then
+        return
+    end
+    local ok, chapter = pcall(ui.toc.getTocTitleOfCurrentPage, ui.toc)
+    if not ok then
+        logger.err("KoPanda: could not look up the chapter:", chapter)
+        chapter = ""
+    end
+    local set_ok, err = pcall(function()
+        local file_written = State.set("featured_chapter_file", ui.document.file)
+        local chapter_written = State.set("featured_chapter", chapter or "")
+        if not (file_written and chapter_written) then
+            logger.err("KoPanda: could not record the chapter, clearing it")
+            State.set("featured_chapter", "")
+        end
+    end)
+    if not set_ok then
+        logger.err("KoPanda: could not record the chapter:", err)
+    end
+end
+
+-- A reader closing its book: record its chapter for the featured book, then build the home
+-- now, so the file browser that usually follows shows it without a build. CloseDocument also
+-- fires on reload, switch and exit, with no file browser after; that build is wasted, which is
+-- accepted since the home is cheap to build, and the next reader's init drops it. Returns
+-- nothing, so the event reaches later modules.
 function KoPanda:onCloseDocument()
-    if self.refused or self.in_fm or Home.pending then
+    if self.refused then
+        return
+    end
+    record_chapter(self.ui)
+    if self.in_fm or Home.pending then
         return
     end
     Home.prebuild()

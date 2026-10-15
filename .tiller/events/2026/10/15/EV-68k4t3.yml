@@ -1,0 +1,13 @@
+id: EV-68k4t3
+type: attest.feature
+at: 2026-10-15T18:19:02.677704Z
+contributor: allen
+command: attest feature F-e8jz6h
+targets:
+    - F-e8jz6h
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/home/features/featured-book/feature.yml

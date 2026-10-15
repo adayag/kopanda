@@ -1,0 +1,13 @@
+id: EV-orz0q0
+type: check.task
+at: 2026-10-15T15:44:24.621665Z
+contributor: allen
+command: check task T-gj4d8q
+targets:
+    - T-gj4d8q
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/book-data/task.yml

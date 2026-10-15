@@ -4,13 +4,16 @@
 --   - os.time() and os.date(format) with no time argument answer 2026-10-13 08:42 in the run's
 --     TZ (a Tuesday, the boards' date); calls with a time pass through, and ui/time's monotonic
 --     clock is untouched, so paint_ms stays real;
---   - KOPANDA_HOME_FIXTURE=populated writes a weather cache fetched 20 minutes earlier and a
---     Statistics database with a 4-day streak, 23 minutes today and 3 books this month;
---     "empty" writes neither;
+--   - KOPANDA_HOME_FIXTURE=populated writes a weather cache fetched 20 minutes earlier, a
+--     Statistics database with a 4-day streak, 23 minutes today and 3 books this month, and the
+--     featured book: frankenstein.epub from the fixture library in the reading history, 62 % read
+--     at 90 s a page with "Letter IV" as its chapter, its cover extracted into CoverBrowser's cache
+--     before the home is built; "typecover" is the same with CoverBrowser disabled, so the
+--     featured book has its typographic cover; "empty" writes none of it;
 --   - KOPANDA_HOME_LOOK, when set, is stored as the look (Diner is the default).
 -- No fetch runs: the capture driver turns the emulator's fake Wi-Fi off, so
 -- NetworkMgr:isConnected() is false (frontend/device/sdl/device.lua:478-500).
--- Writes only under the scratch KO_HOME's settings directory. Any failure exits with status 4.
+-- Writes only under the scratch KO_HOME. Any failure exits with status 4.
 local logger = require("logger")
 
 local ok, err = pcall(function()
@@ -19,8 +22,8 @@ local ok, err = pcall(function()
     local lfs = require("libs/libkoreader-lfs")
 
     local fixture = os.getenv("KOPANDA_HOME_FIXTURE")
-    if fixture ~= "populated" and fixture ~= "empty" then
-        error("KOPANDA_HOME_FIXTURE must be populated or empty, not " .. tostring(fixture))
+    if fixture ~= "populated" and fixture ~= "typecover" and fixture ~= "empty" then
+        error("KOPANDA_HOME_FIXTURE must be populated, typecover or empty, not " .. tostring(fixture))
     end
 
     local real_time, real_date = os.time, os.date
@@ -57,6 +60,97 @@ local ok, err = pcall(function()
 
     if fixture == "empty" then
         return
+    end
+
+    -- The featured book. Its sidecar goes under <KO_HOME>/docsettings/ rather than beside the
+    -- book (document_metadata_folder "dir", frontend/docsettings.lua:118-136, :317-339), so
+    -- nothing is written into spec/fixtures/library/. G_reader_settings is held in memory and
+    -- read when DocSettings looks for a sidecar, so the setting holds for the whole run.
+    G_reader_settings:saveSetting("document_metadata_folder", "dir")
+    local ffiutil = require("ffi/util")
+    local util = require("util")
+    local root = assert(os.getenv("KOPANDA_ROOT"), "KOPANDA_ROOT unset")
+    -- History holds realpaths (frontend/readhistory.lua:26).
+    local book = assert(ffiutil.realpath(root .. "/spec/fixtures/library/frankenstein.epub"),
+        "no frankenstein.epub in the fixture library")
+    local md5 = assert(util.partialMD5(book)) -- frontend/util.lua:1094
+    local FEATURED_PAGES = 220
+
+    -- <DataDir>/history.lua as ReadHistory:_flush writes it (frontend/readhistory.lua:12,
+    -- :89-97), one entry opened an hour before the frozen now. ReadHistory reads it when first
+    -- required (:369-373); one already loaded is made to read it again (:359-367).
+    util.writeToFile(string.format("return {\n    { time = %d, file = %q },\n}\n", NOW - 3600, book),
+        DataStorage:getDataDir() .. "/history.lua")
+    if package.loaded["readhistory"] then
+        package.loaded["readhistory"]:reload(true)
+    end
+
+    -- The sidecar keys ReaderUI saves (readerrolling.lua:338 percent_finished, readerui.lua:493
+    -- doc_props, :497-501 partial_md5_checksum), written through DocSettings:flush.
+    require("docsettings"):open(book)
+        :saveSetting("percent_finished", 0.62)
+        :saveSetting("doc_pages", FEATURED_PAGES)
+        :saveSetting("doc_props", { title = "Frankenstein", authors = "Mary Shelley" })
+        :saveSetting("summary", { status = "reading" })
+        :saveSetting("partial_md5_checksum", md5)
+        :flush()
+
+    -- The chapter KoPanda records when the book closes, in its runtime state file.
+    LuaSettings:open(kopanda_dir .. "/state.lua")
+        :saveSetting("featured_chapter_file", book)
+        :saveSetting("featured_chapter", "Letter IV")
+        :flush()
+
+    if fixture == "typecover" then
+        -- Read by PluginLoader:_discover in FileManager:init (frontend/pluginloader.lua:175),
+        -- long after this patch: CoverBrowser loads only its _meta.lua (:210-216).
+        local disabled = G_reader_settings:readSetting("plugins_disabled") or {}
+        disabled.coverbrowser = true
+        G_reader_settings:saveSetting("plugins_disabled", disabled)
+    else
+        -- The cover goes into CoverBrowser's cache before the home is built, so the capture
+        -- shows it and the widget asks for no extraction after the show. bookinfomanager joins
+        -- package.path only once PluginLoader:loadPlugins has run (frontend/pluginloader.lua:283-287),
+        -- which FileManager:init calls before it instantiates any plugin
+        -- (frontend/apps/filemanager/filemanager.lua:418); KoPanda's show starts its paint_ms
+        -- clock only on the file manager's Show, later still. extractBookInfo is synchronous
+        -- (plugins/coverbrowser.koplugin/bookinfomanager.lua:422-570); run here rather than in its
+        -- subprocess it points crengine's cache at CoverBrowser's tmpcr3cache (:423-439) for the
+        -- rest of the run, which the home, drawing nothing with crengine, never reads.
+        local PluginLoader = require("pluginloader")
+        local load_plugins = PluginLoader.loadPlugins
+        local extracted = false
+        PluginLoader.loadPlugins = function(self, ...)
+            local enabled, disabled = load_plugins(self, ...)
+            if not extracted then
+                extracted = true
+                local extract_ok, extract_err = pcall(function()
+                    local time = require("ui/time")
+                    local started = time.monotonic()
+                    local BookInfoManager = require("bookinfomanager")
+                    local Screen = require("device").screen
+                    -- The widget's own box (featured_cover.lua), in a full-width column, so
+                    -- isCachedCoverInvalid finds the cached cover big enough
+                    -- (bookinfomanager.lua:1013-1030).
+                    local box_w, box_h = require("featured_cover").box(Screen:getWidth(),
+                        { look = require("looks").active(), screen = Screen })
+                    if not BookInfoManager:extractBookInfo(book, { max_cover_w = box_w, max_cover_h = box_h }) then
+                        error("CoverBrowser could not read " .. book)
+                    end
+                    local info = BookInfoManager:getBookInfo(book, false)
+                    if not (info and info.has_cover) then
+                        error("CoverBrowser found no cover in " .. book)
+                    end
+                    logger.info(string.format("KOPANDA_SCENARIO: cover of %s extracted for %dx%d in %d ms",
+                        book, box_w, box_h, time.to_ms(time.monotonic() - started)))
+                end)
+                if not extract_ok then
+                    logger.warn("KOPANDA_SCENARIO: home fixture failed", extract_err)
+                    os.exit(4)
+                end
+            end
+            return enabled, disabled
+        end
     end
 
     -- The cache kopanda.koplugin/weather.lua writes after a fetch, for the schema's default
@@ -132,6 +226,16 @@ local ok, err = pcall(function()
     for id = 1, 4 do
         conn:exec(string.format("INSERT INTO book (id, title, pages) VALUES (%d, 'Book %d', 300);", id, id))
     end
+    -- The featured book's row: its sidecar's md5, the pages its sidecar records, opened last on
+    -- 2025-01-01, and ten pages of 90 s each that day, under the plugin's 120 s max_sec
+    -- (main.lua:30) and with total_pages equal to pages, so the page_stat view keeps each row as
+    -- it is (main.lua:438-451). 90 s a page over 220 - round(0.62 * 220) = 84 pages left is
+    -- 2 h 6 min. 2025 is outside this month and the stats widget's 400-day streak window.
+    local featured_day = real_time{ year = 2025, month = 1, day = 1, hour = 10, min = 0 }
+    local book_stmt = conn:prepare("INSERT INTO book (id, title, authors, last_open, pages, md5)"
+        .. " VALUES (5, 'Frankenstein', 'Mary Shelley', ?, ?, ?);")
+    book_stmt:bind(featured_day, FEATURED_PAGES, md5):step()
+    book_stmt:close()
     -- { id_book, day of the month (October unless month is given), hour, minute, seconds }:
     -- 23 minutes today over two books; read on the three days before, then a gap on the 9th,
     -- so the streak is 4; books 1-3 this month, book 4 only in September.
@@ -144,11 +248,14 @@ local ok, err = pcall(function()
         { 1, 8, 21, 0, 600 },
         { 4, 28, 21, 0, 600, 9 },
     }
-    local stmt = conn:prepare("INSERT INTO page_stat_data VALUES (?, ?, ?, ?, 300);")
+    local stmt = conn:prepare("INSERT INTO page_stat_data VALUES (?, ?, ?, ?, ?);")
     conn:exec("BEGIN;")
     for page, row in ipairs(rows) do
         local start = real_time{ year = 2026, month = row[6] or 10, day = row[2], hour = row[3], min = row[4] }
-        stmt:reset():bind(row[1], page, start, row[5]):step()
+        stmt:reset():bind(row[1], page, start, row[5], 300):step()
+    end
+    for page = 1, 10 do
+        stmt:reset():bind(5, page, featured_day + (page - 1) * 90, 90, FEATURED_PAGES):step()
     end
     conn:exec("COMMIT;")
     stmt:close()

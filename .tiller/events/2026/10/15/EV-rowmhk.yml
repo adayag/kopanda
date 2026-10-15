@@ -1,0 +1,15 @@
+id: EV-rowmhk
+type: start.task
+at: 2026-10-15T17:22:17.554301Z
+contributor: allen
+command: start task T-2axtyg
+targets:
+    - T-2axtyg
+before:
+    status: ready
+after:
+    branch: tiller/home/featured-book/goldens
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/goldens/task.yml

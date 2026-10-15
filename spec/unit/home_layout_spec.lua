@@ -94,6 +94,7 @@ describe("the home's rows", function()
             end),
             weather = stub("weather", 20),
             stats = stub("stats", 20),
+            featured = stub("featured", 100),
         }
         Widgets.get = function(id)
             return stubs[id]
@@ -114,9 +115,9 @@ describe("the home's rows", function()
         -- margin are both 40, so each row is 520 wide; two columns share it less a 14 px gap.
         assert.equals(1, Screen:scaleBySize(1))
         assert.equals(600, Screen:getWidth())
-        assert.same({ date = 253, clock = 253, quote = 520, weather = 253, stats = 253 }, widths)
-        assert.same({ date = 1, clock = 1, quote = 1, weather = 1, stats = 1 }, builds)
-        assert.equals(5, #home.slots)
+        assert.same({ date = 253, clock = 253, featured = 520, quote = 520, weather = 253, stats = 253 }, widths)
+        assert.same({ date = 1, clock = 1, featured = 1, quote = 1, weather = 1, stats = 1 }, builds)
+        assert.equals(6, #home.slots)
     end)
 
     it("passes each build the look, variant, text size, time, screen and home", function()
@@ -256,7 +257,7 @@ describe("the home's rows", function()
         assert.equals(520, slot.built:getSize().w)
         assert.is_nil(slot.built.stub)
         assert.is_true(logged("quote"))
-        assert.same({ date = 1, clock = 1, weather = 1, stats = 1 }, builds)
+        assert.same({ date = 1, clock = 1, featured = 1, weather = 1, stats = 1 }, builds)
     end)
 
     it("leaves a blank slot, logged, for a widget whose height raises", function()
@@ -288,6 +289,70 @@ describe("the home's rows", function()
         assert.equals(1, taps)
         assert.equals(home, Home.shown)
         assert.equals(home, harness.top())
+    end)
+
+    it("passes a slot's tap the home's ctx, the gesture and the slot's built widget", function()
+        local got
+        stubs.quote.tap = function(...)
+            got = { ... }
+        end
+        local _, home = show_home()
+        local slot = slot_of(home, "quote")
+        local x, y = centre(slot.rect)
+        tap_at(x, y)
+        assert.equals(home.ctx, got[1])
+        assert.same({ x, y }, { got[2].pos.x, got[2].pos.y })
+        assert.equals(slot.built, got[3])
+    end)
+
+    it("falls through to closing the home when a slot's tap returns false", function()
+        stubs.quote.tap = function()
+            taps = taps + 1
+            return false
+        end
+        local fm, home = show_home()
+        tap_at(centre(slot_of(home, "quote").rect))
+        assert.equals(1, taps)
+        assert.is_nil(Home.shown)
+        assert.equals(fm, harness.top())
+    end)
+
+    it("calls each slot's after_show once, with the ctx and its built widget, after the settled signal", function()
+        local got = {}
+        stubs.quote.after_show = function(ctx, built)
+            got[#got + 1] = { ctx = ctx, built = built, settled = Home.shown and Home.shown.settled }
+        end
+        local _, home = show_home()
+        harness.tick(3)
+        assert.equals(1, #got)
+        assert.equals(home.ctx, got[1].ctx)
+        assert.equals(slot_of(home, "quote").built, got[1].built)
+        assert.is_true(got[1].settled)
+    end)
+
+    it("logs a raising after_show and keeps the home up", function()
+        stubs.quote.after_show = function()
+            error("kopanda-test: after_show failed")
+        end
+        local _, home = show_home()
+        harness.tick(3)
+        assert.is_true(logged("kopanda-test: after_show failed"))
+        assert.equals(home, Home.shown)
+    end)
+
+    it("drops the featured cover's check when the home closes", function()
+        local FeaturedCover = package.loaded["featured_cover"]
+        local cancel = FeaturedCover.cancel
+        local cancels = 0
+        FeaturedCover.cancel = function()
+            cancels = cancels + 1
+        end
+        finally(function()
+            FeaturedCover.cancel = cancel
+        end)
+        show_home()
+        Home.close()
+        assert.equals(1, cancels)
     end)
 
     it("closes on a tap in a slot whose widget has no tap", function()

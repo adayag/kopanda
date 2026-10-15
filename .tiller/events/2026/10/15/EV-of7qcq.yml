@@ -1,0 +1,11 @@
+id: EV-of7qcq
+type: submit.feature
+at: 2026-10-15T18:19:18.21051Z
+contributor: allen
+command: submit feature home/featured-book
+targets:
+    - F-e8jz6h
+after:
+    pr: 5
+files:
+    - path: .tiller/epics/home/features/featured-book/feature.yml

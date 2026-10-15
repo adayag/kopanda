@@ -35,10 +35,11 @@ return {
             -- may hold.
             id = "layout.rows",
             type = "rows",
-            widgets = { "date", "clock", "weather", "quote", "stats" },
+            widgets = { "date", "clock", "weather", "quote", "stats", "featured" },
             max_columns = 3,
             default = {
                 { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                { { widget = "featured", share = 1 } },
                 { { widget = "quote", share = 1 } },
                 { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
             },
@@ -82,6 +83,15 @@ return {
             default = true,
             label = "Show reading stats",
             group = "stats",
+        },
+        {
+            -- A book to feature on the home in place of the last one opened; false features the
+            -- last one.
+            id = "featured.pinned",
+            type = "path",
+            default = false,
+            label = "Featured book",
+            group = "featured",
         },
     },
 }

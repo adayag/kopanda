@@ -1,9 +1,10 @@
 id: T-2axtyg
 key: home/featured-book/goldens
 title: Home goldens with the featured row and the paint budgets
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-hftuq7
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:33474c1
         observed_at: 2026-10-15T15:18:53.122203Z
+branch: tiller/home/featured-book/goldens
+review_ref:
+    branch: tiller/home/featured-book/goldens
+    head:
+        kind: git_commit
+        value: git:fb132a5
+        observed_at: 2026-10-15T17:46:11.115391Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T17:45:10.218857Z
+        against:
+            kind: git_commit
+            value: git:e6050b7
+            observed_at: 2026-10-15T17:45:10.218853Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-e6050b7-out-d68d639aaf43a8201f3e2dc57c3da9ac1178b6ff98bc8aa71f022dab80b2b1fb.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T17:45:10.218857Z
+        against:
+            kind: git_commit
+            value: git:e6050b7
+            observed_at: 2026-10-15T17:45:10.218853Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-e6050b7-out-47d1c234b566dce0298a4bdc71a16bc20eb140205df735a4722b4d53840c86bd.txt

@@ -1,9 +1,10 @@
 id: T-ew6y91
 key: home/featured-book/cover
 title: Cover from CoverBrowser's cache, typographic placeholder and bounded extraction
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,37 @@ accepted_against:
         kind: git_commit
         value: git:33474c1
         observed_at: 2026-10-15T15:18:53.078555Z
+branch: tiller/home/featured-book/cover
+review_ref:
+    branch: tiller/home/featured-book/cover
+    head:
+        kind: git_commit
+        value: git:1010ba3
+        observed_at: 2026-10-15T16:36:24.821122Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T16:35:34.469693Z
+        against:
+            kind: git_commit
+            value: git:46ccc11
+            observed_at: 2026-10-15T16:35:34.469686Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-46ccc11-out-c548b6b7b3c157ee1e53476bf7ef5c7cb0bb4cf315aa0ed049946a0f91d82ddb.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T16:35:34.469693Z
+        against:
+            kind: git_commit
+            value: git:46ccc11
+            observed_at: 2026-10-15T16:35:34.469686Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-46ccc11-out-3d0d088dede22d4198dd0f6b8c805eacead8abb0384d250e2955c8483e741d70.txt

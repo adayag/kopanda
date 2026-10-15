@@ -34,7 +34,7 @@ describe("schema.lua", function()
         assert.same({ "schema.keys.1.check" }, functions_in({ keys = { { check = print } } }, "schema"))
     end)
 
-    it("is version 1 with the seven keys of the Keys table, in order", function()
+    it("is version 1 with the eight keys of the Keys tables, in order", function()
         local schema = load_bare()
         assert.equals(1, schema.version)
         assert.same({
@@ -64,10 +64,11 @@ describe("schema.lua", function()
             {
                 id = "layout.rows",
                 type = "rows",
-                widgets = { "date", "clock", "weather", "quote", "stats" },
+                widgets = { "date", "clock", "weather", "quote", "stats", "featured" },
                 max_columns = 3,
                 default = {
                     { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                    { { widget = "featured", share = 1 } },
                     { { widget = "quote", share = 1 } },
                     { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
                 },
@@ -109,7 +110,22 @@ describe("schema.lua", function()
                 label = "Show reading stats",
                 group = "stats",
             },
+            {
+                id = "featured.pinned",
+                type = "path",
+                default = false,
+                label = "Featured book",
+                group = "featured",
+            },
         }, schema.keys)
+    end)
+
+    it("validates the path type, whose default false is allowed", function()
+        local Settings = require("settings")
+        assert.is_function(Settings.validators.path)
+        local pinned = load_bare().keys[8]
+        assert.equals("featured.pinned", pinned.id)
+        assert.is_true(Settings.validators.path(pinned, pinned.default))
     end)
 
     it("has no clock.twenty_four_hour key", function()

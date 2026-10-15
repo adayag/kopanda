@@ -87,7 +87,18 @@ describe("looks", function()
                     "progress.fill_grey", "sheet.rule_color", "chip.fill_color", "label.size",
                     "palettes.day.on_band", "faces.strong.file", "faces.quote.file", "home.margin.side",
                     "home.free_space", "home.header.padding.top", "home.footer.line_pitch",
-                    "type.date_label.face", "type.clock.color", "type.stats.line_height" }) do
+                    "type.date_label.face", "type.clock.color", "type.stats.line_height",
+                    "palettes.day.cover", "palettes.night.on_cover", "palettes.grey.cover",
+                    "type.cover_title.tracking", "type.cover_authors.color", "type.cover_empty.face",
+                    "featured.cover_w", "featured.cover_h", "featured.cover_padding.x",
+                    "featured.cover_padding.y", "featured.dash", "featured.dash_gap",
+                    "type.featured_label.face", "type.featured_title.line_height", "type.featured_authors.color",
+                    "type.featured_chapter.size", "type.featured_caption.face", "type.featured_empty_title.size",
+                    "type.featured_empty_body.line_height", "type.featured_button.uppercase", "featured.gap",
+                    "featured.column_padding_y", "featured.title_gap", "featured.chip_outline",
+                    "featured.chip_padding.x", "featured.chip_padding.y", "featured.button_padding.x",
+                    "featured.button_padding.y", "featured.button_fill_color",
+                    "featured.button_outline_color" }) do
                 local found = false
                 for _, path in ipairs(diner) do
                     found = found or path == wanted
@@ -103,7 +114,7 @@ describe("looks", function()
                 assert.same({ "day", "grey", "night" }, keys(palettes), id)
                 local roles = keys(palettes.day)
                 for _, role in ipairs({ "paper", "ink", "muted", "text", "hairline", "hairline_light",
-                        "teal", "pink", "mustard", "outline", "shadow", "on_band" }) do
+                        "teal", "pink", "mustard", "outline", "shadow", "on_band", "cover", "on_cover" }) do
                     assert.is_not_nil(palettes.day[role], id .. " has no " .. role)
                 end
                 assert.same(roles, keys(palettes.night), id .. " night")
@@ -201,6 +212,84 @@ describe("looks", function()
                     assert.is_number(entry.line_height, where)
                 end
             end
+        end)
+
+        -- The typographic cover's fill and text (Main:33, NightA:33, PWEditorial:33; HomeRetro:28,
+        -- NightC:28, PWRetro:28 under .tiller/design/2026-10-13-kopanda-screens/).
+        it("give the cover and on_cover roles the boards' values", function()
+            local wanted = {
+                editorial = { day = { "#2b4c6f", "#f3f1ea" }, night = { "#2b4c6f", "#f3f1ea" },
+                    grey = { "#4a4a4a", "#f4f4f4" } },
+                diner = { day = { "#2b4c6f", "#f5f1e6" }, night = { "#2b4c6f", "#f5f1e6" },
+                    grey = { "#4a4a4a", "#f4f4f4" } },
+            }
+            for id, variants in pairs(wanted) do
+                for variant, pair in pairs(variants) do
+                    local palette = looks[id].palettes[variant]
+                    assert.same(pair, { palette.cover, palette.on_cover }, id .. " " .. variant)
+                end
+            end
+        end)
+
+        it("size the cover box 2:3 and draw the placeholder's text in on_cover and its empty frame in muted", function()
+            for id, size in pairs({ editorial = { 150, 225 }, diner = { 140, 210 } }) do
+                local look = looks[id]
+                assert.same(size, { look.featured.cover_w, look.featured.cover_h }, id)
+                assert.same({ 4, 4 }, { look.featured.dash, look.featured.dash_gap }, id)
+                assert.equals("on_cover", look.type.cover_title.color, id)
+                assert.equals("on_cover", look.type.cover_authors.color, id)
+                assert.equals("muted", look.type.cover_empty.color, id)
+                assert.is_true(look.type.cover_title.uppercase, id)
+                assert.is_true(look.type.cover_authors.uppercase, id)
+                assert.is_true(look.type.cover_empty.uppercase, id)
+            end
+        end)
+
+        -- The featured text column and first run (Main.dc.html:32-52, HomeRetro.dc.html:27-43,
+        -- EmptyStates.dc.html:32-40 under .tiller/design/2026-10-13-kopanda-screens/): each part's
+        -- face, size, palette role and line height, and the featured block's column entries.
+        it("give the featured parts and the featured block the boards' values", function()
+            local wanted = {
+                editorial = {
+                    featured_label = { "text", 11, "muted", 0 },
+                    featured_title = { "display", 28, "ink", 0.1 },
+                    featured_authors = { "text", 15, "text", 0 },
+                    featured_chapter = { "text", 14, "text", 0 },
+                    featured_caption = { "text", 13, "text", 0 },
+                    featured_empty_title = { "display", 24, "ink", 0.15 },
+                    featured_empty_body = { "text", 15, "text", 0.4 },
+                    featured_button = { "strong", 11, "ink", 0 },
+                },
+                diner = {
+                    featured_label = { "display", 11, "ink", 0 },
+                    featured_title = { "display", 28, "ink", 0.05 },
+                    featured_authors = { "text", 15, "muted", 0 },
+                    featured_chapter = { "text", 15, "muted", 0 },
+                    featured_caption = { "strong", 13, "ink", 0 },
+                    featured_empty_title = { "display", 24, "ink", 0.15 },
+                    featured_empty_body = { "text", 15, "muted", 0.4 },
+                    featured_button = { "strong", 11, "ink", 0 },
+                },
+            }
+            for id, parts in pairs(wanted) do
+                for name, value in pairs(parts) do
+                    local part = looks[id].type[name]
+                    assert.is_table(part, id .. " " .. name)
+                    assert.same(value, { part.face, part.size, part.color, part.line_height }, id .. " " .. name)
+                end
+                for _, name in ipairs({ "featured_label", "featured_button" }) do
+                    assert.is_true(looks[id].type[name].uppercase, id .. " " .. name)
+                end
+            end
+            assert.equals(looks.diner.chip.text_color, looks.diner.type.featured_label.color)
+            local editorial, diner = looks.editorial.featured, looks.diner.featured
+            assert.same({ 24, 0, 6, false }, { editorial.gap, editorial.column_padding_y, editorial.title_gap,
+                editorial.chip_outline })
+            assert.same({ 20, 6, 12, 2 }, { diner.gap, diner.column_padding_y, diner.title_gap, diner.chip_outline })
+            assert.same({ x = 10, y = 3 }, diner.chip_padding)
+            assert.same({ x = 14, y = 9 }, editorial.button_padding)
+            assert.same({ false, "ink" }, { editorial.button_fill_color, editorial.button_outline_color })
+            assert.same({ "mustard", "outline" }, { diner.button_fill_color, diner.button_outline_color })
         end)
 
         it("align both looks' header row to its bottom", function()
