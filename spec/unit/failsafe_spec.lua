@@ -140,6 +140,18 @@ describe("KoPanda failing safe", function()
         file_manager_usable()
     end)
 
+    it("closes the home and logs when its rebuild on Resume throws", function()
+        harness.show_fm()
+        harness.tick(2)
+        Home.build = function()
+            error("kopanda-test: rebuild failed")
+        end
+        local ok = pcall(UIManager.broadcastEvent, UIManager, Event:new("Resume"))
+        assert.is_true(ok)
+        file_manager_usable()
+        assert.is_true(logged_error("kopanda-test: rebuild failed"))
+    end)
+
     it("consumes a gesture and closes the home when the gesture body throws", function()
         harness.show_fm()
         harness.tick(2)
@@ -294,7 +306,8 @@ describe("KoPanda failing safe", function()
             return count
         end
 
-        -- Closes the home with a mid-screen tap and opens the file manager's menu.
+        -- Closes the home with a mid-screen tap, outside every tappable slot, and opens the file
+        -- manager's menu.
         local function menu_without_home()
             local fm = harness.show_fm()
             harness.tick(2)

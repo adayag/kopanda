@@ -1,0 +1,17 @@
+id: EV-yyhx0u
+type: start.task
+at: 2026-10-15T13:13:53.500038Z
+contributor: allen
+command: start task T-ds0hab
+targets:
+    - T-ds0hab
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/home/home-layout
+    branch: tiller/home/home-layout/row-engine
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/row-engine/task.yml
+    - path: .tiller/epics/home/features/home-layout/feature.yml

@@ -84,7 +84,10 @@ describe("looks", function()
             assert.truthy(#editorial > 40, "too few tokens: " .. #editorial)
             for _, wanted in ipairs({ "faces.display.file", "faces.accent.file", "palettes.grey.paper",
                     "stroke.outline", "shadow.cover.color", "radius.cover", "tile.outline_color",
-                    "progress.fill_grey", "sheet.rule_color", "chip.fill_color", "label.size" }) do
+                    "progress.fill_grey", "sheet.rule_color", "chip.fill_color", "label.size",
+                    "palettes.day.on_band", "faces.strong.file", "faces.quote.file", "home.margin.side",
+                    "home.free_space", "home.header.padding.top", "home.footer.line_pitch",
+                    "type.date_label.face", "type.clock.color", "type.stats.line_height" }) do
                 local found = false
                 for _, path in ipairs(diner) do
                     found = found or path == wanted
@@ -100,7 +103,7 @@ describe("looks", function()
                 assert.same({ "day", "grey", "night" }, keys(palettes), id)
                 local roles = keys(palettes.day)
                 for _, role in ipairs({ "paper", "ink", "muted", "text", "hairline", "hairline_light",
-                        "teal", "pink", "mustard", "outline", "shadow" }) do
+                        "teal", "pink", "mustard", "outline", "shadow", "on_band" }) do
                     assert.is_not_nil(palettes.day[role], id .. " has no " .. role)
                 end
                 assert.same(roles, keys(palettes.night), id .. " night")
@@ -135,12 +138,15 @@ describe("looks", function()
             end
         end)
 
+        -- on_band is exempt: it is chosen for contrast against the band, not to tell roles apart,
+        -- and equals ink in grey on purpose (PWRetro.dc.html:19).
         it("keep roles that differ by day distinct in grey", function()
             for _, id in ipairs(ids) do
                 local day, grey = looks[id].palettes.day, looks[id].palettes.grey
                 for a, a_day in pairs(day) do
                     for b, b_day in pairs(day) do
-                        if a < b and a_day and b_day and a_day ~= b_day and grey[a] and grey[b] then
+                        if a < b and a ~= "on_band" and b ~= "on_band"
+                                and a_day and b_day and a_day ~= b_day and grey[a] and grey[b] then
                             assert.is_not.equals(grey[a], grey[b], id .. ": " .. a .. " and " .. b)
                         end
                     end
@@ -166,11 +172,45 @@ describe("looks", function()
                         assert.is_table(look.faces[value], where .. " names no face: " .. value)
                     elseif key == "fill_grey" then
                         assert.equals("hatch_135", value, where)
+                    elseif key == "free_space" then
+                        assert.truthy(value == "before_last_row" or value == "before_footer", where .. " = " .. value)
+                    elseif key == "align" then
+                        assert.truthy(value == "top" or value == "bottom", where .. " = " .. value)
                     else
                         error(where .. " is a string that is neither a role, a face nor a marker: " .. value)
                     end
                 end)
             end
+        end)
+
+        it("give every type entry a face with a file, a size, case, tracking, line height and a colour role", function()
+            local fields = { "color", "face", "line_height", "size", "tracking", "uppercase" }
+            for _, id in ipairs(ids) do
+                local look = looks[id]
+                assert.truthy(next(look.type), id .. " has no type entries")
+                for part, entry in pairs(look.type) do
+                    local where = id .. " type." .. part
+                    assert.same(fields, keys(entry), where)
+                    assert.is_table(look.faces[entry.face], where .. " names no face: " .. tostring(entry.face))
+                    assert.is_string(look.faces[entry.face].file, where .. " names a face this look lacks")
+                    assert.is_string(look.palettes.day[entry.color],
+                        where .. " names no palette role this look has: " .. tostring(entry.color))
+                    assert.is_number(entry.size, where)
+                    assert.is_boolean(entry.uppercase, where)
+                    assert.is_number(entry.tracking, where)
+                    assert.is_number(entry.line_height, where)
+                end
+            end
+        end)
+
+        it("align both looks' header row to its bottom", function()
+            assert.equals("bottom", looks.editorial.home.header.align)
+            assert.equals("bottom", looks.diner.home.header.align)
+        end)
+
+        it("put the free height before Editorial's last row and before Diner's footer", function()
+            assert.equals("before_last_row", looks.editorial.home.free_space)
+            assert.equals("before_footer", looks.diner.home.free_space)
         end)
 
         it("mark Diner's grey progress fill as a 135 degree hatch and Editorial's as none", function()

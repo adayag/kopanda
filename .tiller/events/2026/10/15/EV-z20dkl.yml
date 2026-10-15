@@ -1,0 +1,13 @@
+id: EV-z20dkl
+type: claim.task
+at: 2026-10-15T14:16:46.611241Z
+contributor: allen
+command: claim task T-b8dgbr
+targets:
+    - T-b8dgbr
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/date-clock/task.yml

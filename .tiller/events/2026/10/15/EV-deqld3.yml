@@ -1,0 +1,13 @@
+id: EV-deqld3
+type: check.feature
+at: 2026-10-15T15:11:44.947182Z
+contributor: allen
+command: check feature F-wkj9iy
+targets:
+    - F-wkj9iy
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/home/features/home-layout/feature.yml

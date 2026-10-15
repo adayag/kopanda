@@ -353,6 +353,19 @@ describe("the swatch screen", function()
             end
         end)
 
+        -- Each panel's paint stops at its box, but its content paints on past it: content taller
+        -- than the panel runs into the panel or the icons below.
+        it("fits every panel's content inside its panel, and the panels and icons on the screen", function()
+            for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+                local size = panel[1]:getSize()
+                local where = panel.look .. " " .. panel.variant
+                assert.truthy(size.h <= panel.dimen.h - 2 * panel.inset, where .. " h " .. size.h)
+                assert.truthy(size.w <= panel.dimen.w - 2 * panel.inset, where .. " w " .. size.w)
+            end
+            local frame = swatch[1]
+            assert.truthy(frame[1]:getSize().h <= Screen:getHeight() - 2 * frame.padding)
+        end)
+
         it("draws every registered icon with its id beneath", function()
             local icons = collect(swatch, named("kopanda_swatch_icon"))
             assert.equals(#Icons.entries, #icons)

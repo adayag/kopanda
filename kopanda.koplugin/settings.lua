@@ -13,9 +13,54 @@ local logger = require("logger")
 
 local Settings = {}
 
+-- The number of entries in t when t is a table whose keys are exactly 1 to that number, nil
+-- otherwise.
+local function list_length(t)
+    if type(t) ~= "table" then
+        return nil
+    end
+    local count = 0
+    for _ in pairs(t) do
+        count = count + 1
+    end
+    for i = 1, count do
+        if t[i] == nil then
+            return nil
+        end
+    end
+    return count
+end
+
+local function is_slot(entry, slot, seen)
+    if type(slot) ~= "table" then
+        return false
+    end
+    local fields = 0
+    for _ in pairs(slot) do
+        fields = fields + 1
+    end
+    local widget, share = slot.widget, slot.share
+    if fields ~= 2 or type(widget) ~= "string" or seen[widget] then
+        return false
+    end
+    if type(share) ~= "number" or share ~= math.floor(share) or share < 1 or share > 3 then
+        return false
+    end
+    for _, id in ipairs(entry.widgets) do
+        if id == widget then
+            seen[widget] = true
+            return true
+        end
+    end
+    return false
+end
+
 -- One validator per type a schema key uses: validate(entry, value) is true when value is
--- allowed for entry.
+-- allowed for entry. Settings.get calls them on whatever the file holds, so none raises.
 Settings.validators = {
+    boolean = function(_, value)
+        return type(value) == "boolean"
+    end,
     choice = function(entry, value)
         for _, choice in ipairs(entry.choices) do
             if choice.value == value then
@@ -24,7 +69,63 @@ Settings.validators = {
         end
         return false
     end,
+    -- One or more rows; a row is one to entry.max_columns slots; a slot is exactly
+    -- { widget, share }, widget one of entry.widgets and named once in the layout, share an
+    -- integer from 1 to 3.
+    rows = function(entry, value)
+        local rows = list_length(value)
+        if not rows or rows == 0 then
+            return false
+        end
+        local seen = {}
+        for _, row in ipairs(value) do
+            local slots = list_length(row)
+            if not slots or slots == 0 or slots > entry.max_columns then
+                return false
+            end
+            for _, slot in ipairs(row) do
+                if not is_slot(entry, slot, seen) then
+                    return false
+                end
+            end
+        end
+        return true
+    end,
+    -- Exactly { name, latitude, longitude }: a non-empty name, a latitude from -90 to 90 and a
+    -- longitude from -180 to 180.
+    location = function(_, value)
+        if type(value) ~= "table" then
+            return false
+        end
+        local fields = 0
+        for _ in pairs(value) do
+            fields = fields + 1
+        end
+        local name, latitude, longitude = value.name, value.latitude, value.longitude
+        return fields == 3 and type(name) == "string" and name ~= ""
+            and type(latitude) == "number" and latitude >= -90 and latitude <= 90
+            and type(longitude) == "number" and longitude >= -180 and longitude <= 180
+    end,
 }
+
+-- Whether a and b hold the same values: equal, or tables with the same keys whose values are
+-- the same, all the way down.
+local function same(a, b)
+    if type(a) ~= "table" or type(b) ~= "table" then
+        return a == b
+    end
+    for k, v in pairs(a) do
+        if not same(v, b[k]) then
+            return false
+        end
+    end
+    for k in pairs(b) do
+        if a[k] == nil then
+            return false
+        end
+    end
+    return true
+end
 
 local entries = {}
 for _, entry in ipairs(Schema.keys) do
@@ -134,7 +235,7 @@ function Settings.set(key, value)
         previous_version = opened.data.schema_version
         opened:saveSetting(key, value):saveSetting("schema_version", Schema.version):flush()
         local read_ok, data = pcall(dofile, path())
-        if not (read_ok and type(data) == "table" and data[key] == value
+        if not (read_ok and type(data) == "table" and same(data[key], value)
                 and data.schema_version == Schema.version) then
             error("the file did not take " .. key, 0)
         end

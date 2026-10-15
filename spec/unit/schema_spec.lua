@@ -34,7 +34,7 @@ describe("schema.lua", function()
         assert.same({ "schema.keys.1.check" }, functions_in({ keys = { { check = print } } }, "schema"))
     end)
 
-    it("is version 1 with look as its one key", function()
+    it("is version 1 with the seven keys of the Keys table, in order", function()
         local schema = load_bare()
         assert.equals(1, schema.version)
         assert.same({
@@ -49,7 +49,73 @@ describe("schema.lua", function()
                 label = "Look",
                 group = "appearance",
             },
+            {
+                id = "text_size",
+                type = "choice",
+                choices = {
+                    { value = "small", label = "Small" },
+                    { value = "medium", label = "Medium" },
+                    { value = "large", label = "Large" },
+                },
+                default = "medium",
+                label = "Text size",
+                group = "appearance",
+            },
+            {
+                id = "layout.rows",
+                type = "rows",
+                widgets = { "date", "clock", "weather", "quote", "stats" },
+                max_columns = 3,
+                default = {
+                    { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                    { { widget = "quote", share = 1 } },
+                    { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
+                },
+                label = "Layout",
+                group = "home",
+            },
+            {
+                id = "weather.location",
+                type = "location",
+                default = { name = "Chicago, Illinois", latitude = 41.85003, longitude = -87.65005 },
+                label = "Weather location",
+                group = "weather",
+            },
+            {
+                id = "weather.units",
+                type = "choice",
+                choices = {
+                    { value = "fahrenheit", label = "Fahrenheit" },
+                    { value = "celsius", label = "Celsius" },
+                },
+                default = "fahrenheit",
+                label = "Units",
+                group = "weather",
+            },
+            {
+                id = "quote.source",
+                type = "choice",
+                choices = {
+                    { value = "builtin", label = "Built-in" },
+                },
+                default = "builtin",
+                label = "Quote source",
+                group = "quote",
+            },
+            {
+                id = "stats.show",
+                type = "boolean",
+                default = true,
+                label = "Show reading stats",
+                group = "stats",
+            },
         }, schema.keys)
+    end)
+
+    it("has no clock.twenty_four_hour key", function()
+        for _, entry in ipairs(load_bare().keys) do
+            assert.is_not.equals("clock.twenty_four_hour", entry.id)
+        end
     end)
 
     it("gives every entry an id, type, default, label and group, with unique ids", function()

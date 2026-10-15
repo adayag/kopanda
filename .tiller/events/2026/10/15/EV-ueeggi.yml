@@ -1,0 +1,13 @@
+id: EV-ueeggi
+type: claim.task
+at: 2026-10-15T14:16:48.050414Z
+contributor: allen
+command: claim task T-wgis3w
+targets:
+    - T-wgis3w
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/reading-stats/task.yml

@@ -1,0 +1,16 @@
+id: EV-vudynv
+type: submit.task
+at: 2026-10-15T14:38:47.927766Z
+contributor: allen
+command: submit task T-x42jhm
+targets:
+    - T-x42jhm
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/home-layout/quote
+        head: git:ba161f3
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/quote/task.yml

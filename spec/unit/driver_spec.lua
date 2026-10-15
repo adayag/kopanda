@@ -26,7 +26,7 @@ describe("the emulator capture driver", function()
     -- (seed_fails: prints "no sqlite here" and exits 1) and, run as the emulator, records
     -- its pid and sleeps (exit_now: exits 0 at once; ignore_term: ignores SIGTERM first,
     -- which survives the exec; record_args: writes its arguments one per line to <emu>/args
-    -- and exits 0).
+    -- and exits 0; record_env: writes its environment to <emu>/env and exits 0).
     local function fake_emulator(opts)
         opts = opts or {}
         local dir = fresh_dir("emu")
@@ -38,6 +38,8 @@ describe("the emulator capture driver", function()
                 body = "exit 0\n"
             elseif opts.record_args then
                 body = "printf '%s\\n' \"$@\" > '" .. dir .. "/args'\nexit 0\n"
+            elseif opts.record_env then
+                body = "env > '" .. dir .. "/env'\nexit 0\n"
             elseif opts.ignore_term then
                 body = body .. "trap '' TERM\n"
             end
@@ -108,6 +110,21 @@ describe("the emulator capture driver", function()
         assert.same({ "reader.lua", empty }, recorded_args(emu))
     end)
 
+    it("passes each env variable to the emulator beside its own", function()
+        local emu = fake_emulator{ record_env = true }
+        capture_error{ emulator_dir = emu, env = { TZ = "America/Chicago", KOPANDA_FIXTURE = "it's empty" } }
+        local env = {}
+        for line in assert(io.open(emu .. "/env")):lines() do
+            local name, value = line:match("^([%w_]+)=(.*)$")
+            if name then
+                env[name] = value
+            end
+        end
+        assert.equals("America/Chicago", env.TZ)
+        assert.equals("it's empty", env.KOPANDA_FIXTURE)
+        assert.equals("offscreen", env.SDL_VIDEO_DRIVER)
+    end)
+
     describe("write_profile", function()
         local LuaSettings = require("luasettings")
 
@@ -135,6 +152,15 @@ describe("the emulator capture driver", function()
             driver.write_profile(dir, "colorsoft", probe)
             local settings = LuaSettings:open(dir .. "/settings.reader.lua")
             assert.is_true(settings:readSetting("color_rendering"))
+        end)
+
+        -- Off, the emulator's NetworkMgr:isConnected() is false (frontend/device/sdl/device.lua:478-500),
+        -- so no capture fetches the weather.
+        it("turns the emulator's fake Wi-Fi off", function()
+            local dir = fresh_dir("profile")
+            driver.write_profile(dir, "colorsoft", probe)
+            local settings = LuaSettings:open(dir .. "/settings.reader.lua")
+            assert.is_false(settings:readSetting("emulator_fake_wifi_connected"))
         end)
 
         -- user_version sits at offset 60 of the SQLite file header, 4 bytes big-endian.

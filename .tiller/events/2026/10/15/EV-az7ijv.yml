@@ -1,0 +1,13 @@
+id: EV-az7ijv
+type: check.task
+at: 2026-10-15T15:04:53.982943Z
+contributor: allen
+command: check task T-ltupc3
+targets:
+    - T-ltupc3
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/goldens-and-budget/task.yml

@@ -1,9 +1,10 @@
 id: T-b8dgbr
 key: home/home-layout/date-clock
 title: Date and clock widgets in both looks
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-ds0hab
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:b9f66a1
         observed_at: 2026-10-15T12:44:30.762495Z
+branch: tiller/home/home-layout/date-clock
+review_ref:
+    branch: tiller/home/home-layout/date-clock
+    head:
+        kind: git_commit
+        value: git:59b0bc0
+        observed_at: 2026-10-15T14:43:59.968252Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T14:43:16.234564Z
+        against:
+            kind: git_commit
+            value: git:5d98a5c
+            observed_at: 2026-10-15T14:43:16.234559Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-5d98a5c-out-d9472a5dbb51d8f9877c820b2f99b202b12d4efd9f6df28d570b15a0d83cd2ad.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T14:43:16.234564Z
+        against:
+            kind: git_commit
+            value: git:5d98a5c
+            observed_at: 2026-10-15T14:43:16.234559Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-5d98a5c-out-7a6337a792258cfc46b7785938ada8734fe2650ffe632947356cbafaeed6b068.txt

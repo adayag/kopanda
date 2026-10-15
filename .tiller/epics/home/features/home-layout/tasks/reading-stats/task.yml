@@ -1,9 +1,10 @@
 id: T-wgis3w
 key: home/home-layout/reading-stats
 title: Reading stats from KOReader's Statistics database
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-ds0hab
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:b9f66a1
         observed_at: 2026-10-15T12:44:30.80903Z
+branch: tiller/home/home-layout/reading-stats
+review_ref:
+    branch: tiller/home/home-layout/reading-stats
+    head:
+        kind: git_commit
+        value: git:31ba6ca
+        observed_at: 2026-10-15T14:41:48.79004Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T14:41:05.676154Z
+        against:
+            kind: git_commit
+            value: git:9c3eb62
+            observed_at: 2026-10-15T14:41:05.676145Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-9c3eb62-out-61f5e248c63e12d18320d5a507fa541850e13c4fc0c7228e7c70e6205f73ba26.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T14:41:05.676154Z
+        against:
+            kind: git_commit
+            value: git:9c3eb62
+            observed_at: 2026-10-15T14:41:05.676145Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-9c3eb62-out-05e496acc6b28c74f88b211d3d6ccdeff2c99a7806bf8823f957f247dfd73fb8.txt

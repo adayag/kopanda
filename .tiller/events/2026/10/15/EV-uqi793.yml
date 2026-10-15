@@ -1,0 +1,15 @@
+id: EV-uqi793
+type: start.task
+at: 2026-10-15T14:16:48.190046Z
+contributor: allen
+command: start task T-wgis3w
+targets:
+    - T-wgis3w
+before:
+    status: ready
+after:
+    branch: tiller/home/home-layout/reading-stats
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/reading-stats/task.yml

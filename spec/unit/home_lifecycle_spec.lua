@@ -144,10 +144,12 @@ describe("the KoPanda home over the file browser", function()
         assert.is_nil(Home.shown)
     end)
 
-    it("closes on a tap mid-screen, leaving the file manager on top", function()
+    it("closes on a tap outside every tappable slot, leaving the file manager on top", function()
         local fm = harness.show_fm()
         harness.tick(2)
         local size = Screen:getSize()
+        local pos = require("ui/geometry"):new{ x = size.w / 2, y = size.h / 2, w = 0, h = 0 }
+        assert.is_nil(Home.shown:tappableSlotAt(pos))
         UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", size.w / 2, size.h / 2)))
         assert.equals(0, homes_on_stack())
         assert.is_nil(Home.shown)

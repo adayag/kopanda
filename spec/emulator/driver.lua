@@ -77,6 +77,8 @@ end
 -- (frontend/pluginloader.lua:193-199); present, only the listed paths join KOReader's own
 -- plugins/ (frontend/pluginloader.lua:177-188). The quickstart guide needs no setting: the
 -- directory argument capture() passes bypasses it (reader.lua:248-251, 257-261).
+-- emulator_fake_wifi_connected false makes the emulator's NetworkMgr:isConnected() false
+-- (frontend/device/sdl/device.lua:478-500), so no capture fetches the weather.
 --
 -- The third first-run prompt is coverbrowser's: on a profile without
 -- settings/bookinfo_cache.sqlite3 its createDB finds user_version 0, below
@@ -104,7 +106,8 @@ function M.write_profile(dir, profile_name, plugin_dir, emulator, patches)
         disabled[#disabled + 1] = string.format("[%q] = true", name)
     end
     write_file(dir .. "/settings.reader.lua", string.format(
-        "return { [\"color_rendering\"] = %s, [\"plugins_disabled\"] = { %s } }\n",
+        "return { [\"color_rendering\"] = %s, [\"emulator_fake_wifi_connected\"] = false,"
+            .. " [\"plugins_disabled\"] = { %s } }\n",
         tostring(profile.color), table.concat(disabled, ", ")))
 
     assert(lfs.mkdir(dir .. "/settings"))
@@ -216,7 +219,9 @@ end
 -- spec/fixtures/library/; pass an empty dir for no books), out_dir (default: a fresh dir
 -- under KO_HOME), cap_s (default 20), timeout_s (default 120), emulator_dir (default
 -- KOPANDA_EMULATOR), patches (extra userpatches, see write_profile), shot_screen (the
--- KoPandaSettled screen the capture is taken on, default "home"). Returns { png, width,
+-- KoPandaSettled screen the capture is taken on, default "home"), env (a table of extra
+-- environment variables for the emulator, name to value, passed after the driver's own in
+-- name order, so a scenario patch can read its options). Returns { png, width,
 -- height, sidecar, log, scratch }; the scratch profile is removed on success and left in place
 -- on failure.
 function M.capture(opts)
@@ -265,6 +270,14 @@ function M.capture(opts)
     }
     if not profile.color then
         vars[#vars + 1] = { "EMULATE_BW_SCREEN", 1 }
+    end
+    local names = {}
+    for name in pairs(opts.env or {}) do
+        names[#names + 1] = name
+    end
+    table.sort(names)
+    for _, name in ipairs(names) do
+        vars[#vars + 1] = { name, opts.env[name] }
     end
 
     local status = run_emulator(emulator, vars, library_dir, log, timeout_s, marker)

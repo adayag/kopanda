@@ -1,9 +1,10 @@
 id: T-ltupc3
 key: home/home-layout/goldens-and-budget
 title: Home goldens in both looks and the paint budget
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-b8dgbr
@@ -20,3 +21,37 @@ accepted_against:
         kind: git_commit
         value: git:b9f66a1
         observed_at: 2026-10-15T12:44:30.851875Z
+branch: tiller/home/home-layout/goldens-and-budget
+review_ref:
+    branch: tiller/home/home-layout/goldens-and-budget
+    head:
+        kind: git_commit
+        value: git:f54530f
+        observed_at: 2026-10-15T15:05:01.808989Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T15:04:08.390714Z
+        against:
+            kind: git_commit
+            value: git:8e997a5
+            observed_at: 2026-10-15T15:04:08.390709Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-8e997a5-out-89af9d29fb3cab2fdc92d05648850e9c1cd12dfac60bb19193ade1952aa42ffb.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T15:04:08.390714Z
+        against:
+            kind: git_commit
+            value: git:8e997a5
+            observed_at: 2026-10-15T15:04:08.390709Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-8e997a5-out-58b6e64566770298c9963f8f55d4ac1544adf783773adb69229a79f23d979499.txt

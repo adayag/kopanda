@@ -156,7 +156,7 @@ Upgrading KOReader walks this list.
   `frontend/apps/filemanager/filemanagermenu.lua:74-75` reads them, against `Screen:getSize()`
   at gesture time. The home's own zones (touch lock entry below) cover the screen at the home's
   build size and test these bands in their handlers.
-- Screen ratios. A tap inside the top menu zones leaves the placeholder up. The swipe up that
+- Screen ratios. A tap inside the top menu zones leaves the home up. The swipe up that
   opens the settings stub starts in the bottom edge band and outside the left and right bands,
   where Gestures binds frontlight and warmth swipes by default
   (`plugins/gestures.koplugin/defaults.lua:14-17`; it binds nothing to a bottom-edge swipe up,
@@ -387,6 +387,129 @@ Upgrading KOReader walks this list.
 - `base/ffi/blitbuffer.lua:464-467` (a colour greyed by luminance, `getColor8`): two hues can land
   on the same grey, so each look's `grey` palette names an explicit grey per role.
 
+### The quote: `TextBoxWidget`'s line height and ellipsis
+
+- `frontend/ui/widget/textboxwidget.lua:48` (`line_height` is extra space in em), `:151`
+  (`line_height_px = Math.round((1 + line_height) * face.size)`, `Math.round` at
+  `frontend/optmath.lua:43-45`), `:173-181` (a given `height` holds `floor(height / line_height_px)`
+  lines), `:253-260` (`height_overflow_show_ellipsis` marks the last shown line
+  `line_with_ellipsis`; `height_adjust` shrinks `height` to the lines there are), `:870-887`
+  (that line drawn with the ellipsis, `ellipsis_added`). `widgets/quote.lua` sets `height` to
+  four of `line_height_px` so the quote takes at most four lines and a longer one ends in "…".
+- `spec/unit/quote_spec.lua` reads `vertical_string_list`, `lines_per_page`, `line_with_ellipsis`,
+  `line_height_px`, `height` and `face.orig_size` (`frontend/ui/font.lua:337-344`) on the built
+  text box to count its lines, and counts a quote's characters with `util`'s `splitToChars`
+  (`frontend/util.lua:469`), which `typeset.lua` also uses.
+- `base/ffi/blitbuffer.lua:2096` (`paintBorder`), `:2118-2126` (`paintBorderRGB32`): Diner's tile
+  outline, a colour through the RGB32 variant as the fills.
+
+### The home's rows: `Resume`, `TimeFormatChanged` and `setDirty`
+
+- `frontend/device/generic/device.lua:1125` (`Resume` broadcast on wake),
+  `frontend/ui/elements/common_settings_menu_table.lua:87` (`TimeFormatChanged` broadcast when the
+  12-hour clock setting flips), `frontend/ui/uimanager.lua:1042-1061` (`broadcastEvent` reaches
+  every window-level widget whatever a handler returns). The home rebuilds its rows on both and
+  returns nothing; it schedules no task of its own for them.
+- `frontend/ui/uimanager.lua:659` (`setDirty`): a rebuilt home is repainted with `"ui"`.
+- `frontend/ui/widget/container/widgetcontainer.lua:80-107` (`propagateEvent` offers an event to
+  the children before the container's own handler, so a slot widget that consumed `Resume` would
+  keep the home from rebuilding), `:110-117` (`free` frees the array part): the rows container
+  holds the slot widgets in its array part, and the old one is freed after a rebuild.
+- `base/ffi/framebuffer.lua:414-425` (`scaleBySize`): `layout.lua` scales every look length
+  (margins, gaps, header, footer) once; `frontend/ui/font.lua:276` scales font sizes, so
+  `Layout.font_size` doesn't. `Layout.screen` is the screen it scales by, a seam the spec
+  replaces with one of another size.
+- `base/ffi/blitbuffer.lua:2712` (`isColor8`), `:1704-1724` (`paintRect`, which greys a colour),
+  `:1827` (`paintRectRGB32`): the paper, header band, edge, rule and footer stripe are filled as
+  the swatch screen fills its panels.
+
+### The date and clock: `datetime` tables and `twelve_hour_clock`
+
+- `frontend/datetime.lua:29-42` (`longMonthTranslation`, keyed by the English month name
+  `os.date("%B")` gives in the C locale), `:54-62` (`shortDayOfWeekToLongTranslation`, keyed by
+  the English abbreviation `os.date("%a")` gives). `widgets/date.lua` looks both up, so the date
+  follows KOReader's language.
+- `twelve_hour_clock` in `G_reader_settings`: read with `isTrue`, as
+  `frontend/datetime.lua:298-300` reads it, so unset is the 24-hour clock; set by Settings › Time
+  and date › 12-hour clock (`frontend/ui/elements/common_settings_menu_table.lua:76-89`), which
+  broadcasts `TimeFormatChanged` (the home's rows entry above). The 24-hour form is
+  `os.date("%-H:%M")`, KOReader's own on Linux and Kindle (`frontend/datetime.lua:262-264`).
+- Letter spacing: `frontend/ui/widget/textwidget.lua:27-65` (TextWidget has no tracking field),
+  so `typeset.lua` sets a tracked line as one TextWidget per character from
+  `util.splitToChars` (`frontend/util.lua:469`) in a `HorizontalGroup` with `allow_mirroring`
+  off (`frontend/ui/widget/horizontalgroup.lua:11`). A line too wide for its column falls back
+  to one TextWidget with `max_width`, which KOReader cuts with an ellipsis
+  (`frontend/ui/widget/textwidget.lua:36-37`, `:202-238`).
+- Line height: TextWidget's `forced_height` and `forced_baseline`
+  (`frontend/ui/widget/textwidget.lua:43-44`), which `getSize` reports (`:298`) and the xtext
+  paint draws at (`:362`); `getBaseline` (`:312`) gives the face's baseline, not a forced one.
+  `typeset.lua` sets a part whose `line_height` isn't 0 at `(1 + line_height)` em, rounded, as
+  TextBoxWidget sizes a line (`frontend/ui/widget/textboxwidget.lua:151`), and centres the face's
+  height from `face.ftsize:getHeightAndAscender()` (`base/ffi/freetype.lua:154-159`, the call
+  textboxwidget.lua:153-158 makes) in it. `Typeset.baseline` gives the home row the line's
+  baseline.
+
+### The Statistics plugin's database and settings, the reading stats
+
+- The database: `plugins/statistics.koplugin/main.lua:27` (`DataStorage:getSettingsDir() ..
+  "/statistics.sqlite3"`; `datastorage`: `datastorage.lua:60`, `getSettingsDir`). `reading_stats.lua`
+  checks it with `util.fileExists` (`util`: `frontend/util.lua:830`, as
+  `frontend/ui/data/onetime_migration.lua:620` does) and opens it only when it exists, since a
+  creating open would leave an empty file the plugin then fails to open (`main.lua:292-317`).
+- `lua-ljsqlite3/init` (`main.lua:13`): `base/thirdparty/lua-ljsqlite3/init.lua:325-329` (open modes),
+  `:331-350` (`open(path, "ro")`, read-only), `:370-379` (`prepare`), `:611-613` (`step`), `:668`
+  (`bind`), `:568` (statement `close`), `:352` (connection `close`); integers come back as int64
+  cdata and go through `tonumber`. Errors are raised as `ljsqlite3[<code>] <message>` followed by a
+  traceback (`:58-61`, codes `:65-70`); `busy` and `locked` read as the last numbers.
+- `page_stat_data` and its columns `id_book`, `start_time`, `duration`: `main.lua:405-416`, the
+  `start_time` index `:419`; `start_time` is `os.time()` epoch seconds (`:2584`), `duration` whole
+  seconds (`:2604`). The plugin's `createDB` makes it WAL where `Device:canUseWAL()`
+  (`main.lua:455-460`, `frontend/device/generic/device.lua:131`); a read-only connection reads it.
+- `G_reader_settings` key `plugins_disabled`: `frontend/pluginloader.lua:175` (read keyed by folder
+  name, `:212`); `statistics` in it reads as off.
+- `G_reader_settings` key `statistics`, the plugin's own table (`main.lua:61` `settings_key`, `:85`
+  `is_enabled` default, `:143` the read); `is_enabled == false` reads as off. Both keys are read
+  without a default, which `readSetting` would write back (`frontend/luasettings.lua:89-99`).
+- `CloseDocument` order: `ReaderUI:onClose` sends it with `handleEvent`
+  (`frontend/apps/reader/readerui.lua:887`), which offers it to the reader's modules in array order
+  (`frontend/ui/widget/container/widgetcontainer.lua:80-89`); plugins join that array in
+  `PluginLoader:loadPlugins` order (`readerui.lua:464-474`), sorted by path
+  (`frontend/pluginloader.lua:289`). `kopanda.koplugin` sorts before `statistics.koplugin`, and in
+  the emulator KoPanda's handler ran first (module 37 against 64) with the closing session not yet
+  in `page_stat_data`, so `Home.take_pending` has the stats widget read its numbers again.
+- `datetime`: `frontend/datetime.lua:29-42` (`longMonthTranslation`, the month name).
+
+### The weather: `NetworkMgr`, `socketutil`, `socket.http`, `rapidjson` and its cache
+
+- `ui/network/manager`, required at call time so a spec can stub it:
+  - `frontend/ui/network/manager.lua:187` (`NetworkMgr:isConnected`; on the Kindle
+    `ifHasAnAddress`, `frontend/device/kindle/device.lua:523-524`, with no prompt and no network
+    I/O; in the emulator the `emulator_fake_wifi_connected` setting,
+    `frontend/device/sdl/device.lua:478-500`, which the unit harness and the capture driver turn
+    off). `isOnline` (`manager.lua:641-648`) resolves a hostname, so the plugin never calls it.
+  - `manager.lua:698-709` (`runWhenOnline`: the callback now when online; otherwise
+    `beforeWifiAction`, `:605-618`, which turns Wi-Fi on, waits, or prompts as the user's
+    `wifi_enable_action` says, and drops the callback when connected but not online). Only a tap
+    on the weather calls it.
+  - `NetworkConnected`: broadcast when Wi-Fi comes up (`manager.lua:109`) and at start when it is
+    already up (`:152-154`, from a `nextTick`). The home's handler returns nothing, so the
+    broadcast reaches every window (`frontend/ui/widget/container/widgetcontainer.lua:80-107`).
+- `socketutil`: `frontend/socketutil.lua:52-62` (`set_timeout(5, 10)`), `:64-70`
+  (`reset_timeout`, called on every path, a raising request included), `:91-93` (the timeout
+  codes), `:98-115` (`table_sink`, which stops a body past the total timeout); the pattern of
+  `frontend/ui/wikipedia.lua:146-215`.
+- `socket.http`: `base/build/arm64-apple-darwin23.5.0-debug/common/socket/http.lua:30-41`
+  (`https` through LuaSec), `:432-436` (`request` is `socket.protect`ed, so a failure returns
+  `nil` and the error), `:375`, `:406` (a table request returns `1, code, headers, status`; an
+  HTTP/0.9 reply has no headers). `request` is looked up at call time, not kept in a local.
+- `rapidjson`: `common/rapidjson.so`; `decode` returns `nil` and a message for text that is not
+  JSON (`base/thirdparty/lua-rapidjson/build/downloads/source/API.md:26-34`).
+- The cache, `settings/kopanda/weather.lua`: `luasettings` and `datastorage` as for the runtime
+  state file above, `frontend/luasettings.lua:247-250` (`reset`). Runtime state, not a setting:
+  no schema entry, and the studio never reads it. A failed fetch writes nothing.
+- The sun and moon go through `IconWidget` (the swatch entry above), which renders an SVG with
+  `RenderImage:renderSVGImageFile` (`frontend/ui/widget/imagewidget.lua:175`).
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
@@ -396,8 +519,16 @@ Upgrading KOReader walks this list.
 - `ui/widget/container/framecontainer`: `frontend/ui/widget/container/framecontainer.lua:27`
   (`width`, `height`, `background`), `:104` (`paintTo`).
 - `ui/widget/container/centercontainer`: `frontend/ui/widget/container/centercontainer.lua:7`.
+- `ui/widget/container/leftcontainer`: `frontend/ui/widget/container/leftcontainer.lua:8-10`
+  (`allow_mirroring`), `:12-26` (`paintTo` aligns its content left and centres it vertically in
+  `dimen`, `:19-23`); the date's column and the weather's line.
+- `ui/widget/container/rightcontainer`: `frontend/ui/widget/container/rightcontainer.lua:8-10`,
+  `:12-26` (`paintTo` aligns its content right and centres it vertically in `dimen`, `:19-23`);
+  the clock's column.
 - `ui/widget/verticalgroup`: `frontend/ui/widget/verticalgroup.lua:8`.
 - `ui/widget/verticalspan`: `frontend/ui/widget/verticalspan.lua:6`.
+- `ui/widget/widget`: `frontend/ui/widget/widget.lua:40` (`new`), `:70` (`paintTo` draws nothing),
+  the home's blank slot.
 - `ui/widget/textwidget`: `frontend/ui/widget/textwidget.lua:27` (`text`, `face`).
 - `ui/widget/textboxwidget`: `frontend/ui/widget/textboxwidget.lua:37` (`text`, `face`,
   `width`, `fgcolor`, `bgcolor`; the swatch entry above).
@@ -405,6 +536,8 @@ Upgrading KOReader walks this list.
 - `ui/widget/horizontalspan`: `frontend/ui/widget/horizontalspan.lua:6` (`width`).
 - `ui/widget/iconwidget`: `frontend/ui/widget/iconwidget.lua:43` (`file`, `width`, `height`,
   `alpha`; the swatch entry above).
+- `datetime`: `frontend/datetime.lua:29-42`, `:54-62` (the date and clock entry above).
+- `util`: `frontend/util.lua:469` (`splitToChars`, the date and clock entry above).
 - `ui/font`: `frontend/ui/font.lua:269-276` (`getFace` scales the size by
   `Screen:scaleBySize` itself).
 - `ui/geometry`: `frontend/ui/geometry.lua:37` (`Geom:new`), `:255-266` (`contains`).
@@ -412,10 +545,11 @@ Upgrading KOReader walks this list.
   (`colorFromString`, the looks entry above).
 - `ui/uimanager`: the entries above.
 - `ui/time`: `frontend/ui/time.lua:149` (`to_ms`), `:249` (`monotonic`).
+- `optmath`: `frontend/optmath.lua:43-45` (`Math.round`, the quote entry above).
 - `device`: `frontend/device/generic/device.lua:332` (`Screen:getSize`), `:265-271`
   (`Screen:isColorEnabled`, the looks entry above);
-  `base/ffi/framebuffer.lua:414` (`scaleBySize`).
-- `logger`: `frontend/logger.lua:93-98` (`err`); see the harness entry `logger` below.
+  `base/ffi/framebuffer.lua:348` (`getWidth`), `:352` (`getHeight`), `:414` (`scaleBySize`).
+- `logger`: `frontend/logger.lua:96` (`warn`), `:97` (`err`); see the harness entry `logger` below.
 
 ## Capture harness (`spec/emulator/`)
 
@@ -490,6 +624,13 @@ Upgrading KOReader walks this list.
 - `reader.lua:195-203` (first-run notice when absent on a colour screen), `:206-223` (blocking
   ConfirmBox when true on a grey screen); `frontend/device/generic/device.lua:264-270`.
 - Written as the profile's `color`: true on colorsoft, false on paperwhite.
+
+### `emulator_fake_wifi_connected`
+
+- `frontend/device/sdl/device.lua:478-500` (the emulator's `NetworkMgr:isConnected` and
+  `isWifiOn` read it, true when unset). The driver writes it false into every profile and
+  `spec/plugin_harness.lua` sets it false on each load, so no capture or unit spec fetches the
+  weather; a spec that wants a connection stubs `isConnected`.
 
 ### `EMULATE_BW_SCREEN`
 
@@ -573,6 +714,32 @@ Upgrading KOReader walks this list.
   (`:1049`), the order `frontend/ui/widget/touchmenu.lua:913-926` runs them in. The capture is
   taken on the swatch's own signal (`shot_screen = "swatch"`); a failure is sent as a `"swatch"`
   signal with `error`.
+
+### The home fixture (`spec/emulator/scenarios/2-scenario-home-fixture.lua`)
+
+- Read by `home_golden_spec.lua` and `home_capture_spec.lua`, whose captures pass `TZ`,
+  `KOPANDA_HOME_FIXTURE` (`populated` or `empty`) and, for Editorial, `KOPANDA_HOME_LOOK` through
+  the driver's `env` option. Applied at `reader.lua:190`, before any plugin code runs.
+- `os.time()` and `os.date(format)` with no time argument are replaced for the whole process and
+  answer 2026-10-13 08:42 in `TZ` (America/Chicago); calls with a time pass through. KOReader's
+  own no-argument callers, such as the log line's stamp (`frontend/logger.lua:73`), read the frozen
+  instant too. `ui/time`'s monotonic clock is untouched, so `paint_ms` stays real.
+- No `NetworkMgr` stub: the driver's `emulator_fake_wifi_connected = false` (the entry above)
+  already makes `isConnected` false, so no fetch runs after the show or from the start-up
+  `NetworkConnected` (`frontend/ui/network/manager.lua:152-154`, sent only when connected).
+- Populated, it writes, from `DataStorage:getSettingsDir()` (`datastorage.lua:60`):
+  - `kopanda/weather.lua`, the cache `kopanda.koplugin/weather.lua` writes, through `LuaSettings`
+    (`frontend/luasettings.lua:21` `open`, `:247` `reset`, `:270` `flush`);
+  - `statistics.sqlite3` (`plugins/statistics.koplugin/main.lua:27`) through the emulator's
+    `lua-ljsqlite3/init` (`base/thirdparty/lua-ljsqlite3/init.lua:331`, `exec` splitting on `;` at
+    `:381-391`), with the plugin's DDL (`main.lua:405-496`) and `user_version` 20221111 (`:35`).
+    On a fresh profile `checkInitDatabase` finds the `book` table and creates nothing
+    (`main.lua:372-374`); with `convert_to_db` set it compares the version (`:318-319`) and leaves
+    a current one as it is.
+- With a look, it writes `kopanda/settings.lua` with `look` and `schema_version = 1`
+  (`frontend/luasettings.lua:102` `saveSetting`), as `kopanda.koplugin/settings.lua` stores it.
+- Any failure logs `KOPANDA_SCENARIO: home fixture failed` and exits with status 4, which the
+  driver reports with the log tail.
 
 ### `logger`
 
