@@ -31,3 +31,30 @@ accepted_against:
         kind: git_commit
         value: git:b9f66a1
         observed_at: 2026-10-15T12:44:30.716433Z
+gates:
+    evals:
+        required: true
+        kind: command
+        status: pending
+        run_by: allen
+        run_at: 2026-10-15T15:08:55.703721Z
+        criteria:
+            C11:
+                status: pass
+            C12:
+                status: pass
+attestations:
+    - id: AT-pmz69g
+      target:
+        kind: criterion
+        id: C11
+      status: pass
+      by: allen
+      at: 2026-10-15T15:08:19.065159Z
+    - id: AT-0gehcu
+      target:
+        kind: criterion
+        id: C12
+      status: pass
+      by: allen
+      at: 2026-10-15T15:08:55.703721Z
