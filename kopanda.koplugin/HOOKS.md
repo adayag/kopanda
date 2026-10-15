@@ -548,3 +548,16 @@ Upgrading KOReader walks this list.
   (`base/thirdparty/lua-rapidjson/build/downloads/source/API.md:79-80`), so two runs are
   byte-identical; `spec/unit/schema_json_spec.lua` decodes it. The bundled dkjson orders only the
   keys it is given and the rest in `pairs` order (`common/dkjson.lua:325-346`).
+
+### `RenderImage:renderSVGImageFile`, the icon check
+
+- `frontend/ui/renderimage.lua:338-345` (`renderSVGImageFile`), `:349` (NanoSVG is the renderer),
+  `:351-393` (a `TYPE_BBRGB32` buffer of the requested size, the drawing centred at its aspect
+  ratio, returned with straight alpha at `:393`).
+- NanoSVG draws a file's own colours; an unknown colour name such as `currentColor` parses to
+  grey 128 (`base/build/arm64-apple-darwin23.5.0-debug/staging/include/nanosvg.h:1446-1457`), and
+  the rasteriser unpremultiplies its output (`nanosvgrast.h:1206`, `:1450`), so a black stroke's
+  anti-aliased edge stays R = G = B = 0.
+- `spec/unit/icons_spec.lua` renders every registered icon at 48×48 and reads each pixel with
+  `Blitbuffer:getPixel` (`base/ffi/blitbuffer.lua:819-827`; a `ColorRGB32` has `r`, `g`, `b`,
+  `alpha`, `:54-59`). The plugin itself only names icon files, through `icons.lua`.
