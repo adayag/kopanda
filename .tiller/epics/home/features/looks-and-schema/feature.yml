@@ -16,6 +16,7 @@ order:
     - T-6nbln8
 review_grain: feature
 branch: tiller/reviews/features/home/looks-and-schema
+pr: 3
 accepted_against:
     spec:
         kind: git_blob
