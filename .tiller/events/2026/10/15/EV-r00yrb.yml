@@ -1,0 +1,13 @@
+id: EV-r00yrb
+type: check.task
+at: 2026-10-15T14:43:53.385569Z
+contributor: allen
+command: check task T-b8dgbr
+targets:
+    - T-b8dgbr
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/date-clock/task.yml
