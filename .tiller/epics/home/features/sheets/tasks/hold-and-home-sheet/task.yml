@@ -1,9 +1,19 @@
 id: T-odbt4w
 key: home/sheets/hold-and-home-sheet
 title: Hold routing on the home and the home sheet
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-b26ryy
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:ae6cd340b06b98169c4244b3a96db27b4c9db97a
+        path: .tiller/epics/home/features/sheets/tasks/hold-and-home-sheet/task.md
+        observed_at: 2026-10-15T20:24:28.013676Z
+    commit:
+        kind: git_commit
+        value: git:78d4d3c
+        observed_at: 2026-10-15T20:24:28.036452Z

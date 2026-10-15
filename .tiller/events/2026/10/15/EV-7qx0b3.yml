@@ -1,0 +1,13 @@
+id: EV-7qx0b3
+type: approve.task
+at: 2026-10-15T20:24:28.058983Z
+contributor: allen
+command: approve task T-8hhlio
+targets:
+    - T-8hhlio
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/folder-sheet/task.yml

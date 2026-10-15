@@ -1,7 +1,17 @@
 id: T-b26ryy
 key: home/sheets/sheet
 title: The sheet component and its tokens in both looks
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:54cdf777a55289e72ca9582f3b9e56bed4480543
+        path: .tiller/epics/home/features/sheets/tasks/sheet/task.md
+        observed_at: 2026-10-15T20:24:27.992286Z
+    commit:
+        kind: git_commit
+        value: git:78d4d3c
+        observed_at: 2026-10-15T20:24:28.013319Z

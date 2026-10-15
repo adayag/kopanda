@@ -1,9 +1,19 @@
 id: T-pupoys
 key: home/sheets/book-sheet
 title: The book sheet, its read status sub-sheet and the featured-book picker
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-odbt4w
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:dd4dba8146103b561fe670cc8fe1c14788d9b583
+        path: .tiller/epics/home/features/sheets/tasks/book-sheet/task.md
+        observed_at: 2026-10-15T20:24:28.059283Z
+    commit:
+        kind: git_commit
+        value: git:78d4d3c
+        observed_at: 2026-10-15T20:24:28.081869Z

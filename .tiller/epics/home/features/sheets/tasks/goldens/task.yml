@@ -1,10 +1,20 @@
 id: T-w3g6jh
 key: home/sheets/goldens
 title: Sheet goldens in both looks and the sheet paint budget
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-odbt4w
     - T-pupoys
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:39881bb4ee6fedf796a2ba5c737ebd20885886ee
+        path: .tiller/epics/home/features/sheets/tasks/goldens/task.md
+        observed_at: 2026-10-15T20:24:28.082628Z
+    commit:
+        kind: git_commit
+        value: git:78d4d3c
+        observed_at: 2026-10-15T20:24:28.104444Z
