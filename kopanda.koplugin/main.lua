@@ -22,12 +22,14 @@ local time = require("ui/time")
 -- Required here only so they load while the plugin root is on package.path; the modules that
 -- use them get them from the require cache.
 require("icons")
+require("layout")
 require("looks")
 require("looks/diner")
 require("looks/editorial")
 require("migrations")
 require("schema")
 require("settings")
+require("widgets")
 
 -- The boot guard covers only the first show of a process.
 local first_show_done = false

@@ -11,6 +11,8 @@ return {
         display = { file = "fonts/newsreader/Newsreader16pt-Medium.ttf", label = "Newsreader 500" },
         text = { file = "fonts/ibm-plex-sans/IBMPlexSans-Regular.ttf", label = "IBM Plex Sans 400" },
         accent = { file = false, label = false },
+        strong = { file = "fonts/ibm-plex-sans/IBMPlexSans-Medium.ttf", label = "IBM Plex Sans 500" },
+        quote = { file = "fonts/newsreader/Newsreader16pt-MediumItalic.ttf", label = "Newsreader 500 italic" },
     },
 
     palettes = {
@@ -27,6 +29,7 @@ return {
             band = false,
             outline = false, -- implied: by day the cover takes a shadow, not an outline
             shadow = "#c9c5b8", -- the doc: shadow in the hairline colour
+            on_band = false, -- Editorial has no header band
         },
         night = {
             paper = "#15161a",
@@ -41,6 +44,7 @@ return {
             band = false,
             outline = "#3a3b40", -- the doc: the cover gets a hairline outline instead of a shadow
             shadow = false, -- the doc: at night the outline replaces the shadow
+            on_band = false,
         },
         grey = {
             paper = "#f4f4f4",
@@ -56,6 +60,7 @@ return {
             band = false,
             outline = "#8c8c8c", -- implied: the Paperwhite cover gains an outline, Editorial's is a hairline
             shadow = "#8c8c8c", -- implied: the shadow is the hairline colour
+            on_band = false,
         },
     },
 
@@ -121,5 +126,51 @@ return {
         small_caps = true,
         uppercase = false,
         tracking = 0.14,
+    },
+
+    -- The home's page: its margins, the gaps between rows and between columns, where the free
+    -- height goes, the header drawn with row 1 and the footer. Main.dc.html is the board.
+    home = {
+        margin = { top = 44, side = 40, bottom = 36 }, -- the page's padding (Main.dc.html:17)
+        row_gap = 28, -- the quote's top margin (Main.dc.html:56)
+        column_gap = 16, -- the header row's gap (Main.dc.html:19)
+        free_space = "before_last_row", -- the stats row's margin-top: auto (Main.dc.html:87)
+        -- The main rule under row 1, with space above it; the row gap follows it.
+        header = {
+            band_color = false,
+            edge_width = 0,
+            edge_color = false,
+            rule_color = "ink", -- the main rule (Main.dc.html:30)
+            rule_width = 2, -- stroke.rule
+            rule_space = 22, -- the rule's margin (Main.dc.html:30)
+            padding = { top = 0, side = 0, bottom = 0 },
+        },
+        footer = {
+            height = 0, -- Editorial has no footer
+            stripe_color = false,
+            gap_color = false,
+            line_width = 0,
+            line_pitch = 0,
+            edge_width = 0,
+            edge_color = false,
+        },
+    },
+
+    -- The home widgets' text, per part: a face role, a size in board pixels (before text_size),
+    -- case, tracking in em, line height as KOReader's TextBoxWidget counts it (extra space in
+    -- em, frontend/ui/widget/textboxwidget.lua:48, so CSS 1.4 is 0.4) and a palette role.
+    type = {
+        -- The weekday over the date (Main.dc.html:21).
+        date_label = { face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted" },
+        -- The date (Main.dc.html:22).
+        date = { face = "display", size = 36, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        -- The clock (Main.dc.html:26).
+        clock = { face = "display", size = 36, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        -- The weather line (Main.dc.html:25).
+        weather = { face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted" },
+        -- The quote, CSS line height 1.4 (Main.dc.html:56).
+        quote = { face = "quote", size = 18, uppercase = false, tracking = 0, line_height = 0.4, color = "ink" },
+        -- The reading stats (Main.dc.html:87).
+        stats = { face = "text", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "muted" },
     },
 }

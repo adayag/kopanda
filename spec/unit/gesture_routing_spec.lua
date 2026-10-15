@@ -32,6 +32,18 @@ describe("gestures on the KoPanda home", function()
         end
     end
 
+    -- A tap at (x, y) that no slot's widget acts on: the point is outside every slot of the
+    -- shown home whose widget has tap.
+    local function untapped(x, y)
+        local Geom = require("ui/geometry")
+        for _, slot in ipairs(Home.shown.slots) do
+            if slot.module and slot.module.tap then
+                assert.is_false(slot.rect:contains(Geom:new{ x = x, y = y, w = 0, h = 0 }), slot.widget)
+            end
+        end
+        return harness.gesture("tap", x, y)
+    end
+
     -- A file manager with its home up.
     local function fm_with_home(dir)
         local fm = harness.show_fm(dir)
@@ -194,7 +206,7 @@ describe("gestures on the KoPanda home", function()
         assert.equals(Home.shown, harness.top())
     end)
 
-    it("lets a corner zone on the file manager win over the placeholder's tap", function()
+    it("lets a corner zone on the file manager win over the home's tap", function()
         local fm = fm_with_home()
         local received
         fm:registerTouchZones{ {
@@ -212,16 +224,16 @@ describe("gestures on the KoPanda home", function()
         send(ges)
         assert.equals(ges, received)
         assert.equals(home, harness.top())
-        -- The other corners are unbound: a tap there closes the placeholder.
-        send(harness.gesture("tap", 10, size.h - 10))
+        -- The other corners are unbound: a tap there closes the home.
+        send(untapped(10, size.h - 10))
         assert.is_nil(Home.shown)
         assert.equals(fm, harness.top())
     end)
 
-    it("still closes on a tap mid-screen", function()
+    it("still closes on a tap outside every tappable slot", function()
         local fm = fm_with_home()
         local size = Screen:getSize()
-        send(harness.gesture("tap", size.w / 2, size.h / 2))
+        send(untapped(size.w / 2, size.h / 2))
         assert.is_nil(Home.shown)
         assert.equals(fm, harness.top())
     end)
@@ -229,9 +241,9 @@ describe("gestures on the KoPanda home", function()
     it("passes a tap to the file manager's zones only, not to the file chooser beneath", function()
         local fm = fm_with_home()
         local size = Screen:getSize()
-        -- Close the placeholder and paint the file chooser, so its items have their places, then
+        -- Close the home and paint the file chooser, so its items have their places, then
         -- bring the home back over it.
-        send(harness.gesture("tap", size.w / 2, size.h / 2))
+        send(untapped(size.w / 2, size.h / 2))
         UIManager:forceRePaint()
         require("dispatcher"):execute({ kopanda_home = true })
         harness.tick(2)

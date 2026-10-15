@@ -12,6 +12,8 @@ return {
             label = "Bricolage Grotesque 800" },
         text = { file = "fonts/bricolage-grotesque/BricolageGrotesque-Medium.ttf", label = "Bricolage Grotesque 500" },
         accent = { file = "fonts/caveat/Caveat-Regular.ttf", label = "Caveat 400" },
+        strong = { file = "fonts/bricolage-grotesque/BricolageGrotesque-Bold.ttf", label = "Bricolage Grotesque 700" },
+        quote = { file = "fonts/bricolage-grotesque/BricolageGrotesque-Medium.ttf", label = "Bricolage Grotesque 500" },
     },
 
     palettes = {
@@ -28,6 +30,7 @@ return {
             band = "#6fb3ab", -- the canvas's header band is teal (HomeRetro.dc.html)
             outline = "#2f2e2b", -- the doc: strokes are ink
             shadow = "#2f2e2b", -- the doc: hard shadows are ink
+            on_band = "#f5f1e6", -- the header band's text (HomeRetro.dc.html:19)
         },
         night = {
             paper = "#1e1c1a",
@@ -42,6 +45,7 @@ return {
             band = "#2f6b65", -- the canvas's night band is the night teal (NightC.dc.html)
             outline = "#f1ece0", -- the doc: outlines turn cream, the night ink
             shadow = "#f1ece0", -- the doc: hard shadows turn cream, the night ink
+            on_band = "#f1ece0", -- NightC.dc.html:19
         },
         grey = {
             paper = "#f4f4f4",
@@ -56,6 +60,7 @@ return {
             band = "#9a9a9a",
             outline = "#111111", -- implied: strokes are ink
             shadow = "#111111", -- implied: hard shadows are ink
+            on_band = "#111111", -- PWRetro.dc.html:19: ink on the grey band
         },
     },
 
@@ -122,5 +127,58 @@ return {
         small_caps = false,
         uppercase = true,
         tracking = 0.1,
+    },
+
+    -- The home's page: its margins, the gaps between rows and between columns, where the free
+    -- height goes, the header drawn with row 1 and the footer. HomeRetro.dc.html is the board.
+    home = {
+        -- The band and the stripe are full-bleed; every other row has a 40 px side gutter
+        -- (HomeRetro.dc.html:17-19, :26).
+        margin = { top = 0, side = 40, bottom = 0 },
+        row_gap = 22, -- the strip's and the launcher's top padding (HomeRetro.dc.html:47, :55)
+        column_gap = 14, -- the launcher grid's gap (HomeRetro.dc.html:55)
+        free_space = "before_footer", -- the stripe's margin-top: auto (HomeRetro.dc.html:82)
+        -- A full-width band holding row 1, padded, over a 4 px ink edge (HomeRetro.dc.html:19).
+        header = {
+            band_color = "band",
+            edge_width = 4,
+            edge_color = "ink",
+            rule_color = false,
+            rule_width = 0,
+            rule_space = 0,
+            padding = { top = 36, side = 40, bottom = 28 },
+        },
+        -- 22 px of 2 px ink lines every 10 px on paper, under a 4 px ink edge (HomeRetro.dc.html:82).
+        footer = {
+            height = 22,
+            stripe_color = "ink",
+            gap_color = "paper",
+            line_width = 2,
+            line_pitch = 10,
+            edge_width = 4,
+            edge_color = "ink",
+        },
+    },
+
+    -- The home widgets' text, per part: a face role, a size in board pixels (before text_size),
+    -- case, tracking in em, line height as KOReader's TextBoxWidget counts it (extra space in
+    -- em, frontend/ui/widget/textboxwidget.lua:48, so CSS 1.4 is 0.4) and a palette role.
+    type = {
+        -- Not drawn: Diner's date is one line. The look's label style, on the band.
+        date_label = {
+            face = "display", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "on_band",
+        },
+        -- The date on the band (HomeRetro.dc.html:22).
+        date = { face = "strong", size = 16, uppercase = true, tracking = 0.04, line_height = 0, color = "on_band" },
+        -- The clock on the band, CSS line height 0.9 (HomeRetro.dc.html:24).
+        clock = {
+            face = "display", size = 56, uppercase = false, tracking = -0.02, line_height = -0.1, color = "on_band",
+        },
+        -- The strip's weather (HomeRetro.dc.html:47).
+        weather = { face = "strong", size = 13, uppercase = true, tracking = 0.06, line_height = 0, color = "ink" },
+        -- No board draws Diner's quote; the quote face at Editorial's size and line height.
+        quote = { face = "quote", size = 18, uppercase = false, tracking = 0, line_height = 0.4, color = "ink" },
+        -- The strip's reading stats (HomeRetro.dc.html:47).
+        stats = { face = "strong", size = 13, uppercase = true, tracking = 0.06, line_height = 0, color = "ink" },
     },
 }
