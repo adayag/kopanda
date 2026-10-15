@@ -1,0 +1,13 @@
+id: EV-oun5ld
+type: check.task
+at: 2026-10-15T19:12:25.788032Z
+contributor: allen
+command: check task T-j98jk4
+targets:
+    - T-j98jk4
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/launcher/tasks/goldens/task.yml

@@ -1,9 +1,10 @@
 id: T-j98jk4
 key: home/launcher/goldens
 title: Home goldens with the launcher row, the missing plugin and the height budget
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-asihfm
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:00dc9e2
         observed_at: 2026-10-15T18:23:57.066872Z
+branch: tiller/home/launcher/goldens
+review_ref:
+    branch: tiller/home/launcher/goldens
+    head:
+        kind: git_commit
+        value: git:955b18e
+        observed_at: 2026-10-15T19:12:30.244776Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T19:11:28.938893Z
+        against:
+            kind: git_commit
+            value: git:b56fc85
+            observed_at: 2026-10-15T19:11:28.93889Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-b56fc85-out-4a81f6495f894124904dd3e191d1bdc2914f48f6bd0f63c70cc396bae0607d88.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T19:11:28.938893Z
+        against:
+            kind: git_commit
+            value: git:b56fc85
+            observed_at: 2026-10-15T19:11:28.93889Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-b56fc85-out-60d32dd2b2880ce1375d1d603b84f15c579adc5c3591697fd06a62b5b1b2432a.txt

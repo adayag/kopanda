@@ -1,0 +1,13 @@
+id: EV-ng1kpo
+type: claim.task
+at: 2026-10-15T19:00:06.122538Z
+contributor: allen
+command: claim task T-j98jk4
+targets:
+    - T-j98jk4
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/launcher/tasks/goldens/task.yml

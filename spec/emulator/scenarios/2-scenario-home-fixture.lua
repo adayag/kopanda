@@ -9,7 +9,9 @@
 --     featured book: frankenstein.epub from the fixture library in the reading history, 62 % read
 --     at 90 s a page with "Letter IV" as its chapter, its cover extracted into CoverBrowser's cache
 --     before the home is built; "typecover" is the same with CoverBrowser disabled, so the
---     featured book has its typographic cover; "empty" writes none of it;
+--     featured book has its typographic cover; "empty" writes none of it, and stores
+--     launcher.entries as the default five without Settings and a sixth entry for a plugin
+--     named kopanda_absent, which no profile has, so it shows greyed as "plugin missing";
 --   - KOPANDA_HOME_LOOK, when set, is stored as the look (Diner is the default).
 -- No fetch runs: the capture driver turns the emulator's fake Wi-Fi off, so
 -- NetworkMgr:isConnected() is false (frontend/device/sdl/device.lua:478-500).
@@ -48,14 +50,31 @@ local ok, err = pcall(function()
         assert(lfs.mkdir(kopanda_dir))
     end
 
+    -- settings/kopanda/settings.lua as kopanda.koplugin/settings.lua writes it: the keys and
+    -- schema_version beside them, the file opened once for whichever keys the scenario sets.
+    local stored = {}
     local look = os.getenv("KOPANDA_HOME_LOOK")
     if look and look ~= "" then
-        -- settings/kopanda/settings.lua as kopanda.koplugin/settings.lua writes it: the key and
-        -- schema_version beside it.
-        LuaSettings:open(kopanda_dir .. "/settings.lua")
-            :saveSetting("look", look)
-            :saveSetting("schema_version", 1)
-            :flush()
+        stored.look = look
+    end
+    if fixture == "empty" then
+        -- The schema's default five without Settings, then a plugin entry no plugin answers to,
+        -- so it is missing on every profile: the EmptyStates board's launcher.
+        stored["launcher.entries"] = {
+            { kind = "kopanda", target = "library" },
+            { kind = "kopanda", target = "series" },
+            { kind = "kopanda", target = "authors" },
+            { kind = "koreader", target = "history" },
+            { kind = "koreader", target = "wifi" },
+            { kind = "plugin", plugin = "kopanda_absent", action = "terminal", label = "Terminal", icon = "terminal" },
+        }
+    end
+    if next(stored) then
+        local settings = LuaSettings:open(kopanda_dir .. "/settings.lua")
+        for key, value in pairs(stored) do
+            settings:saveSetting(key, value)
+        end
+        settings:saveSetting("schema_version", 1):flush()
     end
 
     if fixture == "empty" then

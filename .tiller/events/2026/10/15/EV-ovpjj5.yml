@@ -1,0 +1,15 @@
+id: EV-ovpjj5
+type: start.task
+at: 2026-10-15T19:00:06.260464Z
+contributor: allen
+command: start task T-j98jk4
+targets:
+    - T-j98jk4
+before:
+    status: ready
+after:
+    branch: tiller/home/launcher/goldens
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/launcher/tasks/goldens/task.yml
