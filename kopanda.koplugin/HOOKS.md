@@ -332,6 +332,21 @@ Upgrading KOReader walks this list.
 - In the reader, the action and Tools › KoPanda › Home close the book and show the file
   manager, whose `Show` brings the home.
 
+### `Font:getFace` by path, the shipped fonts
+
+- `frontend/ui/font.lua:307-312` (a name starting with `/` or `./` is opened as a path; anything
+  else is looked up under KOReader's `fonts/` folder), `:313-327` (then searched for in the font
+  list), `:329-332` (logs and returns nil when nothing loads), `:276` (scales the size by
+  `Screen:scaleBySize`), `:288-291` (faces cached by path and size).
+- `frontend/pluginloader.lua:24` (`DEFAULT_PLUGIN_PATH = "plugins"`), `:204` (a plugin root is
+  the lookup path joined with the folder name, so relative on a device), `:242` (that root is
+  first in `package.path` while `main.lua` loads), `:248` (the plugin module's `path`).
+- `fonts.lua` takes the plugin folder from its own source path as `require` found it, and its
+  join (KoPanda's own, exposed to `spec/unit/fonts_spec.lua` as Fonts._join) gives a relative
+  folder a `./` prefix so `getFace` treats the file as a path.
+- `base/ffi/freetype.lua:207-225` (`newFaceSize` has no variation-axis calls), so the fonts ship
+  as static instances: a variable font would render its default instance only.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`

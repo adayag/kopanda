@@ -1,1 +1,4 @@
 *.epub binary
+*.ttf binary
+# Licence texts ship byte-for-byte as upstream has them (IBM Plex uses CRLF).
+kopanda.koplugin/fonts/*/OFL.txt -text
