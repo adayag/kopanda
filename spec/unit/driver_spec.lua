@@ -154,6 +154,24 @@ describe("the emulator capture driver", function()
             assert.is_true(settings:readSetting("color_rendering"))
         end)
 
+        -- The device toggles night mode before any UI exists when the key is set
+        -- (frontend/device/generic/device.lua:344-347).
+        it("writes night_mode true only when asked", function()
+            local night = fresh_dir("profile")
+            driver.write_profile(night, "colorsoft", probe, nil, nil, { night_mode = true })
+            assert.is_true(dofile(night .. "/settings.reader.lua").night_mode)
+            local day = fresh_dir("profile")
+            driver.write_profile(day, "colorsoft", probe)
+            assert.is_nil(dofile(day .. "/settings.reader.lua").night_mode)
+        end)
+
+        it("passes capture's night_mode through to the profile", function()
+            local emu = fake_emulator{ exit_now = true }
+            local out = fresh_dir("out")
+            capture_error{ emulator_dir = emu, out_dir = out, night_mode = true }
+            assert.is_true(dofile(out .. "/profile-colorsoft/settings.reader.lua").night_mode)
+        end)
+
         -- Off, the emulator's NetworkMgr:isConnected() is false (frontend/device/sdl/device.lua:478-500),
         -- so no capture fetches the weather.
         it("turns the emulator's fake Wi-Fi off", function()

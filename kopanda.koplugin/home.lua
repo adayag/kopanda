@@ -173,7 +173,7 @@ end
 function Home:build()
     local look = Looks.active()
     local variant = Looks.variant()
-    local palette = look.palettes[variant]
+    local palette = Looks.palette(look, variant)
     local ctx = {
         look = look,
         variant = variant,
@@ -239,6 +239,15 @@ local function close_home(home)
     end
 end
 
+-- Builds the home's rows afresh and frees the old ones.
+local function rebuild(home)
+    local old = home[1]
+    home:build()
+    if old then
+        old:free()
+    end
+end
+
 -- Rebuilds the rows and repaints the home, so the time, date and widgets are current. A failure
 -- closes the home onto the file browser. Called by the weather fetch through ctx.home, which may
 -- finish after this home has closed; a home that is not shown is left alone.
@@ -247,11 +256,7 @@ function Home:refresh()
         return
     end
     local ok, err = pcall(function()
-        local old = self[1]
-        self:build()
-        if old then
-            old:free()
-        end
+        rebuild(self)
         UIManager:setDirty(self, "ui")
     end)
     if not ok then
@@ -431,18 +436,18 @@ function Home.drop_pending()
     end
 end
 
--- Hands over the pending home when it was built at the screen's current size; one of another
--- size (the screen rotated since) is dropped. Returns the home or nil. Each slot whose widget
--- has refresh updates it first: the home was built on CloseDocument before Statistics, whose
--- handler runs later, flushed the closing book's session. A failed refresh is logged and
--- leaves that slot as built.
+-- Hands over the pending home when it was built at the screen's current size and in the current
+-- variant; one of another size (the screen rotated since) or variant (night mode toggled since)
+-- is dropped. Returns the home or nil. Each slot whose widget has refresh updates it first: the
+-- home was built on CloseDocument before Statistics, whose handler runs later, flushed the
+-- closing book's session. A failed refresh is logged and leaves that slot as built.
 function Home.take_pending()
     local pending = Home.pending
     if not pending then
         return nil
     end
     local size = Screen:getSize()
-    if pending.dimen.w ~= size.w or pending.dimen.h ~= size.h then
+    if pending.dimen.w ~= size.w or pending.dimen.h ~= size.h or pending.ctx.variant ~= Looks.variant() then
         Home.drop_pending()
         return nil
     end
@@ -458,10 +463,21 @@ function Home.take_pending()
     return pending
 end
 
--- A widget can't be closed from inside the repaint, so a failed paint closes the home from
--- the next tick, leaving the file browser beneath.
+-- Paints the home, rebuilt first when the variant changed since its build. Night mode toggled
+-- from the menu or Dispatcher reaches the home before DeviceListener flips the screen, which then
+-- asks for this repaint (frontend/device/devicelistener.lua:14-27), so the paint is where the
+-- home sees the new variant, and it asks for no repaint of its own.
+local function paint(home, bb, x, y)
+    if home.ctx.variant ~= Looks.variant() then
+        rebuild(home)
+    end
+    InputContainer.paintTo(home, bb, x, y)
+end
+
+-- A widget can't be closed from inside the repaint, so a failed paint, its rebuild included,
+-- closes the home from the next tick, leaving the file browser beneath.
 function Home:paintTo(bb, x, y)
-    local ok, err = pcall(InputContainer.paintTo, self, bb, x, y)
+    local ok, err = pcall(paint, self, bb, x, y)
     if ok and not self.painted_at then
         self.painted_at = time.monotonic()
     end

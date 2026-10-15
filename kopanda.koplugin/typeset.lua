@@ -48,7 +48,7 @@ end
 -- TextWidget per character when the part is tracked.
 function Typeset.line(part, text, max_width, ctx)
     local face = face_of(part, ctx)
-    local color = Looks.color(ctx.look.palettes[ctx.variant][part.color])
+    local color = Looks.color(Looks.palette(ctx.look, ctx.variant)[part.color])
     local forced_height, forced_baseline = forced(part, face)
     if part.uppercase then
         text = text:upper()

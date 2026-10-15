@@ -1,0 +1,15 @@
+id: EV-65287o
+type: start.task
+at: 2026-10-15T19:52:52.535253Z
+contributor: allen
+command: start task T-x4x0f3
+targets:
+    - T-x4x0f3
+before:
+    status: ready
+after:
+    branch: tiller/home/night-mode/goldens
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/night-mode/tasks/goldens/task.yml

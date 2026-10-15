@@ -169,7 +169,7 @@ end
 -- places from the inner box's top left.
 local function placeholder_text(book, inner_w, inner_h, ctx, background)
     local look = ctx.look
-    local palette = look.palettes[ctx.variant]
+    local palette = Looks.palette(look, ctx.variant)
     local widgets, places = {}, {}
     local authors_h = 0
     if book.authors and book.authors ~= "" then
@@ -211,7 +211,7 @@ end
 -- cut. Reads CoverBrowser's cache; never asks for an extraction.
 function FeaturedCover.build(book, w, h, ctx)
     local look = ctx.look
-    local palette = look.palettes[ctx.variant]
+    local palette = Looks.palette(look, ctx.variant)
     local function color(role)
         return role and palette[role] and Looks.color(palette[role]) or nil
     end

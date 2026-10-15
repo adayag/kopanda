@@ -391,6 +391,43 @@ Upgrading KOReader walks this list.
 - `base/ffi/blitbuffer.lua:464-467` (a colour greyed by luminance, `getColor8`): two hues can land
   on the same grey, so each look's `grey` palette names an explicit grey per role.
 
+### Night mode: `Screen.night_mode`, KOReader's inversion and the toggle
+
+- `Screen.night_mode` (`base/ffi/framebuffer.lua:22`, `false` until toggled), flipped by
+  `toggleNightMode` (`:476-477`), which then inverts in hardware when the device can
+  (`:478-480`) or else flips the screen buffer's inverse flag (`:481-488`, and the full buffer's
+  when a viewport is set). `Looks.variant()` reads the flag, after `isColorEnabled`, and answers
+  `"night"`; `Looks.palette` then inverts the night palette per channel, so the panel, which
+  shows the inverse of what is painted on both paths, shows the night palette as designed.
+- The software path's per-paint inversion: `base/ffi/blitbuffer.lua:840-844` (`setPixel`),
+  `:1506-1516` (`fill`), `:1704-1724` (`paintRect`), `:1827-1845` (`paintRectRGB32`), each
+  inverting the colour as it writes it when the flag is set; `:592-597` (an RGB colour inverts
+  each channel). `spec/unit/night_mode_spec.lua` paints on a buffer with the flag set and reads
+  its stored pixels through a copy with the flag cleared, as `Screen:shot` does
+  (`base/ffi/framebuffer.lua:566-581`; `getPixel` inverts what it reads while the flag is set,
+  `base/ffi/blitbuffer.lua:819-826`). It looks for a `TextWidget`'s colour as its grey, since
+  `TextWidget` draws through `colorblitFrom` (`frontend/ui/widget/textwidget.lua:369`), which
+  takes the colour's `getColor8A` (`base/ffi/blitbuffer.lua:1405-1407`).
+- `ImageWidget`'s `original_in_nightmode` (default `true`) and `is_icon` (`true` only for
+  `IconWidget`), `frontend/ui/widget/imagewidget.lua:76-77`: in night mode it inverts its own
+  rectangle after the blit unless it is an icon (`:583-593`), so the original shows through. The
+  featured cover is a plain `ImageWidget` and the plugin adds no inversion of its own; the
+  launcher's `TintedIcon` is no `ImageWidget`, and its tint inverts as it is painted
+  (`colorblitFromRGB32`, `base/ffi/blitbuffer.lua:1422-1437`).
+- The toggle's path: KOReader's menu broadcasts `ToggleNightMode`
+  (`frontend/ui/elements/common_settings_menu_table.lua:266-271`); a gesture goes through
+  `Dispatcher`'s `night_mode` action (`frontend/dispatcher.lua:138`, `ToggleNightMode`) or
+  `set_night_mode` (`:139`, `SetNightMode`). `DeviceListener:onSetNightMode` calls
+  `onToggleNightMode` only when the state differs (`frontend/device/devicelistener.lua:29-34`).
+  Either reaches the home before `DeviceListener` toggles the screen and calls
+  `setDirty("all", "full")` (`:14-27`), so the home handles neither event: its `paintTo`
+  compares the variant it was built with against `Looks.variant()` and rebuilds inside that
+  repaint, inside its paint `pcall`, with no `setDirty` of its own. `Home.take_pending` drops a
+  pre-built home of another variant.
+- Night mode at start: the device toggles it before any UI exists when `night_mode` is set in
+  `G_reader_settings` (`frontend/device/generic/device.lua:344-347`), so the first home is built
+  at night.
+
 ### The quote: `TextBoxWidget`'s line height and ellipsis
 
 - `frontend/ui/widget/textboxwidget.lua:48` (`line_height` is extra space in em), `:151`
@@ -844,6 +881,14 @@ Upgrading KOReader walks this list.
   `spec/plugin_harness.lua` sets it false on each load, so no capture or unit spec fetches the
   weather; a spec that wants a connection stubs `isConnected`.
 
+### `night_mode`
+
+- `frontend/device/generic/device.lua:344-347` (the device toggles night mode before any UI
+  exists when it is set); `base/ffi/framebuffer.lua:566-581` (`Screen:shot` writes what the
+  panel shows in night mode too).
+- Written true only by a capture with `night_mode` (`night_golden_spec.lua`); every other profile
+  leaves it absent, so its `settings.reader.lua` is as before.
+
 ### `EMULATE_BW_SCREEN`
 
 - `base/ffi/framebuffer_SDL3.lua:21-24`.
@@ -927,9 +972,35 @@ Upgrading KOReader walks this list.
   taken on the swatch's own signal (`shot_screen = "swatch"`); a failure is sent as a `"swatch"`
   signal with `error`.
 
+### The night-toggle scenario (`spec/emulator/scenarios/2-scenario-night-toggle.lua`)
+
+- On the first home's settled signal it wraps the home module's `paintTo`
+  (`package.loaded["home"]`, `kopanda.koplugin/home.lua`) to count the paints from then on, and
+  toggles night mode from `nextTick` by `KOPANDA_NIGHT_ROUTE`:
+  - `menu`: `UIManager:broadcastEvent(Event:new("ToggleNightMode"))`
+    (`frontend/ui/uimanager.lua:1042`), what the menu item runs
+    (`frontend/ui/elements/common_settings_menu_table.lua:266-271`);
+  - `dispatcher`: `Dispatcher:execute({ night_mode = true })` (`frontend/dispatcher.lua:138`,
+    `:1549-1598`, sent with `sendEvent`), through the plugin's dispatch bridge.
+- Either reaches the file manager's `DeviceListener` (`frontend/apps/filemanager/filemanager.lua:414`),
+  which toggles the screen and calls `setDirty("all", "full")`
+  (`frontend/device/devicelistener.lua:14-27`). The scenario reports, from `tickAfterNext`
+  (past that repaint), a `"scenario"` signal with `home_paints` and `night_mode`, the screen's
+  `night_mode` (`base/ffi/framebuffer.lua:22`); a failure is reported with `error`.
+
+### The cover-rect scenario (`spec/emulator/scenarios/2-scenario-cover-rect.lua`)
+
+- On the first home's settled signal it finds the featured slot's `ImageWidget` in
+  `package.loaded["home"].shown` (by metatable: `Widget:new` makes the class the instance's metatable,
+  `frontend/ui/widget/widget.lua:26-31`, `:40-48`) and reports the `dimen` its `paintTo` kept
+  (`frontend/ui/widget/imagewidget.lua:518-531`) as `cover_x`, `cover_y`, `cover_w`, `cover_h`
+  in a `"scenario"` signal. That is the rectangle `ImageWidget` inverts again in night mode
+  (`:76-77`, `:583-593`), which `night_golden_spec.lua` compares un-inverted on the Paperwhite.
+
 ### The home fixture (`spec/emulator/scenarios/2-scenario-home-fixture.lua`)
 
-- Read by `home_golden_spec.lua` and `home_capture_spec.lua`, whose captures pass `TZ`,
+- Read by `home_golden_spec.lua`, `home_capture_spec.lua`, `night_golden_spec.lua` and
+  `night_toggle_spec.lua`, whose captures pass `TZ`,
   `KOPANDA_HOME_FIXTURE` (`populated`, `typecover` or `empty`) and, for Editorial,
   `KOPANDA_HOME_LOOK` through the driver's `env` option. Applied at `reader.lua:190`, before any
   plugin code runs.
