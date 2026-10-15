@@ -1,7 +1,7 @@
 id: T-hftuq7
 key: home/featured-book/widget
 title: Featured widget in both looks, first-run state and tap
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,12 @@ accepted_against:
         value: git:33474c1
         observed_at: 2026-10-15T15:18:53.100763Z
 branch: tiller/home/featured-book/widget
+review_ref:
+    branch: tiller/home/featured-book/widget
+    head:
+        kind: git_commit
+        value: git:8dba25c
+        observed_at: 2026-10-15T17:22:05.789846Z
 gates:
     build:
         required: true
