@@ -14,6 +14,7 @@ order:
     - T-2axtyg
 review_grain: feature
 branch: tiller/reviews/features/home/featured-book
+pr: 5
 accepted_against:
     spec:
         kind: git_blob
