@@ -365,7 +365,10 @@ function Home.drop_pending()
 end
 
 -- Hands over the pending home when it was built at the screen's current size; one of another
--- size (the screen rotated since) is dropped. Returns the home or nil.
+-- size (the screen rotated since) is dropped. Returns the home or nil. Each slot whose widget
+-- has refresh updates it first: the home was built on CloseDocument before Statistics, whose
+-- handler runs later, flushed the closing book's session. A failed refresh is logged and
+-- leaves that slot as built.
 function Home.take_pending()
     local pending = Home.pending
     if not pending then
@@ -377,6 +380,14 @@ function Home.take_pending()
         return nil
     end
     Home.pending = nil
+    for _, slot in ipairs(pending.slots) do
+        if slot.module and slot.module.refresh then
+            local ok, err = pcall(slot.module.refresh, slot.built, pending.ctx)
+            if not ok then
+                logger.err("KoPanda: the home widget", slot.widget, "failed to refresh:", err)
+            end
+        end
+    end
     return pending
 end
 

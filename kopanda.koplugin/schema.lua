@@ -45,5 +45,12 @@ return {
             label = "Layout",
             group = "home",
         },
+        {
+            id = "stats.show",
+            type = "boolean",
+            default = true,
+            label = "Show reading stats",
+            group = "stats",
+        },
     },
 }

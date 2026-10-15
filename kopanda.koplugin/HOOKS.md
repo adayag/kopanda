@@ -407,6 +407,36 @@ Upgrading KOReader walks this list.
   `:1827` (`paintRectRGB32`): the paper, header band, edge, rule and footer stripe are filled as
   the swatch screen fills its panels.
 
+### The Statistics plugin's database and settings, the reading stats
+
+- The database: `plugins/statistics.koplugin/main.lua:27` (`DataStorage:getSettingsDir() ..
+  "/statistics.sqlite3"`; `datastorage`: `datastorage.lua:60`, `getSettingsDir`). `reading_stats.lua`
+  checks it with `util.fileExists` (`util`: `frontend/util.lua:830`, as
+  `frontend/ui/data/onetime_migration.lua:620` does) and opens it only when it exists, since a
+  creating open would leave an empty file the plugin then fails to open (`main.lua:292-317`).
+- `lua-ljsqlite3/init` (`main.lua:13`): `base/thirdparty/lua-ljsqlite3/init.lua:325-329` (open modes),
+  `:331-350` (`open(path, "ro")`, read-only), `:370-379` (`prepare`), `:611-613` (`step`), `:668`
+  (`bind`), `:568` (statement `close`), `:352` (connection `close`); integers come back as int64
+  cdata and go through `tonumber`. Errors are raised as `ljsqlite3[<code>] <message>` followed by a
+  traceback (`:58-61`, codes `:65-70`); `busy` and `locked` read as the last numbers.
+- `page_stat_data` and its columns `id_book`, `start_time`, `duration`: `main.lua:405-416`, the
+  `start_time` index `:419`; `start_time` is `os.time()` epoch seconds (`:2584`), `duration` whole
+  seconds (`:2604`). The plugin's `createDB` makes it WAL where `Device:canUseWAL()`
+  (`main.lua:455-460`, `frontend/device/generic/device.lua:131`); a read-only connection reads it.
+- `G_reader_settings` key `plugins_disabled`: `frontend/pluginloader.lua:175` (read keyed by folder
+  name, `:212`); `statistics` in it reads as off.
+- `G_reader_settings` key `statistics`, the plugin's own table (`main.lua:61` `settings_key`, `:85`
+  `is_enabled` default, `:143` the read); `is_enabled == false` reads as off. Both keys are read
+  without a default, which `readSetting` would write back (`frontend/luasettings.lua:89-99`).
+- `CloseDocument` order: `ReaderUI:onClose` sends it with `handleEvent`
+  (`frontend/apps/reader/readerui.lua:887`), which offers it to the reader's modules in array order
+  (`frontend/ui/widget/container/widgetcontainer.lua:80-89`); plugins join that array in
+  `PluginLoader:loadPlugins` order (`readerui.lua:464-474`), sorted by path
+  (`frontend/pluginloader.lua:289`). `kopanda.koplugin` sorts before `statistics.koplugin`, and in
+  the emulator KoPanda's handler ran first (module 37 against 64) with the closing session not yet
+  in `page_stat_data`, so `Home.take_pending` has the stats widget read its numbers again.
+- `datetime`: `frontend/datetime.lua:29-42` (`longMonthTranslation`, the month name).
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
