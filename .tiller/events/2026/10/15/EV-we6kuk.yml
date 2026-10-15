@@ -1,0 +1,13 @@
+id: EV-we6kuk
+type: check.task
+at: 2026-10-15T04:19:55.222317Z
+contributor: allen
+command: check task T-q3nem8
+targets:
+    - T-q3nem8
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/looks/task.yml

@@ -1,7 +1,7 @@
 id: T-q3nem8
 key: home/looks-and-schema/looks
 title: Editorial and Diner token tables with night and grey variants
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -20,3 +20,30 @@ accepted_against:
         value: git:75d54ef
         observed_at: 2026-10-15T02:56:11.976675Z
 branch: tiller/home/looks-and-schema/looks
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T04:19:22.2403Z
+        against:
+            kind: git_commit
+            value: git:ed2b352
+            observed_at: 2026-10-15T04:19:22.240294Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-ed2b352-out-485668f5059a775f713df65e58df112cec35c9eaafb4dfaf54bc2bf430d3b4bc.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T04:19:22.2403Z
+        against:
+            kind: git_commit
+            value: git:ed2b352
+            observed_at: 2026-10-15T04:19:22.240294Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-ed2b352-out-f3c8578705f2156f280d24038ff846bfe1f982ca71a450d36b50e8384a6b970d.txt
