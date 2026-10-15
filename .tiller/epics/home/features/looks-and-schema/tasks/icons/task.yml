@@ -1,7 +1,7 @@
 id: T-puj6su
 key: home/looks-and-schema/icons
 title: Icon registry with the canvas's default stroke icons
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -29,26 +29,26 @@ gates:
     build:
         required: true
         kind: command
-        status: stale
+        status: pass
         run_by: allen
-        run_at: 2026-10-15T04:02:31.235457Z
+        run_at: 2026-10-15T04:18:42.284152Z
         against:
             kind: git_commit
-            value: git:adcfe1e
-            observed_at: 2026-10-15T04:02:31.235448Z
+            value: git:3f5548c
+            observed_at: 2026-10-15T04:18:42.284146Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/build-adcfe1e-out-d6d9ebc314467161fd2a572abc3d7c00b6e8dca97ce638bb9d4d4e29fe8a2354.txt
+              ref: artifacts/tiller/gates/build-3f5548c-out-f8dfc18aeed2014a54643589ee074ab4f89c460740a8c94448c295eb98a09474.txt
     tests:
         required: true
         kind: command
-        status: stale
+        status: pass
         run_by: allen
-        run_at: 2026-10-15T04:02:31.235457Z
+        run_at: 2026-10-15T04:18:42.284152Z
         against:
             kind: git_commit
-            value: git:adcfe1e
-            observed_at: 2026-10-15T04:02:31.235448Z
+            value: git:3f5548c
+            observed_at: 2026-10-15T04:18:42.284146Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/tests-adcfe1e-out-40ec2fb140c0a51c9a31908347742218eec78a9a10c59bc6b174cbb936a45774.txt
+              ref: artifacts/tiller/gates/tests-3f5548c-out-8bd20dae80d93c3fecf4bea66d8c05c1a109f2e536e8a073c6b9a30b91c0b6ff.txt
