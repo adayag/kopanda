@@ -22,6 +22,7 @@ local VerticalSpan = require("ui/widget/verticalspan")
 local Widget = require("ui/widget/widget")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local lfs = require("libs/libkoreader-lfs")
+local time = require("ui/time")
 
 local Featured = {
     id = "featured",
@@ -130,8 +131,9 @@ local function colorer(ctx)
     end
 end
 
--- The percent the book shows: floored, so only a complete book shows 100.
-local function shown_percent(book)
+-- The percent the book shows: floored, so only a complete book shows 100. The book sheet's
+-- meta reads it too.
+function Featured.shown_percent(book)
     if book.status == "complete" then
         return 100
     end
@@ -155,7 +157,7 @@ end
 -- The caption's parts for book: the percent, then "Finished", the time left or the pages left,
 -- the first that applies, or nothing more.
 function Featured.caption(book)
-    local parts = { shown_percent(book) .. "%" }
+    local parts = { Featured.shown_percent(book) .. "%" }
     if book.status == "complete" then
         parts[2] = "Finished"
     elseif book.seconds_left then
@@ -373,7 +375,7 @@ local function book_column(book, w, h, ctx)
         end
     end
     local bottom = {
-        { bar(shown_percent(book), w, ctx), 0 },
+        { bar(Featured.shown_percent(book), w, ctx), 0 },
         { caption(book, w, ctx), scale(BAR_GAP) },
     }
     local room = h - 2 * pad - stacked_height(bottom)
@@ -495,6 +497,18 @@ function Featured.tap(ctx, ges, built)
         return true
     end
     return false
+end
+
+-- A hold in the slot: the book's sheet (book_sheet.lua), its paint_ms counted from here, or false
+-- on the first run, so the home's sheet opens. book_sheet requires this module, so it is
+-- required here, at call time.
+function Featured.hold(ctx, _, built)
+    local started = time.monotonic()
+    if not (built and built.book) then
+        return false
+    end
+    require("book_sheet").open(ctx, built, { started = started })
+    return true
 end
 
 -- After the home's first paint: asks the cover box for the book's cover at the box's size.

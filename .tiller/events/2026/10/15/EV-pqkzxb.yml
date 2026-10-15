@@ -1,0 +1,15 @@
+id: EV-pqkzxb
+type: start.task
+at: 2026-10-15T21:50:57.792475Z
+contributor: allen
+command: start task T-pupoys
+targets:
+    - T-pupoys
+before:
+    status: ready
+after:
+    branch: tiller/home/sheets/book-sheet
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/book-sheet/task.yml

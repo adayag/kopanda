@@ -1,0 +1,13 @@
+id: EV-2i589t
+type: check.task
+at: 2026-10-15T22:35:07.45972Z
+contributor: allen
+command: check task T-pupoys
+targets:
+    - T-pupoys
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/book-sheet/task.yml
