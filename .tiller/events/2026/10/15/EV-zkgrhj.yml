@@ -1,0 +1,13 @@
+id: EV-zkgrhj
+type: claim.task
+at: 2026-10-15T14:45:10.628971Z
+contributor: allen
+command: claim task T-ltupc3
+targets:
+    - T-ltupc3
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/goldens-and-budget/task.yml
