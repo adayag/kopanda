@@ -1,7 +1,7 @@
 id: T-j98jk4
 key: home/launcher/goldens
 title: Home goldens with the launcher row, the missing plugin and the height budget
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:00dc9e2
         observed_at: 2026-10-15T18:23:57.066872Z
 branch: tiller/home/launcher/goldens
+review_ref:
+    branch: tiller/home/launcher/goldens
+    head:
+        kind: git_commit
+        value: git:955b18e
+        observed_at: 2026-10-15T19:12:30.244776Z
 gates:
     build:
         required: true
