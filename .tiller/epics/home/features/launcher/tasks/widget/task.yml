@@ -1,7 +1,7 @@
 id: T-asihfm
 key: home/launcher/widget
 title: Launcher widget in both looks with its states and taps
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:00dc9e2
         observed_at: 2026-10-15T18:23:57.040711Z
 branch: tiller/home/launcher/widget
+review_ref:
+    branch: tiller/home/launcher/widget
+    head:
+        kind: git_commit
+        value: git:01cfadd
+        observed_at: 2026-10-15T19:00:01.340861Z
 gates:
     build:
         required: true
