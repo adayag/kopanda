@@ -1,0 +1,14 @@
+id: EV-6bn6oz
+type: add.task
+at: 2026-10-15T21:07:46.685864Z
+contributor: allen
+command: add task home/device-menus/entry-picker
+targets:
+    - T-zghyve
+after:
+    feature: F-sn4px5
+    key: home/device-menus/entry-picker
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/entry-picker/task.md
+    - path: .tiller/epics/home/features/device-menus/tasks/entry-picker/task.yml

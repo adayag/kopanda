@@ -1,0 +1,10 @@
+id: T-7y2lph
+key: home/device-menus/goldens
+title: Goldens of both screens in both looks and their paint budget
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-6nh4m4
+    - T-h9dkvy

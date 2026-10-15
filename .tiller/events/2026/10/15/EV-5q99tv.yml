@@ -1,0 +1,13 @@
+id: EV-5q99tv
+type: spec.feature
+at: 2026-10-15T21:16:17.436651Z
+contributor: allen
+command: spec feature F-sn4px5
+targets:
+    - F-sn4px5
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/home/features/device-menus/feature.yml

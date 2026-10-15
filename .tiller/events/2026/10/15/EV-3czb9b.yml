@@ -1,0 +1,14 @@
+id: EV-3czb9b
+type: add.task
+at: 2026-10-15T21:07:46.600556Z
+contributor: allen
+command: add task home/device-menus/edit-layout
+targets:
+    - T-6nh4m4
+after:
+    feature: F-sn4px5
+    key: home/device-menus/edit-layout
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/edit-layout/task.md
+    - path: .tiller/epics/home/features/device-menus/tasks/edit-layout/task.yml

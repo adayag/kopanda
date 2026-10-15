@@ -1,0 +1,14 @@
+id: EV-bgvqli
+type: add.task
+at: 2026-10-15T21:07:51.651679Z
+contributor: allen
+command: add task home/device-menus/goldens
+targets:
+    - T-7y2lph
+after:
+    feature: F-sn4px5
+    key: home/device-menus/goldens
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/goldens/task.md
+    - path: .tiller/epics/home/features/device-menus/tasks/goldens/task.yml

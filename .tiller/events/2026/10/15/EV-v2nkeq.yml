@@ -1,0 +1,18 @@
+id: EV-v2nkeq
+type: order.tasks
+at: 2026-10-15T21:07:51.733683Z
+contributor: allen
+command: order task T-51vf9k T-6nh4m4 T-zghyve T-h9dkvy T-cbmaw1 T-ij3256 T-7y2lph
+targets:
+    - F-sn4px5
+after:
+    order:
+        - T-51vf9k
+        - T-6nh4m4
+        - T-zghyve
+        - T-h9dkvy
+        - T-cbmaw1
+        - T-ij3256
+        - T-7y2lph
+files:
+    - path: .tiller/epics/home/features/device-menus/feature.yml

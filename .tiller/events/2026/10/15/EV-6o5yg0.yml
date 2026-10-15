@@ -1,0 +1,14 @@
+id: EV-6o5yg0
+type: add.task
+at: 2026-10-15T21:07:46.500987Z
+contributor: allen
+command: add task home/device-menus/editor-frame
+targets:
+    - T-51vf9k
+after:
+    feature: F-sn4px5
+    key: home/device-menus/editor-frame
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/editor-frame/task.md
+    - path: .tiller/epics/home/features/device-menus/tasks/editor-frame/task.yml

@@ -1,0 +1,14 @@
+id: EV-rp3qew
+type: add.task
+at: 2026-10-15T21:07:46.778481Z
+contributor: allen
+command: add task home/device-menus/launcher-manage
+targets:
+    - T-h9dkvy
+after:
+    feature: F-sn4px5
+    key: home/device-menus/launcher-manage
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/launcher-manage/task.md
+    - path: .tiller/epics/home/features/device-menus/tasks/launcher-manage/task.yml

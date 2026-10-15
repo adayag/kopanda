@@ -1,0 +1,9 @@
+id: T-6nh4m4
+key: home/device-menus/edit-layout
+title: 'Edit layout: the row operations and the screen'
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-51vf9k

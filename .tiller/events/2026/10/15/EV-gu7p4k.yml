@@ -1,0 +1,14 @@
+id: EV-gu7p4k
+type: add.task
+at: 2026-10-15T21:07:51.470701Z
+contributor: allen
+command: add task home/device-menus/location-search
+targets:
+    - T-cbmaw1
+after:
+    feature: F-sn4px5
+    key: home/device-menus/location-search
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/location-search/task.md
+    - path: .tiller/epics/home/features/device-menus/tasks/location-search/task.yml

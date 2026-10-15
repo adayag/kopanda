@@ -1,0 +1,14 @@
+id: EV-6flag3
+type: add.task
+at: 2026-10-15T21:07:51.56392Z
+contributor: allen
+command: add task home/device-menus/settings-menu
+targets:
+    - T-ij3256
+after:
+    feature: F-sn4px5
+    key: home/device-menus/settings-menu
+    status: proposed
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/settings-menu/task.md
+    - path: .tiller/epics/home/features/device-menus/tasks/settings-menu/task.yml
