@@ -17,6 +17,11 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
 local time = require("ui/time")
+-- Required here only so they load while the plugin root is on package.path; the modules that
+-- use them get them from the require cache.
+require("migrations")
+require("schema")
+require("settings")
 
 -- The boot guard covers only the first show of a process.
 local first_show_done = false

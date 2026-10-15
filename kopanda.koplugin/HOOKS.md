@@ -174,6 +174,24 @@ Upgrading KOReader walks this list.
   read-only file or folder or a full disk. The boot guard's `boot_pending` lives here, not in the
   schema.
 
+### The settings file, `settings/kopanda/settings.lua`
+
+- `datastorage` and `libs/libkoreader-lfs` as for the runtime state file above; `settings.lua`
+  makes and checks the directory, writes, and reads the file back the same way.
+- `luasettings`: `frontend/luasettings.lua:21-48` (`open`: a missing file reads as `{}`, a corrupt
+  one falls back to `.old`, then `{}`), `:31-33` (a file returning any truthy non-table is taken
+  as the data; `settings.lua` reads it as `{}` through `reset`, `:247-250`), `:89-99`
+  (`readSetting` with a truthy default writes the default into the data, so `settings.lua` never
+  passes one and falls back to the schema default itself), `:102` (`saveSetting`), `:252-268`
+  (`backup`: the `.old` that `open` falls back to, written when the file is more than 60 s old;
+  KOReader's recovery, kept), `:270-275` (`flush`, which ignores the write's result).
+- `frontend/util.lua:1124-1143` (`util.writeToFile`), as for the state file.
+- The file holds `schema_version` beside the keys. `settings.lua` migrates an older file on open
+  and never writes a newer one, the version stamp included.
+- `Settings._migrate` and `Settings._reset` are KoPanda's own seams for
+  `spec/unit/settings_spec.lua`, not KOReader internals; they are named here because the hooks
+  check flags every underscore access.
+
 ### `InputContainer` gesture and paint dispatch
 
 - `frontend/ui/widget/container/inputcontainer.lua:52` (`InputContainer`), `:73-99`
@@ -511,3 +529,7 @@ Upgrading KOReader walks this list.
 
 - `common/rapidjson.so`.
 - `encode` in the patch, `decode` in the driver.
+- `bin/schema-json` encodes the schema with `sort_keys` and `pretty`
+  (`base/thirdparty/lua-rapidjson/build/downloads/source/API.md:79-80`), so two runs are
+  byte-identical; `spec/unit/schema_json_spec.lua` decodes it. The bundled dkjson orders only the
+  keys it is given and the rest in `pairs` order (`common/dkjson.lua:325-346`).
