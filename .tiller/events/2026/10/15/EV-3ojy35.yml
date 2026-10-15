@@ -1,0 +1,13 @@
+id: EV-3ojy35
+type: claim.task
+at: 2026-10-15T13:13:53.385755Z
+contributor: allen
+command: claim task T-ds0hab
+targets:
+    - T-ds0hab
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/home-layout/tasks/row-engine/task.yml

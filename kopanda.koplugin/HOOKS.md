@@ -156,7 +156,7 @@ Upgrading KOReader walks this list.
   `frontend/apps/filemanager/filemanagermenu.lua:74-75` reads them, against `Screen:getSize()`
   at gesture time. The home's own zones (touch lock entry below) cover the screen at the home's
   build size and test these bands in their handlers.
-- Screen ratios. A tap inside the top menu zones leaves the placeholder up. The swipe up that
+- Screen ratios. A tap inside the top menu zones leaves the home up. The swipe up that
   opens the settings stub starts in the bottom edge band and outside the left and right bands,
   where Gestures binds frontlight and warmth swipes by default
   (`plugins/gestures.koplugin/defaults.lua:14-17`; it binds nothing to a bottom-edge swipe up,
@@ -387,6 +387,26 @@ Upgrading KOReader walks this list.
 - `base/ffi/blitbuffer.lua:464-467` (a colour greyed by luminance, `getColor8`): two hues can land
   on the same grey, so each look's `grey` palette names an explicit grey per role.
 
+### The home's rows: `Resume`, `TimeFormatChanged` and `setDirty`
+
+- `frontend/device/generic/device.lua:1125` (`Resume` broadcast on wake),
+  `frontend/ui/elements/common_settings_menu_table.lua:87` (`TimeFormatChanged` broadcast when the
+  12-hour clock setting flips), `frontend/ui/uimanager.lua:1042-1061` (`broadcastEvent` reaches
+  every window-level widget whatever a handler returns). The home rebuilds its rows on both and
+  returns nothing; it schedules no task of its own for them.
+- `frontend/ui/uimanager.lua:659` (`setDirty`): a rebuilt home is repainted with `"ui"`.
+- `frontend/ui/widget/container/widgetcontainer.lua:80-107` (`propagateEvent` offers an event to
+  the children before the container's own handler, so a slot widget that consumed `Resume` would
+  keep the home from rebuilding), `:110-117` (`free` frees the array part): the rows container
+  holds the slot widgets in its array part, and the old one is freed after a rebuild.
+- `base/ffi/framebuffer.lua:414-425` (`scaleBySize`): `layout.lua` scales every look length
+  (margins, gaps, header, footer) once; `frontend/ui/font.lua:276` scales font sizes, so
+  `Layout.font_size` doesn't. `Layout.screen` is the screen it scales by, a seam the spec
+  replaces with one of another size.
+- `base/ffi/blitbuffer.lua:2712` (`isColor8`), `:1704-1724` (`paintRect`, which greys a colour),
+  `:1827` (`paintRectRGB32`): the paper, header band, edge, rule and footer stripe are filled as
+  the swatch screen fills its panels.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
@@ -398,6 +418,8 @@ Upgrading KOReader walks this list.
 - `ui/widget/container/centercontainer`: `frontend/ui/widget/container/centercontainer.lua:7`.
 - `ui/widget/verticalgroup`: `frontend/ui/widget/verticalgroup.lua:8`.
 - `ui/widget/verticalspan`: `frontend/ui/widget/verticalspan.lua:6`.
+- `ui/widget/widget`: `frontend/ui/widget/widget.lua:40` (`new`), `:70` (`paintTo` draws nothing),
+  the home's blank slot.
 - `ui/widget/textwidget`: `frontend/ui/widget/textwidget.lua:27` (`text`, `face`).
 - `ui/widget/textboxwidget`: `frontend/ui/widget/textboxwidget.lua:37` (`text`, `face`,
   `width`, `fgcolor`, `bgcolor`; the swatch entry above).
@@ -414,8 +436,8 @@ Upgrading KOReader walks this list.
 - `ui/time`: `frontend/ui/time.lua:149` (`to_ms`), `:249` (`monotonic`).
 - `device`: `frontend/device/generic/device.lua:332` (`Screen:getSize`), `:265-271`
   (`Screen:isColorEnabled`, the looks entry above);
-  `base/ffi/framebuffer.lua:414` (`scaleBySize`).
-- `logger`: `frontend/logger.lua:93-98` (`err`); see the harness entry `logger` below.
+  `base/ffi/framebuffer.lua:348` (`getWidth`), `:352` (`getHeight`), `:414` (`scaleBySize`).
+- `logger`: `frontend/logger.lua:96` (`warn`), `:97` (`err`); see the harness entry `logger` below.
 
 ## Capture harness (`spec/emulator/`)
 

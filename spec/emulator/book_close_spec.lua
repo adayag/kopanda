@@ -5,7 +5,6 @@ describe("closing a book on the emulator", function()
     require("commonrequire")
     local lfs = require("libs/libkoreader-lfs")
     local driver = require("emulator.driver")
-    local golden = require("emulator.golden")
     local root = os.getenv("KOPANDA_ROOT")
     local plugin = root .. "/kopanda.koplugin"
     local scenario = root .. "/spec/emulator/scenarios/2-scenario-book-close.lua"
@@ -42,6 +41,5 @@ describe("closing a book on the emulator", function()
         print(string.format("book close: fm_paints=%d home_ms=%s settle_ms=%s close_to_paint_ms=%s",
             sidecar.fm_paints, tostring(sidecar.home_ms), tostring(sidecar.settle_ms),
             tostring(sidecar.close_to_paint_ms)))
-        assert.is_true(golden.check("home-placeholder", "colorsoft", result, { update = false }).ok)
     end)
 end)

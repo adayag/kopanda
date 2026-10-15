@@ -1,9 +1,10 @@
 id: T-ds0hab
 key: home/home-layout/row-engine
 title: Row engine over layout.rows and text_size, with header and footer chrome
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,37 @@ accepted_against:
         kind: git_commit
         value: git:b9f66a1
         observed_at: 2026-10-15T12:44:30.740941Z
+branch: tiller/home/home-layout/row-engine
+review_ref:
+    branch: tiller/home/home-layout/row-engine
+    head:
+        kind: git_commit
+        value: git:a0fda99
+        observed_at: 2026-10-15T14:16:18.699309Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T13:45:07.809469Z
+        against:
+            kind: git_commit
+            value: git:534a9e0
+            observed_at: 2026-10-15T13:45:07.809464Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-534a9e0-out-bd4ae2f3dd710225f4a603b521ca59d5b2ac0a81b298425e9602b83f4745f3ec.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-15T13:45:07.809469Z
+        against:
+            kind: git_commit
+            value: git:534a9e0
+            observed_at: 2026-10-15T13:45:07.809464Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-534a9e0-out-182f6f02169d21f29fe51206cf5e278641f8c717deb40931f38f9da66307243e.txt

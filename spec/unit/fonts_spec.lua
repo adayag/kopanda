@@ -181,7 +181,7 @@ describe("fonts", function()
                 end
             end
         end
-        assert.equals(5, named)
+        assert.equals(9, named)
     end)
 
     it("returns nil for a missing file without raising", function()
