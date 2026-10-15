@@ -1,8 +1,8 @@
 -- The swatch screen: a test pattern of every look's palettes and faces and of the icon registry,
 -- full screen over the file manager or the reader, for settling the token values on a real
 -- panel. Six panels, the looks across and the day, night and grey palettes down, each filled
--- with its paper and holding a chip per colour role (a role the look lacks named with a dash)
--- and a line per face; the icons below. A tap closes it. It is not part of the shell, so it
+-- with its paper and holding a chip per colour role, the roles the look lacks named on one
+-- line, and a line per face; the icons below. A tap closes it. It is not part of the shell, so it
 -- opens while another shell plugin is enabled.
 local Blitbuffer = require("ffi/blitbuffer")
 local CenterContainer = require("ui/widget/container/centercontainer")
@@ -127,17 +127,10 @@ local function ink_text(text, face, width, ink, paper, name)
     }
 end
 
--- One chip: a square of the role's colour outlined in ink, then "role #hex". A role the look
--- lacks (false) has no square, only "role —" beside the labels.
+-- One chip: a square of the role's colour outlined in ink, then "role #hex".
 local function chip(role, hex, width, ink, paper, face)
     local size = scaled(CHIP)
     local gap = scaled(GAP)
-    if not hex then
-        return HorizontalGroup:new{
-            HorizontalSpan:new{ width = size + gap },
-            ink_text(role .. " —", face, width - size - gap, ink, paper),
-        }
-    end
     return HorizontalGroup:new{
         ColorBox:new{
             name = "kopanda_swatch_chip",
@@ -167,10 +160,30 @@ local function panel(id, variant, w, h)
     content[#content + 1] = ink_text(name .. " · " .. variant, header_face, content_w, ink, paper)
     content[#content + 1] = VerticalSpan:new{ width = gap }
 
-    -- The chips in two columns, in role order down the first and then the second.
-    local roles = sorted_keys(palette)
+    -- The chips of the roles the look has in two columns, in role order down the first and then
+    -- the second. The roles it lacks (false) are named on one line: in the second column's empty
+    -- last cell, from its chip x, when the chip count is odd and the line fits the cell's width;
+    -- otherwise full width after the chips.
+    local roles, lacks = {}, {}
+    for _, role in ipairs(sorted_keys(palette)) do
+        if palette[role] then
+            roles[#roles + 1] = role
+        else
+            lacks[#lacks + 1] = role
+        end
+    end
     local column_w = math.floor((content_w - gap) / 2)
     local rows = math.ceil(#roles / 2)
+    local lacks_text = "lacks: " .. table.concat(lacks, ", ")
+    local lacks_cell
+    if #lacks > 0 and #roles % 2 == 1 then
+        local text = ink_text(lacks_text, label_face, column_w, ink, paper, "kopanda_swatch_lacks")
+        if #text.vertical_string_list == 1 then
+            lacks_cell = text
+        else
+            text:free()
+        end
+    end
     local columns = HorizontalGroup:new{ align = "top" }
     for c = 1, 2 do
         local column = VerticalGroup:new{ align = "left" }
@@ -183,12 +196,22 @@ local function panel(id, variant, w, h)
                 column[#column + 1] = chip(role, palette[role], column_w, ink, paper, label_face)
             end
         end
+        if c == 2 and lacks_cell then
+            if #column > 0 then
+                column[#column + 1] = VerticalSpan:new{ width = scaled(ROW_GAP) }
+            end
+            column[#column + 1] = lacks_cell
+        end
         if c > 1 then
             columns[#columns + 1] = HorizontalSpan:new{ width = gap }
         end
         columns[#columns + 1] = column
     end
     content[#content + 1] = columns
+    if #lacks > 0 and not lacks_cell then
+        content[#content + 1] = VerticalSpan:new{ width = scaled(ROW_GAP) }
+        content[#content + 1] = ink_text(lacks_text, label_face, content_w, ink, paper, "kopanda_swatch_lacks")
+    end
 
     content[#content + 1] = VerticalSpan:new{ width = gap }
     for _, role in ipairs(sorted_keys(look.faces)) do

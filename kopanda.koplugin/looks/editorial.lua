@@ -30,6 +30,8 @@ return {
             outline = false, -- implied: by day the cover takes a shadow, not an outline
             shadow = "#c9c5b8", -- the doc: shadow in the hairline colour
             on_band = false, -- Editorial has no header band
+            cover = "#2b4c6f", -- the typographic cover's fill (Main.dc.html:33)
+            on_cover = "#f3f1ea", -- its title and authors (Main.dc.html:33)
         },
         night = {
             paper = "#15161a",
@@ -45,6 +47,8 @@ return {
             outline = "#3a3b40", -- the doc: the cover gets a hairline outline instead of a shadow
             shadow = false, -- the doc: at night the outline replaces the shadow
             on_band = false,
+            cover = "#2b4c6f", -- NightA.dc.html:33
+            on_cover = "#f3f1ea", -- NightA.dc.html:33
         },
         grey = {
             paper = "#f4f4f4",
@@ -61,6 +65,8 @@ return {
             outline = "#8c8c8c", -- implied: the Paperwhite cover gains an outline, Editorial's is a hairline
             shadow = "#8c8c8c", -- implied: the shadow is the hairline colour
             on_band = false,
+            cover = "#4a4a4a", -- PWEditorial.dc.html:33, the doc's cover grey
+            on_cover = "#f4f4f4", -- PWEditorial.dc.html:33
         },
     },
 
@@ -177,5 +183,24 @@ return {
         quote = { face = "quote", size = 18, uppercase = false, tracking = 0, line_height = 0.4, color = "ink" },
         -- The reading stats (Main.dc.html:87).
         stats = { face = "text", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "muted" },
+        -- The typographic cover's title, CSS line height 1.05 (Main.dc.html:34).
+        cover_title = {
+            face = "display", size = 24, uppercase = true, tracking = 0.04, line_height = 0.05, color = "on_cover",
+        },
+        -- Its authors at the foot (Main.dc.html:35).
+        cover_authors = {
+            face = "text", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "on_cover",
+        },
+        -- "No book yet" in the first run's dashed frame (EmptyStates.dc.html:33).
+        cover_empty = { face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
+    },
+
+    -- The featured book's cover box.
+    featured = {
+        cover_w = 150, -- Main.dc.html:33
+        cover_h = 225, -- Main.dc.html:33
+        cover_padding = { x = 14, y = 18 }, -- the placeholder's padding (Main.dc.html:33)
+        dash = 4, -- the first run's dashed frame: KOReader has no dashed border, so 4 px dashes
+        dash_gap = 4, -- with 4 px gaps (EmptyStates.dc.html:33)
     },
 }

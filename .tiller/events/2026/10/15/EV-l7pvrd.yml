@@ -1,0 +1,13 @@
+id: EV-l7pvrd
+type: check.task
+at: 2026-10-15T16:36:20.528306Z
+contributor: allen
+command: check task T-ew6y91
+targets:
+    - T-ew6y91
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/cover/task.yml

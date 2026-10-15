@@ -1,0 +1,16 @@
+id: EV-hgdfaa
+type: submit.task
+at: 2026-10-15T16:36:24.821537Z
+contributor: allen
+command: submit task T-ew6y91
+targets:
+    - T-ew6y91
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/featured-book/cover
+        head: git:1010ba3
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/featured-book/tasks/cover/task.yml

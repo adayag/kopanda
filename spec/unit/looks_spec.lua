@@ -87,7 +87,11 @@ describe("looks", function()
                     "progress.fill_grey", "sheet.rule_color", "chip.fill_color", "label.size",
                     "palettes.day.on_band", "faces.strong.file", "faces.quote.file", "home.margin.side",
                     "home.free_space", "home.header.padding.top", "home.footer.line_pitch",
-                    "type.date_label.face", "type.clock.color", "type.stats.line_height" }) do
+                    "type.date_label.face", "type.clock.color", "type.stats.line_height",
+                    "palettes.day.cover", "palettes.night.on_cover", "palettes.grey.cover",
+                    "type.cover_title.tracking", "type.cover_authors.color", "type.cover_empty.face",
+                    "featured.cover_w", "featured.cover_h", "featured.cover_padding.x",
+                    "featured.cover_padding.y", "featured.dash", "featured.dash_gap" }) do
                 local found = false
                 for _, path in ipairs(diner) do
                     found = found or path == wanted
@@ -103,7 +107,7 @@ describe("looks", function()
                 assert.same({ "day", "grey", "night" }, keys(palettes), id)
                 local roles = keys(palettes.day)
                 for _, role in ipairs({ "paper", "ink", "muted", "text", "hairline", "hairline_light",
-                        "teal", "pink", "mustard", "outline", "shadow", "on_band" }) do
+                        "teal", "pink", "mustard", "outline", "shadow", "on_band", "cover", "on_cover" }) do
                     assert.is_not_nil(palettes.day[role], id .. " has no " .. role)
                 end
                 assert.same(roles, keys(palettes.night), id .. " night")
@@ -200,6 +204,37 @@ describe("looks", function()
                     assert.is_number(entry.tracking, where)
                     assert.is_number(entry.line_height, where)
                 end
+            end
+        end)
+
+        -- The typographic cover's fill and text (Main:33, NightA:33, PWEditorial:33; HomeRetro:28,
+        -- NightC:28, PWRetro:28 under .tiller/design/2026-10-13-kopanda-screens/).
+        it("give the cover and on_cover roles the boards' values", function()
+            local wanted = {
+                editorial = { day = { "#2b4c6f", "#f3f1ea" }, night = { "#2b4c6f", "#f3f1ea" },
+                    grey = { "#4a4a4a", "#f4f4f4" } },
+                diner = { day = { "#2b4c6f", "#f5f1e6" }, night = { "#2b4c6f", "#f5f1e6" },
+                    grey = { "#4a4a4a", "#f4f4f4" } },
+            }
+            for id, variants in pairs(wanted) do
+                for variant, pair in pairs(variants) do
+                    local palette = looks[id].palettes[variant]
+                    assert.same(pair, { palette.cover, palette.on_cover }, id .. " " .. variant)
+                end
+            end
+        end)
+
+        it("size the cover box 2:3 and draw the placeholder's text in on_cover and its empty frame in muted", function()
+            for id, size in pairs({ editorial = { 150, 225 }, diner = { 140, 210 } }) do
+                local look = looks[id]
+                assert.same(size, { look.featured.cover_w, look.featured.cover_h }, id)
+                assert.same({ 4, 4 }, { look.featured.dash, look.featured.dash_gap }, id)
+                assert.equals("on_cover", look.type.cover_title.color, id)
+                assert.equals("on_cover", look.type.cover_authors.color, id)
+                assert.equals("muted", look.type.cover_empty.color, id)
+                assert.is_true(look.type.cover_title.uppercase, id)
+                assert.is_true(look.type.cover_authors.uppercase, id)
+                assert.is_true(look.type.cover_empty.uppercase, id)
             end
         end)
 
