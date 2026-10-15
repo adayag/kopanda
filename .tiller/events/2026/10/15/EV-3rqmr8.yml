@@ -1,0 +1,14 @@
+id: EV-3rqmr8
+type: sync.task
+at: 2026-10-15T13:12:07.540182Z
+contributor: allen
+command: sync task T-puj6su
+targets:
+    - T-puj6su
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/icons/task.yml

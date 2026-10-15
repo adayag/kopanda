@@ -1,7 +1,7 @@
 id: T-6nbln8
 key: home/looks-and-schema/panel-check
 title: Token values settled from the Colorsoft panel
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:c3fc9c5
         observed_at: 2026-10-15T12:43:16.720287Z
+done_basis: ancestry
 gates:
     build:
         required: true

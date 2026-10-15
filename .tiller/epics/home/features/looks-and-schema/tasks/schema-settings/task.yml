@@ -1,7 +1,7 @@
 id: T-f4vjse
 key: home/looks-and-schema/schema-settings
 title: Pure-data schema with look, the settings store with versioning, and the JSON dump
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:b09205f
         observed_at: 2026-10-15T03:09:01.147743Z
+done_basis: ancestry
 gates:
     build:
         required: true

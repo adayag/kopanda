@@ -1,0 +1,14 @@
+id: EV-77tep7
+type: sync.feature
+at: 2026-10-15T13:12:07.917012Z
+contributor: allen
+command: sync feature F-i2mbn1
+targets:
+    - F-i2mbn1
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/feature.yml

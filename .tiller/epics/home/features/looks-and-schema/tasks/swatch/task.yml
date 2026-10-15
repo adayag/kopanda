@@ -1,7 +1,7 @@
 id: T-wj05yo
 key: home/looks-and-schema/swatch
 title: Swatch screen from Tools › KoPanda, reachable beside another shell
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -26,6 +26,7 @@ review_ref:
         kind: git_commit
         value: git:6998b72
         observed_at: 2026-10-15T04:41:23.778125Z
+done_basis: ancestry
 gates:
     build:
         required: true

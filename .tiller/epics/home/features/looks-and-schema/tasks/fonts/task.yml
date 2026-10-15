@@ -1,7 +1,7 @@
 id: T-3qwuor
 key: home/looks-and-schema/fonts
 title: Static font instances shipped under the plugin and loaded by path
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:88f138c
         observed_at: 2026-10-15T03:09:39.496561Z
+done_basis: ancestry
 gates:
     build:
         required: true

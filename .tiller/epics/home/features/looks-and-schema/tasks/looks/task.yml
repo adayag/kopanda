@@ -1,7 +1,7 @@
 id: T-q3nem8
 key: home/looks-and-schema/looks
 title: Editorial and Diner token tables with night and grey variants
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -26,6 +26,7 @@ review_ref:
         kind: git_commit
         value: git:fe589e3
         observed_at: 2026-10-15T04:19:55.447554Z
+done_basis: ancestry
 gates:
     build:
         required: true

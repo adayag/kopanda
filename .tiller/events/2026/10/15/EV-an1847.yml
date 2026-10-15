@@ -1,0 +1,14 @@
+id: EV-an1847
+type: sync.task
+at: 2026-10-15T13:12:07.627966Z
+contributor: allen
+command: sync task T-q3nem8
+targets:
+    - T-q3nem8
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/looks/task.yml

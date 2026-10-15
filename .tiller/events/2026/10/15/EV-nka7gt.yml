@@ -1,0 +1,14 @@
+id: EV-nka7gt
+type: sync.task
+at: 2026-10-15T13:12:07.360381Z
+contributor: allen
+command: sync task T-f4vjse
+targets:
+    - T-f4vjse
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/looks-and-schema/tasks/schema-settings/task.yml
