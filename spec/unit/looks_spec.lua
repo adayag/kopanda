@@ -160,6 +160,8 @@ describe("looks", function()
                     end
                     if tostring(key):match("color$") then
                         assert.is_not_nil(look.palettes.day[value], where .. " names no palette role: " .. value)
+                        assert.is_not_false(look.palettes.day[value],
+                            where .. " names a role this look lacks: " .. value)
                     elseif key == "face" then
                         assert.is_table(look.faces[value], where .. " names no face: " .. value)
                     elseif key == "fill_grey" then
@@ -234,12 +236,14 @@ describe("looks", function()
         end)
 
         describe("variant", function()
-            local had, previous
+            local had, previous, is_color_screen
             before_each(function()
                 had = G_reader_settings:has("color_rendering")
                 previous = G_reader_settings:readSetting("color_rendering")
+                is_color_screen = require("device").screen.isColorScreen
             end)
             after_each(function()
+                require("device").screen.isColorScreen = is_color_screen
                 if had then
                     G_reader_settings:saveSetting("color_rendering", previous)
                 else
@@ -257,6 +261,15 @@ describe("looks", function()
                 G_reader_settings:saveSetting("color_rendering", true)
                 assert.is_true(require("device").screen:isColorEnabled())
                 assert.equals("day", Looks.variant())
+            end)
+
+            it("follows the panel when colour rendering was never set", function()
+                G_reader_settings:delSetting("color_rendering")
+                local screen = require("device").screen
+                screen.isColorScreen = function() return true end
+                assert.equals("day", Looks.variant())
+                screen.isColorScreen = function() return false end
+                assert.equals("grey", Looks.variant())
             end)
         end)
 

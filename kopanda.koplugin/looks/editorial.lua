@@ -18,7 +18,7 @@ return {
             paper = "#f3f1ea",
             ink = "#1c1b19",
             muted = "#6b6861",
-            text = "#1c1b19", -- implied: by day the text is the ink
+            text = "#4a4843", -- the canvas: Main.dc.html:41 draws it where NightA.dc.html:41 draws the night text
             hairline = "#c9c5b8",
             hairline_light = "#e2dfd4", -- the doc gives none by day; the canvas's row rules (Main.dc.html)
             teal = false,
@@ -46,7 +46,8 @@ return {
             paper = "#f4f4f4",
             ink = "#111111",
             muted = "#555555", -- the lighter of the doc's two muted greys; Diner takes #444444
-            text = "#111111", -- implied: as by day, the text is the ink
+            -- The canvas's #333333 (PWEditorial.dc.html:41) is not on the doc's list; the nearest list grey.
+            text = "#444444",
             hairline = "#8c8c8c",
             hairline_light = "#d0d0d0",
             teal = false,
