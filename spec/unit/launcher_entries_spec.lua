@@ -285,6 +285,32 @@ describe("LauncherEntries", function()
             assert.equals(1, sent)
         end)
 
+        it("sends an available action entry's event once", function()
+            local fm = fm_with_home()
+            register_action()
+            local sent = 0
+            fm["on" .. SPEC_EVENT] = function()
+                sent = sent + 1
+                return true
+            end
+            LauncherEntries.run(action_entry(SPEC_ACTION), {})
+            assert.equals(1, sent)
+        end)
+
+        it("lets a raising run reach its caller, so the home's failsafe closes it", function()
+            fm_with_home()
+            register_action()
+            local s = stub(Dispatcher, "execute", function()
+                error("spec: execute failed")
+            end)
+            cleanup(function()
+                s:revert()
+            end)
+            local ok, err = pcall(LauncherEntries.run, action_entry(SPEC_ACTION), {})
+            assert.is_false(ok)
+            assert.matches("spec: execute failed", err)
+        end)
+
         it("opens the Library: closes the home and sends the file browser home once", function()
             local fm = fm_with_home()
             local on_home = spy.on(fm, "onHome")
@@ -359,6 +385,22 @@ describe("LauncherEntries", function()
                 run_for_notes(directory_entry(missing)))
             assert.same({ { text = "Screenshot isn't available here." } },
                 run_for_notes(action_entry("kopanda_spec_no_such_action")))
+        end)
+
+        it("log a raising availability check and say the entry isn't available", function()
+            fm_with_home()
+            register_action()
+            local s = stub(PluginLoader, "isPluginLoaded", function()
+                error("spec: isPluginLoaded failed")
+            end)
+            local err = spy.on(logger, "err")
+            cleanup(function()
+                s:revert()
+                err:revert()
+            end)
+            assert.same({ { text = "Terminal isn't available here." } },
+                run_for_notes(plugin_entry("terminal")))
+            assert.spy(err).was.called()
         end)
 
         it("say the plugin isn't loaded when it is loaded but its action is gone", function()

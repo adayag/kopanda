@@ -149,44 +149,40 @@ local function unavailable_note(entry, suffix)
 end
 
 -- What a tap on the entry does. Availability is checked again now, so what has gone since the
--- home was built gives its note. ctx is unused today; a folder sheet passes its own. A failure
--- is logged.
+-- home was built gives its note; a check that raises is logged and reads as not available. ctx is
+-- unused today; a folder sheet passes its own. Any other error raises to the caller, so a tap
+-- reaches Home:onGesture's pcall, which logs it and closes the home onto the file browser.
 function LauncherEntries.run(entry, ctx)
-    local ok, err = pcall(function()
-        local kind = entry.kind
-        if kind == "kopanda" then
-            KOPANDA_RUN[entry.target]()
-            return
-        end
-        if kind == "folder" then
-            local count = #entry.entries
-            note(T("%1 holds %2; folders open in a later update.", label_of(entry),
-                count == 1 and "1 entry" or (count .. " entries")))
-            return
-        end
-        local available_ok, is_available, suffix = pcall(LauncherEntries.available, entry)
-        if not available_ok then
-            logger.err("KoPanda: could not check a launcher entry:", is_available)
-            is_available, suffix = false, "not available"
-        end
-        if not is_available then
-            unavailable_note(entry, suffix)
-            return
-        end
-        if kind == "directory" then
-            Home.close()
-            local fm = file_manager()
-            if fm then
-                fm.file_chooser:changeToPath(entry.path)
-            end
-            return
-        end
-        local id = kind == "koreader" and fixed(entry).action or entry.action
-        Dispatcher:execute({ [id] = true })
-    end)
-    if not ok then
-        logger.err("KoPanda: could not run a launcher entry:", err)
+    local kind = entry.kind
+    if kind == "kopanda" then
+        KOPANDA_RUN[entry.target]()
+        return
     end
+    if kind == "folder" then
+        local count = #entry.entries
+        note(T("%1 holds %2; folders open in a later update.", label_of(entry),
+            count == 1 and "1 entry" or (count .. " entries")))
+        return
+    end
+    local available_ok, is_available, suffix = pcall(LauncherEntries.available, entry)
+    if not available_ok then
+        logger.err("KoPanda: could not check a launcher entry:", is_available)
+        is_available, suffix = false, "not available"
+    end
+    if not is_available then
+        unavailable_note(entry, suffix)
+        return
+    end
+    if kind == "directory" then
+        Home.close()
+        local fm = file_manager()
+        if fm then
+            fm.file_chooser:changeToPath(entry.path)
+        end
+        return
+    end
+    local id = kind == "koreader" and fixed(entry).action or entry.action
+    Dispatcher:execute({ [id] = true })
 end
 
 return LauncherEntries
