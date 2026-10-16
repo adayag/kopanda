@@ -1,0 +1,13 @@
+id: EV-ew3ye3
+type: claim.task
+at: 2026-10-16T20:09:01.753362Z
+contributor: allen
+command: claim task T-ghzxgk
+targets:
+    - T-ghzxgk
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/pull-and-stage/task.yml

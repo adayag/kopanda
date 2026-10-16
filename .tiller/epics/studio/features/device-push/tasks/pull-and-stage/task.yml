@@ -1,9 +1,10 @@
 id: T-ghzxgk
 key: studio/device-push/pull-and-stage
 title: Studio menu pulls, verifies, stages and arms a profile's bundle
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-janm6k
@@ -18,3 +19,4 @@ accepted_against:
         kind: git_commit
         value: git:33cca18
         observed_at: 2026-10-16T19:41:31.345817Z
+branch: tiller/studio/device-push/pull-and-stage
