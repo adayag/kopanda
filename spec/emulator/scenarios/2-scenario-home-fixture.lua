@@ -19,9 +19,10 @@
 --     file whose chunk returns a non-table is taken as {}, as the plugin reads it;
 --   - KOPANDA_HOME_WEATHER_LATITUDE, _LONGITUDE and _UNITS, all three set, are the location
 --     and units the populated weather reading is written for, so it matches a profile's
---     weather settings: 61.4 in fahrenheit, 16.3 in celsius. None set, it is for the schema's
---     defaults. One or two set, a coordinate that isn't a number or a unit other than
---     fahrenheit or celsius fails the fixture. "empty" writes no reading whatever is set.
+--     weather settings: 61.4 in fahrenheit, 16.3 in celsius. A variable set to "" is unset.
+--     None set, it is for the schema's defaults. One or two set, a coordinate that isn't a
+--     number or a unit other than fahrenheit or celsius fails the fixture. "empty" writes no
+--     reading whatever is set.
 -- No fetch runs: the capture driver turns the emulator's fake Wi-Fi off, so
 -- NetworkMgr:isConnected() is false (frontend/device/sdl/device.lua:478-500).
 -- Writes only under the scratch KO_HOME. Any failure exits with status 4.
@@ -39,11 +40,18 @@ local ok, err = pcall(function()
 
     -- The weather reading's location and units: the schema's defaults (Chicago, fahrenheit,
     -- kopanda.koplugin/schema.lua), or the three variables together.
+    -- An empty variable is unset, as an exported .env block (.env.example) leaves it.
+    local function env(name)
+        local value = os.getenv(name)
+        if value ~= "" then
+            return value
+        end
+    end
     local weather = { latitude = 41.85003, longitude = -87.65005, units = "fahrenheit" }
     local weather_env = {
-        latitude = os.getenv("KOPANDA_HOME_WEATHER_LATITUDE"),
-        longitude = os.getenv("KOPANDA_HOME_WEATHER_LONGITUDE"),
-        units = os.getenv("KOPANDA_HOME_WEATHER_UNITS"),
+        latitude = env("KOPANDA_HOME_WEATHER_LATITUDE"),
+        longitude = env("KOPANDA_HOME_WEATHER_LONGITUDE"),
+        units = env("KOPANDA_HOME_WEATHER_UNITS"),
     }
     local weather_set = 0
     for _ in pairs(weather_env) do

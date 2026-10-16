@@ -164,6 +164,19 @@ describe("the capture inputs", function()
             assert.is_false(compare.compare(with.png, without.png).ok)
         end)
 
+        it("take a variable set to the empty string as unset", function()
+            -- An exported .env block (.env.example lists them empty) reaches the fixture through
+            -- the driver's inherited environment; empty, the reading is for the schema's defaults.
+            local result = driver.capture(home({
+                KOPANDA_HOME_WEATHER_LATITUDE = "",
+                KOPANDA_HOME_WEATHER_LONGITUDE = "",
+                KOPANDA_HOME_WEATHER_UNITS = "",
+            }))
+            local checked = golden.check("home-diner", "colorsoft", result,
+                { update = false, max_fraction = HOME_MAX_FRACTION })
+            assert.is_true(checked.ok)
+        end)
+
         local failures = {
             {
                 what = "only the units set",
