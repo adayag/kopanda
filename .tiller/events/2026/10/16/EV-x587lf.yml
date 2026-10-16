@@ -1,0 +1,14 @@
+id: EV-x587lf
+type: sync.tweak
+at: 2026-10-16T02:11:16.197271Z
+contributor: allen
+command: sync tweak TW-4ae71f
+targets:
+    - TW-4ae71f
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/flaky-probe-golden-paperwhite/tweak.yml

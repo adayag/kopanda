@@ -1,0 +1,13 @@
+id: EV-npnbfe
+type: start.tweak
+at: 2026-10-16T00:20:48.087959Z
+contributor: allen
+command: start tweak TW-npuwi0
+targets:
+    - TW-npuwi0
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/main-requires-every-module/tweak.yml

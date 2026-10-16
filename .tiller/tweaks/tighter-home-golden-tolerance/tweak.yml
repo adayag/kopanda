@@ -1,9 +1,10 @@
 id: TW-i9qml9
 key: tweaks/tighter-home-golden-tolerance
 title: Home golden tolerance lets a wrong caption pass on the Editorial goldens
-status: ready
+status: done
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: T-2axtyg
 accepted_against:
@@ -16,3 +17,33 @@ accepted_against:
         kind: git_commit
         value: git:e6f2573
         observed_at: 2026-10-16T00:19:22.998085Z
+branch: tiller/tweaks/tighter-home-golden-tolerance
+pr: 11
+done_basis: ancestry
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T01:17:31.222334Z
+        against:
+            kind: git_commit
+            value: git:bef5105
+            observed_at: 2026-10-16T01:17:31.222333Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-bef5105-out-f274392c1a8f336f97830fd9b5546df3f4438564cf85a4fa3b0421d65442d214.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T01:17:31.222334Z
+        against:
+            kind: git_commit
+            value: git:bef5105
+            observed_at: 2026-10-16T01:17:31.222333Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-bef5105-out-c96c4892c48be04e003baf87242497a6b8c017c88589b98460b39fb6ece3e8c8.txt

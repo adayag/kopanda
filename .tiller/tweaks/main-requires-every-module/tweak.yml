@@ -1,9 +1,10 @@
 id: TW-npuwi0
 key: tweaks/main-requires-every-module
 title: A spec that main.lua requires every plugin module
-status: ready
+status: done
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: F-3ct1xn
 accepted_against:
@@ -16,3 +17,33 @@ accepted_against:
         kind: git_commit
         value: git:e6f2573
         observed_at: 2026-10-16T00:19:22.534551Z
+branch: tiller/tweaks/main-requires-every-module
+pr: 15
+done_basis: ancestry
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T01:30:28.872544Z
+        against:
+            kind: git_commit
+            value: git:b19b843
+            observed_at: 2026-10-16T01:30:28.872542Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-b19b843-out-8c030bf6e42aa5bc60d55198945755a97d2e33499b674d0318ac88859bde3138.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T01:30:28.872544Z
+        against:
+            kind: git_commit
+            value: git:b19b843
+            observed_at: 2026-10-16T01:30:28.872542Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-b19b843-out-5e7288c2e17430abf03cb186326f03dc8eac21cc77d82af8a71419fd16e4c9e4.txt

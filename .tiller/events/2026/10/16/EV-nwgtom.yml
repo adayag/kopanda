@@ -1,0 +1,11 @@
+id: EV-nwgtom
+type: claim.tweak
+at: 2026-10-16T00:20:48.801231Z
+contributor: allen
+command: claim tweak tweaks/quiet-check-output
+targets:
+    - TW-gs28tx
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/quiet-check-output/tweak.yml

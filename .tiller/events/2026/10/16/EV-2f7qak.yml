@@ -1,0 +1,13 @@
+id: EV-2f7qak
+type: check.tweak
+at: 2026-10-16T01:30:18.830773Z
+contributor: allen
+command: check tweak TW-npuwi0
+targets:
+    - TW-npuwi0
+before:
+    status: in_progress
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/main-requires-every-module/tweak.yml

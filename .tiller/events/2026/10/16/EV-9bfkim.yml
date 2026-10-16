@@ -1,0 +1,13 @@
+id: EV-9bfkim
+type: check.tweak
+at: 2026-10-16T01:54:02.054751Z
+contributor: allen
+command: check tweak TW-w4mx7i
+targets:
+    - TW-w4mx7i
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/cover-placeholder-word-split/tweak.yml

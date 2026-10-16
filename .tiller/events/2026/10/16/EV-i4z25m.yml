@@ -1,0 +1,14 @@
+id: EV-i4z25m
+type: sync.tweak
+at: 2026-10-16T02:11:16.491934Z
+contributor: allen
+command: sync tweak TW-i9qml9
+targets:
+    - TW-i9qml9
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/tighter-home-golden-tolerance/tweak.yml

@@ -1,0 +1,11 @@
+id: EV-hpitpr
+type: claim.tweak
+at: 2026-10-16T00:20:47.971195Z
+contributor: allen
+command: claim tweak tweaks/main-requires-every-module
+targets:
+    - TW-npuwi0
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/main-requires-every-module/tweak.yml

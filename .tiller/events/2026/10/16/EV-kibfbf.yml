@@ -1,0 +1,11 @@
+id: EV-kibfbf
+type: claim.tweak
+at: 2026-10-16T00:20:51.201116Z
+contributor: allen
+command: claim tweak tweaks/weather-hyphen
+targets:
+    - TW-d7y25x
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/weather-hyphen/tweak.yml
