@@ -1,9 +1,10 @@
 id: T-janm6k
 key: studio/device-push/bundle-server
 title: 'Studio serves a profile''s bundle: manifest, files, LAN opt-in and guard, shared vectors'
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,37 @@ accepted_against:
         kind: git_commit
         value: git:33cca18
         observed_at: 2026-10-16T19:41:31.302875Z
+branch: tiller/studio/device-push/bundle-server
+review_ref:
+    branch: tiller/studio/device-push/bundle-server
+    head:
+        kind: git_commit
+        value: git:431eaee
+        observed_at: 2026-10-16T20:02:40.94317Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T20:00:34.482907Z
+        against:
+            kind: git_commit
+            value: git:019b3d4
+            observed_at: 2026-10-16T20:00:34.482901Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-019b3d4-out-512ddc6401c7ef962624e271ddcc66952f3698454b2a3f72a43f6648d17155cf.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T20:00:34.482907Z
+        against:
+            kind: git_commit
+            value: git:019b3d4
+            observed_at: 2026-10-16T20:00:34.482901Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-019b3d4-out-41ca754d8fc15ff71223b067a42fb2acdd8feebd16e8de5b211bfb8b74a34258.txt

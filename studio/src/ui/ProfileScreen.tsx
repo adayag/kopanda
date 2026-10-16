@@ -5,6 +5,7 @@ import { ApiError, fetchProfile, fetchSettings, putSetting, type Settings } from
 import { LayoutEditor } from "./layout/LayoutEditor";
 import { LauncherEditor } from "./launcher/LauncherEditor";
 import { screenFacts } from "./ProfileList";
+import { PushStatus } from "./PushStatus";
 import { SettingsForm } from "./settings/SettingsForm";
 
 /** What the profile's screen shows under its facts: the form or one of the editors. */
@@ -148,6 +149,7 @@ function Profile({ profile, settings }: { profile: ProfileWithPath; settings: Se
           <code>{profile.settings_path}</code>
         </dd>
       </dl>
+      <PushStatus id={profile.id} />
       {!settings.exists && <p className="note">All settings at their defaults</p>}
     </>
   );

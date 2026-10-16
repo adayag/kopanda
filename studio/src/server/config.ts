@@ -3,12 +3,15 @@ import path from "node:path";
 
 export interface Config {
   port: number;
+  /** The address the server binds: loopback by default, `0.0.0.0` to serve the LAN. */
+  host: string;
   /** The directory holding the device profiles. */
   profilesDir: string;
 }
 
 const DEFAULTS = {
   KOPANDA_STUDIO_PORT: "4490",
+  KOPANDA_STUDIO_HOST: "127.0.0.1",
   KOPANDA_STUDIO_PROFILES_DIR: "~/.kopanda/profiles",
 } as const;
 
@@ -38,6 +41,7 @@ export function loadConfig(env: EnvLike = process.env): Config {
   }
   return {
     port,
+    host: read(env, "KOPANDA_STUDIO_HOST"),
     profilesDir: expandHome(read(env, "KOPANDA_STUDIO_PROFILES_DIR")),
   };
 }

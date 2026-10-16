@@ -1,0 +1,13 @@
+id: EV-ua6nik
+type: check.task
+at: 2026-10-16T21:31:46.566057Z
+contributor: allen
+command: check task T-8kwd74
+targets:
+    - T-8kwd74
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/emulator-push/task.yml

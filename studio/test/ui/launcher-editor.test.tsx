@@ -262,7 +262,7 @@ describe("each change is one PUT", () => {
     await open(settings([L, TOOLS], { state, schema_version: state === "read_only" ? 2 : null, reason: "line 1, column 1: bad" }));
 
     expect(screen.getByText(line)).toBeInTheDocument();
-    const buttons = screen.getAllByRole("button");
+    const buttons = within(screen.getByRole("region", { name: "Settings" })).getAllByRole("button");
     expect(buttons.length).toBeGreaterThan(10);
     for (const b of buttons) expect(b).toBeDisabled();
   });

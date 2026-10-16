@@ -1,0 +1,13 @@
+id: EV-qs0rxk
+type: attest.feature
+at: 2026-10-16T21:46:38.083228Z
+contributor: allen
+command: attest feature F-9okxa7
+targets:
+    - F-9okxa7
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/studio/features/device-push/feature.yml

@@ -1,0 +1,17 @@
+id: EV-haa5xm
+type: start.task
+at: 2026-10-16T19:42:00.930384Z
+contributor: allen
+command: start task T-o5gnzj
+targets:
+    - T-o5gnzj
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/studio/device-push
+    branch: tiller/studio/device-push/apply-and-rollback
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/apply-and-rollback/task.yml
+    - path: .tiller/epics/studio/features/device-push/feature.yml

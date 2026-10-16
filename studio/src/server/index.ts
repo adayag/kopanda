@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { loadConfig, type Config } from "./config.js";
 import { ensureProfilesDir } from "./profiles.js";
-import { HOST, startServer } from "./start.js";
+import { startLines, startServer } from "./start.js";
 
 // src/server/index.ts and dist/server/index.js both sit two levels below the studio's root.
 const studioRoot = path.resolve(import.meta.dirname, "../..");
@@ -25,7 +25,7 @@ try {
 ensureProfilesDir(config.profilesDir)
   .then(() => startServer(config, hasBuiltUi ? { uiDir } : {}))
   .then((server) => {
-    console.log(`listening on http://${HOST}:${server.port}`);
+    for (const line of startLines(server.host, server.port)) console.log(line);
     if (!hasBuiltUi) console.log("UI: run `npm run dev` for the Vite dev server, or `npm run build` first");
   })
   .catch((err: unknown) => {

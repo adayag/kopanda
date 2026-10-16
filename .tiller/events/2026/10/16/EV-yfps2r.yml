@@ -1,0 +1,13 @@
+id: EV-yfps2r
+type: check.task
+at: 2026-10-16T20:02:35.374769Z
+contributor: allen
+command: check task T-janm6k
+targets:
+    - T-janm6k
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/bundle-server/task.yml

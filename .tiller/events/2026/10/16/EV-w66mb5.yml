@@ -1,0 +1,16 @@
+id: EV-w66mb5
+type: submit.task
+at: 2026-10-16T20:08:54.265371Z
+contributor: allen
+command: submit task T-o5gnzj
+targets:
+    - T-o5gnzj
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/device-push/apply-and-rollback
+        head: git:f3def1d
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/apply-and-rollback/task.yml

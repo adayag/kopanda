@@ -1,0 +1,13 @@
+id: EV-jjy33t
+type: check.feature
+at: 2026-10-16T21:41:04.968654Z
+contributor: allen
+command: check feature F-9okxa7
+targets:
+    - F-9okxa7
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/studio/features/device-push/feature.yml
