@@ -1,0 +1,13 @@
+id: EV-bvbaf0
+type: claim.task
+at: 2026-10-16T17:11:28.28705Z
+contributor: allen
+command: claim task T-dwsmmb
+targets:
+    - T-dwsmmb
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/schema-contract/task.yml
