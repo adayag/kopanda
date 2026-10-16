@@ -1,7 +1,7 @@
 id: T-h9dkvy
 key: home/device-menus/launcher-manage
 title: 'Launcher management: the list operations, the screen and its ways in'
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -20,3 +20,30 @@ accepted_against:
         value: git:ac38233
         observed_at: 2026-10-16T03:17:38.108421Z
 branch: tiller/home/device-menus/launcher-manage
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T14:07:26.933473Z
+        against:
+            kind: git_commit
+            value: git:8f4b7bf
+            observed_at: 2026-10-16T14:07:26.933468Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-8f4b7bf-out-00dadbc06ae2599d36c9dd694cd7462a2616394e12e6830373f58a493b65a0c2.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T14:07:26.933473Z
+        against:
+            kind: git_commit
+            value: git:8f4b7bf
+            observed_at: 2026-10-16T14:07:26.933468Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-8f4b7bf-out-e311d6c4e028851baa591efc8c41858ac13aef06498b65ba2394d40295f24360.txt
