@@ -1,0 +1,13 @@
+id: EV-r8e56p
+type: approve.task
+at: 2026-10-16T03:55:04.901336Z
+contributor: allen
+command: approve task T-51vf9k
+targets:
+    - T-51vf9k
+before:
+    status: in_progress
+after:
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/editor-frame/task.yml

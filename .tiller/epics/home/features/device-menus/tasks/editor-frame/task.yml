@@ -9,11 +9,11 @@ proposed_by: allen
 accepted_against:
     spec:
         kind: git_blob
-        value: git:c19afb9b42ea3f582b5dd4b297e10104e32addd4
+        value: git:b3c7fa4699620659b134ab18fbcf9bb6cdac0919
         path: .tiller/epics/home/features/device-menus/tasks/editor-frame/task.md
-        observed_at: 2026-10-16T03:17:37.997516Z
+        observed_at: 2026-10-16T03:55:04.87936Z
     commit:
         kind: git_commit
-        value: git:ac38233
-        observed_at: 2026-10-16T03:17:38.018765Z
+        value: git:0ec7ab8
+        observed_at: 2026-10-16T03:55:04.901211Z
 branch: tiller/home/device-menus/editor-frame
