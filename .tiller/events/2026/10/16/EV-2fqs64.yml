@@ -1,0 +1,13 @@
+id: EV-2fqs64
+type: check.feature
+at: 2026-10-16T21:33:52.479913Z
+contributor: allen
+command: check feature F-9okxa7
+targets:
+    - F-9okxa7
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/studio/features/device-push/feature.yml
