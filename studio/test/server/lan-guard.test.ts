@@ -78,7 +78,7 @@ describe("the LAN guard", () => {
     },
   );
 
-  it.each(["::ffff:192.168.1.30", "fe80::1", "128.0.0.1", "10.127.0.1"])("treats %s as another machine", async (peer) => {
+  it.each(["::ffff:192.168.1.30", "fe80::1", "128.0.0.1", "10.127.0.1", "::127.0.0.1"])("treats %s as another machine", async (peer) => {
     const res = await send(guarded(peer), "GET", "/");
 
     expect(res.status).toBe(403);

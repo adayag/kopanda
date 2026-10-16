@@ -8,9 +8,20 @@ import type { Manifest } from "../../src/server/bundle.js";
 import { loadConfig } from "../../src/server/config.js";
 
 const tmpDirs: string[] = [];
+const lockedFiles: string[] = [];
 afterEach(() => {
+  for (const file of lockedFiles.splice(0)) fs.chmodSync(file, 0o644);
   for (const dir of tmpDirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
 });
+
+/** Makes `file` unreadable until the test ends. */
+function lock(file: string): void {
+  fs.chmodSync(file, 0o000);
+  lockedFiles.push(file);
+}
+
+/** Root reads a file whatever its mode, so an unreadable file cannot be staged. */
+const asRoot = process.getuid?.() === 0;
 
 function tempDir(): string {
   const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "kopanda-push-")));
@@ -74,6 +85,17 @@ describe("GET /api/push/profiles", () => {
       ],
     });
   });
+
+  it("is 500 without the directory's path when the profiles directory is gone", async () => {
+    const { app, profiles } = setup();
+    fs.rmSync(profiles, { recursive: true, force: true });
+
+    const res = await request(app).get("/api/push/profiles");
+
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: expect.any(String) as unknown });
+    expect(res.body.error).not.toContain(profiles);
+  });
 });
 
 describe("GET /api/push/:id/manifest", () => {
@@ -110,6 +132,40 @@ describe("GET /api/push/:id/manifest", () => {
 
     expect(res.status).toBe(500);
     expect(res.body).toEqual({ error: expect.stringContaining("plugin/icons/link.svg") as unknown });
+  });
+
+  it.skipIf(asRoot)("is 500 without the profiles directory's path for an unreadable settings file", async () => {
+    const { app, profiles, settingsFile } = setup();
+    lock(settingsFile);
+
+    const res = await request(app).get("/api/push/kobo/manifest");
+
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: expect.any(String) as unknown });
+    expect(res.body.error).not.toContain(profiles);
+  });
+
+  it.skipIf(asRoot)("is 404 without the profiles directory's path for an unreadable profile.json", async () => {
+    const { app, profiles } = setup();
+    lock(path.join(profiles, "kobo", "profile.json"));
+
+    const res = await request(app).get("/api/push/kobo/manifest");
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: expect.stringContaining("kobo") as unknown });
+    expect(res.body.error).not.toContain(profiles);
+  });
+
+  it("is 500 without the plugin folder's path when the plugin folder is missing", async () => {
+    const { profiles } = setup();
+    const pluginDir = path.join(tempDir(), "missing.koplugin");
+    const app = createApp(loadConfig({ KOPANDA_STUDIO_PROFILES_DIR: profiles }), { pluginDir });
+
+    const res = await request(app).get("/api/push/kobo/manifest");
+
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: expect.any(String) as unknown });
+    expect(res.body.error).not.toContain(pluginDir);
   });
 });
 

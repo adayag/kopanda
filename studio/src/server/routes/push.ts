@@ -6,7 +6,9 @@ import { getProfile, listProfiles } from "../profiles.js";
 /**
  * The routes the device pulls a profile's bundle through, over the profiles directory `dir` and the
  * plugin folder `pluginDir` (the repo's kopanda.koplugin/ by default). Each request reads the
- * profiles and builds the bundle from disk again; nothing is cached.
+ * profiles and builds the bundle from disk again; nothing is cached. Other machines reach these routes, so an
+ * error answers no absolute path: an HttpError keeps its message, any other error is logged and answered as a
+ * generic 500.
  */
 export function pushRouter(dir: string, pluginDir?: string): express.Router {
   const router = express.Router();
@@ -15,7 +17,7 @@ export function pushRouter(dir: string, pluginDir?: string): express.Router {
   async function bundleOf(id: string): Promise<Bundle> {
     const profile = await getProfile(dir, id);
     if (profile === undefined) throw new HttpError(404, `no profile "${id}"`);
-    if ("error" in profile) throw new HttpError(404, `profile "${id}" is invalid: ${profile.error}`);
+    if ("error" in profile) throw new HttpError(404, `profile "${id}" is invalid; open the studio on the Mac to see why`);
     return buildBundle({ pluginDir, settingsPath: profile.settings_path });
   }
 
@@ -49,6 +51,19 @@ export function pushRouter(dir: string, pluginDir?: string): express.Router {
     if (bytes === undefined) throw new HttpError(404, `no file "${rel}" in profile "${id}"'s bundle`);
     res.set({ "Content-Type": "application/octet-stream", "Cache-Control": "no-store" });
     res.send(Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength));
+  });
+
+  router.use((err: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (res.headersSent) {
+      next(err);
+      return;
+    }
+    if (err instanceof HttpError) {
+      res.status(err.status).json({ error: err.message });
+      return;
+    }
+    console.error(err);
+    res.status(500).json({ error: "cannot build the bundle; see the studio's log" });
   });
 
   return router;
