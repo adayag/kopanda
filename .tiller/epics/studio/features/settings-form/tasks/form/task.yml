@@ -1,7 +1,7 @@
 id: T-08n402
 key: studio/settings-form/form
 title: The generated form over every schema key
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:d92a0a4
         observed_at: 2026-10-16T17:50:20.423612Z
 branch: tiller/studio/settings-form/form
+review_ref:
+    branch: tiller/studio/settings-form/form
+    head:
+        kind: git_commit
+        value: git:916692d
+        observed_at: 2026-10-16T18:51:06.395905Z
 gates:
     build:
         required: true
