@@ -255,20 +255,23 @@ describe("the editor frame", function()
             end
         end)
 
-        it("casts Diner's tile shadow under a card and Editorial's none", function()
-            local editor, look, palette = painted("diner")
+        it("casts Diner's 2 px card shadow under a card and Editorial's none", function()
+            local editor, _, palette = painted("diner")
             local rect = body_place(editor, 1).rect
-            local sx, sy = scale(look.shadow.tile.x), scale(look.shadow.tile.y)
-            assert.truthy(sx > 0 and sy > 0)
-            local x, y = rect.x + rect.w + sx - 1, rect.y + rect.h + sy - 1
-            assert.is_true(near(rgb(palette.shadow), pixel(bb, x, y), 1), "shadow corner")
-            assert.is_true(near(rgb(palette.paper), pixel(bb, x + 1, y + 1), 1), "past the shadow")
+            local right, bottom = rect.x + rect.w, rect.y + rect.h
+            local mid_x, mid_y = rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2)
+            assert.is_true(near(rgb(palette.shadow), pixel(bb, right + scale(1) - 1, mid_y), 1), "right shadow")
+            assert.is_true(near(rgb(palette.shadow), pixel(bb, mid_x, bottom + scale(1) - 1), 1), "bottom shadow")
+            assert.is_true(near(rgb(palette.paper), pixel(bb, right + scale(3) - 1, mid_y), 1), "past the right shadow")
+            assert.is_true(near(rgb(palette.paper), pixel(bb, mid_x, bottom + scale(3) - 1), 1),
+                "past the bottom shadow")
             assert.is_true(near(rgb(palette.paper), pixel(bb, centre(rect)), 1), "the card over its shadow")
             Editor.close()
             bb:free()
 
+            local look
             editor, look, palette = painted("editorial")
-            assert.is_false(look.shadow.tile.color)
+            assert.is_false(look.editor.card_shadow.color)
             rect = body_place(editor, 1).rect
             assert.is_true(near(rgb(palette.paper), pixel(bb, rect.x + rect.w + 1, rect.y + rect.h + 1), 1))
         end)

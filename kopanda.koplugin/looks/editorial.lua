@@ -345,7 +345,7 @@ return {
     },
     -- The editor screens, edit layout and launcher management: a header of an aside over a title
     -- and a Done button above an ink rule, then hairline cards or rows (EditLayout.dc.html,
-    -- LauncherManage.dc.html). Cards cast shadow.tile, none here.
+    -- LauncherManage.dc.html). Cards cast card_shadow, none here.
     editor = {
         padding = { top = 40, side = 40, bottom = 28 }, -- EditLayout.dc.html:19, :101
         header_band_color = false, -- Editorial's header is on paper
@@ -362,6 +362,7 @@ return {
         card_padding = { x = 14, y = 12 }, -- EditLayout.dc.html:29
         card_outline_color = "hairline", -- EditLayout.dc.html:29
         card_outline_width = 1, -- EditLayout.dc.html:29
+        card_shadow = { x = 0, y = 0, color = false }, -- the boards draw none (EditLayout.dc.html:29)
         selected_outline_color = "ink", -- EditLayout.dc.html:43
         -- The board's #e9e6dc is in no palette; hairline_light (#e2dfd4) is the nearest role (EditLayout.dc.html:43).
         selected_fill_color = "hairline_light",

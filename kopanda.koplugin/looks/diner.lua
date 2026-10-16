@@ -367,7 +367,7 @@ return {
     },
     -- The editor screens, edit layout and launcher management. No board draws Diner's: the
     -- direction doc's vocabulary ("The two looks"), a teal header band, 3 px ink outlines, hard
-    -- 4 px shadows on cards (shadow.tile) and a flat mustard fill for the selected card; spacing as
+    -- 2 px shadows on cards (card_shadow) and a flat mustard fill for the selected card; spacing as
     -- Editorial's boards give it.
     editor = {
         padding = { top = 40, side = 40, bottom = 28 }, -- no board: Editorial's
@@ -385,6 +385,7 @@ return {
         card_padding = { x = 14, y = 12 }, -- no board: Editorial's
         card_outline_color = "outline", -- no board: the doc's ink outlines
         card_outline_width = 3, -- no board: stroke.outline
+        card_shadow = { x = 2, y = 2, color = "shadow" }, -- owner: half the home tiles' 4, so the screens read lighter
         selected_outline_color = "outline", -- no board: the doc's ink outlines
         selected_fill_color = "mustard", -- no board: the doc's flat accent fills
         arrow_size = 28, -- no board: Editorial's
