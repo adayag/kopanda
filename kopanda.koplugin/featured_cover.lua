@@ -168,7 +168,7 @@ end
 
 -- Whether box split a word on a line it shows. TextBoxWidget sets has_split_inside_word for a
 -- split on any line, shown or past its lines_per_page (frontend/ui/widget/textboxwidget.lua:421-424,
--- :476-480); with xtext each line keeps its own no_allowed_break_met (:420-421), so the shown lines
+-- :478-480); with xtext each line keeps its own no_allowed_break_met (:420-421), so the shown lines
 -- are read. Without xtext only the box's flag is there.
 local function split_shown(box)
     if not box.has_split_inside_word then
