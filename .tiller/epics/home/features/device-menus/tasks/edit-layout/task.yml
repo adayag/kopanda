@@ -1,7 +1,7 @@
 id: T-6nh4m4
 key: home/device-menus/edit-layout
 title: 'Edit layout: the row operations and the screen'
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -29,26 +29,26 @@ gates:
     build:
         required: true
         kind: command
-        status: stale
+        status: pass
         run_by: allen
-        run_at: 2026-10-16T04:14:25.631091Z
+        run_at: 2026-10-16T14:51:11.95048Z
         against:
             kind: git_commit
-            value: git:8badf02
-            observed_at: 2026-10-16T04:14:25.631083Z
+            value: git:549b597
+            observed_at: 2026-10-16T14:51:11.950469Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/build-8badf02-out-ef39e4f71031ba23bcb3a1d43297aedf05ba6edaa3262b5c0f081d579bca9f10.txt
+              ref: artifacts/tiller/gates/build-549b597-out-f7797871469095fcb0e6ce90afae39e98a601f76e919b685a22fdd78dd3fffe4.txt
     tests:
         required: true
         kind: command
-        status: stale
+        status: pass
         run_by: allen
-        run_at: 2026-10-16T04:14:25.631091Z
+        run_at: 2026-10-16T14:51:11.95048Z
         against:
             kind: git_commit
-            value: git:8badf02
-            observed_at: 2026-10-16T04:14:25.631083Z
+            value: git:549b597
+            observed_at: 2026-10-16T14:51:11.950469Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/tests-8badf02-out-02ad867a59db86f1cbca51c6008b5dd22ef64a1f5f265d9da69e67fd08e892f9.txt
+              ref: artifacts/tiller/gates/tests-549b597-out-429cd58cacf82e6a58c57ddf7a9c397ba5e3ec2ecaea4728d4f5597be66c5cc5.txt
