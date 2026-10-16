@@ -189,14 +189,17 @@ describe("POST /api/profiles/:id/preview", () => {
 
   it("runs one render at a time, and never runs a queued request whose client has gone", async () => {
     const queue = createPreviewQueue();
-    let queued = 0;
+    const signals: AbortSignal[] = [];
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    // The first render waits for the test, so the others queue behind it whatever the machine's load.
     const counted: PreviewQueue = {
       run: (job, signal) => {
-        queued += 1;
-        return queue.run(job, signal);
+        signals.push(signal!);
+        return queue.run(signals.length === 1 ? () => held.then(job) : job, signal);
       },
     };
-    const { app, runs } = setup("png", { delayMs: 400, queue: counted });
+    const { app, runs } = setup("png", { delayMs: 200, queue: counted });
     const server = app.listen(0, "127.0.0.1");
     cleanups.push(() => server.close());
     await new Promise((resolve) => server.once("listening", resolve));
@@ -209,21 +212,27 @@ describe("POST /api/profiles/:id/preview", () => {
         signal,
       });
 
+    // Each request is sent once the one before it has reached the queue, so they arrive in this order.
     const first = send("diner", false);
+    await vi.waitFor(() => expect(signals).toHaveLength(1));
     const second = send("editorial", false);
+    await vi.waitFor(() => expect(signals).toHaveLength(2));
     const leaving = new AbortController();
     const third = send("diner", true, leaving.signal).catch((err: unknown) => err);
-    await vi.waitFor(() => expect(queued).toBe(3));
+    await vi.waitFor(() => expect(signals).toHaveLength(3));
     leaving.abort();
+    await vi.waitFor(() => expect(signals[2]!.aborted).toBe(true));
+    release();
 
     expect((await first).status).toBe(200);
     expect((await second).status).toBe(200);
     expect(await third).toBeInstanceOf(Error);
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    // A job queued now runs only after every job still in the queue has ended.
+    await queue.run(async () => undefined);
     const records = runs();
     const starts = records.filter((r) => r.event === "start");
     const ends = records.filter((r) => r.event === "end");
-    expect(starts.map((r) => r.args.slice(4, 6)).sort()).toEqual([
+    expect(starts.map((r) => r.args.slice(4, 6))).toEqual([
       ["diner", "day"],
       ["editorial", "day"],
     ]);
