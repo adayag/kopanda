@@ -1,7 +1,7 @@
 id: TW-wzgn5m
 key: tweaks/hold-routing-spec
 title: Move the hold cases out of gesture_routing_spec.lua
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -18,6 +18,7 @@ accepted_against:
         value: git:e6f2573
         observed_at: 2026-10-16T00:19:22.384551Z
 branch: tiller/tweaks/hold-routing-spec
+pr: 10
 gates:
     build:
         required: true
