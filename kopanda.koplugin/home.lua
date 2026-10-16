@@ -141,12 +141,13 @@ function Home:slotAt(pos)
     end
 end
 
--- Runs the show's finished callback (the boot guard's clear), if any.
-local function finish(opts)
+-- Runs the show's finished callback (the boot guard's clear), if any, telling it whether the
+-- home painted.
+local function finish(opts, painted)
     if not opts.finished then
         return
     end
-    local ok, err = pcall(opts.finished)
+    local ok, err = pcall(opts.finished, painted)
     if not ok then
         logger.err("KoPanda: the show's finished callback failed:", err)
     end
@@ -195,13 +196,14 @@ local function settle(home, opts)
             end
         end)
     end
-    finish(opts)
+    finish(opts, home.painted_at ~= nil and not home.paint_failed)
 end
 
 -- opts: widget (a pre-built home to show; default: a fresh build), started (time.monotonic()
 -- at the start of the show path), prebuilt, finished (called once, after the first paint's
--- settled signal or on a caught failure). On any error the home is taken off the stack and the
--- file browser beneath is left as it is.
+-- settled signal or on a caught failure, with true only when the home painted and its paint
+-- didn't fail). On any error the home is taken off the stack and the file browser beneath is
+-- left as it is.
 function Home.show(opts)
     local home
     local ok, err = pcall(function()
@@ -219,7 +221,7 @@ function Home.show(opts)
             close_home(home)
         end
         Home.shown = nil
-        finish(opts)
+        finish(opts, false)
     end
 end
 

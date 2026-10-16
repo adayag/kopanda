@@ -181,12 +181,15 @@ Upgrading KOReader walks this list.
 - `guards.lua` lowercases each name and refuses the shell for `simpleui`, `bookshelf` and
   `ennui` (a git clone of ennUI is `ennUI.koplugin`). An error reading the list refuses nothing.
 
-### `InfoMessage`, the refusal and boot-guard notices
+### `InfoMessage`, the refusal, boot-guard and pull notices
 
 - `ui/widget/infomessage`: `frontend/ui/widget/infomessage.lua:47` (the class), `:52-53`
   (`text`, `timeout`), `:263-292` (`onShow` schedules the close when `timeout` is set).
 - Shown from `UIManager:nextTick`. The refusal message has no timeout and is raised once per
   process from a file-manager instance. The boot guard's notice has a timeout of 8 s.
+- `push_notice.lua` shows the apply patch's result (applied, rolled back, failed, restore
+  failed) with no timeout: over the first home of a process that painted, or, while another
+  shell refuses the home, from a file-manager instance when nothing is on probation.
 
 ### The runtime state file, `settings/kopanda/state.lua`
 
@@ -205,6 +208,9 @@ Upgrading KOReader walks this list.
   format `writeToFile` writes with `lua_dofile_ready`, `frontend/util.lua:1125-1128`) to catch a
   read-only file or folder or a full disk. The boot guard's `boot_pending` lives here, not in the
   schema.
+- The apply patch (below) also writes `boot_pending = false` here, through `LuaSettings` before
+  any plugin loads, when it applies a pull and when it restores one, so the boot guard never
+  skips the home that proves or reports the install.
 
 ### The settings file, `settings/kopanda/settings.lua`
 
@@ -223,6 +229,43 @@ Upgrading KOReader walks this list.
 - `Settings._migrate` and `Settings._reset` are KoPanda's own seams for
   `spec/unit/settings_spec.lua`, not KOReader internals; they are named here because the hooks
   check flags every underscore access.
+
+### The apply patch, `patches/1-kopanda-apply.lua`
+
+- `push_apply.lua` is also the patch: `arm` copies it to `<data>/patches/1-kopanda-apply.lua`
+  (`datastorage.lua:79-81`, `getPatchesDir`), refusing when `patches/.patches_disabled` exists
+  (`frontend/userpatch.lua:39-40`, checked once per process; `applyPatches` then runs nothing,
+  `:110-111`). The copy goes through `1-kopanda-apply.lua.tmp`, which the loader skips: it runs
+  only names ending `.lua` (`:87`).
+- Early priority: the prefix `1` (`frontend/userpatch.lua:11-12`), run by `runUserPatchTasks`
+  (`:65-100`) under `pcall(dofile, fullpath)` (`:89`), whose failure is only logged (`:92`).
+  `reader.lua:25-27` applies early patches before `G_reader_settings` is opened (`:39-40`), and
+  plugins are discovered with the first file manager
+  (`frontend/apps/filemanager/filemanager.lua:418-429`).
+  `dofile` passes the chunk no arguments and `require` passes the module name, which is how the
+  file tells its two uses apart (`spec/unit/push_apply_spec.lua`'s module cases).
+- The push folder, `<data>/settings/kopanda/push/` (`datastorage.lua:60-62`, `getSettingsDir`):
+  the stage, the rollback set, probation and the result. Device-local runtime state, not a
+  setting.
+- `plugins_disabled` in `settings.reader.lua`: a table keyed by plugin folder name
+  (`frontend/pluginloader.lua:175`, matched by exact name at `:212`). The patch adds the stage's
+  `disable` names and the restore puts the recorded value back (or deletes the key). Only an early
+  patch can write it: KOReader writes `G_reader_settings` back at exit (`reader.lua:306-308`).
+- `luasettings`: `frontend/luasettings.lua:21-48` (`open`: a missing or corrupt file falls back
+  to `.old`, then `{}`), `:89` (`readSetting`), `:102` (`saveSetting`), `:108` (`delSetting`),
+  `:252-275` (`flush`; its backup renames the file onto `<file>.old` at `:262`, KOReader's rename,
+  not the patch's). Each write is read back with `dofile`, as `state.lua` does.
+- `ffi/util`: `base/ffi/util.lua:223-241` (`copyFile` ignores write errors, so `arm` checks the
+  copy's size), `:588` (`fsyncOpenedFile`), `:614` (`fsyncDirectory`) for the records, which are
+  written to `<name>.tmp`, synced, and renamed onto a name removed first.
+- `dump`: `frontend/dump.lua:68-72` (`dump(value, nil, true)`, keys in order); records are read
+  back with `load` in an empty environment.
+- `libs/libkoreader-lfs`: `symlinkattributes`, `dir`, `mkdir`, `rmdir` and `attributes`
+  (LuaFileSystem, `base/thirdparty/koreader-lfs/CMakeLists.txt:19`); the purge never follows a
+  link.
+- `PushApply._move`, `PushApply._purge`, `PushApply._write_record` and
+  `PushApply._set_reader_key` are KoPanda's own seams for `spec/unit/push_apply_spec.lua`, not
+  KOReader internals; they are named here because the hooks check flags every underscore access.
 
 ### `InputContainer` gesture and paint dispatch
 

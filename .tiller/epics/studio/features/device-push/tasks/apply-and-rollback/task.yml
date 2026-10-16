@@ -1,9 +1,10 @@
 id: T-o5gnzj
 key: studio/device-push/apply-and-rollback
 title: Early apply patch swaps the plugin, settings and shells, and rolls back an install whose home never painted
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,37 @@ accepted_against:
         kind: git_commit
         value: git:33cca18
         observed_at: 2026-10-16T19:41:31.324741Z
+branch: tiller/studio/device-push/apply-and-rollback
+review_ref:
+    branch: tiller/studio/device-push/apply-and-rollback
+    head:
+        kind: git_commit
+        value: git:f3def1d
+        observed_at: 2026-10-16T20:08:54.265204Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T20:06:49.962131Z
+        against:
+            kind: git_commit
+            value: git:bdb1977
+            observed_at: 2026-10-16T20:06:49.962128Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-bdb1977-out-56414eaad8f4060c7234c665f89457fee6d2c2456fda793b4ae7142bf96a77d8.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T20:06:49.962131Z
+        against:
+            kind: git_commit
+            value: git:bdb1977
+            observed_at: 2026-10-16T20:06:49.962128Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-bdb1977-out-26353aed44aed32c5944c5206bb644e4db85219b4eb0f1c54a6a31f030765ec6.txt

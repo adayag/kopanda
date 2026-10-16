@@ -12,6 +12,7 @@ local Guards = require("guards")
 local Home = require("home")
 local InfoMessage = require("ui/widget/infomessage")
 local MenuEntries = require("menu_entries")
+local PushNotice = require("push_notice")
 local SchemaMenu = require("menu")
 local State = require("state")
 local Swatch = require("swatch")
@@ -42,6 +43,7 @@ require("looks/diner")
 require("looks/editorial")
 require("migrations")
 require("paint")
+require("push_apply")
 require("quotes")
 require("reading_stats")
 require("rows_edit")
@@ -79,6 +81,8 @@ function KoPanda:init()
             self.refused = true
             if in_fm then
                 Guards.notify_once()
+                -- A pull's result shows here in place of the home, unless it is on probation.
+                PushNotice.on_refused()
             end
             self.ui.menu:registerToMainMenu(self)
             return
@@ -151,9 +155,13 @@ function KoPanda:showHome(started)
             return
         end
         State.set("boot_pending", true)
-        -- Run after the home's first paint, or on a caught failure of its build, show or paint.
-        opts.finished = function()
+        -- Run after the home's first paint, or on a caught failure of its build, show or paint;
+        -- only a home that painted ends a pull's probation and shows its result.
+        opts.finished = function(painted)
             State.set("boot_pending", false)
+            if painted then
+                PushNotice.on_painted()
+            end
         end
     end
     use_pending()
