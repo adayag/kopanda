@@ -1,0 +1,16 @@
+id: EV-ituthf
+type: submit.task
+at: 2026-10-16T20:02:40.943336Z
+contributor: allen
+command: submit task T-janm6k
+targets:
+    - T-janm6k
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/device-push/bundle-server
+        head: git:431eaee
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/bundle-server/task.yml
