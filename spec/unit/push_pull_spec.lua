@@ -165,6 +165,19 @@ describe("the pull", function()
         return message, code
     end
 
+    -- A refused_over_stage whose manifest did the refusing: nothing but the manifest requested,
+    -- and the message says so.
+    local function refused_manifest(break_bundle)
+        local message, code = refused_over_stage(break_bundle)
+        local urls = {}
+        for i, request in ipairs(requests) do
+            urls[i] = request.url
+        end
+        assert.same({ BASE .. "/api/push/vector/manifest" }, urls)
+        assert.truthy(message:find("manifest", 1, true))
+        return message, code
+    end
+
     before_each(function()
         counter = counter + 1
         dir = ko_home .. "/push-pull-" .. counter
@@ -314,44 +327,44 @@ describe("the pull", function()
 
     describe("a refused manifest", function()
         it("that is not JSON", function()
-            refused_over_stage(function()
+            refused_manifest(function()
                 raw = "<html>not json</html>"
             end)
         end)
 
         it("that is not an object", function()
-            refused_over_stage(function()
+            refused_manifest(function()
                 raw = "[1, 2]"
             end)
         end)
 
         it("of another format", function()
-            refused_over_stage(function()
+            refused_manifest(function()
                 served.format = 2
             end)
         end)
 
         it("of another profile", function()
-            refused_over_stage(function()
+            refused_manifest(function()
                 served.profile = "colorsoft"
             end)
         end)
 
         it("with a hash that is not 64 hex", function()
-            refused_over_stage(function()
+            refused_manifest(function()
                 served.hash = "abc"
             end)
         end)
 
         it("with a sha256 that is not 64 hex", function()
-            refused_over_stage(function()
+            refused_manifest(function()
                 served.files[1].sha256 = "abc"
             end)
         end)
 
         for _, size in ipairs{ -1, 1.5 } do
             it("with a size of " .. size, function()
-                refused_over_stage(function()
+                refused_manifest(function()
                     served.files[1].size = size
                 end)
             end)
@@ -359,7 +372,7 @@ describe("the pull", function()
 
         for _, path in ipairs{ "plugin/../x", "plugin//x", "plugin/./x", "plugin/x y", "plugin/x\\y" } do
             it("with the unsafe path " .. path, function()
-                refused_over_stage(function()
+                refused_manifest(function()
                     table.insert(served.files, 3, { path = path, size = 0, sha256 = string.rep("a", 64) })
                     table.sort(served.files, function(a, b)
                         return a.path < b.path
@@ -369,26 +382,26 @@ describe("the pull", function()
         end
 
         it("with an absolute path", function()
-            refused_over_stage(function()
+            refused_manifest(function()
                 table.insert(served.files, 1, { path = "/x", size = 0, sha256 = string.rep("a", 64) })
             end)
         end)
 
         it("with a path neither settings.lua nor under plugin/", function()
-            refused_over_stage(function()
+            refused_manifest(function()
                 table.insert(served.files, { path = "zzz.lua", size = 0, sha256 = string.rep("a", 64) })
             end)
         end)
 
         it("with two paths equal ignoring case", function()
-            refused_over_stage(function()
+            refused_manifest(function()
                 table.insert(served.files, 1, { path = "plugin/Main.lua", size = 0, sha256 = string.rep("a", 64) })
             end)
         end)
 
         for _, required in ipairs{ "settings.lua", "plugin/main.lua", "plugin/_meta.lua" } do
             it("missing " .. required, function()
-                refused_over_stage(function()
+                refused_manifest(function()
                     for i, file in ipairs(served.files) do
                         if file.path == required then
                             table.remove(served.files, i)
@@ -400,13 +413,13 @@ describe("the pull", function()
         end
 
         it("with paths out of byte order", function()
-            refused_over_stage(function()
+            refused_manifest(function()
                 served.files[1], served.files[2] = served.files[2], served.files[1]
             end)
         end)
 
         it("answered 404 for a profile the studio no longer has", function()
-            local message, code = refused_over_stage(function()
+            local message, code = refused_manifest(function()
                 routes[BASE .. "/api/push/vector/manifest"] = { 404, '{"error":"no profile \\"vector\\""}' }
             end)
             assert.equals(404, code)
@@ -453,7 +466,7 @@ describe("the pull", function()
         end)
 
         it("whose manifest request raises, with socketutil reset after", function()
-            refused_over_stage(function()
+            refused_manifest(function()
                 routes[BASE .. "/api/push/vector/manifest"] = function()
                     error("kopanda-test: request raised")
                 end
@@ -463,9 +476,11 @@ describe("the pull", function()
         end)
 
         it("of the wrong size", function()
-            assert.truthy(refused_over_stage(function()
+            local message = refused_over_stage(function()
                 routes[file_url("plugin/main.lua")] = { 200, read(bundle .. "/plugin/main.lua") .. "x" }
-            end):find("plugin/main.lua", 1, true))
+            end)
+            assert.truthy(message:find("plugin/main.lua", 1, true))
+            assert.truthy(message:find("bytes", 1, true))
         end)
 
         it("of the right size and the wrong sha256", function()

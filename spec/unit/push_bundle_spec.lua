@@ -258,6 +258,7 @@ describe("the push bundle", function()
             local ok, why = PushBundle.verify_files(dir, vectors())
             assert.is_nil(ok)
             assert.truthy(why:find("plugin/main.lua", 1, true))
+            assert.truthy(why:find("bytes", 1, true))
         end)
 
         it("refuses a file of the right size and the wrong sha256", function()
