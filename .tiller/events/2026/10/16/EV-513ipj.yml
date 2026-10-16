@@ -1,0 +1,11 @@
+id: EV-513ipj
+type: submit.feature
+at: 2026-10-16T21:46:55.688592Z
+contributor: allen
+command: submit feature studio/device-push
+targets:
+    - F-9okxa7
+after:
+    pr: 21
+files:
+    - path: .tiller/epics/studio/features/device-push/feature.yml
