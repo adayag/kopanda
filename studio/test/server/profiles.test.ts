@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import fs from "node:fs";
+import fsp from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import request from "supertest";
@@ -10,6 +11,7 @@ import seed from "../../src/server/default-profiles.json" with { type: "json" };
 
 const tmpDirs: string[] = [];
 afterEach(() => {
+  vi.restoreAllMocks();
   for (const dir of tmpDirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
 });
 
@@ -143,9 +145,12 @@ describe("GET /api/profiles", () => {
     expect((await request(server).get("/api/profiles")).body.profiles[0].name).toBe("Renamed");
   });
 
-  it("sorts by id regardless of the order directories were made in", async () => {
+  it("sorts by id whatever order the directory is read in", async () => {
     const dir = tempDir();
-    for (const id of ["zeta", "alpha", "mid-1"]) writeProfileJson(dir, id, kobo);
+    for (const id of ["alpha", "mid-1", "zeta"]) writeProfileJson(dir, id, kobo);
+    const readdir = fsp.readdir;
+    vi.spyOn(fsp, "readdir").mockImplementation((async (target: string) =>
+      (await readdir(target)).reverse()) as typeof fsp.readdir);
 
     const res = await request(app(dir)).get("/api/profiles");
 

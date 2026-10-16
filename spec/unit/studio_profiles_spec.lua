@@ -44,11 +44,18 @@ describe("the studio's seed profiles", function()
         assert.same({}, mismatches(read_seed()))
     end)
 
-    it("names the id and the field of a mismatch", function()
-        local seed = read_seed()
-        seed.paperwhite.height = seed.paperwhite.height + 1
-        local found = mismatches(seed)
-        assert.equals(1, #found)
-        assert.truthy(found[1]:find("^paperwhite%.height: "))
+    it("names the id and the field of a mismatch in each compared field", function()
+        for _, field in ipairs({ "width", "height", "dpi", "color" }) do
+            local seed = read_seed()
+            local value = seed.paperwhite[field]
+            if type(value) == "boolean" then
+                seed.paperwhite[field] = not value
+            else
+                seed.paperwhite[field] = value + 1
+            end
+            local found = mismatches(seed)
+            assert.equals(1, #found, field)
+            assert.truthy(found[1]:find("^paperwhite%." .. field .. ": "), found[1])
+        end
     end)
 end)
