@@ -1,0 +1,14 @@
+id: EV-w65hzy
+type: add.task
+at: 2026-10-16T20:04:26.252084Z
+contributor: allen
+command: add task bars/title-bar/file-browser
+targets:
+    - T-le8x0f
+after:
+    feature: F-iwl43d
+    key: bars/title-bar/file-browser
+    status: proposed
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/file-browser/task.md
+    - path: .tiller/epics/bars/features/title-bar/tasks/file-browser/task.yml

@@ -1,0 +1,14 @@
+id: EV-6x8yrx
+type: add.task
+at: 2026-10-16T20:04:26.162722Z
+contributor: allen
+command: add task bars/title-bar/bar
+targets:
+    - T-nzshf0
+after:
+    feature: F-iwl43d
+    key: bars/title-bar/bar
+    status: proposed
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/bar/task.md
+    - path: .tiller/epics/bars/features/title-bar/tasks/bar/task.yml

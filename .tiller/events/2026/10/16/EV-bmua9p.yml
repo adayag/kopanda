@@ -1,0 +1,13 @@
+id: EV-bmua9p
+type: approve.feature
+at: 2026-10-16T20:10:55.707705Z
+contributor: allen
+command: approve feature F-9okxa7
+targets:
+    - F-9okxa7
+before:
+    status: ready
+after:
+    status: ready
+files:
+    - path: .tiller/epics/studio/features/device-push/feature.yml
