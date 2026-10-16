@@ -1,9 +1,10 @@
 id: T-6nh4m4
 key: home/device-menus/edit-layout
 title: 'Edit layout: the row operations and the screen'
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-51vf9k
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:ac38233
         observed_at: 2026-10-16T03:17:38.085895Z
+branch: tiller/home/device-menus/edit-layout
+review_ref:
+    branch: tiller/home/device-menus/edit-layout
+    head:
+        kind: git_commit
+        value: git:81c79c6
+        observed_at: 2026-10-16T04:15:50.696714Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T04:14:25.631091Z
+        against:
+            kind: git_commit
+            value: git:8badf02
+            observed_at: 2026-10-16T04:14:25.631083Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-8badf02-out-ef39e4f71031ba23bcb3a1d43297aedf05ba6edaa3262b5c0f081d579bca9f10.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T04:14:25.631091Z
+        against:
+            kind: git_commit
+            value: git:8badf02
+            observed_at: 2026-10-16T04:14:25.631083Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-8badf02-out-02ad867a59db86f1cbca51c6008b5dd22ef64a1f5f265d9da69e67fd08e892f9.txt

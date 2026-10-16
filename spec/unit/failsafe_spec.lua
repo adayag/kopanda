@@ -390,6 +390,27 @@ describe("KoPanda failing safe", function()
             assert.is_true(logged_error("kopanda-test: editor paint failed"))
         end)
 
+        it("logs and leaves no editor when edit layout's read of the settings throws", function()
+            harness.show_fm()
+            harness.tick(2)
+            Editor = require("editor")
+            local Settings = require("settings")
+            local get = Settings.get
+            Settings.get = function(key)
+                if key == "layout.rows" then
+                    error("kopanda-test: layout read failed")
+                end
+                return get(key)
+            end
+            local ok = pcall(require("edit_layout").open)
+            Settings.get = get
+            assert.is_true(ok)
+            no_editor()
+            assert.is_true(logged_error("kopanda-test: layout read failed"))
+            Home.close()
+            file_manager_usable()
+        end)
+
         it("closes itself when a control's run throws", function()
             show(function(control)
                 control.run = function()

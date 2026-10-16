@@ -647,6 +647,17 @@ Upgrading KOReader walks this list.
   `{ generationtime_ms }`. "60614" with `countryCode=US` returned one result, Chicago, Illinois, at
   41.85003, -87.65005. The recorded responses are `spec/fixtures/geocoding/*.json`.
 
+### Edit layout: `util.tableDeepCopy` and its notes
+
+- `util`: `frontend/util.lua:184-203` (`tableDeepCopy`). `Settings.get` hands back the stored
+  table itself, so `edit_layout.lua` copies `layout.rows` when it opens, and every
+  `rows_edit.lua` operation copies the rows it is given before changing them.
+- `ui/widget/infomessage`: a refused change ("That won't fit on the home.", "Couldn't save the
+  layout." and `rows_edit.lua`'s notes) shows a note with no timeout, so no timer
+  (`frontend/ui/widget/infomessage.lua:52-53`, `:283-290`).
+- Its pickers are `sheet.lua`'s sheets over the editor frame; the frame is the editor entries
+  above.
+
 ### The featured cover: CoverBrowser's `bookinfomanager`, `ImageWidget` and the bounded check
 
 - `bookinfomanager` (`plugins/coverbrowser.koplugin/bookinfomanager.lua`), reached by
