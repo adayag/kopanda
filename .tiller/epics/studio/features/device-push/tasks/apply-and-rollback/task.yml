@@ -1,7 +1,17 @@
 id: T-o5gnzj
 key: studio/device-push/apply-and-rollback
 title: Early apply patch swaps the plugin, settings and shells, and rolls back an install whose home never painted
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:0f5348ce072b5bbd09b7948c214a08ea5b88ded2
+        path: .tiller/epics/studio/features/device-push/tasks/apply-and-rollback/task.md
+        observed_at: 2026-10-16T19:41:31.303311Z
+    commit:
+        kind: git_commit
+        value: git:33cca18
+        observed_at: 2026-10-16T19:41:31.324741Z

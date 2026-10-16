@@ -1,9 +1,19 @@
 id: T-8kwd74
 key: studio/device-push/emulator-push
 title: Emulator proves the pull, the switch-over and the rollback across restarts
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-ghzxgk
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:19a97c12e5cf837f7aa898e1e33954033c5e798e
+        path: .tiller/epics/studio/features/device-push/tasks/emulator-push/task.md
+        observed_at: 2026-10-16T19:41:31.346266Z
+    commit:
+        kind: git_commit
+        value: git:33cca18
+        observed_at: 2026-10-16T19:41:31.368625Z

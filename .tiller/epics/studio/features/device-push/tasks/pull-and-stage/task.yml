@@ -1,10 +1,20 @@
 id: T-ghzxgk
 key: studio/device-push/pull-and-stage
 title: Studio menu pulls, verifies, stages and arms a profile's bundle
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-janm6k
     - T-o5gnzj
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:da742ea8a5465ab3c1de5c750d4d2b4095082a0a
+        path: .tiller/epics/studio/features/device-push/tasks/pull-and-stage/task.md
+        observed_at: 2026-10-16T19:41:31.325131Z
+    commit:
+        kind: git_commit
+        value: git:33cca18
+        observed_at: 2026-10-16T19:41:31.345817Z

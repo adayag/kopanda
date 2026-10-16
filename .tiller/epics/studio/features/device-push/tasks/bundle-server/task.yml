@@ -1,7 +1,17 @@
 id: T-janm6k
 key: studio/device-push/bundle-server
 title: 'Studio serves a profile''s bundle: manifest, files, LAN opt-in and guard, shared vectors'
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:60128357e87c3cdaf987b6649803078deb6a5c1f
+        path: .tiller/epics/studio/features/device-push/tasks/bundle-server/task.md
+        observed_at: 2026-10-16T19:41:31.278638Z
+    commit:
+        kind: git_commit
+        value: git:33cca18
+        observed_at: 2026-10-16T19:41:31.302875Z

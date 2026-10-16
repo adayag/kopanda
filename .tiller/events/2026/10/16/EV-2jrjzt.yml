@@ -1,0 +1,13 @@
+id: EV-2jrjzt
+type: approve.feature
+at: 2026-10-16T19:41:31.277985Z
+contributor: allen
+command: approve feature F-9okxa7
+targets:
+    - F-9okxa7
+before:
+    status: specced
+after:
+    status: ready
+files:
+    - path: .tiller/epics/studio/features/device-push/feature.yml
