@@ -1,7 +1,7 @@
 id: TW-gs28tx
 key: tweaks/quiet-check-output
 title: bin/check prints a summary per stage instead of per-test and FFI chatter
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -18,6 +18,7 @@ accepted_against:
         value: git:e6f2573
         observed_at: 2026-10-16T00:19:22.687595Z
 branch: tiller/tweaks/quiet-check-output
+pr: 14
 gates:
     build:
         required: true
