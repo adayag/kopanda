@@ -1,0 +1,14 @@
+id: EV-bp83y3
+type: sync.task
+at: 2026-10-16T17:49:12.063266Z
+contributor: allen
+command: sync task T-q590ja
+targets:
+    - T-q590ja
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/check-stage/task.yml

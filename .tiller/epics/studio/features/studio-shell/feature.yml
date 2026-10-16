@@ -1,7 +1,7 @@
 id: F-kglqs4
 key: studio/studio-shell
 title: Studio app, device profiles and the schema contract
-status: active
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -31,6 +31,23 @@ accepted_against:
         kind: git_commit
         value: git:25f054c
         observed_at: 2026-10-16T17:01:28.852333Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:f441e1b1876adc728b47fdcd727f7039a456f8e7
+        path: .tiller/epics/studio/features/studio-shell/feature.md
+        observed_at: 2026-10-16T17:49:12.367703Z
+    eval:
+        kind: git_blob
+        value: git:d2bae69067001c5e04d54881c57a955b7d07f84f
+        path: .tiller/epics/studio/features/studio-shell/feature.eval.md
+        observed_at: 2026-10-16T17:49:12.367703Z
+    commit:
+        kind: git_commit
+        value: git:8d2432f
+        observed_at: 2026-10-16T17:49:11.877471Z
+    surfaces: []
+done_basis: rollup
 gates:
     build:
         required: true

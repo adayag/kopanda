@@ -1,0 +1,14 @@
+id: EV-r7f9wb
+type: sync.feature
+at: 2026-10-16T17:49:12.414501Z
+contributor: allen
+command: sync feature F-kglqs4
+targets:
+    - F-kglqs4
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/studio/features/studio-shell/feature.yml

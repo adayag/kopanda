@@ -1,7 +1,7 @@
 id: T-q590ja
 key: studio/studio-shell/check-stage
 title: bin/check gains the studio's typecheck, lint and tests
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:e8e13ed
         observed_at: 2026-10-16T17:22:00.811415Z
+done_basis: ancestry
 gates:
     build:
         required: true

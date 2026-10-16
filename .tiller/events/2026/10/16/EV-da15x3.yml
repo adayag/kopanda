@@ -1,0 +1,14 @@
+id: EV-da15x3
+type: sync.task
+at: 2026-10-16T17:49:12.147031Z
+contributor: allen
+command: sync task T-dwsmmb
+targets:
+    - T-dwsmmb
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/schema-contract/task.yml

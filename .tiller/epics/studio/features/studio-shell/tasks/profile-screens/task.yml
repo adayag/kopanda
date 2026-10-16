@@ -1,7 +1,7 @@
 id: T-txsef1
 key: studio/studio-shell/profile-screens
 title: First screen lists profiles and opens one
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:5d7b1ce
         observed_at: 2026-10-16T17:33:40.445442Z
+done_basis: ancestry
 gates:
     build:
         required: true

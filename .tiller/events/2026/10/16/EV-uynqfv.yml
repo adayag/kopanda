@@ -1,0 +1,14 @@
+id: EV-uynqfv
+type: sync.task
+at: 2026-10-16T17:49:11.966238Z
+contributor: allen
+command: sync task T-6yxswg
+targets:
+    - T-6yxswg
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/scaffold/task.yml
