@@ -1546,8 +1546,8 @@ Upgrading KOReader walks this list.
 
 ### The push server (`spec/emulator/push_server.lua`): `socket.bind`
 
-- `common/socket.lua:27-40` (`bind`: a listening TCP socket, `reuseaddr` set); LuaSocket's
-  `getsockname`, `settimeout` and `accept`
+- `base/build/arm64-apple-darwin23.5.0-debug/common/socket.lua:27-40` (`bind`: a listening TCP
+  socket, `reuseaddr` set); LuaSocket's `getsockname`, `settimeout` and `accept`
   (`base/build/arm64-apple-darwin23.5.0-debug/thirdparty/luasocket/source/src/tcp.c:47`, `:56`,
   `:66`).
 - Bound to `127.0.0.1` on port 0, so the system picks a free port and parallel worktrees never

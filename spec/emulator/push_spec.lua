@@ -22,6 +22,8 @@ describe("pulling from the studio on the emulator", function()
     -- before its finally kills it.
     local SERVER_LIFETIME_S = 120
     local SETTINGS = "-- settings/kopanda/settings.lua\nreturn {\n    [\"look\"] = \"editorial\",\n}\n"
+    -- What the profile held before the rollback spec's pull: schema-valid, and not what is served.
+    local SETTINGS_BEFORE = "-- settings/kopanda/settings.lua\nreturn {\n    [\"look\"] = \"diner\",\n}\n"
 
     local counter = 0
     local function fresh_dir(name)
@@ -132,6 +134,7 @@ describe("pulling from the studio on the emulator", function()
         local scratch = result.scratch
         local push = scratch .. "/settings/kopanda/push"
 
+        assert.equals("home", result.starts[2].sidecar.screen)
         local plugins = loaded(result.starts[2].sidecar)
         assert.is_true(plugins.kopanda)
         assert.is_nil(plugins.ennui)
@@ -180,11 +183,17 @@ describe("pulling from the studio on the emulator", function()
                 {
                     env = pull_env(server, notices),
                     accept = { 85 },
-                    -- The pull stages; it never touches the settings file.
+                    -- The pull stages; it never touches the settings file. A fresh profile writes
+                    -- none, so one is seeded here for the apply to set aside and the rollback to
+                    -- restore byte for byte.
                     after = function(_, scratch)
                         settings_path = scratch .. "/settings/kopanda/settings.lua"
                         push = scratch .. "/settings/kopanda/push"
-                        settings_before = read(settings_path)
+                        assert.is_nil(read(settings_path))
+                        settings_before = SETTINGS_BEFORE
+                        local f = assert(io.open(settings_path, "wb"))
+                        f:write(settings_before)
+                        f:close()
                         assert.equals("file", mode(push .. "/staged.lua"))
                     end,
                 },
@@ -196,6 +205,7 @@ describe("pulling from the studio on the emulator", function()
                     env = { KOPANDA_NOTICES = notices },
                     after = function()
                         assert.equals("file", mode(push .. "/probation.lua"))
+                        assert.equals(settings_before, read(push .. "/rollback/settings.lua"))
                     end,
                 },
                 { shot = true, env = { KOPANDA_NOTICES = notices } },
