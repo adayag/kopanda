@@ -30,6 +30,7 @@ return {
             outline = false, -- implied: by day the cover takes a shadow, not an outline
             shadow = "#c9c5b8", -- the doc: shadow in the hairline colour
             on_band = false, -- Editorial has no header band
+            on_accent = false, -- Editorial has no accent fills
             cover = "#2b4c6f", -- the typographic cover's fill (Main.dc.html:33)
             on_cover = "#f3f1ea", -- its title and authors (Main.dc.html:33)
         },
@@ -47,6 +48,7 @@ return {
             outline = "#3a3b40", -- the doc: the cover gets a hairline outline instead of a shadow
             shadow = false, -- the doc: at night the outline replaces the shadow
             on_band = false,
+            on_accent = false, -- Editorial has no accent fills
             cover = "#2b4c6f", -- NightA.dc.html:33
             on_cover = "#f3f1ea", -- NightA.dc.html:33
         },
@@ -65,6 +67,7 @@ return {
             outline = "#8c8c8c", -- implied: the Paperwhite cover gains an outline, Editorial's is a hairline
             shadow = "#8c8c8c", -- implied: the shadow is the hairline colour
             on_band = false,
+            on_accent = false, -- Editorial has no accent fills
             cover = "#4a4a4a", -- PWEditorial.dc.html:33, the doc's cover grey
             on_cover = "#f4f4f4", -- PWEditorial.dc.html:33
         },
@@ -114,6 +117,31 @@ return {
         rule_width = 2,
         outline_color = false,
         header_band = false,
+        inset = { side = 0, bottom = 0 }, -- full width, on the bottom edge (HoldBook.dc.html:34)
+        padding = { top = 0, side = 40, bottom = 28 }, -- HoldBook.dc.html:34
+        book_band_color = false, -- Editorial's headers have no band
+        home_band_color = false,
+        folder_band_color = false,
+        header_rule_color = "ink", -- HoldBook.dc.html:35
+        header_rule_width = 1, -- HoldBook.dc.html:35
+        header_padding = { top = 22, side = 0, bottom = 16 }, -- HoldHome.dc.html:35
+        book_header_padding = { top = 24, side = 0, bottom = 20 }, -- HoldBook.dc.html:35
+        cover_gap = 18, -- HoldBook.dc.html:35
+        cover_w = 60, -- HoldBook.dc.html:36
+        cover_h = 90, -- HoldBook.dc.html:36
+        line_gap = 3, -- HoldBook.dc.html:37
+        meta_gap = 4, -- HoldBook.dc.html:40
+        aside_gap = 12, -- "Folder · 3" after the heading (FolderOpen.dc.html:36)
+        row_padding = { x = 0, y = 15 }, -- HoldBook.dc.html:43
+        row_gap = 16, -- HoldBook.dc.html:43
+        icon_size = 22, -- HoldBook.dc.html:44
+        row_rule_color = "hairline", -- HoldBook.dc.html:43
+        row_rule_width = 1, -- HoldBook.dc.html:43
+        last_row_bottom = 0, -- HoldBook.dc.html:69
+        status_chip_color = false, -- Editorial's details are plain (HoldBook.dc.html:56)
+        state_chip_color = false,
+        chip_padding = { x = false, y = false },
+        chip_outline_width = 0,
     },
 
     -- Small caps, muted.
@@ -233,6 +261,28 @@ return {
         launcher_suffix = {
             face = "strong", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "muted",
         },
+        -- A sheet's heading, "Home" (HoldHome.dc.html:36).
+        sheet_heading = {
+            face = "display", size = 26, uppercase = false, tracking = 0, line_height = 0, color = "ink",
+        },
+        -- The heading's aside, "KoPanda" (HoldHome.dc.html:37).
+        sheet_aside = { face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
+        -- The book header's title, CSS line height 1.1 (HoldBook.dc.html:38).
+        sheet_title = {
+            face = "display", size = 24, uppercase = false, tracking = 0, line_height = 0.1, color = "ink",
+        },
+        -- Its author (HoldBook.dc.html:39).
+        sheet_author = { face = "text", size = 14, uppercase = false, tracking = 0, line_height = 0, color = "text" },
+        -- Its meta line, "62% · Part 3 · opened yesterday" (HoldBook.dc.html:40).
+        sheet_meta = { face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
+        -- A sheet row's label (HoldBook.dc.html:43).
+        sheet_row = { face = "strong", size = 17, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        -- A row's detail, "Reading ›" (HoldBook.dc.html:56).
+        sheet_detail = {
+            face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted",
+        },
+        -- Not drawn: Editorial has no chips. Its plain detail's style.
+        sheet_chip = { face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
     },
 
     -- The launcher: a grid of text rows, each under a hairline in tile.rule_color.

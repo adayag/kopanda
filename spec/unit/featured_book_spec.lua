@@ -371,6 +371,173 @@ describe("FeaturedBook", function()
         end)
     end)
 
+    -- The picker's books (sheets' C7): the recent history entries the featured book would take,
+    -- each read as current() reads its title and authors, raising nothing and writing nothing.
+    describe("recent and describe", function()
+        local DS = require("docsettings")
+        local saved_find
+
+        before_each(function()
+            saved_find = DS.findSidecarFile
+        end)
+
+        after_each(function()
+            DS.findSidecarFile = saved_find
+        end)
+
+        -- Every logger.err call's arguments joined, for the running case.
+        local function errors_during(fn)
+            local errored = spy.on(logger, "err")
+            local ok, err = pcall(fn)
+            logger.err:revert()
+            assert(ok, err)
+            local out = {}
+            for _, call in ipairs(errored.calls) do
+                local parts = {}
+                for _, arg in ipairs(call.vals) do
+                    parts[#parts + 1] = tostring(arg)
+                end
+                out[#out + 1] = table.concat(parts, " ")
+            end
+            return out
+        end
+
+        local function any_naming(lines, text)
+            for _, line in ipairs(lines) do
+                if line:find(text, 1, true) then
+                    return true
+                end
+            end
+            return false
+        end
+
+        it("gives the first six history books that remain, most recent first, from their sidecars", function()
+            local guide = book("quickstart.html")
+            QuickStart.quickstart_filename = guide
+            local files, sidecars = {}, {}
+            for i = 1, 7 do
+                files[i] = book("book" .. i .. ".epub")
+                sidecars[i] = sidecar(files[i], string.format(
+                    '{ doc_props = { title = "Title %d", authors = "Author %d\\nOther %d" } }', i, i, i))
+            end
+            -- Ten entries: three the filter drops, then seven books, the seventh past the six.
+            local entries = {
+                { file = files[1], select_enabled = true, time = 10 },
+                { file = books_dir .. "/gone.epub", select_enabled = true, time = 9 },
+                { file = files[2], select_enabled = true, time = 8 },
+                { file = book("unselectable.epub"), select_enabled = false, time = 7 },
+                { file = guide, select_enabled = true, time = 6 },
+                { file = files[3], select_enabled = true, time = 5 },
+                { file = files[4], select_enabled = true, time = 4 },
+                { file = files[5], select_enabled = true, time = 3 },
+                { file = files[6], select_enabled = true, time = 2 },
+                { file = files[7], select_enabled = true, time = 1 },
+            }
+            history(entries)
+            local history_file = DataStorage:getDataDir() .. "/history.lua"
+            local history_before = lfs.attributes(history_file, "mode") and read(history_file)
+            local copy = util.tableDeepCopy(entries)
+            local bytes = {}
+            for i, path in ipairs(sidecars) do
+                bytes[i] = read(path)
+            end
+            local recent = FeaturedBook.recent(6)
+            local want = {}
+            for i = 1, 6 do
+                want[i] = { file = files[i], title = "Title " .. i, authors = "Author " .. i .. ", Other " .. i }
+            end
+            assert.same(want, recent)
+            assert.same(copy, entries)
+            for i, path in ipairs(sidecars) do
+                assert.equals(bytes[i], read(path))
+            end
+            assert.equals(history_before, lfs.attributes(history_file, "mode") and read(history_file))
+        end)
+
+        it("gives fewer than n when the history holds fewer, and none from an empty one", function()
+            local a = book("a.epub")
+            history({ { file = a, select_enabled = true } })
+            assert.same({ { file = a, title = "a" } }, FeaturedBook.recent(6))
+            history({})
+            assert.same({}, FeaturedBook.recent(6))
+        end)
+
+        it("describes a file with no sidecar by its file name, with no authors", function()
+            local a = book("A Book.epub")
+            assert.same({ file = a, title = "A Book" }, FeaturedBook.describe(a))
+        end)
+
+        it("describes a book whose sidecar read raises by CoverBrowser's title, logged, and keeps it", function()
+            local a = book("a.epub")
+            sidecar(a, '{ doc_props = { title = "Sidecar title" } }')
+            DS.findSidecarFile = function()
+                error("sidecar broke on purpose")
+            end
+            coverbrowser({ title = "CoverBrowser title", authors = "Mary Shelley" })
+            history({ { file = a, select_enabled = true } })
+            local described, recent
+            local logged = errors_during(function()
+                described = FeaturedBook.describe(a)
+                recent = FeaturedBook.recent(6)
+            end)
+            assert.same({ file = a, title = "CoverBrowser title", authors = "Mary Shelley" }, described)
+            assert.same({ described }, recent)
+            assert.is_true(any_naming(logged, "sidecar broke on purpose"))
+        end)
+
+        it("describes it by its file name with CoverBrowser unrequirable", function()
+            local a = book("a.epub")
+            sidecar(a, '{ doc_props = { title = "Sidecar title" } }')
+            DS.findSidecarFile = function()
+                error("sidecar broke on purpose")
+            end
+            assert.is_false((pcall(require, "bookinfomanager")))
+            local described
+            local logged = errors_during(function()
+                described = FeaturedBook.describe(a)
+            end)
+            assert.same({ file = a, title = "a" }, described)
+            assert.is_true(any_naming(logged, "sidecar broke on purpose"))
+        end)
+
+        it("skips only the entry whose describe raises, logged", function()
+            local a, b, c = book("a.epub"), book("b.epub"), book("c.epub")
+            history({
+                { file = a, select_enabled = true },
+                { file = b, select_enabled = true },
+                { file = c, select_enabled = true },
+            })
+            local describe = FeaturedBook.describe
+            FeaturedBook.describe = function(file)
+                if file == b then
+                    error("describe broke on purpose")
+                end
+                return describe(file)
+            end
+            local recent
+            local logged = errors_during(function()
+                recent = FeaturedBook.recent(6)
+            end)
+            FeaturedBook.describe = describe
+            assert.same({ { file = a, title = "a" }, { file = c, title = "c" } }, recent)
+            assert.is_true(any_naming(logged, "describe broke on purpose"))
+        end)
+
+        it("gives none, logged, when the history can't be read", function()
+            package.loaded["readhistory"] = setmetatable({}, {
+                __index = function()
+                    error("history broke on purpose")
+                end,
+            })
+            local recent
+            local logged = errors_during(function()
+                recent = FeaturedBook.recent(6)
+            end)
+            assert.same({}, recent)
+            assert.is_true(any_naming(logged, "history broke on purpose"))
+        end)
+    end)
+
     describe("chapter", function()
         local a
 

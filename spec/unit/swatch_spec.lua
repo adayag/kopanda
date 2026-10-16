@@ -6,6 +6,7 @@ describe("the swatch screen", function()
     local Blitbuffer = require("ffi/blitbuffer")
     local Event = require("ui/event")
     local FileManager = require("apps/filemanager/filemanager")
+    local Geom = require("ui/geometry")
     local InputContainer = require("ui/widget/container/inputcontainer")
     local Screen = require("device").screen
     local UIManager = require("ui/uimanager")
@@ -319,7 +320,8 @@ describe("the swatch screen", function()
             end
         end)
 
-        it("names the roles a palette lacks, in role order, on one line after the chips", function()
+        -- Where the line goes is the "where the lacks text goes" cases'.
+        it("names the roles a palette lacks, in role order, on one line", function()
             for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
                 local where = panel.look .. " " .. panel.variant
                 local palette = Looks.get(panel.look).palettes[panel.variant]
@@ -337,16 +339,6 @@ describe("the swatch screen", function()
                 assert.is_true(same_color(Looks.color(palette.ink), line.fgcolor))
                 assert.is_true(same_color(Looks.color(palette.paper), line.bgcolor))
                 assert.equals(1, #line.vertical_string_list, where .. " lacks line wraps")
-                -- After the chips: met after the last chip in child order.
-                local seen_line, chip_after = false, false
-                walk(panel, function(w)
-                    if w == line then
-                        seen_line = true
-                    elseif w.name == "kopanda_swatch_chip" and seen_line then
-                        chip_after = true
-                    end
-                end)
-                assert.is_false(chip_after, where)
             end
         end)
 
@@ -438,6 +430,49 @@ describe("the swatch screen", function()
                 assert.equals(grey_of(palette.ink).a, w.fgcolor.a)
                 assert.equals(grey_of(palette.paper).a, w.bgcolor.a)
             end
+        end
+    end)
+
+    -- The golden profiles' sizes (spec/emulator/profiles.lua), where Diner's 14 chips, on_accent
+    -- among them, leave the lacks text no empty cell: every face line still ends inside its
+    -- panel.
+    it("fits every panel's content inside its panel at the Colorsoft's and the Paperwhite's sizes", function()
+        local roles = 0
+        for _, hex in pairs(Looks.get("diner").palettes.day) do
+            if hex then
+                roles = roles + 1
+            end
+        end
+        assert.equals(14, roles)
+        color_enabled(true)
+        local stubbed = { "getWidth", "getHeight", "getSize" }
+        local saved = {}
+        for _, name in ipairs(stubbed) do
+            saved[name] = rawget(Screen, name)
+        end
+        finally(function()
+            for _, name in ipairs(stubbed) do
+                rawset(Screen, name, saved[name])
+            end
+        end)
+        for _, size in ipairs({ { 1264, 1680 }, { 1236, 1648 } }) do
+            local w, h = size[1], size[2]
+            rawset(Screen, "getWidth", function() return w end)
+            rawset(Screen, "getHeight", function() return h end)
+            rawset(Screen, "getSize", function() return Geom:new{ x = 0, y = 0, w = w, h = h } end)
+            local swatch = Swatch:new{}
+            local panels = collect(swatch, named("kopanda_swatch_panel"))
+            assert.equals(6, #panels)
+            for _, panel in ipairs(panels) do
+                local where = w .. "x" .. h .. " " .. panel.look .. " " .. panel.variant
+                local content = panel[1]:getSize()
+                assert.truthy(content.h <= panel.dimen.h - 2 * panel.inset,
+                    where .. ": content " .. content.h .. " in " .. (panel.dimen.h - 2 * panel.inset))
+                assert.truthy(content.w <= panel.dimen.w - 2 * panel.inset, where .. " w " .. content.w)
+            end
+            local frame = swatch[1]
+            assert.truthy(frame[1]:getSize().h <= h - 2 * frame.padding, w .. "x" .. h .. " overall")
+            swatch:free()
         end
     end)
 
@@ -550,11 +585,11 @@ describe("the swatch screen", function()
         end
 
         it("goes in the empty last cell, from its chip x, for an odd chip count when it fits", function()
-            local placed = editorial_day(4)
+            local placed = editorial_day(6)
             assert.equals(1, placed.chips % 2)
             local col = columns(placed.labels)
             local lacks = placed.lacks
-            assert.equals("lacks: pink, teal", lacks.text)
+            assert.equals("lacks: teal", lacks.text)
             -- The cell's left edge: the right column's chip x, and the whole cell's width.
             local chip_x = math.max(unpack(placed.chip_xs))
             assert.equals(chip_x, lacks.dimen.x)
@@ -565,12 +600,30 @@ describe("the swatch screen", function()
             assert.is_true(lacks.dimen.y + lacks:getSize().h <= placed.faces[1].dimen.y)
         end)
 
-        it("goes on its own line after the chips for an even chip count", function()
-            local placed = editorial_day(3)
+        it("goes on the heading's line, from the right column's chip x, for an even chip count when it fits", function()
+            local placed = editorial_day(5)
             assert.equals(0, placed.chips % 2)
-            assert.equals("lacks: outline, pink, teal", placed.lacks.text)
-            -- It would fit the column: the even count alone puts it on its own line.
-            assert.is_true(text_w(placed.lacks) <= columns(placed.labels).right_w)
+            local col = columns(placed.labels)
+            local lacks = placed.lacks
+            assert.equals("lacks: pink, teal", lacks.text)
+            local chip_x = math.max(unpack(placed.chip_xs))
+            assert.equals(chip_x, lacks.dimen.x)
+            assert.equals(col.right_x - chip_x + col.right_w, lacks.width)
+            assert.equals(1, #lacks.vertical_string_list)
+            -- Above every chip label, inside the panel's padding.
+            local top = math.huge
+            for _, w in ipairs(placed.labels) do
+                top = math.min(top, w.dimen.y)
+            end
+            assert.is_true(lacks.dimen.y + lacks:getSize().h <= top, "lacks ends below the first chip row")
+            assert.is_true(lacks.dimen.y >= placed.panel.dimen.y + placed.panel.inset)
+        end)
+
+        it("goes on its own line after the chips for an even chip count wider than a column's label", function()
+            local placed = editorial_day(1)
+            assert.equals(0, placed.chips % 2)
+            assert.is_true(text_w(placed.lacks) > columns(placed.labels).right_w,
+                "premise: " .. placed.lacks.text .. " fits a column")
             assert_own_line(placed)
         end)
 

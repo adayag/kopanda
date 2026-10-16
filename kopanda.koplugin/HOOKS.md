@@ -263,12 +263,13 @@ Upgrading KOReader walks this list.
   its comment at `:311-321` notes that a subclass overriding `onGesture` escapes the swap);
   `frontend/ui/uimanager.lua:142-145` (`UIManager:setIgnoreTouchInput`), `:268-271` (`show`
   lifts the lock for the widget shown).
-- The home overrides `onGesture`, so its own steps, the swipe up to the settings stub and the
-  closing tap, are touch zones on the home (`kopanda_home_swipe_up`, `kopanda_home_tap`, made in
-  `home_gestures.lua`) run through `InputContainer.onGesture(home, ges)`: under the lock they
-  match nothing and the settings message, whose `show` would lift the lock, never shows. A
-  zone's handler only records its step; `HomeGestures.route` runs it in place, the closing tap after
-  the forwarded steps. The forwarded steps go through `InputContainer.onGesture` too, so under
+- The home overrides `onGesture`, so its own steps, the swipe up to the settings stub, the
+  closing tap and the hold, are touch zones on the home (`kopanda_home_swipe_up`,
+  `kopanda_home_tap`, `kopanda_home_hold`, made in `home_gestures.lua`) run through
+  `InputContainer.onGesture(home, ges)`: under the lock they match nothing and the settings
+  message or sheet, whose `show` would lift the lock, never shows. A zone's handler only records
+  its step; `HomeGestures.route` runs it in place, the closing tap and the hold after the
+  forwarded steps. The forwarded steps go through `InputContainer.onGesture` too, so under
   the lock the file manager's zones the Gestures plugin marks always active still run. The
   lock's state is read nowhere: `UIManager._input_gestures_disabled` is private.
 
@@ -723,7 +724,10 @@ Upgrading KOReader walks this list.
   (`:367-369`), which updates the file manager's title bar (`filemanager.lua:108-114`).
 - `FileManager:onHome()` (`filemanager.lua:865-870`), as the featured widget's entry above: the
   Library entry closes the home, then calls it.
-- `ffi/util`: `template` (`base/ffi/util.lua:785`), the folder and unavailable notes.
+- `ffi/util`: `template` (`base/ffi/util.lua:785`), the unavailable notes.
+- A folder entry's tap opens the folder sheet (`folder_sheet.lua`) through `sheet.lua`, with
+  the `ui/time` `monotonic` it took on the tap as the sheet's start; `folder_sheet` is required
+  at call time, since it requires `launcher_entries`. Its rows run their entries through `run`.
 - `ui/widget/infomessage`: `timeout` defaults to nil (`frontend/ui/widget/infomessage.lua:53`)
   and only a set one schedules a close (`:283-290`); `dismissable` defaults to true (`:67`), a
   full-screen `TapClose` (`:88-100`). The launcher's notes set neither, so no timer runs and a
@@ -759,6 +763,141 @@ Upgrading KOReader walks this list.
 - `ui/network/manager`: `NetworkMgr:isWifiOn()` (the launcher's entries above), read at call
   time by the launcher's `stale`.
 
+### The sheet: its refreshes, keys, Back and gestures
+
+- `UIManager:show(sheet, "ui", rect)` (`frontend/ui/uimanager.lua:229-273`) schedules the one
+  paint of the panel and its shadow; `UIManager:close(sheet, "flashui", rect)` (`:290-355`)
+  marks every window from the topmost `covers_fullscreen` one up dirty again, the home under
+  the sheet, then refreshes the rectangle. `_repaint` (`:1298-1346`) paints from that window up
+  and every window above a dirty one, so a home refresh repaints the sheet over it. The sheet's
+  `dimen` is the whole screen and it is not `covers_fullscreen`.
+- The refreshes follow `ButtonDialog`'s: `"ui"` on show unless coloured on a Kaleido panel
+  (`frontend/ui/widget/buttondialog.lua:89-90`, `:327-331`) and `"flashui"` on close (`:333-337`).
+  Only Kobo sets `hasKaleidoWfm` (`frontend/device/generic/device.lua:118`,
+  `frontend/device/kobo/device.lua:800`), so on the Kindle it is `"ui"` too.
+- The Back key: `key_events.Close = { { Device.input.group.Back } }` only where `Device:hasKeys()`,
+  as `ButtonDialog` binds it (`buttondialog.lua:98-108`). `hasKeys` is false by default
+  (`frontend/device/generic/device.lua:92`), true in the emulator
+  (`frontend/device/sdl/device.lua:73`), and true on a Kindle only once a frame-tap input is
+  found (`frontend/device/kindle/device.lua:553-556`, `:673-675`). `Device.input.group.Back` is
+  `{ "Back" }` on every device's input (`frontend/device/input.lua:121`); `InputContainer:onKeyPress`
+  matches it with `Key:match` (`frontend/ui/widget/container/inputcontainer.lua:238-250`,
+  `frontend/device/key.lua:60-92`).
+- KOReader's Back: the dispatcher's `fm_back` sends the `Back` event (`frontend/dispatcher.lua:169`)
+  to the top widget, the sheet, whose `onBack` closes it and consumes it.
+- Taps: `ges_events.TapSheet`, one `GestureRange` (`frontend/ui/gesturerange.lua:14`, `:21-51`)
+  over the whole screen, consumed wherever it lands, as `ButtonDialog:onTapClose` consumes a tap
+  (`buttondialog.lua:347-352`), so `sendEvent` offers it to no window below
+  (`frontend/ui/uimanager.lua:988-1031`). Under KOReader's touch lock `ges_events` are filtered as
+  the home's zones are (the touch-lock entry above).
+- Holds: a hold's lift sends `hold_release` to the top widget, by then the sheet
+  (`frontend/device/gesturedetector.lua:1346-1356`); the sheet registers nothing for `hold`,
+  `hold_release`, `hold_pan` or swipes, so they reach only the active widgets below.
+- The settled signal goes from a `nextTick` (`frontend/ui/uimanager.lua:431-433`) that the
+  sheet's first good `paintTo` schedules: it runs from the next `_checkTasks`, past that
+  `_repaint` (`handleInput` `:1542-1564`). Nothing is scheduled before the paint, so a sheet
+  under a `covers_fullscreen` window waits without a task; polling there would keep
+  `_task_queue_dirty` set and spin `handleInput`'s loop.
+- The home closing by any path, KOReader's own close included, closes a shown sheet with it:
+  `UIManager:close` sends `CloseWidget` before it walks the stack (`frontend/ui/uimanager.lua:298-300`),
+  and the home's `onCloseWidget` calls `Sheet.close` in a `pcall`.
+
+### The hold on the home: the `hold` gesture, Gestures' hold corners and the home sheet's rows
+
+- The `hold` gesture fires while the finger is still down, after `HOLD_INTERVAL_MS`, 500 ms
+  (`frontend/device/gesturedetector.lua:63`, `:1276-1287`); the lift sends `hold_release` to the
+  top widget (`:1346-1356`), the sheet's entry above.
+- Nothing under the home took a hold before: the file manager's menu zones are tap and swipe only
+  (`frontend/apps/filemanager/filemanagermenu.lua:76-113`), so the home's hold zone has no
+  menu-zone test, and the file chooser's hold is a menu item's `HoldSelect`
+  (`frontend/ui/widget/menu.lua:124-128`, `frontend/apps/filemanager/filemanager.lua:171-177`),
+  which `InputContainer.onGesture(fm, ges)` never visits, since it runs the file manager's own
+  zones and `ges_events` only (`frontend/ui/widget/container/inputcontainer.lua:266-285`).
+- The hold step runs after the zones registered on the file manager, so the Gestures plugin's
+  four hold-corner zones win when bound: their rectangles come from `DTAP_ZONE_TOP_LEFT` and the
+  other corners (`plugins/gestures.koplugin/main.lua:971-998`; `defaults.lua:66-69` in the
+  KOReader root, each corner an eighth of each side), `hold_top_left_corner` to
+  `hold_bottom_left_corner` are `ges = "hold"` (`main.lua:1124-1139`) with `overrides_hold_corner`
+  (`:1044`), registered through `registerGesture` on the file manager (`:1287-1305`). Unbound, or
+  with `ignore_hold_corners` (`:245`), `gestureAction` returns nothing (`:1316-1320`) and the hold
+  carries on to the home's step.
+- Gestures' default binds `hold_top_right_corner = { refresh_content = true }`
+  (`plugins/gestures.koplugin/defaults.lua:11`): the dispatcher's `refresh_content`
+  (`frontend/dispatcher.lua:162`, `RefreshContent`) reaches `FileManager.onRefreshContent`, the
+  file chooser's `refreshPath` (`frontend/apps/filemanager/filemanager.lua:857-862`). That corner
+  (`DTAP_ZONE_TOP_RIGHT`, `defaults.lua:67`: x from 1106 and y under 210 on the Colorsoft) covers
+  the right end of both looks' clock, so a hold there refreshes the hidden file chooser and opens
+  no sheet.
+- The home sheet's Sleep row is the dispatcher's `suspend` (`frontend/dispatcher.lua:94`, listed
+  only with `Device:canSuspend()`), run through `LauncherEntries.run` and the dispatch bridge as
+  the launcher's action entries are: its `RequestSuspend` reaches the file manager's
+  `devicelistener` (`filemanager.lua:414`), `DeviceListener:onRequestSuspend`
+  (`frontend/device/devicelistener.lua:458-460`), which calls `UIManager:suspend`, which runs the
+  `Suspend` handler on the next tick (`frontend/ui/uimanager.lua:1679-1686`). The emulator can
+  suspend (`frontend/device/sdl/device.lua:165`) by simulation: its `Suspend` handler
+  (`:417-428`) shows the screensaver (`simulateSuspend`, `:462-468`). The Kindle can
+  (`frontend/device/kindle/device.lua:402`).
+- Its Wi-Fi row is the launcher's Wi-Fi entry (the launcher's entries above); its Edit layout note
+  is an `InfoMessage` with no timeout, as the launcher's notes are.
+- "Wi-Fi" takes a plain hyphen: Diner's row face, `fonts/bricolage-grotesque/BricolageGrotesque-Bold.ttf`,
+  has no U+2011 (`face.ftsize:hasGlyph(0x2011)` false, `base/ffi/freetype.lua:75`), so the
+  boards' non-breaking hyphen would come from a fallback font.
+
+### The book sheet: KOReader's status buttons, `BookList`, book details and the history's times
+
+- `apps/filemanager/filemanagerutil`, required by `book_sheet.lua`:
+  `filemanagerutil.genStatusButtonsRow(doc_settings_or_file, caller_callback)`
+  (`frontend/apps/filemanager/filemanagerutil.lua:118-146`) builds the reading, abandoned and
+  complete buttons in that order (`:141-145`). With a `DocSettings` it reads the file from its
+  `doc_path` and the status from its raw `summary.status` (`:120-123`), so a sidecar with no
+  status ticks nothing; with a bare path it starts from an empty `summary` and reads the status
+  through `BookList.getBookStatus` (`:124-127`). The current status's button is the one with
+  `enabled = false` (`:132`), the row the sub-sheet ticks. A button's `callback` sets
+  `summary.status`, then calls `filemanagerutil.saveSummary` (`:106-115`: opens the sidecar with
+  `DocSettings:open` when given a path, so it is created when there is none, sets
+  `summary.modified` to today's `%Y-%m-%d`, saves `summary` and flushes), then
+  `BookList.setBookInfoCacheProperty(file, "status", s)`, then the caller's callback, KoPanda's
+  home refresh. The sub-sheet passes the `DocSettings` when `DocSettings:hasSidecarFile(file)`
+  (`frontend/docsettings.lua:151-153`: true when `findSidecarFile`, `:159-175`, finds a sidecar
+  file in any location, or the legacy history file when that location is enabled), so a
+  sidecar's other summary fields survive the write. The file dialog chooses by the cached
+  `BookList.hasBookBeenOpened(file)` instead (`frontend/apps/filemanager/filemanager.lua:255-270`,
+  reached from `onFileHold`, `:171-177`), which a stale cache entry `{ been_opened = false }`
+  answers false while a sidecar exists; a bare path's write then starts from an empty `summary`
+  and wipes the note and rating.
+- `ui/widget/booklist`, required by `book_sheet.lua`: `BookList.hasBookBeenOpened` (whether a
+  sidecar exists, cached, `frontend/ui/widget/booklist.lua:348-356`), `getDocSettings`
+  (`DocSettings:open`, caching the book's info, `:358-364`), `getBookStatus` (`"new"` for a book
+  never opened, `:366-369`, through `getBookInfo`, `:337-346`), `getBookStatusString(status, false,
+  true)` (`:386-389`: Reading, On hold, Finished for the single-book strings, `:380-384`, and New
+  from the group strings, `:371-378`) and `setBookInfoCacheProperty` (`:318-326`), with the cache
+  `BookList.book_info_cache` (`:15`). `setBookInfoCache` maps a missing or unknown status to
+  reading (`:293-296`), so the book sheet's detail reads Reading where the sub-sheet ticks nothing.
+- `DocSettings:open` removes a sidecar candidate it finds invalid, empty or not a table
+  (`frontend/docsettings.lua:283-284`). `book_sheet.lua` reaches it through `getBookInfo`
+  (`booklist.lua:337-346`) when the sheet opens, for the Read status detail, and through
+  `getDocSettings` (`:358-364`) when the sub-sheet opens: the path KOReader's own file dialog takes
+  on a hold. `featured_book.lua`'s rule of opening sidecars light (the featured book's entry above)
+  covers that module only.
+- `FileManager.instance.bookinfo:show(file)` (the module registered at
+  `frontend/apps/filemanager/filemanager.lua:406`; `frontend/apps/filemanager/filemanagerbookinfo.lua:71-87`
+  takes a path and opens the sidecar itself when the book has one) shows KOReader's book details
+  page over the home. Its `close_callback` broadcasts `InvalidateMetadataCache` and
+  `BookMetadataChanged` when a property was edited, and `BookMetadataChanged` when the summary was
+  (`filemanagerbookinfo.lua:267-285`); the home handles neither, so an edit shows on the next
+  rebuild. Read through `package.loaded` at tap time, as the featured widget's tap reads the file
+  manager.
+- `ReadHistory.hist[i].time` (`frontend/readhistory.lua:25-35`, the entry's `time` beside its
+  realpath `file`, `:26`): set by `addItem` when a book opens (`:313-339`;
+  `frontend/apps/reader/readerui.lua:510`) and by `updateLastBookTime` when it closes
+  (`readhistory.lua:342-350`; `readerui.lua:882`). The book sheet's "opened" counts local calendar
+  days from it, comparing the book by `ffi/util`'s `realpath`; `readhistory` is required at call
+  time.
+- The small cover is `FeaturedCover.build` at the sheet's `cover_w` by `cover_h`, which reads
+  CoverBrowser's cache and never asks for an extraction; a cached cover too small for the box is
+  left out by `BookInfoManager.isCachedCoverInvalid`
+  (`plugins/coverbrowser.koplugin/bookinfomanager.lua:1013-1030`; the featured cover's entry above).
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
@@ -790,6 +929,8 @@ Upgrading KOReader walks this list.
 - `ui/font`: `frontend/ui/font.lua:269-276` (`getFace` scales the size by
   `Screen:scaleBySize` itself).
 - `ui/geometry`: `frontend/ui/geometry.lua:37` (`Geom:new`), `:255-266` (`contains`).
+- `ui/gesturerange`: `frontend/ui/gesturerange.lua:14` (`new`, `ges` and `range`), `:21-51`
+  (`match`); the sheet's tap range.
 - `ffi/blitbuffer`: `base/ffi/blitbuffer.lua:2717` (`COLOR_WHITE`), `:2653-2683`
   (`colorFromString`, the looks entry above).
 - `ui/uimanager`: the entries above.
@@ -997,10 +1138,22 @@ Upgrading KOReader walks this list.
   in a `"scenario"` signal. That is the rectangle `ImageWidget` inverts again in night mode
   (`:76-77`, `:583-593`), which `night_golden_spec.lua` compares un-inverted on the Paperwhite.
 
+### The sheet-hold scenario (`spec/emulator/scenarios/2-scenario-sheet-hold.lua`)
+
+- Run after the home fixture by `sheet_golden_spec.lua`. On the first home's settled signal it
+  finds the home with `UIManager:topdown_widgets_iter` (`frontend/ui/uimanager.lua:846`) and,
+  from `nextTick`, sends one `Gesture` hold with `UIManager:sendEvent` (`:962-1034`), with the
+  fields `GestureRange:match` reads (`frontend/ui/gesturerange.lua:21-51`), at a point
+  `KOPANDA_SHEET_HOLD` names: `book`, the centre of the featured slot's rectangle; `home`,
+  `x = 4` at half the screen's height, checked outside every slot and outside the four
+  `DTAP_ZONE_*` corners (`defaults.lua:66-69`, read through `G_defaults:readSetting`). No
+  `hold_release` follows. The capture is taken on the sheet's own signal
+  (`shot_screen = "sheet"`); a failure is sent as a `"sheet"` signal with `error`.
+
 ### The home fixture (`spec/emulator/scenarios/2-scenario-home-fixture.lua`)
 
-- Read by `home_golden_spec.lua`, `home_capture_spec.lua`, `night_golden_spec.lua` and
-  `night_toggle_spec.lua`, whose captures pass `TZ`,
+- Read by `home_golden_spec.lua`, `home_capture_spec.lua`, `night_golden_spec.lua`,
+  `night_toggle_spec.lua` and `sheet_golden_spec.lua`, whose captures pass `TZ`,
   `KOPANDA_HOME_FIXTURE` (`populated`, `typecover` or `empty`) and, for Editorial,
   `KOPANDA_HOME_LOOK` through the driver's `env` option. Applied at `reader.lua:190`, before any
   plugin code runs.

@@ -1,7 +1,8 @@
 -- The featured widget (C6): the cover box and the text column in each look, its size, the
--- caption's wording, the progress bar, the first run and the tap. FeaturedBook.current is
--- stubbed per case; bookinfomanager is unrequirable, so the cover box draws its placeholder;
--- FileManager.instance and Home.close are replaced by recorders. Each case restores them.
+-- caption's wording, the progress bar, the first run, the tap and the hold (sheets' C5).
+-- FeaturedBook.current is stubbed per case; bookinfomanager is unrequirable, so the cover box
+-- draws its placeholder; FileManager.instance and Home.close are replaced by recorders. Each
+-- case restores them.
 describe("the featured widget", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
@@ -675,5 +676,105 @@ describe("the featured widget", function()
                 built:free()
             end
         end)
+    end)
+
+    -- A hold in the slot (sheets' C5): the book's sheet with a book, false on the first run.
+    describe("hold", function()
+        local Sheet
+
+        before_each(function()
+            Sheet = require("sheet")
+        end)
+
+        after_each(function()
+            Sheet.close()
+        end)
+
+        it("opens the book sheet for a widget with a book and returns true", function()
+            calls.book = record()
+            local ctx = ctx_for("editorial", { home = { refresh = function() end } })
+            local built = Featured.build(1264, ctx)
+            assert.is_true(Featured.hold(ctx, harness.gesture("hold", 5, 5), built))
+            assert.is_not_nil(Sheet.shown)
+            assert.equals("book", Sheet.shown.spec.name)
+            assert.equals(Sheet.shown, harness.top())
+            built:free()
+        end)
+
+        it("returns false on the first run, opening nothing", function()
+            calls.book = nil
+            local top = harness.top()
+            local ctx = ctx_for("diner", { home = { refresh = function() end } })
+            local built = Featured.build(1264, ctx)
+            assert.is_false(Featured.hold(ctx, harness.gesture("hold", 5, 5), built))
+            assert.is_nil(Sheet.shown)
+            assert.equals(top, harness.top())
+            built:free()
+        end)
+    end)
+end)
+
+-- A hold on the featured slot of a shown home over a real file manager (sheets' C5): the book's
+-- sheet with a book in the history, the home's own sheet on the first run.
+describe("a hold on the home's featured slot", function()
+    local harness = require("plugin_harness")
+    local Event = require("ui/event")
+    local ReadHistory = require("readhistory")
+    local UIManager = require("ui/uimanager")
+    local ffiutil = require("ffi/util")
+    local Home, Sheet
+    local saved_hist, loaded, preload
+
+    before_each(function()
+        harness.load()
+        Home = require("home")
+        Sheet = require("sheet")
+        saved_hist = ReadHistory.hist
+        loaded, preload = package.loaded.bookinfomanager, package.preload.bookinfomanager
+        package.loaded.bookinfomanager = nil
+        package.preload.bookinfomanager = function() error("CoverBrowser is disabled") end
+    end)
+
+    after_each(function()
+        harness.teardown()
+        ReadHistory.hist = saved_hist
+        package.loaded.bookinfomanager = loaded
+        package.preload.bookinfomanager = preload
+    end)
+
+    -- Shows a file manager with its home, then holds the centre of the featured slot.
+    local function hold_featured()
+        harness.show_fm()
+        harness.tick(2)
+        assert.equals(Home.shown, harness.top())
+        local rect
+        for _, slot in ipairs(Home.shown.slots) do
+            if slot.widget == "featured" then
+                rect = slot.rect
+            end
+        end
+        UIManager:sendEvent(Event:new("Gesture", harness.gesture("hold",
+            rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2))))
+    end
+
+    it("shows the book sheet over the home with a book", function()
+        ReadHistory.hist = { {
+            file = ffiutil.realpath(harness.library .. "/frankenstein.epub"),
+            select_enabled = true,
+            time = os.time(),
+        } }
+        hold_featured()
+        assert.is_not_nil(Sheet.shown)
+        assert.equals(Sheet.shown, harness.top())
+        assert.equals("book", Sheet.shown.spec.name)
+        assert.equals(Home.shown, harness.top(2))
+    end)
+
+    it("shows the home sheet on the first run", function()
+        ReadHistory.hist = {}
+        hold_featured()
+        assert.is_not_nil(Sheet.shown)
+        assert.equals(Sheet.shown, harness.top())
+        assert.equals("home", Sheet.shown.spec.name)
     end)
 end)

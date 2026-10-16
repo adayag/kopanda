@@ -1,7 +1,7 @@
 id: F-3ct1xn
 key: home/sheets
 title: Tap acts, hold opens a sheet
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -16,6 +16,8 @@ order:
     - T-8hhlio
     - T-w3g6jh
 review_grain: feature
+branch: tiller/reviews/features/home/sheets
+pr: 9
 accepted_against:
     spec:
         kind: git_blob
@@ -31,3 +33,140 @@ accepted_against:
         kind: git_commit
         value: git:78d4d3c
         observed_at: 2026-10-15T20:24:27.991622Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T00:02:38.879228Z
+        against:
+            kind: git_commit
+            value: git:80e1ba1
+            observed_at: 2026-10-16T00:02:38.878139Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-80e1ba1-out-06218264d3e41cf5be2b23f1462bd5f95f1d23c79cceae704752133ec3f851db.txt
+    evals:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T00:11:19.277162Z
+        against:
+            kind: git_commit
+            value: git:80e1ba1
+            observed_at: 2026-10-16T00:02:38.878139Z
+        criteria:
+            C1:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C1-80e1ba1-out-b64b7529194bec0f45592b47b68cc78a9b62521df6095b6b11fb39a277b7d1d4.txt
+            C2:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C2-80e1ba1-out-6b2fd9c07c3a419a2c12bbe55b1fbb2af94e7c4d2b35ca1e1d0ba888ac1b615b.txt
+            C3:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C3-80e1ba1-out-5c2fcbf7060542b3311be559e67be1d0bec7ef280510f152abd4645e3730febb.txt
+            C4:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C4-80e1ba1-out-17c504a2cb8d07ebb06fa1ba9cb5eb7c30034092d855ea0534e8c5fb47c45095.txt
+            C5:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C5-80e1ba1-out-be8df25468564bb7c344d83fe3addac8043d7bd73c2aa457b283b8636ba6debc.txt
+            C6:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C6-80e1ba1-out-07d05978235a772ea27af95470dc5c83f7bff322167ca9a73fd1caf371a06145.txt
+            C7:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C7-80e1ba1-out-90bc0bd1c50d09fadf3e8cbe66b774d131f8fe44b70817dc6615789a30818675.txt
+            C8:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C8-80e1ba1-out-09549557be7d93af6a8b61cafbc5a62852d211392c2e75edc6cd2db56b574352.txt
+            C9:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C9-80e1ba1-out-d8944fc19a58b1c84158a467cb4a90f84198c4f56caf59e352953cc04a563462.txt
+            C10:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C10-80e1ba1-out-0f9a021aa995fbfdf8505c9412de904df5d09e24df971fbc6a42b6b70715bb94.txt
+            C11:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C11-80e1ba1-out-c0cff630ad078d7471d85b15ddf08a77d4fd195d129b81fb3ecdcb9353b7e9ca.txt
+            C12:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C12-80e1ba1-out-4131029939d1930b65454d7023401943efce1c9c8ae98fadb3ac7b120e6bf890.txt
+            C13:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C13-80e1ba1-out-5c5146e76acfa5c6355939ed2a3ec2957addfb0b15d332d7c2138d6e486f7a48.txt
+            C14:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C14-80e1ba1-out-3317613a87b8e7af5a71b40b6497b418b5bd43d85b2fa991837c8ad14bcfe635.txt
+            C15:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C15-80e1ba1-out-6acb613a75e6758f921c420cbd3817a0ed4e2f47f1ede598d5ec30ab38835f5c.txt
+            C16:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C16-80e1ba1-out-08a4631921515146245cece5432a04909b3216b432ea10f7552410a005079a1b.txt
+            C17:
+                status: pass
+            C18:
+                status: pass
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T00:02:38.879228Z
+        against:
+            kind: git_commit
+            value: git:80e1ba1
+            observed_at: 2026-10-16T00:02:38.878139Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-80e1ba1-out-f69b3e802a5a3bd3d56b736acd12aae7dc80b8c12f0a1020d8d46066cbafc882.txt
+attestations:
+    - id: AT-whwzr6
+      target:
+        kind: criterion
+        id: C18
+      status: pass
+      by: allen
+      at: 2026-10-16T00:11:04.50711Z
+    - id: AT-giiwgg
+      target:
+        kind: criterion
+        id: C17
+      status: pass
+      by: allen
+      at: 2026-10-16T00:11:19.277162Z

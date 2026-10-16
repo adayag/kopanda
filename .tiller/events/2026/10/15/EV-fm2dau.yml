@@ -1,0 +1,13 @@
+id: EV-fm2dau
+type: check.task
+at: 2026-10-15T21:48:02.153429Z
+contributor: allen
+command: check task T-odbt4w
+targets:
+    - T-odbt4w
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/hold-and-home-sheet/task.yml

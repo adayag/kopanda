@@ -200,6 +200,108 @@ describe("KoPanda failing safe", function()
         assert.is_true(logged_error("kopanda-test: gesture failed"))
     end)
 
+    it("closes the home onto the file browser, with no sheet, when a widget's hold throws", function()
+        local Geom = require("ui/geometry")
+        local Widget = require("ui/widget/widget")
+        local quote = {
+            id = "quote",
+            height = function()
+                return 60
+            end,
+            build = function(width)
+                return Widget:new{ dimen = Geom:new{ w = width, h = 60 } }
+            end,
+            hold = function()
+                error("kopanda-test: hold failed")
+            end,
+        }
+        package.loaded["widgets"].get = function(id)
+            return id == "quote" and quote or nil
+        end
+        harness.show_fm()
+        harness.tick(2)
+        local rect
+        for _, slot in ipairs(Home.shown.slots) do
+            if slot.widget == "quote" then
+                rect = slot.rect
+            end
+        end
+        local ok = pcall(UIManager.sendEvent, UIManager, Event:new("Gesture",
+            harness.gesture("hold", rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2))))
+        assert.is_true(ok)
+        for _, widget in ipairs(harness.stack()) do
+            assert.is_not.equals("kopanda_sheet", widget.name)
+        end
+        file_manager_usable()
+        assert.is_true(logged_error("kopanda-test: hold failed"))
+    end)
+
+    describe("a sheet", function()
+        local Geom = require("ui/geometry")
+        local Sheet
+
+        local function sheets_on_stack()
+            local count = 0
+            for _, widget in ipairs(harness.stack()) do
+                if widget.name == "kopanda_sheet" then
+                    count = count + 1
+                end
+            end
+            return count
+        end
+
+        -- A one-row sheet over a shown home, its header a book's whose cover is given.
+        local function show(row, cover)
+            harness.show_fm()
+            harness.tick(2)
+            assert.equals(Home.shown, harness.top())
+            Sheet = require("sheet")
+            Sheet.show({
+                name = "test",
+                band = "book",
+                header = cover and { cover = cover, title = "A book" } or { heading = "Test" },
+                rows = { row or { icon = "info", label = "Row", run = function() end } },
+            }, Home.shown.ctx)
+        end
+
+        local function no_sheet()
+            assert.equals(0, sheets_on_stack())
+            assert.is_nil(Sheet.shown)
+        end
+
+        it("closes itself and the home when a row's action throws", function()
+            show({ icon = "info", label = "Row", run = function() error("kopanda-test: row failed") end })
+            local rect = Sheet.shown.rows[1].rect
+            local ok = pcall(UIManager.sendEvent, UIManager, Event:new("Gesture",
+                harness.gesture("tap", rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2))))
+            assert.is_true(ok)
+            no_sheet()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: row failed"))
+        end)
+
+        it("leaves the file manager on top when its build throws in the show", function()
+            show(nil, setmetatable({}, { __index = function() error("kopanda-test: sheet build failed") end }))
+            no_sheet()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: sheet build failed"))
+        end)
+
+        it("closes itself and the home from the next tick when its paint throws", function()
+            show(nil, {
+                getSize = function() return Geom:new{ w = 20, h = 30 } end,
+                paintTo = function() error("kopanda-test: sheet paint failed") end,
+                free = function() end,
+            })
+            assert.equals(Sheet.shown, harness.top())
+            local ok = pcall(harness.tick, 3)
+            assert.is_true(ok)
+            no_sheet()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: sheet paint failed"))
+        end)
+    end)
+
     describe("the dispatcher wrapper", function()
         local Dispatcher = require("dispatcher")
 

@@ -1,0 +1,13 @@
+id: EV-8iycsm
+type: claim.task
+at: 2026-10-15T20:35:54.219876Z
+contributor: allen
+command: claim task T-b26ryy
+targets:
+    - T-b26ryy
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/sheet/task.yml

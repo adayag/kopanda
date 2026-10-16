@@ -1,0 +1,17 @@
+id: EV-hajikc
+type: start.task
+at: 2026-10-15T20:35:54.34083Z
+contributor: allen
+command: start task T-b26ryy
+targets:
+    - T-b26ryy
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/home/sheets
+    branch: tiller/home/sheets/sheet
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/sheet/task.yml
+    - path: .tiller/epics/home/features/sheets/feature.yml

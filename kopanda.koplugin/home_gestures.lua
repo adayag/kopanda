@@ -3,6 +3,7 @@
 local Geom = require("ui/geometry")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local SettingsMenu = require("settings_menu")
+local time = require("ui/time")
 local Screen = require("device").screen
 
 local HomeGestures = {}
@@ -77,14 +78,48 @@ function HomeGestures.own_zones(home)
                 end
             end,
         },
+        -- No menu-zone test: the file manager's menu zones are tap and swipe only
+        -- (frontend/apps/filemanager/filemanagermenu.lua:76-113).
+        {
+            id = "kopanda_home_hold",
+            ges = "hold",
+            screen_zone = FULL_SCREEN,
+            handler = function()
+                home.own_step = "hold"
+                return true
+            end,
+        },
     }
+end
+
+-- A hold on the home: inside a slot whose widget has hold, that hold, unless it returns false;
+-- inside a slot whose widget has none, its settings (the stub until device-menus); otherwise,
+-- outside every slot, in a blank slot with no module or after a false, the home's sheet, whose
+-- paint_ms runs from this step's entry. home_sheet is required here, not at load: it reaches
+-- launcher_entries, which requires home (launcher_entries.lua:5), which requires this module.
+local function hold(home, ges)
+    local started = time.monotonic()
+    local slot = home:slotAt(ges.pos)
+    local module = slot and slot.module
+    if module then
+        if not module.hold then
+            SettingsMenu.open()
+            return true
+        end
+        if module.hold(home.ctx, ges, slot.built) ~= false then
+            return true
+        end
+    end
+    require("home_sheet").open(home.ctx, { started = started })
+    return true
 end
 
 -- The home's gestures, in order, each step stopping at the first that consumes: its own swipe
 -- up; the file manager's menu zones (top-zone tap and swipe down, by KOReader's own rules,
 -- filemanagermenu.lua:71-124, :1102-1114); a page swipe, consumed since there is nothing to
 -- page; the zones registered on the file manager itself, the Gestures plugin's among them
--- (gestures main.lua:1287-1288); a tap outside the top menu zones runs the tapped slot's widget
+-- (gestures main.lua:1287-1288), so a bound hold corner wins over the hold (:1124-1139); a hold
+-- runs the hold step above; a tap outside the top menu zones runs the tapped slot's widget
 -- when it acts on taps, and otherwise, or when that tap returns false, closes the home onto the
 -- file browser through close(home). With
 -- the home on top, UIManager:sendEvent offers the file manager nothing but its screenshot
@@ -109,6 +144,9 @@ function HomeGestures.route(home, ges, close)
     end
     if fm and InputContainer.onGesture(fm, ges) then
         return true
+    end
+    if own_step == "hold" then
+        return hold(home, ges)
     end
     if own_step == "tap" then
         local slot = home:tappableSlotAt(ges.pos)

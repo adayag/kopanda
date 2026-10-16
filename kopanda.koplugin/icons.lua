@@ -22,7 +22,8 @@ Icons.entries = {
       file = "icons/history.svg" },
     { id = "wifi", label = "Wi-Fi", used_in = { "launcher", "home sheet", "quick settings" },
       file = "icons/wifi.svg" },
-    { id = "wifi_off", label = "Wi-Fi off", used_in = { "launcher", "empty states" }, file = "icons/wifi_off.svg" },
+    { id = "wifi_off", label = "Wi-Fi off", used_in = { "launcher", "empty states", "home sheet" },
+      file = "icons/wifi_off.svg" },
     { id = "settings", label = "Settings",
       used_in = { "launcher", "nav", "book sheet", "home sheet", "launcher management" },
       file = "icons/settings.svg" },
@@ -50,7 +51,7 @@ Icons.entries = {
     { id = "power", label = "Sleep (power)", used_in = { "quick settings" }, file = "icons/power.svg" },
     { id = "back", label = "Back", used_in = { "settings menu" }, file = "icons/back.svg" },
     { id = "close", label = "Close", used_in = { "settings menu" }, file = "icons/close.svg" },
-    { id = "check", label = "Checked", used_in = { "settings menu" }, file = "icons/check.svg" },
+    { id = "check", label = "Checked", used_in = { "settings menu", "sheets" }, file = "icons/check.svg" },
 }
 
 -- The path of the icon file for id, in the form Fonts.path gives a plugin file, or nil for an

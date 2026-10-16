@@ -1,0 +1,13 @@
+id: EV-vreaej
+type: claim.task
+at: 2026-10-15T21:24:37.883043Z
+contributor: allen
+command: claim task T-odbt4w
+targets:
+    - T-odbt4w
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/hold-and-home-sheet/task.yml

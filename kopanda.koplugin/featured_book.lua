@@ -34,18 +34,31 @@ local function try(what, f, ...)
     return result
 end
 
--- The first entry of the reading history, most recent first (frontend/readhistory.lua:332-333),
--- whose file is still a file, skipping entries KOReader marks unselectable and the QuickStart
--- guide, as ReaderUI:getLastDirFile skips it (frontend/apps/reader/readerui.lua:571-577).
--- Required on each call, not at load, so the history read is the one KOReader holds now.
-local function most_recent()
+-- The reading history's files, most recent first (frontend/readhistory.lua:332-333), that are
+-- still files, skipping entries KOReader marks unselectable and the QuickStart guide, as
+-- ReaderUI:getLastDirFile skips it (frontend/apps/reader/readerui.lua:571-577), each passed to
+-- each(file) until it returns true. Required on each call, not at load, so the history read is
+-- the one KOReader holds now.
+local function each_book(each)
     local quickstart = require("ui/quickstart").quickstart_filename
     for _, entry in ipairs(require("readhistory").hist) do
         local file = entry.file
         if entry.select_enabled ~= false and file ~= quickstart and is_file(file) then
-            return file
+            if each(file) then
+                return
+            end
         end
     end
+end
+
+-- The first of them.
+local function most_recent()
+    local first
+    each_book(function(file)
+        first = file
+        return true
+    end)
+    return first
 end
 
 -- The featured file: the pin when it names a file, else the most recent book; nil with neither.
@@ -181,6 +194,45 @@ function FeaturedBook.current()
         return nil
     end
     return result
+end
+
+-- One book for the picker: { file, title, authors }, read as current() reads them, a raising
+-- read logged and left out. authors may be nil.
+function FeaturedBook.describe(file)
+    local doc = try("the sidecar of " .. file, sidecar, file) or DocSettings.openSettingsFile(nil)
+    local info = try("CoverBrowser's book info for " .. file, cached_info, file) or {}
+    local props = doc:readSetting("doc_props")
+    if type(props) ~= "table" then
+        props = {}
+    end
+    return {
+        file = file,
+        title = text(info.title) or text(props.title) or file_title(file),
+        authors = joined(info.authors) or joined(props.authors),
+    }
+end
+
+-- Up to n of the history's books the featured book would take, most recent first, each as
+-- describe gives it. A book whose describe raises is left out and logged; a history that can't
+-- be read gives what was read before it, logged. Never raises.
+function FeaturedBook.recent(n)
+    local books = {}
+    local ok, err = pcall(each_book, function(file)
+        if #books >= n then
+            return true
+        end
+        local described, book = pcall(FeaturedBook.describe, file)
+        if described then
+            books[#books + 1] = book
+        else
+            logger.err("KoPanda: could not read the book", file, ":", book)
+        end
+        return #books >= n
+    end)
+    if not ok then
+        logger.err("KoPanda: could not read the reading history:", err)
+    end
+    return books
 end
 
 -- For specs: forget which gone pins were logged.
