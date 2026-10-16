@@ -1,0 +1,14 @@
+id: EV-pgsmp5
+type: resume.task
+at: 2026-10-16T22:47:55.355878Z
+contributor: allen
+command: resume task T-ld7mvc
+targets:
+    - T-ld7mvc
+before:
+    status: in_review
+after:
+    reason: fix the flaky one-at-a-time queue test (an extra diner night render under a loaded full check)
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-api/task.yml

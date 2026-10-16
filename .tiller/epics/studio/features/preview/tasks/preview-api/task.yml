@@ -1,7 +1,7 @@
 id: T-ld7mvc
 key: studio/preview/preview-api
 title: The preview endpoint runs bin/preview one render at a time
-status: in_review
+status: in_progress
 blocked: false
 started: true
 owner: allen
@@ -29,7 +29,7 @@ gates:
     build:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-16T22:29:40.668555Z
         against:
@@ -42,7 +42,7 @@ gates:
     tests:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-16T22:29:40.668555Z
         against:
