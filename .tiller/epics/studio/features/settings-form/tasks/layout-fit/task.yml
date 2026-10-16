@@ -1,7 +1,7 @@
 id: T-jslnv7
 key: studio/settings-form/layout-fit
 title: bin/layout-fit runs the plugin's fit rule for a profile
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:d92a0a4
         observed_at: 2026-10-16T17:50:20.378768Z
 branch: tiller/studio/settings-form/layout-fit
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T18:37:36.734662Z
+        against:
+            kind: git_commit
+            value: git:37099ee
+            observed_at: 2026-10-16T18:37:36.734653Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-37099ee-out-498630b5a5e2593a76da886934d2ebf4b01c278e596937620e971ffff36e32f9.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T18:37:36.734662Z
+        against:
+            kind: git_commit
+            value: git:37099ee
+            observed_at: 2026-10-16T18:37:36.734653Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-37099ee-out-4a4270262f38ea552f7e6aa4efc212da0316bad04019875fa4330b357b5f222d.txt

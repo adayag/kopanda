@@ -1,0 +1,13 @@
+id: EV-fm42vf
+type: check.task
+at: 2026-10-16T18:39:31.813759Z
+contributor: allen
+command: check task T-jslnv7
+targets:
+    - T-jslnv7
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/layout-fit/task.yml
