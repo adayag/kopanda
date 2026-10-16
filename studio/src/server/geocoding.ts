@@ -71,13 +71,18 @@ function text(value: unknown): value is string {
  * "<name>, <admin1>" when admin1 is non-empty and not the name, else "<name>, <country>" when the
  * country is non-empty, else the name; shown adds ", <country>" unless it is already the last part.
  * A result without a non-empty name or with a coordinate that isn't a number is skipped, as is a
- * string or a list; no list of results is none. Null for a body that isn't JSON or isn't an object
- * or a list, and for a result that is a number, a boolean or null, which the device's parse raises on.
+ * string or a list; no list of results is none. Null for a body that isn't JSON, holds a number too
+ * big for a double (rapidjson refuses it) or isn't an object or a list, and for a result that is a
+ * number, a boolean or null, which the device's parse raises on.
  */
 export function parseGeocoding(body: string): Candidate[] | null {
   let data: unknown;
   try {
-    data = JSON.parse(body);
+    // A number too big for a double is Infinity here; rapidjson refuses the whole body for it.
+    data = JSON.parse(body, (_key, value: unknown) => {
+      if (typeof value === "number" && !Number.isFinite(value)) throw new RangeError("number too big");
+      return value;
+    });
   } catch {
     return null;
   }

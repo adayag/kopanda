@@ -22,7 +22,9 @@ describe("LocationSearch on the shared geocoding corpus", function()
     end)
 
     for i, case in ipairs(cases.urls) do
-        it(("url case %d: %q"):format(i, case.query), function()
+        -- %q writes a newline as a backslash and a newline; keep each name on one line.
+        local quoted = ("%q"):format(case.query):gsub("\\\n", "\\n")
+        it(("url case %d: %s"):format(i, quoted), function()
             assert.equals(case.url, LocationSearch.url(case.query))
         end)
     end

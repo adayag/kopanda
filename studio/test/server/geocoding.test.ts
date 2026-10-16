@@ -87,6 +87,16 @@ describe("parseGeocoding", () => {
     expect(parseGeocoding("null")).toBeNull();
   });
 
+  // rapidjson.decode refuses a number too big for a double ("Number too big to be stored in
+  // double"), anywhere in the body, so the device reads the whole answer as unreadable.
+  it("reads a body with a coordinate too big for a double as unreadable", () => {
+    expect(parseGeocoding('{"results":[{"name":"K","latitude":1e999,"longitude":2}]}')).toBeNull();
+  });
+
+  it("reads a body with any other number too big for a double as unreadable", () => {
+    expect(parseGeocoding('{"results":[{"name":"K","latitude":1,"longitude":2,"elevation":1e999}]}')).toBeNull();
+  });
+
   it("reads JSON with no list of results as none", () => {
     expect(parseGeocoding("{}")).toEqual([]);
     expect(parseGeocoding('{"results":{"name":"Paris"}}')).toEqual([]);
