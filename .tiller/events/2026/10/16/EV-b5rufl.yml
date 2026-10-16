@@ -1,0 +1,13 @@
+id: EV-b5rufl
+type: check.task
+at: 2026-10-16T03:56:31.021228Z
+contributor: allen
+command: check task T-51vf9k
+targets:
+    - T-51vf9k
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/editor-frame/task.yml
