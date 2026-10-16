@@ -225,9 +225,7 @@ local function card_buttons(state, i, j)
         run = function()
             local new, why = RowsEdit.remove_row(state.rows, i)
             local selected = state.selected
-            if selected and selected.row > i then
-                selected = { row = selected.row - 1, column = selected.column }
-            elseif selected and selected.row == i then
+            if selected and selected.row == i then
                 selected = nil
             end
             apply(state, new, why, selected)

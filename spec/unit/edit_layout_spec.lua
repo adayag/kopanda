@@ -258,10 +258,11 @@ describe("edit layout", function()
     end)
 
     describe("each change", function()
-        -- Opens four_rows, runs steps, then checks the file holds wanted, the home refreshed
-        -- once and the editor asked for one ui repaint, counted from the change's last step.
-        local function change(select, act, wanted)
-            local editor = open(four_rows())
+        -- Opens rows (four_rows when nil), runs steps, then checks the file holds wanted, the
+        -- home refreshed once and the editor asked for one ui repaint, counted from the change's
+        -- last step.
+        local function change(select, act, wanted, rows)
+            local editor = open(rows or four_rows())
             if select then
                 select()
             end
@@ -289,6 +290,14 @@ describe("edit layout", function()
             assert.equals("Row 1 · one column · selected", one({ kind = "card", row = 1 }).control.caption)
         end)
 
+        it("moves row 2 up past the selected row 1, the selection following row 1 down", function()
+            change(function() tap_card(1) end, function()
+                tap(one({ kind = "arrow", row = 2, direction = "up" }).rect)
+            end, { { slot("featured") }, { slot("date"), slot("clock") }, { slot("quote") }, { slot("launcher") } })
+            assert.equals("Row 1 · one column", one({ kind = "card", row = 1 }).control.caption)
+            assert.equals("Row 2 · two columns · selected", one({ kind = "card", row = 2 }).control.caption)
+        end)
+
         it("adds a column to row 3 picked from the unused widgets", function()
             change(function() tap_card(3) end, function()
                 tap_button("Add column")
@@ -310,7 +319,9 @@ describe("edit layout", function()
             end, { { slot("date"), slot("clock") }, { slot("stats") }, { slot("quote") }, { slot("launcher") } })
         end)
 
-        it("sets the selected column's width to 2", function()
+        it("sets the selected column's width to 2, ticking that column's own width", function()
+            local rows = four_rows()
+            rows[1] = { slot("date", 2), slot("clock", 1) }
             change(function()
                 tap_card(1)
                 tap(one({ kind = "box", row = 1, column = 2 }).rect)
@@ -319,8 +330,9 @@ describe("edit layout", function()
                 assert.equals("Width", Sheet.shown.spec.header.heading)
                 assert.same({ "1 ✓", "2", "3" }, sheet_rows())
                 pick("2")
-            end, { { slot("date"), slot("clock", 2) }, { slot("featured") }, { slot("quote") }, { slot("launcher") } })
-            assert.equals("2/3", one({ kind = "box", row = 1, column = 2 }).control.share)
+            end, { { slot("date", 2), slot("clock", 2) }, { slot("featured") }, { slot("quote") },
+                { slot("launcher") } }, rows)
+            assert.equals("1/2", one({ kind = "box", row = 1, column = 2 }).control.share)
         end)
 
         it("removes the selected column", function()
@@ -330,6 +342,9 @@ describe("edit layout", function()
             end, function()
                 tap_button("Remove column")
             end, { { slot("date") }, { slot("featured") }, { slot("quote") }, { slot("launcher") } })
+            -- The selection moves to the column that remains.
+            tap_button("Change widget")
+            assert.equals("Date ✓", sheet_rows()[1])
         end)
 
         it("removes the selected row and clears the selection", function()
@@ -422,6 +437,13 @@ describe("edit layout", function()
     end)
 
     describe("pickers", function()
+        it("grey Add column on a row of three columns, though a widget is unused", function()
+            open({ { slot("date"), slot("clock"), slot("weather") }, { slot("featured") }, { slot("quote") },
+                { slot("launcher") } })
+            tap_card(1)
+            assert.is_true(one({ kind = "button", label = "Add column" }).control.disabled)
+        end)
+
         it("grey Add row on a home with every widget, and a tap on it opens nothing", function()
             open()
             local add = one({ kind = "button", label = "Add row" })
