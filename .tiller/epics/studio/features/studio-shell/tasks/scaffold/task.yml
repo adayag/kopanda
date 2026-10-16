@@ -1,9 +1,10 @@
 id: T-6yxswg
 key: studio/studio-shell/scaffold
 title: Studio package, env config, Express server and Vite UI with dev and start
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,37 @@ accepted_against:
         kind: git_commit
         value: git:25f054c
         observed_at: 2026-10-16T17:01:28.873018Z
+branch: tiller/studio/studio-shell/scaffold
+review_ref:
+    branch: tiller/studio/studio-shell/scaffold
+    head:
+        kind: git_commit
+        value: git:7881d87
+        observed_at: 2026-10-16T17:11:11.392569Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T17:09:47.118577Z
+        against:
+            kind: git_commit
+            value: git:225d72d
+            observed_at: 2026-10-16T17:09:47.118572Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-225d72d-out-58c8f9d5a14b667e352024d5099fcf57d040b5491d2bc7ce173dbf4570e94b85.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T17:09:47.118577Z
+        against:
+            kind: git_commit
+            value: git:225d72d
+            observed_at: 2026-10-16T17:09:47.118572Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-225d72d-out-535cf89c222a672a424cf30e9d5fccc1e0462ab0e673d260bc0d23abc1f4587f.txt

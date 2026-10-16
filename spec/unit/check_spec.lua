@@ -41,13 +41,41 @@ describe("bin/check", function()
         return copy
     end
 
+    -- Gives a scratch checkout a studio/ whose `check` script runs `script`
+    -- instead of the real typecheck, lint and tests, with an empty node_modules/
+    -- unless `installed` is false.
+    local function fake_studio(copy, script, installed)
+        local package_json = '{"name": "fake-studio", "private": true, "scripts": {"check": "' .. script .. '"}}'
+        local _, setup = run("mkdir -p '" .. copy .. "/studio' && printf '%s\\n' '" .. package_json
+            .. "' > '" .. copy .. "/studio/package.json'"
+            .. (installed == false and "" or " && mkdir '" .. copy .. "/studio/node_modules'"))
+        assert.equals(0, setup)
+    end
+
+    -- Environment assignments for a PATH of /usr/bin:/bin plus a directory
+    -- holding only a link to luacheck, so it finds luacheck but no node; and the
+    -- directory, for removal. Homebrew's bin/ holds a node, so instead of brew
+    -- on PATH, KO_DYLD_PREFIX gives KOReader's ffi/loadlib.lua:150-152 the
+    -- prefix it otherwise asks `brew --prefix` for.
+    local function nodeless_env()
+        local dir = run("mktemp -d"):gsub("\n$", "")
+        local luacheck = run("command -v luacheck"):gsub("\n$", "")
+        local prefix = run("brew --prefix"):gsub("\n$", "")
+        local _, setup = run("ln -s '" .. luacheck .. "' '" .. dir .. "/luacheck'")
+        assert.equals(0, setup)
+        return "PATH='" .. dir .. ":/usr/bin:/bin' KO_DYLD_PREFIX='" .. prefix .. "'", dir
+    end
+
     it("prints one summary line per stage on a green run, without per-test lines or library chatter", function()
         local copy = small_checkout()
+        fake_studio(copy, "echo studio-check-passed")
         local output, status = run("'" .. copy .. "/bin/check'")
         run("rm -rf '" .. copy .. "'")
         assert.equals(0, status, output)
         assert.is_true(line_count(output) < 20, output)
-        assert.truthy(output:find("\n== lint: luacheck\nTotal: 0 warnings / 0 errors in %d+ files\n== unit\n"), output)
+        assert.truthy(output:find("\n== lint: luacheck\nTotal: 0 warnings / 0 errors in %d+ files\n== studio\n"),
+            output)
+        assert.truthy(output:find("\n== studio\n.*studio%-check%-passed\n.*== unit\n"), output)
         local layer = "%[==========%] 7 tests from 1 test file ran%.[^\n]*\n%[  PASSED  %] 7 tests%.\n"
         assert.truthy(output:find("\n== unit\n" .. layer .. "== emulator\n" .. layer .. "$"), output)
         assert.falsy(contains(output, "ffi.findlib"))
@@ -162,6 +190,62 @@ describe("bin/check", function()
         run("rm -rf '" .. copy .. "'")
         assert.equals(1, status)
         assert.truthy(contains(output, "lint-warning.lua"))
+    end)
+
+    it("runs the studio's check between lint and the unit specs, and exits 1 when it fails", function()
+        local copy = small_checkout()
+        fake_studio(copy, "echo studio-check-failed; exit 1")
+        local output, status = run("'" .. copy .. "/bin/check'")
+        run("rm -rf '" .. copy .. "'")
+        assert.equals(1, status, output)
+        assert.truthy(output:find("\n== lint: luacheck\n.*\n== studio\n.*studio%-check%-failed"), output)
+        assert.falsy(contains(output, "== unit"), output)
+    end)
+
+    it("refuses with exit 2 when studio/node_modules is missing, naming npm ci", function()
+        local copy = small_checkout()
+        fake_studio(copy, "echo studio-check-ran", false)
+        local output, status = run("'" .. copy .. "/bin/check'")
+        run("rm -rf '" .. copy .. "'")
+        assert.equals(2, status, output)
+        assert.truthy(contains(output, "npm ci --prefix studio"), output)
+        assert.falsy(contains(output, "brew install node"), output)
+        assert.falsy(contains(output, "studio-check-ran"), output)
+        assert.falsy(contains(output, "== lint"), output)
+    end)
+
+    it("refuses with exit 2 when node is not on PATH, naming brew and npm ci", function()
+        local copy = small_checkout()
+        fake_studio(copy, "echo studio-check-ran")
+        local env, dir = nodeless_env()
+        local output, status = run(env .. " '" .. copy .. "/bin/check'")
+        run("rm -rf '" .. copy .. "' '" .. dir .. "'")
+        assert.equals(2, status, output)
+        assert.truthy(contains(output, "brew install node"), output)
+        assert.truthy(contains(output, "npm ci --prefix studio"), output)
+        assert.falsy(contains(output, "== lint"), output)
+    end)
+
+    it("does not lint Lua files under studio/node_modules or studio/dist", function()
+        local copy = small_checkout()
+        fake_studio(copy, "true")
+        local _, setup = run("mkdir -p '" .. copy .. "/studio/node_modules/pkg' '" .. copy .. "/studio/dist'"
+            .. " && cp '" .. root .. "/spec/fixtures/lint-warning.lua' '" .. copy .. "/studio/node_modules/pkg/'"
+            .. " && cp '" .. root .. "/spec/fixtures/lint-warning.lua' '" .. copy .. "/studio/dist/'")
+        assert.equals(0, setup)
+        local output, status = run("'" .. copy .. "/bin/check' --lint")
+        run("rm -rf '" .. copy .. "'")
+        assert.equals(0, status, output)
+        assert.falsy(contains(output, "lint-warning.lua"), output)
+    end)
+
+    it("runs named specs without node on PATH and without studio/", function()
+        local copy = small_checkout()
+        local env, dir = nodeless_env()
+        local output, status = run("cd '" .. copy .. "' && " .. env .. " '" .. copy
+            .. "/bin/check' spec/unit/environment_spec.lua")
+        run("rm -rf '" .. copy .. "' '" .. dir .. "'")
+        assert.equals(0, status, output)
     end)
 
     it("runs from a checkout whose path contains a space", function()

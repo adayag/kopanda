@@ -1,0 +1,16 @@
+id: EV-q580ys
+type: submit.task
+at: 2026-10-16T17:11:11.392682Z
+contributor: allen
+command: submit task T-6yxswg
+targets:
+    - T-6yxswg
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/studio-shell/scaffold
+        head: git:7881d87
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/scaffold/task.yml

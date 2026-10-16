@@ -1,7 +1,7 @@
 id: F-kglqs4
 key: studio/studio-shell
 title: Studio app, device profiles and the schema contract
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -14,6 +14,8 @@ order:
     - T-n4uwe9
     - T-txsef1
 review_grain: feature
+branch: tiller/reviews/features/studio/studio-shell
+pr: 19
 accepted_against:
     spec:
         kind: git_blob
@@ -29,3 +31,96 @@ accepted_against:
         kind: git_commit
         value: git:25f054c
         observed_at: 2026-10-16T17:01:28.852333Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T17:33:49.022014Z
+        against:
+            kind: git_commit
+            value: git:543ac2c
+            observed_at: 2026-10-16T17:33:49.021108Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-543ac2c-out-89c91df37d8a979e14826eb49d55044ad5635013a51579b88349ab0f10099e79.txt
+    evals:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T17:47:27.323933Z
+        against:
+            kind: git_commit
+            value: git:543ac2c
+            observed_at: 2026-10-16T17:33:49.021108Z
+        criteria:
+            C1:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C1-543ac2c-out-056bd58fcd00c1113f08afa9381beb90fd115e9c7ef4077dd67752e6f2fa11ce.txt
+            C2:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C2-543ac2c-out-89bcd5ce563689e2ea1d3dddc89c3b1c6919e01408401a6a13e339926d378558.txt
+            C3:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C3-543ac2c-out-ba0e65e0b57552e2be84b541455821450995f82a50727af462f0713eae99e20a.txt
+            C4:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C4-543ac2c-out-cca883dfea66926557d9dc8ee82e751788ae6ffaa84842b47a0598774f14ef14.txt
+            C5:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C5-543ac2c-out-3168e85a380f500a78a7ec909fb087d86769d6a76ec180746bbe7671fa2c80fa.txt
+            C6:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C6-543ac2c-out-510f618d3422a341905c993dc08c022b4eeea18fde81f7aff09724bfba5e2acf.txt
+            C7:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C7-543ac2c-out-85239f176948d148e04d6ecce172f0e5a01210b481736c37315c43ce5a15f7d7.txt
+            C8:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C8-543ac2c-out-3700ecd26b052a0e4c9d96f11786eacf0257982f6aeb75601d2f167d324f2a99.txt
+            C9:
+                status: pass
+            C10:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C10-543ac2c-out-89418a13a7b2f92e07aa874823578ce24770602fbbd81b97a2ff213d265839ec.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T17:33:49.022014Z
+        against:
+            kind: git_commit
+            value: git:543ac2c
+            observed_at: 2026-10-16T17:33:49.021108Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-543ac2c-out-3cb94e31db73ae569838c44c3323d1572e2bf8a9e942e06b194efaedb6037385.txt
+attestations:
+    - id: AT-uf9h35
+      target:
+        kind: criterion
+        id: C9
+      status: pass
+      by: allen
+      at: 2026-10-16T17:47:27.323933Z

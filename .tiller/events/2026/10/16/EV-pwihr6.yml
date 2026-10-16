@@ -1,0 +1,13 @@
+id: EV-pwihr6
+type: claim.task
+at: 2026-10-16T17:11:23.291676Z
+contributor: allen
+command: claim task T-q590ja
+targets:
+    - T-q590ja
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/check-stage/task.yml

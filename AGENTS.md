@@ -25,14 +25,14 @@ The owner's own interface for KOReader e-readers: a plugin that replaces the she
 
 ## Commands
 
-- `bin/check`: the gate. luacheck, then every `spec/unit/*_spec.lua`, then every `spec/emulator/*_spec.lua` on the emulator's LuaJIT under a fresh `KO_HOME`; stops at the first failing stage.
+- `bin/check`: the gate. luacheck, then the studio's typecheck, lint and tests (`npm --prefix studio run check`), then every `spec/unit/*_spec.lua`, then every `spec/emulator/*_spec.lua` on the emulator's LuaJIT under a fresh `KO_HOME`; stops at the first failing stage.
 - `bin/check --lint`: luacheck alone (Tiller's build gate).
 - `bin/check <spec>...`: exactly those spec files, no luacheck.
 - `bin/check --verbose ...`: combines with any mode above. By default each stage prints only luacheck's total or Busted's suite summary, plus each file with a failing test and that test's output in full; `--verbose` prints luacheck's per-file lines, Busted's per-test lines and KOReader's library-loading chatter.
 - `bin/schema-json`: prints `kopanda.koplugin/schema.lua` as JSON with sorted keys on stdout (the studio's build input), through the emulator's LuaJIT and bundled `rapidjson`; refuses with exit 2 without a luajit at `KOPANDA_EMULATOR`.
 - `KOPANDA_UPDATE_GOLDENS=1 bin/check <spec>`: writes that spec's captures as its goldens under `spec/goldens/` (PNG plus JSON sidecar; masks and notes in an existing sidecar are kept). Open every regenerated PNG and look at it before committing.
 
-`bin/check` needs `luacheck` on `PATH` (`brew install luacheck`) and the emulator at `KOPANDA_EMULATOR` (see `.env.example`); it refuses with exit 2 otherwise.
+`bin/check` needs `luacheck` on `PATH` (`brew install luacheck`) and the emulator at `KOPANDA_EMULATOR` (see `.env.example`); it refuses with exit 2 otherwise. With no arguments it also needs `node` on `PATH` (`brew install node`) and `studio/node_modules`, and refuses with exit 2 without them: every checkout and worktree, an aggregate's included, needs `npm ci --prefix studio` before `tiller check` or `tiller eval`. `--lint` and named-spec runs need neither.
 
 ## Conventions and gotchas
 

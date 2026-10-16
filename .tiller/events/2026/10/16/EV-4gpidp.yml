@@ -1,0 +1,13 @@
+id: EV-4gpidp
+type: claim.task
+at: 2026-10-16T17:11:32.728272Z
+contributor: allen
+command: claim task T-n4uwe9
+targets:
+    - T-n4uwe9
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/profiles/task.yml

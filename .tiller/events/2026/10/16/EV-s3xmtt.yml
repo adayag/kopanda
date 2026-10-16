@@ -1,0 +1,13 @@
+id: EV-s3xmtt
+type: check.task
+at: 2026-10-16T17:23:29.543038Z
+contributor: allen
+command: check task T-n4uwe9
+targets:
+    - T-n4uwe9
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/profiles/task.yml

@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# KoPanda's gate: luacheck, then Busted specs on the emulator's LuaJIT under a fresh KO_HOME.
+# KoPanda's gate: luacheck, the studio's typecheck, lint and tests, then Busted specs on the
+# emulator's LuaJIT under a fresh KO_HOME.
 #
-#   bin/check              lint, unit specs, emulator specs; stops at the first failing stage
+#   bin/check              lint, studio, unit specs, emulator specs; stops at the first failing stage;
+#                          needs node on PATH and studio/node_modules (npm ci --prefix studio)
 #   bin/check --lint       luacheck alone
 #   bin/check <spec>...    exactly those spec files, no luacheck
 #   --verbose              with any of the above: luacheck's per-file lines and Busted's full gtest
@@ -42,6 +44,15 @@ for arg in "$@"; do
 done
 set -- ${args[@]+"${args[@]}"}
 
+if [[ $# -eq 0 ]]; then
+    if ! command -v node >/dev/null 2>&1; then
+        refuse "bin/check: node is not on PATH" "    brew install node" "    npm ci --prefix studio"
+    fi
+    if [[ ! -d "$KOPANDA_ROOT/studio/node_modules" ]]; then
+        refuse "bin/check: no studio/node_modules" "    npm ci --prefix studio"
+    fi
+fi
+
 KO_HOME="$(mktemp -d)"
 export KO_HOME
 trap 'rm -rf "$KO_HOME"' EXIT
@@ -54,6 +65,11 @@ run_lint() {
     else
         (cd "$KOPANDA_ROOT" && luacheck --quiet --no-color .)
     fi
+}
+
+run_studio() {
+    echo "== studio"
+    npm --prefix "$KOPANDA_ROOT/studio" run check
 }
 
 # Reads Busted's gtest output and keeps what a reader needs: a test's lines only when it fails or
@@ -129,6 +145,7 @@ absolute() {
 
 if [[ $# -eq 0 ]]; then
     run_lint || exit 1
+    run_studio || exit 1
     run_layer unit || exit 1
     run_layer emulator || exit 1
 elif [[ $# -eq 1 && "$1" == "--lint" ]]; then

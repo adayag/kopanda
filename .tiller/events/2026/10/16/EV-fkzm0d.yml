@@ -1,0 +1,17 @@
+id: EV-fkzm0d
+type: start.task
+at: 2026-10-16T17:02:03.42744Z
+contributor: allen
+command: start task T-6yxswg
+targets:
+    - T-6yxswg
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/studio/studio-shell
+    branch: tiller/studio/studio-shell/scaffold
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/scaffold/task.yml
+    - path: .tiller/epics/studio/features/studio-shell/feature.yml

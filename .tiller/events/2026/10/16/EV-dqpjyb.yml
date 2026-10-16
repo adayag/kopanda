@@ -1,0 +1,15 @@
+id: EV-dqpjyb
+type: start.task
+at: 2026-10-16T17:11:28.448008Z
+contributor: allen
+command: start task T-dwsmmb
+targets:
+    - T-dwsmmb
+before:
+    status: ready
+after:
+    branch: tiller/studio/studio-shell/schema-contract
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/schema-contract/task.yml

@@ -1,0 +1,13 @@
+id: EV-w09oe4
+type: check.feature
+at: 2026-10-16T17:35:34.163824Z
+contributor: allen
+command: check feature F-kglqs4
+targets:
+    - F-kglqs4
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/studio/features/studio-shell/feature.yml

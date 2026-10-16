@@ -1,0 +1,15 @@
+id: EV-6notz5
+type: start.task
+at: 2026-10-16T17:23:42.300029Z
+contributor: allen
+command: start task T-txsef1
+targets:
+    - T-txsef1
+before:
+    status: ready
+after:
+    branch: tiller/studio/studio-shell/profile-screens
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/profile-screens/task.yml
