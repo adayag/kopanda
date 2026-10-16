@@ -1,0 +1,13 @@
+id: EV-qi488l
+type: start.tweak
+at: 2026-10-16T00:20:44.219392Z
+contributor: allen
+command: start tweak TW-w4mx7i
+targets:
+    - TW-w4mx7i
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/cover-placeholder-word-split/tweak.yml
