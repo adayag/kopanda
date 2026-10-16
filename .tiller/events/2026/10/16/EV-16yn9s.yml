@@ -1,0 +1,13 @@
+id: EV-16yn9s
+type: spec.feature
+at: 2026-10-16T21:29:27.301192Z
+contributor: allen
+command: spec feature F-rce9ko
+targets:
+    - F-rce9ko
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/bars/features/quick-settings/feature.yml

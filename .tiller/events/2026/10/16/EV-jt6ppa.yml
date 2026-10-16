@@ -1,0 +1,13 @@
+id: EV-jt6ppa
+type: approve.feature
+at: 2026-10-16T20:56:58.366165Z
+contributor: allen
+command: approve feature F-78e5ij
+targets:
+    - F-78e5ij
+before:
+    status: specced
+after:
+    status: ready
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/feature.yml

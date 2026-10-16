@@ -1,0 +1,13 @@
+id: EV-hrwl5x
+type: approve.task
+at: 2026-10-16T20:56:58.49543Z
+contributor: allen
+command: approve task T-9h0fhs
+targets:
+    - T-9h0fhs
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/file-browser/task.yml

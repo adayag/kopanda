@@ -1,0 +1,9 @@
+id: T-2x7tk6
+key: bars/quick-settings/launcher-target
+title: Quick settings as a KoPanda launcher target with its registry icon, schema and studio catalog
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-7g6ybl

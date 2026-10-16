@@ -1,7 +1,17 @@
 id: T-3648b1
 key: nav-bar/nav-bar/bar
 title: 'The nav bar: its tokens in both looks and its five tabs'
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:b6730c4e460c82154b51b39faa131497279e36bb
+        path: .tiller/epics/nav-bar/features/nav-bar/tasks/bar/task.md
+        observed_at: 2026-10-16T20:56:58.366795Z
+    commit:
+        kind: git_commit
+        value: git:fae01e4
+        observed_at: 2026-10-16T20:56:58.408991Z

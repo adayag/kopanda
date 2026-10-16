@@ -1,0 +1,13 @@
+id: EV-aogd2d
+type: approve.task
+at: 2026-10-16T20:56:58.453885Z
+contributor: allen
+command: approve task T-rl8eso
+targets:
+    - T-rl8eso
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/home-band/task.yml

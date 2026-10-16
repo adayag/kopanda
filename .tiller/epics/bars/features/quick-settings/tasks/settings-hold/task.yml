@@ -1,0 +1,9 @@
+id: T-czph2w
+key: bars/quick-settings/settings-hold
+title: A hold on the nav bar's Settings tab opens the sheet, on the home and over the file browser
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-n6wve0

@@ -1,0 +1,13 @@
+id: EV-c3exwu
+type: approve.epic
+at: 2026-10-16T20:56:57.993587Z
+contributor: allen
+command: approve epic E-yyznit
+targets:
+    - E-yyznit
+before:
+    status: draft
+after:
+    status: ready
+files:
+    - path: .tiller/epics/nav-bar/epic.yml

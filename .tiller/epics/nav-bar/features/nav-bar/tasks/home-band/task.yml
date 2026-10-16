@@ -1,9 +1,19 @@
 id: T-rl8eso
 key: nav-bar/nav-bar/home-band
 title: The home reserves the bar's band, draws it, routes its taps first, and its goldens are regenerated
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-3648b1
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:e3dd709fed64167ac135bd9c2f1d6db31d615b62
+        path: .tiller/epics/nav-bar/features/nav-bar/tasks/home-band/task.md
+        observed_at: 2026-10-16T20:56:58.409504Z
+    commit:
+        kind: git_commit
+        value: git:fae01e4
+        observed_at: 2026-10-16T20:56:58.453631Z

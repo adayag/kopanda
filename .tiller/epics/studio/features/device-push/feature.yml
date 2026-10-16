@@ -18,15 +18,15 @@ branch: tiller/reviews/features/studio/device-push
 accepted_against:
     spec:
         kind: git_blob
-        value: git:3636fac78b969c4d8f3f77ec1b70747b3445f3c3
+        value: git:e4bd6915489caa05ccbc27401c831e5e98bb7ecd
         path: .tiller/epics/studio/features/device-push/feature.md
-        observed_at: 2026-10-16T19:41:31.24429Z
+        observed_at: 2026-10-16T20:10:55.669868Z
     eval:
         kind: git_blob
         value: git:7256fba1020602fa642c1406e68c59431fee0d5c
         path: .tiller/epics/studio/features/device-push/feature.eval.md
-        observed_at: 2026-10-16T19:41:31.24429Z
+        observed_at: 2026-10-16T20:10:55.669868Z
     commit:
         kind: git_commit
-        value: git:33cca18
-        observed_at: 2026-10-16T19:41:31.277814Z
+        value: git:e4bea1b
+        observed_at: 2026-10-16T20:10:55.707524Z

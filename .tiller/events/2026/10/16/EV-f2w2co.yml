@@ -1,0 +1,14 @@
+id: EV-f2w2co
+type: add.tweak
+at: 2026-10-16T21:08:26.600863Z
+contributor: allen
+command: add tweak flaky-layout-editor-fit-after-done
+targets:
+    - TW-f9nvsm
+after:
+    attached_to: F-k4yn5f
+    key: tweaks/flaky-layout-editor-fit-after-done
+    status: proposed
+files:
+    - path: .tiller/tweaks/flaky-layout-editor-fit-after-done/tweak.md
+    - path: .tiller/tweaks/flaky-layout-editor-fit-after-done/tweak.yml

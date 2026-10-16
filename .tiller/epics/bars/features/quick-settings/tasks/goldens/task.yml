@@ -1,0 +1,9 @@
+id: T-phfsk7
+key: bars/quick-settings/goldens
+title: Quick-settings goldens in both looks on the Colorsoft and their paint budget
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-n6wve0

@@ -1,0 +1,14 @@
+id: EV-1az3at
+type: add.task
+at: 2026-10-16T21:15:18.30962Z
+contributor: allen
+command: add task bars/quick-settings/sheet-body
+targets:
+    - T-s3rp5n
+after:
+    feature: F-rce9ko
+    key: bars/quick-settings/sheet-body
+    status: proposed
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/sheet-body/task.md
+    - path: .tiller/epics/bars/features/quick-settings/tasks/sheet-body/task.yml

@@ -392,8 +392,7 @@ The notices, each an `InfoMessage` (`frontend/ui/widget/infomessage.lua:47`, `:5
 - `rolled_back`: "KoPanda's home didn't draw after the pull of `<profile>`, so the previous KoPanda and
   its settings are back."
 - `failed`: "KoPanda couldn't apply the pull of `<profile>`: `<message>`. Nothing changed."
-- `restore_failed`: "KoPanda couldn't restore the previous version: `<message>`. It tries again at the
-  next start."
+- `restore_failed`: "KoPanda couldn't restore the previous version: `<message>`."
 
 ### Tests
 
