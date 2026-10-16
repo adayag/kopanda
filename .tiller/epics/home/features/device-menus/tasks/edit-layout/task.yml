@@ -1,7 +1,7 @@
 id: T-6nh4m4
 key: home/device-menus/edit-layout
 title: 'Edit layout: the row operations and the screen'
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -23,8 +23,8 @@ review_ref:
     branch: tiller/home/device-menus/edit-layout
     head:
         kind: git_commit
-        value: git:81c79c6
-        observed_at: 2026-10-16T04:15:50.696714Z
+        value: git:01734fc
+        observed_at: 2026-10-16T14:52:42.041507Z
 gates:
     build:
         required: true

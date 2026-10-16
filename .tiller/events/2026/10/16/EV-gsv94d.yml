@@ -1,0 +1,16 @@
+id: EV-gsv94d
+type: submit.task
+at: 2026-10-16T14:52:42.041699Z
+contributor: allen
+command: submit task T-6nh4m4
+targets:
+    - T-6nh4m4
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/device-menus/edit-layout
+        head: git:01734fc
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/edit-layout/task.yml
