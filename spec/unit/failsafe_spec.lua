@@ -98,10 +98,13 @@ describe("KoPanda failing safe", function()
         assert.is_true(logged_error("kopanda-test: paint failed"))
     end)
 
+    -- The file browser it closes onto sends its own, with screen "file_browser" (fm_nav.lua).
     it("sends no settled signal when the home's paint throws", function()
         local settled = 0
-        settled_listener = function()
-            settled = settled + 1
+        settled_listener = function(payload)
+            if payload.screen == "home" then
+                settled = settled + 1
+            end
         end
         UIManager.event_hook:register("KoPandaSettled", settled_listener)
         InputContainer.paintTo = function(self, ...)
@@ -549,6 +552,95 @@ describe("KoPanda failing safe", function()
             assert.equals("onShowHist", sent.calls[1].vals[2].handler)
             assert.is_nil(FileManager.instance.is_always_active)
             assert.is_true(logged_error("kopanda-test: lookup failed"))
+        end)
+    end)
+
+    -- fm_nav.lua's wrapper of FileManager.setupLayout and its frame.
+    describe("the file browser's nav bar", function()
+        local Blitbuffer = require("ffi/blitbuffer")
+        local FileChooser = require("ui/widget/filechooser")
+
+        -- A file manager with its home closed.
+        local function file_manager()
+            local fm = harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            harness.tick()
+            return fm
+        end
+
+        it("leaves the file manager usable when the band raises", function()
+            package.loaded["nav_bar"].height = function()
+                error("kopanda-test: band failed")
+            end
+            file_manager()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: band failed"))
+        end)
+
+        it("re-raises setupLayout's own error with FileChooser's height put back", function()
+            local real = FileManager.setupLayout
+            local failing = false
+            FileManager.setupLayout = function(...)
+                if failing then
+                    error("kopanda-test: setupLayout failed")
+                end
+                return real(...)
+            end
+            local fm = file_manager()
+            failing = true
+            local ok, err = pcall(fm.reinit, fm)
+            failing = false
+            assert.is_false(ok)
+            assert.truthy(tostring(err):find("kopanda-test: setupLayout failed", 1, true))
+            assert.is_nil(rawget(FileChooser, "height"))
+            file_manager_usable()
+        end)
+
+        it("leaves the file manager usable when the frame's build raises", function()
+            package.loaded["nav_bar"].new = function()
+                error("kopanda-test: bar failed")
+            end
+            file_manager()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: bar failed"))
+        end)
+
+        it("leaves the file manager usable when the bar's paint raises", function()
+            local fm = file_manager()
+            fm[1].bar.paintTo = function()
+                error("kopanda-test: bar paint failed")
+            end
+            local size = Screen:getSize()
+            local bb = Blitbuffer.new(size.w, size.h, Blitbuffer.TYPE_BBRGB32)
+            fm:paintTo(bb, 0, 0)
+            bb:free()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: bar paint failed"))
+        end)
+
+        it("leaves the file manager usable when a tab's run raises", function()
+            local fm = file_manager()
+            package.loaded["launcher_entries"].run = function()
+                error("kopanda-test: tab failed")
+            end
+            local bar = fm[1].bar
+            local column = bar.columns[5]
+            local ok = pcall(UIManager.sendEvent, UIManager, Event:new("Gesture", harness.gesture("tap",
+                bar.padding_x + column.x + column.w / 2, bar.dimen.y + bar.dimen.h / 2)))
+            assert.is_true(ok)
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: tab failed"))
+        end)
+
+        it("leaves the file manager usable when a relayout's reinit raises", function()
+            local fm = file_manager()
+            fm.reinit = function()
+                error("kopanda-test: reinit failed")
+            end
+            package.loaded["fm_nav"].relayout()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: reinit failed"))
         end)
     end)
 

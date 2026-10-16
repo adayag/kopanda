@@ -45,9 +45,10 @@ local function network()
 end
 
 -- Stores value under entry's key unless it is already stored. A refused write is logged and
--- noted; a done one refreshes a shown home once, after one weather fetch when it changed the
--- weather's place or units while connected. home is required here, not at load: it reaches
--- home_gestures, which requires settings_menu, which requires this module.
+-- noted; a done one re-lays the file browser out for a new look, then refreshes a shown home
+-- once, after one weather fetch when it changed the weather's place or units while connected.
+-- home is required here, not at load: it reaches home_gestures, which requires settings_menu,
+-- which requires this module; fm_nav is required here as home is.
 local function write(entry, value)
     if util.tableEquals(Settings.get(entry.id), value) then
         return
@@ -57,6 +58,9 @@ local function write(entry, value)
         logger.err("KoPanda: could not save " .. entry.id .. ":", why)
         note("Couldn't save " .. entry.label .. ".")
         return
+    end
+    if entry.id == "look" then
+        require("fm_nav").relayout()
     end
     local home = require("home").shown
     if not home then

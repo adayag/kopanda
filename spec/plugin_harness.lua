@@ -55,14 +55,16 @@ end
 
 -- Dispatcher.execute as KOReader defines it, before any plugin wraps it.
 M.dispatcher_execute = require("dispatcher").execute
+-- FileManager.setupLayout as KOReader defines it, before fm_nav.lua wraps it.
+M.fm_setup_layout = require("apps/filemanager/filemanager").setupLayout
 
 -- Loads the plugin as the only enabled one, with its modules' state, runtime state file and
 -- settings file fresh (no boot flag or setting left by an earlier spec), KOReader's
 -- require-cached file manager menu order fresh (no Home tab inserted and no user order merged
 -- by an earlier spec), and
--- Dispatcher.execute unwrapped, as in a new process, and returns the plugin module (the class
--- KOReader makes an instance of per file manager and reader). PluginLoader:_load reads main,
--- meta, path and name (frontend/pluginloader.lua:231-271).
+-- Dispatcher.execute and FileManager.setupLayout unwrapped, as in a new process, and returns
+-- the plugin module (the class KOReader makes an instance of per file manager and reader).
+-- PluginLoader:_load reads main, meta, path and name (frontend/pluginloader.lua:231-271).
 -- The emulator's fake Wi-Fi is off, so NetworkMgr:isConnected() is false
 -- (frontend/device/sdl/device.lua:478-500) and no home shown by a spec fetches the weather; a
 -- spec that wants a connection stubs isConnected.
@@ -70,6 +72,7 @@ function M.load()
     disable_plugins()
     G_reader_settings:saveSetting("emulator_fake_wifi_connected", false)
     require("dispatcher").execute = M.dispatcher_execute
+    require("apps/filemanager/filemanager").setupLayout = M.fm_setup_layout
     for _, name in ipairs(M.module_names()) do
         package.unload(name) -- luacheck: ignore 143
     end

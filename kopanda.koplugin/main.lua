@@ -7,6 +7,7 @@
 -- so a later require could resolve to another plugin's same-named file (:283-286).
 local DispatchBridge = require("dispatch_bridge")
 local Dispatcher = require("dispatcher")
+local FmNav = require("fm_nav")
 require("fonts") -- loaded now for the looks and swatch modules, which reach it later
 local Guards = require("guards")
 local Home = require("home")
@@ -96,6 +97,10 @@ function KoPanda:init()
         self.ui.menu:registerToMainMenu(self)
         -- Once per process; it acts only while a home is shown.
         DispatchBridge.install()
+        -- Once per process, before the file manager's first layout (filemanager.lua:418-431).
+        if self.in_fm then
+            FmNav.install()
+        end
     end)
     if not ok then
         logger.err("KoPanda: init failed:", err)
