@@ -1,9 +1,10 @@
 id: T-ij3256
 key: home/device-menus/settings-menu
 title: The settings menu generated from the schema, and its callers
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-6nh4m4
@@ -19,3 +20,4 @@ accepted_against:
         kind: git_commit
         value: git:ac38233
         observed_at: 2026-10-16T03:17:38.130788Z
+branch: tiller/home/device-menus/settings-menu

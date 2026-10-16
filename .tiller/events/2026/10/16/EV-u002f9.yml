@@ -1,0 +1,13 @@
+id: EV-u002f9
+type: claim.task
+at: 2026-10-16T14:09:09.473254Z
+contributor: allen
+command: claim task T-ij3256
+targets:
+    - T-ij3256
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/settings-menu/task.yml

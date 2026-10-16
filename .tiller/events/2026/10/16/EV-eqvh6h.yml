@@ -1,0 +1,15 @@
+id: EV-eqvh6h
+type: start.task
+at: 2026-10-16T14:09:09.687075Z
+contributor: allen
+command: start task T-ij3256
+targets:
+    - T-ij3256
+before:
+    status: ready
+after:
+    branch: tiller/home/device-menus/settings-menu
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/settings-menu/task.yml
