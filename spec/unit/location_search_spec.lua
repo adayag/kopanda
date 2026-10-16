@@ -208,7 +208,8 @@ describe("location search", function()
             local candidates = LocationSearch.parse(body)
             assert.same({ name = "Berlin, Germany", latitude = 52.52, longitude = 13.41,
                 shown = "Berlin, Germany" }, candidates[1])
-            assert.same({ name = "Monaco", latitude = 43.73, longitude = 7.42, shown = "Monaco" }, candidates[2])
+            assert.same({ name = "Monaco, Monaco", latitude = 43.73, longitude = 7.42, shown = "Monaco, Monaco" },
+                candidates[2])
             assert.same({ name = "Springfield, Illinois", latitude = 39.8, longitude = -89.64,
                 shown = "Springfield, Illinois" }, candidates[3])
         end)

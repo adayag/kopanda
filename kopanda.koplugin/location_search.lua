@@ -52,7 +52,7 @@ function LocationSearch.parse(body)
             local stored = name
             if text(result.admin1) and result.admin1 ~= name then
                 stored = name .. ", " .. result.admin1
-            elseif text(result.country) and result.country ~= name then
+            elseif text(result.country) then
                 stored = name .. ", " .. result.country
             end
             local shown = stored
