@@ -1,0 +1,15 @@
+id: EV-w6ow6d
+type: start.task
+at: 2026-10-16T17:11:32.884Z
+contributor: allen
+command: start task T-n4uwe9
+targets:
+    - T-n4uwe9
+before:
+    status: ready
+after:
+    branch: tiller/studio/studio-shell/profiles
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/profiles/task.yml

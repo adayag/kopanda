@@ -1,9 +1,10 @@
 id: T-n4uwe9
 key: studio/studio-shell/profiles
 title: Device profiles on disk, seeded defaults and the profiles API
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-6yxswg
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:25f054c
         observed_at: 2026-10-16T17:01:28.933438Z
+branch: tiller/studio/studio-shell/profiles
+review_ref:
+    branch: tiller/studio/studio-shell/profiles
+    head:
+        kind: git_commit
+        value: git:7220021
+        observed_at: 2026-10-16T17:23:29.818593Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T17:22:09.131135Z
+        against:
+            kind: git_commit
+            value: git:68c66fc
+            observed_at: 2026-10-16T17:22:09.131129Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-68c66fc-out-6c2bb0c839a2409ea04520c54af8e4c21b6d44f81a114673861b837e92dba4a7.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T17:22:09.131135Z
+        against:
+            kind: git_commit
+            value: git:68c66fc
+            observed_at: 2026-10-16T17:22:09.131129Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-68c66fc-out-ae9a6ec11a685997b721b16f6b4fe5e0688c304b23d021f1f8e1aa0e3a95d993.txt
