@@ -38,115 +38,115 @@ gates:
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-16T14:31:44.097192Z
+        run_at: 2026-10-16T15:03:55.325131Z
         against:
             kind: git_commit
-            value: git:9bbb012
-            observed_at: 2026-10-16T14:31:44.096284Z
+            value: git:95b08ed
+            observed_at: 2026-10-16T15:03:55.323239Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/build-9bbb012-out-5fc57727fa288fce2f032292d3c3e9a619a601fed02f5b576415917c20214b6e.txt
+              ref: artifacts/tiller/gates/build-95b08ed-out-a35d22ba8441fc5e3f73aabefce800d509cae6467b19265cbfea966651ae3533.txt
     evals:
         required: true
         kind: command
         status: pending
         run_by: allen
-        run_at: 2026-10-16T14:31:44.097192Z
+        run_at: 2026-10-16T15:03:55.325131Z
         against:
             kind: git_commit
-            value: git:9bbb012
-            observed_at: 2026-10-16T14:31:44.096284Z
+            value: git:95b08ed
+            observed_at: 2026-10-16T15:03:55.323239Z
         criteria:
             C1:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C1-9bbb012-out-9e3547fccd9ff81ebc9f56c3530badacee5b75e194e7afb87baee5aecbc3e1d2.txt
+                      ref: artifacts/tiller/gates/eval-C1-95b08ed-out-3e9a6f319d0e3e662337da9d25182300d478f2af8d0fe606bd10e9b3bce2fc29.txt
             C2:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C2-9bbb012-out-62ad37ec5847851a49b5793c7bfd148e77035b8ba17feb6e860a85762d318a46.txt
+                      ref: artifacts/tiller/gates/eval-C2-95b08ed-out-b6374ca5aca29969fe1df6e974fe27e823c5306833b8925bd8e17fa8febe3875.txt
             C3:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C3-9bbb012-out-6a6d40142125016fc370cf4c701fe338edff64fae5c606b4ed6725d647d07506.txt
+                      ref: artifacts/tiller/gates/eval-C3-95b08ed-out-05558dc8817619d035f3b1c1e9345d013abb10a4244413007b44899fb9c9f15b.txt
             C4:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C4-9bbb012-out-c2641cee7f0f0b7d311a04eaa41be3c87db127177142bccf129772587d6d6922.txt
+                      ref: artifacts/tiller/gates/eval-C4-95b08ed-out-9ab2c589d1429eaa7b47cc19b90f1f48982eb155030ab975f72f9df3a066d744.txt
             C5:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C5-9bbb012-out-aec04ccb3c011d2dc7e38624803d8d94250b474b6151f8c3b04d06843a1c1b56.txt
+                      ref: artifacts/tiller/gates/eval-C5-95b08ed-out-6cc8806100369e4d5db5d11e10cf2a9d6d6e5af69dc7149d05b1945d009cdea8.txt
             C6:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C6-9bbb012-out-c97548ade2d17045d7f4e98c565c4bc8fab5d29389b5f59c67e0a4ae9e224558.txt
+                      ref: artifacts/tiller/gates/eval-C6-95b08ed-out-b1d0c08cd7cfd9dea3c68ae720eb0f8e873c743fb7121f73881f43d961278e07.txt
             C7:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C7-9bbb012-out-99f933a2b0c9badafc0057bb6d87b7b19c41bac359ab68fd35740b7083cf84fc.txt
+                      ref: artifacts/tiller/gates/eval-C7-95b08ed-out-2f27cf4d7e06264370bb4e35593f514fc6bb001cee2d9a05ed1e62c60554c5b9.txt
             C8:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C8-9bbb012-out-e7dd73175ecafa0ac1d1f9e409e4a0075e8df3c34d9c30f768765323e0ecfa10.txt
+                      ref: artifacts/tiller/gates/eval-C8-95b08ed-out-83a3ddbadcf3d785f75d461339daf575ca7ae67c49daa860e04d12888f2a1661.txt
             C9:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C9-9bbb012-out-d1779f7cafaf413598e7894a4d335f2a41cdd2919957b839a6a176f5dbf3df34.txt
+                      ref: artifacts/tiller/gates/eval-C9-95b08ed-out-8c3a4453abcf6463523417fc5d985a4fd94db7834b957c7c3b91e7e3512813b7.txt
             C10:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C10-9bbb012-out-f9fe87f9361f3d300ac375571dea8c474fd81c9ab04330cb9b9d3b45bc74d85b.txt
+                      ref: artifacts/tiller/gates/eval-C10-95b08ed-out-995f5b7ef2e157a7ebb3b341792840b9faaab3016865f8b813efb9ef80054664.txt
             C11:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C11-9bbb012-out-0022104fed4577e3d2f90ac62adb7a2fcd198fcd23ac503bec89c0b83b50de14.txt
+                      ref: artifacts/tiller/gates/eval-C11-95b08ed-out-93f4d15b1a002f8e7731dcf5c5cca89d87a17156b1630c29c311c25cbc906422.txt
             C12:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C12-9bbb012-out-539230dbe0bce801037fff7af8af506b77d3be945513680c6cdef14f26e4d8f6.txt
+                      ref: artifacts/tiller/gates/eval-C12-95b08ed-out-c59194464faedffd0216b48b7e819de670772da7d4f2d17cf1c0e950aa737222.txt
             C13:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C13-9bbb012-out-c28a5a70948d756aacd5445e1496aa94b7f5edeca62a194ce36b87bab638908f.txt
+                      ref: artifacts/tiller/gates/eval-C13-95b08ed-out-19070c233b8361677d963f9b798de1967ea197eda7ce1e9d965af4aae74e9d8d.txt
             C14:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C14-9bbb012-out-51d51325041fc4c8a648895b00f6b25c50f05523b94a2e9f929dff80eef947e8.txt
+                      ref: artifacts/tiller/gates/eval-C14-95b08ed-out-72898f850054caf1e88a02f09e2908892ebcc45c9aa43b3bb95ab8b70dd700b5.txt
             C15:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C15-9bbb012-out-648d4f258bb7a35eb39cd015d04c2fffb0b9f21d0581edad593c5e410ba83a0f.txt
+                      ref: artifacts/tiller/gates/eval-C15-95b08ed-out-56f92b3c1798b58a8084ebb8c702d7e071170b209649f275c43b5878fe6c2984.txt
             C16:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C16-9bbb012-out-edd63743805871a4fcb14ddc453875f187f296c652e405e3afc8b6b8dc9caa8b.txt
+                      ref: artifacts/tiller/gates/eval-C16-95b08ed-out-8f41825991ccefd005c50cdb317461c6c8a743b93290ddb9be3a68f7e75fd775.txt
             C17:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C17-9bbb012-out-f35c478c10fce0420cd7d0ca1c80794a6df050550683139288fd21bc868465a8.txt
+                      ref: artifacts/tiller/gates/eval-C17-95b08ed-out-e8aca9cb217fb3430e04111d9697f6912250b1d08bdb779b7487b234361ff3cf.txt
             C18:
                 status: pass
                 evidence:
                     - kind: command_output
-                      ref: artifacts/tiller/gates/eval-C18-9bbb012-out-3c6b0453aa687cd823514099ddb92d436d008100067969e53db8e99bc21d834c.txt
+                      ref: artifacts/tiller/gates/eval-C18-95b08ed-out-7ccd74e1d6977074acb266b80d70b086412ca677b518c933f765a386d119ac08.txt
             C19:
                 status: needs_attestation
             C20:
@@ -156,11 +156,11 @@ gates:
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-16T14:31:44.097192Z
+        run_at: 2026-10-16T15:03:55.325131Z
         against:
             kind: git_commit
-            value: git:9bbb012
-            observed_at: 2026-10-16T14:31:44.096284Z
+            value: git:95b08ed
+            observed_at: 2026-10-16T15:03:55.323239Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/tests-9bbb012-out-5f3e1d3f6628eddb3acc1bd518e4edb3c6c57d8a73a107a0e45bbc36da212ba3.txt
+              ref: artifacts/tiller/gates/tests-95b08ed-out-b1b8cef6122c3e8576a1dcb6fdadb1f312b15210fd8a0a18410619a06f90af56.txt
