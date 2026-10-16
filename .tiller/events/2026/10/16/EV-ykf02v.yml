@@ -1,0 +1,13 @@
+id: EV-ykf02v
+type: check.tweak
+at: 2026-10-16T01:30:02.852282Z
+contributor: allen
+command: check tweak TW-4ae71f
+targets:
+    - TW-4ae71f
+before:
+    status: check
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/flaky-probe-golden-paperwhite/tweak.yml
