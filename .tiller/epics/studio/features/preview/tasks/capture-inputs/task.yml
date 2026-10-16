@@ -1,9 +1,10 @@
 id: T-0s2a1j
 key: studio/preview/capture-inputs
 title: The capture driver takes a profile's screen and settings file, and the home fixture a weather reading for them
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,37 @@ accepted_against:
         kind: git_commit
         value: git:2bbb0b4
         observed_at: 2026-10-16T21:49:07.26511Z
+branch: tiller/studio/preview/capture-inputs
+review_ref:
+    branch: tiller/studio/preview/capture-inputs
+    head:
+        kind: git_commit
+        value: git:7f27bf5
+        observed_at: 2026-10-16T22:05:53.553651Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T22:03:14.131942Z
+        against:
+            kind: git_commit
+            value: git:b2784d5
+            observed_at: 2026-10-16T22:03:14.131936Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-b2784d5-out-730ddef3933841126a056ddb350a4def74fea321c26b966d9a170637792a22a9.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T22:03:14.131942Z
+        against:
+            kind: git_commit
+            value: git:b2784d5
+            observed_at: 2026-10-16T22:03:14.131936Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-b2784d5-out-9c0234d1eb62c4e83620252d1c775a040909b25c3a604a59aaa6e4db523db7ca.txt

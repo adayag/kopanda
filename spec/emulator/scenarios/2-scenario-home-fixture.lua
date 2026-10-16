@@ -1,7 +1,8 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
--- by spec/emulator/home_golden_spec.lua, home_capture_spec.lua, night_golden_spec.lua and
--- night_toggle_spec.lua. Applied by reader.lua:190 before any plugin code runs, it makes the
--- home deterministic for a golden:
+-- by spec/emulator/home_golden_spec.lua, home_capture_spec.lua, night_golden_spec.lua,
+-- night_toggle_spec.lua, capture_inputs_spec.lua and preview_spec.lua, and by bin/preview.lua.
+-- Applied by reader.lua:190 before any plugin code runs, it makes the home deterministic for a
+-- golden:
 --   - os.time() and os.date(format) with no time argument answer 2026-10-13 08:42 in the run's
 --     TZ (a Tuesday, the boards' date); calls with a time pass through, and ui/time's monotonic
 --     clock is untouched, so paint_ms stays real;
@@ -13,7 +14,15 @@
 --     featured book has its typographic cover; "empty" writes none of it, and stores
 --     launcher.entries as the default five without Settings and a sixth entry for a plugin
 --     named kopanda_absent, which no profile has, so it shows greyed as "plugin missing";
---   - KOPANDA_HOME_LOOK, when set, is stored as the look (Diner is the default).
+--   - KOPANDA_HOME_LOOK, when set, is stored as the look (Diner is the default), into the
+--     settings file already there (a capture's settings_file) if any, its other keys kept; a
+--     file whose chunk returns a non-table is taken as {}, as the plugin reads it;
+--   - KOPANDA_HOME_WEATHER_LATITUDE, _LONGITUDE and _UNITS, all three set, are the location
+--     and units the populated weather reading is written for, so it matches a profile's
+--     weather settings: 61.4 in fahrenheit, 16.3 in celsius. A variable set to "" is unset.
+--     None set, it is for the schema's defaults. One or two set, a coordinate that isn't a
+--     number or a unit other than fahrenheit or celsius fails the fixture. "empty" writes no
+--     reading whatever is set.
 -- No fetch runs: the capture driver turns the emulator's fake Wi-Fi off, so
 -- NetworkMgr:isConnected() is false (frontend/device/sdl/device.lua:478-500).
 -- Writes only under the scratch KO_HOME. Any failure exits with status 4.
@@ -27,6 +36,43 @@ local ok, err = pcall(function()
     local fixture = os.getenv("KOPANDA_HOME_FIXTURE")
     if fixture ~= "populated" and fixture ~= "typecover" and fixture ~= "empty" then
         error("KOPANDA_HOME_FIXTURE must be populated, typecover or empty, not " .. tostring(fixture))
+    end
+
+    -- The weather reading's location and units: the schema's defaults (Chicago, fahrenheit,
+    -- kopanda.koplugin/schema.lua), or the three variables together.
+    -- An empty variable is unset, as an exported .env block (.env.example) leaves it.
+    local function env(name)
+        local value = os.getenv(name)
+        if value ~= "" then
+            return value
+        end
+    end
+    local weather = { latitude = 41.85003, longitude = -87.65005, units = "fahrenheit" }
+    local weather_env = {
+        latitude = env("KOPANDA_HOME_WEATHER_LATITUDE"),
+        longitude = env("KOPANDA_HOME_WEATHER_LONGITUDE"),
+        units = env("KOPANDA_HOME_WEATHER_UNITS"),
+    }
+    local weather_set = 0
+    for _ in pairs(weather_env) do
+        weather_set = weather_set + 1
+    end
+    if weather_set == 3 then
+        for _, field in ipairs({ "latitude", "longitude" }) do
+            weather[field] = tonumber(weather_env[field])
+            if not weather[field] then
+                error(string.format("KOPANDA_HOME_WEATHER_%s must be a number, not %q",
+                    field:upper(), weather_env[field]))
+            end
+        end
+        if weather_env.units ~= "fahrenheit" and weather_env.units ~= "celsius" then
+            error(string.format("KOPANDA_HOME_WEATHER_UNITS must be fahrenheit or celsius, not %q",
+                weather_env.units))
+        end
+        weather.units = weather_env.units
+    elseif weather_set ~= 0 then
+        error("KOPANDA_HOME_WEATHER_LATITUDE, KOPANDA_HOME_WEATHER_LONGITUDE and"
+            .. " KOPANDA_HOME_WEATHER_UNITS are set all together or not at all")
     end
 
     local real_time, real_date = os.time, os.date
@@ -72,6 +118,12 @@ local ok, err = pcall(function()
     end
     if next(stored) then
         local settings = LuaSettings:open(kopanda_dir .. "/settings.lua")
+        -- A chunk returning a non-table is taken as the data (frontend/luasettings.lua:31-33),
+        -- which saveSetting cannot index; the plugin reads such a file as {}
+        -- (kopanda.koplugin/settings.lua, open).
+        if type(settings.data) ~= "table" then
+            settings:reset({})
+        end
         for key, value in pairs(stored) do
             settings:saveSetting(key, value)
         end
@@ -173,16 +225,16 @@ local ok, err = pcall(function()
         end
     end
 
-    -- The cache kopanda.koplugin/weather.lua writes after a fetch, for the schema's default
-    -- location (Chicago) and units (fahrenheit): 61.4°, partly cloudy, by day.
+    -- The cache kopanda.koplugin/weather.lua writes after a fetch, for the location and units
+    -- read above: 61.4° (16.3° in celsius), partly cloudy, by day.
     LuaSettings:open(kopanda_dir .. "/weather.lua"):reset({
         fetched_at = NOW - 20 * 60,
-        temperature = 61.4,
+        temperature = weather.units == "celsius" and 16.3 or 61.4,
         weather_code = 2,
         is_day = 1,
-        units = "fahrenheit",
-        latitude = 41.85003,
-        longitude = -87.65005,
+        units = weather.units,
+        latitude = weather.latitude,
+        longitude = weather.longitude,
     }):flush()
 
     -- The Statistics database (plugins/statistics.koplugin/main.lua:27) with the plugin's DDL

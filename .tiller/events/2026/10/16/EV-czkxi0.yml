@@ -1,0 +1,16 @@
+id: EV-czkxi0
+type: submit.task
+at: 2026-10-16T22:05:53.553802Z
+contributor: allen
+command: submit task T-0s2a1j
+targets:
+    - T-0s2a1j
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/preview/capture-inputs
+        head: git:7f27bf5
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/capture-inputs/task.yml
