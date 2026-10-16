@@ -1,0 +1,13 @@
+id: EV-8nrmrm
+type: claim.task
+at: 2026-10-16T17:02:03.298112Z
+contributor: allen
+command: claim task T-6yxswg
+targets:
+    - T-6yxswg
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/scaffold/task.yml
