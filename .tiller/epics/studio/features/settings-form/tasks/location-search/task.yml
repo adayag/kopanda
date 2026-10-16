@@ -1,9 +1,10 @@
 id: T-wmf18g
 key: studio/settings-form/location-search
 title: Weather location search through the studio server
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-08n402
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:d92a0a4
         observed_at: 2026-10-16T17:50:20.446641Z
+branch: tiller/studio/settings-form/location-search
+review_ref:
+    branch: tiller/studio/settings-form/location-search
+    head:
+        kind: git_commit
+        value: git:21a35d9
+        observed_at: 2026-10-16T19:13:07.380632Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T19:11:09.658068Z
+        against:
+            kind: git_commit
+            value: git:8e9a772
+            observed_at: 2026-10-16T19:11:09.658061Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-8e9a772-out-1885494cb0e88fb4d0b5a9aa975406ddf39959a82f55bc3b352185c9bb9155ea.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T19:11:09.658068Z
+        against:
+            kind: git_commit
+            value: git:8e9a772
+            observed_at: 2026-10-16T19:11:09.658061Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-8e9a772-out-e4c93b95b84b08db4bf6f23f17761b64248f847d9baf3958894a00f662e4cf5e.txt
