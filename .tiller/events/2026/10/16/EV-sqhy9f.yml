@@ -1,0 +1,14 @@
+id: EV-sqhy9f
+type: submit.tweak
+at: 2026-10-16T02:13:08.072368Z
+contributor: allen
+command: submit tweak TW-a7nfpr
+targets:
+    - TW-a7nfpr
+before:
+    status: check
+after:
+    pr: 17
+    status: in_review
+files:
+    - path: .tiller/tweaks/shared-paint-helpers/tweak.yml
