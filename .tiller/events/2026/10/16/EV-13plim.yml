@@ -1,0 +1,13 @@
+id: EV-13plim
+type: check.task
+at: 2026-10-16T20:08:48.326621Z
+contributor: allen
+command: check task T-o5gnzj
+targets:
+    - T-o5gnzj
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/apply-and-rollback/task.yml
