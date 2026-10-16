@@ -1,0 +1,14 @@
+id: EV-skeom6
+type: add.bug
+at: 2026-10-16T20:55:26.23721Z
+contributor: allen
+command: add bug swatch-settle-before-paint
+targets:
+    - B-0wpe5u
+after:
+    attached_to: F-i2mbn1
+    key: bugs/swatch-settle-before-paint
+    status: proposed
+files:
+    - path: .tiller/bugs/swatch-settle-before-paint/bug.md
+    - path: .tiller/bugs/swatch-settle-before-paint/bug.yml

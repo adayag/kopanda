@@ -1,0 +1,9 @@
+id: B-0wpe5u
+key: bugs/swatch-settle-before-paint
+title: Swatch settled signal can fire before its first paint
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: F-i2mbn1
+source: kopanda.koplugin/swatch.lua#L383-L411
