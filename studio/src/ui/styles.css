@@ -129,3 +129,150 @@ button.profile:active {
 .facts dd {
   margin: 0;
 }
+
+.settings {
+  margin-top: 1.5rem;
+}
+
+.settings-form > p.error {
+  margin: 0 0 1.25rem;
+}
+
+.setting-group {
+  margin-bottom: 1.5rem;
+}
+
+.setting-group h2,
+.editor-head h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.setting {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.5rem 0 0.65rem;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.setting-label {
+  font-weight: 500;
+}
+
+.setting .note,
+.setting .error {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.choice,
+.pin button {
+  padding: 0.3rem 0.8rem;
+  background: transparent;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.choice:hover:not(:disabled),
+.pin button:hover:not(:disabled) {
+  background: var(--hairline);
+}
+
+.choice[aria-pressed="true"],
+.choice.current {
+  background: var(--accent-tint);
+  border-color: var(--accent);
+}
+
+code.choice {
+  cursor: default;
+}
+
+:disabled,
+a[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pin {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.pin input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.toggle input {
+  accent-color: var(--accent);
+}
+
+.place {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.75rem;
+  margin: 0;
+}
+
+.editor-link {
+  justify-self: start;
+  text-decoration: none;
+}
+
+a.editor-link[href]:hover {
+  text-decoration: underline;
+}
+
+.editor-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.unknown {
+  margin: 0;
+}
+
+.unknown div {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.unknown dd {
+  margin: 0.2rem 0 0;
+}
+
+.unknown pre {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
