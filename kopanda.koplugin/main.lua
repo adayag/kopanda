@@ -15,6 +15,7 @@ local MenuEntries = require("menu_entries")
 local PushNotice = require("push_notice")
 local SchemaMenu = require("menu")
 local State = require("state")
+local StudioMenu = require("studio_menu")
 local Swatch = require("swatch")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -44,6 +45,8 @@ require("looks/editorial")
 require("migrations")
 require("paint")
 require("push_apply")
+require("push_bundle")
+require("push_pull")
 require("quotes")
 require("reading_stats")
 require("rows_edit")
@@ -309,11 +312,14 @@ function KoPanda:addToMainMenu(menu_items)
         text = "Swatches",
         callback = after_menu("Tools › KoPanda › Swatches", Swatch.show),
     }
+    -- The Studio's pull works from both menus: the first pull onto a device runs while another
+    -- shell is still enabled.
+    local studio = StudioMenu.item(self)
     if self.refused then
         menu_items.kopanda = {
             text = "KoPanda",
             sorting_hint = "tools",
-            sub_item_table = { swatches },
+            sub_item_table = { studio, swatches },
         }
         return
     end
@@ -352,6 +358,7 @@ function KoPanda:addToMainMenu(menu_items)
                     return items
                 end,
             },
+            studio,
             swatches,
         },
     }
