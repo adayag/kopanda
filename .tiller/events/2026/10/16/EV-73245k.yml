@@ -1,0 +1,16 @@
+id: EV-73245k
+type: submit.task
+at: 2026-10-16T23:44:52.084637Z
+contributor: allen
+command: submit task T-tvonaw
+targets:
+    - T-tvonaw
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/book-model/index
+        head: git:6c9360a
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/index/task.yml
