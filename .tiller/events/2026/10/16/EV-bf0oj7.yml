@@ -1,0 +1,13 @@
+id: EV-bf0oj7
+type: check.task
+at: 2026-10-16T18:05:17.448423Z
+contributor: allen
+command: check task T-zbcfes
+targets:
+    - T-zbcfes
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/catalog/task.yml
