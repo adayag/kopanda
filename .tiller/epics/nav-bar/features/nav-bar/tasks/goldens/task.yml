@@ -1,9 +1,19 @@
 id: T-1r8qb2
 key: nav-bar/nav-bar/goldens
 title: File-browser goldens in both looks on both profiles and their paint budget
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-9h0fhs
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:03771941a0bc298fc4ce0fe4bc776e45a587b92e
+        path: .tiller/epics/nav-bar/features/nav-bar/tasks/goldens/task.md
+        observed_at: 2026-10-16T20:56:58.49584Z
+    commit:
+        kind: git_commit
+        value: git:fae01e4
+        observed_at: 2026-10-16T20:56:58.546594Z
