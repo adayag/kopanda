@@ -1,9 +1,10 @@
 id: T-ld7mvc
 key: studio/preview/preview-api
 title: The preview endpoint runs bin/preview one render at a time
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-f4ooin
@@ -17,3 +18,4 @@ accepted_against:
         kind: git_commit
         value: git:2bbb0b4
         observed_at: 2026-10-16T21:49:07.314006Z
+branch: tiller/studio/preview/preview-api

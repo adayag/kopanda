@@ -1,0 +1,13 @@
+id: EV-ta5xer
+type: claim.task
+at: 2026-10-16T22:21:36.623116Z
+contributor: allen
+command: claim task T-ld7mvc
+targets:
+    - T-ld7mvc
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-api/task.yml

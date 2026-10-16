@@ -1,0 +1,15 @@
+id: EV-7kmegg
+type: start.task
+at: 2026-10-16T22:21:36.788285Z
+contributor: allen
+command: start task T-ld7mvc
+targets:
+    - T-ld7mvc
+before:
+    status: ready
+after:
+    branch: tiller/studio/preview/preview-api
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-api/task.yml
