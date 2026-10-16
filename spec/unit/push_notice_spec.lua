@@ -246,8 +246,7 @@ describe("the pull's probation and notices", function()
                     profile = "colorsoft",
                     message = "could not restore boot_pending",
                 },
-                "KoPanda couldn't restore the previous version: could not restore boot_pending. It tries again "
-                    .. "at the next start.",
+                "KoPanda couldn't restore the previous version: could not restore boot_pending.",
             },
         }
         for _, case in ipairs(kinds) do

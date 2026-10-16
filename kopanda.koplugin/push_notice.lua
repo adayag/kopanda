@@ -22,8 +22,7 @@ local function text(outcome)
     elseif outcome.kind == "failed" then
         return string.format("KoPanda couldn't apply the pull of %s: %s. Nothing changed.", profile, message)
     elseif outcome.kind == "restore_failed" then
-        return string.format("KoPanda couldn't restore the previous version: %s. It tries again at the next start.",
-            message)
+        return string.format("KoPanda couldn't restore the previous version: %s.", message)
     end
 end
 
