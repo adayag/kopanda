@@ -1,9 +1,10 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
 -- by spec/emulator/capture_spec.lua. Within each UIManager:_checkTasks pass, time.now() returns
 -- the value the pass sampled as _now (frontend/ui/uimanager.lua:1082), as a clock that does not
--- tick during the pass would: CLOCK_MONOTONIC_COARSE on a device (frontend/ui/time.lua:185-199),
--- or macOS's µs CLOCK_MONOTONIC when the pass takes under a microsecond. A nextTick queued
--- inside the pass is then due at _now and runs in the same pass, before the next _repaint
+-- tick during the pass would: a coarse clock (CLOCK_MONOTONIC_COARSE where its resolution is
+-- <= 1 ms, frontend/ui/time.lua:193-198), or macOS's µs CLOCK_MONOTONIC when the _now sample
+-- and the nextTick schedule time (uimanager.lua:416) fall in the same floored µs. A nextTick
+-- queued inside the pass is then due at _now and runs in the same pass, before the next _repaint
 -- (uimanager.lua:1088-1097), so tickAfterNext lands ahead of the paint it was meant to follow.
 local logger = require("logger")
 

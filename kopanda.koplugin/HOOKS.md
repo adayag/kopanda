@@ -969,7 +969,7 @@ Upgrading KOReader walks this list.
 ### `UIManager:scheduleIn`, `nextTick`, `tickAfterNext`
 
 - `frontend/ui/uimanager.lua:413-418`, `:431-433`, `:447-456`; `_checkTasks` `:1081-1106`;
-  `handleInput` `:1537-1561`.
+  `handleInput` `:1537-1564`.
 - Tasks run only from the UI loop, so the patch's watchdog cannot fire while KOReader hangs:
   the driver's kill covers that.
 - `tickAfterNext` re-queues its action through `nextTick` at `time.now()`; the action lands
@@ -977,12 +977,14 @@ Upgrading KOReader walks this list.
   `_checkTasks` sampled at `:1082`, since a task due at `_now` runs in the same pass
   (`:1088-1097`).
 - `time.now` is `time.monotonic_coarse` (`frontend/ui/time.lua:300`), which on macOS is
-  `CLOCK_MONOTONIC` at µs resolution (`:185-199`). A pass that takes under a microsecond
-  leaves `time.now()` equal to `_now`: the probe's `tickAfterNext` signal ran before the first
-  `_repaint` in about 6 % of captures, a blank white shot. The probe now queues its signal with
-  `nextTick` from its widget's first `paintTo`, inside `_repaint`, so it always runs past the
-  paint; `spec/emulator/scenarios/2-scenario-held-clock.lua` holds `time.now()` through each
-  pass so a capture spec reproduces the race on every run.
+  `CLOCK_MONOTONIC` at µs resolution (`:185-199`). When the `_now` sample
+  (`frontend/ui/uimanager.lua:1082`) and the wrapper's `nextTick` schedule time
+  (`time.now()` at `uimanager.lua:416`) fall in the same floored microsecond, the re-queued
+  action is due at `_now` and runs in the same pass: the probe's `tickAfterNext` signal ran
+  before the first `_repaint` in about 6 % of captures, a blank white shot. The probe now
+  queues its signal with `nextTick` from its widget's first `paintTo`, inside `_repaint`, so
+  it always runs past the paint; `spec/emulator/scenarios/2-scenario-held-clock.lua` holds
+  `time.now()` through each pass so a capture spec reproduces the race on every run.
 
 ### The `Show` event reaching plugin instances
 
