@@ -1,0 +1,11 @@
+id: EV-0k41az
+type: claim.tweak
+at: 2026-10-16T00:20:47.265346Z
+contributor: allen
+command: claim tweak tweaks/hold-routing-spec
+targets:
+    - TW-wzgn5m
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/hold-routing-spec/tweak.yml
