@@ -36,7 +36,7 @@ relative to `~/Projects/kodev/koreader/` at `e1fe1ac`. Starts after `home/device
    - **body:** a card per row (EditLayout:29-98): up and down arrows (`chevron_up`, `chevron_down`),
      greyed at the ends; the caption (`editor_caption`); a box per column with `label` (`editor_box`)
      and `share_text` (`editor_share`), on paper in a selected card (EditLayout:51). A selected card
-     draws `selected_outline_color` and `selected_fill_color`, its selected column's box with a 2× outline,
+     draws `selected_outline_color` and `selected_fill_color`, its selected column's box with an outline one board px heavier than the others,
      and its buttons below the boxes (EditLayout:53-57), wrapping to a second line when they don't fit:
      Add column, Change widget, then Width and Remove column on rows of two or more, then Remove row.
      Add column is greyed with three columns or no unused widget.
