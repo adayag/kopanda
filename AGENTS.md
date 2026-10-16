@@ -41,7 +41,7 @@ The owner's own interface for KOReader e-readers: a plugin that replaces the she
 - Lua: KOReader's style (4-space indent, `local` everything, modules return a table). Widgets are small tables: `id`, `build(width, ctx)`, `height(ctx)`, settings prefix.
 - The schema is pure data, no functions, so a LuaJIT one-liner can dump it to JSON for the studio.
 - Settings live in `settings/kopanda/settings.lua` through KOReader's `LuaSettings`; reads fall back to the schema default, writes to undefined keys are refused.
-- Runtime state (the boot guard flag, one-time migration markers) lives in `settings/kopanda/state.lua` through `LuaSettings`; it is not a setting, has no schema entry, and the studio never reads or writes it.
+- Runtime state (the boot guard flag, one-time migration markers) lives in `settings/kopanda/state.lua` through `LuaSettings`, and a pull's stage, rollback set, probation and result live in `settings/kopanda/push/`; neither is a setting, neither has a schema entry, and the studio never reads or writes them.
 - Out of scope, don't re-suggest: context-aware looks (per-book themes, time rules), the CWNG library folder, the Xteink X4 Pro, publishing the plugin, translations.
 - Open requirement questions live in Tiller (`tiller queue --kind answer_question`). Ask them one at a time.
 
