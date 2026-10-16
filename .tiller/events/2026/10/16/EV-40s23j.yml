@@ -1,0 +1,14 @@
+id: EV-40s23j
+type: add.task
+at: 2026-10-16T18:00:00.073503Z
+contributor: allen
+command: add task nav-bar/nav-bar/goldens
+targets:
+    - T-1r8qb2
+after:
+    feature: F-78e5ij
+    key: nav-bar/nav-bar/goldens
+    status: proposed
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/goldens/task.md
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/goldens/task.yml

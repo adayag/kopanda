@@ -1,0 +1,14 @@
+id: EV-enwp6w
+type: add.task
+at: 2026-10-16T17:59:59.882781Z
+contributor: allen
+command: add task nav-bar/nav-bar/home-band
+targets:
+    - T-rl8eso
+after:
+    feature: F-78e5ij
+    key: nav-bar/nav-bar/home-band
+    status: proposed
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/home-band/task.md
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/home-band/task.yml

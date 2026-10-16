@@ -1,0 +1,13 @@
+id: EV-bpjw2t
+type: spec.feature
+at: 2026-10-16T18:20:43.919053Z
+contributor: allen
+command: spec feature F-78e5ij
+targets:
+    - F-78e5ij
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/feature.yml

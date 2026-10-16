@@ -1,0 +1,15 @@
+id: EV-48gdfa
+type: order.tasks
+at: 2026-10-16T18:00:00.167413Z
+contributor: allen
+command: order task T-3648b1 T-rl8eso T-9h0fhs T-1r8qb2
+targets:
+    - F-78e5ij
+after:
+    order:
+        - T-3648b1
+        - T-rl8eso
+        - T-9h0fhs
+        - T-1r8qb2
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/feature.yml

@@ -1,0 +1,13 @@
+id: EV-kpjj81
+type: rename.title.task
+at: 2026-10-16T18:05:02.230818Z
+contributor: allen
+command: rename task T-1r8qb2 --title "File-browser goldens in both looks on both profiles and their paint budget"
+targets:
+    - T-1r8qb2
+before:
+    title: File-browser goldens, the regenerated home goldens and the paint budget
+after:
+    title: File-browser goldens in both looks on both profiles and their paint budget
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/goldens/task.yml

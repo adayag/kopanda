@@ -1,0 +1,14 @@
+id: EV-e1rues
+type: add.task
+at: 2026-10-16T17:59:59.977576Z
+contributor: allen
+command: add task nav-bar/nav-bar/file-browser
+targets:
+    - T-9h0fhs
+after:
+    feature: F-78e5ij
+    key: nav-bar/nav-bar/file-browser
+    status: proposed
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/file-browser/task.md
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/file-browser/task.yml

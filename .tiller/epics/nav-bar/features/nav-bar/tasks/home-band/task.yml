@@ -1,0 +1,9 @@
+id: T-rl8eso
+key: nav-bar/nav-bar/home-band
+title: The home reserves the bar's band, draws it, routes its taps first, and its goldens are regenerated
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-3648b1

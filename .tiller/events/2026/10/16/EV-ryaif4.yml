@@ -1,0 +1,18 @@
+id: EV-ryaif4
+type: unlink.task
+at: 2026-10-16T18:05:02.156918Z
+contributor: allen
+command: unlink task T-1r8qb2
+targets:
+    - T-1r8qb2
+before:
+    depends_on:
+        - T-rl8eso
+        - T-9h0fhs
+after:
+    depends_on:
+        - T-9h0fhs
+    removed:
+        - T-rl8eso
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/goldens/task.yml

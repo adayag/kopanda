@@ -1,0 +1,13 @@
+id: EV-169ko5
+type: rename.title.task
+at: 2026-10-16T18:05:02.310012Z
+contributor: allen
+command: rename task T-rl8eso --title "The home reserves the bar's band, draws it, routes its taps first, and its goldens are regenerated"
+targets:
+    - T-rl8eso
+before:
+    title: The home reserves the bar's band, draws it and routes its taps first
+after:
+    title: The home reserves the bar's band, draws it, routes its taps first, and its goldens are regenerated
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/home-band/task.yml
