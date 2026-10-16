@@ -220,7 +220,7 @@ looks": 3 px ink outlines, hard ink shadows of 4 px on tiles, flat accent fills,
 | `body_gap` (the header rule to the body's first row) | 18 (EditLayout:27; LauncherManage:27 draws 10) | 18 |
 | `button_outline_color`, `button_outline_width`, `button_fill_color` | `ink`, 1, false (EditLayout:24) | `outline`, 3, `paper` |
 | `button_padding.x`, `.y` | 14, 8 (EditLayout:24) | 14, 8 |
-| `card_gap`, `card_padding.x`, `.y` | 12, 14, 12 (EditLayout:27, :29) | 12, 14, 12 |
+| `card_gap`, `card_padding.x`, `.y` | 12, 14, 12 (EditLayout:27, :29) | 10, 14, 12 (10 so the default layout's five rows fit with one selected) |
 | `card_outline_color`, `card_outline_width` | `hairline`, 1 (EditLayout:29) | `outline`, 3 |
 | `selected_outline_color`, `selected_fill_color` | `ink`, `hairline_light` (EditLayout:43; see Notes) | `outline`, `mustard` |
 | `arrow_size`, `arrow_gap` | 28, 14 (EditLayout:30-32) | 28, 14 |
