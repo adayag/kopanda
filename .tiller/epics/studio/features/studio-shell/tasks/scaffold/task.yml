@@ -1,7 +1,7 @@
 id: T-6yxswg
 key: studio/studio-shell/scaffold
 title: Studio package, env config, Express server and Vite UI with dev and start
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -17,6 +17,12 @@ accepted_against:
         value: git:25f054c
         observed_at: 2026-10-16T17:01:28.873018Z
 branch: tiller/studio/studio-shell/scaffold
+review_ref:
+    branch: tiller/studio/studio-shell/scaffold
+    head:
+        kind: git_commit
+        value: git:7881d87
+        observed_at: 2026-10-16T17:11:11.392569Z
 gates:
     build:
         required: true
