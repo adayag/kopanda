@@ -1,4 +1,5 @@
 import type { LuaKey } from "../core/lua.js";
+import type { Candidate } from "../server/geocoding.js";
 import type { ProfileListing, ProfileWithPath } from "../server/profiles.js";
 import type { SettingsState } from "../server/settings-file.js";
 
@@ -72,4 +73,10 @@ export async function putSetting(id: string, key: string, value: unknown): Promi
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ value }),
   });
+}
+
+/** The places Open-Meteo offers for query, asked through the studio's server. */
+export async function searchPlaces(query: string): Promise<Candidate[]> {
+  const { candidates } = await requestJson<{ candidates: Candidate[] }>(`/api/geocode?q=${encodeURIComponent(query)}`);
+  return candidates;
 }

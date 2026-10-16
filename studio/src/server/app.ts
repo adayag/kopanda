@@ -1,5 +1,6 @@
 import express from "express";
 import type { Config } from "./config.js";
+import { geocodeRouter, type GeocodeOptions } from "./routes/geocode.js";
 import type { LayoutFitOptions } from "./routes/layout-fit.js";
 import { profilesRouter } from "./routes/profiles.js";
 
@@ -10,12 +11,15 @@ export interface AppOptions {
   api?: express.Router;
   /** The fit check's command and timeout; the repo's bin/layout-fit and 30 s by default. */
   layoutFit?: LayoutFitOptions;
+  /** How the place search reaches Open-Meteo; the global fetch and 10 s by default. */
+  geocode?: GeocodeOptions;
 }
 
 export function createApp(config: Config, options: AppOptions = {}): express.Express {
   const app = express();
 
   app.use("/api/profiles", profilesRouter(config.profilesDir, options.layoutFit));
+  app.use("/api/geocode", geocodeRouter(options.geocode));
 
   if (options.api) {
     app.use("/api", options.api);
