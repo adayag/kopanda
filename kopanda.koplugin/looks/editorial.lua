@@ -303,10 +303,15 @@ return {
         editor_share = {
             face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "muted",
         },
-        -- A launcher entry's label (LauncherManage.dc.html:32).
-        editor_label = { face = "strong", size = 16, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
-        -- Its kind line (LauncherManage.dc.html:33).
-        editor_kind = { face = "text", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
+        -- A launcher entry's label (LauncherManage.dc.html:32), at the browser's normal line height
+        -- of about 1.3, so six rows fit above the add-an-entry foot (owner decision).
+        editor_label = {
+            face = "strong", size = 16, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
+        },
+        -- Its kind line (LauncherManage.dc.html:33), at the same line height.
+        editor_kind = {
+            face = "text", size = 11, uppercase = true, tracking = 0.1, line_height = 0.3, color = "muted",
+        },
         -- The note under the kinds (LauncherManage.dc.html:103).
         editor_note = { face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "muted" },
     },

@@ -14,6 +14,7 @@ describe("the folder sheet", function()
     local lfs = require("libs/libkoreader-lfs")
     local logger = require("logger")
     local time = require("ui/time")
+    local util = require("util")
     local Screen = require("device").screen
     local FolderSheet, Home, LauncherEntries, Settings, Sheet
 
@@ -171,7 +172,8 @@ describe("the folder sheet", function()
         local sheet = open(folder_of_five(temp_dir("folder-sheet-head")))
         assert.equals("folder", sheet.spec.name)
         assert.equals("folder", sheet.spec.band)
-        assert.same({ heading = "Tools", aside = "Folder · 5", aside_beside = true }, sheet.spec.header)
+        assert.same({ heading = "Tools", aside = "Folder · 5", aside_beside = true, hint = "Hold to edit" },
+            sheet.spec.header)
     end)
 
     it("lists the entries in order with their icons, labels and kinds, the off and unavailable ones as on the home",
@@ -294,7 +296,8 @@ describe("the folder sheet", function()
         assert.is_not_nil(sheet)
         assert.equals(sheet, harness.top())
         assert.equals("folder", sheet.spec.name)
-        assert.same({ heading = "Tools", aside = "Folder · 2", aside_beside = true }, sheet.spec.header)
+        assert.same({ heading = "Tools", aside = "Folder · 2", aside_beside = true, hint = "Hold to edit" },
+            sheet.spec.header)
         assert.same({ "Library", "History" }, { sheet.rows[1].row.label, sheet.rows[2].row.label })
         assert.equals(Home.shown, harness.top(2))
     end)
@@ -342,6 +345,62 @@ describe("the folder sheet", function()
         assert.equals(1, logged)
         assert.spy(err).was_not.called()
         assert.equals(sheet, Sheet.shown)
+    end)
+
+    describe("a hold", function()
+        local Editor
+
+        -- Stores a launcher of Library, Mine (one entry) and Tools (two), shows the home and
+        -- opens the sheet of the stored folder at index f; returns the sheet.
+        local function stored_folder(f)
+            local entries = {
+                { kind = "kopanda", target = "library" },
+                { kind = "folder", label = "Mine", entries = { { kind = "kopanda", target = "series" } } },
+                { kind = "folder", label = "Tools", entries = {
+                    { kind = "kopanda", target = "library" }, { kind = "koreader", target = "history" },
+                } },
+            }
+            assert.is_true(Settings.set("launcher.entries", entries))
+            fm_with_home()
+            Editor = require("editor")
+            return open(Settings.get("launcher.entries")[f])
+        end
+
+        it("in the sheet closes it and opens that folder's list, headed with its label", function()
+            local sheet = stored_folder(3)
+            local x, y = centre(sheet.rows[1].rect)
+            UIManager:sendEvent(Event:new("Gesture", harness.gesture("hold", x, y)))
+            assert.is_nil(Sheet.shown)
+            assert.is_false(UIManager:isWidgetShown(sheet))
+            local editor = Editor.shown
+            assert.is_not_nil(editor)
+            assert.equals(editor, harness.top())
+            assert.equals("Tools", editor.spec.title)
+            assert.equals("Folder · 2", editor.spec.aside)
+        end)
+
+        it("finds the folder by its contents when the sheet's entry is a copy", function()
+            local entries = {
+                { kind = "folder", label = "Mine", entries = { { kind = "kopanda", target = "series" } } },
+                { kind = "folder", label = "Tools", entries = { { kind = "kopanda", target = "library" } } },
+            }
+            assert.is_true(Settings.set("launcher.entries", entries))
+            fm_with_home()
+            Editor = require("editor")
+            local sheet = open(util.tableDeepCopy(entries[2]))
+            UIManager:sendEvent(Event:new("Gesture", harness.gesture("hold", centre(sheet.rows[1].rect))))
+            assert.equals("Tools", Editor.shown.spec.title)
+        end)
+
+        it("opens the top level when the folder is no longer stored", function()
+            fm_with_home()
+            Editor = require("editor")
+            local sheet = open({ kind = "folder", label = "Gone",
+                entries = { { kind = "kopanda", target = "series" } } })
+            UIManager:sendEvent(Event:new("Gesture", harness.gesture("hold", centre(sheet.rows[1].rect))))
+            assert.is_nil(Sheet.shown)
+            assert.equals("Launcher", Editor.shown.spec.title)
+        end)
     end)
 
     it("starts paint_ms from the tap, before the first child resolves", function()

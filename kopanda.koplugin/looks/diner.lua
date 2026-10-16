@@ -322,11 +322,13 @@ return {
         editor_share = {
             face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "muted",
         },
+        -- no board: Editorial's line height, so six rows fit above the add-an-entry foot
         editor_label = {
-            face = "strong", size = 16, uppercase = false, tracking = 0, line_height = 0, color = "ink",
+            face = "strong", size = 16, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
         },
+        -- no board: Editorial's line height
         editor_kind = {
-            face = "strong", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "muted",
+            face = "strong", size = 11, uppercase = true, tracking = 0.08, line_height = 0.3, color = "muted",
         },
         editor_note = { face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "muted" },
     },

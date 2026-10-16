@@ -3,7 +3,7 @@
 -- icon, its label and a hairline under it (Main.dc.html:60-62); Diner draws outlined tiles with
 -- the hard tile shadow, the first three on the look's accents, the icon at the top and the label
 -- at the foot (HomeRetro.dc.html:55-64). A tap on an entry runs it; a tap between entries falls
--- through to the home.
+-- through to the home. A hold anywhere on it opens launcher management.
 local Blitbuffer = require("ffi/blitbuffer")
 local Geom = require("ui/geometry")
 local Icons = require("icons")
@@ -15,6 +15,7 @@ local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
+local time = require("ui/time")
 
 local Launcher = {
     id = "launcher",
@@ -277,6 +278,13 @@ function Launcher.tap(ctx, ges, built)
         end
     end
     return false
+end
+
+-- A hold inside the slot opens launcher management's top level, its paint_ms from now, and
+-- returns nothing, so the home takes the hold as done. launcher_manage is required here, not at
+-- load, as the home's modules require the screens (home_gestures.lua's hold step).
+function Launcher.hold()
+    require("launcher_manage").open{ started = time.monotonic() }
 end
 
 -- True when the grid drew a Wi-Fi entry whose on or off no longer matches NetworkMgr:isWifiOn()

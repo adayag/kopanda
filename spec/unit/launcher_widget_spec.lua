@@ -193,12 +193,13 @@ describe("the launcher widget", function()
         end
     end
 
-    it("is registered as launcher, with a tap and a stale check", function()
+    it("is registered as launcher, with a tap, a hold and a stale check", function()
         local module = Widgets.get("launcher")
         assert.equals(Launcher, module)
         assert.equals("launcher", module.id)
         assert.equals("launcher", module.settings_prefix)
         assert.is_function(module.tap)
+        assert.is_function(module.hold)
         assert.is_function(module.stale)
     end)
 
@@ -701,6 +702,59 @@ describe("the launcher widget", function()
                 end
             end
             assert.is_true(logged)
+        end)
+    end)
+
+    describe("hold", function()
+        local Editor, InfoMessage
+
+        before_each(function()
+            Editor = package.loaded["editor"]
+            InfoMessage = require("ui/widget/infomessage")
+        end)
+
+        local function show_home()
+            assert.is_true(Settings.set("layout.rows", {
+                { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                { { widget = "launcher", share = 1 } },
+            }))
+            harness.show_fm()
+            harness.tick(2)
+            assert.equals(Home.shown, harness.top())
+            return Home.shown
+        end
+
+        it("opens launcher management's top level and returns nil", function()
+            local home = show_home()
+            local ges = harness.gesture("hold", 10, 10)
+            assert.is_nil(Launcher.hold(home.ctx, ges, nil))
+            local editor = Editor.shown
+            assert.is_not_nil(editor)
+            assert.equals("launcher", editor.spec.screen)
+            assert.equals("Launcher", editor.spec.title)
+            assert.equals(editor, harness.top())
+        end)
+
+        it("is what a hold on the launcher's slot runs through the home, opening no settings", function()
+            local home = show_home()
+            local slot
+            for _, s in ipairs(home.slots) do
+                if s.widget == "launcher" then
+                    slot = s
+                end
+            end
+            local rect = slot.rect
+            UIManager:sendEvent(Event:new("Gesture", harness.gesture("hold",
+                rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2))))
+            local editor = Editor.shown
+            assert.is_not_nil(editor)
+            assert.equals("launcher", editor.spec.screen)
+            assert.equals(editor, harness.top())
+            assert.equals(home, harness.top(2))
+            for _, widget in ipairs(harness.stack()) do
+                assert.is_not.equals(InfoMessage, getmetatable(widget))
+            end
+            assert.same({}, ran)
         end)
     end)
 

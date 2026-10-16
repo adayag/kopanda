@@ -1,9 +1,10 @@
 -- The editor frame: the full-screen screen edit layout and launcher management draw in, over
 -- whatever is shown (the home, the file browser or a book), in the active look. Its opener hands
 -- it a spec,
---   { screen, aside, title, body, foot }
+--   { screen, aside, title, body, foot, done }
 -- screen: what the settled signal reports ("edit_layout" or "launcher"); aside over title on
--- the header's left, Done on its right; body and foot: functions (ctx, width) returning rows,
+-- the header's left, Done on its right; done, optional, what Done runs in place of closing the
+-- editor, read at the tap; body and foot: functions (ctx, width) returning rows,
 -- each row a list of controls { kind, rect, draw, run, disabled }. kind is one of card, button,
 -- arrow, box, kind_button, caption, note or row; rect { x, y, w, h } is the control's place in
 -- its row, the row as tall as its lowest control; draw(bb, x, y) paints it at its screen place;
@@ -155,7 +156,16 @@ local function lay_out(editor, ctx)
     add(label, done.x + outline + pad_x, done.y + outline + pad_y)
 
     local places = { {
-        control = { kind = "button", run = function() close_editor(editor) end },
+        control = {
+            kind = "button",
+            run = function()
+                if spec.done then
+                    spec.done()
+                else
+                    close_editor(editor)
+                end
+            end,
+        },
         rect = done,
     } }
     local function place_row(row, y)
