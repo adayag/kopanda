@@ -163,6 +163,24 @@ return {
     expect(res.body.reason).toContain("UTF-8");
   });
 
+  const unreadableFiles: [string, string, RegExp][] = [
+    ["a repeated key holding a table", 'return { ["look"] = {}, look = "editorial" }\n', /^line 1, column 25: /],
+    ["tables nested too deeply", `return { x = ${"{".repeat(200000)}${"}".repeat(200000)} }\n`, /nested too deeply/],
+  ];
+
+  for (const [name, text, reason] of unreadableFiles) {
+    it(`calls a file with ${name} unreadable, giving the reason`, async () => {
+      const { app, store } = setup();
+      store(text);
+
+      const res = await request(app).get("/api/profiles/kobo/settings");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ exists: true, state: "unreadable", values: defaults });
+      expect(res.body.reason).toMatch(reason);
+    });
+  }
+
   it("is 404 for an unknown profile", async () => {
     const { app } = setup();
 
@@ -286,6 +304,8 @@ return {
     ["a value of the wrong shape", original, "weather.location", [1, 2], 400, /weather\.location/],
     ["a read-only file", 'return { look = "diner", schema_version = 2 }\n', "look", "editorial", 409, /schema version 2/],
     ["an unreadable file", "return { look = os.exit() }\n", "look", "editorial", 409, /line 1/],
+    ["a file with a repeated key holding a table", 'return { ["look"] = {}, look = "editorial" }\n', "look", "diner", 409, /line 1, column 25/],
+    ["a file with tables nested too deeply", `return { x = ${"{".repeat(200000)}${"}".repeat(200000)} }\n`, "look", "diner", 409, /nested too deeply/],
   ];
 
   for (const [name, text, key, value, status, error] of refusals) {

@@ -178,6 +178,10 @@ return {
     ["an empty file", "", 1, 1],
     ["a missing closing brace", "return { 1", 1, 11],
     ["a reserved word as a field name", "return { end = 1 }", 1, 10],
+    ["a repeated key holding a table, then a constant", 'return { ["x"] = {}, x = 1 }', 1, 22],
+    ["a repeated key holding a constant, then a table", "return { x = 1, x = {} }", 1, 17],
+    ["a repeated index holding a table, then a positional constant", 'return { [1] = {}, "b" }', 1, 20],
+    ["a positional table, then a repeated index", 'return { {"x"}, [1] = "a" }', 1, 18],
   ];
 
   for (const [name, text, line, column] of unreadable) {
@@ -190,6 +194,17 @@ return {
       expect(result.error).toMatch(new RegExp(`^line ${line}, column ${column}: .+`));
     });
   }
+
+  it("refuses tables nested too deeply with the line and column, and reads 1000 levels", () => {
+    const result = parse("return " + "{".repeat(100000) + "}".repeat(100000));
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.line).toBe(1);
+    expect(result.column).toBeGreaterThan(8);
+    expect(result.error).toMatch(/nested too deeply/);
+    expect(parse("return " + "{".repeat(1000) + "}".repeat(1000)).ok).toBe(true);
+  });
 
   it("counts columns in characters, not bytes", () => {
     const result = parse('return { "é", x }');

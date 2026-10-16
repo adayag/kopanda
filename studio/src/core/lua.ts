@@ -428,9 +428,16 @@ class Lexer {
   }
 }
 
+/**
+ * How deep tables may nest. LuaJIT loads 1000 levels; past this the reader refuses the file
+ * rather than run parse, toJson and dump out of stack.
+ */
+const MAX_DEPTH = 1000;
+
 /** Reads `return <value>` and nothing after it. */
 class Parser {
   private token: Token;
+  private depth = 0;
 
   constructor(private readonly lexer: Lexer) {
     this.token = lexer.next();
@@ -503,8 +510,20 @@ class Parser {
   }
 
   private table(): LuaTable {
-    this.take();
+    const open = this.take();
+    this.depth += 1;
+    if (this.depth > MAX_DEPTH) this.fail(`tables nested too deeply: more than ${MAX_DEPTH} levels`, open);
     const t = new LuaTable();
+    // Keys that held a table. LuaJIT builds a table's constant fields first and stores its
+    // table-valued fields after, so when such a key repeats the last value doesn't always win.
+    const tableKeys = new Set<LuaKey>();
+    const set = (key: LuaKey, value: LuaValue, at: Token) => {
+      if (t.fields.has(key) && (value instanceof LuaTable || tableKeys.has(key))) {
+        this.fail("a repeated key holding a table isn't read: LuaJIT may not keep its last value", at);
+      }
+      if (value instanceof LuaTable) tableKeys.add(key);
+      t.fields.set(key, value);
+    };
     let position = 0;
     while (!this.isPunct("}")) {
       if (this.isPunct("[")) {
@@ -516,16 +535,17 @@ class Parser {
         }
         this.expectPunct("]");
         this.expectPunct("=");
-        t.fields.set(key, this.value());
+        set(key, this.value(), keyToken);
       } else if (this.token.kind === "name" && !RESERVED.has(this.token.text)) {
         const name = this.token;
         this.take();
         if (!this.isPunct("=")) this.fail(`${name.text} isn't read: a name is a field only before =`, name);
         this.take();
-        t.fields.set(name.text, this.value());
+        set(name.text, this.value(), name);
       } else {
         position += 1;
-        t.fields.set(position, this.value());
+        const valueToken = this.token;
+        set(position, this.value(), valueToken);
       }
       if (this.isPunct(",") || this.isPunct(";")) {
         this.take();
@@ -534,13 +554,15 @@ class Parser {
       }
     }
     this.take();
+    this.depth -= 1;
     return t;
   }
 }
 
 /**
  * The value a settings file returns, read from its text or its bytes (UTF-8), or why it is
- * unreadable with the line and column. A repeated key keeps its last value, as Lua does.
+ * unreadable with the line and column. A repeated key keeps its last value, as Lua does, when
+ * every value it holds is a constant; one holding a table makes the file unreadable.
  */
 export function parse(text: string | Uint8Array): ParseResult {
   const bytes = typeof text === "string" ? encoder.encode(text) : text;
