@@ -1,9 +1,10 @@
 id: T-txsef1
 key: studio/studio-shell/profile-screens
 title: First screen lists profiles and opens one
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-n4uwe9
@@ -17,3 +18,4 @@ accepted_against:
         kind: git_commit
         value: git:25f054c
         observed_at: 2026-10-16T17:01:28.954413Z
+branch: tiller/studio/studio-shell/profile-screens
