@@ -1,0 +1,13 @@
+id: EV-0b0sqb
+type: check.task
+at: 2026-10-16T19:13:02.931103Z
+contributor: allen
+command: check task T-wmf18g
+targets:
+    - T-wmf18g
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/location-search/task.yml
