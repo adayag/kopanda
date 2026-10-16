@@ -122,4 +122,36 @@ describe("Books against the real CoverBrowser", function()
         assert.equals("frankenstein", record.title)
         assert.is_nil(record.series)
     end)
+
+    describe("the index", function()
+        it("lists a book under both authors and in its series after setBookInfoProperties", function()
+            local BookIndex = package.loaded["book_index"]
+            local path = fixture("frankenstein.epub")
+            for _, entry in ipairs(manifest) do
+                bim:extractBookInfo(fixture(entry.file), { max_cover_w = 150, max_cover_h = 225 })
+            end
+            bim:setBookInfoProperties(path, {
+                authors = "Mary Shelley\nPercy Shelley",
+                series = "Gothic",
+                series_index = 1.5,
+            })
+            local id = "file:" .. ffiutil.realpath(path)
+            local authors = {}
+            for _, entry in ipairs(BookIndex.authors(Books.all())) do
+                local ids = {}
+                for i, record in ipairs(entry.books) do
+                    ids[i] = record.id
+                end
+                authors[entry.name] = ids
+            end
+            assert.same({ id }, authors["Mary Shelley"])
+            assert.same({ id }, authors["Percy Shelley"])
+            local series = BookIndex.series(Books.all())
+            assert.equals(1, #series)
+            assert.equals("Gothic", series[1].name)
+            assert.equals(1, #series[1].books)
+            assert.equals(id, series[1].books[1].id)
+            assert.equals(1.5, series[1].books[1].series_index)
+        end)
+    end)
 end)
