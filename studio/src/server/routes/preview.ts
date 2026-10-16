@@ -26,6 +26,14 @@ export function previewRouter(dir: string, options: PreviewOptions = {}): expres
   const queue = options.queue ?? createPreviewQueue();
 
   router.post("/:id/preview", express.json(), async (req, res) => {
+    // The request's own close fires once its body is read; the response's fires when the client goes,
+    // which may be before this handler runs or while the profile is read.
+    const gone = new AbortController();
+    res.on("close", () => {
+      if (!res.writableFinished) gone.abort();
+    });
+    if (res.closed) gone.abort();
+
     const body: unknown = req.body;
     const { look, night } = typeof body === "object" && body !== null ? (body as { look?: unknown; night?: unknown }) : {};
     if (typeof look !== "string" || !LOOKS.includes(look)) {
@@ -33,12 +41,6 @@ export function previewRouter(dir: string, options: PreviewOptions = {}): expres
     }
     if (typeof night !== "boolean") throw new HttpError(400, "night must be true or false");
     const profile = await resolveProfile(dir, req.params.id);
-
-    // The request's own close fires once its body is read; the response's fires when the client goes.
-    const gone = new AbortController();
-    res.on("close", () => {
-      if (!res.writableFinished) gone.abort();
-    });
 
     let png: Buffer;
     try {

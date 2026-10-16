@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type express from "express";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
-import type { AddressInfo } from "node:net";
+import type { AddressInfo, Socket } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import request from "supertest";
@@ -189,14 +190,17 @@ describe("POST /api/profiles/:id/preview", () => {
 
   it("runs one render at a time, and never runs a queued request whose client has gone", async () => {
     const queue = createPreviewQueue();
-    let queued = 0;
+    const signals: AbortSignal[] = [];
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    // The first render waits for the test, so the others queue behind it whatever the machine's load.
     const counted: PreviewQueue = {
       run: (job, signal) => {
-        queued += 1;
-        return queue.run(job, signal);
+        signals.push(signal!);
+        return queue.run(signals.length === 1 ? () => held.then(job) : job, signal);
       },
     };
-    const { app, runs } = setup("png", { delayMs: 400, queue: counted });
+    const { app, runs } = setup("png", { delayMs: 200, queue: counted });
     const server = app.listen(0, "127.0.0.1");
     cleanups.push(() => server.close());
     await new Promise((resolve) => server.once("listening", resolve));
@@ -209,26 +213,72 @@ describe("POST /api/profiles/:id/preview", () => {
         signal,
       });
 
+    // Each request is sent once the one before it has reached the queue, so they arrive in this order.
     const first = send("diner", false);
+    await vi.waitFor(() => expect(signals).toHaveLength(1));
     const second = send("editorial", false);
+    await vi.waitFor(() => expect(signals).toHaveLength(2));
     const leaving = new AbortController();
     const third = send("diner", true, leaving.signal).catch((err: unknown) => err);
-    await vi.waitFor(() => expect(queued).toBe(3));
+    await vi.waitFor(() => expect(signals).toHaveLength(3));
     leaving.abort();
+    await vi.waitFor(() => expect(signals[2]!.aborted).toBe(true));
+    release();
 
     expect((await first).status).toBe(200);
     expect((await second).status).toBe(200);
     expect(await third).toBeInstanceOf(Error);
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    // A job queued now runs only after every job still in the queue has ended.
+    await queue.run(async () => undefined);
     const records = runs();
     const starts = records.filter((r) => r.event === "start");
     const ends = records.filter((r) => r.event === "end");
-    expect(starts.map((r) => r.args.slice(4, 6)).sort()).toEqual([
+    expect(starts.map((r) => r.args.slice(4, 6))).toEqual([
       ["diner", "day"],
       ["editorial", "day"],
     ]);
     expect(starts[1]!.at).toBeGreaterThanOrEqual(ends[0]!.at);
     expect(ends[0]!.args).toEqual(starts[0]!.args);
+  });
+
+  it("never runs a request whose client has gone while its profile was read", async () => {
+    const queue = createPreviewQueue();
+    const signals: AbortSignal[] = [];
+    const counted: PreviewQueue = {
+      run: (job, signal) => {
+        signals.push(signal!);
+        return queue.run(job, signal);
+      },
+    };
+    const { app, record, runs } = setup("png", { queue: counted });
+    // The profile's file is a pipe, so its read waits until the test writes it.
+    const profileFile = path.join(path.dirname(record), "colorsoft", "profile.json");
+    fs.rmSync(profileFile);
+    execFileSync("mkfifo", [profileFile]);
+    const server = app.listen(0, "127.0.0.1");
+    cleanups.push(() => server.close());
+    await new Promise((resolve) => server.once("listening", resolve));
+    const closed = new Promise((resolve) => server.once("connection", (socket: Socket) => socket.once("close", resolve)));
+    const leaving = new AbortController();
+    const sent = fetch(`http://127.0.0.1:${(server.address() as AddressInfo).port}/api/profiles/colorsoft/preview`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ look: "diner", night: false }),
+      signal: leaving.signal,
+    }).catch((err: unknown) => err);
+
+    // Opening the pipe to write waits until the server has opened it to read.
+    const writer = await fs.promises.open(profileFile, "w");
+    leaving.abort();
+    expect(await sent).toBeInstanceOf(Error);
+    await closed;
+    await writer.writeFile(JSON.stringify(colorsoft));
+    await writer.close();
+
+    await vi.waitFor(() => expect(signals).toHaveLength(1));
+    expect(signals[0]!.aborted).toBe(true);
+    await queue.run(async () => undefined);
+    expect(runs()).toEqual([]);
   });
 });
 
