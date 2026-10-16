@@ -1,7 +1,7 @@
 id: T-ghzxgk
 key: studio/device-push/pull-and-stage
 title: Studio menu pulls, verifies, stages and arms a profile's bundle
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -20,3 +20,30 @@ accepted_against:
         value: git:33cca18
         observed_at: 2026-10-16T19:41:31.345817Z
 branch: tiller/studio/device-push/pull-and-stage
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T20:59:03.816503Z
+        against:
+            kind: git_commit
+            value: git:ebceff4
+            observed_at: 2026-10-16T20:59:03.816496Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-ebceff4-out-1c62bd07ae1e3cd9c04cb25faf4e31d03b0ab3c05f399bfb8486125dd1c3ba1b.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T20:59:03.816503Z
+        against:
+            kind: git_commit
+            value: git:ebceff4
+            observed_at: 2026-10-16T20:59:03.816496Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-ebceff4-out-f85ecf14d795d01a01af7fefd5a0b8118366ee162b0228ce359a3d76a68d3d2a.txt

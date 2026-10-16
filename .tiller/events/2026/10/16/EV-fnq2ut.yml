@@ -1,0 +1,13 @@
+id: EV-fnq2ut
+type: check.task
+at: 2026-10-16T21:01:15.393448Z
+contributor: allen
+command: check task T-ghzxgk
+targets:
+    - T-ghzxgk
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/pull-and-stage/task.yml
