@@ -1,0 +1,11 @@
+id: EV-79o1sw
+type: claim.tweak
+at: 2026-10-16T00:20:44.152594Z
+contributor: allen
+command: claim tweak tweaks/cover-placeholder-word-split
+targets:
+    - TW-w4mx7i
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/cover-placeholder-word-split/tweak.yml

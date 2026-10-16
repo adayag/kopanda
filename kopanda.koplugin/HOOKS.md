@@ -665,6 +665,29 @@ Upgrading KOReader walks this list.
   `spec/unit/featured_cover_spec.lua` reads its `vertical_string_list`, `lines_per_page` and
   `line_with_ellipsis`, as `quote_spec.lua` does (the quote widget's entry above).
 
+### The placeholder title's size: `TextBoxWidget`'s split-word flags
+
+- `has_split_inside_word`, set on the box when a word was broken mid-word on any line, shown or
+  past `lines_per_page`: with xtext at `frontend/ui/widget/textboxwidget.lua:421-424`, without at
+  `:478-480`; not in the class defaults, so nil on a box that split nothing. `featured_cover.lua`
+  (`split_shown`) reads it first, as CoverBrowser's fake cover does before trying a smaller size
+  (`plugins/coverbrowser.koplugin/mosaicmenu.lua:211-214`), and `placeholder_text` builds the
+  title one size smaller, down to `MIN_TITLE_SIZE`, while a shown line splits a word.
+- `vertical_string_list[i].no_allowed_break_met`, the xtext line table stored whole (`:420`), its
+  flag the one that sets `has_split_inside_word` (`:421`). `split_shown` reads it on the shown
+  lines only, `1` to `math.min(lines_per_page, #vertical_string_list)`; `lines_per_page` is
+  `floor(height / line_height_px)` for a given `height` (`:180`), the lines drawn before the
+  ellipsis (`:253-254`). A split on a line past the ellipsis doesn't step the size down.
+- `use_xtext` (`:112`, `G_reader_settings:nilOrTrue("use_xtext")`, which the file manager's
+  developer menu flips, `frontend/apps/filemanager/filemanagermenu.lua:730-733`) picks the
+  fallback: without xtext the line tables (`:541-545`) carry no flag, so `split_shown` takes the
+  box's `has_split_inside_word` alone and a split on a hidden line also steps the size down.
+- If these change: a renamed `has_split_inside_word`, or a renamed `no_allowed_break_met` under
+  xtext, reads as no split, so the title stays at its size and breaks a word mid-word again; the
+  narrow-box test in `spec/unit/featured_cover_spec.lua` fails on the split title. A nil
+  `lines_per_page` makes `math.min` raise out of `FeaturedCover.build`. A renamed `use_xtext`
+  reads as the non-xtext fallback, smaller titles where only a hidden line split.
+
 ### The featured widget: `FileManager:openFile`, `onHome` and `FrameContainer`'s stripes
 
 - `FileManager:openFile(file)` (`frontend/apps/filemanager/filemanager.lua:1616-1639`): with no
