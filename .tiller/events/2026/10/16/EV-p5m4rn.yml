@@ -1,0 +1,13 @@
+id: EV-p5m4rn
+type: check.tweak
+at: 2026-10-16T01:30:19.249762Z
+contributor: allen
+command: check tweak TW-gs28tx
+targets:
+    - TW-gs28tx
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/quiet-check-output/tweak.yml

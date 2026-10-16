@@ -4,6 +4,11 @@
 #   bin/check              lint, unit specs, emulator specs; stops at the first failing stage
 #   bin/check --lint       luacheck alone
 #   bin/check <spec>...    exactly those spec files, no luacheck
+#   --verbose              with any of the above: luacheck's per-file lines and Busted's full gtest
+#                          output, KOReader's library-loading chatter included
+#
+# Without --verbose each stage prints luacheck's total or Busted's suite summary, plus each file with
+# a failing test and Busted's failure blocks in full.
 #
 # Exit 0 on success, 1 when a stage fails, 2 when the script refuses to run.
 set -euo pipefail
@@ -26,6 +31,17 @@ if [[ ! -x "$KOPANDA_EMULATOR/luajit" ]]; then
         "    set KOPANDA_EMULATOR to the emulator's koreader directory"
 fi
 
+verbose=0
+args=()
+for arg in "$@"; do
+    if [[ "$arg" == "--verbose" ]]; then
+        verbose=1
+    else
+        args+=("$arg")
+    fi
+done
+set -- ${args[@]+"${args[@]}"}
+
 KO_HOME="$(mktemp -d)"
 export KO_HOME
 trap 'rm -rf "$KO_HOME"' EXIT
@@ -33,18 +49,59 @@ printf 'KOPANDA_KO_HOME=%s\n' "$KO_HOME"
 
 run_lint() {
     echo "== lint: luacheck"
-    (cd "$KOPANDA_ROOT" && luacheck .)
+    if [[ $verbose -eq 1 ]]; then
+        (cd "$KOPANDA_ROOT" && luacheck .)
+    else
+        (cd "$KOPANDA_ROOT" && luacheck --quiet --no-color .)
+    fi
+}
+
+# Reads Busted's gtest output and keeps what a reader needs: a test's lines only when it fails or
+# errors, after the name of its file; Busted's own messages, such as a spec file that does not
+# load; and the suite summary. A test that ends the process is printed after its [ RUN ] line, the
+# only place its name appears. It drops gtest's per-file and per-test lines and the lines KOReader's
+# ffi/loadlib.lua:59,68,72,91,106,136,168-170 logs whenever a process loads a library.
+summarize() {
+    awk -v root="$KOPANDA_ROOT/" '
+        /^(has monolibtic\? |lib_(search_path|basic_format|version_format): |ffi\.(findlib|load): |package\.loadlib: )/ {
+            next
+        }
+        summary { print; next }
+        /^\[==========\] [0-9]+ tests? from / { summary = 1; print; next }
+        /^\[----------\] Running tests from / {
+            file = $0
+            sub(/^\[----------\] Running tests from /, "", file)
+            if (index(file, root) == 1) file = substr(file, length(root) + 1)
+        }
+        /^\[ RUN      \] / { intest = 1; buffered = 0; running = $0; next }
+        intest && /^\[(       OK | SKIPPED  )\] / { intest = 0; next }
+        intest && /^\[(  FAILED  |  ERROR   )\] / { buffer[++buffered] = $0; intest = 0; flush(); next }
+        intest { buffer[++buffered] = $0; next }
+        /^\[(==========|----------)\] / || /^$/ { next }
+        { print }
+        function flush(first,    i) {
+            if (!(file in named)) print "[  FAILED  ] in " file
+            named[file] = 1
+            if (first != "") print first
+            for (i = 1; i <= buffered; i++) print buffer[i]
+        }
+        END { if (intest) flush(running) }
+    '
 }
 
 run_busted() {
     local lua_path="?.lua;common/?.lua;frontend/?.lua;spec/front/unit/?.lua"
     lua_path="$lua_path;spec/rocks/share/lua/5.1/?.lua;spec/rocks/share/lua/5.1/?/init.lua"
     lua_path="$lua_path;$KOPANDA_ROOT/spec/?.lua;$KOPANDA_ROOT/kopanda.koplugin/?.lua"
+    local busted=(./luajit -e 'require "busted.runner" {standalone = false}' /dev/null
+        --output=gtest --sort-files --helper="$KOPANDA_ROOT/spec/helper.lua" --loaders=lua --lazy)
     cd "$KOPANDA_EMULATOR"
-    LUA_PATH="$lua_path" \
-    LUA_CPATH='?.so;common/?.so;spec/rocks/lib/lua/5.1/?.so' \
-    ./luajit -e 'require "busted.runner" {standalone = false}' /dev/null \
-        --output=gtest --sort-files --helper="$KOPANDA_ROOT/spec/helper.lua" --loaders=lua --lazy -- "$@"
+    local lua_cpath='?.so;common/?.so;spec/rocks/lib/lua/5.1/?.so'
+    if [[ $verbose -eq 1 ]]; then
+        LUA_PATH="$lua_path" LUA_CPATH="$lua_cpath" "${busted[@]}" -- "$@"
+    else
+        LUA_PATH="$lua_path" LUA_CPATH="$lua_cpath" "${busted[@]}" -- "$@" 2>&1 | summarize
+    fi
 }
 
 # Runs every spec under spec/<layer>/; a missing or empty layer is a clean no-op.
