@@ -1,0 +1,51 @@
+#!/usr/bin/env node
+// A fake bin/preview. It appends a start and an end record, each { event, args, at }, as JSON lines to
+// $KOPANDA_FAKE_PREVIEW_DIR/runs, and behaves by $KOPANDA_FAKE_PREVIEW_MODE:
+//   png (the default)  writes a 1×1 PNG to <out.png> (a copy to the record directory's out.png) after
+//                      $KOPANDA_FAKE_PREVIEW_DELAY_MS, then prints the answer's JSON line
+//   fail               exit 1, stderr "line 1" to "line 45"
+//   refuse             exit 2, one line of stderr
+//   sleep              starts a child sleep holding stderr, as the real script's luajit does, writes its
+//                      pid to the record directory's child-pid, and never answers
+//   junk               exit 0, stdout that isn't JSON
+import { spawn } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+
+const args = process.argv.slice(2);
+const record = process.env.KOPANDA_FAKE_PREVIEW_DIR;
+const mode = process.env.KOPANDA_FAKE_PREVIEW_MODE ?? "png";
+const delay = Number(process.env.KOPANDA_FAKE_PREVIEW_DELAY_MS ?? 0);
+const png = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==",
+  "base64",
+);
+
+function note(event) {
+  fs.appendFileSync(path.join(record, "runs"), `${JSON.stringify({ event, args, at: Date.now() })}\n`);
+}
+
+note("start");
+if (mode === "fail") {
+  for (let n = 1; n <= 45; n++) process.stderr.write(`line ${n}\n`);
+  note("end");
+  process.exit(1);
+} else if (mode === "refuse") {
+  process.stderr.write("bin/preview: no luajit at /nonexistent/luajit\n");
+  note("end");
+  process.exit(2);
+} else if (mode === "sleep") {
+  const child = spawn("sleep", ["30"], { stdio: ["ignore", "ignore", "inherit"] });
+  fs.writeFileSync(path.join(record, "child-pid"), String(child.pid));
+  setTimeout(() => {}, 30000);
+} else if (mode === "junk") {
+  process.stdout.write("has monolibtic? yes\n");
+  note("end");
+} else {
+  setTimeout(() => {
+    fs.writeFileSync(args[6], png);
+    fs.writeFileSync(path.join(record, "out.png"), png);
+    process.stdout.write(`${JSON.stringify({ png: args[6], width: 1, height: 1, paint_ms: 5 })}\n`);
+    note("end");
+  }, delay);
+}
