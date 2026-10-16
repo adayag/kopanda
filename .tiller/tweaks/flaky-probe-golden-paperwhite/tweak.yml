@@ -24,24 +24,24 @@ gates:
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-16T01:26:12.219909Z
+        run_at: 2026-10-16T01:27:28.809527Z
         against:
             kind: git_commit
-            value: git:fc0d53e
-            observed_at: 2026-10-16T01:26:12.219907Z
+            value: git:b1ba3de
+            observed_at: 2026-10-16T01:27:28.809526Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/build-fc0d53e-out-5600643974a3eb4916211f5eaeb0e97506bb9f7559dca6c32dde4fbaf4d0b285.txt
+              ref: artifacts/tiller/gates/build-b1ba3de-out-bdcb507b8387e322f2a7cfec68ac018530583448f52b146ab5b67e28e3fe0c13.txt
     tests:
         required: true
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-16T01:26:12.219909Z
+        run_at: 2026-10-16T01:27:28.809527Z
         against:
             kind: git_commit
-            value: git:fc0d53e
-            observed_at: 2026-10-16T01:26:12.219907Z
+            value: git:b1ba3de
+            observed_at: 2026-10-16T01:27:28.809526Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/tests-fc0d53e-out-6a20e30779460896df8ff7268934d3c4165daf8d0bbaa45955face513f4d60c8.txt
+              ref: artifacts/tiller/gates/tests-b1ba3de-out-d87244520bb5af11f49a97362e39c19c650d59be47647395fce15d8acd353fcc.txt
