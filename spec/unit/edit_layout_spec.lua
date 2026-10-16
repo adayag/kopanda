@@ -235,6 +235,49 @@ describe("edit layout", function()
         end
     end)
 
+    it("outlines the selected column one board px heavier than the other boxes, in both looks", function()
+        local Blitbuffer = require("ffi/blitbuffer")
+        local Looks = require("looks")
+        local Screen = require("device").screen
+        local function pixel(bb, x, y)
+            local c = bb:getPixel(x, y):getColorRGB32()
+            return { c:getR(), c:getG(), c:getB() }
+        end
+        local function rgb(hex)
+            local r, g, b = hex:match("^#(%x%x)(%x%x)(%x%x)$")
+            return { tonumber(r, 16), tonumber(g, 16), tonumber(b, 16) }
+        end
+        for _, id in ipairs({ "editorial", "diner" }) do
+            assert.is_true(Settings.set("look", id))
+            local editor = open(four_rows(), { selected = 1 })
+            local size = Screen:getSize()
+            local bb = Blitbuffer.new(size.w, size.h, Blitbuffer.TYPE_BBRGB32)
+            editor:paintTo(bb, 0, 0)
+            local look = Looks.get(id)
+            local palette = Looks.palette(look, "day")
+            local ink = rgb(palette[look.editor.button_outline_color])
+            local paper = rgb(palette.paper)
+            local board = look.editor.button_outline_width
+            -- The pixels just inside and just past an outline board_px wide at the left edge of
+            -- row 1's box j.
+            local function edge(j, board_px)
+                local rect = one({ kind = "box", row = 1, column = j }).rect
+                local w = Screen:scaleBySize(board_px)
+                local y = rect.y + math.floor(rect.h / 2)
+                return pixel(bb, rect.x + w - 1, y), pixel(bb, rect.x + w + 1, y)
+            end
+            local sel_in, sel_out = edge(1, board + 1)
+            local plain_in, plain_out = edge(2, board)
+            bb:free()
+            assert.same(ink, sel_in, id)
+            assert.same(paper, sel_out, id)
+            assert.same(ink, plain_in, id)
+            assert.same(paper, plain_out, id)
+            Editor.close()
+            harness.teardown()
+        end
+    end)
+
     describe("a tap on a card", function()
         it("selects its row and shows its buttons, Width and Remove column on a row of two", function()
             open()

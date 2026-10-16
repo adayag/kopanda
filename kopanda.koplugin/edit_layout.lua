@@ -263,7 +263,7 @@ local function card(state, k, i, width)
     y = y + caption_line:getSize().h + gap
 
     -- A box per column, sharing the width evenly, its label at the left and its share at the
-    -- right; on paper, the selected column's outline doubled.
+    -- right; on paper, the selected column's outline one board px heavier.
     local box_out, box_pad_x, box_pad_y = s(t.button_outline_width), s(t.box_padding.x), s(t.box_padding.y)
     local box_w = math.floor((inner_w - (#row - 1) * gap) / #row)
     local box_h = 0
@@ -281,7 +281,7 @@ local function card(state, k, i, width)
             label_line = label_line, share_line = share_line }
     end
     for j, b in ipairs(boxes) do
-        local width_px = selected and selected.column == j and 2 * box_out or box_out
+        local width_px = selected and selected.column == j and s(t.button_outline_width + 1) or box_out
         local box_y = y
         paints[#paints + 1] = {
             draw = function(bb, x0, y0)
