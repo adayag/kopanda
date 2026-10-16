@@ -1,9 +1,10 @@
 id: T-9h0fhs
 key: nav-bar/nav-bar/file-browser
 title: 'The bar under KOReader''s file browser: the setupLayout patch, its failsafe and its tripwire'
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-3648b1
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:fae01e4
         observed_at: 2026-10-16T20:56:58.495297Z
+branch: tiller/nav-bar/nav-bar/file-browser
+review_ref:
+    branch: tiller/nav-bar/nav-bar/file-browser
+    head:
+        kind: git_commit
+        value: git:1b88c37
+        observed_at: 2026-10-16T21:54:11.302419Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T21:52:06.092059Z
+        against:
+            kind: git_commit
+            value: git:cbf97d6
+            observed_at: 2026-10-16T21:52:06.092055Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-cbf97d6-out-e714c3cf44a11287482c88b4b318a72770f3ccf233f5d5fb3be9b9e7c2817e19.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T21:52:06.092059Z
+        against:
+            kind: git_commit
+            value: git:cbf97d6
+            observed_at: 2026-10-16T21:52:06.092055Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-cbf97d6-out-e8506c0e1c20b8fdacfba883cd08381e743b1a39542eaab1164ae9ccb6cfb1a3.txt

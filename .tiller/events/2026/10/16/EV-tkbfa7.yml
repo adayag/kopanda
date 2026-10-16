@@ -1,0 +1,13 @@
+id: EV-tkbfa7
+type: check.task
+at: 2026-10-16T21:54:03.312106Z
+contributor: allen
+command: check task T-9h0fhs
+targets:
+    - T-9h0fhs
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/file-browser/task.yml
