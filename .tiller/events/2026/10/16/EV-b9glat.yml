@@ -1,0 +1,13 @@
+id: EV-b9glat
+type: check.task
+at: 2026-10-16T17:33:40.167207Z
+contributor: allen
+command: check task T-txsef1
+targets:
+    - T-txsef1
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/profile-screens/task.yml

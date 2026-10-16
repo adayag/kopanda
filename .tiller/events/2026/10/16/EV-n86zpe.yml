@@ -1,0 +1,13 @@
+id: EV-n86zpe
+type: claim.task
+at: 2026-10-16T17:23:42.14711Z
+contributor: allen
+command: claim task T-txsef1
+targets:
+    - T-txsef1
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/profile-screens/task.yml

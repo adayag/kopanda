@@ -1,0 +1,16 @@
+id: EV-eujwv0
+type: submit.task
+at: 2026-10-16T17:33:40.445545Z
+contributor: allen
+command: submit task T-txsef1
+targets:
+    - T-txsef1
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/studio-shell/profile-screens
+        head: git:5d7b1ce
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/profile-screens/task.yml
