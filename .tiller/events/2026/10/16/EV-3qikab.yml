@@ -1,0 +1,16 @@
+id: EV-3qikab
+type: submit.task
+at: 2026-10-16T22:21:35.645546Z
+contributor: allen
+command: submit task T-f4ooin
+targets:
+    - T-f4ooin
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/preview/preview-script
+        head: git:4377f68
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-script/task.yml

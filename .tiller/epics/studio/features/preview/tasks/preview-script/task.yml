@@ -1,7 +1,7 @@
 id: T-f4ooin
 key: studio/preview/preview-script
 title: bin/preview renders a profile's home in one look, day or night
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:2bbb0b4
         observed_at: 2026-10-16T21:49:07.290258Z
 branch: tiller/studio/preview/preview-script
+review_ref:
+    branch: tiller/studio/preview/preview-script
+    head:
+        kind: git_commit
+        value: git:4377f68
+        observed_at: 2026-10-16T22:21:35.645401Z
 gates:
     build:
         required: true
