@@ -41,10 +41,10 @@ describe("icons", function()
         end
         table.sort(ids)
         assert.same({
-            "authors", "back", "bookmark", "check", "close", "folder", "history", "home", "info",
-            "layout", "library", "list", "moon", "open_book", "plugin_missing", "power",
-            "rotation_lock", "screenshot", "series", "settings", "sun", "sync", "terminal", "wifi",
-            "wifi_off",
+            "action", "authors", "back", "bookmark", "check", "chevron_down", "chevron_up", "close",
+            "folder", "history", "home", "info", "layout", "library", "list", "moon", "open_book",
+            "plugin_missing", "power", "rotation_lock", "screenshot", "series", "settings", "sun", "sync",
+            "terminal", "wifi", "wifi_off",
         }, ids)
     end)
 

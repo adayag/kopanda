@@ -302,6 +302,89 @@ describe("KoPanda failing safe", function()
         end)
     end)
 
+    describe("an editor screen", function()
+        local Editor
+
+        local function editors_on_stack()
+            local count = 0
+            for _, widget in ipairs(harness.stack()) do
+                if widget.name == "kopanda_editor" then
+                    count = count + 1
+                end
+            end
+            return count
+        end
+
+        -- An editor of one card over the file manager, the home closed; card may change the card.
+        local function show(card)
+            harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            assert.equals(FileManager.instance, harness.top())
+            Editor = require("editor")
+            Editor.show({
+                screen = "edit_layout",
+                aside = "Home",
+                title = "Edit layout",
+                body = function(_, width)
+                    local control = { kind = "card", rect = { x = 0, y = 0, w = width, h = 100 },
+                        draw = function() end, run = function() end }
+                    if card then
+                        card(control)
+                    end
+                    return { { control } }
+                end,
+                foot = function()
+                    return {}
+                end,
+            })
+        end
+
+        local function no_editor()
+            assert.equals(0, editors_on_stack())
+            assert.is_nil(Editor.shown)
+        end
+
+        it("leaves the file manager on top when its body throws in the show", function()
+            show(function()
+                error("kopanda-test: editor build failed")
+            end)
+            no_editor()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: editor build failed"))
+        end)
+
+        it("closes itself from the next tick when its paint throws", function()
+            show(function(control)
+                control.draw = function()
+                    error("kopanda-test: editor paint failed")
+                end
+            end)
+            assert.equals(Editor.shown, harness.top())
+            local ok = pcall(harness.tick, 3)
+            assert.is_true(ok)
+            no_editor()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: editor paint failed"))
+        end)
+
+        it("closes itself when a control's run throws", function()
+            show(function(control)
+                control.run = function()
+                    error("kopanda-test: editor run failed")
+                end
+            end)
+            local place = Editor.shown.places[2]
+            local rect = place.rect
+            local ok = pcall(UIManager.sendEvent, UIManager, Event:new("Gesture",
+                harness.gesture("tap", rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2))))
+            assert.is_true(ok)
+            no_editor()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: editor run failed"))
+        end)
+    end)
+
     describe("the dispatcher wrapper", function()
         local Dispatcher = require("dispatcher")
 
