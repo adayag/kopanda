@@ -1,0 +1,13 @@
+id: EV-qk1k7f
+type: check.feature
+at: 2026-10-16T17:05:11.996733Z
+contributor: allen
+command: check feature F-sn4px5
+targets:
+    - F-sn4px5
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/home/features/device-menus/feature.yml
