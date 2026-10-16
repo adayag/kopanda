@@ -10,7 +10,6 @@ describe("the home sheet", function()
     local lfs = require("libs/libkoreader-lfs")
     local Home, HomeSheet, Sheet
 
-    local EDIT_LAYOUT_TEXT = "Edit layout comes with the settings menus."
     local SETTINGS_TEXT = "KoPanda has no settings yet."
 
     -- Undo steps for the running test, run last first after it. busted keeps only a test's last
@@ -131,22 +130,17 @@ describe("the home sheet", function()
     end)
 
     describe("Edit layout", function()
-        it("shows its note with no timeout over the home and schedules nothing", function()
+        it("opens the edit layout screen over the home, with no note", function()
             open_sheet()
             local home = Home.shown
-            local schedule = spy.on(UIManager, "scheduleIn")
-            cleanup(function()
-                schedule:revert()
-            end)
             tap("Edit layout")
-            assert.spy(schedule).was_not.called()
-            local note = message()
-            assert.is_not_nil(note)
-            assert.equals(EDIT_LAYOUT_TEXT, note.text)
-            assert.is_nil(note.timeout)
-            assert.equals(note, harness.top())
+            local Editor = require("editor")
+            assert.is_not_nil(Editor.shown)
+            assert.equals("edit_layout", Editor.shown.spec.screen)
+            assert.equals(Editor.shown, harness.top())
             assert.equals(home, harness.top(2))
             assert.equals(home, Home.shown)
+            assert.is_nil(message())
             assert.is_nil(Sheet.shown)
         end)
     end)

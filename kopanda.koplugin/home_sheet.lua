@@ -2,13 +2,13 @@
 -- the file browser, Refresh weather with its age, Wi-Fi with its state, KoPanda settings and
 -- Sleep. Wi-Fi and Sleep are launcher entries, resolved and run as the launcher runs them. Each
 -- row's detail is read when the sheet opens. Nothing here writes a setting.
+local EditLayout = require("edit_layout")
 local Home = require("home")
-local InfoMessage = require("ui/widget/infomessage")
 local LauncherEntries = require("launcher_entries")
 local SettingsMenu = require("settings_menu")
 local Sheet = require("sheet")
-local UIManager = require("ui/uimanager")
 local Weather = require("weather")
+local time = require("ui/time")
 
 local HomeSheet = {}
 
@@ -54,9 +54,8 @@ local function spec(ctx)
             {
                 icon = "layout",
                 label = "Edit layout",
-                -- No timeout, so no timer (frontend/ui/widget/infomessage.lua:53, :283-290).
                 run = function()
-                    UIManager:show(InfoMessage:new{ text = "Edit layout comes with the settings menus." })
+                    EditLayout.open{ started = time.monotonic() }
                 end,
             },
             {

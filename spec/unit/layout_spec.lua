@@ -342,6 +342,33 @@ describe("Layout", function()
             assert.is_true(flipped)
         end)
 
+        it("counts no row left out on the Colorsoft and one for a layout one row too tall, logging nothing", function()
+            local warned = spy.on(logger, "warn")
+            heights = { date = 60, clock = 60, quote = 100, weather = 20, stats = 20 }
+            local fitting = Layout.overflow(default, ctx(diner, 1264, 1680))
+            heights = { date = 60, clock = 60, quote = 700, weather = 300, stats = 20 }
+            local too_tall = Layout.overflow(default, ctx(diner, 1680, 1264))
+            warned:revert()
+            assert.equals(0, fitting)
+            assert.equals(1, too_tall)
+            assert.spy(warned).was_not_called()
+        end)
+
+        it("counts exactly the rows the placement drops, zero exactly when fits is true", function()
+            local counted = {}
+            for _, look in ipairs({ editorial, diner }) do
+                for quote = 400, 2400, 40 do
+                    heights = { date = 60, clock = 60, quote = quote, weather = quote, stats = 20 }
+                    local c = ctx(look, 1264, 1680)
+                    local overflow = Layout.overflow(default, c)
+                    assert.equals(#Layout.arrange(default, c).dropped, overflow, quote)
+                    assert.equals(overflow == 0, Layout.fits(default, c), quote)
+                    counted[overflow] = true
+                end
+            end
+            assert.is_true(counted[0] and counted[1] and counted[2], "the sweep reaches 0, 1 and 2")
+        end)
+
         it("lays out a landscape screen, dropping what doesn't fit", function()
             heights = { date = 60, clock = 60, quote = 700, weather = 300, stats = 20 }
             local c = ctx(diner, 1680, 1264)
