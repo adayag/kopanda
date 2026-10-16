@@ -1,0 +1,11 @@
+id: EV-j5u2da
+type: claim.tweak
+at: 2026-10-16T00:20:46.479861Z
+contributor: allen
+command: claim tweak tweaks/flaky-probe-golden-paperwhite
+targets:
+    - TW-4ae71f
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/flaky-probe-golden-paperwhite/tweak.yml
