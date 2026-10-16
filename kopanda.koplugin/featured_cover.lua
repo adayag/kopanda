@@ -16,7 +16,6 @@ local Layout = require("layout")
 local Looks = require("looks")
 local Math = require("optmath")
 local TextBoxWidget = require("ui/widget/textboxwidget")
-local TextWidget = require("ui/widget/textwidget")
 local Typeset = require("typeset")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -26,7 +25,7 @@ local FeaturedCover = {}
 
 -- The placeholder title's most lines, ending in an ellipsis past them.
 local TITLE_LINES = 4
--- The smallest size the placeholder title steps down to so its widest word fits on a line.
+-- The smallest size the placeholder title steps down to so no word of it is split.
 local MIN_TITLE_SIZE = 8
 -- The checks while an extraction runs, one a second, before giving up.
 local MAX_CHECKS = 30
@@ -167,15 +166,23 @@ function FeaturedCover.box(width, ctx)
     return w, h
 end
 
--- The width in pixels of text's widest word set in face.
-local function widest_word(text, face)
-    local widest = 0
-    for word in text:gmatch("%S+") do
-        local widget = TextWidget:new{ text = word, face = face }
-        widest = math.max(widest, widget:getSize().w)
-        widget:free()
+-- Whether box split a word on a line it shows. TextBoxWidget sets has_split_inside_word for a
+-- split on any line, shown or past its lines_per_page (frontend/ui/widget/textboxwidget.lua:421-424,
+-- :476-480); with xtext each line keeps its own no_allowed_break_met (:420-421), so the shown lines
+-- are read. Without xtext only the box's flag is there.
+local function split_shown(box)
+    if not box.has_split_inside_word then
+        return false
     end
-    return widest
+    if not box.use_xtext then
+        return true
+    end
+    for i = 1, math.min(box.lines_per_page, #box.vertical_string_list) do
+        if box.vertical_string_list[i].no_allowed_break_met then
+            return true
+        end
+    end
+    return false
 end
 
 -- The placeholder's title and authors in a box inner_w wide and inner_h high: the title at the
@@ -197,33 +204,39 @@ local function placeholder_text(book, inner_w, inner_h, ctx, background)
     if part.uppercase then
         title = title:upper()
     end
-    -- TextBoxWidget breaks a word wider than its box mid-word, so the size steps down, to
-    -- MIN_TITLE_SIZE at least, until the widest word fits.
+    -- TextBoxWidget breaks a word wider than its box mid-word, so the box is built again one size
+    -- smaller, to MIN_TITLE_SIZE at least, while it splits one, as CoverBrowser's fake cover does
+    -- (plugins/coverbrowser.koplugin/mosaicmenu.lua:211-214).
     local file = look.faces[part.face].file
     local size = Layout.font_size(part.size, ctx.text_size)
-    local face = Fonts.face(file, size)
-    while face and size > MIN_TITLE_SIZE and widest_word(title, face) > inner_w do
-        size = size - 1
-        face = Fonts.face(file, size)
-    end
-    if not face then
-        error("the cover title's font didn't load")
-    end
-    -- TextBoxWidget's line is (1 + line_height) em, rounded (frontend/ui/widget/textboxwidget.lua:151).
-    local line_px = Math.round((1 + part.line_height) * face.size)
     local room = inner_h - authors_h
-    local lines = math.max(1, math.min(TITLE_LINES, math.floor(room / line_px)))
-    widgets[#widgets + 1] = TextBoxWidget:new{
-        text = title,
-        face = face,
-        width = inner_w,
-        line_height = part.line_height,
-        fgcolor = Looks.color(palette[part.color]),
-        bgcolor = background,
-        height = lines * line_px,
-        height_adjust = true,
-        height_overflow_show_ellipsis = true,
-    }
+    local box
+    while true do
+        local face = Fonts.face(file, size)
+        if not face then
+            error("the cover title's font didn't load")
+        end
+        -- TextBoxWidget's line is (1 + line_height) em, rounded (frontend/ui/widget/textboxwidget.lua:151).
+        local line_px = Math.round((1 + part.line_height) * face.size)
+        local lines = math.max(1, math.min(TITLE_LINES, math.floor(room / line_px)))
+        box = TextBoxWidget:new{
+            text = title,
+            face = face,
+            width = inner_w,
+            line_height = part.line_height,
+            fgcolor = Looks.color(palette[part.color]),
+            bgcolor = background,
+            height = lines * line_px,
+            height_adjust = true,
+            height_overflow_show_ellipsis = true,
+        }
+        if size <= MIN_TITLE_SIZE or not split_shown(box) then
+            break
+        end
+        box:free()
+        size = size - 1
+    end
+    widgets[#widgets + 1] = box
     places[#places + 1] = { x = 0, y = 0 }
     return widgets, places
 end

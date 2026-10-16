@@ -9,6 +9,9 @@ describe("the featured cover", function()
     local UIManager = require("ui/uimanager")
     local FeaturedCover = require("featured_cover")
     local Home = require("home")
+    local Fonts = require("fonts")
+    local Layout = require("layout")
+    local TextBoxWidget = require("ui/widget/textboxwidget")
 
     local BOOK = "/books/piranesi.epub"
 
@@ -319,8 +322,56 @@ describe("the featured cover", function()
                         lines[i] = table.concat(chars, "", line.offset, last):match("^%s*(.-)%s*$")
                     end
                     assert.equals(title:upper(), table.concat(lines, " "), id .. ": " .. table.concat(lines, " / "))
+                    -- The size is the largest that fits: one point up, the box splits a word.
+                    local part = ctx.look.type.cover_title
+                    if box.face.orig_size < Layout.font_size(part.size, "large") then
+                        local up = TextBoxWidget:new{
+                            text = box.text,
+                            face = Fonts.face(ctx.look.faces[part.face].file, box.face.orig_size + 1),
+                            width = box.width,
+                            line_height = part.line_height,
+                        }
+                        assert.is_true(up.has_split_inside_word, id .. ": " .. title .. " fits one point up")
+                        up:free()
+                    end
                     built:free()
                 end
+            end
+        end)
+
+        -- The title in the placeholder of a 253 px column at the large size, in look id.
+        local function narrow_title(id, title)
+            stub(false)
+            local ctx = ctx_for(id)
+            ctx.text_size = "large"
+            local w, h = FeaturedCover.box(253, ctx)
+            local built = FeaturedCover.build({ file = BOOK, title = title }, w, h, ctx)
+            return built, built[#built], Layout.font_size(ctx.look.type.cover_title.size, "large")
+        end
+
+        it("keeps the placeholder title's size for a CJK title, which breaks between characters", function()
+            for _, id in ipairs({ "editorial", "diner" }) do
+                local built, box, size = narrow_title(id, "三体問題の長い題名ですよこれは本当に長い")
+                assert.equals(size, box.face.orig_size, id)
+                built:free()
+            end
+        end)
+
+        it("keeps the placeholder title's size when the word too wide is past the lines shown", function()
+            local title = string.rep("A ", 40) .. "Supercalifragilisticexpialidocious"
+            for _, id in ipairs({ "editorial", "diner" }) do
+                local built, box, size = narrow_title(id, title)
+                assert.equals(size, box.face.orig_size, id)
+                assert.equals(box.lines_per_page, box.line_with_ellipsis, id)
+                built:free()
+            end
+        end)
+
+        it("sets a placeholder title word too wide at any size at 8 points, the floor", function()
+            for _, id in ipairs({ "editorial", "diner" }) do
+                local built, box = narrow_title(id, "Supercalifragilisticexpialidocious")
+                assert.equals(8, box.face.orig_size, id)
+                built:free()
             end
         end)
 
