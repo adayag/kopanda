@@ -109,6 +109,11 @@ describe("the profile list", () => {
     expect(invalid.closest("button")).toBeNull();
     expect(invalid.closest("a")).toBeNull();
     expect(screen.getByText(broken.error)).toBeInTheDocument();
+
+    fireEvent.click(invalid);
+    fireEvent.click(screen.getByText(broken.error));
+    expect(location.hash).toBe("");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("shows a failed request's error text in place of the list", async () => {
