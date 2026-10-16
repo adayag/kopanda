@@ -7,7 +7,6 @@
 -- require means it is disabled, and the placeholder is drawn.
 -- Module state: asked, the files extraction was asked for in this process; check, the scheduled
 -- check or nil.
-local Blitbuffer = require("ffi/blitbuffer")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Fonts = require("fonts")
 local Geom = require("ui/geometry")
@@ -15,6 +14,7 @@ local ImageWidget = require("ui/widget/imagewidget")
 local Layout = require("layout")
 local Looks = require("looks")
 local Math = require("optmath")
+local Paint = require("paint")
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local Typeset = require("typeset")
 local UIManager = require("ui/uimanager")
@@ -87,24 +87,6 @@ local function read_cover(file, w, h)
     return nil
 end
 
--- A filled rectangle, rounded by radius; a colour goes through the RGB32 variant, since the
--- plain one greys it (base/ffi/blitbuffer.lua:2169-2197).
-local function fill(bb, x, y, w, h, color, radius)
-    if Blitbuffer.isColor8(color) then
-        bb:paintRoundedRect(x, y, w, h, color, radius)
-    else
-        bb:paintRoundedRectRGB32(x, y, w, h, color, radius)
-    end
-end
-
-local function border(bb, x, y, w, h, width, color, radius)
-    if Blitbuffer.isColor8(color) then
-        bb:paintBorder(x, y, w, h, width, color, radius)
-    else
-        bb:paintBorderRGB32(x, y, w, h, width, color, radius)
-    end
-end
-
 -- The cover box, box_w by box_h, with its shadow below and right of it: the shadow, the fill,
 -- each child at its place (self.places[i], from the box's top left), then the outline.
 local CoverBox = WidgetContainer:extend{
@@ -113,19 +95,12 @@ local CoverBox = WidgetContainer:extend{
 
 function CoverBox:paintTo(bb, x, y)
     local w, h = self.box_w, self.box_h
-    if self.shadow_color then
-        fill(bb, x + self.shadow_x, y + self.shadow_y, w, h, self.shadow_color, self.radius)
-    end
-    if self.fill_color then
-        fill(bb, x, y, w, h, self.fill_color, self.fill_radius)
-    end
+    Paint.backing(bb, x, y, w, h, self)
     for i, child in ipairs(self) do
         local place = self.places[i]
         child:paintTo(bb, x + place.x, y + place.y)
     end
-    if self.outline > 0 then
-        border(bb, x, y, w, h, self.outline, self.outline_color, self.radius)
-    end
+    Paint.outline(bb, x, y, w, h, self)
 end
 
 -- The first run's frame: dash-long strokes with dash_gap between them along each edge of the
@@ -139,13 +114,13 @@ function DashedBox:paintTo(bb, x, y)
     local step = self.dash + self.dash_gap
     for along = 0, w - 1, step do
         local len = math.min(self.dash, w - along)
-        fill(bb, x + along, y, len, s, self.color, 0)
-        fill(bb, x + along, y + h - s, len, s, self.color, 0)
+        Paint.fill(bb, x + along, y, len, s, self.color, 0)
+        Paint.fill(bb, x + along, y + h - s, len, s, self.color, 0)
     end
     for along = 0, h - 1, step do
         local len = math.min(self.dash, h - along)
-        fill(bb, x, y + along, s, len, self.color, 0)
-        fill(bb, x + w - s, y + along, s, len, self.color, 0)
+        Paint.fill(bb, x, y + along, s, len, self.color, 0)
+        Paint.fill(bb, x + w - s, y + along, s, len, self.color, 0)
     end
     self[1]:paintTo(bb, x + self.places[1].x, y + self.places[1].y)
 end

@@ -1,13 +1,13 @@
 -- The quote of the day: one entry of the quote source a day, changing at local midnight, drawn
 -- in curly quotes with no attribution in at most four lines, a longer text ending in an
 -- ellipsis. Editorial draws it between hairline rules (Main.dc.html:56), Diner in its tile.
-local Blitbuffer = require("ffi/blitbuffer")
 local Font = require("ui/font")
 local Fonts = require("fonts")
 local Geom = require("ui/geometry")
 local Layout = require("layout")
 local Looks = require("looks")
 local Math = require("optmath")
+local Paint = require("paint")
 local Settings = require("settings")
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local Typeset = require("typeset")
@@ -48,24 +48,6 @@ function Quote.index(t)
     return local_days(t) % count + 1
 end
 
--- A filled rectangle; a colour goes through paintRectRGB32, since paintRect greys it
--- (base/ffi/blitbuffer.lua:1704-1724, :1827).
-local function fill(bb, x, y, w, h, color)
-    if Blitbuffer.isColor8(color) then
-        bb:paintRect(x, y, w, h, color)
-    else
-        bb:paintRectRGB32(x, y, w, h, color)
-    end
-end
-
-local function border(bb, x, y, w, h, width, color)
-    if Blitbuffer.isColor8(color) then
-        bb:paintBorder(x, y, w, h, width, color)
-    else
-        bb:paintBorderRGB32(x, y, w, h, width, color)
-    end
-end
-
 -- The text box (self[1], self.text_box) at self.text_x, self.text_y inside its chrome: rules
 -- across the top and bottom, or a tile with a hard shadow.
 local QuoteBox = WidgetContainer:extend{
@@ -76,17 +58,12 @@ function QuoteBox:paintTo(bb, x, y)
     local w, h = self.dimen.w, self.dimen.h
     local c = self.chrome
     if c.rule then
-        fill(bb, x, y, w, c.rule, c.rule_color)
-        fill(bb, x, y + h - c.rule, w, c.rule, c.rule_color)
+        Paint.fill(bb, x, y, w, c.rule, c.rule_color)
+        Paint.fill(bb, x, y + h - c.rule, w, c.rule, c.rule_color)
     else
         local box_w, box_h = w - c.shadow_x, h - c.shadow_y
-        if c.shadow_color and (c.shadow_x > 0 or c.shadow_y > 0) then
-            fill(bb, x + c.shadow_x, y + c.shadow_y, box_w, box_h, c.shadow_color)
-        end
-        fill(bb, x, y, box_w, box_h, c.fill_color)
-        if c.outline > 0 then
-            border(bb, x, y, box_w, box_h, c.outline, c.outline_color)
-        end
+        Paint.backing(bb, x, y, box_w, box_h, c)
+        Paint.outline(bb, x, y, box_w, box_h, c)
     end
     self.text_box:paintTo(bb, x + self.text_x, y + self.text_y)
 end
