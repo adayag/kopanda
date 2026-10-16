@@ -1,0 +1,13 @@
+id: EV-342gzy
+type: check.task
+at: 2026-10-16T14:08:53.281581Z
+contributor: allen
+command: check task T-h9dkvy
+targets:
+    - T-h9dkvy
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/launcher-manage/task.yml

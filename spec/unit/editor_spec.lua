@@ -321,6 +321,29 @@ describe("the editor frame", function()
             assert.equals("full", closed[1][3])
         end)
 
+        it("on Done run the spec's done in place of closing, read at the tap", function()
+            local runs, dones = {}, 0
+            local spec = screen_spec(runs)
+            Editor.show(spec)
+            local editor = Editor.shown
+            spec.done = function()
+                dones = dones + 1
+            end
+            local closed, restore = record(UIManager, "close")
+            send(harness.gesture("tap", centre(editor.done)))
+            assert.equals(1, dones)
+            assert.same({}, runs)
+            assert.equals(0, #closed)
+            assert.equals(editor, Editor.shown)
+            assert.equals(editor, harness.top())
+            spec.done = nil
+            send(harness.gesture("tap", centre(editor.done)))
+            restore()
+            assert.equals(1, dones)
+            assert.is_nil(Editor.shown)
+            assert.equals(1, #closed)
+        end)
+
         it("on a disabled control run nothing", function()
             local runs = {}
             local spec = screen_spec(runs)

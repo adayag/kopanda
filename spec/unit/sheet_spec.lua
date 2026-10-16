@@ -371,6 +371,125 @@ describe("the sheet", function()
         end)
     end)
 
+    describe("a spec's hold", function()
+        -- three_rows with a hold that counts its runs in holds.n and records whether the sheet
+        -- (holds.sheet) was still up when it ran.
+        local function with_hold(runs, holds)
+            local spec = three_rows(runs)
+            spec.hold = function()
+                holds.n = holds.n + 1
+                holds.shown = Sheet.shown or false
+                holds.stacked = UIManager:isWidgetShown(holds.sheet)
+            end
+            return spec
+        end
+
+        it("runs once on a hold inside the panel, after the sheet has closed", function()
+            local runs, holds = {}, { n = 0 }
+            Sheet.show(with_hold(runs, holds), ctx_for("editorial"))
+            local sheet = Sheet.shown
+            holds.sheet = sheet
+            send(harness.gesture("hold", centre(sheet.rows[2].rect)))
+            assert.equals(1, holds.n)
+            assert.is_false(holds.shown)
+            assert.is_false(holds.stacked)
+            assert.same({}, runs)
+            assert.is_nil(Sheet.shown)
+            assert.equals(0, sheets_on_stack())
+            assert.equals(Home.shown, harness.top())
+        end)
+
+        it("runs on a hold on the header too, and the hold_release after it does nothing more", function()
+            local runs, holds = {}, { n = 0 }
+            Sheet.show(with_hold(runs, holds), ctx_for("diner"))
+            local sheet = Sheet.shown
+            holds.sheet = sheet
+            local x, y = centre(sheet.header_rect)
+            send(harness.gesture("hold", x, y))
+            send(harness.gesture("hold_release", x, y))
+            assert.equals(1, holds.n)
+            assert.same({}, runs)
+            assert.is_nil(Sheet.shown)
+        end)
+
+        it("doesn't run on a hold above the panel, and keeps the sheet", function()
+            local runs, holds = {}, { n = 0 }
+            Sheet.show(with_hold(runs, holds), ctx_for("diner"))
+            local sheet = Sheet.shown
+            holds.sheet = sheet
+            send(harness.gesture("hold", Screen:getWidth() / 2, math.floor(sheet.panel.y / 2)))
+            assert.equals(0, holds.n)
+            assert.equals(sheet, Sheet.shown)
+            assert.equals(sheet, harness.top())
+        end)
+
+        it("closes the sheet and the home and logs when the hold throws", function()
+            local errored = spy.on(logger, "err")
+            finally(function()
+                logger.err:revert()
+            end)
+            local spec = three_rows()
+            spec.hold = function()
+                error("kopanda-test: sheet hold failed")
+            end
+            Sheet.show(spec, ctx_for("editorial"))
+            send(harness.gesture("hold", centre(Sheet.shown.rows[1].rect)))
+            assert.is_nil(Sheet.shown)
+            assert.equals(0, sheets_on_stack())
+            assert.is_nil(Home.shown)
+            local logged = false
+            for _, call in ipairs(errored.calls) do
+                for _, arg in ipairs(call.vals) do
+                    logged = logged or tostring(arg):find("kopanda-test: sheet hold failed", 1, true) ~= nil
+                end
+            end
+            assert.is_true(logged)
+        end)
+    end)
+
+    describe("a heading's hint", function()
+        local bb
+
+        after_each(function()
+            if bb then
+                bb:free()
+                bb = nil
+            end
+        end)
+
+        for _, id in ipairs({ "editorial", "diner" }) do
+            it("is drawn in sheet_aside at the header's right, past the heading and its aside, in " .. id, function()
+                local spec = three_rows()
+                spec.header = { heading = "Tools", aside = "Folder · 3", aside_beside = true, hint = "Hold to edit" }
+                Sheet.show(spec, ctx_for(id, colorsoft))
+                local sheet = Sheet.shown
+                local look = Looks.get(id)
+                local palette = Looks.palette(look, "day")
+                local header, hint = sheet.header_rect, sheet.hint_rect
+                assert.is_table(hint)
+                local inner_right = header.x + header.w - colorsoft:scaleBySize(look.sheet.header_padding.side)
+                assert.equals(inner_right, hint.x + hint.w)
+                assert.truthy(hint.w > 0 and hint.h > 0)
+                assert.truthy(hint.x > header.x + header.w / 2, "right of the heading")
+                assert.truthy(hint.y >= header.y and hint.y + hint.h <= header.y + header.h)
+                bb = buffer(1264, 1680)
+                sheet:paintTo(bb, 0, 0)
+                local inked = 0
+                each_pixel(bb, hint, function(p)
+                    if near(grey(palette[look.type.sheet_aside.color]), p, 8) then
+                        inked = inked + 1
+                    end
+                end)
+                assert.truthy(inked > 0, "no pixel of the hint in its colour")
+            end)
+        end
+
+        it("is absent without a hint", function()
+            Sheet.show(three_rows(), ctx_for("editorial"))
+            assert.is_nil(Sheet.shown.hint_rect)
+        end)
+    end)
+
     describe("Back", function()
         local has_keys
 

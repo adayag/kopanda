@@ -428,6 +428,68 @@ describe("KoPanda failing safe", function()
         end)
     end)
 
+    describe("launcher management", function()
+        local Editor, LauncherManage
+
+        -- The file manager on top, its home closed, and launcher management's modules loaded.
+        local function over_fm()
+            harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            assert.equals(FileManager.instance, harness.top())
+            Editor = require("editor")
+            LauncherManage = require("launcher_manage")
+        end
+
+        it("draws every row as unavailable and logs when resolving each entry throws", function()
+            over_fm()
+            local LauncherEntries = require("launcher_entries")
+            local available = stub(LauncherEntries, "available", function()
+                error("kopanda-test: resolve failed")
+            end)
+            finally(function()
+                available:revert()
+            end)
+            LauncherManage.open{}
+            local editor = Editor.shown
+            assert.is_not_nil(editor)
+            assert.equals(editor, harness.top())
+            local rows = 0
+            for _, place in ipairs(editor.places) do
+                if place.control.name == "entry" then
+                    rows = rows + 1
+                    assert.is_true(place.control.muted)
+                end
+            end
+            assert.truthy(rows > 0)
+            local ok = pcall(harness.tick, 3)
+            assert.is_true(ok)
+            assert.equals(editor, Editor.shown)
+            assert.is_true(logged_error("kopanda-test: resolve failed"))
+            Editor.close()
+            file_manager_usable()
+        end)
+
+        it("leaves no editor and logs when reading the launcher throws in open", function()
+            over_fm()
+            local Settings = require("settings")
+            local get = stub(Settings, "get", function()
+                error("kopanda-test: launcher read failed")
+            end)
+            finally(function()
+                get:revert()
+            end)
+            LauncherManage.open{}
+            get:revert()
+            assert.is_nil(Editor.shown)
+            for _, widget in ipairs(harness.stack()) do
+                assert.is_not.equals("kopanda_editor", widget.name)
+            end
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: launcher read failed"))
+        end)
+    end)
+
     describe("the dispatcher wrapper", function()
         local Dispatcher = require("dispatcher")
 

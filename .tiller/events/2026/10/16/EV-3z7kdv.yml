@@ -1,0 +1,15 @@
+id: EV-3z7kdv
+type: start.task
+at: 2026-10-16T03:57:06.022409Z
+contributor: allen
+command: start task T-h9dkvy
+targets:
+    - T-h9dkvy
+before:
+    status: ready
+after:
+    branch: tiller/home/device-menus/launcher-manage
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/launcher-manage/task.yml

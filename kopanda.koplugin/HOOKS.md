@@ -860,8 +860,9 @@ Upgrading KOReader walks this list.
   (`frontend/ui/uimanager.lua:988-1031`). Under KOReader's touch lock `ges_events` are filtered as
   the home's zones are (the touch-lock entry above).
 - Holds: a hold's lift sends `hold_release` to the top widget, by then the sheet
-  (`frontend/device/gesturedetector.lua:1346-1356`); the sheet registers nothing for `hold`,
-  `hold_release`, `hold_pan` or swipes, so they reach only the active widgets below.
+  (`frontend/device/gesturedetector.lua:1346-1356`); the sheet registers nothing for `hold`
+  (unless its spec has a `hold`, the launcher management entry below), `hold_release`,
+  `hold_pan` or swipes, so they reach only the active widgets below.
 - The settled signal goes from a `nextTick` (`frontend/ui/uimanager.lua:431-433`) that the
   sheet's first good `paintTo` schedules: it runs from the next `_checkTasks`, past that
   `_repaint` (`handleInput` `:1542-1564`). Nothing is scheduled before the paint, so a sheet
@@ -1017,6 +1018,27 @@ Upgrading KOReader walks this list.
   closes the container itself, once. `onMenuSelect` (`:873-929`) opens a section and runs an
   action item's callback.
 - `logger.err` for every guarded failure; the sheets are `sheet.lua`'s.
+
+### Launcher management: `ConfirmBox`, the sheet's hold and `util`'s table copies
+
+- `ui/widget/confirmbox`: `frontend/ui/widget/confirmbox.lua:45-51` (`text`, `ok_text`,
+  `ok_callback`, `cancel_callback`), `:62` (`init`), `:107-122` (Cancel runs `cancel_callback`,
+  OK runs `ok_callback`, each then closes the box), `:242-247` (`onClose`, from the Back key and
+  from a tap outside it, `:249-254`, runs `cancel_callback`). Removing a launcher folder asks
+  through it, `ok_text = "Remove"`; Cancel writes nothing, and the `ok_callback` runs guarded.
+- `util`: `util.tableDeepCopy` (`frontend/util.lua:184-202`) copies `launcher.entries` before
+  every list operation, since `Settings.get` hands back the stored table; `util.tableEquals`
+  (`:146-174`) finds the folder sheet's folder among the stored entries, the sheet holding the
+  entry the launcher was built with.
+- The sheet's hold: `ges_events.HoldSheet`, a `GestureRange` of `ges = "hold"` whose range is a
+  function returning the panel (`frontend/ui/gesturerange.lua:25-37`), registered only for a spec
+  with `hold`. The sheet closes, then runs it; the lift's `hold_release`
+  (`frontend/device/gesturedetector.lua:1346-1356`) reaches the editor it opened, which has no
+  handler for it.
+- The launcher's hold: the home's hold step (`home_gestures.lua`) calls the widget's `hold`,
+  which returns nothing, so the step takes the hold as done and opens no settings.
+- The editor's Done runs the spec's `done` when it has one, a folder's list opened from the top
+  level going back to it; the frame's show and close are the editor entries above.
 
 ### Widget and support modules
 
