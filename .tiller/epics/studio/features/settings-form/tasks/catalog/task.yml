@@ -1,7 +1,7 @@
 id: T-zbcfes
 key: studio/settings-form/catalog
 title: Checked-in catalog of KOReader actions, plugins and KoPanda icons
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:d92a0a4
         observed_at: 2026-10-16T17:50:20.400048Z
 branch: tiller/studio/settings-form/catalog
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T18:03:27.826828Z
+        against:
+            kind: git_commit
+            value: git:ab55c33
+            observed_at: 2026-10-16T18:03:27.82682Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-ab55c33-out-d76260bbe22534fa8c1aebf6f44d0dbc08272b06d7237996676433dac5eb405e.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T18:03:27.826828Z
+        against:
+            kind: git_commit
+            value: git:ab55c33
+            observed_at: 2026-10-16T18:03:27.82682Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-ab55c33-out-72c39ca6b926f624d751943071fc7c1a49f61d316ffe7000c7f88f3685713d58.txt
