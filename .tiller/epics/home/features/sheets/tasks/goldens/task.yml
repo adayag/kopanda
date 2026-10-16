@@ -1,7 +1,7 @@
 id: T-w3g6jh
 key: home/sheets/goldens
 title: Sheet goldens in both looks and the sheet paint budget
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -20,3 +20,30 @@ accepted_against:
         value: git:78d4d3c
         observed_at: 2026-10-15T20:24:28.104444Z
 branch: tiller/home/sheets/goldens
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T00:01:14.455795Z
+        against:
+            kind: git_commit
+            value: git:d8745b9
+            observed_at: 2026-10-16T00:01:14.455783Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-d8745b9-out-24b7eb1c4dd896f13523263762bdf0c38a5777a2a8359edeac1244efdbee5f28.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T00:01:14.455795Z
+        against:
+            kind: git_commit
+            value: git:d8745b9
+            observed_at: 2026-10-16T00:01:14.455783Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-d8745b9-out-7a867e49c99e776436504c975fd4e0e734f354190a645bf4c787e03d6f438fcc.txt
