@@ -195,6 +195,21 @@ describe("edit layout", function()
             open(nil, { selected = 2 })
             assert.equals("Row 2 · one column · selected", one({ kind = "card", row = 2 }).control.caption)
         end)
+
+        it("show all five of the default's rows on the Colorsoft in both looks, row 2 selected", function()
+            for _, id in ipairs({ "diner", "editorial" }) do
+                assert.is_true(Settings.set("look", id))
+                harness.show_fm()
+                harness.tick(4)
+                harness.at_colorsoft(function()
+                    EditLayout.open({ selected = 2 })
+                end)
+                assert.is_not_nil(Editor.shown, id)
+                assert.same({ 0, 5 }, { Editor.shown.left_out, #find({ kind = "card" }) }, id)
+                Editor.close()
+                harness.teardown()
+            end
+        end)
     end)
 
     it("paints in both looks, the selected card in the selected fill and the others on paper", function()

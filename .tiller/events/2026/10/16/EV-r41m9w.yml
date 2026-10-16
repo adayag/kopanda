@@ -1,0 +1,15 @@
+id: EV-r41m9w
+type: start.task
+at: 2026-10-16T14:09:12.428903Z
+contributor: allen
+command: start task T-7y2lph
+targets:
+    - T-7y2lph
+before:
+    status: ready
+after:
+    branch: tiller/home/device-menus/goldens
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/goldens/task.yml

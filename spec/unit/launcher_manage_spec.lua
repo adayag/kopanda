@@ -215,6 +215,22 @@ describe("launcher management", function()
             assert.equals(6, #rows())
         end)
 
+        it("shows all six of the board's rows on the Colorsoft in both looks", function()
+            for _, id in ipairs({ "diner", "editorial" }) do
+                assert.is_true(Settings.set("look", id))
+                assert.is_true(Settings.set("launcher.entries", board()))
+                harness.show_fm()
+                harness.tick(2)
+                harness.at_colorsoft(function()
+                    LauncherManage.open({})
+                end)
+                assert.is_not_nil(Editor.shown, id)
+                assert.same({ 0, 6 }, { Editor.shown.left_out, #rows() }, id)
+                Editor.close()
+                harness.teardown()
+            end
+        end)
+
         it("shows a row per entry with its resolved icon, label and kind line", function()
             open(board())
             local got = {}

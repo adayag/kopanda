@@ -1,0 +1,13 @@
+id: EV-mvtve7
+type: check.task
+at: 2026-10-16T14:31:28.225873Z
+contributor: allen
+command: check task T-7y2lph
+targets:
+    - T-7y2lph
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/goldens/task.yml
