@@ -11,13 +11,13 @@ depends_on:
 accepted_against:
     spec:
         kind: git_blob
-        value: git:108e344a42d58b8936bc504527e9232f217a2f4b
+        value: git:41f94d1ee4d7733e51ef1b476dea2a0eba0cb61e
         path: .tiller/epics/home/features/device-menus/tasks/edit-layout/task.md
-        observed_at: 2026-10-16T03:17:38.063092Z
+        observed_at: 2026-10-16T14:51:07.059388Z
     commit:
         kind: git_commit
-        value: git:ac38233
-        observed_at: 2026-10-16T03:17:38.085895Z
+        value: git:a704909
+        observed_at: 2026-10-16T14:51:07.08672Z
 branch: tiller/home/device-menus/edit-layout
 review_ref:
     branch: tiller/home/device-menus/edit-layout
