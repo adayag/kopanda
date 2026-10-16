@@ -49,6 +49,10 @@ Upgrading KOReader walks this list.
 - Read through `package.loaded` as `apps/filemanager/filemanager` when the deferred show runs,
   since the file manager can close between `Show` and that tick, and the same way at gesture
   time by the home and at call time by the dispatcher wrapper.
+- The nav bar's Home tab in the file browser reaches KoPanda's instance through it as
+  `instance.kopanda`: `registerModule` stores a module under its name
+  (`frontend/apps/filemanager/filemanager.lua:379-389`), and plugin instances are registered by
+  their plugin's name (`:424`).
 
 ### `CloseWidget` on file-manager close
 

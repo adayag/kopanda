@@ -114,7 +114,11 @@ describe("looks", function()
                     "editor.kind_columns", "type.editor_aside.tracking", "type.editor_title.size",
                     "type.editor_button.face", "type.editor_caption.color", "type.editor_box.face",
                     "type.editor_share.color", "type.editor_label.size", "type.editor_kind.uppercase",
-                    "type.editor_note.line_height" }) do
+                    "type.editor_note.line_height", "nav.fill_color", "nav.edge_width", "nav.edge_color",
+                    "nav.padding_x", "nav.padding_top", "nav.padding_bottom", "nav.icon_size", "nav.icon_gap",
+                    "nav.icon_color", "nav.active_icon_color", "nav.active_rule_width", "nav.active_rule_color",
+                    "nav.active_fill_color", "nav.divider_width", "nav.divider_color", "type.nav_label.face",
+                    "type.nav_label.tracking", "type.nav_label_active.face", "type.nav_label_active.color" }) do
                 local found = false
                 for _, path in ipairs(diner) do
                     found = found or path == wanted
@@ -390,6 +394,50 @@ describe("looks", function()
                 parts.editor_title.color })
             assert.same({ "strong", 11, true, 0.1, "on_band" }, { parts.editor_aside.face, parts.editor_aside.size,
                 parts.editor_aside.uppercase, parts.editor_aside.tracking, parts.editor_aside.color })
+        end)
+
+        -- The nav bar's tokens (NavBar.dc.html:68-87, NavBarC.dc.html:70-89 under
+        -- .tiller/design/2026-10-13-kopanda-screens/).
+        local function nav_values(look)
+            local nav = look.nav
+            return {
+                fill_color = nav.fill_color, edge_width = nav.edge_width, edge_color = nav.edge_color,
+                padding_x = nav.padding_x, padding_top = nav.padding_top, padding_bottom = nav.padding_bottom,
+                icon_size = nav.icon_size, icon_gap = nav.icon_gap, icon_color = nav.icon_color,
+                active_icon_color = nav.active_icon_color, active_rule_width = nav.active_rule_width,
+                active_rule_color = nav.active_rule_color, active_fill_color = nav.active_fill_color,
+                divider_width = nav.divider_width, divider_color = nav.divider_color,
+            }
+        end
+
+        local function part_values(part)
+            return { part.face, part.size, part.uppercase, part.tracking, part.line_height, part.color }
+        end
+
+        it("give Editorial's nav block and parts the boards' values", function()
+            local look = looks.editorial
+            assert.same({
+                fill_color = "paper", edge_width = 1, edge_color = "ink",
+                padding_x = 24, padding_top = 16, padding_bottom = 18,
+                icon_size = 26, icon_gap = 7, icon_color = "text", active_icon_color = "ink",
+                active_rule_width = 3, active_rule_color = "ink", active_fill_color = false,
+                divider_width = 0, divider_color = false,
+            }, nav_values(look))
+            assert.same({ "strong", 11, true, 0.12, 0, "text" }, part_values(look.type.nav_label))
+            assert.same({ "strong", 11, true, 0.12, 0, "ink" }, part_values(look.type.nav_label_active))
+        end)
+
+        it("give Diner's nav block and parts the boards' values", function()
+            local look = looks.diner
+            assert.same({
+                fill_color = "band", edge_width = 4, edge_color = "ink",
+                padding_x = 0, padding_top = 14, padding_bottom = 16,
+                icon_size = 28, icon_gap = 6, icon_color = "ink", active_icon_color = "on_accent",
+                active_rule_width = 0, active_rule_color = false, active_fill_color = "mustard",
+                divider_width = 3, divider_color = "outline",
+            }, nav_values(look))
+            assert.same({ "strong", 12, true, 0.04, 0, "ink" }, part_values(look.type.nav_label))
+            assert.same({ "display", 12, true, 0.04, 0, "on_accent" }, part_values(look.type.nav_label_active))
         end)
 
         it("align both looks' header row to its bottom", function()
