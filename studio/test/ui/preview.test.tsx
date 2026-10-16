@@ -335,6 +335,41 @@ describe("the preview pane", () => {
     expect(within(frame("Diner")).queryByText("stale")).not.toBeInTheDocument();
   });
 
+  it("renders a frame again as soon as it ends when the pause ended while it was hidden", async () => {
+    await open();
+    await write();
+    const night = within(pane()).getByRole("checkbox", { name: "Night" });
+    fireEvent.click(night);
+    await tick();
+    await tick(1_500);
+    fireEvent.click(night);
+    await tick();
+
+    await succeed(0);
+    await tick(10_000);
+    expect(renders.filter(({ night }) => !night)).toHaveLength(2);
+    await succeed(2);
+    expect(within(frame("Diner")).queryByText("stale")).not.toBeInTheDocument();
+  });
+
+  it("leaves a frame whose render ended while hidden until it is shown", async () => {
+    await open();
+    await write();
+    const night = within(pane()).getByRole("checkbox", { name: "Night" });
+    fireEvent.click(night);
+    await tick();
+    await succeed(1);
+    await tick(1_500);
+
+    await succeed(0);
+    await tick(10_000);
+    expect(renders.map(({ night }) => night)).toEqual([false, true]);
+
+    fireEvent.click(night);
+    await tick();
+    expect(renders.map(({ night }) => night)).toEqual([false, true, false]);
+  });
+
   it("makes one request after a failed first render until Re-render", async () => {
     await open();
     await fail(0);
@@ -503,6 +538,33 @@ describe("the preview pane", () => {
     expect(within(failed).getByText(/first log line\s+last log line/)).toBeInTheDocument();
     expect(within(failed).queryByText("stale")).not.toBeInTheDocument();
     expect(within(failed).queryByText(/^Rendered in/)).not.toBeInTheDocument();
+  });
+
+  it("shows the failure under a stale image whose render after the pause failed", async () => {
+    await open();
+    await succeed(0);
+    await write();
+    await tick(1_500);
+    await fail(1);
+
+    const failed = frame("Diner");
+    expect(within(failed).getByText("stale")).toBeInTheDocument();
+    expect(within(failed).getByText("The emulator crashed")).toBeInTheDocument();
+    expect(within(failed).getByText("Showing the last good render.")).toBeInTheDocument();
+    expect(within(failed).queryByText(/^Settings changed/)).not.toBeInTheDocument();
+  });
+
+  it("clears the failure once a later render succeeds", async () => {
+    await open();
+    await fail(0);
+    fireEvent.click(rerender());
+    await tick();
+    await succeed(1);
+
+    const shown = frame("Diner");
+    expect(within(shown).getByText(/^Rendered in \d+\.\d s$/)).toBeInTheDocument();
+    expect(within(shown).queryByText("The emulator crashed")).not.toBeInTheDocument();
+    expect(within(shown).queryByText("No earlier render to show.")).not.toBeInTheDocument();
   });
 
   it("says there is no earlier render when the first render fails", async () => {

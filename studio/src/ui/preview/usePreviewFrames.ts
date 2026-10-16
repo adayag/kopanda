@@ -39,8 +39,6 @@ interface FrameRecord {
   requested: number;
   /** The render in flight. */
   controller: AbortController | null;
-  /** Render again when the one in flight ends: the pause ended while it ran on older settings. */
-  again: boolean;
 }
 
 function keyOf({ look, night }: FrameId): string {
@@ -121,8 +119,7 @@ class FrameStore {
     this.timer = null;
     for (const frame of this.shown) {
       const record = this.record(frame);
-      if (record.controller !== null) record.again = record.requested < this.revision;
-      else if (this.stale(record) || this.unrequested(record)) this.render(frame);
+      if (record.controller === null && (this.stale(record) || this.unrequested(record))) this.render(frame);
     }
     this.publish();
   }
@@ -133,7 +130,6 @@ class FrameStore {
     const revision = this.revision;
     record.controller = controller;
     record.requested = revision;
-    record.again = false;
     const started = performance.now();
     void fetchPreview(this.id, frame, controller.signal)
       .then(
@@ -160,12 +156,13 @@ class FrameStore {
       });
   }
 
-  /** A render that ended waits for a pause still running; else it renders again if it ran on older settings. */
+  /**
+   * A render that ended waits for a pause still running, and a hidden frame for being shown; else it
+   * renders again if it was asked for before the last landed write.
+   */
   private ended(frame: FrameId, record: FrameRecord): void {
-    const again = record.again;
-    record.again = false;
     if (this.timer !== null || !this.shown.some((shown) => keyOf(shown) === keyOf(frame))) return;
-    if (again || this.unrequested(record)) this.render(frame);
+    if (record.requested < this.revision) this.render(frame);
   }
 
   private stale(record: FrameRecord): boolean {
@@ -188,7 +185,6 @@ class FrameStore {
         elapsed: null,
         requested: -1,
         controller: null,
-        again: false,
       };
       this.records.set(key, record);
     }
