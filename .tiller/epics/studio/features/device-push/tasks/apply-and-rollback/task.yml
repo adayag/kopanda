@@ -1,7 +1,7 @@
 id: T-o5gnzj
 key: studio/device-push/apply-and-rollback
 title: Early apply patch swaps the plugin, settings and shells, and rolls back an install whose home never painted
-status: in_review
+status: in_progress
 blocked: false
 started: true
 owner: allen
@@ -27,7 +27,7 @@ gates:
     build:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-16T20:06:49.962131Z
         against:
@@ -40,7 +40,7 @@ gates:
     tests:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-16T20:06:49.962131Z
         against:
