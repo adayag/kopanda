@@ -1,0 +1,16 @@
+id: EV-t8zug2
+type: submit.task
+at: 2026-10-16T04:15:50.696879Z
+contributor: allen
+command: submit task T-6nh4m4
+targets:
+    - T-6nh4m4
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/device-menus/edit-layout
+        head: git:81c79c6
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/edit-layout/task.yml
