@@ -1,9 +1,10 @@
 id: T-ihpvfp
 key: studio/settings-form/layout-editor
 title: The layout editor with the device's row operations and fit refusal
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-08n402
@@ -18,3 +19,4 @@ accepted_against:
         kind: git_commit
         value: git:d92a0a4
         observed_at: 2026-10-16T17:50:20.468549Z
+branch: tiller/studio/settings-form/layout-editor
