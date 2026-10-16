@@ -1,0 +1,14 @@
+id: EV-2djcky
+type: submit.tweak
+at: 2026-10-16T01:24:37.105367Z
+contributor: allen
+command: submit tweak TW-d7y25x
+targets:
+    - TW-d7y25x
+before:
+    status: check
+after:
+    pr: 12
+    status: in_review
+files:
+    - path: .tiller/tweaks/weather-hyphen/tweak.yml
