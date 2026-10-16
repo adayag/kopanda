@@ -75,6 +75,21 @@ describe("capturing the probe plugin on the emulator", function()
         end)
     end
 
+    -- A clock that holds still through a task pass (spec/emulator/scenarios/2-scenario-held-clock.lua)
+    -- runs a nextTick queued in the pass within that same pass, so a signal counted in ticks can
+    -- go out before the probe is painted. The signal must follow the paint itself.
+    it("captures the probe painted when the clock holds still through each task pass", function()
+        local held_clock = root .. "/spec/emulator/scenarios/2-scenario-held-clock.lua"
+        local result = driver.capture{ profile = "colorsoft", plugin_dir = probe, library_dir = fresh_dir("library"),
+            patches = { held_clock } }
+        assert.equals("home", result.sidecar.screen)
+        assert.truthy(result.sidecar.paint_ms > 0, "paint_ms " .. tostring(result.sidecar.paint_ms))
+        local shot = assert(RenderImage:renderImageFile(result.png))
+        local corner = grey_at(shot, MARGIN + SQUARE / 2, MARGIN + SQUARE / 2)
+        shot:free()
+        assert.equals(0, corner)
+    end)
+
     local function entries(dir)
         local names = {}
         for name in lfs.dir(dir) do

@@ -1,9 +1,10 @@
 id: TW-4ae71f
 key: tweaks/flaky-probe-golden-paperwhite
 title: The probe golden on paperwhite fails intermittently in a full bin/check
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: T-ltupc3
 accepted_against:
@@ -16,3 +17,32 @@ accepted_against:
         kind: git_commit
         value: git:e6f2573
         observed_at: 2026-10-16T00:19:22.223897Z
+branch: tiller/tweaks/flaky-probe-golden-paperwhite
+pr: 13
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T01:30:03.095513Z
+        against:
+            kind: git_commit
+            value: git:95bbe28
+            observed_at: 2026-10-16T01:30:03.095511Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-95bbe28-out-0c14dba51e0419dff72c4edd03145018fb37169c8f183630374e4f10d824d335.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T01:30:03.095513Z
+        against:
+            kind: git_commit
+            value: git:95bbe28
+            observed_at: 2026-10-16T01:30:03.095511Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-95bbe28-out-c57b04f4cce24a863ae24380880b358744eb33bfb5f1c855c842d6f8c999c441.txt

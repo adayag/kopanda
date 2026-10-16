@@ -1,0 +1,13 @@
+id: EV-319z8t
+type: start.tweak
+at: 2026-10-16T00:20:46.553611Z
+contributor: allen
+command: start tweak TW-4ae71f
+targets:
+    - TW-4ae71f
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/flaky-probe-golden-paperwhite/tweak.yml
