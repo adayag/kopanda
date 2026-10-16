@@ -1,10 +1,18 @@
 :root {
   --bg: #15131c;
   --text: #ece9f4;
+  --muted: #a8a4b6;
+  --hairline: rgba(255, 255, 255, 0.08);
   --accent: #a78bfa;
+  --accent-tint: rgba(167, 139, 250, 0.14);
+  --warning: #e8c27a;
 
   color-scheme: dark;
-  font-family: system-ui, sans-serif;
+  font: 14px/1.45 system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
@@ -13,13 +21,111 @@ body {
   color: var(--text);
 }
 
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--accent);
+}
+
+code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+}
+
 .app {
+  max-width: 44rem;
   padding: 2rem;
 }
 
-.app h1 {
-  margin: 0;
+.brand {
+  margin-bottom: 1.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.screen h1 {
+  margin: 0 0 1rem;
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--accent);
+}
+
+.screen nav {
+  margin-bottom: 0.75rem;
+}
+
+.note,
+.muted {
+  color: var(--muted);
+}
+
+.note {
+  margin: 0 0 1rem;
+}
+
+.error {
+  color: var(--warning);
+  overflow-wrap: anywhere;
+}
+
+p.error {
+  margin: 0 0 1rem;
+}
+
+.profile-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.profile {
+  width: 100%;
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+}
+
+button.profile {
+  cursor: pointer;
+}
+
+button.profile:hover,
+button.profile:active {
+  background: var(--accent-tint);
+  border-color: var(--accent);
+}
+
+.profile-name {
+  font-weight: 600;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
 }
