@@ -1,7 +1,7 @@
 id: T-08n402
 key: studio/settings-form/form
 title: The generated form over every schema key
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:d92a0a4
         observed_at: 2026-10-16T17:50:20.423612Z
 branch: tiller/studio/settings-form/form
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T18:49:12.93408Z
+        against:
+            kind: git_commit
+            value: git:fbaca19
+            observed_at: 2026-10-16T18:49:12.934076Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-fbaca19-out-5a77631ec679847ba4c8fe232d1587a61bf0b47a8f6047bed2dd272a9af29ea5.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T18:49:12.93408Z
+        against:
+            kind: git_commit
+            value: git:fbaca19
+            observed_at: 2026-10-16T18:49:12.934076Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-fbaca19-out-8b621fe916257a02aef6c74bd1350c5338b5d0c2ef6809d0ad6ae7e4ca8ac171.txt
