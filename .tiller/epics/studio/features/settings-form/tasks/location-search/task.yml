@@ -1,7 +1,7 @@
 id: T-wmf18g
 key: studio/settings-form/location-search
 title: Weather location search through the studio server
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:d92a0a4
         observed_at: 2026-10-16T17:50:20.446641Z
 branch: tiller/studio/settings-form/location-search
+review_ref:
+    branch: tiller/studio/settings-form/location-search
+    head:
+        kind: git_commit
+        value: git:21a35d9
+        observed_at: 2026-10-16T19:13:07.380632Z
 gates:
     build:
         required: true
