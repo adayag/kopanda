@@ -111,6 +111,22 @@ describe("the pull's probation and notices", function()
             assert.same({ { n = 1, false } }, calls)
         end)
 
+        it("gets false when the home is closed before its first paint", function()
+            harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            local calls = {}
+            Home.show{
+                started = time.monotonic(),
+                finished = function(...)
+                    calls[#calls + 1] = { n = select("#", ...), ... }
+                end,
+            }
+            Home.close()
+            harness.tick(3)
+            assert.same({ { n = 1, false } }, calls)
+        end)
+
         it("gets false after a show that throws", function()
             Home.onShow = function()
                 error("kopanda-test: show failed")

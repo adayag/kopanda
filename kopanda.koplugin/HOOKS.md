@@ -236,7 +236,7 @@ Upgrading KOReader walks this list.
   (`datastorage.lua:79-81`, `getPatchesDir`), refusing when `patches/.patches_disabled` exists
   (`frontend/userpatch.lua:39-40`, checked once per process; `applyPatches` then runs nothing,
   `:110-111`). The copy goes through `1-kopanda-apply.lua.tmp`, which the loader skips: it runs
-  only names ending `.lua` (`:86`).
+  only names ending `.lua` (`:87`).
 - Early priority: the prefix `1` (`frontend/userpatch.lua:11-12`), run by `runUserPatchTasks`
   (`:65-100`) under `pcall(dofile, fullpath)` (`:89`), whose failure is only logged (`:92`).
   `reader.lua:25-27` applies early patches before `G_reader_settings` is opened (`:39-40`), and

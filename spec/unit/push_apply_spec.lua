@@ -275,6 +275,8 @@ describe("the apply patch", function()
                 stage{ plugin_dir = dir .. "/missing/kopanda.koplugin" }
             end },
             { "another format", function() stage{ format = 2 } end },
+            { "a disable that isn't a list", function() stage{ disable = "simpleui" } end },
+            { "a disable holding a non-name", function() stage{ disable = { 1 } } end },
             { "a missing staged/plugin/main.lua", function()
                 stage()
                 os.remove(p.staged .. "/plugin/main.lua")
@@ -608,6 +610,22 @@ describe("the apply patch", function()
             assert.is_nil(mode(p.probation))
         end)
 
+        it("gives up and moves nothing when the rollback record's plugin folder is not the plugin's", function()
+            device_fixture()
+            stage()
+            PushApply.run(dir)
+            local record = load_lua(p.rollback .. "/record.lua")
+            record.plugin_dir = dir .. "/plugins"
+            write(p.rollback .. "/record.lua", "return " .. require("dump")(record, nil, true) .. "\n")
+            local before = device()
+            PushApply.run(dir)
+            assert.equals("restore_failed", result().kind)
+            assert.is_nil(mode(p.probation))
+            assert.same(before, device())
+            assert.equals("new\n", plugin_marker())
+            assert.is_nil(mode(p.discard))
+        end)
+
         it("only logs a failed purge of discard/ after the swap", function()
             device_fixture()
             local before = device()
@@ -629,10 +647,14 @@ describe("the apply patch", function()
         end)
 
         it("never renames onto an existing path itself", function()
-            local renames = 0
+            -- An assert here would raise inside run's pcalls and be swallowed, so a rename onto an
+            -- existing path is recorded and checked after the runs.
+            local renames, violations = 0, {}
             local move = PushApply._move
             PushApply._move = function(from, to)
-                assert.is_nil(mode(to), "a rename onto " .. to)
+                if mode(to) then
+                    violations[#violations + 1] = to
+                end
                 renames = renames + 1
                 return move(from, to)
             end
@@ -651,6 +673,7 @@ describe("the apply patch", function()
             PushApply.run(dir)
             assert.truthy(PushApply.arm(os.getenv("KOPANDA_ROOT") .. "/kopanda.koplugin", dir))
             assert.truthy(PushApply.arm(os.getenv("KOPANDA_ROOT") .. "/kopanda.koplugin", dir))
+            assert.same({}, violations)
             assert.truthy(renames >= 12)
         end)
     end)
