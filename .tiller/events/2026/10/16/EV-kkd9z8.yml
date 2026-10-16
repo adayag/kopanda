@@ -1,0 +1,16 @@
+id: EV-kkd9z8
+type: submit.task
+at: 2026-10-16T19:17:53.044639Z
+contributor: allen
+command: submit task T-48qqub
+targets:
+    - T-48qqub
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/settings-form/launcher-editor
+        head: git:c1359bf
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/launcher-editor/task.yml
