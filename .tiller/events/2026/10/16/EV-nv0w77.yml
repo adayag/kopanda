@@ -1,0 +1,13 @@
+id: EV-nv0w77
+type: check.task
+at: 2026-10-16T17:19:49.749881Z
+contributor: allen
+command: check task T-dwsmmb
+targets:
+    - T-dwsmmb
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/schema-contract/task.yml
