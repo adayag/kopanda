@@ -1,0 +1,16 @@
+id: EV-9psmox
+type: submit.task
+at: 2026-10-16T17:23:29.818738Z
+contributor: allen
+command: submit task T-n4uwe9
+targets:
+    - T-n4uwe9
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/studio-shell/profiles
+        head: git:7220021
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/profiles/task.yml
