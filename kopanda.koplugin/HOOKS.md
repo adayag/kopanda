@@ -262,12 +262,15 @@ Upgrading KOReader walks this list.
 - The nav bar's step runs before the file manager's zones: a tap or a hold the home's own zones
   name that lies in the bar's band goes to the bar, so Gestures' bottom corner zones
   (`DTAP_ZONE_BOTTOM_LEFT`, `DTAP_ZONE_BOTTOM_RIGHT`, `defaults.lua:68-69` in the KOReader root,
-  each an eighth of each side; read at `plugins/gestures.koplugin/main.lua:985-997`) never
+  each an eighth of each side; read at `plugins/gestures.koplugin/main.lua:985-998`) never
   see it there. Gestures binds the bottom-left corner tap to `toggle_frontlight` by default on
   any device with a frontlight (`plugins/gestures.koplugin/defaults.lua:9`), the emulator
   included (`hasFrontlight`, `frontend/device/sdl/device.lua:157`), which would otherwise take
-  most of the Home tab. The band is shorter than an eighth of the screen, so each corner zone
-  still has its strip above the bar.
+  most of the Home tab. In portrait the band is shorter than an eighth of the screen, so each
+  corner zone still has its strip above the bar. In landscape it isn't: `scaleBySize` scales by
+  the shorter side (`base/ffi/framebuffer.lua:416`), so the bar keeps its portrait height while
+  the eighth shrinks to 1264 / 8 = 158 px on the Colorsoft, and both bottom corner zones lie
+  wholly inside the band; on the home the bar takes every tap and hold there.
 
 ### KOReader's touch lock: `setIgnoreTouchInput`, `_onGestureFiltered`, `isGestureAlwaysActive`
 

@@ -231,6 +231,19 @@ describe("KoPanda failing safe", function()
         assert.is_nil(home.nav)
         assert.truthy(#home.slots > 0)
         assert.is_true(logged_error("kopanda-test: bar height failed"))
+        local Layout = require("layout")
+        local Looks = require("looks")
+        local Settings = require("settings")
+        local ctx = {
+            look = Looks.active(),
+            variant = Looks.variant(),
+            text_size = Settings.get("text_size"),
+            now = os.time(),
+            screen = Screen,
+        }
+        local arranged = Layout.arrange(Settings.get("layout.rows"), ctx)
+        assert.equals(0, arranged.nav.h)
+        assert.equals(Layout.screen:getHeight(), arranged.nav.y)
     end)
 
     it("closes the home onto the file browser, with no sheet, when a widget's hold throws", function()
