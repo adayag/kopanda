@@ -283,25 +283,32 @@ return {
         },
         -- Not drawn: Editorial has no chips. Its plain detail's style.
         sheet_chip = { face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
-        -- The editor screens' aside over the title, "Home" (EditLayout.dc.html:21).
+        -- The editor screens' aside over the title, "Home" (EditLayout.dc.html:21), at the editor's line
+        -- height of 0.3, which every editor part takes so the default layout's five rows fit above the
+        -- foot (owner decision).
         editor_aside = {
-            face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted",
+            face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0.3, color = "muted",
         },
-        -- Their title, "Edit layout" (EditLayout.dc.html:22).
-        editor_title = { face = "display", size = 34, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
-        -- A button's text, "Done"; the board's weight 600 is the strong face's 500 (EditLayout.dc.html:24).
+        -- Their title, "Edit layout" (EditLayout.dc.html:22), at the same line height.
+        editor_title = {
+            face = "display", size = 34, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
+        },
+        -- A button's text, "Done"; the board's weight 600 is the strong face's 500 (EditLayout.dc.html:24),
+        -- at the same line height.
         editor_button = {
-            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "ink",
+            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0.3, color = "ink",
         },
-        -- A card's caption, "Row 1 · two columns" (EditLayout.dc.html:35).
+        -- A card's caption, "Row 1 · two columns" (EditLayout.dc.html:35), at the same line height.
         editor_caption = {
-            face = "text", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "muted",
+            face = "text", size = 11, uppercase = true, tracking = 0.12, line_height = 0.3, color = "muted",
         },
-        -- A column box's widget (EditLayout.dc.html:37).
-        editor_box = { face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
-        -- Its share, "1/2" (EditLayout.dc.html:37).
+        -- A column box's widget (EditLayout.dc.html:37), at the same line height.
+        editor_box = {
+            face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
+        },
+        -- Its share, "1/2" (EditLayout.dc.html:37), at the same line height.
         editor_share = {
-            face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "muted",
+            face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0.3, color = "muted",
         },
         -- A launcher entry's label (LauncherManage.dc.html:32), at the browser's normal line height
         -- of about 1.3, so six rows fit above the add-an-entry foot (owner decision).
@@ -312,8 +319,10 @@ return {
         editor_kind = {
             face = "text", size = 11, uppercase = true, tracking = 0.1, line_height = 0.3, color = "muted",
         },
-        -- The note under the kinds (LauncherManage.dc.html:103).
-        editor_note = { face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "muted" },
+        -- The note under the kinds (LauncherManage.dc.html:103), at the same line height.
+        editor_note = {
+            face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0.3, color = "muted",
+        },
     },
 
     -- The launcher: a grid of text rows, each under a hairline in tile.rule_color.

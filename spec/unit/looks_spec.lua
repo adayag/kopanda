@@ -366,7 +366,7 @@ describe("looks", function()
             assert.same({ "hairline", 1 }, { editor.card_outline_color, editor.card_outline_width })
             assert.same({ "ink", "hairline_light" }, { editor.selected_outline_color, editor.selected_fill_color })
             assert.equals("hairline", editor.disabled_color)
-            assert.same({ "display", 34, false, 0, 0, "ink" }, { parts.editor_title.face, parts.editor_title.size,
+            assert.same({ "display", 34, false, 0, 0.3, "ink" }, { parts.editor_title.face, parts.editor_title.size,
                 parts.editor_title.uppercase, parts.editor_title.tracking, parts.editor_title.line_height,
                 parts.editor_title.color })
             assert.same({ "text", 11, true, 0.14, "muted" }, { parts.editor_aside.face, parts.editor_aside.size,

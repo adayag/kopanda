@@ -306,21 +306,29 @@ return {
         -- The editor screens have no Diner board: the direction doc's vocabulary ("The two looks"),
         -- the header's aside and title on the band as the home's date and clock are (HomeRetro.dc.html:22-24),
         -- the rest in the look's label style and Editorial's sizes.
+        -- no board: Editorial's line height, so the default layout's five rows fit above the foot
         editor_aside = {
-            face = "strong", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "on_band",
+            face = "strong", size = 11, uppercase = true, tracking = 0.1, line_height = 0.3, color = "on_band",
         },
+        -- no board: Editorial's line height
         editor_title = {
-            face = "display", size = 30, uppercase = false, tracking = 0, line_height = 0, color = "on_band",
+            face = "display", size = 30, uppercase = false, tracking = 0, line_height = 0.3, color = "on_band",
         },
+        -- no board: Editorial's line height
         editor_button = {
-            face = "display", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "ink",
+            face = "display", size = 11, uppercase = true, tracking = 0.1, line_height = 0.3, color = "ink",
         },
+        -- no board: Editorial's line height
         editor_caption = {
-            face = "strong", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "muted",
+            face = "strong", size = 11, uppercase = true, tracking = 0.1, line_height = 0.3, color = "muted",
         },
-        editor_box = { face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        -- no board: Editorial's line height
+        editor_box = {
+            face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
+        },
+        -- no board: Editorial's line height
         editor_share = {
-            face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "muted",
+            face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0.3, color = "muted",
         },
         -- no board: Editorial's line height, so six rows fit above the add-an-entry foot
         editor_label = {
@@ -330,7 +338,10 @@ return {
         editor_kind = {
             face = "strong", size = 11, uppercase = true, tracking = 0.08, line_height = 0.3, color = "muted",
         },
-        editor_note = { face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "muted" },
+        -- no board: Editorial's line height
+        editor_note = {
+            face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0.3, color = "muted",
+        },
     },
 
     -- The launcher: a grid of outlined tiles with the tile shadow, the first three on accents.
@@ -383,7 +394,7 @@ return {
         button_outline_width = 3, -- no board: stroke.outline
         button_fill_color = "paper", -- no board: a paper button on the band
         button_padding = { x = 14, y = 8 }, -- no board: Editorial's
-        card_gap = 12, -- no board: Editorial's
+        card_gap = 10, -- no board: 10, so the default layout's five rows fit with one selected (owner decision)
         card_padding = { x = 14, y = 12 }, -- no board: Editorial's
         card_outline_color = "outline", -- no board: the doc's ink outlines
         card_outline_width = 3, -- no board: stroke.outline

@@ -141,6 +141,42 @@ function M.gesture(ges, x, y)
     return { ges = ges, pos = Geom:new{ x = x, y = y, w = 0, h = 0 }, time = time.now() }
 end
 
+-- Runs fn with the device screen answering as the emulator's Colorsoft profile does: 1264×1680
+-- with no DPI override, so scaleBySize is ceil(px × 1264 / 600) (ffi/framebuffer.lua:414-426)
+-- and Font:getFace scales by it (frontend/ui/font.lua:276). TextWidget's vertical padding is
+-- Size.padding.small, scaled once when the class loads (frontend/ui/widget/textwidget.lua:34,
+-- frontend/ui/size.lua:43), so it is set to its Colorsoft value too. The unit screen's own
+-- values come back afterwards, even when fn raises, so nothing built under fn should be painted
+-- into the unit screen's 600×800 buffer before the caller is done with it.
+function M.at_colorsoft(fn)
+    local Geom = require("ui/geometry")
+    local Screen = require("device").screen
+    local TextWidget = require("ui/widget/textwidget")
+    local W, H = 1264, 1680
+    local function scale(px)
+        return math.ceil(px * W / 600)
+    end
+    local stubs = {
+        { Screen, "getWidth", function() return W end },
+        { Screen, "getHeight", function() return H end },
+        { Screen, "getSize", function() return Geom:new{ x = 0, y = 0, w = W, h = H } end },
+        { Screen, "scaleBySize", function(_, px) return scale(px) end },
+        { TextWidget, "padding", scale(2) },
+    }
+    local saved = {}
+    for i, stub in ipairs(stubs) do
+        saved[i] = rawget(stub[1], stub[2])
+        stub[1][stub[2]] = stub[3]
+    end
+    local ok, err = pcall(fn)
+    for i, stub in ipairs(stubs) do
+        stub[1][stub[2]] = saved[i]
+    end
+    if not ok then
+        error(err, 0)
+    end
+end
+
 -- Closes any reader and file manager, then everything left on the stack, and drops every
 -- scheduled task, so the next spec starts from an empty UI.
 function M.teardown()
