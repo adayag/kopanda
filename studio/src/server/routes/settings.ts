@@ -6,7 +6,7 @@ import { readSettings, SettingsWriteError, writeSetting, type SettingsRead } fro
 const STATUS = { unknown_key: 404, invalid_value: 400, not_writable: 409 } as const;
 
 /** The listed, valid profile with this id; 404 otherwise. The id is never joined into a path. */
-async function resolveProfile(dir: string, id: string): Promise<ProfileWithPath> {
+export async function resolveProfile(dir: string, id: string): Promise<ProfileWithPath> {
   const profile = await getProfile(dir, id);
   if (profile === undefined) throw new HttpError(404, `no profile "${id}"`);
   if ("error" in profile) throw new HttpError(404, `profile "${id}" is invalid: ${profile.error}`);

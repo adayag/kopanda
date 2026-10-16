@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Runs the plugin's own fit rule, Layout.overflow, for a profile: reads a JSON array of row lists
+# on stdin and prints { "screen": { "width": w, "height": h }, "overflow": [n, ...] }, one count
+# per row list, for a screen of <width>x<height> at <dpi> under the profile's settings file. The
+# studio's layout editor asks it before every change (bin/layout-fit.lua holds the rule's run).
+#
+#   bin/layout-fit <width> <height> <dpi> [settings file]
+#
+# Exit 0 on success, 1 for input that isn't a JSON array of row lists, a row list the plugin's
+# validator refuses or a Lua error, 2 when the script refuses to run.
+set -euo pipefail
+
+KOPANDA_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
+emulator_default="$HOME/Projects/kodev/koreader/koreader-emulator-arm64-apple-darwin23.5.0-debug"
+KOPANDA_EMULATOR="${KOPANDA_EMULATOR:-$emulator_default/koreader}"
+
+usage() {
+    printf '%s\n' "usage: bin/layout-fit <width> <height> <dpi> [settings file]" >&2
+    exit 2
+}
+
+if [[ $# -lt 3 || $# -gt 4 ]]; then
+    usage
+fi
+for size in "$1" "$2" "$3"; do
+    [[ "$size" =~ ^[1-9][0-9]*$ ]] || usage
+done
+
+if [[ ! -x "$KOPANDA_EMULATOR/luajit" ]]; then
+    printf '%s\n' "bin/layout-fit: no luajit at $KOPANDA_EMULATOR/luajit" \
+        "    set KOPANDA_EMULATOR to the emulator's koreader directory" >&2
+    exit 2
+fi
+
+# A headless KOReader in a scratch KO_HOME, so commonrequire's files and anything the plugin
+# writes stay out of the profile's directory. The template names TMPDIR, which macOS's mktemp
+# skips without one.
+KO_HOME="$(mktemp -d "${TMPDIR:-/tmp}/layout-fit.XXXXXX")"
+trap 'rm -rf "$KO_HOME"' EXIT
+if [[ $# -eq 4 && -f "$4" ]]; then
+    mkdir -p "$KO_HOME/settings/kopanda"
+    cp "$4" "$KO_HOME/settings/kopanda/settings.lua"
+fi
+
+# bin/check's paths without Busted's rocks or KoPanda's spec/, whose home_gestures.lua would
+# shadow the plugin's.
+lua_path="?.lua;common/?.lua;frontend/?.lua;spec/front/unit/?.lua;$KOPANDA_ROOT/kopanda.koplugin/?.lua"
+
+# KOReader logs to stdout (ffi/loadlib.lua:22, frontend/logger.lua:89), so the process's stdout
+# goes to stderr and the answer comes out on file descriptor 3, this script's stdout.
+cd "$KOPANDA_EMULATOR"
+KO_HOME="$KO_HOME" EMULATE_READER_DPI="$3" LUA_PATH="$lua_path" LUA_CPATH="?.so;common/?.so" \
+    ./luajit "$KOPANDA_ROOT/bin/layout-fit.lua" "$1" "$2" 3>&1 1>&2
