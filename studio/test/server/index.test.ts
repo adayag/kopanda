@@ -9,6 +9,9 @@ const root = path.join(import.meta.dirname, "..", "..");
 const entry = path.join(root, "src", "server", "index.ts");
 const tsx = path.join(root, "node_modules", ".bin", "tsx");
 
+/** A child still running after this long is killed; each test waits longer than that. */
+const killAfterMs = 15_000;
+
 let tmp: string;
 
 beforeEach(() => {
@@ -32,7 +35,7 @@ function start(port: string): Promise<{ status: number | null; stderr: string }>
     });
     let stderr = "";
     child.stderr.setEncoding("utf8").on("data", (chunk: string) => (stderr += chunk));
-    const timer = setTimeout(() => child.kill(), 15_000);
+    const timer = setTimeout(() => child.kill(), killAfterMs);
     child.on("error", reject);
     child.on("close", (status) => {
       clearTimeout(timer);
@@ -49,7 +52,7 @@ function occupyPort(): Promise<net.Server> {
   });
 }
 
-describe("the server entry point", () => {
+describe("the server entry point", { timeout: killAfterMs + 5_000 }, () => {
   it("exits 1 with one line naming the variable for a bad KOPANDA_STUDIO_PORT", async () => {
     const { status, stderr } = await start("abc");
 

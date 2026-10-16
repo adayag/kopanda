@@ -30,7 +30,11 @@ describe("unknown API paths", () => {
   });
 
   it("answer 404 JSON even when a UI directory is served", async () => {
-    const res = await request(createApp(loadConfig({}), { uiDir: tempUiDir() })).get("/api/x");
+    const uiDir = tempUiDir();
+    fs.mkdirSync(path.join(uiDir, "api"));
+    fs.writeFileSync(path.join(uiDir, "api", "x"), "a file the static handler would serve");
+
+    const res = await request(createApp(loadConfig({}), { uiDir })).get("/api/x");
 
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: "not found: GET /api/x" });
