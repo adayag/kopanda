@@ -3,7 +3,6 @@
 -- look (Main.dc.html:32-52, HomeRetro.dc.html:27-43). With no book, the first run: the dashed
 -- frame and a column pointing at the Library (EmptyStates.dc.html:32-40). Lengths are board
 -- pixels, scaled by ctx.screen.
-local Blitbuffer = require("ffi/blitbuffer")
 local FeaturedBook = require("featured_book")
 local FeaturedCover = require("featured_cover")
 local Fonts = require("fonts")
@@ -15,6 +14,7 @@ local HorizontalSpan = require("ui/widget/horizontalspan")
 local Layout = require("layout")
 local Looks = require("looks")
 local Math = require("optmath")
+local Paint = require("paint")
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local Typeset = require("typeset")
 local VerticalGroup = require("ui/widget/verticalgroup")
@@ -47,24 +47,6 @@ local DINER_JOIN = " · "
 -- floor(percent × 100) less a hair, so 0.29 reads 29 although 0.29 × 100 is 28.999…
 local EPSILON = 1e-9
 
--- A filled rectangle; a colour goes through the RGB32 variant, since the plain one greys it
--- (base/ffi/blitbuffer.lua:1704-1724, :1827).
-local function fill(bb, x, y, w, h, color)
-    if Blitbuffer.isColor8(color) then
-        bb:paintRect(x, y, w, h, color)
-    else
-        bb:paintRectRGB32(x, y, w, h, color)
-    end
-end
-
-local function border(bb, x, y, w, h, width, color)
-    if Blitbuffer.isColor8(color) then
-        bb:paintBorder(x, y, w, h, width, color)
-    else
-        bb:paintBorderRGB32(x, y, w, h, width, color)
-    end
-end
-
 -- A box box_w by box_h with its shadow below and right of it, its fill, its child inset by its
 -- outline and padding, and its outline: Diner's chip and the first run's button. Its rectangle
 -- on the screen is kept as screen_rect when it paints.
@@ -75,16 +57,9 @@ local Box = WidgetContainer:extend{
 function Box:paintTo(bb, x, y)
     local w, h = self.box_w, self.box_h
     self.screen_rect = Geom:new{ x = x, y = y, w = w, h = h }
-    if self.shadow_color then
-        fill(bb, x + self.shadow_x, y + self.shadow_y, w, h, self.shadow_color)
-    end
-    if self.fill_color then
-        fill(bb, x, y, w, h, self.fill_color)
-    end
+    Paint.backing(bb, x, y, w, h, self)
     self[1]:paintTo(bb, x + self.outline + self.pad_x, y + self.outline + self.pad_y)
-    if self.outline > 0 then
-        border(bb, x, y, w, h, self.outline, self.outline_color)
-    end
+    Paint.outline(bb, x, y, w, h, self)
 end
 
 -- The progress bar: its track, its fill (self[1]) inside its outline, then the outline.
@@ -95,11 +70,11 @@ local Bar = WidgetContainer:extend{
 function Bar:paintTo(bb, x, y)
     local w, h = self.dimen.w, self.dimen.h
     if self.track_color then
-        fill(bb, x, y, w, h, self.track_color)
+        Paint.fill(bb, x, y, w, h, self.track_color)
     end
     self[1]:paintTo(bb, x + self.outline, y + self.outline)
     if self.outline > 0 then
-        border(bb, x, y, w, h, self.outline, self.outline_color)
+        Paint.border(bb, x, y, w, h, self.outline, self.outline_color)
     end
 end
 
@@ -110,7 +85,7 @@ local Fill = Widget:extend{
 
 function Fill:paintTo(bb, x, y)
     if self.dimen.w > 0 and self.color then
-        fill(bb, x, y, self.dimen.w, self.dimen.h, self.color)
+        Paint.fill(bb, x, y, self.dimen.w, self.dimen.h, self.color)
     end
 end
 

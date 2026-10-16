@@ -1,0 +1,11 @@
+id: EV-9ap9a3
+type: claim.tweak
+at: 2026-10-16T00:20:49.554946Z
+contributor: allen
+command: claim tweak tweaks/shared-paint-helpers
+targets:
+    - TW-a7nfpr
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/shared-paint-helpers/tweak.yml
