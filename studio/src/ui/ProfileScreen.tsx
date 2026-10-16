@@ -3,7 +3,8 @@ import type { Key } from "../schema";
 import type { ProfileWithPath } from "../server/profiles.js";
 import { ApiError, fetchProfile, fetchSettings, putSetting, type Settings } from "./api";
 import { LayoutEditor } from "./layout/LayoutEditor";
-import { profileHref, screenFacts } from "./ProfileList";
+import { LauncherEditor } from "./launcher/LauncherEditor";
+import { screenFacts } from "./ProfileList";
 import { SettingsForm } from "./settings/SettingsForm";
 
 /** What the profile's screen shows under its facts: the form or one of the editors. */
@@ -118,7 +119,13 @@ export function ProfileScreen({ id, view = "form" }: { id: string; view?: Profil
                 onWrite={write}
               />
             ) : (
-              <EditorSlot id={id} title="Launcher" />
+              <LauncherEditor
+                profileId={id}
+                settings={state.settings}
+                pending={pending}
+                errors={errors}
+                onWrite={write}
+              />
             )}
           </section>
         </>
@@ -143,17 +150,5 @@ function Profile({ profile, settings }: { profile: ProfileWithPath; settings: Se
       </dl>
       {!settings.exists && <p className="note">All settings at their defaults</p>}
     </>
-  );
-}
-
-/** Where an editor opens: its heading and Done back to the form. */
-function EditorSlot({ id, title }: { id: string; title: string }) {
-  return (
-    <header className="editor-head">
-      <h2>{title}</h2>
-      <a className="editor-link" href={profileHref(id)}>
-        Done
-      </a>
-    </header>
   );
 }

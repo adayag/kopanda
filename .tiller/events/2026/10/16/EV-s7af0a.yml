@@ -1,0 +1,13 @@
+id: EV-s7af0a
+type: check.task
+at: 2026-10-16T19:17:48.099824Z
+contributor: allen
+command: check task T-48qqub
+targets:
+    - T-48qqub
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/launcher-editor/task.yml
