@@ -192,7 +192,10 @@ describe("fonts", function()
         for _, file in ipairs(files) do
             local source = read(harness.plugin_dir .. "/" .. file)
             assert.is_nil(source:find("\226\128\145", 1, true), file .. " has a raw U+2011")
-            assert.is_nil(source:lower():find("\\u{2011}", 1, true), file .. " has an escaped U+2011")
+            local lower = source:lower()
+            assert.is_nil(lower:find("\\u{0*2011}"), file .. " has a \\u{} escaped U+2011")
+            assert.is_nil(lower:find("\\226\\128\\145", 1, true), file .. " has a decimal escaped U+2011")
+            assert.is_nil(lower:find("\\xe2\\x80\\x91", 1, true), file .. " has a hex escaped U+2011")
         end
     end)
 
