@@ -1,0 +1,16 @@
+id: EV-ks482l
+type: submit.task
+at: 2026-10-16T21:31:53.516218Z
+contributor: allen
+command: submit task T-8kwd74
+targets:
+    - T-8kwd74
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/device-push/emulator-push
+        head: git:edab1fc
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/emulator-push/task.yml
