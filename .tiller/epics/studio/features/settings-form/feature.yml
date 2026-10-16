@@ -1,7 +1,7 @@
 id: F-k4yn5f
 key: studio/settings-form
 title: Form, layout editor and launcher editor from the schema
-status: active
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -34,6 +34,23 @@ accepted_against:
         kind: git_commit
         value: git:d92a0a4
         observed_at: 2026-10-16T17:50:20.330798Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:08155eaebd56fc03e01bf26c1721a07046108d0a
+        path: .tiller/epics/studio/features/settings-form/feature.md
+        observed_at: 2026-10-16T19:37:18.653619Z
+    eval:
+        kind: git_blob
+        value: git:6bea398b6e990c0006f8716722b67314396ed25d
+        path: .tiller/epics/studio/features/settings-form/feature.eval.md
+        observed_at: 2026-10-16T19:37:18.653619Z
+    commit:
+        kind: git_commit
+        value: git:20c63d7
+        observed_at: 2026-10-16T19:37:17.965434Z
+    surfaces: []
+done_basis: rollup
 gates:
     build:
         required: true

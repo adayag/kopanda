@@ -1,0 +1,14 @@
+id: EV-if3e8k
+type: sync.task
+at: 2026-10-16T19:37:18.338931Z
+contributor: allen
+command: sync task T-08n402
+targets:
+    - T-08n402
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/form/task.yml

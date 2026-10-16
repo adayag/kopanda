@@ -1,0 +1,14 @@
+id: EV-wo0p7l
+type: sync.task
+at: 2026-10-16T19:37:18.512655Z
+contributor: allen
+command: sync task T-ihpvfp
+targets:
+    - T-ihpvfp
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/layout-editor/task.yml

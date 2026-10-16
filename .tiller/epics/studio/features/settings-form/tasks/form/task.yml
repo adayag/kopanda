@@ -1,7 +1,7 @@
 id: T-08n402
 key: studio/settings-form/form
 title: The generated form over every schema key
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:916692d
         observed_at: 2026-10-16T18:51:06.395905Z
+done_basis: ancestry
 gates:
     build:
         required: true

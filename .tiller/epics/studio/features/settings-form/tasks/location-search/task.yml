@@ -1,7 +1,7 @@
 id: T-wmf18g
 key: studio/settings-form/location-search
 title: Weather location search through the studio server
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:21a35d9
         observed_at: 2026-10-16T19:13:07.380632Z
+done_basis: ancestry
 gates:
     build:
         required: true

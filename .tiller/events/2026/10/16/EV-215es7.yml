@@ -1,0 +1,14 @@
+id: EV-215es7
+type: sync.task
+at: 2026-10-16T19:37:18.427055Z
+contributor: allen
+command: sync task T-wmf18g
+targets:
+    - T-wmf18g
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/location-search/task.yml

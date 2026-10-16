@@ -1,0 +1,14 @@
+id: EV-vn3nzq
+type: sync.task
+at: 2026-10-16T19:37:18.057796Z
+contributor: allen
+command: sync task T-v4irt5
+targets:
+    - T-v4irt5
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/settings-file/task.yml
