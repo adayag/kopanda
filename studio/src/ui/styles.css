@@ -658,3 +658,131 @@ button.entry-kind {
   display: grid;
   gap: 0.25rem;
 }
+
+.app:has(.preview) {
+  max-width: 84rem;
+}
+
+.profile-body {
+  display: grid;
+  grid-template-columns: minmax(0, 44rem) minmax(16rem, 1fr);
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (max-width: 60rem) {
+  .profile-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.preview {
+  position: sticky;
+  top: 1rem;
+  margin-top: 1.5rem;
+}
+
+.preview-head p {
+  margin: 0;
+}
+
+.preview-name {
+  font-weight: 600;
+}
+
+.preview-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 0.6rem 0 1rem;
+}
+
+.preview-controls button {
+  margin-left: auto;
+  padding: 0.25rem 0.8rem;
+  background: transparent;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.preview-controls button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.preview-frames {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.preview-frame {
+  margin: 0;
+}
+
+.preview-image {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #fff;
+}
+
+.preview-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.preview-image img.dimmed {
+  opacity: 0.35;
+}
+
+.stale {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--bg);
+  background: var(--warning);
+  border-radius: 4px;
+}
+
+.preview-frame figcaption {
+  margin-top: 0.45rem;
+  font-weight: 500;
+}
+
+.preview-status {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.preview-failure {
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.85rem;
+  color: var(--warning);
+  background: rgba(232, 194, 122, 0.08);
+  border: 1px solid var(--warning);
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
+.preview-failure p {
+  margin: 0 0 0.25rem;
+}
+
+.preview-failure pre {
+  margin: 0.4rem 0 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  color: var(--muted);
+}
