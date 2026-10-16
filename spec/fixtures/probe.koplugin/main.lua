@@ -2,6 +2,12 @@
 -- deterministic full-screen widget (the screen size as text, a square in each corner) and,
 -- once that paint has happened, signals "KoPandaSettled" on UIManager.event_hook with the
 -- milliseconds the paint took. Fixed strings and sizes only, so captures compare equal.
+--
+-- The widget's first paintTo queues the signal with nextTick. paintTo runs inside
+-- UIManager:_repaint, and tasks run only from the next _checkTasks pass, after that repaint
+-- (frontend/ui/uimanager.lua:1542-1564), so the shot always follows the paint. Counting ticks
+-- from the show instead (tickAfterNext) lets the signal run before the first repaint whenever
+-- time.now() has not advanced within a task pass (uimanager.lua:1082, :1088-1097).
 local Blitbuffer = require("ffi/blitbuffer")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Font = require("ui/font")
@@ -24,6 +30,19 @@ local Probe = WidgetContainer:extend{
     settled = false,
 }
 
+-- The full-screen widget: a FrameContainer that calls on_first_paint once, after its first paint.
+local ProbeScreen = FrameContainer:extend{
+    painted = false,
+}
+
+function ProbeScreen:paintTo(bb, x, y)
+    FrameContainer.paintTo(self, bb, x, y)
+    if not self.painted then
+        self.painted = true
+        self.on_first_paint()
+    end
+end
+
 local function square(x, y)
     return FrameContainer:new{
         bordersize = 0,
@@ -35,10 +54,11 @@ local function square(x, y)
     }
 end
 
-local function build_screen(width, height)
+local function build_screen(width, height, on_first_paint)
     local far_x = width - MARGIN - SQUARE
     local far_y = height - MARGIN - SQUARE
-    return FrameContainer:new{
+    return ProbeScreen:new{
+        on_first_paint = on_first_paint,
         covers_fullscreen = true,
         bordersize = 0,
         padding = 0,
@@ -74,10 +94,11 @@ function Probe:onShow()
     end
     self.settled = true
     local started = time.monotonic()
-    UIManager:show(build_screen(Screen:getWidth(), Screen:getHeight()))
-    UIManager:tickAfterNext(function()
-        pcall(signal, time.to_ms(time.monotonic() - started))
-    end)
+    UIManager:show(build_screen(Screen:getWidth(), Screen:getHeight(), function()
+        UIManager:nextTick(function()
+            pcall(signal, time.to_ms(time.monotonic() - started))
+        end)
+    end))
 end
 
 return Probe

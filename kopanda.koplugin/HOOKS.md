@@ -977,8 +977,12 @@ Upgrading KOReader walks this list.
   `_checkTasks` sampled at `:1082`, since a task due at `_now` runs in the same pass
   (`:1088-1097`).
 - `time.now` is `time.monotonic_coarse` (`frontend/ui/time.lua:300`), which on macOS is
-  `CLOCK_MONOTONIC` at µs resolution (`:185-199`). The probe's capture was painted in 10 of
-  10 runs.
+  `CLOCK_MONOTONIC` at µs resolution (`:185-199`). A pass that takes under a microsecond
+  leaves `time.now()` equal to `_now`: the probe's `tickAfterNext` signal ran before the first
+  `_repaint` in about 6 % of captures, a blank white shot. The probe now queues its signal with
+  `nextTick` from its widget's first `paintTo`, inside `_repaint`, so it always runs past the
+  paint; `spec/emulator/scenarios/2-scenario-held-clock.lua` holds `time.now()` through each
+  pass so a capture spec reproduces the race on every run.
 
 ### The `Show` event reaching plugin instances
 
