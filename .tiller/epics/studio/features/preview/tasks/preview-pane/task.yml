@@ -1,9 +1,19 @@
 id: T-ruuuqy
 key: studio/preview/preview-pane
 title: The preview pane beside the form, with both looks, night and its states
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-ld7mvc
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:f55ef0821f8cd873cce09ed6a5ff0763fda7d090
+        path: .tiller/epics/studio/features/preview/tasks/preview-pane/task.md
+        observed_at: 2026-10-16T21:49:07.314459Z
+    commit:
+        kind: git_commit
+        value: git:2bbb0b4
+        observed_at: 2026-10-16T21:49:07.337416Z

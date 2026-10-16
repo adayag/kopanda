@@ -1,0 +1,13 @@
+id: EV-orfdgr
+type: configure.feature
+at: 2026-10-16T21:49:07.096734Z
+contributor: allen
+command: configure feature studio/preview --review-grain feature
+targets:
+    - F-29oj9m
+before:
+    review_grain: ""
+after:
+    review_grain: feature
+files:
+    - path: .tiller/epics/studio/features/preview/feature.yml

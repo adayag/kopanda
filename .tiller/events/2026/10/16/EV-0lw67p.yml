@@ -1,0 +1,13 @@
+id: EV-0lw67p
+type: approve.task
+at: 2026-10-16T21:49:07.337497Z
+contributor: allen
+command: approve task T-ruuuqy
+targets:
+    - T-ruuuqy
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-pane/task.yml
