@@ -199,15 +199,16 @@ describe("the swatch screen", function()
     end)
 
     describe("Tools › KoPanda › Swatches", function()
-        it("follows Home and Settings in the file manager's and the reader's Tools", function()
+        it("follows Home, Settings and Studio in the file manager's and the reader's Tools", function()
             local fm = harness.show_fm()
             fm.menu:onShowMenu()
-            assert.same({ "Home", "Settings", "Swatches" }, texts(kopanda_item(fm.menu.tab_item_table).sub_item_table))
+            assert.same({ "Home", "Settings", "Studio", "Swatches" },
+                texts(kopanda_item(fm.menu.tab_item_table).sub_item_table))
             fm.menu:onCloseFileManagerMenu()
             fm:onClose()
             local reader = harness.open_reader()
             reader.menu:onShowMenu()
-            assert.same({ "Home", "Settings", "Swatches" },
+            assert.same({ "Home", "Settings", "Studio", "Swatches" },
                 texts(kopanda_item(reader.menu.tab_item_table).sub_item_table))
         end)
 
