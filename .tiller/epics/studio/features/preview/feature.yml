@@ -1,7 +1,7 @@
 id: F-29oj9m
 key: studio/preview
 title: Emulator preview per profile and look
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -11,6 +11,7 @@ depends_on:
     - F-wkj9iy
     - F-k4yn5f
 review_grain: feature
+branch: tiller/reviews/features/studio/preview
 accepted_against:
     spec:
         kind: git_blob

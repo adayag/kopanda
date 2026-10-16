@@ -1,0 +1,17 @@
+id: EV-nufmsi
+type: start.task
+at: 2026-10-16T21:49:34.506609Z
+contributor: allen
+command: start task T-0s2a1j
+targets:
+    - T-0s2a1j
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/studio/preview
+    branch: tiller/studio/preview/capture-inputs
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/capture-inputs/task.yml
+    - path: .tiller/epics/studio/features/preview/feature.yml
