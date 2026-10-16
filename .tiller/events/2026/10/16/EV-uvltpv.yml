@@ -1,0 +1,14 @@
+id: EV-uvltpv
+type: resume.task
+at: 2026-10-16T20:36:34.683371Z
+contributor: allen
+command: resume task T-o5gnzj
+targets:
+    - T-o5gnzj
+before:
+    status: in_review
+after:
+    reason: 'push_notice_spec:87 flakes: finished(false) after a successful first paint; diagnose and fix'
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/apply-and-rollback/task.yml

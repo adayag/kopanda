@@ -6,12 +6,16 @@ describe("the pull's probation and notices", function()
     local InfoMessage = require("ui/widget/infomessage")
     local InputContainer = require("ui/widget/container/inputcontainer")
     local PluginLoader = require("pluginloader")
+    local Screen = require("device").screen
+    local UIManager = require("ui/uimanager")
+    local WidgetContainer = require("ui/widget/container/widgetcontainer")
     local lfs = require("libs/libkoreader-lfs")
     local time = require("ui/time")
     local push_dir = harness.state_dir .. "/push"
     local probation_file = push_dir .. "/probation.lua"
     local result_file = push_dir .. "/result.lua"
     local original_paint = InputContainer.paintTo
+    local original_now = time.now
     local HASH = "0123456789ab" .. string.rep("c", 52)
     local Home
 
@@ -55,12 +59,21 @@ describe("the pull's probation and notices", function()
         end
     end
 
+    -- Holds UIManager's clock (time.now) where it is until the test ends.
+    local function stop_clock()
+        local frozen = original_now()
+        time.now = function()
+            return frozen
+        end
+    end
+
     before_each(function()
         harness.load()
         Home = require("home")
     end)
 
     after_each(function()
+        time.now = original_now
         InputContainer.paintTo = original_paint
         harness.teardown()
         os.execute("rm -rf '" .. push_dir .. "'")
@@ -86,6 +99,81 @@ describe("the pull's probation and notices", function()
 
         it("gets true after a first paint that succeeded", function()
             assert.same({ { n = 1, true } }, show())
+        end)
+
+        -- UIManager runs a task scheduled during a task in the same pass, before the repaint,
+        -- when time.now() hasn't moved past the pass's start (frontend/ui/uimanager.lua:1081-1104,
+        -- 447-456, 1537-1564): so tickAfterNext's task can land before the home's first paint.
+        it("gets true after a first paint that succeeded while the clock stands still", function()
+            stop_clock()
+            assert.same({ { n = 1, true } }, show())
+        end)
+
+        it("gets false after a paint that throws while the clock stands still", function()
+            stop_clock()
+            fail_paint()
+            assert.same({ { n = 1, false } }, show())
+        end)
+
+        describe("for a home covered before its first paint", function()
+            -- Shows a home with a full-screen widget over it, so the repaints skip the home
+            -- (frontend/ui/uimanager.lua:1305-1316), and returns the cover and finished's calls.
+            local function show_covered()
+                harness.show_fm()
+                harness.tick(2)
+                Home.close()
+                local calls = {}
+                Home.show{
+                    started = time.monotonic(),
+                    finished = function(...)
+                        calls[#calls + 1] = { n = select("#", ...), ... }
+                    end,
+                }
+                local cover = WidgetContainer:new{ dimen = Screen:getSize(), covers_fullscreen = true }
+                UIManager:show(cover)
+                harness.tick(3)
+                return cover, calls
+            end
+
+            it("waits for that paint and gets true once the cover goes", function()
+                local cover, calls = show_covered()
+                assert.same({}, calls)
+                UIManager:close(cover)
+                harness.tick(3)
+                assert.same({ { n = 1, true } }, calls)
+            end)
+
+            it("gets false when the home is closed without painting", function()
+                local _, calls = show_covered()
+                Home.close()
+                harness.tick(2)
+                assert.same({ { n = 1, false } }, calls)
+            end)
+
+            -- The close runs finished from the home's onCloseWidget, inside UIManager:close,
+            -- which takes the widget off the stack only after its CloseWidget event
+            -- (frontend/ui/uimanager.lua:298-312).
+            it("a finished that throws on a close before the paint leaves no home on the stack", function()
+                local fm = harness.show_fm()
+                harness.tick(2)
+                Home.close()
+                Home.show{
+                    started = time.monotonic(),
+                    finished = function()
+                        error("kopanda-test: finished failed")
+                    end,
+                }
+                local home = Home.shown
+                local cover = WidgetContainer:new{ dimen = Screen:getSize(), covers_fullscreen = true }
+                UIManager:show(cover)
+                harness.tick(3)
+                Home.close()
+                harness.tick(2)
+                assert.is_false(UIManager:isWidgetShown(home))
+                UIManager:close(cover)
+                harness.tick(2)
+                assert.equals(fm, harness.top())
+            end)
         end)
 
         it("gets false after a paint that throws", function()
