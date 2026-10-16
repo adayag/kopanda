@@ -101,9 +101,13 @@ Upgrading KOReader walks this list.
 - `frontend/ui/uimanager.lua:431-433`, `:447-456`.
 - With no pending home the show runs from `nextTick`, landing over what `reader.lua:291-300`
   shows synchronously after `showFiles` (a pending home is shown at once, see `CloseDocument`
-  above); the settled signal runs from `tickAfterNext`, past the next repaint (the
-  harness entry for `scheduleIn`, `nextTick` and `tickAfterNext` has the details). A failed
-  paint closes the home from `nextTick`.
+  above); the settled signal and the show's `finished` run from a `nextTick` that the home's
+  first `paintTo` schedules, past that `_repaint`, or at once from `onCloseWidget` for a home
+  closed before it painted. Nothing is scheduled before the paint, so a home under a
+  `covers_fullscreen` window waits without a task. A `tickAfterNext` from the show could land
+  before the paint and tell `finished` the home hadn't painted (the harness entry for
+  `scheduleIn`, `nextTick` and `tickAfterNext` has the details). A failed paint closes the home
+  from `nextTick`.
 
 ### `UIManager:show`, `close` and `isWidgetShown`
 
@@ -122,9 +126,10 @@ Upgrading KOReader walks this list.
 - After the home's first paint the plugin executes `KoPandaSettled` with `{ screen, paint_ms,
   settle_ms, prebuilt }`, once per home; the capture harness entry below is the listener.
   `paint_ms` runs from the start of the show path to the end of the home's first `paintTo`;
-  `settle_ms` runs on to the signal, which `tickAfterNext` (`uimanager.lua:447-456`) queues
-  behind tasks already due on the tick after the paint, such as coverbrowser's background
-  extraction (`plugins/coverbrowser.koplugin/covermenu.lua:119`, a fork).
+  `settle_ms` runs on to the signal, which the first `paintTo`'s `nextTick`
+  (`uimanager.lua:431-433`) queues behind tasks already due on the tick after the paint, such
+  as coverbrowser's background extraction (`plugins/coverbrowser.koplugin/covermenu.lua:119`,
+  a fork).
 
 ### The swatch screen
 
@@ -1274,7 +1279,10 @@ Upgrading KOReader walks this list.
   before the first `_repaint` in about 6 % of captures, a blank white shot. The probe now
   queues its signal with `nextTick` from its widget's first `paintTo`, inside `_repaint`, so
   it always runs past the paint; `spec/emulator/scenarios/2-scenario-held-clock.lua` holds
-  `time.now()` through each pass so a capture spec reproduces the race on every run.
+  `time.now()` through each pass so a capture spec reproduces the race on every run. The
+  home's own settle did the same until it too moved to its first `paintTo`: about one run in
+  ten of `spec/unit/push_notice_spec.lua` gave the show's `finished` `false` after a good
+  paint, and that spec now holds `time.now()` to reproduce it on every run.
 
 ### The `Show` event reaching plugin instances
 
