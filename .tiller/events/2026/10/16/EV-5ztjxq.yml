@@ -1,0 +1,16 @@
+id: EV-5ztjxq
+type: submit.task
+at: 2026-10-16T19:11:03.577974Z
+contributor: allen
+command: submit task T-ihpvfp
+targets:
+    - T-ihpvfp
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/settings-form/layout-editor
+        head: git:559f60c
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/layout-editor/task.yml
