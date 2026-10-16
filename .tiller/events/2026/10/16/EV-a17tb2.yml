@@ -1,0 +1,13 @@
+id: EV-a17tb2
+type: claim.task
+at: 2026-10-16T22:06:01.141729Z
+contributor: allen
+command: claim task T-f4ooin
+targets:
+    - T-f4ooin
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-script/task.yml
