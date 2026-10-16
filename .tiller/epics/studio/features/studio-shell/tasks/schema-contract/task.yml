@@ -1,7 +1,7 @@
 id: T-dwsmmb
 key: studio/studio-shell/schema-contract
 title: Checked-in schema JSON, its npm regeneration and the equality spec
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:25f054c
         observed_at: 2026-10-16T17:01:28.912316Z
 branch: tiller/studio/studio-shell/schema-contract
+review_ref:
+    branch: tiller/studio/studio-shell/schema-contract
+    head:
+        kind: git_commit
+        value: git:d4595fb
+        observed_at: 2026-10-16T17:20:09.45366Z
 gates:
     build:
         required: true

@@ -1,0 +1,16 @@
+id: EV-c0d5c6
+type: submit.task
+at: 2026-10-16T17:20:09.453832Z
+contributor: allen
+command: submit task T-dwsmmb
+targets:
+    - T-dwsmmb
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/studio-shell/schema-contract
+        head: git:d4595fb
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/schema-contract/task.yml
