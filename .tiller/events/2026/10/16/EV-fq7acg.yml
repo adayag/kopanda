@@ -1,0 +1,15 @@
+id: EV-fq7acg
+type: start.task
+at: 2026-10-16T18:51:16.560808Z
+contributor: allen
+command: start task T-wmf18g
+targets:
+    - T-wmf18g
+before:
+    status: ready
+after:
+    branch: tiller/studio/settings-form/location-search
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/location-search/task.yml
