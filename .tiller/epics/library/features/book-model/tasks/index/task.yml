@@ -1,9 +1,10 @@
 id: T-tvonaw
 key: library/book-model/index
 title: Author and series index over the records
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-n450u3
@@ -17,3 +18,4 @@ accepted_against:
         kind: git_commit
         value: git:f3fd5f9
         observed_at: 2026-10-16T22:58:33.568019Z
+branch: tiller/library/book-model/index
