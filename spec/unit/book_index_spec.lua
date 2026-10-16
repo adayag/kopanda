@@ -89,15 +89,28 @@ describe("BookIndex", function()
             assert.same({ { "Mary Shelley", { "f" } } }, shape(entries))
         end)
 
+        it("lists a book under each case variant of a name it gives", function()
+            local entries = BookIndex.authors({
+                book("f", "Frankenstein", { authors = { "Mary Shelley", "mary shelley" } }),
+            })
+            assert.same({ { "Mary Shelley", { "f" } }, { "mary shelley", { "f" } } }, shape(entries))
+        end)
+
         it("keeps case variants of a name as two entries, by lowercase name then name", function()
             local entries = BookIndex.authors({
-                book("f", "Frankenstein", { authors = { "Mary Shelley" } }),
                 book("l", "The Last Man", { authors = { "mary shelley" } }),
+                book("f", "Frankenstein", { authors = { "Mary Shelley" } }),
+                book("v", "Valperga", { authors = { "MARY SHELLEY" } }),
+                book("m", "Mathilda", { authors = { "Mary shelley" } }),
+                book("p", "Proserpine", { authors = { "mary Shelley" } }),
                 book("d", "Dracula", { authors = { "Bram Stoker" } }),
             })
             assert.same({
                 { "Bram Stoker", { "d" } },
+                { "MARY SHELLEY", { "v" } },
                 { "Mary Shelley", { "f" } },
+                { "Mary shelley", { "m" } },
+                { "mary Shelley", { "p" } },
                 { "mary shelley", { "l" } },
             }, shape(entries))
         end)
@@ -229,6 +242,11 @@ describe("BookIndex", function()
             })
             assert.same({ { "Bram Stoker", { "n" } }, { "Mary Shelley", { "f" } } }, shape(entries))
             assert.equals(1, #logged)
+            assert.equals(2, logged[1][2])
+            logged = {}
+            BookIndex.authors({ book("n", "Odd names", { authors = { "Mary Shelley", 42 } }) })
+            assert.equals(1, #logged)
+            assert.equals(1, logged[1][2])
             logged = {}
             BookIndex.authors({ book("f", "Frankenstein", { authors = { "Mary Shelley" } }) })
             assert.equals(0, #logged)
@@ -245,6 +263,11 @@ describe("BookIndex", function()
             })
             assert.same({ { "Dune", { "d", "m", "n", "s" } } }, shape(entries))
             assert.equals(1, #logged)
+            assert.equals(4, logged[1][2])
+            logged = {}
+            BookIndex.series({ book("n", "Not a number", { series = "Dune", series_index = 0 / 0 }) })
+            assert.equals(1, #logged)
+            assert.equals(1, logged[1][2])
             logged = {}
             BookIndex.series({ book("d", "Dune", { series = "Dune", series_index = 1 }) })
             assert.equals(0, #logged)
