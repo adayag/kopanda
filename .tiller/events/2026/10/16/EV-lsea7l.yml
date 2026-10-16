@@ -1,0 +1,13 @@
+id: EV-lsea7l
+type: configure.feature
+at: 2026-10-16T20:58:07.580547Z
+contributor: allen
+command: configure feature nav-bar/nav-bar --review-grain feature
+targets:
+    - F-78e5ij
+before:
+    review_grain: ""
+after:
+    review_grain: feature
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/feature.yml
