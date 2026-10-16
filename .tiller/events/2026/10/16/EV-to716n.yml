@@ -1,0 +1,13 @@
+id: EV-to716n
+type: claim.task
+at: 2026-10-16T03:18:10.383542Z
+contributor: allen
+command: claim task T-cbmaw1
+targets:
+    - T-cbmaw1
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/location-search/task.yml
