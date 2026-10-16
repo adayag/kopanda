@@ -1,7 +1,7 @@
 id: F-k4yn5f
 key: studio/settings-form
 title: Form, layout editor and launcher editor from the schema
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -17,6 +17,7 @@ order:
     - T-zbcfes
     - T-48qqub
 review_grain: feature
+branch: tiller/reviews/features/studio/settings-form
 accepted_against:
     spec:
         kind: git_blob
