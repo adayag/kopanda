@@ -1,0 +1,11 @@
+id: EV-ehql0o
+type: submit.feature
+at: 2026-10-16T17:47:40.683883Z
+contributor: allen
+command: submit feature studio/studio-shell
+targets:
+    - F-kglqs4
+after:
+    pr: 19
+files:
+    - path: .tiller/epics/studio/features/studio-shell/feature.yml
