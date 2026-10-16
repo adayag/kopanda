@@ -1,0 +1,14 @@
+id: EV-1lzhv8
+type: submit.tweak
+at: 2026-10-16T01:32:32.249264Z
+contributor: allen
+command: submit tweak TW-npuwi0
+targets:
+    - TW-npuwi0
+before:
+    status: check
+after:
+    pr: 15
+    status: in_review
+files:
+    - path: .tiller/tweaks/main-requires-every-module/tweak.yml
