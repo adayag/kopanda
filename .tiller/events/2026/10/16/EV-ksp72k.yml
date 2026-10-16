@@ -1,0 +1,13 @@
+id: EV-ksp72k
+type: approve.task
+at: 2026-10-16T22:58:33.544955Z
+contributor: allen
+command: approve task T-1ms8w2
+targets:
+    - T-1ms8w2
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/covers/task.yml

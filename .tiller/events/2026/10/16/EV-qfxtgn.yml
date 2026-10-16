@@ -1,0 +1,15 @@
+id: EV-qfxtgn
+type: approve.feature
+at: 2026-10-16T22:58:33.498406Z
+contributor: allen
+command: approve feature F-alfeze
+targets:
+    - F-alfeze
+before:
+    review_grain: ""
+    status: specced
+after:
+    review_grain: feature
+    status: ready
+files:
+    - path: .tiller/epics/library/features/book-model/feature.yml

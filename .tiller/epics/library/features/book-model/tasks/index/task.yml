@@ -1,9 +1,19 @@
 id: T-tvonaw
 key: library/book-model/index
 title: Author and series index over the records
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-n450u3
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:3c4abad569cf9646180641e76916a2971ed21a3f
+        path: .tiller/epics/library/features/book-model/tasks/index/task.md
+        observed_at: 2026-10-16T22:58:33.545251Z
+    commit:
+        kind: git_commit
+        value: git:f3fd5f9
+        observed_at: 2026-10-16T22:58:33.568019Z

@@ -1,0 +1,13 @@
+id: EV-8aitfz
+type: approve.task
+at: 2026-10-16T22:58:33.522225Z
+contributor: allen
+command: approve task T-n450u3
+targets:
+    - T-n450u3
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/records/task.yml

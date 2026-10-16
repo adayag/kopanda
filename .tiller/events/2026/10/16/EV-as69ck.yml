@@ -1,0 +1,13 @@
+id: EV-as69ck
+type: approve.task
+at: 2026-10-16T22:58:33.568089Z
+contributor: allen
+command: approve task T-tvonaw
+targets:
+    - T-tvonaw
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/index/task.yml
