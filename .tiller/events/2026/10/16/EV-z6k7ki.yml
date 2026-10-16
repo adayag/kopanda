@@ -1,0 +1,16 @@
+id: EV-z6k7ki
+type: submit.task
+at: 2026-10-16T14:27:13.25968Z
+contributor: allen
+command: submit task T-ij3256
+targets:
+    - T-ij3256
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/device-menus/settings-menu
+        head: git:4c783da
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/settings-menu/task.yml

@@ -12,7 +12,7 @@ local Guards = require("guards")
 local Home = require("home")
 local InfoMessage = require("ui/widget/infomessage")
 local MenuEntries = require("menu_entries")
-local SettingsMenu = require("settings_menu")
+local SchemaMenu = require("menu")
 local State = require("state")
 local Swatch = require("swatch")
 local UIManager = require("ui/uimanager")
@@ -47,6 +47,7 @@ require("reading_stats")
 require("rows_edit")
 require("schema")
 require("settings")
+require("settings_menu")
 require("sheet")
 require("tinted_icon")
 require("typeset")
@@ -330,9 +331,18 @@ function KoPanda:addToMainMenu(menu_items)
                     self:goHome()
                 end),
             },
+            -- A native submenu: the rows open inside KOReader's menu, whose back arrow returns
+            -- here. A failed build gives no rows, which TouchMenu ignores (touchmenu.lua:892-911).
             {
                 text = "Settings",
-                callback = after_menu("Tools › KoPanda › Settings", SettingsMenu.open),
+                sub_item_table_func = function()
+                    local ok, items = pcall(SchemaMenu.items)
+                    if not ok then
+                        logger.err("KoPanda: Tools › KoPanda › Settings failed:", items)
+                        return {}
+                    end
+                    return items
+                end,
             },
             swatches,
         },

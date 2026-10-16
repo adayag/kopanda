@@ -164,7 +164,7 @@ Upgrading KOReader walks this list.
   at gesture time, in `home_gestures.lua`. The home's own zones (touch lock entry below) cover
   the screen at the home's build size and test these bands in their handlers.
 - Screen ratios. A tap inside the top menu zones leaves the home up. The swipe up that
-  opens the settings stub starts in the bottom edge band and outside the left and right bands,
+  opens the settings menu starts in the bottom edge band and outside the left and right bands,
   where Gestures binds frontlight and warmth swipes by default
   (`plugins/gestures.koplugin/defaults.lua:14-17`; it binds nothing to a bottom-edge swipe up,
   `:20-21`). A west or east swipe outside the top and bottom bands is consumed.
@@ -186,8 +186,7 @@ Upgrading KOReader walks this list.
 - `ui/widget/infomessage`: `frontend/ui/widget/infomessage.lua:47` (the class), `:52-53`
   (`text`, `timeout`), `:263-292` (`onShow` schedules the close when `timeout` is set).
 - Shown from `UIManager:nextTick`. The refusal message has no timeout and is raised once per
-  process from a file-manager instance. The boot guard's notice has a timeout of 8 s. The
-  settings stub (`settings_menu.lua`) shows one with no timeout.
+  process from a file-manager instance. The boot guard's notice has a timeout of 8 s.
 
 ### The runtime state file, `settings/kopanda/state.lua`
 
@@ -266,7 +265,7 @@ Upgrading KOReader walks this list.
   its comment at `:311-321` notes that a subclass overriding `onGesture` escapes the swap);
   `frontend/ui/uimanager.lua:142-145` (`UIManager:setIgnoreTouchInput`), `:268-271` (`show`
   lifts the lock for the widget shown).
-- The home overrides `onGesture`, so its own steps, the swipe up to the settings stub, the
+- The home overrides `onGesture`, so its own steps, the swipe up to the settings menu, the
   closing tap and the hold, are touch zones on the home (`kopanda_home_swipe_up`,
   `kopanda_home_tap`, `kopanda_home_hold`, made in `home_gestures.lua`) run through
   `InputContainer.onGesture(home, ges)`: under the lock they match nothing and the settings
@@ -646,6 +645,43 @@ Upgrading KOReader walks this list.
   country_id, country, admin1..admin4 } ], generationtime_ms }`; no match returns only
   `{ generationtime_ms }`. "60614" with `countryCode=US` returned one result, Chicago, Illinois, at
   41.85003, -87.65005. The recorded responses are `spec/fixtures/geocoding/*.json`.
+
+### The settings menu: `TouchMenu`'s items, one tab and closing
+
+- `menu.lua` builds the rows as `TouchMenu` items, which `ui/widget/touchmenu` reads as
+  follows: `frontend/ui/widget/touchmenu.lua:73-96` (`enabled`, `checked_func`, `radio` draw a
+  radio or check mark), `:107` and `frontend/ui/widget/menu.lua:1610-1621` (`Menu.getMenuText`:
+  `text_func` is read on every redraw, and an item with `sub_item_table_func` gets the submenu
+  arrow), `:715` (`separator` draws a line before the next item), `:892-911`
+  (`sub_item_table_func` is called on tap; an empty table opens nothing), `:913-926` (the
+  `callback` gets the menu; with `checked_func` the menu redraws, with `keep_menu_open` it stays,
+  otherwise it closes after the callback), `:671` (`updateItems`, which the location row calls
+  after a pick). `TouchMenu` doesn't catch a callback's error, so every function `menu.lua` hands
+  it is guarded.
+- Tools › KoPanda › Settings is a native submenu: its `sub_item_table_func` returns the rows,
+  or `{}` when building them fails.
+- `settings_menu.lua` shows the rows on their own in a `TouchMenu` with one tab:
+  `tab_item_table = { items }` with `items.icon = "appbar.settings"`, the icon of KOReader's own
+  settings tab (`frontend/apps/filemanager/filemanagermenu.lua:37`). Tabs are read from each
+  tab table's `icon` (`touchmenu.lua:540`); with one icon `TouchMenuBar:init`'s separator and
+  before-last branches don't run (`:373`, `:421`). `settings_menu_spec.lua` builds, paints and
+  closes one.
+- The container is `FileManagerMenu:onShowMenu`'s pattern
+  (`frontend/apps/filemanager/filemanagermenu.lua:1006-1047`): a full-screen
+  `ui/widget/container/centercontainer` with `ignore = "height"` holding the `TouchMenu`, whose
+  `show_parent` it is. KoPanda's menu sets no `close_callback`, so the default closes the
+  container (`touchmenu.lua:499-504`), from a tap outside the menu (`:508-512`, `:977-981`), the
+  Back key (`:531`) or the up arrow at the top level (`:798-814`); `onCloseWidget` asks for a
+  full-screen `flashui` (`:987-998`). It saves no tab index, unlike `FileManagerMenu`'s close
+  (`filemanagermenu.lua:1051-1052`).
+- `util`: `frontend/util.lua:146` (`tableEquals`), so a tap on the value already stored, a place
+  table included, writes nothing.
+- `ui/network/manager`: `isConnected` as the weather entry above, before the one weather fetch
+  that follows a write of the weather's place or units while a home is shown.
+- `ui/widget/infomessage`: "Couldn't save <label>." has no timeout, so no timer
+  (`frontend/ui/widget/infomessage.lua:283-290`).
+- The Layout and Launcher rows open their screens from `UIManager:nextTick`, after the menu has
+  closed itself (`touchmenu.lua:920-926`).
 
 ### Edit layout: `util.tableDeepCopy` and its notes
 

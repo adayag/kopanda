@@ -1,9 +1,10 @@
 id: T-ij3256
 key: home/device-menus/settings-menu
 title: The settings menu generated from the schema, and its callers
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-6nh4m4
@@ -19,3 +20,37 @@ accepted_against:
         kind: git_commit
         value: git:ac38233
         observed_at: 2026-10-16T03:17:38.130788Z
+branch: tiller/home/device-menus/settings-menu
+review_ref:
+    branch: tiller/home/device-menus/settings-menu
+    head:
+        kind: git_commit
+        value: git:4c783da
+        observed_at: 2026-10-16T14:27:13.258938Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T14:25:37.129756Z
+        against:
+            kind: git_commit
+            value: git:4b68338
+            observed_at: 2026-10-16T14:25:37.129745Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-4b68338-out-e69281f3735250cb057d0769724cb04ff51796faf68180ef17d196e2fbfc0b11.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T14:25:37.129756Z
+        against:
+            kind: git_commit
+            value: git:4b68338
+            observed_at: 2026-10-16T14:25:37.129745Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-4b68338-out-f03cee8ed8afff2b24ed77a45b1ffa5fca60c546d9141dd6168040635db22e97.txt
