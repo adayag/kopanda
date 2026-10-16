@@ -134,6 +134,12 @@ describe("Books with a source", function()
                 cover = "none" }, emma)
         end)
 
+        it("gives a source's record without authors none, and drops a path it supplies", function()
+            remote({ { id = "remote:x", title = "X", path = "/tmp/x.epub" } })
+            local all = Books.all()
+            assert.same({ id = "remote:x", source = "remote", title = "X", authors = {}, cover = "none" }, all[4])
+        end)
+
         it("lists the source's books alone from a missing root", function()
             remote({ DUNE })
             remove_tree(lib)

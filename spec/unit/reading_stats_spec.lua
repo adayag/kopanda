@@ -1,8 +1,9 @@
 -- Reading stats from KOReader's Statistics database (C7): the three numbers read from fixture
 -- databases under a fixed TZ, the off and empty states, the wording per look, the fit to the
 -- column, stats.show, and the pre-built home reading its numbers again when it is shown.
--- Every lj-sqlite3 use stays in this file, and the binding is required once here: it
--- ffi.cdef()s on load (spec/emulator/driver.lua:87-88).
+-- The lj-sqlite3 binding ffi.cdef()s on load (spec/emulator/driver.lua:87-88), so a Busted process
+-- loads it once: spec/unit/books_coverbrowser_spec.lua's expose block requires it and keeps it
+-- loaded, and runs before this file in bin/check's sorted files; the require here gets that one.
 describe("reading stats", function()
     local harness = require("plugin_harness")
     local ffi = require("ffi")

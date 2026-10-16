@@ -246,6 +246,26 @@ describe("Books", function()
             assert.same({ books = {}, folders = {} }, Books.folder(gone))
         end)
 
+        it("takes a listed book's title and authors from the sidecar when CoverBrowser gives none", function()
+            sidecar(a, '{ doc_props = { title = "Frankenstein", authors = "Mary Shelley" } }')
+            local function listed_a(records)
+                for _, record in ipairs(records) do
+                    if record.path == a then
+                        return record
+                    end
+                end
+            end
+            for _, record in ipairs({ listed_a(Books.folder(lib).books), listed_a(Books.all()) }) do
+                assert.equals("Frankenstein", record.title)
+                assert.same({ "Mary Shelley" }, record.authors)
+            end
+            coverbrowser({ [a] = { title = "T" } })
+            for _, record in ipairs({ listed_a(Books.folder(lib).books), listed_a(Books.all()) }) do
+                assert.equals("T", record.title)
+                assert.same({ "Mary Shelley" }, record.authors)
+            end
+        end)
+
         it("asks no extraction, opens no sidecar of a complete row, and writes nothing", function()
             local rows = {}
             for _, path in ipairs({ a, B, c, d, e }) do
