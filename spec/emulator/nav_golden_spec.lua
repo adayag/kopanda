@@ -16,6 +16,10 @@ describe("the file-browser goldens", function()
     -- this many ms, in the emulator on this Mac, the home's tripwire (home_capture_spec.lua). A
     -- regression tripwire, not a device figure.
     local PAINT_BUDGET_MS = 250
+    -- About 42 px at 1264×1680, against compare's default of about 1,060. Clean captures differ
+    -- from these goldens by 0 px; the file list's progress text at 63 % differs by 114 px or more
+    -- on every golden, which the default let through (as on the home goldens, TW-i9qml9).
+    local MAX_FRACTION = 0.00002
 
     local scenarios = {
         { name = "filebrowser-diner", profile = "colorsoft" },
@@ -65,7 +69,8 @@ describe("the file-browser goldens", function()
             local log = read(result.log)
             assert.equals(1, count(log, "KOPANDA_SHOT: saved"))
             assert.equals(0, count(log, "settle cap"))
-            local checked = golden.assert_golden(scenario_opts.name, scenario_opts.profile, result)
+            local checked = golden.check(scenario_opts.name, scenario_opts.profile, result,
+                { max_fraction = MAX_FRACTION })
             if os.getenv("KOPANDA_UPDATE_GOLDENS") ~= "1" then
                 assert.is_true(checked.ok)
             end
