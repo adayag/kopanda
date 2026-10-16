@@ -1,0 +1,17 @@
+id: EV-ogejk2
+type: start.task
+at: 2026-10-16T03:18:09.715631Z
+contributor: allen
+command: start task T-zghyve
+targets:
+    - T-zghyve
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/home/device-menus
+    branch: tiller/home/device-menus/entry-picker
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/entry-picker/task.yml
+    - path: .tiller/epics/home/features/device-menus/feature.yml
