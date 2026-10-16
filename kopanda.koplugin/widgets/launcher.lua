@@ -282,7 +282,7 @@ end
 
 -- A hold inside the slot opens launcher management's top level, its paint_ms from now, and
 -- returns nothing, so the home takes the hold as done. launcher_manage is required here, not at
--- load, as the home's modules require the screens (home_gestures.lua's hold step).
+-- load, so loading the widget doesn't load the editor and picker chain.
 function Launcher.hold()
     require("launcher_manage").open{ started = time.monotonic() }
 end

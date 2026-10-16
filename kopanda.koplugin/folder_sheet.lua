@@ -54,8 +54,8 @@ function FolderSheet.open(entry, ctx, opts)
         header = { heading = entry.label, aside = "Folder · " .. #entry.entries, aside_beside = true,
             hint = "Hold to edit" },
         rows = rows,
-        -- launcher_manage is required here, not at load, as the home's modules require the
-        -- screens (home_gestures.lua's hold).
+        -- launcher_manage is required here, not at load, so loading the sheet doesn't load the
+        -- editor and picker chain.
         hold = function()
             local started = time.monotonic()
             require("launcher_manage").open{ folder = index_of(entry), started = started }
