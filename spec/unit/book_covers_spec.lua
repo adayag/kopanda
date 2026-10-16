@@ -2,8 +2,9 @@
 -- unusable one freed; one extractInBackground per request for every wanted file with the specs
 -- given, never for a file already asked, a path-less record or a cover that fits; a check once a
 -- second while extraction runs, at most 30, each calling on_arrival once with exactly the records
--- that arrived; the last check's cover read; alive(), cancel, a replacing request and a failed
--- fork. bookinfomanager is stubbed in package.loaded, since this file sorts before
+-- that arrived; the last check's cover read; alive(), cancel, a replacing request (one made from
+-- on_arrival too, raising or not), files given up staying asked and a failed fork.
+-- bookinfomanager is stubbed in package.loaded, since this file sorts before
 -- books_coverbrowser_spec.lua, which loads the real one; UIManager's scheduleIn and unschedule
 -- record their calls; each case restores them in finally.
 describe("BookCovers", function()
@@ -379,6 +380,50 @@ describe("BookCovers", function()
             assert.equals(0, #queue)
             assert.is_true(was_logged(logged, "arrival broke on purpose"))
         end)
+
+        it("lets on_arrival request again while extraction runs, leaving only the new request's check", function()
+            local arrived = {}
+            local bim = manager{
+                info = function(file) return arrived[file] and usable(nil) or nil end,
+                extracting = { true },
+            }
+            local queue = stub(bim)
+            local first_calls = 0
+            BookCovers.request({ { path = A }, { path = B } }, SPECS, function()
+                first_calls = first_calls + 1
+                if first_calls == 1 then
+                    BookCovers.request({ { path = C } }, SPECS, function() end, always)
+                end
+            end, always)
+            arrived[A] = true
+            run_next(queue)
+            assert.same({ files(A, B), files(C) }, bim.extracted)
+            assert.equals(1, first_calls)
+            assert.equals(1, #queue)
+            arrived[B], arrived[C] = true, true
+            while #queue > 0 do
+                run_next(queue)
+            end
+            assert.equals(1, first_calls)
+        end)
+
+        it("keeps the new request's check when on_arrival requests again and then raises", function()
+            local arrived = {}
+            local bim = manager{
+                info = function(file) return arrived[file] and usable(nil) or nil end,
+                extracting = { true },
+            }
+            local queue, logged = stub(bim)
+            BookCovers.request({ { path = A }, { path = B } }, SPECS, function()
+                BookCovers.request({ { path = C } }, SPECS, function() end, always)
+                error("arrival broke after a request on purpose")
+            end, always)
+            arrived[A] = true
+            run_next(queue)
+            assert.same({ files(A, B), files(C) }, bim.extracted)
+            assert.is_true(was_logged(logged, "arrival broke after a request on purpose"))
+            assert.equals(1, #queue)
+        end)
     end)
 
     describe("cancel and replacement", function()
@@ -419,6 +464,29 @@ describe("BookCovers", function()
             assert.equals(1, #first_calls)
             BookCovers.request({ { path = A }, { path = B } }, SPECS, function() end, always)
             assert.same({ files(A, B), files(C), files(B) }, bim.extracted)
+        end)
+
+        it("keeps a file given up after the last check asked, through a later request", function()
+            local arrived = {}
+            local bim = manager{
+                info = function(file) return arrived[file] and usable(nil) or nil end,
+                extracting = { true },
+            }
+            local queue = stub(bim)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            local checks = 0
+            while #queue > 0 do
+                run_next(queue)
+                checks = checks + 1
+            end
+            assert.equals(30, checks)
+            local calls, on_arrival = recorder()
+            BookCovers.request({ { path = C } }, SPECS, on_arrival, always)
+            arrived[C] = true
+            run_next(queue)
+            assert.same({ { check = 0, paths = { C } } }, calls)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            assert.same({ files(A), files(C) }, bim.extracted)
         end)
 
         it("schedules nothing for a fork that fails, logged, and never asks for its files again", function()
