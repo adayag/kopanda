@@ -276,3 +276,130 @@ a.editor-link[href]:hover {
   overflow-wrap: anywhere;
   color: var(--muted);
 }
+
+.editor-aside {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.layout-editor > p {
+  margin: 0.5rem 0;
+}
+
+.layout-rows {
+  list-style: none;
+  margin: 0.75rem 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.layout-card {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.6rem;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+}
+
+.layout-card[data-selected] {
+  background: var(--accent-tint);
+  border-color: var(--accent);
+}
+
+.layout-editor button {
+  padding: 0.3rem 0.7rem;
+  background: transparent;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.layout-editor button:hover:not(:disabled) {
+  background: var(--hairline);
+}
+
+.arrows {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.layout-editor .arrows button {
+  padding: 0.15rem 0.45rem;
+}
+
+.card-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.layout-editor .caption {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.layout-editor .caption:hover:not(:disabled) {
+  background: transparent;
+  color: var(--text);
+}
+
+.boxes {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.layout-editor .box {
+  flex-basis: 0;
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.layout-editor .box[aria-pressed="true"] {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+.box .share {
+  color: var(--muted);
+}
+
+.card-buttons,
+.layout-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.layout-foot {
+  justify-content: space-between;
+}
+
+.layout-editor button.muted {
+  color: var(--muted);
+}
+
+.layout-editor button.bare {
+  border: 0;
+  color: var(--muted);
+}
+
+.picker {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.picker-heading {
+  font-size: 0.85rem;
+  color: var(--muted);
+}

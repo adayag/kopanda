@@ -1,0 +1,13 @@
+id: EV-oyeqaq
+type: check.task
+at: 2026-10-16T19:10:41.964011Z
+contributor: allen
+command: check task T-ihpvfp
+targets:
+    - T-ihpvfp
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/layout-editor/task.yml
