@@ -1,0 +1,14 @@
+id: EV-0558lm
+type: submit.tweak
+at: 2026-10-16T01:32:19.33347Z
+contributor: allen
+command: submit tweak TW-4ae71f
+targets:
+    - TW-4ae71f
+before:
+    status: check
+after:
+    pr: 13
+    status: in_review
+files:
+    - path: .tiller/tweaks/flaky-probe-golden-paperwhite/tweak.yml
