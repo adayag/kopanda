@@ -24,6 +24,17 @@ describe("the schema type", () => {
     expect(result.success).toBe(false);
     expect(z.prettifyError(result.error!)).toContain(`keys[${index}]`);
   });
+
+  it("rejects a key carrying a field the studio does not declare, naming the key's index", () => {
+    const copy = readCheckedIn();
+    const index = copy.keys.findIndex((key) => key.id === "stats.show");
+    Object.assign(copy.keys[index]!, { hint: "x" });
+
+    const result = Schema.safeParse(copy);
+
+    expect(result.success).toBe(false);
+    expect(z.prettifyError(result.error!)).toContain(`keys[${index}]`);
+  });
 });
 
 describe("schema", () => {
