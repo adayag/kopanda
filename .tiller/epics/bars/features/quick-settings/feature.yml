@@ -1,9 +1,17 @@
 id: F-rce9ko
 key: bars/quick-settings
 title: Quick settings sheet
-status: draft
+status: specced
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
 depends_on:
     - F-3ct1xn
+    - F-78e5ij
+order:
+    - T-s3rp5n
+    - T-7g6ybl
+    - T-n6wve0
+    - T-2x7tk6
+    - T-phfsk7
+    - T-czph2w

@@ -1,0 +1,9 @@
+id: T-n6wve0
+key: bars/quick-settings/controls
+title: 'The panel''s controls: light and warmth steps, toggles, close-first actions and their routing'
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-7g6ybl

@@ -1,0 +1,14 @@
+id: EV-pdi7sq
+type: add.task
+at: 2026-10-16T21:15:18.405766Z
+contributor: allen
+command: add task bars/quick-settings/panel
+targets:
+    - T-7g6ybl
+after:
+    feature: F-rce9ko
+    key: bars/quick-settings/panel
+    status: proposed
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/panel/task.md
+    - path: .tiller/epics/bars/features/quick-settings/tasks/panel/task.yml

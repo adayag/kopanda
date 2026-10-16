@@ -1,0 +1,17 @@
+id: EV-wbbqw1
+type: order.tasks
+at: 2026-10-16T21:15:23.550455Z
+contributor: allen
+command: order task T-s3rp5n T-7g6ybl T-n6wve0 T-2x7tk6 T-phfsk7 T-czph2w
+targets:
+    - F-rce9ko
+after:
+    order:
+        - T-s3rp5n
+        - T-7g6ybl
+        - T-n6wve0
+        - T-2x7tk6
+        - T-phfsk7
+        - T-czph2w
+files:
+    - path: .tiller/epics/bars/features/quick-settings/feature.yml

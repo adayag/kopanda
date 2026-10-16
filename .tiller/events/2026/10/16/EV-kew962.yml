@@ -1,0 +1,14 @@
+id: EV-kew962
+type: add.task
+at: 2026-10-16T21:15:18.774157Z
+contributor: allen
+command: add task bars/quick-settings/settings-hold
+targets:
+    - T-czph2w
+after:
+    feature: F-rce9ko
+    key: bars/quick-settings/settings-hold
+    status: proposed
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/settings-hold/task.md
+    - path: .tiller/epics/bars/features/quick-settings/tasks/settings-hold/task.yml

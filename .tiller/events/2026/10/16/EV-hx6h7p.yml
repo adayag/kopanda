@@ -1,0 +1,14 @@
+id: EV-hx6h7p
+type: add.task
+at: 2026-10-16T21:15:18.684753Z
+contributor: allen
+command: add task bars/quick-settings/goldens
+targets:
+    - T-phfsk7
+after:
+    feature: F-rce9ko
+    key: bars/quick-settings/goldens
+    status: proposed
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/goldens/task.md
+    - path: .tiller/epics/bars/features/quick-settings/tasks/goldens/task.yml

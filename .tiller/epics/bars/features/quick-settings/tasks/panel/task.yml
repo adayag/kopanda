@@ -1,0 +1,9 @@
+id: T-7g6ybl
+key: bars/quick-settings/panel
+title: 'The quick-settings panel: its tokens in both looks, its state and its paint'
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-s3rp5n
