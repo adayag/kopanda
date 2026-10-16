@@ -1,7 +1,7 @@
 id: T-rl8eso
 key: nav-bar/nav-bar/home-band
 title: The home reserves the bar's band, draws it, routes its taps first, and its goldens are regenerated
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:fae01e4
         observed_at: 2026-10-16T20:56:58.453631Z
 branch: tiller/nav-bar/nav-bar/home-band
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T21:59:06.856895Z
+        against:
+            kind: git_commit
+            value: git:4bf6ce5
+            observed_at: 2026-10-16T21:59:06.85689Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-4bf6ce5-out-ba69811715c7d8226ccb71fdf3b69f630efb4545b52d2259451586ca0473f2e0.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T21:59:06.856895Z
+        against:
+            kind: git_commit
+            value: git:4bf6ce5
+            observed_at: 2026-10-16T21:59:06.85689Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-4bf6ce5-out-55e7ed9e2806aeee7b0a7af65146f5b7ac18195a879ea4ee1c40a71e343319f0.txt
