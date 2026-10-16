@@ -1,0 +1,15 @@
+id: EV-e7sk6t
+type: start.task
+at: 2026-10-16T22:32:33.121848Z
+contributor: allen
+command: start task T-ruuuqy
+targets:
+    - T-ruuuqy
+before:
+    status: ready
+after:
+    branch: tiller/studio/preview/preview-pane
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-pane/task.yml

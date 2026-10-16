@@ -1,9 +1,10 @@
 id: T-ruuuqy
 key: studio/preview/preview-pane
 title: The preview pane beside the form, with both looks, night and its states
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-ld7mvc
@@ -17,3 +18,4 @@ accepted_against:
         kind: git_commit
         value: git:2bbb0b4
         observed_at: 2026-10-16T21:49:07.337416Z
+branch: tiller/studio/preview/preview-pane

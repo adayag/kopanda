@@ -1,0 +1,13 @@
+id: EV-42k8u5
+type: claim.task
+at: 2026-10-16T22:32:32.956914Z
+contributor: allen
+command: claim task T-ruuuqy
+targets:
+    - T-ruuuqy
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-pane/task.yml
