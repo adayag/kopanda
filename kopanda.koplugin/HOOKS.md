@@ -617,6 +617,33 @@ Upgrading KOReader walks this list.
 - The sun and moon go through `IconWidget` (the swatch entry above), which renders an SVG with
   `RenderImage:renderSVGImageFile` (`frontend/ui/widget/imagewidget.lua:175`).
 
+### The place search: `InputDialog`, `ButtonDialog`, `forceRePaint`, `util` and the geocoding endpoint
+
+- `ui/widget/inputdialog`: `frontend/ui/widget/inputdialog.lua:124-167` (the class; `title`,
+  `input_hint`, `buttons`), `:354-362` (Enter runs the button marked `is_enter_default`), `:583`
+  (`getInputText`), `:640` (`onShowKeyboard`), `:633` (`onCloseWidget` closes the keyboard with the
+  dialog). The Cancel button's `id = "close"` follows `:25`.
+- `ui/widget/buttondialog`: `frontend/ui/widget/buttondialog.lua:1-40` (rows of buttons with
+  `text` and `callback`), `:62-75` (`buttons`, `title`), `:187-189` and `:217` (a table taller than
+  the screen scrolls in a `ScrollableContainer`). Ten candidates and Cancel at most.
+- `ui/uimanager`: `frontend/ui/uimanager.lua:1404` (`forceRePaint` drains the paint queue now), so the
+  "Searching…" note is on screen before the fetch blocks the UI loop; `show` and `close` as above.
+- `ui/widget/infomessage`: the notes and "Searching…" have no timeout, so no timer
+  (`frontend/ui/widget/infomessage.lua:283-290`).
+- `util`: `frontend/util.lua:52` (`trim`), `:1443` (`urlEncode`, RFC 3986 unreserved characters
+  kept, a space as `%20`).
+- `ui/network/manager`: `isConnected` as the weather entry above; offline the search says so and
+  fetches nothing.
+- The fetch is the weather's `Weather.get` (`socketutil` timeouts and their reset, `socket.http`), and
+  the body is decoded with `rapidjson` in a `pcall`, as the weather entry above.
+- Open-Meteo's geocoding endpoint, read live on 2026-10-15:
+  `https://geocoding-api.open-meteo.com/v1/search?name=<query>&count=10&language=en&format=json`, plus
+  `&countryCode=US` for a five-digit ZIP code. A match returns `{ results = [ { id, name, latitude,
+  longitude, elevation, feature_code, country_code, admin1_id.., timezone, population, postcodes,
+  country_id, country, admin1..admin4 } ], generationtime_ms }`; no match returns only
+  `{ generationtime_ms }`. "60614" with `countryCode=US` returned one result, Chicago, Illinois, at
+  41.85003, -87.65005. The recorded responses are `spec/fixtures/geocoding/*.json`.
+
 ### The featured cover: CoverBrowser's `bookinfomanager`, `ImageWidget` and the bounded check
 
 - `bookinfomanager` (`plugins/coverbrowser.koplugin/bookinfomanager.lua`), reached by

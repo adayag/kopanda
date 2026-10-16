@@ -539,4 +539,117 @@ describe("KoPanda failing safe", function()
             assert.is_true(logged_error("kopanda-test: tools home failed"))
         end)
     end)
+
+    describe("the place search", function()
+        local ButtonDialog = require("ui/widget/buttondialog")
+        local NetworkMgr = require("ui/network/manager")
+        local http = require("socket.http")
+        local rapidjson = require("rapidjson")
+        local stubs, picks
+
+        -- KoPanda's dialogs and notes from the search still on the window stack, by text or title.
+        local function search_widgets()
+            local left = {}
+            for _, widget in ipairs(harness.stack()) do
+                local label = widget.text or widget.title
+                if label == "Weather location" or label == "Searching…" or label == "Choose a place" then
+                    left[#left + 1] = label
+                end
+            end
+            return left
+        end
+
+        -- Closes the home over the file manager, opens the search and searches for query.
+        local function search_for(query)
+            harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            local LocationSearch = require("location_search")
+            LocationSearch.ask(function(location)
+                picks[#picks + 1] = location
+            end)
+            local dialog
+            for _, widget in ipairs(harness.stack()) do
+                if widget.title == "Weather location" then
+                    dialog = widget
+                end
+            end
+            dialog:setInputText(query)
+            for _, b in ipairs(dialog.button_table.buttons_layout[1]) do
+                if b.text == "Search" then
+                    b.callback()
+                end
+            end
+        end
+
+        -- Closes whatever note the search left on top of the file manager.
+        local function dismiss_notes()
+            while harness.top() ~= require("apps/filemanager/filemanager").instance do
+                UIManager:close(harness.top())
+            end
+        end
+
+        before_each(function()
+            picks = {}
+            stubs = {
+                request = stub(http, "request", function(request)
+                    request.sink('{"results":[{"name":"Chicago","admin1":"Illinois","country":"United States",'
+                        .. '"latitude":41.85003,"longitude":-87.65005}]}')
+                    return 1, 200, {}, "HTTP 200"
+                end),
+                is_connected = stub(NetworkMgr, "isConnected", function()
+                    return true
+                end),
+                warn = spy.on(logger, "warn"),
+            }
+        end)
+
+        after_each(function()
+            for _, s in pairs(stubs) do
+                s:revert()
+            end
+        end)
+
+        it("logs a decode that throws, closes the searching note and picks nothing", function()
+            stubs.decode = stub(rapidjson, "decode", function()
+                error("kopanda-test: decode failed")
+            end)
+            search_for("Chicago")
+            assert.same({}, search_widgets())
+            assert.same({}, picks)
+            local found = false
+            for _, call in ipairs(stubs.warn.calls) do
+                for _, arg in ipairs(call.vals) do
+                    found = found or tostring(arg):find("kopanda-test: decode failed", 1, true) ~= nil
+                end
+            end
+            assert.is_true(found)
+            dismiss_notes()
+            file_manager_usable()
+        end)
+
+        it("logs a search that throws while its note is up, closes the note and picks nothing", function()
+            local LocationSearch = require("location_search")
+            stubs.search = stub(LocationSearch, "search", function()
+                error("kopanda-test: search failed")
+            end)
+            search_for("Chicago")
+            assert.same({}, search_widgets())
+            assert.same({}, picks)
+            assert.is_true(logged_error("kopanda-test: search failed"))
+            file_manager_usable()
+        end)
+
+        it("logs a chooser that throws, closes the searching note and picks nothing", function()
+            stubs.new = stub(ButtonDialog, "new", function()
+                error("kopanda-test: chooser failed")
+            end)
+            search_for("Chicago")
+            assert.same({}, search_widgets())
+            assert.same({}, picks)
+            assert.is_true(logged_error("kopanda-test: chooser failed"))
+            dismiss_notes()
+            file_manager_usable()
+        end)
+    end)
 end)
