@@ -1,0 +1,11 @@
+id: EV-71e4z9
+type: claim.tweak
+at: 2026-10-16T00:20:50.409738Z
+contributor: allen
+command: claim tweak tweaks/tighter-home-golden-tolerance
+targets:
+    - TW-i9qml9
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/tighter-home-golden-tolerance/tweak.yml

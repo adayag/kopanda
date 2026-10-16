@@ -1,0 +1,14 @@
+id: EV-pcgwv7
+type: submit.tweak
+at: 2026-10-16T01:21:28.834888Z
+contributor: allen
+command: submit tweak TW-i9qml9
+targets:
+    - TW-i9qml9
+before:
+    status: check
+after:
+    pr: 11
+    status: in_review
+files:
+    - path: .tiller/tweaks/tighter-home-golden-tolerance/tweak.yml

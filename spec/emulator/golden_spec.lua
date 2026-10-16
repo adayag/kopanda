@@ -126,6 +126,19 @@ describe("probe goldens", function()
             { golden_dir = dir, update = false, artifact_dir = artifacts }).updated)
     end)
 
+    it("compares with the caller's max_fraction in place of compare's default", function()
+        local dir = fresh_dir("goldens")
+        local artifacts = fresh_dir("artifacts")
+        golden.check("probe", "colorsoft", fake_capture("base.png"), { golden_dir = dir, update = true })
+        -- block.png differs from base.png in 4 of 16 pixels.
+        local result = golden.check("probe", "colorsoft", fake_capture("block.png"),
+            { golden_dir = dir, update = false, artifact_dir = artifacts, max_fraction = 0.25 })
+        assert.is_true(result.ok)
+        local err = error_of(golden.check, "probe", "colorsoft", fake_capture("block.png"),
+            { golden_dir = dir, update = false, artifact_dir = artifacts, max_fraction = 0.2 })
+        contains(err, "25.00 %")
+    end)
+
     it("keeps a failing run's capture and diff under spec/.artifacts/goldens by default", function()
         local dir = fresh_dir("goldens")
         golden.check("default-artifacts", "colorsoft", fake_capture("base.png"), { golden_dir = dir, update = true })

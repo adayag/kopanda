@@ -13,6 +13,10 @@ describe("the home goldens", function()
     local root = os.getenv("KOPANDA_ROOT")
     local plugin = root .. "/kopanda.koplugin"
     local fixture = root .. "/spec/emulator/scenarios/2-scenario-home-fixture.lua"
+    -- About 42 px at 1264×1680, against compare's default of about 1,060. Clean captures differ
+    -- from these goldens by 0 px; the featured caption at 60 s a page or at 63 % differs by 356 px
+    -- or more on every golden that shows it (TW-i9qml9), which the default let through.
+    local MAX_FRACTION = 0.00002
 
     local scenarios = {
         { name = "home-diner", fixture = "populated", profile = "colorsoft" },
@@ -62,7 +66,7 @@ describe("the home goldens", function()
             -- (kopanda.koplugin/layout.lua, Layout.place).
             local dropped = read(result.log):match("[^\n]*doesn't fit the screen[^\n]*")
             assert.is_nil(dropped, dropped)
-            local checked = golden.assert_golden(scenario.name, scenario.profile, result)
+            local checked = golden.check(scenario.name, scenario.profile, result, { max_fraction = MAX_FRACTION })
             if os.getenv("KOPANDA_UPDATE_GOLDENS") ~= "1" then
                 assert.is_true(checked.ok)
             end
