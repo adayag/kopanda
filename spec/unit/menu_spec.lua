@@ -337,6 +337,34 @@ describe("the settings menu's rows", function()
             assert.same({ "refresh" }, log)
         end)
 
+        it("fetches once before the refresh after a location pick when connected", function()
+            local LocationSearch = require("location_search")
+            local ask = LocationSearch.ask
+            LocationSearch.ask = function(on_pick)
+                on_pick({ name = "Paris, Île-de-France", latitude = 48.85341, longitude = 2.3488 })
+            end
+            finally(function()
+                LocationSearch.ask = ask
+            end)
+            local log = {}
+            home_logging(log)
+            connected(true)
+            fetch_logging(log)
+            row(SchemaMenu.items(), "weather.location").callback({ updateItems = function() end })
+            assert.same({ "fetch", "refresh" }, log)
+        end)
+
+        it("neither fetches nor refreshes with no home shown", function()
+            local log = {}
+            connected(true)
+            fetch_logging(log)
+            assert.is_nil(Home.shown)
+            local units = row(SchemaMenu.items(), "weather.units")
+            choice(units.sub_item_table_func(), "Celsius").callback()
+            assert.same({}, log)
+            assert.equals("celsius", Settings.get("weather.units"))
+        end)
+
         it("doesn't fetch for a key that isn't the weather's", function()
             local log = {}
             home_logging(log)

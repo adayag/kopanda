@@ -10,6 +10,7 @@ describe("gestures on the KoPanda home", function()
 
     local send = gestures.send
     local settings_menu = gestures.settings_menu
+    local settings_keys = gestures.settings_keys
     local fm_with_home = gestures.fm_with_home
     local slot_of = gestures.slot_of
     local point = gestures.point
@@ -179,6 +180,14 @@ describe("gestures on the KoPanda home", function()
             assert.equals(0, sheets_on_stack())
             assert.equals(settings_menu(), harness.top())
             assert.equals(home, harness.top(2))
+        end)
+
+        it("opens the quote's settings, cut to its group, on a hold on the quote", function()
+            fm_with_home()
+            assert.is_nil(slot_of("quote").module.hold)
+            hold(centre_of("quote"))
+            assert.same({ "quote.source" }, settings_keys())
+            assert.equals(0, sheets_on_stack())
         end)
 
         -- As the Gestures plugin registers hold_top_right_corner (gestures main.lua:1128-1131,
