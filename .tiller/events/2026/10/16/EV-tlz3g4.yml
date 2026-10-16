@@ -1,0 +1,17 @@
+id: EV-tlz3g4
+type: start.task
+at: 2026-10-16T22:58:53.030459Z
+contributor: allen
+command: start task T-n450u3
+targets:
+    - T-n450u3
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/library/book-model
+    branch: tiller/library/book-model/records
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/records/task.yml
+    - path: .tiller/epics/library/features/book-model/feature.yml

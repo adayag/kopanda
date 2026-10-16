@@ -1,0 +1,13 @@
+id: EV-g6uuu0
+type: claim.task
+at: 2026-10-16T22:58:52.890622Z
+contributor: allen
+command: claim task T-n450u3
+targets:
+    - T-n450u3
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/records/task.yml
