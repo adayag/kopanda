@@ -1,0 +1,14 @@
+id: EV-33073z
+type: add.task
+at: 2026-10-16T03:58:40.310007Z
+contributor: allen
+command: add task studio/preview/preview-script
+targets:
+    - T-f4ooin
+after:
+    feature: F-29oj9m
+    key: studio/preview/preview-script
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-script/task.md
+    - path: .tiller/epics/studio/features/preview/tasks/preview-script/task.yml

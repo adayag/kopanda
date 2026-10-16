@@ -1,0 +1,14 @@
+id: EV-7p6oi2
+type: add.task
+at: 2026-10-16T03:58:40.47532Z
+contributor: allen
+command: add task studio/preview/preview-pane
+targets:
+    - T-ruuuqy
+after:
+    feature: F-29oj9m
+    key: studio/preview/preview-pane
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-pane/task.md
+    - path: .tiller/epics/studio/features/preview/tasks/preview-pane/task.yml

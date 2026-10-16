@@ -1,0 +1,9 @@
+id: T-f4ooin
+key: studio/preview/preview-script
+title: bin/preview renders a profile's home in one look, day or night
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-0s2a1j

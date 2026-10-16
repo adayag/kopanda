@@ -1,0 +1,9 @@
+id: T-ruuuqy
+key: studio/preview/preview-pane
+title: The preview pane beside the form, with both looks, night and its states
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-ld7mvc

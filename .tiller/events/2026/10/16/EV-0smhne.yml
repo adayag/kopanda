@@ -1,0 +1,14 @@
+id: EV-0smhne
+type: add.task
+at: 2026-10-16T03:58:40.219916Z
+contributor: allen
+command: add task studio/preview/capture-inputs
+targets:
+    - T-0s2a1j
+after:
+    feature: F-29oj9m
+    key: studio/preview/capture-inputs
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/capture-inputs/task.md
+    - path: .tiller/epics/studio/features/preview/tasks/capture-inputs/task.yml
