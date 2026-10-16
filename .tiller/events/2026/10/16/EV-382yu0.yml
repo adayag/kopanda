@@ -1,0 +1,16 @@
+id: EV-382yu0
+type: submit.task
+at: 2026-10-16T22:01:15.576645Z
+contributor: allen
+command: submit task T-rl8eso
+targets:
+    - T-rl8eso
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/nav-bar/nav-bar/home-band
+        head: git:f63531c
+    status: in_review
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/home-band/task.yml

@@ -1,0 +1,13 @@
+id: EV-c15kk6
+type: claim.task
+at: 2026-10-16T21:20:50.705786Z
+contributor: allen
+command: claim task T-rl8eso
+targets:
+    - T-rl8eso
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/home-band/task.yml

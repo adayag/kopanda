@@ -325,15 +325,17 @@ describe("looks", function()
         end)
 
         -- The launcher (Main.dc.html:60-62, HomeRetro.dc.html:55-64, EmptyStates.dc.html:65 under
-        -- .tiller/design/2026-10-13-kopanda-screens/): its block and its two type parts.
-        it("give the launcher block and its parts the boards' values", function()
+        -- .tiller/design/2026-10-13-kopanda-screens/): its block and its two type parts. Editorial's
+        -- row padding (15) and Diner's row gap (14) are tightened to fit the home above the nav bar
+        -- (layout_spec.lua's default home above the bar).
+        it("give the launcher block and its parts the boards' values, its height tightened", function()
             assert.same({
                 columns = 2, column_gap = 32, row_gap = 0, icon_size = 22, icon_gap = 14,
-                padding = { x = 0, y = 15 }, tile_height = false, accent_1_color = false,
+                padding = { x = 0, y = 11 }, tile_height = false, accent_1_color = false,
                 accent_2_color = false, accent_3_color = false, suffix_gap = 6, suffix_below = false,
             }, looks.editorial.launcher)
             assert.same({
-                columns = 3, column_gap = 14, row_gap = 14, icon_size = 28, icon_gap = false,
+                columns = 3, column_gap = 14, row_gap = 9, icon_size = 28, icon_gap = false,
                 padding = { x = 14, y = 12 }, tile_height = 104, accent_1_color = "mustard",
                 accent_2_color = "pink", accent_3_color = "teal", suffix_gap = 6, suffix_below = true,
             }, looks.diner.launcher)
@@ -438,6 +440,13 @@ describe("looks", function()
             }, nav_values(look))
             assert.same({ "strong", 12, true, 0.04, 0, "ink" }, part_values(look.type.nav_label))
             assert.same({ "display", 12, true, 0.04, 0, "on_accent" }, part_values(look.type.nav_label_active))
+        end)
+
+        -- D7: the bar always shows on the home, and NavBarC:70 draws no stripe above it; NavBar:19,
+        -- :61 leave 20 px under Editorial's last row.
+        it("give Diner no footer stripe and Editorial a 20 px bottom margin above the bar", function()
+            assert.equals(0, looks.diner.home.footer.height)
+            assert.equals(20, looks.editorial.home.margin.bottom)
         end)
 
         it("align both looks' header row to its bottom", function()

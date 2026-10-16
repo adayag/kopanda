@@ -203,6 +203,52 @@ describe("KoPanda failing safe", function()
         assert.is_true(logged_error("kopanda-test: gesture failed"))
     end)
 
+    it("logs a nav bar tab whose run throws on the home and keeps the home up", function()
+        harness.show_fm()
+        harness.tick(2)
+        local home = Home.shown
+        package.loaded["settings_menu"].open = function()
+            error("kopanda-test: settings tab failed")
+        end
+        local bar = home.nav
+        local column = bar.columns[5]
+        local x = bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2)
+        local y = bar.dimen.y + math.floor(bar.dimen.h / 2)
+        local ok, consumed = pcall(home.handleEvent, home, Event:new("Gesture", harness.gesture("tap", x, y)))
+        assert.is_true(ok)
+        assert.is_true(consumed)
+        assert.is_true(logged_error("kopanda-test: settings tab failed"))
+        assert.equals(home, Home.shown)
+        assert.equals(home, harness.top())
+    end)
+
+    it("lays the home out with no band, logged, when the nav bar's height throws", function()
+        package.loaded["nav_bar"].height = function()
+            error("kopanda-test: bar height failed")
+        end
+        harness.show_fm()
+        harness.tick(2)
+        local home = Home.shown
+        assert.is_not_nil(home)
+        assert.equals(home, harness.top())
+        assert.is_nil(home.nav)
+        assert.truthy(#home.slots > 0)
+        assert.is_true(logged_error("kopanda-test: bar height failed"))
+        local Layout = require("layout")
+        local Looks = require("looks")
+        local Settings = require("settings")
+        local ctx = {
+            look = Looks.active(),
+            variant = Looks.variant(),
+            text_size = Settings.get("text_size"),
+            now = os.time(),
+            screen = Screen,
+        }
+        local arranged = Layout.arrange(Settings.get("layout.rows"), ctx)
+        assert.equals(0, arranged.nav.h)
+        assert.equals(Layout.screen:getHeight(), arranged.nav.y)
+    end)
+
     it("closes the home onto the file browser, with no sheet, when a widget's hold throws", function()
         local Geom = require("ui/geometry")
         local Widget = require("ui/widget/widget")
@@ -526,8 +572,11 @@ describe("KoPanda failing safe", function()
                 end,
             } }
             local size = Screen:getSize()
+            -- Just above the nav bar, which wins in its band (D4), and still in the corner eighth.
+            local y = Home.shown.nav.dimen.y - 5
+            assert.truthy(y >= size.h * 7 / 8)
             local ok = pcall(UIManager.sendEvent, UIManager,
-                Event:new("Gesture", harness.gesture("tap", size.w - 10, size.h - 10)))
+                Event:new("Gesture", harness.gesture("tap", size.w - 10, y)))
             assert.is_true(ok)
             assert.is_nil(fm.is_always_active)
             file_manager_usable()

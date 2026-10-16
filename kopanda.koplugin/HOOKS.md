@@ -259,6 +259,18 @@ Upgrading KOReader walks this list.
 - The Gestures plugin registers its zones on the file manager (`plugins/gestures.koplugin/main.lua:1287-1288`,
   `self.ui:registerTouchZones`) and binds one-finger west and east swipes only in the top and
   bottom edge bands (`:1168-1195`); its actions run `Dispatcher:execute` (`:1327`).
+- The nav bar's step runs before the file manager's zones: a tap or a hold the home's own zones
+  name that lies in the bar's band goes to the bar, so Gestures' bottom corner zones
+  (`DTAP_ZONE_BOTTOM_LEFT`, `DTAP_ZONE_BOTTOM_RIGHT`, `defaults.lua:68-69` in the KOReader root,
+  each an eighth of each side; read at `plugins/gestures.koplugin/main.lua:985-998`) never
+  see it there. Gestures binds the bottom-left corner tap to `toggle_frontlight` by default on
+  any device with a frontlight (`plugins/gestures.koplugin/defaults.lua:9`), the emulator
+  included (`hasFrontlight`, `frontend/device/sdl/device.lua:157`), which would otherwise take
+  most of the Home tab. In portrait the band is shorter than an eighth of the screen, so each
+  corner zone still has its strip above the bar. In landscape it isn't: `scaleBySize` scales by
+  the shorter side (`base/ffi/framebuffer.lua:416`), so the bar keeps its portrait height while
+  the eighth shrinks to 1264 / 8 = 158 px on the Colorsoft, and both bottom corner zones lie
+  wholly inside the band; on the home the bar takes every tap and hold there.
 
 ### KOReader's touch lock: `setIgnoreTouchInput`, `_onGestureFiltered`, `isGestureAlwaysActive`
 
@@ -994,6 +1006,10 @@ Upgrading KOReader walks this list.
   (`DTAP_ZONE_TOP_RIGHT`, `defaults.lua:67`: x from 1106 and y under 210 on the Colorsoft) covers
   the right end of both looks' clock, so a hold there refreshes the hidden file chooser and opens
   no sheet.
+- A hold in the nav bar's band is the bar's and runs nothing, before the zones on the file
+  manager (gestures under the home, above): Gestures' bottom hold corners
+  (`hold_bottom_left_corner`, `hold_bottom_right_corner`, `plugins/gestures.koplugin/main.lua:1124-1139`)
+  don't fire there, and neither a slot's hold nor the home sheet runs.
 - The home sheet's Sleep row is the dispatcher's `suspend` (`frontend/dispatcher.lua:94`, listed
   only with `Device:canSuspend()`), run through `LauncherEntries.run` and the dispatch bridge as
   the launcher's action entries are: its `RequestSuspend` reaches the file manager's
@@ -1341,7 +1357,7 @@ Upgrading KOReader walks this list.
   plugin loads, binding `tap_right_bottom_corner` to `history` (`frontend/dispatcher.lua:68`,
   event `ShowHist`).
 - The tap: a `Gesture` event sent with `UIManager:sendEvent` inside `DTAP_ZONE_BOTTOM_RIGHT`
-  (`defaults.lua:69`), with the fields `GestureRange:match` reads
+  (`defaults.lua:69`), 10 px above the nav bar's band, with the fields `GestureRange:match` reads
   (`frontend/ui/gesturerange.lua:21-51`).
 - `FileManager.instance.history.booklist_menu`: `frontend/apps/filemanager/filemanagerhistory.lua:59-61`
   (the list `onShowHist` shows), checked with `UIManager:isWidgetShown`

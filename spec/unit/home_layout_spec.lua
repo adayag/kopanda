@@ -183,13 +183,14 @@ describe("the home's rows", function()
             end
             painted = {}
             rows:paintTo(bb, 0, 0)
-            -- The baselines painted in a slot's column, lowest last; the other slots are stubs
-            -- that paint no text.
+            -- The baselines painted in a slot's box, lowest last; the other slots are stubs that
+            -- paint no text, and the nav bar's labels lie below every slot.
             local function baselines(id_)
                 local rect = slot_of(home, id_).rect
                 local found = {}
                 for _, p in ipairs(painted) do
-                    if p.x >= rect.x and p.x < rect.x + rect.w then
+                    if p.x >= rect.x and p.x < rect.x + rect.w and p.baseline >= rect.y
+                            and p.baseline <= rect.y + rect.h then
                         found[#found + 1] = p.baseline
                     end
                 end
@@ -548,5 +549,78 @@ describe("the home's rows", function()
             local source = debug.getinfo(task.action, "S").source
             assert.is_falsy(source:find("kopanda.koplugin", 1, true), source)
         end
+    end)
+
+    -- The nav bar (the nav bar's C3): built with Home active in the band under the rows, the rows'
+    -- last child so it paints over them, and left out, logged, when its build raises.
+    describe("the nav bar", function()
+        local Blitbuffer = require("ffi/blitbuffer")
+        local RED = Blitbuffer.ColorRGB32(255, 0, 0, 255)
+
+        local function rgb(color)
+            local c = color:getColorRGB32()
+            return { c:getR(), c:getG(), c:getB() }
+        end
+
+        -- The weather's widget paints red from its top to the screen's bottom, over the band.
+        local function overreaching_weather()
+            local Overreach = Widget:extend{}
+            function Overreach:paintTo(bb, x, y)
+                bb:paintRectRGB32(x, y, self.dimen.w, Screen:getHeight() - y, RED)
+            end
+            stubs.weather.build = function(width)
+                return Overreach:new{ dimen = Geom:new{ w = width, h = 20 } }
+            end
+        end
+
+        -- The home painted into an RGB32 buffer of the screen's size, and the colour at (x, y).
+        local function painted_at(home, x, y)
+            local bb = Blitbuffer.new(Screen:getWidth(), Screen:getHeight(), Blitbuffer.TYPE_BBRGB32)
+            home:paintTo(bb, 0, 0)
+            local got = rgb(bb:getPixel(x, y))
+            bb:free()
+            return got
+        end
+
+        it("is drawn with Home active in the band under the rows, painted over them", function()
+            overreaching_weather()
+            local _, home = show_home()
+            local look = Looks.active()
+            local bar = home.nav
+            assert.equals("kopanda_nav_bar", bar.name)
+            assert.equals("home", bar.where)
+            assert.equals(1, bar.active)
+            local h = package.loaded["nav_bar"].height(look, Screen)
+            assert.same({ 0, Screen:getHeight() - h, Screen:getWidth(), h },
+                { bar.dimen.x, bar.dimen.y, bar.dimen.w, bar.dimen.h })
+            local rows = home[1]
+            assert.equals(bar, rows[#rows])
+            assert.same({ x = 0, y = bar.dimen.y }, rows.places[#rows])
+            for _, slot in ipairs(home.slots) do
+                assert.truthy(slot.rect.y + slot.rect.h <= bar.dimen.y, slot.widget)
+            end
+            -- Column 2 under the edge, above its icon, and under the weather's red.
+            local x = bar.padding_x + bar.columns[2].x + 2
+            local y = bar.dimen.y + Screen:scaleBySize(look.nav.edge_width) + 1
+            local weather = slot_of(home, "weather").rect
+            assert.truthy(x >= weather.x and x < weather.x + weather.w)
+            local fill = Looks.color(Looks.palette(look, home.ctx.variant)[look.nav.fill_color])
+            assert.same(rgb(fill), painted_at(home, x, y))
+        end)
+
+        it("leaves the band paper, logged, and the slots built when its build raises", function()
+            package.loaded["nav_bar"].new = function()
+                error("kopanda-test: bar failed")
+            end
+            local _, home = show_home()
+            assert.equals(home, harness.top())
+            assert.is_nil(home.nav)
+            assert.is_true(logged("kopanda-test: bar failed"))
+            assert.same({ date = 1, clock = 1, featured = 1, quote = 1, launcher = 1, weather = 1, stats = 1 }, builds)
+            local look = Looks.active()
+            local paper = Looks.color(Looks.palette(look, home.ctx.variant).paper)
+            local h = package.loaded["nav_bar"].height(look, Screen)
+            assert.same(rgb(paper), painted_at(home, Screen:getWidth() - 3, Screen:getHeight() - math.floor(h / 2)))
+        end)
     end)
 end)
