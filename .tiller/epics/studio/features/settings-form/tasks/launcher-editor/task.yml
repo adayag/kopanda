@@ -1,9 +1,10 @@
 id: T-48qqub
 key: studio/settings-form/launcher-editor
 title: The launcher editor with the device's entry operations, pickers and icons
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-08n402
@@ -18,3 +19,4 @@ accepted_against:
         kind: git_commit
         value: git:d92a0a4
         observed_at: 2026-10-16T17:50:20.489337Z
+branch: tiller/studio/settings-form/launcher-editor
