@@ -1,7 +1,7 @@
 id: T-cbmaw1
 key: home/device-menus/location-search
 title: Weather location search through Open-Meteo's geocoding
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -17,6 +17,12 @@ accepted_against:
         value: git:ac38233
         observed_at: 2026-10-16T03:17:38.062173Z
 branch: tiller/home/device-menus/location-search
+review_ref:
+    branch: tiller/home/device-menus/location-search
+    head:
+        kind: git_commit
+        value: git:e9dd9e9
+        observed_at: 2026-10-16T03:32:24.623534Z
 gates:
     build:
         required: true
