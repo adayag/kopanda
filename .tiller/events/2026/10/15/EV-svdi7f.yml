@@ -1,0 +1,13 @@
+id: EV-svdi7f
+type: claim.task
+at: 2026-10-15T22:35:27.704125Z
+contributor: allen
+command: claim task T-w3g6jh
+targets:
+    - T-w3g6jh
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/goldens/task.yml

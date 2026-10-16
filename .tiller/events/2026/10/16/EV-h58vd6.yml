@@ -1,0 +1,16 @@
+id: EV-h58vd6
+type: submit.task
+at: 2026-10-16T00:02:31.506218Z
+contributor: allen
+command: submit task T-w3g6jh
+targets:
+    - T-w3g6jh
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/sheets/goldens
+        head: git:a8b5d01
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/goldens/task.yml

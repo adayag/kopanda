@@ -1138,10 +1138,22 @@ Upgrading KOReader walks this list.
   in a `"scenario"` signal. That is the rectangle `ImageWidget` inverts again in night mode
   (`:76-77`, `:583-593`), which `night_golden_spec.lua` compares un-inverted on the Paperwhite.
 
+### The sheet-hold scenario (`spec/emulator/scenarios/2-scenario-sheet-hold.lua`)
+
+- Run after the home fixture by `sheet_golden_spec.lua`. On the first home's settled signal it
+  finds the home with `UIManager:topdown_widgets_iter` (`frontend/ui/uimanager.lua:846`) and,
+  from `nextTick`, sends one `Gesture` hold with `UIManager:sendEvent` (`:962-1034`), with the
+  fields `GestureRange:match` reads (`frontend/ui/gesturerange.lua:21-51`), at a point
+  `KOPANDA_SHEET_HOLD` names: `book`, the centre of the featured slot's rectangle; `home`,
+  `x = 4` at half the screen's height, checked outside every slot and outside the four
+  `DTAP_ZONE_*` corners (`defaults.lua:66-69`, read through `G_defaults:readSetting`). No
+  `hold_release` follows. The capture is taken on the sheet's own signal
+  (`shot_screen = "sheet"`); a failure is sent as a `"sheet"` signal with `error`.
+
 ### The home fixture (`spec/emulator/scenarios/2-scenario-home-fixture.lua`)
 
-- Read by `home_golden_spec.lua`, `home_capture_spec.lua`, `night_golden_spec.lua` and
-  `night_toggle_spec.lua`, whose captures pass `TZ`,
+- Read by `home_golden_spec.lua`, `home_capture_spec.lua`, `night_golden_spec.lua`,
+  `night_toggle_spec.lua` and `sheet_golden_spec.lua`, whose captures pass `TZ`,
   `KOPANDA_HOME_FIXTURE` (`populated`, `typecover` or `empty`) and, for Editorial,
   `KOPANDA_HOME_LOOK` through the driver's `env` option. Applied at `reader.lua:190`, before any
   plugin code runs.

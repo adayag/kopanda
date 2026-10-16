@@ -1,0 +1,13 @@
+id: EV-8lotwh
+type: check.task
+at: 2026-10-16T00:02:31.233202Z
+contributor: allen
+command: check task T-w3g6jh
+targets:
+    - T-w3g6jh
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/goldens/task.yml
