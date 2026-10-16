@@ -18,3 +18,30 @@ accepted_against:
         value: git:e6f2573
         observed_at: 2026-10-16T00:19:22.843489Z
 branch: tiller/tweaks/shared-paint-helpers
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T01:17:31.222377Z
+        against:
+            kind: git_commit
+            value: git:4144ab6
+            observed_at: 2026-10-16T01:17:31.222376Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-4144ab6-out-14f0ebaf87006d2383f4f11fd0745b9dace85ba0d16d877a89b7ef128d757aac.txt
+    tests:
+        required: true
+        kind: command
+        status: fail
+        run_by: allen
+        run_at: 2026-10-16T01:17:31.222377Z
+        against:
+            kind: git_commit
+            value: git:4144ab6
+            observed_at: 2026-10-16T01:17:31.222376Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-4144ab6-out-d0b016a28d0d8ee1cdcbfe950b35583319dd65c5674e4e280ae0f445af5deb41.txt
