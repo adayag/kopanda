@@ -1,0 +1,13 @@
+id: EV-6rv2na
+type: check.feature
+at: 2026-10-16T22:19:29.51366Z
+contributor: allen
+command: check feature F-78e5ij
+targets:
+    - F-78e5ij
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/feature.yml
