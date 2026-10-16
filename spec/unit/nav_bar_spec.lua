@@ -224,23 +224,28 @@ describe("the nav bar", function()
         it("draws Editorial's 1 px ink edge across the top and its 3 px rule over the active column only", function()
             harness.at_colorsoft(function()
                 for _, variant in ipairs({ "day", "night", "grey" }) do
-                    local bar, bb, holds = painted("editorial", "home", variant)
-                    local w = bar:getSize().w
-                    local edge, rule = scale(1), scale(3)
-                    for _, x in ipairs({ 0, math.floor(w / 2), w - 1 }) do
-                        holds("ink", x, 0, "edge top")
-                        holds("ink", x, edge - 1, "edge bottom")
+                    for active, where in ipairs({ "home", "file_browser" }) do
+                        local bar, bb, holds = painted("editorial", where, variant)
+                        local w = bar:getSize().w
+                        local edge, rule = scale(1), scale(3)
+                        for _, x in ipairs({ 0, math.floor(w / 2), w - 1 }) do
+                            holds("ink", x, 0, where .. " edge top")
+                            holds("ink", x, edge - 1, where .. " edge bottom")
+                        end
+                        local active_x = column(bar, active) + 2
+                        holds("ink", active_x, rule - 1, where .. " the rule's bottom")
+                        holds("paper", active_x, rule, where .. " under the rule")
+                        holds("paper", 2, rule - 1, where .. " the side padding beside the rule")
+                        for i = 1, 5 do
+                            if i ~= active then
+                                holds("paper", column(bar, i) + 2, edge, where .. " column " .. i .. " under the edge")
+                                holds("paper", column(bar, i) + 2, rule - 1,
+                                    where .. " column " .. i .. " at the rule's bottom")
+                            end
+                        end
+                        bar:free()
+                        bb:free()
                     end
-                    local home_x = column(bar, 1) + 2
-                    holds("ink", home_x, rule - 1, "the rule's bottom")
-                    holds("paper", home_x, rule, "under the rule")
-                    holds("paper", 2, rule - 1, "the side padding beside the rule")
-                    for i = 2, 5 do
-                        holds("paper", column(bar, i) + 2, edge, "column " .. i .. " under the edge")
-                        holds("paper", column(bar, i) + 2, rule - 1, "column " .. i .. " under the edge")
-                    end
-                    bar:free()
-                    bb:free()
                 end
             end)
         end)
@@ -277,24 +282,58 @@ describe("the nav bar", function()
             end)
         end)
 
+        -- The pixels near rgb, within tolerance, in column i's box from y for h rows, short of
+        -- trim px at the column's right.
+        local function count(bar, bb, i, y0, h, rgb_color, tolerance, trim)
+            local x0, w = column(bar, i)
+            local n = 0
+            for y = y0, y0 + h - 1 do
+                for x = x0, x0 + w - (trim or 0) - 1 do
+                    if near(rgb_color, pixel(bb, x, y), tolerance) then
+                        n = n + 1
+                    end
+                end
+            end
+            return n
+        end
+
         it("sets Diner's active label and icon in on_accent, which no other column draws, at night", function()
             harness.at_colorsoft(function()
                 local bar, bb = painted("diner", "home", "night")
                 local on_accent = rgb(Looks.palette(Looks.get("diner"), "night").on_accent)
-                local function count(i)
-                    local x0, w = column(bar, i)
-                    local n = 0
-                    for y = scale(4), bar:getSize().h - 1 do
-                        for x = x0, x0 + w - scale(3) - 1 do
-                            if near(on_accent, pixel(bb, x, y), 8) then
-                                n = n + 1
-                            end
-                        end
-                    end
-                    return n
+                local icon_top, icon_h = scale(4) + scale(14), scale(28)
+                local label_top = icon_top + icon_h + scale(6)
+                local label_h = bar:getSize().h - label_top
+                local boxes = {
+                    { "icon", icon_top, icon_h },
+                    { "label", label_top, label_h },
+                }
+                for _, box in ipairs(boxes) do
+                    local what, y0, h = box[1], box[2], box[3]
+                    local active = count(bar, bb, 1, y0, h, on_accent, 8, scale(3))
+                    assert.is_true(active > 0, "the active tab's " .. what .. " has no on_accent pixel")
+                    assert.equals(0, count(bar, bb, 2, y0, h, on_accent, 8, scale(3)), "column 2's " .. what)
                 end
-                assert.is_true(count(1) > 0, "the active tab has no on_accent pixel")
-                assert.equals(0, count(2))
+                bar:free()
+                bb:free()
+            end)
+        end)
+
+        it("sets Editorial's active icon in ink and the others in text, at night", function()
+            harness.at_colorsoft(function()
+                local bar, bb = painted("editorial", "home", "night")
+                local palette = Looks.palette(Looks.get("editorial"), "night")
+                local ink, text = rgb(palette.ink), rgb(palette.text)
+                local icon_top, icon_h = scale(1) + (scale(3) - scale(1)) + scale(16), scale(26)
+                local function counts(i)
+                    return count(bar, bb, i, icon_top, icon_h, ink, 2), count(bar, bb, i, icon_top, icon_h, text, 2)
+                end
+                local active_ink, active_text = counts(1)
+                local other_ink, other_text = counts(2)
+                assert.is_true(active_ink > 0, "the active icon has no ink pixel")
+                assert.equals(0, active_text, "the active icon's text pixels")
+                assert.equals(0, other_ink, "column 2's icon's ink pixels")
+                assert.is_true(other_text > 0, "column 2's icon has no text pixel")
                 bar:free()
                 bb:free()
             end)
