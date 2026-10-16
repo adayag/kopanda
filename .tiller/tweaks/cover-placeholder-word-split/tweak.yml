@@ -1,7 +1,7 @@
 id: TW-w4mx7i
 key: tweaks/cover-placeholder-word-split
 title: The cover placeholder breaks a long title word mid-word in a narrow slot
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         observed_at: 2026-10-16T00:19:21.742351Z
 branch: tiller/tweaks/cover-placeholder-word-split
 pr: 16
+done_basis: ancestry
 gates:
     build:
         required: true

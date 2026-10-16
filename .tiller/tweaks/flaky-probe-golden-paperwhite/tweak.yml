@@ -1,7 +1,7 @@
 id: TW-4ae71f
 key: tweaks/flaky-probe-golden-paperwhite
 title: The probe golden on paperwhite fails intermittently in a full bin/check
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         observed_at: 2026-10-16T00:19:22.223897Z
 branch: tiller/tweaks/flaky-probe-golden-paperwhite
 pr: 13
+done_basis: ancestry
 gates:
     build:
         required: true

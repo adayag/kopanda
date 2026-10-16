@@ -1,0 +1,14 @@
+id: EV-xu7aib
+type: sync.tweak
+at: 2026-10-16T02:11:16.590818Z
+contributor: allen
+command: sync tweak TW-npuwi0
+targets:
+    - TW-npuwi0
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/main-requires-every-module/tweak.yml

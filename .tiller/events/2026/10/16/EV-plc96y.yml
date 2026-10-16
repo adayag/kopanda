@@ -1,0 +1,14 @@
+id: EV-plc96y
+type: sync.tweak
+at: 2026-10-16T02:11:16.790293Z
+contributor: allen
+command: sync tweak TW-wzgn5m
+targets:
+    - TW-wzgn5m
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/hold-routing-spec/tweak.yml

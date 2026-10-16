@@ -1,0 +1,14 @@
+id: EV-xr94mi
+type: sync.tweak
+at: 2026-10-16T02:11:16.689717Z
+contributor: allen
+command: sync tweak TW-w4mx7i
+targets:
+    - TW-w4mx7i
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/cover-placeholder-word-split/tweak.yml

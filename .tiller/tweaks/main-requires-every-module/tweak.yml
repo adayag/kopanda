@@ -1,7 +1,7 @@
 id: TW-npuwi0
 key: tweaks/main-requires-every-module
 title: A spec that main.lua requires every plugin module
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         observed_at: 2026-10-16T00:19:22.534551Z
 branch: tiller/tweaks/main-requires-every-module
 pr: 15
+done_basis: ancestry
 gates:
     build:
         required: true
