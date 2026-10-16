@@ -1,7 +1,7 @@
 id: F-9okxa7
 key: studio/device-push
 title: Wi-Fi pull with staged apply and rollback
-status: active
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -31,6 +31,23 @@ accepted_against:
         kind: git_commit
         value: git:e4bea1b
         observed_at: 2026-10-16T20:10:55.707524Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:e4bd6915489caa05ccbc27401c831e5e98bb7ecd
+        path: .tiller/epics/studio/features/device-push/feature.md
+        observed_at: 2026-10-16T21:47:25.868271Z
+    eval:
+        kind: git_blob
+        value: git:7256fba1020602fa642c1406e68c59431fee0d5c
+        path: .tiller/epics/studio/features/device-push/feature.eval.md
+        observed_at: 2026-10-16T21:47:25.868271Z
+    commit:
+        kind: git_commit
+        value: git:3b41f02
+        observed_at: 2026-10-16T21:47:25.479029Z
+    surfaces: []
+done_basis: rollup
 gates:
     build:
         required: true

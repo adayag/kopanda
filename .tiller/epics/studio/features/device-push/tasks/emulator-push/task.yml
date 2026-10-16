@@ -1,7 +1,7 @@
 id: T-8kwd74
 key: studio/device-push/emulator-push
 title: Emulator proves the pull, the switch-over and the rollback across restarts
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:edab1fc
         observed_at: 2026-10-16T21:31:53.516019Z
+done_basis: ancestry
 gates:
     build:
         required: true

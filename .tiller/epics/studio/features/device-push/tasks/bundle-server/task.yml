@@ -1,7 +1,7 @@
 id: T-janm6k
 key: studio/device-push/bundle-server
 title: 'Studio serves a profile''s bundle: manifest, files, LAN opt-in and guard, shared vectors'
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:431eaee
         observed_at: 2026-10-16T20:02:40.94317Z
+done_basis: ancestry
 gates:
     build:
         required: true

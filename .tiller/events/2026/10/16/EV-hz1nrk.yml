@@ -1,0 +1,14 @@
+id: EV-hz1nrk
+type: sync.feature
+at: 2026-10-16T21:47:25.917974Z
+contributor: allen
+command: sync feature F-9okxa7
+targets:
+    - F-9okxa7
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/studio/features/device-push/feature.yml

@@ -1,0 +1,14 @@
+id: EV-543p2r
+type: sync.task
+at: 2026-10-16T21:47:25.8195Z
+contributor: allen
+command: sync task T-8kwd74
+targets:
+    - T-8kwd74
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/emulator-push/task.yml
