@@ -1,0 +1,14 @@
+id: EV-2c4krx
+type: sync.feature
+at: 2026-10-16T17:08:26.177439Z
+contributor: allen
+command: sync feature F-sn4px5
+targets:
+    - F-sn4px5
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/home/features/device-menus/feature.yml

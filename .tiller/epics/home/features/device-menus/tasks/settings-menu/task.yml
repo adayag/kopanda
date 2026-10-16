@@ -1,7 +1,7 @@
 id: T-ij3256
 key: home/device-menus/settings-menu
 title: The settings menu generated from the schema, and its callers
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -27,6 +27,7 @@ review_ref:
         kind: git_commit
         value: git:4c783da
         observed_at: 2026-10-16T14:27:13.258938Z
+done_basis: ancestry
 gates:
     build:
         required: true

@@ -1,7 +1,7 @@
 id: T-zghyve
 key: home/device-menus/entry-picker
 title: The add-an-entry picker for the five kinds
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:5d2fb62
         observed_at: 2026-10-16T03:34:48.965171Z
+done_basis: ancestry
 gates:
     build:
         required: true

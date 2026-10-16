@@ -1,0 +1,14 @@
+id: EV-51kujl
+type: sync.epic
+at: 2026-10-16T17:08:26.251791Z
+contributor: allen
+command: sync epic E-ao5nga
+targets:
+    - E-ao5nga
+before:
+    status: ready
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/home/epic.yml

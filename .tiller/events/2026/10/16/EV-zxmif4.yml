@@ -1,0 +1,14 @@
+id: EV-zxmif4
+type: sync.task
+at: 2026-10-16T17:08:25.643905Z
+contributor: allen
+command: sync task T-zghyve
+targets:
+    - T-zghyve
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/entry-picker/task.yml

@@ -1,7 +1,7 @@
 id: T-h9dkvy
 key: home/device-menus/launcher-manage
 title: 'Launcher management: the list operations, the screen and its ways in'
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -26,6 +26,7 @@ review_ref:
         kind: git_commit
         value: git:410da5b
         observed_at: 2026-10-16T14:08:53.602817Z
+done_basis: ancestry
 gates:
     build:
         required: true

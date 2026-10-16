@@ -1,0 +1,14 @@
+id: EV-lsjgd2
+type: sync.task
+at: 2026-10-16T17:08:25.816495Z
+contributor: allen
+command: sync task T-6nh4m4
+targets:
+    - T-6nh4m4
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/edit-layout/task.yml

@@ -1,7 +1,7 @@
 id: E-ao5nga
 key: home
 title: Home screen in the emulator
-status: ready
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 order:
@@ -14,3 +14,15 @@ order:
     - F-3ct1xn
     - F-sn4px5
     - F-4jh8sz
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:71aa9dd390ad1aa4df7d59df03ab8276d734bcbf
+        path: .tiller/epics/home/epic.md
+        observed_at: 2026-10-16T17:08:26.227452Z
+    commit:
+        kind: git_commit
+        value: git:fc3681d
+        observed_at: 2026-10-16T17:08:25.477125Z
+    surfaces: []
+done_basis: rollup

@@ -1,0 +1,14 @@
+id: EV-ycjrtg
+type: sync.task
+at: 2026-10-16T17:08:25.557584Z
+contributor: allen
+command: sync task T-51vf9k
+targets:
+    - T-51vf9k
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/editor-frame/task.yml
