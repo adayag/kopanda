@@ -1,0 +1,15 @@
+id: EV-1kmenb
+type: start.task
+at: 2026-10-16T21:20:54.786027Z
+contributor: allen
+command: start task T-9h0fhs
+targets:
+    - T-9h0fhs
+before:
+    status: ready
+after:
+    branch: tiller/nav-bar/nav-bar/file-browser
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/file-browser/task.yml

@@ -1,0 +1,13 @@
+id: EV-9ezyq0
+type: claim.task
+at: 2026-10-16T21:20:54.625481Z
+contributor: allen
+command: claim task T-9h0fhs
+targets:
+    - T-9h0fhs
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/file-browser/task.yml
