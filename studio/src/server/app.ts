@@ -1,5 +1,6 @@
 import express from "express";
 import type { Config } from "./config.js";
+import { profilesRouter } from "./routes/profiles.js";
 
 export interface AppOptions {
   /** Directory holding the built UI (index.html and assets). Omit in dev; Vite serves it. */
@@ -10,6 +11,8 @@ export interface AppOptions {
 
 export function createApp(config: Config, options: AppOptions = {}): express.Express {
   const app = express();
+
+  app.use("/api/profiles", profilesRouter(config.profilesDir));
 
   if (options.api) {
     app.use("/api", options.api);

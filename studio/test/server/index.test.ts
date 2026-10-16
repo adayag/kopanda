@@ -74,4 +74,35 @@ describe("the server entry point", { timeout: killAfterMs + 5_000 }, () => {
       await new Promise((done) => holder.close(done));
     }
   });
+
+  it("exits 1 with one line naming the path when the profiles directory is a file", async () => {
+    const profiles = path.join(tmp, "profiles");
+    fs.writeFileSync(profiles, "");
+    // The port is held, so a server that got past the profiles directory would exit too, not listen.
+    const holder = await occupyPort();
+    try {
+      const { port } = holder.address() as net.AddressInfo;
+
+      const { status, stderr } = await start(String(port));
+
+      expect(status).toBe(1);
+      expect(stderr).toMatch(/^[^\n]*\n$/);
+      expect(stderr).toContain(profiles);
+    } finally {
+      await new Promise((done) => holder.close(done));
+    }
+  });
+
+  it("seeds a missing profiles directory before it listens", async () => {
+    const holder = await occupyPort();
+    try {
+      const { port } = holder.address() as net.AddressInfo;
+
+      await start(String(port));
+
+      expect(fs.readdirSync(path.join(tmp, "profiles")).sort()).toEqual(["colorsoft", "paperwhite"]);
+    } finally {
+      await new Promise((done) => holder.close(done));
+    }
+  });
 });

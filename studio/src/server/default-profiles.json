@@ -1,0 +1,18 @@
+{
+  "colorsoft": {
+    "name": "Colorsoft",
+    "device": "Kindle Colorsoft SE",
+    "width": 1264,
+    "height": 1680,
+    "dpi": 300,
+    "color": true
+  },
+  "paperwhite": {
+    "name": "Paperwhite",
+    "device": "Kindle Paperwhite (11th gen)",
+    "width": 1236,
+    "height": 1648,
+    "dpi": 300,
+    "color": false
+  }
+}
