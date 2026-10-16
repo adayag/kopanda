@@ -217,6 +217,7 @@ looks": 3 px ink outlines, hard ink shadows of 4 px on tiles, flat accent fills,
 | `padding.top`, `.side`, `.bottom` | 40, 40, 28 (EditLayout:19, :101) | 40, 40, 28 |
 | `header_band_color`, `header_text_color` | false, false | `band`, `on_band` (the home's header, `looks/diner.lua` palettes) |
 | `header_rule_color`, `header_rule_width`, `header_gap` | `ink`, 1, 16 (EditLayout:19) | `outline`, 3, 16 |
+| `body_gap` (the header rule to the body's first row) | 18 (EditLayout:27; LauncherManage:27 draws 10) | 18 |
 | `button_outline_color`, `button_outline_width`, `button_fill_color` | `ink`, 1, false (EditLayout:24) | `outline`, 3, `paper` |
 | `button_padding.x`, `.y` | 14, 8 (EditLayout:24) | 14, 8 |
 | `card_gap`, `card_padding.x`, `.y` | 12, 14, 12 (EditLayout:27, :29) | 12, 14, 12 |
