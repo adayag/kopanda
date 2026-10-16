@@ -12,7 +12,7 @@ describe("weather", function()
     local cache_file = harness.state_dir .. "/weather.lua"
     local Weather, Settings
 
-    local NEEDS_WIFI = "Weather needs Wi\u{2011}Fi"
+    local NEEDS_WIFI = "Weather needs Wi-Fi"
     local CHICAGO = { name = "Chicago, Illinois", latitude = 41.85003, longitude = -87.65005 }
 
     -- A trimmed copy of a real response for the default location in °F (2026-10-15). The

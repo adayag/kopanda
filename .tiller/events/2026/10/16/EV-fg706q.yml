@@ -1,0 +1,13 @@
+id: EV-fg706q
+type: check.tweak
+at: 2026-10-16T01:24:24.922156Z
+contributor: allen
+command: check tweak TW-d7y25x
+targets:
+    - TW-d7y25x
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/weather-hyphen/tweak.yml

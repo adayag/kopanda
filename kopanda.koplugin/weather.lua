@@ -19,7 +19,8 @@ local Weather = {}
 local attempted = false
 local successes = 0
 
-local NO_READING = "Weather needs Wi\u{2011}Fi" -- U+2011, as the board writes it (EmptyStates.dc.html:25)
+-- A plain hyphen, though the board writes U+2011 (EmptyStates.dc.html:25): the look faces have no U+2011.
+local NO_READING = "Weather needs Wi-Fi"
 
 -- WMO weather interpretation codes (open-meteo.com/en/docs) to plain words.
 local CONDITIONS = { [0] = "Clear", [1] = "Mainly clear", [2] = "Partly cloudy", [3] = "Overcast",
@@ -154,7 +155,7 @@ end
 -- The line the widget draws for reading at now in the look look_id: "Partly cloudy, 61°" in
 -- Editorial (Main.dc.html:25), "61° partly cloudy" in Diner (HomeRetro.dc.html:48-51), the
 -- temperature alone for an unknown code, then " · 3 h ago" once the reading is an hour old
--- (" · 2 d ago" from two days); with no reading, "Weather needs Wi‑Fi".
+-- (" · 2 d ago" from two days); with no reading, "Weather needs Wi-Fi".
 function Weather.line(reading, now, look_id)
     if not reading then
         return NO_READING
