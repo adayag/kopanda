@@ -34,6 +34,19 @@ function settingsPath(id: string): string {
   return `${DIR}/${id}/settings/kopanda/settings.lua`;
 }
 
+/** The settings answer for a profile: its file exists when the profile has one, every key at its default. */
+function settingsOf(profile: { id: string; has_settings: boolean }) {
+  return {
+    path: settingsPath(profile.id),
+    exists: profile.has_settings,
+    state: "writable",
+    schema_version: 1,
+    values: {},
+    invalid: [],
+    unknown: [],
+  };
+}
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -141,6 +154,7 @@ describe("opening a profile", () => {
       "/api/profiles": () => json({ dir: DIR, profiles: [colorsoft, paperwhite] }),
       "/api/profiles/colorsoft": () =>
         json({ ...colorsoft, settings_path: settingsPath("colorsoft") }),
+      "/api/profiles/colorsoft/settings": () => json(settingsOf(colorsoft)),
     });
     render(<App />);
 
@@ -160,6 +174,7 @@ describe("opening a profile", () => {
     route({
       "/api/profiles/paperwhite": () =>
         json({ ...paperwhite, settings_path: settingsPath("paperwhite") }),
+      "/api/profiles/paperwhite/settings": () => json(settingsOf(paperwhite)),
     });
 
     render(<App />);
@@ -175,13 +190,14 @@ describe("opening a profile", () => {
     route({
       "/api/profiles/paperwhite": () =>
         json({ ...paperwhite, settings_path: settingsPath("paperwhite") }),
+      "/api/profiles/paperwhite/settings": () => json(settingsOf(paperwhite)),
     });
 
     render(<App />);
 
     expect(screen.queryByText("Loading profiles")).not.toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Paperwhite" })).toBeInTheDocument();
-    expect(requestedUrls()).toEqual(["/api/profiles/paperwhite"]);
+    expect(requestedUrls()).toEqual(["/api/profiles/paperwhite", "/api/profiles/paperwhite/settings"]);
   });
 
   it("shows No profile <id> for a 404, with a way back to the list", async () => {
@@ -220,6 +236,7 @@ describe("opening a profile", () => {
       "/api/profiles": () => json(listing),
       "/api/profiles/colorsoft": () =>
         json({ ...colorsoft, settings_path: settingsPath("colorsoft") }),
+      "/api/profiles/colorsoft/settings": () => json(settingsOf(colorsoft)),
     });
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /Colorsoft/ }));
@@ -232,6 +249,7 @@ describe("opening a profile", () => {
     expect(requestedUrls()).toEqual([
       "/api/profiles",
       "/api/profiles/colorsoft",
+      "/api/profiles/colorsoft/settings",
       "/api/profiles",
     ]);
   });
@@ -266,6 +284,7 @@ describe("opening a profile", () => {
       "/api/profiles/colorsoft": () => late.promise,
       "/api/profiles/paperwhite": () =>
         json({ ...paperwhite, settings_path: settingsPath("paperwhite") }),
+      "/api/profiles/paperwhite/settings": () => json(settingsOf(paperwhite)),
     });
     render(<App />);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -288,7 +307,9 @@ describe("opening a profile", () => {
     route({
       "/api/profiles/colorsoft": () =>
         json({ ...colorsoft, settings_path: settingsPath("colorsoft") }),
+      "/api/profiles/colorsoft/settings": () => json(settingsOf(colorsoft)),
       "/api/profiles/paperwhite": () => next.promise,
+      "/api/profiles/paperwhite/settings": () => json(settingsOf(paperwhite)),
     });
     render(<App />);
     await screen.findByRole("heading", { name: "Colorsoft" });
