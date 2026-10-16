@@ -80,6 +80,21 @@ describe("bin/check", function()
         assert.falsy(contains(output, "has monolibtic"), output)
     end)
 
+    it("names the file and the test, and prints the test's output, when a test ends the process", function()
+        local dir = run("mktemp -d"):gsub("\n$", "")
+        local _, setup = run("printf '%s\\n' 'describe(\"scratch\", function()'"
+            .. " '    it(\"dies\", function() print(\"last words\"); os.exit(3) end)' 'end)'"
+            .. " > '" .. dir .. "/exiting_spec.lua'")
+        assert.equals(0, setup)
+        local output, status = run("'" .. check .. "' '" .. dir .. "/exiting_spec.lua'")
+        run("rm -rf '" .. dir .. "'")
+        assert.equals(1, status, output)
+        assert.truthy(contains(output, "[  FAILED  ] in "), output)
+        assert.truthy(contains(output, "last words"), output)
+        assert.truthy(output:find("scratch dies\n"), output)
+        assert.falsy(contains(output, "has monolibtic"), output)
+    end)
+
     it("prints Busted's per-test lines and KOReader's library chatter with --verbose", function()
         local output, status = run("cd '" .. root .. "' && bin/check --verbose spec/unit/environment_spec.lua")
         assert.equals(0, status, output)
