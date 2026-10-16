@@ -1,0 +1,13 @@
+id: EV-qsne1e
+type: check.task
+at: 2026-10-16T17:11:08.311498Z
+contributor: allen
+command: check task T-6yxswg
+targets:
+    - T-6yxswg
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/scaffold/task.yml

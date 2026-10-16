@@ -1,7 +1,7 @@
 id: F-kglqs4
 key: studio/studio-shell
 title: Studio app, device profiles and the schema contract
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -14,6 +14,7 @@ order:
     - T-n4uwe9
     - T-txsef1
 review_grain: feature
+branch: tiller/reviews/features/studio/studio-shell
 accepted_against:
     spec:
         kind: git_blob
