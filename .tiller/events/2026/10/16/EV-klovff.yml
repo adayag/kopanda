@@ -1,0 +1,17 @@
+id: EV-klovff
+type: start.task
+at: 2026-10-16T20:58:14.247506Z
+contributor: allen
+command: start task T-3648b1
+targets:
+    - T-3648b1
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/nav-bar/nav-bar
+    branch: tiller/nav-bar/nav-bar/bar
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/bar/task.yml
+    - path: .tiller/epics/nav-bar/features/nav-bar/feature.yml

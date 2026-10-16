@@ -1,7 +1,7 @@
 id: F-78e5ij
 key: nav-bar/nav-bar
 title: Five-tab nav bar in both looks
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -15,6 +15,7 @@ order:
     - T-9h0fhs
     - T-1r8qb2
 review_grain: feature
+branch: tiller/reviews/features/nav-bar/nav-bar
 accepted_against:
     spec:
         kind: git_blob
