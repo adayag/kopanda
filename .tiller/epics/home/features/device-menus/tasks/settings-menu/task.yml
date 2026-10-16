@@ -1,7 +1,7 @@
 id: T-ij3256
 key: home/device-menus/settings-menu
 title: The settings menu generated from the schema, and its callers
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
@@ -9,3 +9,13 @@ depends_on:
     - T-6nh4m4
     - T-h9dkvy
     - T-cbmaw1
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:26703a84579ab9705076659a66ed059a58407f8d
+        path: .tiller/epics/home/features/device-menus/tasks/settings-menu/task.md
+        observed_at: 2026-10-16T03:17:38.108793Z
+    commit:
+        kind: git_commit
+        value: git:ac38233
+        observed_at: 2026-10-16T03:17:38.130788Z

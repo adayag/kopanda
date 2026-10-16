@@ -1,10 +1,20 @@
 id: T-h9dkvy
 key: home/device-menus/launcher-manage
 title: 'Launcher management: the list operations, the screen and its ways in'
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-51vf9k
     - T-zghyve
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:7b723454f1747e323f1209599f8f17d311a57620
+        path: .tiller/epics/home/features/device-menus/tasks/launcher-manage/task.md
+        observed_at: 2026-10-16T03:17:38.086332Z
+    commit:
+        kind: git_commit
+        value: git:ac38233
+        observed_at: 2026-10-16T03:17:38.108421Z

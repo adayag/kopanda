@@ -1,0 +1,13 @@
+id: EV-pkqkw8
+type: approve.task
+at: 2026-10-16T03:17:38.130863Z
+contributor: allen
+command: approve task T-ij3256
+targets:
+    - T-ij3256
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/settings-menu/task.yml

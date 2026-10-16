@@ -1,7 +1,17 @@
 id: T-51vf9k
 key: home/device-menus/editor-frame
 title: The full-screen editor frame, its look tokens and its icons
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:c19afb9b42ea3f582b5dd4b297e10104e32addd4
+        path: .tiller/epics/home/features/device-menus/tasks/editor-frame/task.md
+        observed_at: 2026-10-16T03:17:37.997516Z
+    commit:
+        kind: git_commit
+        value: git:ac38233
+        observed_at: 2026-10-16T03:17:38.018765Z

@@ -1,0 +1,13 @@
+id: EV-pnjaui
+type: approve.task
+at: 2026-10-16T03:17:38.108519Z
+contributor: allen
+command: approve task T-h9dkvy
+targets:
+    - T-h9dkvy
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/launcher-manage/task.yml

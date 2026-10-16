@@ -1,7 +1,17 @@
 id: T-zghyve
 key: home/device-menus/entry-picker
 title: The add-an-entry picker for the five kinds
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:9b165ee10e8107541051eedc6d8aae4bb4517589
+        path: .tiller/epics/home/features/device-menus/tasks/entry-picker/task.md
+        observed_at: 2026-10-16T03:17:38.019123Z
+    commit:
+        kind: git_commit
+        value: git:ac38233
+        observed_at: 2026-10-16T03:17:38.040773Z

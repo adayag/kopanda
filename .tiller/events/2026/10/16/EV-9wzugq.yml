@@ -1,0 +1,15 @@
+id: EV-9wzugq
+type: approve.feature
+at: 2026-10-16T03:17:37.996863Z
+contributor: allen
+command: approve feature F-sn4px5
+targets:
+    - F-sn4px5
+before:
+    review_grain: ""
+    status: specced
+after:
+    review_grain: feature
+    status: ready
+files:
+    - path: .tiller/epics/home/features/device-menus/feature.yml

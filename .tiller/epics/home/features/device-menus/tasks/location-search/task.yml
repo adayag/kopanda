@@ -1,7 +1,17 @@
 id: T-cbmaw1
 key: home/device-menus/location-search
 title: Weather location search through Open-Meteo's geocoding
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:e27eaf1cf4272f2e0c2ce152f4831be11f791cdb
+        path: .tiller/epics/home/features/device-menus/tasks/location-search/task.md
+        observed_at: 2026-10-16T03:17:38.041181Z
+    commit:
+        kind: git_commit
+        value: git:ac38233
+        observed_at: 2026-10-16T03:17:38.062173Z

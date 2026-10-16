@@ -1,10 +1,20 @@
 id: T-7y2lph
 key: home/device-menus/goldens
 title: Goldens of both screens in both looks and their paint budget
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-6nh4m4
     - T-h9dkvy
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:4dd30e5c0b343b0a1bc7184b7e6718e45cac6dd0
+        path: .tiller/epics/home/features/device-menus/tasks/goldens/task.md
+        observed_at: 2026-10-16T03:17:38.131156Z
+    commit:
+        kind: git_commit
+        value: git:ac38233
+        observed_at: 2026-10-16T03:17:38.152338Z

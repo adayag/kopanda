@@ -1,0 +1,13 @@
+id: EV-tl3lj4
+type: approve.task
+at: 2026-10-16T03:17:38.040888Z
+contributor: allen
+command: approve task T-zghyve
+targets:
+    - T-zghyve
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/entry-picker/task.yml

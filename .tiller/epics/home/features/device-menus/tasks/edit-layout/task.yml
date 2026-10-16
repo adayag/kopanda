@@ -1,9 +1,19 @@
 id: T-6nh4m4
 key: home/device-menus/edit-layout
 title: 'Edit layout: the row operations and the screen'
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-51vf9k
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:108e344a42d58b8936bc504527e9232f217a2f4b
+        path: .tiller/epics/home/features/device-menus/tasks/edit-layout/task.md
+        observed_at: 2026-10-16T03:17:38.063092Z
+    commit:
+        kind: git_commit
+        value: git:ac38233
+        observed_at: 2026-10-16T03:17:38.085895Z

@@ -1,0 +1,13 @@
+id: EV-njc771
+type: approve.task
+at: 2026-10-16T03:17:38.086001Z
+contributor: allen
+command: approve task T-6nh4m4
+targets:
+    - T-6nh4m4
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/edit-layout/task.yml
