@@ -1,0 +1,13 @@
+id: EV-3375sq
+type: check.tweak
+at: 2026-10-16T01:20:31.860101Z
+contributor: allen
+command: check tweak TW-a7nfpr
+targets:
+    - TW-a7nfpr
+before:
+    status: in_progress
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/shared-paint-helpers/tweak.yml
