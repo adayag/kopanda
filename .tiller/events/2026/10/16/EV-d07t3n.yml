@@ -1,0 +1,16 @@
+id: EV-d07t3n
+type: submit.task
+at: 2026-10-16T18:39:37.707994Z
+contributor: allen
+command: submit task T-jslnv7
+targets:
+    - T-jslnv7
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/settings-form/layout-fit
+        head: git:6a52e7a
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/layout-fit/task.yml

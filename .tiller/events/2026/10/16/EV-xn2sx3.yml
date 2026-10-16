@@ -1,0 +1,13 @@
+id: EV-xn2sx3
+type: check.task
+at: 2026-10-16T18:27:37.766106Z
+contributor: allen
+command: check task T-v4irt5
+targets:
+    - T-v4irt5
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/settings-file/task.yml

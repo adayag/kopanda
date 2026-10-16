@@ -1,9 +1,11 @@
 import express from "express";
 import { HttpError } from "../http-error.js";
 import { getProfile, listProfiles } from "../profiles.js";
+import { layoutFitRouter, type LayoutFitOptions } from "./layout-fit.js";
+import { settingsRouter } from "./settings.js";
 
 /** The profiles API over the profiles directory `dir`, read from disk on every request. */
-export function profilesRouter(dir: string): express.Router {
+export function profilesRouter(dir: string, layoutFit: LayoutFitOptions = {}): express.Router {
   const router = express.Router();
 
   router.get("/", async (_req, res) => {
@@ -17,6 +19,9 @@ export function profilesRouter(dir: string): express.Router {
     if ("error" in profile) throw new HttpError(404, `profile "${id}" is invalid: ${profile.error}`);
     res.json(profile);
   });
+
+  router.use(settingsRouter(dir));
+  router.use(layoutFitRouter(dir, layoutFit));
 
   return router;
 }

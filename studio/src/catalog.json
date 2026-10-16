@@ -1,0 +1,686 @@
+{
+    "actions": [
+        {
+            "actions": [
+                {
+                    "id": "gesture_overview",
+                    "title": "Gesture overview"
+                },
+                {
+                    "id": "filemanager",
+                    "title": "File browser"
+                },
+                {
+                    "id": "open_previous_document",
+                    "title": "Open previous document"
+                },
+                {
+                    "id": "history",
+                    "title": "History"
+                },
+                {
+                    "id": "history_search",
+                    "title": "History search"
+                },
+                {
+                    "id": "favorites",
+                    "title": "Favorites"
+                },
+                {
+                    "id": "collections",
+                    "title": "Collections"
+                },
+                {
+                    "id": "collections_search",
+                    "title": "Collections search"
+                },
+                {
+                    "id": "book_metadata_archive",
+                    "title": "Book metadata archive"
+                },
+                {
+                    "id": "bookmark_browser",
+                    "title": "Bookmark browser"
+                },
+                {
+                    "id": "dictionary_lookup",
+                    "title": "Dictionary lookup"
+                },
+                {
+                    "id": "cycle_dictionary_preset",
+                    "title": "Cycle through dictionary presets"
+                },
+                {
+                    "id": "wikipedia_lookup",
+                    "title": "Wikipedia lookup"
+                },
+                {
+                    "id": "show_menu",
+                    "title": "Show menu"
+                },
+                {
+                    "id": "menu_search",
+                    "title": "Menu search"
+                },
+                {
+                    "id": "open_next_document_in_folder",
+                    "title": "Open next file in last book folder"
+                },
+                {
+                    "id": "open_previous_document_in_folder",
+                    "title": "Open previous file in last book folder"
+                },
+                {
+                    "id": "notebook_file",
+                    "title": "Notebook file"
+                },
+                {
+                    "id": "screenshot",
+                    "title": "Screenshot"
+                },
+                {
+                    "id": "show_ephemeris",
+                    "title": "Show ephemeris"
+                },
+                {
+                    "id": "calibre_search",
+                    "title": "Calibre metadata search"
+                },
+                {
+                    "id": "calibre_browse_tags",
+                    "title": "Browse all calibre tags"
+                },
+                {
+                    "id": "calibre_browse_series",
+                    "title": "Browse all calibre series"
+                },
+                {
+                    "id": "calibre_browse_authors",
+                    "title": "Browse all calibre authors"
+                },
+                {
+                    "id": "calibre_browse_titles",
+                    "title": "Browse all calibre titles"
+                },
+                {
+                    "id": "calibre_start_connection",
+                    "title": "Calibre wireless connect"
+                },
+                {
+                    "id": "calibre_close_connection",
+                    "title": "Calibre wireless disconnect"
+                },
+                {
+                    "id": "cloudstorage",
+                    "title": "Cloud storage"
+                },
+                {
+                    "id": "show_alarm",
+                    "title": "Read timer: set alarm"
+                },
+                {
+                    "id": "show_timer",
+                    "title": "Read timer: set interval"
+                },
+                {
+                    "id": "start_timer",
+                    "title": "Read timer: start"
+                },
+                {
+                    "id": "start_timer_not_running",
+                    "title": "Read timer: start if not running"
+                },
+                {
+                    "id": "stop_timer",
+                    "title": "Read timer: stop"
+                },
+                {
+                    "id": "toggle_statistics",
+                    "title": "Reading statistics: toggle"
+                },
+                {
+                    "id": "reading_progress",
+                    "title": "Reading statistics: show progress"
+                },
+                {
+                    "id": "stats_time_range",
+                    "title": "Reading statistics: show time range"
+                },
+                {
+                    "id": "stats_calendar_view",
+                    "title": "Reading statistics: show calendar view"
+                },
+                {
+                    "id": "stats_calendar_day_view",
+                    "title": "Reading statistics: show today's timeline"
+                },
+                {
+                    "id": "stats_sync",
+                    "title": "Reading statistics: synchronize"
+                },
+                {
+                    "id": "edit_last_edited_file",
+                    "title": "Text editor: open last file"
+                },
+                {
+                    "id": "show_vocab_builder",
+                    "title": "Open vocabulary builder"
+                },
+                {
+                    "id": "sync_vocab_builder",
+                    "title": "Sync vocabulary builder"
+                },
+                {
+                    "id": "wallabag_download",
+                    "title": "Wallabag retrieval"
+                },
+                {
+                    "id": "wallabag_queue_upload",
+                    "title": "Wallabag queue upload"
+                },
+                {
+                    "id": "wallabag_status_upload",
+                    "title": "Wallabag statuses upload"
+                }
+            ],
+            "title": "General"
+        },
+        {
+            "actions": [
+                {
+                    "id": "exit_screensaver",
+                    "title": "Exit sleep screen"
+                },
+                {
+                    "id": "suspend",
+                    "title": "Sleep"
+                },
+                {
+                    "id": "restart",
+                    "title": "Restart KOReader"
+                },
+                {
+                    "id": "reboot",
+                    "title": "Reboot the device"
+                },
+                {
+                    "id": "poweroff",
+                    "title": "Power off"
+                },
+                {
+                    "id": "exit",
+                    "title": "Exit KOReader"
+                },
+                {
+                    "id": "toggle_hold_corners",
+                    "title": "Toggle long-press on corners"
+                },
+                {
+                    "id": "touch_input_on",
+                    "title": "Enable touch input"
+                },
+                {
+                    "id": "touch_input_off",
+                    "title": "Disable touch input"
+                },
+                {
+                    "id": "toggle_touch_input",
+                    "title": "Toggle touch input"
+                },
+                {
+                    "id": "swap_page_turn_buttons",
+                    "title": "Invert page-turn buttons"
+                },
+                {
+                    "id": "toggle_rotation",
+                    "title": "Toggle orientation"
+                },
+                {
+                    "id": "invert_rotation",
+                    "title": "Invert rotation"
+                },
+                {
+                    "id": "iterate_rotation",
+                    "title": "Rotate by 90° CW"
+                },
+                {
+                    "id": "iterate_rotation_ccw",
+                    "title": "Rotate by 90° CCW"
+                },
+                {
+                    "id": "wifi_on",
+                    "title": "Turn on Wi-Fi"
+                },
+                {
+                    "id": "wifi_off",
+                    "title": "Turn off Wi-Fi"
+                },
+                {
+                    "id": "toggle_wifi",
+                    "title": "Toggle Wi-Fi"
+                },
+                {
+                    "id": "toggle_fullscreen",
+                    "title": "Toggle Fullscreen"
+                },
+                {
+                    "id": "show_network_info",
+                    "title": "Show network info"
+                },
+                {
+                    "id": "battery_statistics",
+                    "title": "Battery statistics"
+                },
+                {
+                    "id": "system_statistics",
+                    "title": "System statistics"
+                },
+                {
+                    "id": "terminal",
+                    "title": "Terminal emulator"
+                }
+            ],
+            "title": "Device"
+        },
+        {
+            "actions": [
+                {
+                    "id": "show_frontlight_dialog",
+                    "title": "Show frontlight dialog"
+                },
+                {
+                    "id": "toggle_frontlight",
+                    "title": "Toggle frontlight"
+                },
+                {
+                    "id": "night_mode",
+                    "title": "Toggle night mode"
+                },
+                {
+                    "id": "full_refresh",
+                    "title": "Full screen refresh"
+                },
+                {
+                    "id": "toggle_flash_on_chapter_boundaries",
+                    "title": "Toggle flashing on chapter boundaries"
+                },
+                {
+                    "id": "toggle_no_flash_on_second_chapter_page",
+                    "title": "Toggle flashing on chapter's 2nd page"
+                },
+                {
+                    "id": "toggle_flash_on_pages_with_images",
+                    "title": "Toggle flashing on pages with images"
+                },
+                {
+                    "id": "auto_warmth_off",
+                    "title": "Auto warmth off"
+                },
+                {
+                    "id": "auto_warmth_activate_sun",
+                    "title": "Auto warmth use sun position"
+                },
+                {
+                    "id": "auto_warmth_activate_schedule",
+                    "title": "Auto warmth use schedule"
+                },
+                {
+                    "id": "auto_warmth_activate_closer_midnight",
+                    "title": "Auto warmth use closer midnight"
+                },
+                {
+                    "id": "auto_warmth_activate_closer_noon",
+                    "title": "Auto warmth use closer noon"
+                },
+                {
+                    "id": "auto_warmth_cycle_trough",
+                    "title": "Auto warmth cycle through modes"
+                }
+            ],
+            "title": "Screen and lights"
+        },
+        {
+            "actions": [
+                {
+                    "id": "show_plus_menu",
+                    "title": "Show plus menu"
+                },
+                {
+                    "id": "toggle_select_mode",
+                    "title": "Toggle select mode"
+                },
+                {
+                    "id": "refresh_content",
+                    "title": "Refresh content"
+                },
+                {
+                    "id": "file_search",
+                    "title": "File search"
+                },
+                {
+                    "id": "file_search_results",
+                    "title": "Last file search results"
+                },
+                {
+                    "id": "folder_shortcuts",
+                    "title": "Folder shortcuts"
+                },
+                {
+                    "id": "folder_up",
+                    "title": "Folder up"
+                },
+                {
+                    "id": "fm_go_to",
+                    "title": "Go to page"
+                },
+                {
+                    "id": "fm_back",
+                    "title": "Back"
+                },
+                {
+                    "id": "export_all_notes",
+                    "title": "Export all notes in all books in history"
+                },
+                {
+                    "id": "opds_show_catalog",
+                    "title": "OPDS Catalog"
+                }
+            ],
+            "title": "File browser"
+        }
+    ],
+    "icons": [
+        {
+            "id": "home",
+            "label": "Home",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 11l9-8 9 8v10H3z\"/></svg>\n"
+        },
+        {
+            "id": "library",
+            "label": "Library",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 4h4v16H4zM10 4h4v16h-4zM16 6l4-1 3 15-4 1z\"/></svg>\n"
+        },
+        {
+            "id": "series",
+            "label": "Series",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3l9 5-9 5-9-5zM3 13l9 5 9-5\"/></svg>\n"
+        },
+        {
+            "id": "authors",
+            "label": "Authors",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21a8 8 0 0 1 16 0\"/></svg>\n"
+        },
+        {
+            "id": "history",
+            "label": "History",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg>\n"
+        },
+        {
+            "id": "wifi",
+            "label": "Wi-Fi",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0\"/><circle cx=\"12\" cy=\"19.5\" r=\"1\"/></svg>\n"
+        },
+        {
+            "id": "wifi_off",
+            "label": "Wi-Fi off",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0\"/><path d=\"M4 4l16 16\"/></svg>\n"
+        },
+        {
+            "id": "settings",
+            "label": "Settings",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1\"/></svg>\n"
+        },
+        {
+            "id": "folder",
+            "label": "Folder",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 6h7l2 2h9v11H3z\"/></svg>\n"
+        },
+        {
+            "id": "terminal",
+            "label": "Terminal",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"1\"/><path d=\"M7 9l3 3-3 3M12 15h5\"/></svg>\n"
+        },
+        {
+            "id": "sync",
+            "label": "Sync",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3v12M7 10l5 5 5-5M4 19h16\"/></svg>\n"
+        },
+        {
+            "id": "screenshot",
+            "label": "Screenshot",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 8h3l2-3h6l2 3h3v11H4z\"/><circle cx=\"12\" cy=\"13\" r=\"3\"/></svg>\n"
+        },
+        {
+            "id": "plugin_missing",
+            "label": "Plugin missing",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"1\" stroke-dasharray=\"3 3\"/></svg>\n"
+        },
+        {
+            "id": "sun",
+            "label": "Sun (weather, refresh weather)",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4\"/></svg>\n"
+        },
+        {
+            "id": "moon",
+            "label": "Moon (night weather, sleep, night mode)",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z\"/></svg>\n"
+        },
+        {
+            "id": "open_book",
+            "label": "Open book",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H4zM20 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z\"/></svg>\n"
+        },
+        {
+            "id": "info",
+            "label": "Book details",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 11v5M12 8h.01\"/></svg>\n"
+        },
+        {
+            "id": "bookmark",
+            "label": "Read status",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 4h14v17l-7-4-7 4z\"/></svg>\n"
+        },
+        {
+            "id": "list",
+            "label": "Feature a different book",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 7h16M4 12h16M4 17h10\"/></svg>\n"
+        },
+        {
+            "id": "layout",
+            "label": "Edit layout",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"6\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"8\" height=\"6\" rx=\"1\"/><rect x=\"13\" y=\"14\" width=\"8\" height=\"6\" rx=\"1\"/></svg>\n"
+        },
+        {
+            "id": "rotation_lock",
+            "label": "Rotation lock",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"5\" y=\"3\" width=\"14\" height=\"18\" rx=\"2\"/><path d=\"M9 7h6\"/></svg>\n"
+        },
+        {
+            "id": "power",
+            "label": "Sleep (power)",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3v9M6.5 7.5a7.5 7.5 0 1 0 11 0\"/></svg>\n"
+        },
+        {
+            "id": "back",
+            "label": "Back",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 5l-7 7 7 7\"/></svg>\n"
+        },
+        {
+            "id": "close",
+            "label": "Close",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg>\n"
+        },
+        {
+            "id": "check",
+            "label": "Checked",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg>\n"
+        },
+        {
+            "id": "chevron_up",
+            "label": "Move up",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m18 15-6-6-6 6\"/></svg>\n"
+        },
+        {
+            "id": "chevron_down",
+            "label": "Move down",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m6 9 6 6 6-6\"/></svg>\n"
+        },
+        {
+            "id": "action",
+            "label": "Action or plugin entry",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 14a1 1 0 0 1-.8-1.6l9.9-10.2a.5.5 0 0 1 .9.5l-1.9 6A1 1 0 0 0 13 10h7a1 1 0 0 1 .8 1.6l-9.9 10.2a.5.5 0 0 1-.9-.5l1.9-6A1 1 0 0 0 11 14z\"/></svg>\n"
+        }
+    ],
+    "plugins": [
+        {
+            "label": "Archive viewer",
+            "name": "archiveviewer"
+        },
+        {
+            "label": "Auto power save",
+            "name": "autosuspend"
+        },
+        {
+            "label": "Auto warmth and night mode",
+            "name": "autowarmth"
+        },
+        {
+            "label": "Automatic dimmer",
+            "name": "autodim"
+        },
+        {
+            "label": "Battery statistics",
+            "name": "batterystat"
+        },
+        {
+            "label": "Book shortcuts",
+            "name": "bookshortcuts"
+        },
+        {
+            "label": "Calibre",
+            "name": "calibre"
+        },
+        {
+            "label": "Cloud storage",
+            "name": "cloudstorage"
+        },
+        {
+            "label": "Cover browser",
+            "name": "coverbrowser"
+        },
+        {
+            "label": "Export highlights",
+            "name": "exporter"
+        },
+        {
+            "label": "Gestures",
+            "name": "gestures"
+        },
+        {
+            "label": "HTTP KOReader Inspector",
+            "name": "httpinspector"
+        },
+        {
+            "label": "Hotkeys",
+            "name": "hotkeys"
+        },
+        {
+            "label": "Japanese support",
+            "name": "japanese"
+        },
+        {
+            "label": "Keep alive",
+            "name": "keepalive"
+        },
+        {
+            "label": "Move to archive",
+            "name": "movetoarchive"
+        },
+        {
+            "label": "News downloader",
+            "name": "newsdownloader"
+        },
+        {
+            "label": "OPDS",
+            "name": "opds"
+        },
+        {
+            "label": "Profiles",
+            "name": "profiles"
+        },
+        {
+            "label": "QR from clipboard",
+            "name": "qrclipboard"
+        },
+        {
+            "label": "Read timer",
+            "name": "readtimer"
+        },
+        {
+            "label": "Reading statistics",
+            "name": "statistics"
+        },
+        {
+            "label": "System statistics",
+            "name": "systemstat"
+        },
+        {
+            "label": "Terminal emulator",
+            "name": "terminal"
+        },
+        {
+            "label": "Text editor",
+            "name": "texteditor"
+        },
+        {
+            "label": "Tweak document settings",
+            "name": "docsettingtweak"
+        },
+        {
+            "label": "Vocabulary builder",
+            "name": "vocabbuilder"
+        },
+        {
+            "label": "Wallabag",
+            "name": "wallabag"
+        }
+    ],
+    "screens": {
+        "kopanda": {
+            "authors": {
+                "icon": "authors",
+                "label": "Authors"
+            },
+            "library": {
+                "icon": "library",
+                "label": "Library"
+            },
+            "series": {
+                "icon": "series",
+                "label": "Series"
+            },
+            "settings": {
+                "icon": "settings",
+                "label": "Settings"
+            }
+        },
+        "koreader": {
+            "collections": {
+                "icon": "list",
+                "label": "Collections"
+            },
+            "favorites": {
+                "icon": "bookmark",
+                "label": "Favorites"
+            },
+            "history": {
+                "icon": "history",
+                "label": "History"
+            },
+            "wifi": {
+                "icon": "wifi",
+                "label": "Wi-Fi"
+            }
+        }
+    }
+}

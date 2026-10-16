@@ -1,0 +1,13 @@
+id: EV-rmsna3
+type: claim.task
+at: 2026-10-16T18:51:16.410168Z
+contributor: allen
+command: claim task T-wmf18g
+targets:
+    - T-wmf18g
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/location-search/task.yml

@@ -1,9 +1,10 @@
 id: T-v4irt5
 key: studio/settings-form/settings-file
 title: Read and write a profile's settings file, with validators shared with the plugin
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,37 @@ accepted_against:
         kind: git_commit
         value: git:d92a0a4
         observed_at: 2026-10-16T17:50:20.355126Z
+branch: tiller/studio/settings-form/settings-file
+review_ref:
+    branch: tiller/studio/settings-form/settings-file
+    head:
+        kind: git_commit
+        value: git:f6a0114
+        observed_at: 2026-10-16T18:27:42.47061Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T18:25:49.267217Z
+        against:
+            kind: git_commit
+            value: git:75e39c5
+            observed_at: 2026-10-16T18:25:49.267209Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-75e39c5-out-02d1f1798291dd08a4dc42aa2bfbef0ea42d7e440ff86589b9892697eb41eb34.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T18:25:49.267217Z
+        against:
+            kind: git_commit
+            value: git:75e39c5
+            observed_at: 2026-10-16T18:25:49.267209Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-75e39c5-out-24b9181f89f93f340f83be025a02555c41fbeb3a518ef58bbc0c0d2a0cccac8d.txt
