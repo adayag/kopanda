@@ -34,7 +34,7 @@ are on `main` at `ca26783`. This task starts after `sheets` has merged (the feat
    - **Drawing:** paper over the whole screen; the header: aside (`editor_aside`) over title
      (`editor_title`) on the left, the Done button on the right baseline-aligned to the title's foot
      (EditLayout:19-25), the header band (Diner) or none (Editorial), then the header rule. Then the
-     body's rows from `padding.top` below the rule, then the foot pinned to the bottom with
+     body's rows from `body_gap` below the rule, then the foot pinned to the bottom with
      `padding.bottom`. Text through `Typeset.line(part, text, max_width, ctx)` (`typeset.lua:49`), icons
      as `TintedIcon`s (`tinted_icon.lua:23-60`), fills and borders through the RGB32 calls for a colour
      (`home_rows.lua:16-25`'s `fill`). Every colour through `Looks.palette(ctx.look, ctx.variant)`

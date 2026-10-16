@@ -111,6 +111,9 @@ Upgrading KOReader walks this list.
   (`close`, which sends `CloseWidget` at `:300`), `:881-888` (`isWidgetShown`).
 - The home is shown and closed with `"full"`; a home that reached the stack before failing
   is taken off it.
+- The editor frame (`editor.lua`) is shown and closed the same way, with `"full"`, and is
+  `covers_fullscreen` as the home is, so nothing beneath it is painted while it is up; an editor
+  that reached the stack before failing is taken off it.
 
 ### `UIManager.event_hook`, the settled signal
 
@@ -835,6 +838,11 @@ Upgrading KOReader walks this list.
   `frontend/device/key.lua:60-92`).
 - KOReader's Back: the dispatcher's `fm_back` sends the `Back` event (`frontend/dispatcher.lua:169`)
   to the top widget, the sheet, whose `onBack` closes it and consumes it.
+- The editor frame binds both as the sheet does: `key_events.Close = { { Device.input.group.Back } }`
+  only where `Device:hasKeys()` (`buttondialog.lua:98-108`), and `onBack` for the `Back` event
+  (`frontend/dispatcher.lua:169`), each closing it. Its taps are one `ges_events.TapEditor` whose
+  range is a function returning its `dimen` (`frontend/ui/gesturerange.lua:25-37`), so a rebuild at
+  a new size moves it.
 - Taps: `ges_events.TapSheet`, one `GestureRange` (`frontend/ui/gesturerange.lua:14`, `:21-51`)
   over the whole screen, consumed wherever it lands, as `ButtonDialog:onTapClose` consumes a tap
   (`buttondialog.lua:347-352`), so `sendEvent` offers it to no window below
