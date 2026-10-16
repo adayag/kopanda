@@ -1,0 +1,14 @@
+id: EV-6ch8q9
+type: sync.tweak
+at: 2026-10-16T02:22:19.112825Z
+contributor: allen
+command: sync tweak TW-a7nfpr
+targets:
+    - TW-a7nfpr
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/shared-paint-helpers/tweak.yml
