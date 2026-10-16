@@ -1,0 +1,13 @@
+id: EV-hn47v4
+type: spec.feature
+at: 2026-10-16T20:38:41.125238Z
+contributor: allen
+command: spec feature F-iwl43d
+targets:
+    - F-iwl43d
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/bars/features/title-bar/feature.yml

@@ -1,0 +1,9 @@
+id: T-le8x0f
+key: bars/title-bar/file-browser
+title: 'The title bar in KOReader''s file browser: the one-shot swap, its pickers, failsafe and tripwire'
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-nzshf0

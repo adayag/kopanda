@@ -1,0 +1,9 @@
+id: T-m6bm2e
+key: bars/title-bar/goldens
+title: File-browser goldens with the title bar in both looks on both profiles
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-le8x0f

@@ -1,9 +1,14 @@
 id: F-iwl43d
 key: bars/title-bar
 title: File manager title bar in look tokens
-status: draft
+status: specced
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
 depends_on:
     - F-i2mbn1
+    - F-78e5ij
+order:
+    - T-nzshf0
+    - T-le8x0f
+    - T-m6bm2e
