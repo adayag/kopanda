@@ -18,3 +18,30 @@ accepted_against:
         value: git:e6f2573
         observed_at: 2026-10-16T00:19:22.534551Z
 branch: tiller/tweaks/main-requires-every-module
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T01:29:00.946491Z
+        against:
+            kind: git_commit
+            value: git:261b07b
+            observed_at: 2026-10-16T01:29:00.94649Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-261b07b-out-6648bb773cfdcaaa10019076db669d866ce429d6c28211ccf2ea37557036f4de.txt
+    tests:
+        required: true
+        kind: command
+        status: fail
+        run_by: allen
+        run_at: 2026-10-16T01:29:00.946491Z
+        against:
+            kind: git_commit
+            value: git:261b07b
+            observed_at: 2026-10-16T01:29:00.94649Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-261b07b-out-ff2730717c50dcf4b0d8d0dbdbd6172ad7a308a0d79b1d9877d8b3b3a03f77d1.txt
