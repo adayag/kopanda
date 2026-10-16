@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { Key } from "../schema";
 import type { ProfileWithPath } from "../server/profiles.js";
 import { ApiError, fetchProfile, fetchSettings, putSetting, type Settings } from "./api";
 import { profileHref, screenFacts } from "./ProfileList";
@@ -25,9 +26,18 @@ async function load(id: string, signal: AbortSignal): Promise<State> {
   }
 }
 
+function without(record: Readonly<Record<string, string>>, key: string): Record<string, string> {
+  const rest = { ...record };
+  delete rest[key];
+  return rest;
+}
+
 /** One profile's screen, for the profile with this id, with its settings; mount it keyed by the id. */
 export function ProfileScreen({ id, view = "form" }: { id: string; view?: ProfileView }) {
   const [state, setState] = useState<State>({ status: "loading" });
+  const [pending, setPending] = useState<ReadonlySet<string>>(() => new Set());
+  const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
+  const writes = useRef<Promise<unknown>>(Promise.resolve());
 
   useEffect(() => {
     const controller = new AbortController();
@@ -41,14 +51,33 @@ export function ProfileScreen({ id, view = "form" }: { id: string; view?: Profil
     setState((current) => (current.status === "loaded" ? { ...current, settings } : current));
   }
 
-  /** One PUT; its answer becomes the settings shown. A failure reads the file again, then rejects. */
-  async function write(key: string, value: unknown): Promise<void> {
-    try {
-      showSettings(await putSetting(id, key, value));
-    } catch (err) {
-      fetchSettings(id).then(showSettings, () => undefined);
-      throw err;
-    }
+  /**
+   * One PUT, sent once every earlier write and its refetch has settled, so answers land in order; its
+   * answer becomes the settings shown. A failure puts its line beside the key and reads the file again.
+   * The key stays in flight until then; resolves true once written, false when refused.
+   */
+  function write(entry: Key, value: unknown): Promise<boolean> {
+    setPending((keys) => new Set(keys).add(entry.id));
+    setErrors((all) => without(all, entry.id));
+    const written = writes.current.then(async () => {
+      try {
+        showSettings(await putSetting(id, entry.id, value));
+        return true;
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : String(err);
+        setErrors((all) => ({ ...all, [entry.id]: `Couldn't save ${entry.label}: ${reason}.` }));
+        await fetchSettings(id).then(showSettings, () => undefined);
+        return false;
+      } finally {
+        setPending((keys) => {
+          const next = new Set(keys);
+          next.delete(entry.id);
+          return next;
+        });
+      }
+    });
+    writes.current = written.catch(() => undefined);
+    return written;
   }
 
   return (
@@ -72,7 +101,13 @@ export function ProfileScreen({ id, view = "form" }: { id: string; view?: Profil
           <Profile profile={state.profile} settings={state.settings} />
           <section className="settings" aria-label="Settings">
             {view === "form" ? (
-              <SettingsForm profileId={id} settings={state.settings} onWrite={write} />
+              <SettingsForm
+                profileId={id}
+                settings={state.settings}
+                pending={pending}
+                errors={errors}
+                onWrite={write}
+              />
             ) : (
               <EditorSlot id={id} title={view === "layout" ? "Layout" : "Launcher"} />
             )}

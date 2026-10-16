@@ -1,4 +1,4 @@
-import { useId, useState, type ComponentType } from "react";
+import { useId, type ComponentType } from "react";
 import { schema as studioSchema, type Key, type Schema } from "../../schema";
 import type { Settings } from "../api";
 import { profileHref } from "../ProfileList";
@@ -39,12 +39,6 @@ function capitalised(id: string): string {
   return id.charAt(0).toUpperCase() + id.slice(1);
 }
 
-function without(record: Readonly<Record<string, string>>, key: string): Record<string, string> {
-  const rest = { ...record };
-  delete rest[key];
-  return rest;
-}
-
 export interface SettingsFormProps {
   /** The schema the form is generated from; a test hands its own. */
   schema?: Schema;
@@ -52,41 +46,31 @@ export interface SettingsFormProps {
   profileId: string;
   /** The profile's settings file as the API answered it. */
   settings: Settings;
-  /** Writes one key; rejects with the reason when the write fails. */
-  onWrite: (key: string, value: unknown) => Promise<void>;
+  /** The keys whose writes are in flight; their controls are disabled. */
+  pending: ReadonlySet<string>;
+  /** The failure line of each key's last write, beside its control. */
+  errors: Readonly<Record<string, string>>;
+  /** Writes one key; resolves true once written, false when refused. */
+  onWrite: (entry: Key, value: unknown) => Promise<boolean>;
 }
 
 /**
  * One control per schema key, in schema order under its group's heading, with the file's reports: a
  * read-only or unreadable file above the form, refused stored values beside their controls, keys
- * outside the schema after it. A key's control is disabled while its write runs.
+ * outside the schema after it. A key's control is disabled while its write is pending.
  */
-export function SettingsForm({ schema = studioSchema, profileId, settings, onWrite }: SettingsFormProps) {
-  const [pending, setPending] = useState<ReadonlySet<string>>(() => new Set());
-  const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
+export function SettingsForm({
+  schema = studioSchema,
+  profileId,
+  settings,
+  pending,
+  errors,
+  onWrite,
+}: SettingsFormProps) {
   const unknownId = useId();
   const writable = settings.state === "writable";
   const invalid = new Set(settings.invalid.map(({ key }) => key));
   const href = profileHref(profileId);
-
-  async function write(entry: Key, value: unknown): Promise<boolean> {
-    setPending((keys) => new Set(keys).add(entry.id));
-    setErrors((all) => without(all, entry.id));
-    try {
-      await onWrite(entry.id, value);
-      return true;
-    } catch (err) {
-      const reason = err instanceof Error ? err.message : String(err);
-      setErrors((all) => ({ ...all, [entry.id]: `Couldn't save ${entry.label}: ${reason}.` }));
-      return false;
-    } finally {
-      setPending((keys) => {
-        const next = new Set(keys);
-        next.delete(entry.id);
-        return next;
-      });
-    }
-  }
 
   function control(entry: Key) {
     const Control = controlFor(entry.type);
@@ -114,7 +98,7 @@ export function SettingsForm({ schema = studioSchema, profileId, settings, onWri
         entry={entry}
         value={entry.id in settings.values ? settings.values[entry.id] : entry.default}
         disabled={!writable || pending.has(entry.id)}
-        write={(value) => write(entry, value)}
+        write={(value) => onWrite(entry, value)}
         profileHref={href}
         notes={notes}
       />

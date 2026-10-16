@@ -113,9 +113,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** The form's props beside its settings when nothing is being written. */
+const idle = { pending: new Set<string>(), errors: {}, onWrite: () => Promise.resolve(true) };
+
 describe("the form's controls", () => {
   it("has exactly one control per schema key, in schema order, under the groups' headings", () => {
-    render(<SettingsForm profileId="colorsoft" settings={settings()} onWrite={() => Promise.resolve()} />);
+    render(<SettingsForm profileId="colorsoft" settings={settings()} {...idle} />);
 
     expect(keyIds()).toEqual(schema.keys.map((key) => key.id));
     expect(keyIds()[0]).toBe("look");
@@ -137,7 +140,7 @@ describe("the form's controls", () => {
     const odd = { id: "x", label: "X", group: "appearance", type: "widgetty", default: 1 } as unknown as Key;
     const withOdd: Schema = { ...schema, keys: [schema.keys[0]!, odd, ...schema.keys.slice(1)] };
 
-    render(<SettingsForm schema={withOdd} profileId="colorsoft" settings={settings()} onWrite={() => Promise.resolve()} />);
+    render(<SettingsForm schema={withOdd} profileId="colorsoft" settings={settings()} {...idle} />);
 
     expect(screen.getByText("No control for widgetty (x).")).toBeInTheDocument();
     expect(keyIds()).toEqual(schema.keys.map((key) => key.id));
@@ -148,7 +151,7 @@ describe("the form's controls", () => {
       <SettingsForm
         profileId="colorsoft"
         settings={settings({}, { text_size: "large" })}
-        onWrite={() => Promise.resolve()}
+        {...idle}
       />,
     );
 
@@ -159,7 +162,7 @@ describe("the form's controls", () => {
   });
 
   it("shows quote.source's one choice as one button, already selected", () => {
-    render(<SettingsForm profileId="colorsoft" settings={settings()} onWrite={() => Promise.resolve()} />);
+    render(<SettingsForm profileId="colorsoft" settings={settings()} {...idle} />);
 
     const buttons = within(control("quote.source")).getAllByRole("button");
     expect(buttons).toHaveLength(1);
@@ -172,7 +175,7 @@ describe("the form's controls", () => {
     delete answer.values.look;
     delete answer.values["featured.pinned"];
 
-    render(<SettingsForm profileId="colorsoft" settings={answer} onWrite={() => Promise.resolve()} />);
+    render(<SettingsForm profileId="colorsoft" settings={answer} {...idle} />);
 
     expect(within(control("look")).getByRole("button", { name: "Diner" })).toHaveAttribute("aria-pressed", "true");
     expect(within(control("featured.pinned")).getByRole("button", { name: "Most recent book" })).toHaveAttribute(
@@ -187,7 +190,7 @@ describe("the form's controls", () => {
       <SettingsForm
         profileId="colorsoft"
         settings={settings({}, { "weather.location": seattle })}
-        onWrite={() => Promise.resolve()}
+        {...idle}
       />,
     );
 
@@ -203,7 +206,7 @@ describe("the form's controls", () => {
       <SettingsForm
         profileId="colorsoft"
         settings={settings({}, { "layout.rows": rows, "launcher.entries": entries })}
-        onWrite={() => Promise.resolve()}
+        {...idle}
       />,
     );
 
@@ -365,6 +368,51 @@ describe("writing a key", () => {
     expect(look.getByRole("button", { name: "Editorial" })).toHaveAttribute("aria-pressed", "true");
     expect(look.getByRole("button", { name: "Editorial" })).toBeEnabled();
     expect(gets(SETTINGS_URL)).toBe(1);
+  });
+
+  it("keeps a write in flight across an editor, and its failure line once answered", async () => {
+    const answer = deferred<Response>();
+    await open(settings(), { "PUT /api/profiles/colorsoft/settings/look": () => answer.promise });
+
+    fireEvent.click(within(control("look")).getByRole("button", { name: "Editorial" }));
+    await waitFor(() => expect(puts()).toHaveLength(1));
+    fireEvent.click(screen.getByRole("link", { name: /Layout ·/ }));
+    fireEvent.click(await screen.findByRole("link", { name: "Done" }));
+
+    const look = within(await waitFor(() => control("look")));
+    expect(look.getByRole("button", { name: "Diner" })).toBeDisabled();
+    expect(look.getByRole("button", { name: "Editorial" })).toBeDisabled();
+
+    answer.resolve(json({ error: '"editorial" is not allowed for look' }, 400));
+
+    expect(await look.findByText(`Couldn't save Look: "editorial" is not allowed for look.`)).toBeInTheDocument();
+    await waitFor(() => expect(look.getByRole("button", { name: "Editorial" })).toBeEnabled());
+  });
+
+  it("sends a second key's write only once the first is answered, so answers land in order", async () => {
+    const first = deferred<Response>();
+    await open(settings(), {
+      "PUT /api/profiles/colorsoft/settings/look": () => first.promise,
+      "PUT /api/profiles/colorsoft/settings/text_size": () =>
+        json(settings({}, { look: "editorial", text_size: "small" })),
+    });
+    const look = within(control("look"));
+    const size = within(control("text_size"));
+
+    fireEvent.click(look.getByRole("button", { name: "Editorial" }));
+    fireEvent.click(size.getByRole("button", { name: "Small" }));
+    await waitFor(() => expect(puts()).toHaveLength(1));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(puts()).toEqual([["/api/profiles/colorsoft/settings/look", { value: "editorial" }]]);
+    expect(size.getByRole("button", { name: "Large" })).toBeDisabled();
+
+    first.resolve(json(settings({}, { look: "editorial" })));
+
+    await waitFor(() => expect(puts()).toHaveLength(2));
+    expect(puts()[1]).toEqual(["/api/profiles/colorsoft/settings/text_size", { value: "small" }]);
+    await waitFor(() => expect(size.getByRole("button", { name: "Small" })).toHaveAttribute("aria-pressed", "true"));
+    expect(look.getByRole("button", { name: "Editorial" })).toHaveAttribute("aria-pressed", "true");
+    expect(size.getByRole("button", { name: "Large" })).toBeEnabled();
   });
 });
 
