@@ -323,6 +323,12 @@ return {
         editor_note = {
             face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0.3, color = "muted",
         },
+        -- A nav tab's label (NavBar.dc.html:73); the board's weight 500 is the strong face.
+        nav_label = { face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "text" },
+        -- The active tab's label (NavBar.dc.html:69); the board's weight 600 is the strong face's 500.
+        nav_label_active = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "ink",
+        },
     },
 
     -- The launcher: a grid of text rows, each under a hairline in tile.rule_color.
@@ -393,5 +399,24 @@ return {
         control_size = 30, -- LauncherManage.dc.html:35
         kind_gap = 8, -- LauncherManage.dc.html:97
         kind_columns = 2, -- LauncherManage.dc.html:97
+    },
+    -- The nav bar: a hairline over paper, five tabs of an icon over an uppercase label, and a 3 px
+    -- ink rule over the active tab, laid from the bar's top over the edge (NavBar.dc.html:68-87).
+    nav = {
+        fill_color = "paper", -- NavBar.dc.html:68
+        edge_width = 1, -- NavBar.dc.html:68
+        edge_color = "ink", -- NavBar.dc.html:68
+        padding_x = 24, -- the bar's side padding (NavBar.dc.html:68)
+        padding_top = 16, -- a tab's (NavBar.dc.html:69)
+        padding_bottom = 18, -- NavBar.dc.html:69
+        icon_size = 26, -- NavBar.dc.html:70
+        icon_gap = 7, -- the icon to the label (NavBar.dc.html:69)
+        icon_color = "text", -- NavBar.dc.html:73
+        active_icon_color = "ink", -- the page's ink, inherited (NavBar.dc.html:14, :17)
+        active_rule_width = 3, -- NavBar.dc.html:69
+        active_rule_color = "ink", -- NavBar.dc.html:69
+        active_fill_color = false, -- the active tab has no fill (NavBar.dc.html:69)
+        divider_width = 0, -- no dividers between tabs (NavBar.dc.html:69-87)
+        divider_color = false,
     },
 }

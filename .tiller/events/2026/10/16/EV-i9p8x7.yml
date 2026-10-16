@@ -1,0 +1,13 @@
+id: EV-i9p8x7
+type: check.task
+at: 2026-10-16T21:20:05.866649Z
+contributor: allen
+command: check task T-3648b1
+targets:
+    - T-3648b1
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/bar/task.yml

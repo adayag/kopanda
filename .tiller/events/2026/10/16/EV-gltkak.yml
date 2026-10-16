@@ -1,0 +1,16 @@
+id: EV-gltkak
+type: submit.task
+at: 2026-10-16T21:20:12.627573Z
+contributor: allen
+command: submit task T-3648b1
+targets:
+    - T-3648b1
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/nav-bar/nav-bar/bar
+        head: git:4328d4f
+    status: in_review
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/bar/task.yml

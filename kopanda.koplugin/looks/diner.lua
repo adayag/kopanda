@@ -342,6 +342,13 @@ return {
         editor_note = {
             face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0.3, color = "muted",
         },
+        -- A nav tab's label (NavBarC.dc.html:75, weight 700).
+        nav_label = { face = "strong", size = 12, uppercase = true, tracking = 0.04, line_height = 0, color = "ink" },
+        -- The active tab's label on its mustard block (NavBarC.dc.html:71, weight 800), in the dark
+        -- text the look puts on mustard, so the night block keeps dark text.
+        nav_label_active = {
+            face = "display", size = 12, uppercase = true, tracking = 0.04, line_height = 0, color = "on_accent",
+        },
     },
 
     -- The launcher: a grid of outlined tiles with the tile shadow, the first three on accents.
@@ -414,5 +421,24 @@ return {
         control_size = 30, -- no board: Editorial's
         kind_gap = 8, -- no board: Editorial's
         kind_columns = 2, -- no board: Editorial's
+    },
+    -- The nav bar: a teal band under a 4 px ink edge, five tabs of an icon over an uppercase label
+    -- split by outline dividers, and the active tab a mustard block (NavBarC.dc.html:70-89).
+    nav = {
+        fill_color = "band", -- NavBarC.dc.html:70
+        edge_width = 4, -- NavBarC.dc.html:70, as the header's edge (home.header.edge_width)
+        edge_color = "ink", -- NavBarC.dc.html:70
+        padding_x = 0, -- the bar is unpadded at its sides (NavBarC.dc.html:70)
+        padding_top = 14, -- a tab's (NavBarC.dc.html:71)
+        padding_bottom = 16, -- NavBarC.dc.html:71
+        icon_size = 28, -- NavBarC.dc.html:72
+        icon_gap = 6, -- the icon to the label (NavBarC.dc.html:71)
+        icon_color = "ink", -- the page's ink, inherited (NavBarC.dc.html:14, :17)
+        active_icon_color = "on_accent", -- the dark text on the mustard block, ink by day (NavBarC.dc.html:71)
+        active_rule_width = 0, -- the active tab has no rule (NavBarC.dc.html:71)
+        active_rule_color = false,
+        active_fill_color = "mustard", -- NavBarC.dc.html:71
+        divider_width = 3, -- NavBarC.dc.html:71, :75, :79, :83; none on the last tab (:87)
+        divider_color = "outline", -- the doc: strokes are ink (NavBarC.dc.html:71)
     },
 }
