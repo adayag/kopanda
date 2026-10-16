@@ -58,14 +58,22 @@ local ok, err = pcall(function()
     if target == "launcher" then
         -- settings/kopanda/settings.lua as kopanda.koplugin/settings.lua writes it, as the home
         -- fixture writes it (2-scenario-home-fixture.lua:56-79), its other keys kept.
-        local kopanda_dir = DataStorage:getSettingsDir() .. "/kopanda"
-        if lfs.attributes(kopanda_dir, "mode") ~= "directory" then
-            assert(lfs.mkdir(kopanda_dir))
+        local store_ok, store_err = pcall(function()
+            local kopanda_dir = DataStorage:getSettingsDir() .. "/kopanda"
+            if lfs.attributes(kopanda_dir, "mode") ~= "directory" then
+                assert(lfs.mkdir(kopanda_dir))
+            end
+            LuaSettings:open(kopanda_dir .. "/settings.lua")
+                :saveSetting("launcher.entries", LAUNCHER)
+                :saveSetting("schema_version", 1)
+                :flush()
+        end)
+        if not store_ok then
+            UIManager:nextTick(function()
+                report_error("storing launcher.entries failed: " .. tostring(store_err))
+            end)
+            return
         end
-        LuaSettings:open(kopanda_dir .. "/settings.lua")
-            :saveSetting("launcher.entries", LAUNCHER)
-            :saveSetting("schema_version", 1)
-            :flush()
     end
 
     local open = function()

@@ -145,7 +145,7 @@ end
 -- with no DPI override, so scaleBySize is ceil(px × 1264 / 600) (ffi/framebuffer.lua:414-426)
 -- and Font:getFace scales by it (frontend/ui/font.lua:276). TextWidget's vertical padding is
 -- Size.padding.small, scaled once when the class loads (frontend/ui/widget/textwidget.lua:34,
--- frontend/ui/size.lua:43), so it is set to its Colorsoft value too. The unit screen's own
+-- frontend/ui/size.lua:52), so it is set to its Colorsoft value too. The unit screen's own
 -- values come back afterwards, even when fn raises, so nothing built under fn should be painted
 -- into the unit screen's 600×800 buffer before the caller is done with it.
 function M.at_colorsoft(fn)
