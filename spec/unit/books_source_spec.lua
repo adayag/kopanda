@@ -230,4 +230,79 @@ describe("Books with a source", function()
             assert.is_true(was_logged("progress broke on purpose"))
         end)
     end)
+
+    describe("covers", function()
+        local UIManager = require("ui/uimanager")
+
+        -- A bookinfomanager stub that records every call, with a row for no file.
+        local function recording_manager()
+            local bim = { calls = {} }
+            function bim:getBookInfo(file, get_cover)
+                bim.calls[#bim.calls + 1] = { "getBookInfo", file, get_cover }
+            end
+            function bim:extractInBackground(files)
+                bim.calls[#bim.calls + 1] = { "extractInBackground", files }
+                return true
+            end
+            function bim.isExtractingInBackground()
+                return false
+            end
+            function bim.isCachedCoverInvalid()
+                return true
+            end
+            return bim
+        end
+
+        it("draws a source's book with the bitmap its cover gives for the box", function()
+            local bb = { free = function() end }
+            local asked = {}
+            Books.add_source({
+                name = "remote",
+                books = function() return { DUNE } end,
+                cover = function(record, w, h)
+                    asked[#asked + 1] = { record.id, w, h }
+                    return bb
+                end,
+            })
+            local BookCovers = package.loaded["book_covers"]
+            assert.equals(bb, BookCovers.read(Books.get("remote:dune"), 150, 225))
+            assert.same({ { "remote:dune", 150, 225 } }, asked)
+        end)
+
+        it("gives nil for a source with no cover", function()
+            Books.add_source({ name = "remote", books = function() return { DUNE } end })
+            local BookCovers = package.loaded["book_covers"]
+            assert.is_nil(BookCovers.read(Books.get("remote:dune"), 150, 225))
+        end)
+
+        it("gives nil, logged, for a source whose cover raises", function()
+            remote({ DUNE }).cover = function()
+                error("cover broke on purpose")
+            end
+            local BookCovers = package.loaded["book_covers"]
+            assert.is_nil(BookCovers.read(Books.get("remote:dune"), 150, 225))
+            assert.is_true(was_logged("cover broke on purpose"))
+        end)
+
+        it("never asks CoverBrowser about a source's book, read or requested", function()
+            local bim = recording_manager()
+            package.loaded["bookinfomanager"] = bim
+            local schedule_in = UIManager.scheduleIn
+            local scheduled = 0
+            UIManager.scheduleIn = function()
+                scheduled = scheduled + 1
+            end
+            finally(function()
+                UIManager.scheduleIn = schedule_in
+            end)
+            remote({ DUNE, EMMA })
+            local BookCovers = package.loaded["book_covers"]
+            BookCovers.reset()
+            BookCovers.read(Books.get("remote:dune"), 150, 225)
+            BookCovers.request({ Books.get("remote:dune"), Books.get("remote:emma") }, { max_cover_w = 150,
+                max_cover_h = 225 }, function() end, function() return true end)
+            assert.same({}, bim.calls)
+            assert.equals(0, scheduled)
+        end)
+    end)
 end)

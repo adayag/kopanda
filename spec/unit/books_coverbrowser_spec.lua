@@ -122,4 +122,21 @@ describe("Books against the real CoverBrowser", function()
         assert.equals("frankenstein", record.title)
         assert.is_nil(record.series)
     end)
+
+    describe("covers", function()
+        it("reads each extracted cover no larger than its box, and none for a box twice as big", function()
+            local BookCovers = package.loaded["book_covers"]
+            for _, entry in ipairs(manifest) do
+                bim:extractBookInfo(fixture(entry.file), { max_cover_w = 150, max_cover_h = 225 })
+            end
+            for _, record in ipairs(Books.all()) do
+                local bb = BookCovers.read(record, 150, 225)
+                assert.is_not_nil(bb, record.path)
+                assert.truthy(bb:getWidth() <= 150 and bb:getHeight() <= 225, record.path)
+                assert.truthy(bb:getWidth() == 150 or bb:getHeight() == 225, record.path)
+                bb:free()
+                assert.is_nil(BookCovers.read(record, 300, 450), record.path)
+            end
+        end)
+    end)
 end)

@@ -874,7 +874,8 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
 ### The featured cover: CoverBrowser's `bookinfomanager`, `ImageWidget` and the bounded check
 
 - `bookinfomanager` (`plugins/coverbrowser.koplugin/bookinfomanager.lua`), reached by
-  `pcall(require, "bookinfomanager")` in `featured_cover.lua`, at call time. The plugin's folder
+  `pcall(require, "bookinfomanager")` in `book_covers.lua`, the cover reader and the one asker,
+  at call time; `featured_cover.lua` reads and asks through it. The plugin's folder
   joins `package.path` only for an enabled plugin (`frontend/pluginloader.lua:283-287`); a disabled
   one loads only its `_meta.lua` (`:208-216`, `plugins_disabled` read at `:175`), so a failed
   require means CoverBrowser is off and the placeholder is drawn. CoverBrowser is built in and on
@@ -885,9 +886,12 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   never-extract row with `ignore_cover` for a file with no document provider (`:333-357`);
   otherwise the `BOOKINFO_COLS_SET` columns (`:77-103`), flags `'Y'` or nil, `unsupported` a
   reason string (`:38`), `cover_w` and `cover_h` read even without `get_cover` (`:373-378`), and
-  with it a fresh decompressed `cover_bb` when `has_cover` is set (`:380-396`). The build reads
-  with `true`; the extraction test reads with `false`; each check reads with `false` first, and
-  the last check with `true`.
+  with it a fresh decompressed `cover_bb` when `has_cover` is set (`:380-396`). `BookCovers.read`
+  reads with `true`; the extraction test reads with `false`; each check reads each pending file
+  with `false`, and the last check each still pending with `true`.
+- The cache `book_covers.lua` relies on: one row per file, keyed by directory and file name
+  (`bookinfomanager.lua:68`), its cover scaled down at extraction to the box asked for when bigger
+  (`:533-540`), so a file keeps one thumbnail and smaller boxes fit it down.
 - A row with `ignore_cover` draws the placeholder even with a cached cover, its bitmap freed, as
   CoverBrowser draws no cover for it (`plugins/coverbrowser.koplugin/mosaicmenu.lua:508`,
   `listmenu.lua:272`).
@@ -897,17 +901,21 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   as `mosaicmenu.lua:478-479` does.
 - `extractInBackground(files)` (`:689-745`): terminates earlier jobs, CoverBrowser's own included
   (`:695`), closes the database connection (`:699`), forks the extraction (`:721`) and returns
-  `true` (`:744`), or `false` when the fork fails (`:724`). Asked at most once per file per
-  process, only from `FeaturedCover.after_show`, never from `build` or `paintTo`.
+  `true` (`:744`), or `false` when the fork fails (`:724`). One subprocess walks the batch's
+  files in order, extracting each (`:702-711`). Asked only from `BookCovers.request`, at most once
+  per file per process unless a later request replaced the one that asked for it (its
+  extraction terminated, `:695`), with every wanted file of the batch in one call; the featured
+  cover asks through `FeaturedCover.after_show`, never from `build` or `paintTo`.
 - `isExtractingInBackground()` (`:685-687`), the only completion signal, counts CoverBrowser's own
   jobs too. CoverBrowser polls it once a second (`plugins/coverbrowser.koplugin/covermenu.lua:164-175`);
-  the featured cover does the same through `UIManager:scheduleIn` (`frontend/ui/uimanager.lua:413`)
-  for at most 30 checks, and `FeaturedCover.cancel` drops it with `UIManager:unschedule` (`:518`).
+  `book_covers.lua` does the same through `UIManager:scheduleIn` (`frontend/ui/uimanager.lua:413`)
+  for at most 30 checks, and `BookCovers.cancel` (through `FeaturedCover.cancel`) drops it with
+  `UIManager:unschedule` (`:518`).
 - It turns false only when CoverBrowser's collector reaps the extraction's pid, every
   `subprocesses_collect_interval` = 10 s (`bookinfomanager.lua:139`; `collectSubprocesses`
   `:627-650`, first scheduled by `extractInBackground` at `:735-742`), so a cover written at 2 s
-  would wait for it. Each check therefore reads the row first and stops once it holds a cover
-  that fits.
+  would wait for it. Each check therefore reads the pending rows first, and stops once none is
+  pending.
 - `ui/widget/imagewidget`: `frontend/ui/widget/imagewidget.lua:62` (`image_disposable` defaults
   to true, so the widget frees `cover_bb` in `free`, `:600-606`), `:86-89` and `:320-328`
   (`scale_factor = 0` fits the image in `width` by `height`, keeping its aspect).
