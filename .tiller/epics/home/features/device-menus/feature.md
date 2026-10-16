@@ -244,8 +244,9 @@ Type parts, each `{ color, face, line_height, size, tracking, uppercase }` (`loo
 | `editor_kind` | `text` 11, uppercase, 0.1, `muted` (LauncherManage:33) | `strong` 11, uppercase, 0.08, `muted` |
 | `editor_note` | `text` 12, `muted` (LauncherManage:103) | `text` 12, `muted` |
 
-Cards cast the look's existing `shadow.tile` (`looks/diner.lua:83`, 4 px in `shadow`; `looks/editorial.lua:83`,
-none), so no shadow token is added. The boards' weight 600 is each look's `strong` face, as `featured_button` takes it
+Cards cast the editor's own `card_shadow`, `{ x, y, color }` as `shadow.tile` is: Editorial `false` (the boards
+draw none), Diner 2 px in `shadow`, half the home tiles' 4 px (`looks/diner.lua:87`), so the screens read lighter
+than the home (owner decision, 2026-10-16). The boards' weight 600 is each look's `strong` face, as `featured_button` takes it
 (`looks/editorial.lua` `type.featured_button`). The night and grey palettes need no new role: every token
 names an existing one.
 
@@ -467,7 +468,7 @@ For the owner, each a default the lead chose that you can overturn at approval:
 - **Width and Remove column** are on no board. Without them a share can't change on the device and a
   column can only go with its row. They appear on rows of two or more columns.
 - **Editorial's selected card** is `hairline_light` (`#e2dfd4`); the board's `#e9e6dc` is in no palette.
-- **Diner's two screens** have no board. They take Diner's band header, 3 px outlines, tile shadows and a
+- **Diner's two screens** have no board. They take Diner's band header, 3 px outlines, 2 px card shadows and a
   mustard selected card.
 - **Arrows are Lucide chevrons**, not the board's filled triangles, which no face has.
 - **After a location or units change** a connected home fetches the weather before its one refresh, so
