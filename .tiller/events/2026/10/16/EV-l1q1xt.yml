@@ -1,0 +1,14 @@
+id: EV-l1q1xt
+type: add.tweak
+at: 2026-10-16T00:18:04.598606Z
+contributor: allen
+command: add tweak main-requires-every-module
+targets:
+    - TW-npuwi0
+after:
+    attached_to: F-3ct1xn
+    key: tweaks/main-requires-every-module
+    status: proposed
+files:
+    - path: .tiller/tweaks/main-requires-every-module/tweak.md
+    - path: .tiller/tweaks/main-requires-every-module/tweak.yml

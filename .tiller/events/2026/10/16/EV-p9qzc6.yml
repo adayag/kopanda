@@ -1,0 +1,14 @@
+id: EV-p9qzc6
+type: add.tweak
+at: 2026-10-16T00:18:04.509866Z
+contributor: allen
+command: add tweak hold-routing-spec
+targets:
+    - TW-wzgn5m
+after:
+    attached_to: F-3ct1xn
+    key: tweaks/hold-routing-spec
+    status: proposed
+files:
+    - path: .tiller/tweaks/hold-routing-spec/tweak.md
+    - path: .tiller/tweaks/hold-routing-spec/tweak.yml

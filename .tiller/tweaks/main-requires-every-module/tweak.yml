@@ -1,0 +1,8 @@
+id: TW-npuwi0
+key: tweaks/main-requires-every-module
+title: A spec that main.lua requires every plugin module
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: F-3ct1xn

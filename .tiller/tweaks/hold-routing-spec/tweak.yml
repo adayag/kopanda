@@ -1,0 +1,8 @@
+id: TW-wzgn5m
+key: tweaks/hold-routing-spec
+title: Move the hold cases out of gesture_routing_spec.lua
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: F-3ct1xn

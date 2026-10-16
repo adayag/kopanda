@@ -1,0 +1,14 @@
+id: EV-mws0no
+type: add.tweak
+at: 2026-10-16T00:18:04.681265Z
+contributor: allen
+command: add tweak weather-hyphen
+targets:
+    - TW-d7y25x
+after:
+    attached_to: F-3ct1xn
+    key: tweaks/weather-hyphen
+    status: proposed
+files:
+    - path: .tiller/tweaks/weather-hyphen/tweak.md
+    - path: .tiller/tweaks/weather-hyphen/tweak.yml
