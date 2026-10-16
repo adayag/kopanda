@@ -1,0 +1,13 @@
+id: EV-dn90ca
+type: claim.task
+at: 2026-10-16T17:51:10.860113Z
+contributor: allen
+command: claim task T-jslnv7
+targets:
+    - T-jslnv7
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/layout-fit/task.yml

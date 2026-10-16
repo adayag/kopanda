@@ -1,9 +1,10 @@
 id: T-jslnv7
 key: studio/settings-form/layout-fit
 title: bin/layout-fit runs the plugin's fit rule for a profile
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,4 @@ accepted_against:
         kind: git_commit
         value: git:d92a0a4
         observed_at: 2026-10-16T17:50:20.378768Z
+branch: tiller/studio/settings-form/layout-fit
