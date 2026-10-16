@@ -184,6 +184,18 @@ describe("fonts", function()
         assert.equals(9, named)
     end)
 
+    -- The look faces have no U+2011 (non-breaking hyphen), so KOReader would draw it from a
+    -- fallback face; plugin strings write a plain hyphen instead.
+    it("finds no U+2011 in any plugin source, raw or escaped", function()
+        local files = harness.plugin_files()
+        assert.truthy(#files > 0)
+        for _, file in ipairs(files) do
+            local source = read(harness.plugin_dir .. "/" .. file)
+            assert.is_nil(source:find("\226\128\145", 1, true), file .. " has a raw U+2011")
+            assert.is_nil(source:lower():find("\\u{2011}", 1, true), file .. " has an escaped U+2011")
+        end
+    end)
+
     it("returns nil for a missing file without raising", function()
         local ok, face = pcall(Fonts.face, "fonts/nope/missing.ttf", 20)
         assert.is_true(ok, tostring(face))
