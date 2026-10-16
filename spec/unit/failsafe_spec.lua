@@ -726,6 +726,36 @@ describe("KoPanda failing safe", function()
             file_manager_usable()
             assert.is_true(logged_error("kopanda-test: tools home failed"))
         end)
+
+        it("gives an empty Settings submenu, logged, when building its rows throws", function()
+            -- A schema key whose fields raise when read, so the row builder throws inside items.
+            local keys = require("schema").keys
+            keys[#keys + 1] = setmetatable({}, {
+                __index = function()
+                    error("kopanda-test: settings rows failed")
+                end,
+            })
+            finally(function()
+                keys[#keys] = nil
+            end)
+            local fm = menu_without_home()
+            local tools
+            for _, tab in ipairs(fm.menu.tab_item_table) do
+                if tab.id == "tools" then
+                    tools = tab
+                end
+            end
+            local kopanda
+            for _, item in ipairs(tools) do
+                if item.id == "kopanda" then
+                    kopanda = item
+                end
+            end
+            assert.same({}, kopanda.sub_item_table[2].sub_item_table_func())
+            assert.is_true(logged_error("kopanda-test: settings rows failed"))
+            fm.menu:onCloseFileManagerMenu()
+            file_manager_usable()
+        end)
     end)
 
     describe("the place search", function()

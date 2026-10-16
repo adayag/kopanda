@@ -336,6 +336,7 @@ describe("LauncherEntries", function()
             end)
             LauncherEntries.run({ kind = "kopanda", target = "settings" }, {})
             assert.stub(open).was.called(1)
+            assert.stub(open).was.called_with()
         end)
     end)
 
