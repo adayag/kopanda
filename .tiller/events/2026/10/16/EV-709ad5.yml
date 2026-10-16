@@ -1,0 +1,13 @@
+id: EV-709ad5
+type: configure.feature
+at: 2026-10-16T19:39:31.512157Z
+contributor: allen
+command: configure feature studio/device-push --review-grain feature
+targets:
+    - F-9okxa7
+before:
+    review_grain: ""
+after:
+    review_grain: feature
+files:
+    - path: .tiller/epics/studio/features/device-push/feature.yml
