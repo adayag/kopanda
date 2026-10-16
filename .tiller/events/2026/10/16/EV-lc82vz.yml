@@ -1,0 +1,13 @@
+id: EV-lc82vz
+type: check.task
+at: 2026-10-16T17:22:00.547784Z
+contributor: allen
+command: check task T-q590ja
+targets:
+    - T-q590ja
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/check-stage/task.yml

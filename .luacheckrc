@@ -11,6 +11,8 @@ globals = {
 
 exclude_files = {
     "spec/fixtures/**",
+    "studio/node_modules/**",
+    "studio/dist/**",
 }
 
 -- don't balk on busted stuff in spec

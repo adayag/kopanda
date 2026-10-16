@@ -1,9 +1,10 @@
 id: T-q590ja
 key: studio/studio-shell/check-stage
 title: bin/check gains the studio's typecheck, lint and tests
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-6yxswg
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:25f054c
         observed_at: 2026-10-16T17:01:28.892443Z
+branch: tiller/studio/studio-shell/check-stage
+review_ref:
+    branch: tiller/studio/studio-shell/check-stage
+    head:
+        kind: git_commit
+        value: git:e8e13ed
+        observed_at: 2026-10-16T17:22:00.811415Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T17:20:38.563666Z
+        against:
+            kind: git_commit
+            value: git:b050855
+            observed_at: 2026-10-16T17:20:38.563659Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-b050855-out-3ede4f8424662c97f83c8e9b2bc76a96744f34b92c5063aa9ca4187e5ba77f03.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T17:20:38.563666Z
+        against:
+            kind: git_commit
+            value: git:b050855
+            observed_at: 2026-10-16T17:20:38.563659Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-b050855-out-2dc0597b0aec2ac5cebaf33ce5c4850a3d19664adfc08d33b6b4a04343272fda.txt
