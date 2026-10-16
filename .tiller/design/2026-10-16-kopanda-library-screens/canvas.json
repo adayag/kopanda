@@ -1,0 +1,43 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-16T12:00:00Z" },
+  "title": "KoPanda Library",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 632, "h": 840, "title": "C · Library grid" },
+    "GridA.dc.html": { "x": 712, "y": 0, "w": 632, "h": 840, "title": "A · Library grid" },
+    "SortC.dc.html": { "x": 1424, "y": 0, "w": 632, "h": 840, "title": "C · Tap the sort picker" },
+    "HoldBookC.dc.html": { "x": 0, "y": 1200, "w": 632, "h": 840, "title": "C · Hold on a book" },
+    "HoldFolderC.dc.html": { "x": 712, "y": 1200, "w": 632, "h": 840, "title": "C · Hold on a folder tile" },
+    "HoldEmptyC.dc.html": { "x": 1424, "y": 1200, "w": 632, "h": 840, "title": "C · Hold on empty space" },
+    "HoldBookA.dc.html": { "x": 2136, "y": 1200, "w": 632, "h": 840, "title": "A · Hold on a book" },
+    "SeriesC.dc.html": { "x": 0, "y": 2400, "w": 632, "h": 840, "title": "C · Series" },
+    "SeriesBooksC.dc.html": { "x": 712, "y": 2400, "w": 632, "h": 840, "title": "C · One series" },
+    "AuthorsC.dc.html": { "x": 1424, "y": 2400, "w": 632, "h": 840, "title": "C · Authors" },
+    "AuthorBooksA.dc.html": { "x": 2136, "y": 2400, "w": 632, "h": 840, "title": "A · One author" }
+  },
+  "order": [
+    "Main.dc.html",
+    "GridA.dc.html",
+    "SortC.dc.html",
+    "HoldBookC.dc.html",
+    "HoldFolderC.dc.html",
+    "HoldEmptyC.dc.html",
+    "HoldBookA.dc.html",
+    "SeriesC.dc.html",
+    "SeriesBooksC.dc.html",
+    "AuthorsC.dc.html",
+    "AuthorBooksA.dc.html"
+  ],
+  "notes": {
+    "row1": { "x": 0, "y": -300, "text": "Cover grid: a folder tile, a book not on the device, pages by rows", "kind": "title1", "maxW": 2056 },
+    "row2": { "x": 0, "y": 900, "text": "Hold opens the menu for what you held", "kind": "title1", "maxW": 2768 },
+    "row3": { "x": 0, "y": 2100, "text": "Series and Authors replace the placeholders", "kind": "title1", "maxW": 2768 },
+    "scale": { "x": 2136, "y": 0, "w": 300, "text": "Every board is the Kindle Colorsoft at half size (1264×1680 on the device). C is Diner, the default look; A is Editorial. Covers are typographic placeholders; the device draws real covers.", "fill": "blue" },
+    "grid": { "x": 2136, "y": 420, "w": 300, "text": "Decided (owner, 2026-10-16): sub-folders show as a tile in the grid; progress strip sits under the cover; the grid is always 3 columns, no density setting; the not-downloaded badge stays as the design target and is built with the grid, though nothing shows it until a remote source exists. Still to settle when cover-grid is specified: sort and status are remembered per folder; the grid pages by swipe, the pager is also tappable.", "fill": "orange" },
+    "hold": { "x": 2848, "y": 1200, "w": 300, "text": "Delete asks to confirm, then goes through KOReader's own delete so sidecars and history follow. \"Add to the home\" pins the book as the featured book.", "fill": "green" },
+    "lists": { "x": 2848, "y": 2400, "w": 300, "text": "Decided (owner, 2026-10-16): authors sort by surname (last word, prefixes like Le and de kept with it) under letter dividers; a book with two authors appears under both and counts for both. The series list puts series under way first, then the rest A to Z; one series lists in series order with the next unread marked. Series is not a nav tab, so no tab is lit there.", "fill": "orange" }
+  },
+  "designSystems": []
+}
