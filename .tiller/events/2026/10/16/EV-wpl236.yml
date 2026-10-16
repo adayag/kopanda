@@ -1,0 +1,15 @@
+id: EV-wpl236
+type: start.task
+at: 2026-10-16T21:54:21.058143Z
+contributor: allen
+command: start task T-1r8qb2
+targets:
+    - T-1r8qb2
+before:
+    status: ready
+after:
+    branch: tiller/nav-bar/nav-bar/goldens
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/goldens/task.yml
