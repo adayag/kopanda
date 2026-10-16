@@ -1,0 +1,16 @@
+id: EV-2sr0ka
+type: submit.task
+at: 2026-10-16T17:22:00.811633Z
+contributor: allen
+command: submit task T-q590ja
+targets:
+    - T-q590ja
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/studio-shell/check-stage
+        head: git:e8e13ed
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/check-stage/task.yml
