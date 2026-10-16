@@ -1,0 +1,15 @@
+id: EV-w3yebx
+type: order.tasks
+at: 2026-10-16T14:32:07.098965Z
+contributor: allen
+command: order task T-janm6k T-o5gnzj T-ghzxgk T-8kwd74
+targets:
+    - F-9okxa7
+after:
+    order:
+        - T-janm6k
+        - T-o5gnzj
+        - T-ghzxgk
+        - T-8kwd74
+files:
+    - path: .tiller/epics/studio/features/device-push/feature.yml

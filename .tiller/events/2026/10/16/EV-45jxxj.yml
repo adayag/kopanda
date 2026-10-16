@@ -1,0 +1,14 @@
+id: EV-45jxxj
+type: add.task
+at: 2026-10-16T14:29:37.802863Z
+contributor: allen
+command: add task studio/device-push/bundle-server
+targets:
+    - T-janm6k
+after:
+    feature: F-9okxa7
+    key: studio/device-push/bundle-server
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/bundle-server/task.md
+    - path: .tiller/epics/studio/features/device-push/tasks/bundle-server/task.yml

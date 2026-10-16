@@ -1,10 +1,15 @@
 id: F-9okxa7
 key: studio/device-push
 title: Wi-Fi pull with staged apply and rollback
-status: draft
+status: specced
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
 depends_on:
     - F-kglqs4
     - F-yrw3g6
+order:
+    - T-janm6k
+    - T-o5gnzj
+    - T-ghzxgk
+    - T-8kwd74

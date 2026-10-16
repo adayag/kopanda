@@ -1,0 +1,14 @@
+id: EV-vj6bi4
+type: add.task
+at: 2026-10-16T14:29:38.075046Z
+contributor: allen
+command: add task studio/device-push/emulator-push
+targets:
+    - T-8kwd74
+after:
+    feature: F-9okxa7
+    key: studio/device-push/emulator-push
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/emulator-push/task.md
+    - path: .tiller/epics/studio/features/device-push/tasks/emulator-push/task.yml

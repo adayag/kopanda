@@ -1,0 +1,10 @@
+id: T-ghzxgk
+key: studio/device-push/pull-and-stage
+title: Studio menu pulls, verifies, stages and arms a profile's bundle
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-janm6k
+    - T-o5gnzj

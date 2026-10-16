@@ -1,0 +1,13 @@
+id: EV-2oyrr3
+type: spec.feature
+at: 2026-10-16T14:48:17.826611Z
+contributor: allen
+command: spec feature F-9okxa7
+targets:
+    - F-9okxa7
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/studio/features/device-push/feature.yml

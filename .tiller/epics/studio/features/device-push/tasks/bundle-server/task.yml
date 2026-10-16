@@ -1,0 +1,7 @@
+id: T-janm6k
+key: studio/device-push/bundle-server
+title: 'Studio serves a profile''s bundle: manifest, files, LAN opt-in and guard, shared vectors'
+status: proposed
+blocked: false
+started: false
+proposed_by: allen

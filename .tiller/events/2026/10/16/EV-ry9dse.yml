@@ -1,0 +1,14 @@
+id: EV-ry9dse
+type: add.task
+at: 2026-10-16T14:29:37.898661Z
+contributor: allen
+command: add task studio/device-push/apply-and-rollback
+targets:
+    - T-o5gnzj
+after:
+    feature: F-9okxa7
+    key: studio/device-push/apply-and-rollback
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/apply-and-rollback/task.md
+    - path: .tiller/epics/studio/features/device-push/tasks/apply-and-rollback/task.yml

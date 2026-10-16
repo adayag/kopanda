@@ -1,0 +1,14 @@
+id: EV-iyupk7
+type: add.task
+at: 2026-10-16T14:29:37.988485Z
+contributor: allen
+command: add task studio/device-push/pull-and-stage
+targets:
+    - T-ghzxgk
+after:
+    feature: F-9okxa7
+    key: studio/device-push/pull-and-stage
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/pull-and-stage/task.md
+    - path: .tiller/epics/studio/features/device-push/tasks/pull-and-stage/task.yml

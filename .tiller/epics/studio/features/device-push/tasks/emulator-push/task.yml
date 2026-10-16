@@ -1,0 +1,9 @@
+id: T-8kwd74
+key: studio/device-push/emulator-push
+title: Emulator proves the pull, the switch-over and the rollback across restarts
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-ghzxgk
