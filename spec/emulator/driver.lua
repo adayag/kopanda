@@ -64,11 +64,44 @@ local function log_tail(path)
     return table.concat(lines, "", first)
 end
 
--- Writes a scratch KO_HOME at dir for the named profile: settings.reader.lua, the plugin
--- copied under plugins/, and the capture patch under patches/ with each extra patch (a list
--- of paths) beside it. An extra patch's name must start with "2-", KOReader's late priority
--- (frontend/userpatch.lua:13), which reader.lua:190 applies before any plugin code runs, in
--- natural-sort order of the names (frontend/userpatch.lua:82).
+-- The screen a run uses: device when given, else the named profile from profiles.lua, so a device
+-- given under a known name (colorsoft) still wins. device holds positive integer width, height and
+-- dpi and a boolean color; with it the name only names the scratch's files (profile-<name>,
+-- <name>.png, <name>.log), so it must match ^[a-z0-9-]+$. Errors start with who.
+local function resolve_screen(who, profile_name, device)
+    if device == nil then
+        local profile = profiles[profile_name]
+        if not profile then
+            error(who .. ": unknown profile " .. tostring(profile_name))
+        end
+        return profile
+    end
+    if type(device) ~= "table" then
+        error(who .. ": device is not a table: " .. tostring(device))
+    end
+    for _, field in ipairs({ "width", "height", "dpi" }) do
+        local value = device[field]
+        if type(value) ~= "number" or value <= 0 or value % 1 ~= 0 then
+            error(string.format("%s: device.%s must be a positive integer, not %s", who, field, tostring(value)))
+        end
+    end
+    if type(device.color) ~= "boolean" then
+        error(who .. ": device.color must be a boolean, not " .. tostring(device.color))
+    end
+    if type(profile_name) ~= "string" or not profile_name:match("^[a-z0-9-]+$") then
+        error(who .. ": profile name " .. tostring(profile_name) .. " must match ^[a-z0-9-]+$")
+    end
+    return device
+end
+
+-- Writes a scratch KO_HOME at dir for the named profile, or for opts.device under that name
+-- (see resolve_screen): settings.reader.lua, the plugin copied under plugins/, and the capture
+-- patch under patches/ with each extra patch (a list of paths) beside it. With
+-- opts.settings_file, that file is copied to settings/kopanda/settings.lua, where the plugin
+-- reads its settings; a path that is not a file is an error naming it. An extra patch's name
+-- must start with "2-", KOReader's late priority (frontend/userpatch.lua:13), which
+-- reader.lua:190 applies before any plugin code runs, in natural-sort order of the names
+-- (frontend/userpatch.lua:82).
 --
 -- settings.reader.lua is what LuaSettings:open dofile()s (frontend/luasettings.lua:30-33).
 -- color_rendering present suppresses the first-run colour notice (reader.lua:195-203); it
@@ -91,9 +124,10 @@ end
 -- runs in the emulator's own luajit: its sqlite binding ffi.cdef()s on load, so a Busted
 -- process can require it once at most, and spec files are insulated from each other.
 function M.write_profile(dir, profile_name, plugin_dir, emulator, patches, opts)
-    local profile = profiles[profile_name]
-    if not profile then
-        error("capture: unknown profile " .. tostring(profile_name))
+    opts = opts or {}
+    local profile = resolve_screen("capture", profile_name, opts.device)
+    if opts.settings_file and lfs.attributes(opts.settings_file, "mode") ~= "file" then
+        error("capture: settings_file is not a file: " .. tostring(opts.settings_file))
     end
     for _, patch in ipairs(patches or {}) do
         if not basename(patch):match("^2%-") then
@@ -107,13 +141,20 @@ function M.write_profile(dir, profile_name, plugin_dir, emulator, patches, opts)
     for _, name in ipairs(M.disabled_plugins) do
         disabled[#disabled + 1] = string.format("[%q] = true", name)
     end
-    local night = opts and opts.night_mode and " [\"night_mode\"] = true," or ""
+    local night = opts.night_mode and " [\"night_mode\"] = true," or ""
     write_file(dir .. "/settings.reader.lua", string.format(
         "return { [\"color_rendering\"] = %s, [\"emulator_fake_wifi_connected\"] = false,%s"
             .. " [\"plugins_disabled\"] = { %s } }\n",
         tostring(profile.color), night, table.concat(disabled, ", ")))
 
     assert(lfs.mkdir(dir .. "/settings"))
+    if opts.settings_file then
+        assert(lfs.mkdir(dir .. "/settings/kopanda"))
+        local copy = dir .. "/settings/kopanda/settings.lua"
+        if not shell("cp " .. quote(opts.settings_file) .. " " .. quote(copy)) then
+            error("capture: could not copy " .. opts.settings_file .. " to " .. copy)
+        end
+    end
     local seed = "require('ffi/loadlib'); local SQ3 = require('lua-ljsqlite3/init');"
         .. " local db = SQ3.open(os.getenv('KOPANDA_SEED'));"
         .. string.format(" db:exec('PRAGMA user_version=%d;'); db:close()", BOOKINFO_DB_VERSION)
@@ -218,17 +259,14 @@ local function run_emulator(emulator, vars, library_dir, log, timeout_s, marker)
     return tonumber(output:match("(%d+)\n$"))
 end
 
--- The checks capture and run_starts make before writing anything: a known profile, the
--- plugin folder, the library and the emulator's luajit, and no copy of KoPanda in the
--- emulator's own plugins/. Errors start with who. Returns emulator, profile_name, profile and
--- library_dir.
+-- The checks capture and run_starts make before writing anything: the screen (a known profile,
+-- or opts.device under a name, see resolve_screen), the plugin folder, the library and the
+-- emulator's luajit, and no copy of KoPanda in the emulator's own plugins/. Errors start with who.
+-- Returns emulator, profile_name, profile (the screen) and library_dir.
 local function preflight(who, opts)
     local emulator = opts.emulator_dir or os.getenv("KOPANDA_EMULATOR")
     local profile_name = opts.profile
-    local profile = profiles[profile_name]
-    if not profile then
-        error(who .. ": unknown profile " .. tostring(profile_name))
-    end
+    local profile = resolve_screen(who, profile_name, opts.device)
     if not opts.plugin_dir or not is_dir(opts.plugin_dir) then
         error(who .. ": plugin_dir is not a directory: " .. tostring(opts.plugin_dir))
     end
@@ -301,7 +339,9 @@ end
 -- KoPandaSettled screen the capture is taken on, default "home"), env (a table of extra
 -- environment variables for the emulator, name to value, passed after the driver's own in
 -- name order, so a scenario patch can read its options), night_mode (start the emulator with
--- night mode on, see write_profile). Returns { png, width,
+-- night mode on, see write_profile), device ({ width, height, dpi, color }: the screen in place
+-- of profiles[profile], which then only names the scratch's files; see resolve_screen),
+-- settings_file (copied as the plugin's settings, see write_profile). Returns { png, width,
 -- height, sidecar, log, scratch }; the scratch profile is removed on success and left in place
 -- on failure.
 function M.capture(opts)
@@ -311,7 +351,8 @@ function M.capture(opts)
     local timeout_s = opts.timeout_s or 120
     local out_dir = opts.out_dir or fresh_out_dir(profile_name)
     local scratch = M.write_profile(out_dir .. "/profile-" .. profile_name, profile_name, opts.plugin_dir,
-        emulator, opts.patches, { night_mode = opts.night_mode })
+        emulator, opts.patches, { night_mode = opts.night_mode, device = opts.device,
+            settings_file = opts.settings_file })
     local png = out_dir .. "/" .. profile_name .. ".png"
     local log = out_dir .. "/" .. profile_name .. ".log"
     local marker = out_dir .. "/" .. profile_name .. ".timeout"
@@ -352,7 +393,7 @@ end
 
 -- Several starts of the emulator on one scratch profile, written once, as a device restarts
 -- KOReader: what one start leaves in KO_HOME (settings, patches, a moved plugin folder) is
--- what the next one starts from. opts: capture's profile, plugin_dir, library_dir, out_dir,
+-- what the next one starts from. opts: capture's profile, device, plugin_dir, library_dir, out_dir,
 -- timeout_s (per start), emulator_dir and patches; extra_plugins, folders copied into the
 -- scratch's plugins/ beside the plugin, refused before anything is written when the emulator's
 -- own plugins/ holds a folder of the same name (KOReader would load both); and starts, a list
@@ -381,7 +422,7 @@ function M.run_starts(opts)
     local timeout_s = opts.timeout_s or 120
     local out_dir = opts.out_dir or fresh_out_dir(profile_name)
     local scratch = M.write_profile(out_dir .. "/profile-" .. profile_name, profile_name, opts.plugin_dir,
-        emulator, opts.patches)
+        emulator, opts.patches, { device = opts.device })
     for _, extra in ipairs(opts.extra_plugins or {}) do
         local copy = scratch .. "/plugins/" .. basename(extra)
         if not shell("cp -R " .. quote(extra) .. " " .. quote(copy)) then
