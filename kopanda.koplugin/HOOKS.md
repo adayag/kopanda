@@ -652,6 +652,64 @@ Upgrading KOReader walks this list.
   in `page_stat_data`, so `Home.take_pending` has the stats widget read its numbers again.
 - `datetime`: `frontend/datetime.lua:29-42` (`longMonthTranslation`, the month name).
 
+### Book records: the home folder, the file browser's filters, CoverBrowser's rows and the sidecar
+
+`books.lua` lists the library and builds one record per book. It requires each KOReader module
+below at call time, so a spec's stub or a toggled field is read as it is now.
+
+- `apps/filemanager/filemanagerutil`: `getHomeFolder()`
+  (`frontend/apps/filemanager/filemanagerutil.lua:25-27`, `home_dir`, else `Device.home_dir`, else
+  `"."`), the library root.
+- `ui/widget/filechooser`, the file browser's listing rules (`frontend/ui/widget/filechooser.lua:114-143`):
+  - `FileChooser.show_hidden`, a class field set from `G_reader_settings` when the module loads
+    (`:24`) and by `toggleShowFilesMode` (`:415-420`), read on each listing; names starting with `.`
+    only while it is on (`:120`);
+  - `exclude_dirs` (`:28-54`, `%.sdr$` among them) through `FileChooser:show_dir` (`:81-86`), called
+    on the class;
+  - `exclude_files` (`:55-72`), matched against the name by `books.lua` itself, since `show_file`
+    (`:88-97`) also applies the status filter and `file_filter`, which the library doesn't; the
+    patterns are unanchored at the end where written so (`^BookReader%.sqlite`, `:57`);
+  - `getPathList` reads a folder with `pcall(lfs.dir, path)` (`:116`), so a folder that can't be read
+    lists nothing; `books.lua` does the same and logs it. A `._` file is never listed (`:135`).
+- `document/documentregistry`: `DocumentRegistry:hasProvider(file)`
+  (`frontend/document/documentregistry.lua:63-85`), asked with the file's name, as the file
+  manager's own `file_filter` asks (`frontend/apps/filemanager/filemanager.lua:143`). For a suffix
+  with no provider it tests `DocSettings:hasSidecarFile` and, when there is one, calls
+  `DocSettings:open` (`:81-82`), as the file browser's filter does on every listing; `books.lua`
+  never calls `DocSettings:open` itself.
+- `bookinfomanager`, CoverBrowser's cache, by `pcall(require, "bookinfomanager")` (a failure means
+  CoverBrowser is off, `frontend/pluginloader.lua:283-287`). One `getBookInfo(path, false)` per
+  record (`plugins/coverbrowser.koplugin/bookinfomanager.lua:325-404`), with the path as listed:
+  rows are keyed by directory and file name (`:68`, the unique index). Its row's `title`,
+  `authors`, `series` and `series_index` (`:53-56`; `series_index` is `REAL`, so it may be
+  fractional) and the flags `unsupported`, `cover_fetched`, `has_cover` and `ignore_cover`
+  (`:37-47`, `'Y'` or nil, `unsupported` a reason string). The cover state follows
+  `plugins/coverbrowser.koplugin/mosaicmenu.lua:471-488`'s order. `bcid` (`:27-28`) is not an id.
+  The real `getBookInfo` itself calls `hasProvider` with the full path (`:332-333`).
+- The authors separator: crengine joins every `dc:creator`, each trimmed, with `"\n"`
+  (`base/thirdparty/kpvcrlib/crengine/crengine/src/epubfmt.cpp:1179-1199`), and KOReader splits them
+  on it (`frontend/apps/filemanager/filemanagerbookinfo.lua:287-301`). `books.lua` splits on newlines,
+  trims each name, makes runs of white space one space and drops empty names.
+- The series split: `Document:getProps` splits a trailing `" #N"` off the series into a number
+  (`frontend/document/document.lua:169-185`), so the column holds the name alone.
+- `docsettings`: `DocSettings:findSidecarFile` (`frontend/docsettings.lua:159-175`) and
+  `DocSettings.openSettingsFile` (`:301-315`), the light read the featured book made before;
+  `DocSettings:hasSidecarFile` (`:151-153`) is `findSidecarFile` giving a path, the test for a book
+  never opened, which `books.lua` makes from the same `findSidecarFile` call. `doc_props.title` and
+  `doc_props.authors` fill what CoverBrowser leaves empty, field by field.
+- Read status and progress, the rules of `BookList` (`frontend/ui/widget/booklist.lua`):
+  `getBookStatus` gives `new` for a book with no sidecar (`:366-369`); `setBookInfoCache` keeps any
+  `summary.status` with a status string, else `reading` (`:292-296`, the six statuses `:371-378`),
+  which `books.lua` narrows to `reading`, `abandoned` and `complete`; the pages order (`:298-306`).
+- `ffi/util`: `realpath` (`base/ffi/util.lua:171-176`, nil for a missing path), the record's id,
+  `"file:"` plus the realpath, the identity the reading history uses (`frontend/readhistory.lua:26`).
+- `spec/unit/books_coverbrowser_spec.lua` runs the real CoverBrowser: `disable_plugins` and
+  `load_plugin` (`spec/unit/commonrequire.lua:57-62`, `:64-75`) load it through
+  `PluginLoader:_load`, whose `main.lua` requires `bookinfomanager` at its top
+  (`plugins/coverbrowser.koplugin/main.lua:6`); then `extractBookInfo(filepath, cover_specs)`
+  (`bookinfomanager.lua:422-570`) in-process, and `setBookInfoProperties` and `deleteBookInfo`
+  (`:572-600`).
+
 ### The featured book: reading history, sidecars, CoverBrowser and the chapter
 
 - `readhistory`: `frontend/readhistory.lua:15-16` (`ReadHistory.hist`), `:369-373` (read from its
@@ -671,7 +729,8 @@ Upgrading KOReader walks this list.
   the fallback at `:41-42`), while history
   holds realpaths (`frontend/readhistory.lua:26`). Either way the comparison misses, and the
   guide is featured when it is the newest history entry.
-- `docsettings`: `DocSettings:findSidecarFile` (`frontend/docsettings.lua:159-175`, the sidecar
+- `docsettings`, read through `books.lua` (the "Book records" entry above), which the featured book
+  asks for its record and progress: `DocSettings:findSidecarFile` (`frontend/docsettings.lua:159-175`, the sidecar
   path or nil, by `getOrderedLocationCandidates` `:101-110` and `getSidecarDir` `:118-135`, in the
   order the `G_reader_settings` key `document_metadata_folder` gives, `:102`, `:121`;
   `spec/unit/featured_book_spec.lua` sets it to `dir`) and
@@ -679,16 +738,17 @@ Upgrading KOReader walks this list.
   file or an empty table; it cannot flush). `DocSettings:open` is never called: it removes
   candidates it finds invalid (`:282-284`). Read through `isTrue` and `readSetting`
   (`frontend/luasettings.lua:124-126`, `:89-99`, no default passed).
-- The sidecar keys read:
+- The sidecar keys read, in `books.lua`'s `Books.for_path` and `Books.progress`:
   - `percent_finished`, 0 to 1 (`frontend/apps/reader/modules/readerrolling.lua:338`,
     `readerpaging.lua:163`), clamped to 0 to 1, absent as 0;
   - `summary.status`, `reading`, `abandoned` or `complete`, anything else as `reading`
-    (`frontend/ui/widget/booklist.lua:292-296`, the statuses `:371-378`);
+    (`frontend/ui/widget/booklist.lua:292-296`, the statuses `:371-378`); a book with no sidecar is
+    `new` in the model (`:366-369`), which the featured book reads as `reading`;
   - `pagemap_doc_pages` when `pagemap_use_page_labels` is true, else `doc_pages`, else `stats.pages`
     when it isn't 0 (`booklist.lua:298-306`);
   - `doc_props.title` and `doc_props.authors` (`frontend/apps/reader/readerui.lua:492-493`);
   - `partial_md5_checksum` (`readerui.lua:497-501`), the Statistics `book.md5`.
-- `bookinfomanager`, CoverBrowser's cache: its folder is on `package.path` only when the plugin is
+- `bookinfomanager`, CoverBrowser's cache, reached by `books.lua`: its folder is on `package.path` only when the plugin is
   enabled (`frontend/pluginloader.lua:283-287`), so `pcall(require, "bookinfomanager")` failing
   means disabled. The module is the initialised instance
   (`plugins/coverbrowser.koplugin/bookinfomanager.lua:1032-1034`).
