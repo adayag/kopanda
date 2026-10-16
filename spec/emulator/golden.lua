@@ -84,8 +84,9 @@ end
 -- opts: golden_dir (default <KOPANDA_ROOT>/spec/goldens), update (default true only when
 -- KOPANDA_UPDATE_GOLDENS is "1"), artifact_dir (default <KOPANDA_ROOT>/spec/.artifacts/goldens,
 -- where a pixel failure leaves a copy of the capture and the diff image, since bin/check
--- deletes KO_HOME on exit). Returns { updated = true } after writing the golden, or
--- compare's result on a match; raises an error naming the files on any failure.
+-- deletes KO_HOME on exit), max_fraction (passed to compare; default compare's). Returns
+-- { updated = true } after writing the golden, or compare's result on a match; raises an
+-- error naming the files on any failure.
 function M.check(name, profile, capture_result, opts)
     opts = opts or {}
     local golden_dir = opts.golden_dir or (os.getenv("KOPANDA_ROOT") .. "/spec/goldens")
@@ -113,7 +114,8 @@ function M.check(name, profile, capture_result, opts)
     make_dir(artifact_dir)
     local artifact = artifact_dir .. "/" .. name .. "-" .. profile
     local actual_png, diff_png = artifact .. ".actual.png", artifact .. ".diff.png"
-    local result = compare.compare(capture_result.png, png_path, { masks = masks, diff_png = diff_png })
+    local result = compare.compare(capture_result.png, png_path, { masks = masks, diff_png = diff_png,
+        max_fraction = opts.max_fraction })
     if result.reason == "size" then
         error(string.format("golden %s-%s: the capture is %d×%d but the golden is %d×%d;"
             .. " check profile %s in spec/emulator/profiles.lua\ncapture: %s\ngolden: %s",
