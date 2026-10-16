@@ -1,0 +1,14 @@
+id: EV-hgfey8
+type: add.task
+at: 2026-10-16T22:04:06.913746Z
+contributor: allen
+command: add task library/book-model/covers
+targets:
+    - T-1ms8w2
+after:
+    feature: F-alfeze
+    key: library/book-model/covers
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/covers/task.md
+    - path: .tiller/epics/library/features/book-model/tasks/covers/task.yml

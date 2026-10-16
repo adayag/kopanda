@@ -8,21 +8,29 @@ describe("loadConfig", () => {
   it("applies the defaults when no variable is set", () => {
     expect(loadConfig({})).toEqual({
       port: 4490,
+      host: "127.0.0.1",
       profilesDir: path.join(os.homedir(), ".kopanda/profiles"),
     });
   });
 
   it("takes the default for an empty value", () => {
-    expect(loadConfig({ KOPANDA_STUDIO_PORT: "", KOPANDA_STUDIO_PROFILES_DIR: "" })).toEqual({
+    expect(
+      loadConfig({ KOPANDA_STUDIO_PORT: "", KOPANDA_STUDIO_HOST: "", KOPANDA_STUDIO_PROFILES_DIR: "" }),
+    ).toEqual({
       port: 4490,
+      host: "127.0.0.1",
       profilesDir: path.join(os.homedir(), ".kopanda/profiles"),
     });
   });
 
-  it("reads both variables when set", () => {
+  it("reads every variable when set", () => {
     expect(
-      loadConfig({ KOPANDA_STUDIO_PORT: "5000", KOPANDA_STUDIO_PROFILES_DIR: "/opt/profiles" }),
-    ).toEqual({ port: 5000, profilesDir: "/opt/profiles" });
+      loadConfig({
+        KOPANDA_STUDIO_PORT: "5000",
+        KOPANDA_STUDIO_HOST: "0.0.0.0",
+        KOPANDA_STUDIO_PROFILES_DIR: "/opt/profiles",
+      }),
+    ).toEqual({ port: 5000, host: "0.0.0.0", profilesDir: "/opt/profiles" });
   });
 
   it("expands ~ to the home directory", () => {
@@ -60,7 +68,11 @@ describe("the repo's .env.example", () => {
   );
 
   it("lists every variable loadConfig reads", () => {
-    expect(CONFIG_VARIABLES).toEqual(["KOPANDA_STUDIO_PORT", "KOPANDA_STUDIO_PROFILES_DIR"]);
+    expect(CONFIG_VARIABLES).toEqual([
+      "KOPANDA_STUDIO_PORT",
+      "KOPANDA_STUDIO_HOST",
+      "KOPANDA_STUDIO_PROFILES_DIR",
+    ]);
     for (const name of CONFIG_VARIABLES) {
       expect(envExample).toMatch(new RegExp(`^${name}=`, "m"));
     }

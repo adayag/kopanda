@@ -1,0 +1,9 @@
+id: T-tvonaw
+key: library/book-model/index
+title: Author and series index over the records
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-n450u3

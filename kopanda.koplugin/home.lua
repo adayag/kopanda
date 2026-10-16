@@ -141,12 +141,13 @@ function Home:slotAt(pos)
     end
 end
 
--- Runs the show's finished callback (the boot guard's clear), if any.
-local function finish(opts)
+-- Runs the show's finished callback (the boot guard's clear), if any, telling it whether the
+-- home painted.
+local function finish(opts, painted)
     if not opts.finished then
         return
     end
-    local ok, err = pcall(opts.finished)
+    local ok, err = pcall(opts.finished, painted)
     if not ok then
         logger.err("KoPanda: the show's finished callback failed:", err)
     end
@@ -195,23 +196,25 @@ local function settle(home, opts)
             end
         end)
     end
-    finish(opts)
+    finish(opts, home.painted_at ~= nil and not home.paint_failed)
 end
 
 -- opts: widget (a pre-built home to show; default: a fresh build), started (time.monotonic()
--- at the start of the show path), prebuilt, finished (called once, after the first paint's
--- settled signal or on a caught failure). On any error the home is taken off the stack and the
--- file browser beneath is left as it is.
+-- at the start of the show path), prebuilt, finished (called once: with true after the home's
+-- first paint, or with false when the home closes before painting or its build, show or paint
+-- fails). On any error the home is taken off the stack and the file browser beneath is
+-- left as it is.
 function Home.show(opts)
     local home
     local ok, err = pcall(function()
         home = opts.widget or Home:new{}
         Home.shown = home
         UIManager:show(home, "full")
-        -- Lands past the next repaint, so the signal follows the paint.
-        UIManager:tickAfterNext(function()
-            settle(home, opts)
-        end)
+        -- The home settles from its first paint, or from its close if that comes first; nothing
+        -- is scheduled until then. A tickAfterNext here would land before the paint whenever the
+        -- clock hasn't moved since the UI loop's pass began, since UIManager runs its inner
+        -- nextTick in that same pass (frontend/ui/uimanager.lua:447-456, 1081-1104, 1537-1564).
+        home.settle_opts = opts
     end)
     if not ok then
         logger.err("KoPanda: could not show the home:", err)
@@ -219,7 +222,7 @@ function Home.show(opts)
             close_home(home)
         end
         Home.shown = nil
-        finish(opts)
+        finish(opts, false)
     end
 end
 
@@ -291,7 +294,8 @@ local function paint(home, bb, x, y)
 end
 
 -- A widget can't be closed from inside the repaint, so a failed paint, its rebuild included,
--- closes the home from the next tick, leaving the file browser beneath.
+-- closes the home from the next tick, leaving the file browser beneath. A show waiting on this
+-- paint settles from the next tick, which runs after this repaint.
 function Home:paintTo(bb, x, y)
     local ok, err = pcall(paint, self, bb, x, y)
     if ok and not self.painted_at then
@@ -304,13 +308,25 @@ function Home:paintTo(bb, x, y)
             close_home(self)
         end)
     end
+    local opts = self.settle_opts
+    if opts then
+        self.settle_opts = nil
+        UIManager:nextTick(function()
+            settle(self, opts)
+        end)
+    end
 end
 
 -- KOReader may close the home itself; Home.shown must not outlive it, nor the featured cover's
--- bounded check, nor a sheet shown over it.
+-- bounded check, nor a sheet shown over it, nor a show waiting on a paint that won't come.
 function Home:onCloseWidget()
     if Home.shown == self then
         Home.shown = nil
+    end
+    local opts = self.settle_opts
+    if opts then
+        self.settle_opts = nil
+        settle(self, opts)
     end
     local ok, err = pcall(FeaturedCover.cancel)
     if not ok then

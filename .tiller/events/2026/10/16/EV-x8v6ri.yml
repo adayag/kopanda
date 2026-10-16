@@ -1,0 +1,14 @@
+id: EV-x8v6ri
+type: add.task
+at: 2026-10-16T21:15:18.500607Z
+contributor: allen
+command: add task bars/quick-settings/controls
+targets:
+    - T-n6wve0
+after:
+    feature: F-rce9ko
+    key: bars/quick-settings/controls
+    status: proposed
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/controls/task.md
+    - path: .tiller/epics/bars/features/quick-settings/tasks/controls/task.yml

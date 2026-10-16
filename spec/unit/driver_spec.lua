@@ -275,4 +275,162 @@ describe("the emulator capture driver", function()
         capture_error{ emulator_dir = emu, timeout_s = 777 }
         assert.not_equals(0, os.execute("pgrep -f 'sleep 77[7]' >/dev/null"))
     end)
+
+    describe("run_starts", function()
+        local function read(path)
+            local f = assert(io.open(path, "r"))
+            local text = f:read("*a")
+            f:close()
+            return text
+        end
+
+        local function lines(path)
+            local found = {}
+            for line in assert(io.open(path)):lines() do
+                found[#found + 1] = line
+            end
+            return found
+        end
+
+        -- A fake emulator run as each start: appends KO_HOME's start count (kept in KO_HOME, so
+        -- it counts only while one profile serves every start) and the start's own variables to
+        -- <emu>/starts, writes a tiny PNG and a sidecar where KOPANDA_SHOT says, and exits with
+        -- KOPANDA_FAKE_STATUS (default 0).
+        local function counting_emulator()
+            local dir = fresh_dir("emu")
+            assert(lfs.mkdir(dir .. "/plugins"))
+            local Blitbuffer = require("ffi/blitbuffer")
+            local bb = Blitbuffer.new(2, 3, Blitbuffer.TYPE_BBRGB32)
+            assert.is_true(bb:writePNG(dir .. "/tiny.png"))
+            bb:free()
+            write(dir .. "/luajit", table.concat({
+                "#!/bin/sh",
+                "[ \"$1\" = -e ] && exit 0",
+                "n=$(cat \"$KO_HOME/count\" 2>/dev/null || echo 0); n=$((n + 1)); echo $n > \"$KO_HOME/count\"",
+                "echo \"$n shot=${KOPANDA_SHOT:+set} cap=${KOPANDA_SHOT_CAP_S:-} fake=${KOPANDA_FAKE:-}\" >> '"
+                    .. dir .. "/starts'",
+                "if [ -n \"$KOPANDA_SHOT\" ]; then cp '" .. dir .. "/tiny.png' \"$KOPANDA_SHOT\"; "
+                    .. "echo '{\"plugins\":[\"probe\"]}' > \"$KOPANDA_SHOT.json\"; fi",
+                "exit ${KOPANDA_FAKE_STATUS:-0}",
+                "",
+            }, "\n"), true)
+            return dir
+        end
+
+        local function extra_plugin(name)
+            local dir = fresh_dir("extra") .. "/" .. name .. ".koplugin"
+            assert(lfs.mkdir(dir))
+            write(dir .. "/_meta.lua", "return { name = \"" .. name .. "\" }\n")
+            write(dir .. "/main.lua", "return {}\n")
+            return dir
+        end
+
+        local function run(opts)
+            opts.profile = opts.profile or "colorsoft"
+            opts.plugin_dir = opts.plugin_dir or probe
+            opts.library_dir = opts.library_dir or fresh_dir("lib")
+            opts.out_dir = opts.out_dir or fresh_dir("out")
+            return opts, driver.run_starts(opts)
+        end
+
+        it("writes the profile once with the default disabled list and copies extra_plugins", function()
+            local emu = counting_emulator()
+            local extra = extra_plugin("ennui")
+            local opts, result = run{ emulator_dir = emu, extra_plugins = { extra },
+                starts = { { env = { KOPANDA_FAKE = "one" } }, { env = { KOPANDA_FAKE = "two" } } } }
+            assert.equals(opts.out_dir .. "/profile-colorsoft", result.scratch)
+            assert.same({ "1 shot= cap= fake=one", "2 shot= cap= fake=two" }, lines(emu .. "/starts"))
+            assert.equals(0, result.starts[1].status)
+            assert.equals(0, result.starts[2].status)
+            local settings = dofile(result.scratch .. "/settings.reader.lua")
+            local disabled = {}
+            for name in pairs(settings.plugins_disabled) do
+                disabled[#disabled + 1] = name
+            end
+            table.sort(disabled)
+            assert.same({ "bookshelf", "ennUI", "simpleui", "solariconpack" }, disabled)
+            assert.equals("return {}\n", read(result.scratch .. "/plugins/ennui.koplugin/main.lua"))
+            assert.equals("file", lfs.attributes(result.scratch .. "/plugins/probe.koplugin/main.lua", "mode"))
+        end)
+
+        it("sets KOPANDA_SHOT only for a shot start and returns its PNG and sidecar", function()
+            local emu = counting_emulator()
+            local _, result = run{ emulator_dir = emu,
+                starts = { { env = { KOPANDA_FAKE = "plain" } }, { shot = true, cap_s = 15 } } }
+            assert.same({ "1 shot= cap= fake=plain", "2 shot=set cap=15 fake=" }, lines(emu .. "/starts"))
+            assert.is_nil(result.starts[1].png)
+            assert.equals("file", lfs.attributes(result.starts[2].png, "mode"))
+            assert.same({ "probe" }, result.starts[2].sidecar.plugins)
+            assert.equals("file", lfs.attributes(result.starts[2].log, "mode"))
+        end)
+
+        it("runs a start's after with its result and the scratch before the next start", function()
+            local emu = counting_emulator()
+            local seen = {}
+            local function after(start_result, scratch)
+                seen[#seen + 1] = { status = start_result.status, count = read(scratch .. "/count"):match("%d+") }
+            end
+            run{ emulator_dir = emu, starts = {
+                { env = { KOPANDA_FAKE_STATUS = "85" }, accept = { 85 }, after = after },
+                { after = after },
+            } }
+            assert.same({ { status = 85, count = "1" }, { status = 0, count = "2" } }, seen)
+        end)
+
+        it("refuses an extra plugin the emulator's plugins/ also holds, before any start", function()
+            local emu = counting_emulator()
+            assert(lfs.mkdir(emu .. "/plugins/ennui.koplugin"))
+            local out = fresh_dir("out")
+            local ok, err = pcall(run, { emulator_dir = emu, out_dir = out, extra_plugins = { extra_plugin("ennui") },
+                starts = { {} } })
+            assert.is_false(ok)
+            assert.truthy(contains(tostring(err), emu .. "/plugins/ennui.koplugin"), err)
+            assert.is_nil(lfs.attributes(emu .. "/starts", "mode"))
+            assert.is_nil(lfs.attributes(out .. "/profile-colorsoft", "mode"))
+        end)
+
+        it("refuses a status outside a start's accept list, naming the start, and keeps the scratch", function()
+            local emu = counting_emulator()
+            local out = fresh_dir("out")
+            local ok, err = pcall(run, { emulator_dir = emu, out_dir = out, starts = {
+                { env = { KOPANDA_FAKE_STATUS = "85" }, accept = { 85 } },
+                { env = { KOPANDA_FAKE_STATUS = "7" } },
+            } })
+            assert.is_false(ok)
+            err = tostring(err)
+            assert.truthy(contains(err, "start 2"), err)
+            assert.truthy(contains(err, "status 7"), err)
+            assert.equals("directory", lfs.attributes(out .. "/profile-colorsoft", "mode"))
+            assert.equals("2", read(out .. "/profile-colorsoft/count"):match("%d+"))
+        end)
+
+        -- The real emulator: a scenario patch quits with the status KOPANDA_TEST_QUIT names, so
+        -- the first start ends as a restart does (85) and the second, without it, is shot.
+        it("runs the probe across starts on the emulator, a scenario quitting 85 before the shot", function()
+            local patch = fresh_dir("patches") .. "/2-quit.lua"
+            write(patch, table.concat({
+                "local code = tonumber(os.getenv(\"KOPANDA_TEST_QUIT\"))",
+                "if code then",
+                "    local UIManager = require(\"ui/uimanager\")",
+                "    UIManager:scheduleIn(0.5, function() UIManager:quit(code) end)",
+                "end",
+                "",
+            }, "\n"))
+            local _, result = run{ patches = { patch }, starts = {
+                { env = { KOPANDA_TEST_QUIT = "85" }, accept = { 85 } },
+                { shot = true },
+            } }
+            assert.equals(85, result.starts[1].status)
+            assert.is_nil(result.starts[1].png)
+            assert.equals(0, result.starts[2].status)
+            assert.equals("home", result.starts[2].sidecar.screen)
+            local loaded = {}
+            for _, name in ipairs(result.starts[2].sidecar.plugins) do
+                loaded[name] = true
+            end
+            assert.is_true(loaded.probe)
+            assert.equals(1264, (driver.png_size(result.starts[2].png)))
+            assert.equals("directory", lfs.attributes(result.scratch, "mode"))
+        end)
+    end)
 end)

@@ -1,7 +1,7 @@
 id: F-9okxa7
 key: studio/device-push
 title: Wi-Fi pull with staged apply and rollback
-status: ready
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -14,6 +14,8 @@ order:
     - T-ghzxgk
     - T-8kwd74
 review_grain: feature
+branch: tiller/reviews/features/studio/device-push
+pr: 21
 accepted_against:
     spec:
         kind: git_blob
@@ -29,3 +31,143 @@ accepted_against:
         kind: git_commit
         value: git:e4bea1b
         observed_at: 2026-10-16T20:10:55.707524Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:e4bd6915489caa05ccbc27401c831e5e98bb7ecd
+        path: .tiller/epics/studio/features/device-push/feature.md
+        observed_at: 2026-10-16T21:47:25.868271Z
+    eval:
+        kind: git_blob
+        value: git:7256fba1020602fa642c1406e68c59431fee0d5c
+        path: .tiller/epics/studio/features/device-push/feature.eval.md
+        observed_at: 2026-10-16T21:47:25.868271Z
+    commit:
+        kind: git_commit
+        value: git:3b41f02
+        observed_at: 2026-10-16T21:47:25.479029Z
+    surfaces: []
+done_basis: rollup
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T21:34:08.691119Z
+        against:
+            kind: git_commit
+            value: git:08d4cfd
+            observed_at: 2026-10-16T21:34:08.690007Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-08d4cfd-out-ba557aa2c231d3ea58e53d0a50e6e3677642739dc02bff5247212d8f2b687ca5.txt
+    evals:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T21:46:38.083026Z
+        against:
+            kind: git_commit
+            value: git:08d4cfd
+            observed_at: 2026-10-16T21:34:08.690007Z
+        criteria:
+            C1:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C1-08d4cfd-out-a95d93ec0080eaca0bda6388b6b08b9963a60ff2a12cbfbff63ad345ba074748.txt
+            C2:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C2-08d4cfd-out-880c1d29d10528ffb79591539b0334646b7744d2caa814fdd89a85bc8d732135.txt
+            C3:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C3-08d4cfd-out-d22e703c3fc114b7cd092590bfd2bc5ad094a3c6328210b34b6807455adaf113.txt
+            C4:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C4-08d4cfd-out-6db791cab73cf0185245bcd2f6631c8c10533dd14d4265d1c56e316967aebd24.txt
+            C5:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C5-08d4cfd-out-588495a49ea2e06a379cadc157cfef17888d4a2f22b1670b3eb423863f409f51.txt
+            C6:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C6-08d4cfd-out-6ed066bfdb4f7226c6f1b622db4e636d8f7ac667c791cf1b114cf773c0ce476e.txt
+            C7:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C7-08d4cfd-out-5723d08ca16d958ca9df8cc619efe1c5ac8bb5d08b4f6427afa3e0d98b28c4f7.txt
+            C8:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C8-08d4cfd-out-92678423d336733d9b82abd7cf7d0e0b6d4c81110640e7f79ccd3dfa30da2e85.txt
+            C9:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C9-08d4cfd-out-7197b50d92d1141bf42c8316784392be0781ad1faed69f25ef7f2833e2935dd1.txt
+            C10:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C10-08d4cfd-out-45ffa5ae6123da9086b9ba7fdc149d5d1aa88e7f4a14b47d163c40226919fffd.txt
+            C11:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C11-08d4cfd-out-f59cccd677de4f867e8d44e1e50bced089cc875195a8fad7c5258f7a50874677.txt
+            C12:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C12-08d4cfd-out-996c79f0e91f793f7fe46e4a9b98f750e999b6700304069668a377f6ff554ee5.txt
+            C13:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C13-08d4cfd-out-02a2166eae638eb2e3f23879f62f2d05ad1bbf75cf3b876df9b9955b762c1098.txt
+            C14:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C14-08d4cfd-out-1185db3a04e92c374a4adb79f6270dd419dd94542444ff3f9ec8ca44af82791e.txt
+            C15:
+                status: pass
+            C16:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C16-08d4cfd-out-955a17e7209ce16b158e3545993c9e8275e804a83521b5c0f795a7449b83dfbb.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T21:34:08.691119Z
+        against:
+            kind: git_commit
+            value: git:08d4cfd
+            observed_at: 2026-10-16T21:34:08.690007Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-08d4cfd-out-97f987600e79a49844a6efefd84e1e863082b1f3abc87f5db2c2f68f27f2d85b.txt
+attestations:
+    - id: AT-3r4jtr
+      target:
+        kind: criterion
+        id: C15
+      status: pass
+      by: allen
+      at: 2026-10-16T21:46:38.083026Z

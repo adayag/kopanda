@@ -19,6 +19,18 @@ local SHELLS = {
 local conflicts
 local notified = false
 
+-- The runtime names of the enabled shell plugins, in PluginLoader's order; raises when the list
+-- can't be read.
+local function enabled_shells()
+    local names = {}
+    for _, plugin in ipairs(PluginLoader:loadPlugins()) do
+        if SHELLS[plugin.name:lower()] then
+            names[#names + 1] = plugin.name
+        end
+    end
+    return names
+end
+
 -- The display names of the enabled shell plugins, in PluginLoader's order. A failure to read
 -- the list is logged and refuses nothing, leaving KOReader's own file browser as it is.
 function Guards.conflicts()
@@ -27,11 +39,8 @@ function Guards.conflicts()
     end
     local ok, found = pcall(function()
         local names = {}
-        for _, plugin in ipairs(PluginLoader:loadPlugins()) do
-            local display = SHELLS[plugin.name:lower()]
-            if display then
-                names[#names + 1] = display
-            end
+        for i, name in ipairs(enabled_shells()) do
+            names[i] = SHELLS[name:lower()]
         end
         return names
     end)
@@ -41,6 +50,18 @@ function Guards.conflicts()
     end
     conflicts = found
     return conflicts
+end
+
+-- The runtime names (folder names, case kept) of the enabled shell plugins, read afresh: what a
+-- pull adds to plugins_disabled, matched there by exact name (frontend/pluginloader.lua:212).
+-- {} when the list can't be read, logged.
+function Guards.enabled_shell_names()
+    local ok, names = pcall(enabled_shells)
+    if not ok then
+        logger.err("KoPanda: could not list the enabled shell plugins:", names)
+        return {}
+    end
+    return names
 end
 
 function Guards.refused()

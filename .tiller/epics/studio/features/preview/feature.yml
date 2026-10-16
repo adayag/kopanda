@@ -1,7 +1,7 @@
 id: F-29oj9m
 key: studio/preview
 title: Emulator preview per profile and look
-status: specced
+status: ready
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -10,3 +10,19 @@ depends_on:
     - F-xo6obj
     - F-wkj9iy
     - F-k4yn5f
+review_grain: feature
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:9c44ec5ab52cb5c48c03869f78b2377c5770e955
+        path: .tiller/epics/studio/features/preview/feature.md
+        observed_at: 2026-10-16T21:49:07.205056Z
+    eval:
+        kind: git_blob
+        value: git:99d686f9a6c5ef33f258295ffdb4c5a3cd91c068
+        path: .tiller/epics/studio/features/preview/feature.eval.md
+        observed_at: 2026-10-16T21:49:07.205056Z
+    commit:
+        kind: git_commit
+        value: git:2bbb0b4
+        observed_at: 2026-10-16T21:49:07.243498Z

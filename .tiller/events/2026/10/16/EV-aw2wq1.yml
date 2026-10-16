@@ -1,0 +1,14 @@
+id: EV-aw2wq1
+type: sync.task
+at: 2026-10-16T21:47:25.558126Z
+contributor: allen
+command: sync task T-janm6k
+targets:
+    - T-janm6k
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/bundle-server/task.yml

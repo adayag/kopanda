@@ -1,0 +1,14 @@
+id: EV-ovheq5
+type: add.task
+at: 2026-10-16T21:15:18.592719Z
+contributor: allen
+command: add task bars/quick-settings/launcher-target
+targets:
+    - T-2x7tk6
+after:
+    feature: F-rce9ko
+    key: bars/quick-settings/launcher-target
+    status: proposed
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/launcher-target/task.md
+    - path: .tiller/epics/bars/features/quick-settings/tasks/launcher-target/task.yml

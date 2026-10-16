@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Diner, hold on empty library space</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Caveat:wght@500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2f2e2b}a:hover{color:#2f2e2b}
+</style>
+</helmet>
+<div style="width: 632px; height: 840px; box-sizing: border-box; background: #f5f1e6; color: #2f2e2b; font-family: 'Bricolage Grotesque', sans-serif; position: relative; overflow: hidden">
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; opacity: 0.3">
+    <div style="background: #e0bd6a; padding: 28px 40px 18px 40px; border-bottom: 4px solid #2f2e2b">
+      <div style="font-family: Caveat, cursive; font-size: 24px; line-height: 1">142 books on the shelf</div>
+      <div style="font-size: 40px; font-weight: 800; line-height: 0.95">Library</div>
+    </div>
+    <div style="padding: 22px 40px 0 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px">
+      <div style="height: 220px; background: #e8a59d; border: 3px solid #2f2e2b"></div>
+      <div style="height: 220px; background: #2b4c6f; border: 3px solid #2f2e2b"></div>
+      <div style="height: 220px; background: #8a4b3a; border: 3px solid #2f2e2b"></div>
+      <div style="height: 220px; background: #5e7a4a; border: 3px solid #2f2e2b"></div>
+      <div style="height: 220px; background: #c9a24a; border: 3px solid #2f2e2b"></div>
+      <div style="height: 220px; background: #44474f; border: 3px solid #2f2e2b"></div>
+    </div>
+  </div>
+
+  <div role="dialog" aria-label="Library" style="position: absolute; left: 22px; right: 22px; bottom: 22px; background: #f5f1e6; border: 3px solid #2f2e2b; box-shadow: 8px 8px 0 #2f2e2b; display: flex; flex-direction: column">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 18px 20px; background: #e0bd6a; border-bottom: 3px solid #2f2e2b">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="font-family: Caveat, cursive; font-size: 22px; line-height: 1">this folder</div>
+        <div style="font-size: 28px; font-weight: 800; line-height: 1">Library</div>
+      </div>
+      <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase">142 books</div>
+    </div>
+    <button type="button" style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 20px; border: 0; border-bottom: 2px solid #2f2e2b; background: transparent; font: inherit; font-size: 17px; font-weight: 700; color: #2f2e2b; text-align: left">
+      <span style="display: flex; align-items: center; gap: 14px">
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 16l4 4 4-4M14 6h7M14 11h5M14 16h3"></path></svg>
+        <span>Sort</span>
+      </span>
+      <span style="background: #f5f1e6; border: 2px solid #2f2e2b; padding: 2px 8px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase">Recent ›</span>
+    </button>
+    <button type="button" style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 20px; border: 0; border-bottom: 2px solid #2f2e2b; background: transparent; font: inherit; font-size: 17px; font-weight: 700; color: #2f2e2b; text-align: left">
+      <span style="display: flex; align-items: center; gap: 14px">
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16l-6 8v6l-4-2v-4z"></path></svg>
+        <span>Show</span>
+      </span>
+      <span style="background: #e8a59d; border: 2px solid #2f2e2b; padding: 2px 8px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase">All ›</span>
+    </button>
+    <button type="button" style="display: flex; align-items: center; gap: 14px; padding: 15px 20px; border: 0; background: transparent; font: inherit; font-size: 17px; font-weight: 700; color: #2f2e2b; text-align: left">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"></path></svg>
+      <span style="display: flex; flex-direction: column; gap: 2px">
+        <span>Refresh covers</span>
+        <span style="font-size: 12px; font-weight: 500">Re-reads covers for this folder</span>
+      </span>
+    </button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":632,"height":840}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

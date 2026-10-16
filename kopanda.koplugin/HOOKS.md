@@ -105,9 +105,13 @@ Upgrading KOReader walks this list.
 - `frontend/ui/uimanager.lua:431-433`, `:447-456`.
 - With no pending home the show runs from `nextTick`, landing over what `reader.lua:291-300`
   shows synchronously after `showFiles` (a pending home is shown at once, see `CloseDocument`
-  above); the settled signal runs from `tickAfterNext`, past the next repaint (the
-  harness entry for `scheduleIn`, `nextTick` and `tickAfterNext` has the details). A failed
-  paint closes the home from `nextTick`.
+  above); the settled signal and the show's `finished` run from a `nextTick` that the home's
+  first `paintTo` schedules, past that `_repaint`, or at once from `onCloseWidget` for a home
+  closed before it painted. Nothing is scheduled before the paint, so a home under a
+  `covers_fullscreen` window waits without a task. A `tickAfterNext` from the show could land
+  before the paint and tell `finished` the home hadn't painted (the harness entry for
+  `scheduleIn`, `nextTick` and `tickAfterNext` has the details). A failed paint closes the home
+  from `nextTick`.
 
 ### `UIManager:show`, `close` and `isWidgetShown`
 
@@ -126,9 +130,10 @@ Upgrading KOReader walks this list.
 - After the home's first paint the plugin executes `KoPandaSettled` with `{ screen, paint_ms,
   settle_ms, prebuilt }`, once per home; the capture harness entry below is the listener.
   `paint_ms` runs from the start of the show path to the end of the home's first `paintTo`;
-  `settle_ms` runs on to the signal, which `tickAfterNext` (`uimanager.lua:447-456`) queues
-  behind tasks already due on the tick after the paint, such as coverbrowser's background
-  extraction (`plugins/coverbrowser.koplugin/covermenu.lua:119`, a fork).
+  `settle_ms` runs on to the signal, which the first `paintTo`'s `nextTick`
+  (`uimanager.lua:431-433`) queues behind tasks already due on the tick after the paint, such
+  as coverbrowser's background extraction (`plugins/coverbrowser.koplugin/covermenu.lua:119`,
+  a fork).
 
 ### The swatch screen
 
@@ -184,13 +189,20 @@ Upgrading KOReader walks this list.
   made (`frontend/pluginloader.lua:479-482`).
 - `guards.lua` lowercases each name and refuses the shell for `simpleui`, `bookshelf` and
   `ennui` (a git clone of ennUI is `ennUI.koplugin`). An error reading the list refuses nothing.
+- `Guards.enabled_shell_names` reads the same list afresh at pull time and gives those plugins'
+  runtime names as loaded, case kept: the pull's `disable` list, which the apply patch writes
+  into `plugins_disabled`, matched there by exact folder name (`frontend/pluginloader.lua:210-212`).
+  An error reading the list gives none, logged.
 
-### `InfoMessage`, the refusal and boot-guard notices
+### `InfoMessage`, the refusal, boot-guard and pull notices
 
 - `ui/widget/infomessage`: `frontend/ui/widget/infomessage.lua:47` (the class), `:52-53`
   (`text`, `timeout`), `:263-292` (`onShow` schedules the close when `timeout` is set).
 - Shown from `UIManager:nextTick`. The refusal message has no timeout and is raised once per
   process from a file-manager instance. The boot guard's notice has a timeout of 8 s.
+- `push_notice.lua` shows the apply patch's result (applied, rolled back, failed, restore
+  failed) with no timeout: over the first home of a process that painted, or, while another
+  shell refuses the home, from a file-manager instance when nothing is on probation.
 
 ### The runtime state file, `settings/kopanda/state.lua`
 
@@ -209,6 +221,13 @@ Upgrading KOReader walks this list.
   format `writeToFile` writes with `lua_dofile_ready`, `frontend/util.lua:1125-1128`) to catch a
   read-only file or folder or a full disk. The boot guard's `boot_pending` lives here, not in the
   schema.
+- The apply patch (below) also writes `boot_pending = false` here, through `LuaSettings` before
+  any plugin loads, when it applies a pull and when it restores one, so the boot guard never
+  skips the home that proves or reports the install.
+- The Studio menu (below) keeps `studio_address` (the studio's host:port as typed, trimmed) and
+  `studio_profile` (the profile id to pull) here. An emptied address clears its key:
+  `saveSetting(key, nil)` sets it to nil (`frontend/luasettings.lua:102-105`), so `flush` leaves
+  it out, and `State.set`'s read-back takes the absent key as the nil it was given.
 
 ### The settings file, `settings/kopanda/settings.lua`
 
@@ -227,6 +246,104 @@ Upgrading KOReader walks this list.
 - `Settings._migrate` and `Settings._reset` are KoPanda's own seams for
   `spec/unit/settings_spec.lua`, not KOReader internals; they are named here because the hooks
   check flags every underscore access.
+
+### The apply patch, `patches/1-kopanda-apply.lua`
+
+- `push_apply.lua` is also the patch: `arm` copies it to `<data>/patches/1-kopanda-apply.lua`
+  (`datastorage.lua:79-81`, `getPatchesDir`), refusing when `patches/.patches_disabled` exists
+  (`frontend/userpatch.lua:39-40`, checked once per process; `applyPatches` then runs nothing,
+  `:110-111`). The copy goes through `1-kopanda-apply.lua.tmp`, which the loader skips: it runs
+  only names ending `.lua` (`:87`).
+- Early priority: the prefix `1` (`frontend/userpatch.lua:11-12`), run by `runUserPatchTasks`
+  (`:65-100`) under `pcall(dofile, fullpath)` (`:89`), whose failure is only logged (`:92`).
+  `reader.lua:25-27` applies early patches before `G_reader_settings` is opened (`:39-40`), and
+  plugins are discovered with the first file manager
+  (`frontend/apps/filemanager/filemanager.lua:418-429`).
+  `dofile` passes the chunk no arguments and `require` passes the module name, which is how the
+  file tells its two uses apart (`spec/unit/push_apply_spec.lua`'s module cases).
+- The push folder, `<data>/settings/kopanda/push/` (`datastorage.lua:60-62`, `getSettingsDir`):
+  the stage, the rollback set, probation and the result. Device-local runtime state, not a
+  setting.
+- `plugins_disabled` in `settings.reader.lua`: a table keyed by plugin folder name
+  (`frontend/pluginloader.lua:175`, matched by exact name at `:212`). The patch adds the stage's
+  `disable` names and the restore puts the recorded value back (or deletes the key). Only an early
+  patch can write it: KOReader writes `G_reader_settings` back at exit (`reader.lua:306-308`).
+- `luasettings`: `frontend/luasettings.lua:21-48` (`open`: a missing or corrupt file falls back
+  to `.old`, then `{}`), `:89` (`readSetting`), `:102` (`saveSetting`), `:108` (`delSetting`),
+  `:252-275` (`flush`; its backup renames the file onto `<file>.old` at `:262`, KOReader's rename,
+  not the patch's). Each write is read back with `dofile`, as `state.lua` does.
+- `ffi/util`: `base/ffi/util.lua:223-241` (`copyFile` ignores write errors, so `arm` checks the
+  copy's size), `:588` (`fsyncOpenedFile`), `:614` (`fsyncDirectory`) for the records, which are
+  written to `<name>.tmp`, synced, and renamed onto a name removed first.
+- `dump`: `frontend/dump.lua:68-72` (`dump(value, nil, true)`, keys in order); records are read
+  back with `load` in an empty environment.
+- `libs/libkoreader-lfs`: `symlinkattributes`, `dir`, `mkdir`, `rmdir` and `attributes`
+  (LuaFileSystem, `base/thirdparty/koreader-lfs/CMakeLists.txt:19`); the purge never follows a
+  link.
+- `PushApply._move`, `PushApply._purge`, `PushApply._write_record` and
+  `PushApply._set_reader_key` are KoPanda's own seams for `spec/unit/push_apply_spec.lua`, not
+  KOReader internals; they are named here because the hooks check flags every underscore access.
+
+### The Studio menu and the pull: `InputDialog`, `ButtonDialog`, `ConfirmBox`, `Restart`, `NetworkMgr`, `socketutil`, `socket.http`, `ffi/sha2`
+
+- Tools › KoPanda › Studio is in both of `addToMainMenu`'s menus, before Swatches. Its items'
+  texts are `text_func`s and Pull's state an `enabled_func`, read each time the menu draws
+  (`frontend/ui/widget/touchmenu.lua:74-75`, `:1026-1028`); Address and Profile are
+  `keep_menu_open` and call the menu's `updateItems` (`:671`) after a save (the settings menu
+  entry above). Every item acts from `UIManager:nextTick` and catches its own errors.
+- `ui/widget/inputdialog`: the Address dialog as the place search's (that entry above),
+  `frontend/ui/widget/inputdialog.lua:583` (`getInputText`), `:640` (`onShowKeyboard`), with the
+  hint `192.168.1.20:4490`; `util.trim` (`frontend/util.lua:52`) before it is saved.
+- `ui/widget/buttondialog`: the profile chooser, one row per profile by name and Cancel, as the
+  place search's chooser (that entry above, `frontend/ui/widget/buttondialog.lua:62-75`).
+- `ui/widget/confirmbox`: the pull's confirm and the restart offer
+  (`frontend/ui/widget/confirmbox.lua:45-51`, with `cancel_text` at `:49`, `:107-122`); the restart
+  offer's `ok_text` is Restart and its `cancel_text` Later, whose default `cancel_callback` does
+  nothing, so the stage stays armed for the next start.
+- `ui/event`: `frontend/ui/event.lua:30` (`Event:new`). Restart broadcasts `Event:new("Restart")`
+  with `UIManager:broadcastEvent` (`frontend/ui/uimanager.lua:1042`). `DeviceListener:onRestart`
+  (`frontend/device/devicelistener.lua:454-456`) runs the app menu's `exitOrRestart`: the file
+  manager's closes the menu and the file manager (`frontend/apps/filemanager/filemanagermenu.lua:998-1004`),
+  the reader's closes the menu and then the reader from a `nextTick`
+  (`frontend/apps/reader/modules/readermenu.lua:386-393`); then `UIManager:restartKOReader` quits
+  with 85 (`frontend/ui/uimanager.lua:1765-1769`), and the Kindle's launcher starts KOReader again
+  while it exits 85 (`platform/kindle/koreader.sh:333-340`).
+- `ui/uimanager`: the "Pulling <id>…" note is painted with `forceRePaint` (`frontend/ui/uimanager.lua:1404`)
+  before the pull blocks the UI loop, and closed after; no timer, no progress redraws.
+- `ui/network/manager`, required at call time so a spec can stub it:
+  `frontend/ui/network/manager.lua:713-719` (`runWhenConnected`: the callback now when connected,
+  else `beforeWifiAction`, `:605-618`, which turns Wi-Fi on, waits or prompts as the user's
+  `wifi_enable_action` says, then runs it). It needs a connection only, not DNS (`isOnline`,
+  `:641-648`, is never called). Profile and Pull fetch inside it.
+- `socketutil`: `frontend/socketutil.lua:32-33` (`FILE_BLOCK_TIMEOUT` 15 s, `FILE_TOTAL_TIMEOUT`
+  60 s), `:52-62` (`set_timeout`), `:64-70` (`reset_timeout`, on every path, a raising request
+  included), `:98-115` (`table_sink`, the manifest and the profile list), `:118-140` (`file_sink`,
+  each file; it closes the file at the body's end, so `push_pull.lua` closes one a failed request
+  left open). The sinks read the total timeout when made, so each is made after `set_timeout`.
+- `socket.http`: `request` as the weather entry above, looked up at call time, with
+  `Accept-Encoding: identity`; a status other than 200 refuses, a 409 for a file as "changed in the
+  studio during the pull".
+- `rapidjson`: `decode` as the weather entry above; a decoded object or array is a table either
+  way, so `push_bundle.lua` takes a table with items 1..n for an array and checks every field's type.
+- `ffi/sha2`: `base/ffi/sha2.lua:4356-4410` (`sha256ext`: with no message it returns an updater fed
+  chunk by chunk, then called with no argument for the hex digest), `:5612` (`sha256`). Each file's
+  sha256 and the bundle hash, the studio's `hashTree` framing, are streamed through it.
+- `util`: `frontend/util.lua:855-883` (`makePath`, the download's folders).
+- `libs/libkoreader-lfs`: `symlinkattributes` (each downloaded file must be a `file` with one
+  link, `nlink`), `attributes` (sizes) and `currentdir` (LuaFileSystem,
+  `base/thirdparty/koreader-lfs/CMakeLists.txt:19`).
+- The plugin's own folder, `self.path`: `frontend/pluginloader.lua:248` (the loader sets the plugin
+  module's `path` to its root), which is relative on the Kindle (`:24` `DEFAULT_PLUGIN_PATH =
+  "plugins"`, `:177`, `:204`) under the launcher's working directory
+  (`platform/kindle/koreader.sh:130`), and `<KO_HOME>/plugins//kopanda.koplugin` under `KO_HOME`
+  (`:196`, `:204`). The pull makes it absolute with `lfs.currentdir()` and collapses doubled
+  slashes for the stage's `plugin_dir`, and refuses a folder not named `kopanda.koplugin`.
+- `patches/.patches_disabled`: `frontend/userpatch.lua:39-40` (checked once per process); the pull
+  refuses before any request when it exists, as `PushApply.arm` does (the apply patch entry above).
+- `datastorage`: `getDataDir` (`datastorage.lua:16-20`), the push folder and `patches/` under it.
+- `PushApply._purge` and `PushApply._write_record` (the apply patch entry above) purge `download/`
+  and the stage without following links, and write `staged.lua` as the patch's records are
+  written; KoPanda's own seams, not KOReader internals.
 
 ### `InputContainer` gesture and paint dispatch
 
@@ -371,8 +488,8 @@ Upgrading KOReader walks this list.
   both apps register their menu module before making plugin instances
   (`frontend/apps/filemanager/filemanager.lua:404`, :418-429;
   `frontend/apps/reader/readerui.lua:176`, :464-478). A refused instance registers too, and its
-  `addToMainMenu` gives Tools › KoPanda the one item Swatches; the Home tab, Home and Settings
-  are left out.
+  `addToMainMenu` gives Tools › KoPanda the items Studio and Swatches; the Home tab, Home and
+  Settings are left out.
 
 ### The cached menu order, `ui/elements/filemanager_menu_order`
 
@@ -1238,7 +1355,10 @@ Upgrading KOReader walks this list.
   before the first `_repaint` in about 6 % of captures, a blank white shot. The probe now
   queues its signal with `nextTick` from its widget's first `paintTo`, inside `_repaint`, so
   it always runs past the paint; `spec/emulator/scenarios/2-scenario-held-clock.lua` holds
-  `time.now()` through each pass so a capture spec reproduces the race on every run.
+  `time.now()` through each pass so a capture spec reproduces the race on every run. The
+  home's own settle did the same until it too moved to its first `paintTo`: about one run in
+  ten of `spec/unit/push_notice_spec.lua` gave the show's `finished` `false` after a good
+  paint, and that spec now holds `time.now()` to reproduce it on every run.
 
 ### The `Show` event reaching plugin instances
 
@@ -1481,6 +1601,64 @@ Upgrading KOReader walks this list.
   whatever plugins the emulator's own `plugins/` holds.
 - Any failure logs `KOPANDA_SCENARIO: home fixture failed` and exits with status 4, which the
   driver reports with the log tail.
+
+### Multi-start runs (`run_starts`), exit 85 and no relaunch on macOS
+
+- `frontend/ui/uimanager.lua:1765-1769` (`restartKOReader` quits with 85); `reader.lua:312-313`
+  (`exitReader` returns a numeric exit code), `:328` (`os.exit` with it).
+- `frontend/device/sdl/device.lua:142` (`canRestart = notOSX`): the emulator on macOS doesn't
+  start itself again on 85, and running `./luajit reader.lua` directly has no launcher loop, so the
+  driver's next start is the relaunch. `run_starts` writes the scratch profile once and runs each
+  start on it, accepting the exit statuses that start lists (85 for a start that restarts, 3 for a
+  start the capture patch's settle cap ends). The capture patch is inactive in a start without
+  `shot` (`KOPANDA_SHOT` unset, `spec/emulator/patches/2-kopanda-capture.lua:8-11`).
+- Extra plugins (`extra_plugins`) are copied into `<KO_HOME>/plugins/`; one whose folder name the
+  emulator's own `plugins/` also holds would load twice, so the driver refuses it. That `plugins/`
+  is a symlink to `~/Projects/kodev/koreader/plugins` (scanned as `plugins`,
+  `frontend/pluginloader.lua:24`, `:177`), which holds the real `simpleui`, `bookshelf` and
+  `solariconpack`; the push spec's stand-in shell is therefore `spec/fixtures/push/shells/ennui.koplugin`,
+  which the coexistence guard matches lower-cased (`kopanda.koplugin/guards.lua:11-17`) and which
+  the driver's default disabled list, matched by exact name (`pluginloader.lua:211-212`), leaves on.
+
+### The push server (`spec/emulator/push_server.lua`): `socket.bind`
+
+- `base/build/arm64-apple-darwin23.5.0-debug/common/socket.lua:27-40` (`bind`: a listening TCP
+  socket, `reuseaddr` set); LuaSocket's `getsockname`, `settimeout` and `accept`
+  (`base/build/arm64-apple-darwin23.5.0-debug/thirdparty/luasocket/source/src/tcp.c:47`, `:56`,
+  `:66`).
+- Bound to `127.0.0.1` on port 0, so the system picks a free port and parallel worktrees never
+  collide; the port is written to a file the spec waits for. `accept` with a timeout of the
+  server's lifetime returns nil once that long passes with no connection, and the server exits.
+  It runs as its own process: Busted blocks on the driver's `io.popen():read` while the emulator
+  runs.
+- KOReader's `socket.http` client (the pull's, the Studio menu entry above) reads the body by
+  `Content-Length`; every answer carries it and `Connection: close`.
+
+### The push-pull scenario (`spec/emulator/scenarios/2-scenario-push-pull.lua`)
+
+- Active when `KOPANDA_PUSH_ADDRESS` is set. Polls with `UIManager:scheduleIn` until
+  `FileManager.instance` (`frontend/apps/filemanager/filemanager.lua:447`) and KoPanda's
+  `push_pull` and `guards` modules are in `package.loaded` (required by `main.lua` at load, in the
+  refused instance too).
+- KoPanda's folder is the `path` the loader set on its module (`frontend/pluginloader.lua:248`),
+  found in `PluginLoader:loadPlugins()` (`:273-291`); the data folder is `DataStorage:getDataDir()`
+  (`datastorage.lua:16-20`, `KO_HOME`). The pull is `PushPull.pull` with `Guards.enabled_shell_names()`,
+  called directly: the emulator's Wi-Fi is off (`emulator_fake_wifi_connected` above), so
+  `NetworkMgr:runWhenConnected` is bypassed.
+- Then `UIManager:broadcastEvent(Event:new("Restart"))` (`frontend/ui/uimanager.lua:1042`,
+  `frontend/ui/event.lua:30`), as the restart offer does: `DeviceListener:onRestart`
+  (`frontend/device/devicelistener.lua:454-456`) closes the file manager
+  (`frontend/apps/filemanager/filemanagermenu.lua:998-1004`) and quits with 85. A failed pull logs
+  `KOPANDA_SCENARIO: <message>` and quits with 5.
+
+### The notices scenario (`spec/emulator/scenarios/2-scenario-notices.lua`)
+
+- Active when `KOPANDA_NOTICES` names a file. Wraps `UIManager.show`
+  (`frontend/ui/uimanager.lua:229`) at patch time, before any plugin runs (`reader.lua:190`), so
+  the plugin's `UIManager:show` calls go through it; an `InfoMessage`
+  (`frontend/ui/widget/infomessage.lua:47`) is told by its metatable, which `Widget:new` sets to the
+  class (`frontend/ui/widget/widget.lua:26-31`, `:40-48`). Each one's `text` is appended to the
+  file as one line before the original `show` runs; the spec reads the last line.
 
 ### `logger`
 

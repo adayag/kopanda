@@ -1,0 +1,13 @@
+id: EV-a86piz
+type: claim.task
+at: 2026-10-16T19:42:00.803479Z
+contributor: allen
+command: claim task T-o5gnzj
+targets:
+    - T-o5gnzj
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/apply-and-rollback/task.yml

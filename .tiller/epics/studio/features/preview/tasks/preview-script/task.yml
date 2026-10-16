@@ -1,9 +1,19 @@
 id: T-f4ooin
 key: studio/preview/preview-script
 title: bin/preview renders a profile's home in one look, day or night
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-0s2a1j
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:9897027df2cc44b1aaf97b44e9855f0fba713384
+        path: .tiller/epics/studio/features/preview/tasks/preview-script/task.md
+        observed_at: 2026-10-16T21:49:07.265534Z
+    commit:
+        kind: git_commit
+        value: git:2bbb0b4
+        observed_at: 2026-10-16T21:49:07.290258Z

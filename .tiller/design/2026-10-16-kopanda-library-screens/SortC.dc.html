@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Diner, sort picker</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Caveat:wght@500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2f2e2b}a:hover{color:#2f2e2b}
+</style>
+</helmet>
+<div style="width: 632px; height: 840px; box-sizing: border-box; background: #f5f1e6; color: #2f2e2b; font-family: 'Bricolage Grotesque', sans-serif; position: relative; overflow: hidden">
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; opacity: 0.3">
+    <div style="background: #e0bd6a; padding: 28px 40px 18px 40px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 4px solid #2f2e2b">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="font-family: Caveat, cursive; font-size: 24px; line-height: 1">142 books on the shelf</div>
+        <div style="font-size: 40px; font-weight: 800; line-height: 0.95">Library</div>
+      </div>
+      <div style="display: flex; gap: 10px">
+        <span style="background: #f5f1e6; border: 2px solid #2f2e2b; padding: 4px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase">Recent ▾</span>
+        <span style="background: #e8a59d; border: 2px solid #2f2e2b; padding: 4px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase">All ▾</span>
+      </div>
+    </div>
+    <div style="padding: 22px 40px 0 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px">
+      <div style="height: 220px; background: #e8a59d; border: 3px solid #2f2e2b"></div>
+      <div style="height: 220px; background: #2b4c6f; border: 3px solid #2f2e2b"></div>
+      <div style="height: 220px; background: #8a4b3a; border: 3px solid #2f2e2b"></div>
+    </div>
+  </div>
+
+  <div role="dialog" aria-label="Sort" style="position: absolute; left: 22px; right: 22px; bottom: 22px; background: #f5f1e6; border: 3px solid #2f2e2b; box-shadow: 8px 8px 0 #2f2e2b; display: flex; flex-direction: column">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 18px 20px; background: #e0bd6a; border-bottom: 3px solid #2f2e2b">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="font-family: Caveat, cursive; font-size: 22px; line-height: 1">for this folder</div>
+        <div style="font-size: 28px; font-weight: 800; line-height: 1">Sort</div>
+      </div>
+      <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase">Library</div>
+    </div>
+    <button type="button" aria-pressed="true" style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 20px; border: 0; border-bottom: 2px solid #2f2e2b; background: #6fb3ab; font: inherit; font-size: 17px; font-weight: 800; color: #2f2e2b; text-align: left">
+      <span style="display: flex; flex-direction: column; gap: 2px">
+        <span>Recent</span>
+        <span style="font-size: 12px; font-weight: 500">Last opened first</span>
+      </span>
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>
+    </button>
+    <button type="button" aria-pressed="false" style="display: flex; align-items: center; gap: 14px; padding: 16px 20px; border: 0; border-bottom: 2px solid #2f2e2b; background: transparent; font: inherit; font-size: 17px; font-weight: 700; color: #2f2e2b; text-align: left">
+      <span style="display: flex; flex-direction: column; gap: 2px">
+        <span>Title</span>
+        <span style="font-size: 12px; font-weight: 500">A to Z, ignoring “The” and “A”</span>
+      </span>
+    </button>
+    <button type="button" aria-pressed="false" style="display: flex; align-items: center; gap: 14px; padding: 16px 20px; border: 0; border-bottom: 2px solid #2f2e2b; background: transparent; font: inherit; font-size: 17px; font-weight: 700; color: #2f2e2b; text-align: left">
+      <span style="display: flex; flex-direction: column; gap: 2px">
+        <span>Author</span>
+        <span style="font-size: 12px; font-weight: 500">By surname</span>
+      </span>
+    </button>
+    <button type="button" aria-pressed="false" style="display: flex; align-items: center; gap: 14px; padding: 16px 20px; border: 0; background: transparent; font: inherit; font-size: 17px; font-weight: 700; color: #2f2e2b; text-align: left">
+      <span style="display: flex; flex-direction: column; gap: 2px">
+        <span>Series</span>
+        <span style="font-size: 12px; font-weight: 500">Series together, in series order</span>
+      </span>
+    </button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":632,"height":840}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,7 +1,17 @@
 id: T-0s2a1j
 key: studio/preview/capture-inputs
 title: The capture driver takes a profile's screen and settings file, and the home fixture a weather reading for them
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:ca745cb89ae2f9ed3353de76c896210a3487dc9d
+        path: .tiller/epics/studio/features/preview/tasks/capture-inputs/task.md
+        observed_at: 2026-10-16T21:49:07.244174Z
+    commit:
+        kind: git_commit
+        value: git:2bbb0b4
+        observed_at: 2026-10-16T21:49:07.26511Z
