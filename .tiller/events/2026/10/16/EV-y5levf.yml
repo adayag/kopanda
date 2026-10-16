@@ -1,0 +1,17 @@
+id: EV-y5levf
+type: start.task
+at: 2026-10-16T03:18:10.519235Z
+contributor: allen
+command: start task T-cbmaw1
+targets:
+    - T-cbmaw1
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/home/device-menus
+    branch: tiller/home/device-menus/location-search
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/location-search/task.yml
+    - path: .tiller/epics/home/features/device-menus/feature.yml
