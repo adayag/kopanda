@@ -1,7 +1,7 @@
 id: T-1r8qb2
 key: nav-bar/nav-bar/goldens
 title: File-browser goldens in both looks on both profiles and their paint budget
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:fae01e4
         observed_at: 2026-10-16T20:56:58.546594Z
 branch: tiller/nav-bar/nav-bar/goldens
+review_ref:
+    branch: tiller/nav-bar/nav-bar/goldens
+    head:
+        kind: git_commit
+        value: git:1ef940c
+        observed_at: 2026-10-16T22:15:36.493944Z
 gates:
     build:
         required: true
