@@ -1,0 +1,13 @@
+id: EV-a0r7ih
+type: start.tweak
+at: 2026-10-16T00:20:49.678855Z
+contributor: allen
+command: start tweak TW-a7nfpr
+targets:
+    - TW-a7nfpr
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/shared-paint-helpers/tweak.yml
