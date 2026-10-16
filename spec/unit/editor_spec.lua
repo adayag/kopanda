@@ -221,6 +221,14 @@ describe("the editor frame", function()
             local header = editor.header
             assert.same({ 0, 0, Screen:getWidth(), editor.rule.y }, { header.x, header.y, header.w, header.h })
             assert.truthy(count(bb, header, grey(palette.on_band), 8) > 0, "no on_band text")
+            assert.is_true(near(rgb(palette.band), pixel(bb, 2, editor.rule.y - 1), 1), "band down to the rule")
+        end)
+
+        it("fills Diner's Done in paper inside its outline, over the band", function()
+            local editor, look, palette = painted("diner")
+            local done, outline = editor.done, scale(look.editor.button_outline_width)
+            assert.equals("paper", look.editor.button_fill_color)
+            assert.is_true(near(rgb(palette.paper), pixel(bb, done.x + outline + 1, done.y + outline + 1), 1))
         end)
 
         it("leaves Editorial's header on paper with ink text", function()
@@ -255,6 +263,7 @@ describe("the editor frame", function()
             local x, y = rect.x + rect.w + sx - 1, rect.y + rect.h + sy - 1
             assert.is_true(near(rgb(palette.shadow), pixel(bb, x, y), 1), "shadow corner")
             assert.is_true(near(rgb(palette.paper), pixel(bb, x + 1, y + 1), 1), "past the shadow")
+            assert.is_true(near(rgb(palette.paper), pixel(bb, centre(rect)), 1), "the card over its shadow")
             Editor.close()
             bb:free()
 
@@ -325,6 +334,29 @@ describe("the editor frame", function()
             local editor = Editor.shown
             send(harness.gesture("tap", centre(body_place(editor, 2).rect)))
             assert.same({}, runs)
+            assert.equals(editor, harness.top())
+        end)
+
+        it("on a control with no run run nothing, log no error and keep the editor", function()
+            local runs = {}
+            local spec = screen_spec(runs)
+            local body = spec.body
+            spec.body = function(ctx, width)
+                local rows = body(ctx, width)
+                local size = ctx.screen:scaleBySize(30)
+                rows[#rows + 1] = { { kind = "caption", rect = { x = 0, y = size, w = width, h = size } } }
+                return rows
+            end
+            Editor.show(spec)
+            local editor = Editor.shown
+            local caption = body_place(editor, 3)
+            assert.equals("caption", caption.control.kind)
+            local errors = spy.on(logger, "err")
+            send(harness.gesture("tap", centre(caption.rect)))
+            errors:revert()
+            assert.spy(errors).was_not_called()
+            assert.same({}, runs)
+            assert.equals(editor, Editor.shown)
             assert.equals(editor, harness.top())
         end)
 

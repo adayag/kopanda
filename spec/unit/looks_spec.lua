@@ -378,6 +378,7 @@ describe("looks", function()
             assert.same({ "outline", 3 }, { editor.header_rule_color, editor.header_rule_width })
             assert.same({ "outline", 3, "paper" }, { editor.button_outline_color, editor.button_outline_width,
                 editor.button_fill_color })
+            assert.same({ "outline", 3 }, { editor.card_outline_color, editor.card_outline_width })
             assert.same({ "outline", "mustard" }, { editor.selected_outline_color, editor.selected_fill_color })
             assert.same({ "outline", 2 }, { editor.row_rule_color, editor.row_rule_width })
             assert.equals("muted", editor.disabled_color)
