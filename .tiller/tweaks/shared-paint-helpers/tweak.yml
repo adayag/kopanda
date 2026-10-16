@@ -1,7 +1,7 @@
 id: TW-a7nfpr
 key: tweaks/shared-paint-helpers
 title: One paint module for the fill, border and shadowed-box helpers
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -24,24 +24,24 @@ gates:
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-16T01:19:16.354327Z
+        run_at: 2026-10-16T02:11:31.415801Z
         against:
             kind: git_commit
-            value: git:01d5a03
-            observed_at: 2026-10-16T01:19:16.354326Z
+            value: git:29e7579
+            observed_at: 2026-10-16T02:11:31.4158Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/build-01d5a03-out-e7d0f7c7df1590b23e6031249e6f8f4bd4675963c7dd43c80937b24d23ff0075.txt
+              ref: artifacts/tiller/gates/build-29e7579-out-f6affdd918db7d20547dca1c750cde37685708a1d47996f198edde30644bfe5b.txt
     tests:
         required: true
         kind: command
-        status: fail
+        status: pass
         run_by: allen
-        run_at: 2026-10-16T01:19:16.354327Z
+        run_at: 2026-10-16T02:11:31.415801Z
         against:
             kind: git_commit
-            value: git:01d5a03
-            observed_at: 2026-10-16T01:19:16.354326Z
+            value: git:29e7579
+            observed_at: 2026-10-16T02:11:31.4158Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/tests-01d5a03-out-8c73fd6e8d631d3254b85f15eb4fb21e9398c2d3da4b9ce125e486fef44906ce.txt
+              ref: artifacts/tiller/gates/tests-29e7579-out-e239ca498b05f3b40d579c5b959e4d21ca6aebf82ed7644e446d5080e6f4e6ee.txt
