@@ -1,7 +1,7 @@
 id: T-n450u3
 key: library/book-model/records
 title: Book records from the library folder, read status and progress, sources, and the featured book reading through them
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:f3fd5f9
         observed_at: 2026-10-16T22:58:33.522142Z
 branch: tiller/library/book-model/records
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T23:25:03.056861Z
+        against:
+            kind: git_commit
+            value: git:255a64e
+            observed_at: 2026-10-16T23:25:03.056855Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-255a64e-out-16ba9546d99e32c3ee6c9623f09f9d7b3c22637b04443ebb8930f970de0bbfe3.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T23:25:03.056861Z
+        against:
+            kind: git_commit
+            value: git:255a64e
+            observed_at: 2026-10-16T23:25:03.056855Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-255a64e-out-9032429b401fe57cc1347a661c22158df3f4ad44a70ede3537e50d10ac022ce3.txt

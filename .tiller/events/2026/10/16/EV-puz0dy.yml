@@ -1,0 +1,13 @@
+id: EV-puz0dy
+type: check.task
+at: 2026-10-16T23:27:34.259265Z
+contributor: allen
+command: check task T-n450u3
+targets:
+    - T-n450u3
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/records/task.yml
