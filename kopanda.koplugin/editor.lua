@@ -173,7 +173,7 @@ local function lay_out(editor, ctx)
     end
 
     -- The foot, pinned above the bottom padding; then as many of the body's rows, in order, as
-    -- fit between the rule's padding and the foot.
+    -- fit between body_gap below the rule and the foot.
     local foot_rows = spec.foot(ctx, content_w) or {}
     local foot_h = 0
     for _, row in ipairs(foot_rows) do
@@ -181,7 +181,7 @@ local function lay_out(editor, ctx)
     end
     local foot_top = size.h - scale(tokens.padding.bottom) - foot_h
     local body_rows = spec.body(ctx, content_w) or {}
-    local y = rule.y + rule.h + top
+    local y = rule.y + rule.h + scale(tokens.body_gap)
     local kept = 0
     for _, row in ipairs(body_rows) do
         local h = row_height(row)

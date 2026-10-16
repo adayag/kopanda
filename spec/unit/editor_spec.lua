@@ -237,13 +237,13 @@ describe("the editor frame", function()
             assert.truthy(count(bb, editor.header, grey(palette.ink), 8) > 0, "no ink text")
         end)
 
-        it("lays the body out from padding.top below the rule and pins the foot above padding.bottom", function()
+        it("lays the body out from body_gap below the rule and pins the foot above padding.bottom", function()
             for _, id in ipairs({ "editorial", "diner" }) do
                 local editor, look = painted(id)
                 local tokens = look.editor
                 local first, second = body_place(editor, 1).rect, body_place(editor, 2).rect
                 local side = scale(tokens.padding.side)
-                assert.same({ side, editor.rule.y + editor.rule.h + scale(tokens.padding.top) }, { first.x, first.y })
+                assert.same({ side, editor.rule.y + editor.rule.h + scale(tokens.body_gap) }, { first.x, first.y }, id)
                 assert.equals(Screen:getWidth() - 2 * side, first.w)
                 assert.equals(first.y + first.h + scale(tokens.card_gap), second.y)
                 local foot = editor.places[#editor.places].rect

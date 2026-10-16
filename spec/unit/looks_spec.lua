@@ -108,7 +108,7 @@ describe("looks", function()
                     "sheet.book_header_padding.bottom", "sheet.row_rule_color", "sheet.status_chip_color",
                     "sheet.chip_padding.x", "type.sheet_heading.face", "type.sheet_aside.color",
                     "type.sheet_chip.size", "editor.padding.top", "editor.header_band_color",
-                    "editor.header_rule_width", "editor.button_padding.y", "editor.card_padding.x",
+                    "editor.header_rule_width", "editor.body_gap", "editor.button_padding.y", "editor.card_padding.x",
                     "editor.selected_fill_color", "editor.arrow_size", "editor.disabled_color",
                     "editor.box_padding.y", "editor.row_rule_color", "editor.control_size",
                     "editor.kind_columns", "type.editor_aside.tracking", "type.editor_title.size",
@@ -360,6 +360,7 @@ describe("looks", function()
             assert.same({ top = 40, side = 40, bottom = 28 }, editor.padding)
             assert.same({ false, false }, { editor.header_band_color, editor.header_text_color })
             assert.same({ "ink", 1, 16 }, { editor.header_rule_color, editor.header_rule_width, editor.header_gap })
+            assert.equals(18, editor.body_gap)
             assert.same({ "ink", 1, false }, { editor.button_outline_color, editor.button_outline_width,
                 editor.button_fill_color })
             assert.same({ "hairline", 1 }, { editor.card_outline_color, editor.card_outline_width })
@@ -376,6 +377,7 @@ describe("looks", function()
             local editor, parts = looks.diner.editor, looks.diner.type
             assert.same({ "band", "on_band" }, { editor.header_band_color, editor.header_text_color })
             assert.same({ "outline", 3 }, { editor.header_rule_color, editor.header_rule_width })
+            assert.equals(18, editor.body_gap)
             assert.same({ "outline", 3, "paper" }, { editor.button_outline_color, editor.button_outline_width,
                 editor.button_fill_color })
             assert.same({ "outline", 3 }, { editor.card_outline_color, editor.card_outline_width })

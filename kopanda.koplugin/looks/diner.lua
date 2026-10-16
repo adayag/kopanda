@@ -376,6 +376,7 @@ return {
         header_rule_color = "outline", -- no board: the doc's ink strokes
         header_rule_width = 3, -- no board: stroke.outline
         header_gap = 16, -- no board: Editorial's
+        body_gap = 18, -- no board: Editorial's
         button_outline_color = "outline", -- no board: the doc's ink strokes
         button_outline_width = 3, -- no board: stroke.outline
         button_fill_color = "paper", -- no board: a paper button on the band

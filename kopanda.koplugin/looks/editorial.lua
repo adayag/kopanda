@@ -353,6 +353,7 @@ return {
         header_rule_color = "ink", -- EditLayout.dc.html:19
         header_rule_width = 1, -- EditLayout.dc.html:19
         header_gap = 16, -- the header's padding above the rule (EditLayout.dc.html:19)
+        body_gap = 18, -- the rule to the first card (EditLayout.dc.html:27)
         button_outline_color = "ink", -- EditLayout.dc.html:24
         button_outline_width = 1, -- EditLayout.dc.html:24
         button_fill_color = false, -- transparent (EditLayout.dc.html:24)
