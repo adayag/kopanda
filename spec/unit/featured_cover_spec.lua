@@ -302,6 +302,28 @@ describe("the featured cover", function()
             end
         end)
 
+        it("sets a placeholder title word too wide for a narrow box smaller, never split", function()
+            stub(false)
+            local util = require("util")
+            for _, id in ipairs({ "editorial", "diner" }) do
+                for _, title in ipairs({ "Piranesi", "Piranesi and the Labyrinth" }) do
+                    local ctx = ctx_for(id)
+                    ctx.text_size = "large"
+                    local w, h = FeaturedCover.box(253, ctx)
+                    local built = FeaturedCover.build({ file = BOOK, title = title }, w, h, ctx)
+                    local box = built[#built]
+                    local chars = util.splitToChars(box.text)
+                    local lines = {}
+                    for i, line in ipairs(box.vertical_string_list) do
+                        local last = line.end_offset or #chars
+                        lines[i] = table.concat(chars, "", line.offset, last):match("^%s*(.-)%s*$")
+                    end
+                    assert.equals(title:upper(), table.concat(lines, " "), id .. ": " .. table.concat(lines, " / "))
+                    built:free()
+                end
+            end
+        end)
+
         it("draws the placeholder in cover and on_cover when bookinfomanager won't load, and asks nothing", function()
             local queue = stub(false)
             for _, id in ipairs({ "editorial", "diner" }) do
