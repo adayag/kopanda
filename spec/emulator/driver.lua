@@ -218,6 +218,82 @@ local function run_emulator(emulator, vars, library_dir, log, timeout_s, marker)
     return tonumber(output:match("(%d+)\n$"))
 end
 
+-- The checks capture and run_starts make before writing anything: a known profile, the
+-- plugin folder, the library and the emulator's luajit, and no copy of KoPanda in the
+-- emulator's own plugins/. Errors start with who. Returns emulator, profile_name, profile and
+-- library_dir.
+local function preflight(who, opts)
+    local emulator = opts.emulator_dir or os.getenv("KOPANDA_EMULATOR")
+    local profile_name = opts.profile
+    local profile = profiles[profile_name]
+    if not profile then
+        error(who .. ": unknown profile " .. tostring(profile_name))
+    end
+    if not opts.plugin_dir or not is_dir(opts.plugin_dir) then
+        error(who .. ": plugin_dir is not a directory: " .. tostring(opts.plugin_dir))
+    end
+    local library_dir = opts.library_dir
+        or assert(os.getenv("KOPANDA_ROOT"), who .. ": KOPANDA_ROOT unset") .. "/spec/fixtures/library"
+    if not is_dir(library_dir) then
+        error(who .. ": library_dir is not a directory: " .. tostring(library_dir))
+    end
+    if lfs.attributes(emulator .. "/luajit", "mode") ~= "file" then
+        error(who .. ": no emulator luajit at " .. emulator .. "/luajit")
+    end
+    local shadow = emulator .. "/plugins/kopanda.koplugin"
+    if lfs.attributes(shadow, "mode") then
+        error(who .. ": " .. shadow .. " exists; KOReader would load the plugin from both paths")
+    end
+    return emulator, profile_name, profile, library_dir
+end
+
+-- The emulator's variables for one run on the scratch profile: the screen, then, with png, the
+-- capture patch's (KOPANDA_SHOT unset leaves the patch inactive), then env in name order.
+local function emulator_vars(scratch, profile, png, cap_s, shot_screen, env)
+    local vars = {
+        { "KO_HOME", scratch },
+        { "XDG_DOCUMENTS_DIR", scratch },
+        { "SDL_VIDEO_DRIVER", "offscreen" },
+        { "EMULATE_READER_W", profile.width },
+        { "EMULATE_READER_H", profile.height },
+        { "EMULATE_READER_DPI", profile.dpi },
+        { "EMULATE_READER_FORCE_PORTRAIT", 1 },
+    }
+    if png then
+        vars[#vars + 1] = { "KOPANDA_SHOT", png }
+        vars[#vars + 1] = { "KOPANDA_SHOT_CAP_S", cap_s }
+        vars[#vars + 1] = { "KOPANDA_SHOT_SCREEN", shot_screen or "home" }
+    end
+    if not profile.color then
+        vars[#vars + 1] = { "EMULATE_BW_SCREEN", 1 }
+    end
+    local names = {}
+    for name in pairs(env or {}) do
+        names[#names + 1] = name
+    end
+    table.sort(names)
+    for _, name in ipairs(names) do
+        vars[#vars + 1] = { name, env[name] }
+    end
+    return vars
+end
+
+-- The PNG a settled run left and its sidecar, decoded; fail(message) raises otherwise.
+local function read_shot(png, fail)
+    if lfs.attributes(png, "mode") ~= "file" then
+        fail("emulator exited 0 without writing " .. png)
+    end
+    local sidecar_text = read_file(png .. ".json")
+    if not sidecar_text then
+        fail("no sidecar at " .. png .. ".json")
+    end
+    local sidecar = require("rapidjson").decode(sidecar_text)
+    if type(sidecar) ~= "table" then
+        fail("sidecar is not a JSON object: " .. sidecar_text)
+    end
+    return sidecar
+end
+
 -- opts: profile (name), plugin_dir, library_dir (default: the fixture library,
 -- spec/fixtures/library/; pass an empty dir for no books), out_dir (default: a fresh dir
 -- under KO_HOME), cap_s (default 20), timeout_s (default 120), emulator_dir (default
@@ -229,27 +305,7 @@ end
 -- height, sidecar, log, scratch }; the scratch profile is removed on success and left in place
 -- on failure.
 function M.capture(opts)
-    local emulator = opts.emulator_dir or os.getenv("KOPANDA_EMULATOR")
-    local profile_name = opts.profile
-    local profile = profiles[profile_name]
-    if not profile then
-        error("capture: unknown profile " .. tostring(profile_name))
-    end
-    if not opts.plugin_dir or not is_dir(opts.plugin_dir) then
-        error("capture: plugin_dir is not a directory: " .. tostring(opts.plugin_dir))
-    end
-    local library_dir = opts.library_dir
-        or assert(os.getenv("KOPANDA_ROOT"), "capture: KOPANDA_ROOT unset") .. "/spec/fixtures/library"
-    if not is_dir(library_dir) then
-        error("capture: library_dir is not a directory: " .. tostring(library_dir))
-    end
-    if lfs.attributes(emulator .. "/luajit", "mode") ~= "file" then
-        error("capture: no emulator luajit at " .. emulator .. "/luajit")
-    end
-    local shadow = emulator .. "/plugins/kopanda.koplugin"
-    if lfs.attributes(shadow, "mode") then
-        error("capture: " .. shadow .. " exists; KOReader would load the plugin from both paths")
-    end
+    local emulator, profile_name, profile, library_dir = preflight("capture", opts)
 
     local cap_s = opts.cap_s or 20
     local timeout_s = opts.timeout_s or 120
@@ -260,30 +316,7 @@ function M.capture(opts)
     local log = out_dir .. "/" .. profile_name .. ".log"
     local marker = out_dir .. "/" .. profile_name .. ".timeout"
 
-    local vars = {
-        { "KO_HOME", scratch },
-        { "XDG_DOCUMENTS_DIR", scratch },
-        { "SDL_VIDEO_DRIVER", "offscreen" },
-        { "EMULATE_READER_W", profile.width },
-        { "EMULATE_READER_H", profile.height },
-        { "EMULATE_READER_DPI", profile.dpi },
-        { "EMULATE_READER_FORCE_PORTRAIT", 1 },
-        { "KOPANDA_SHOT", png },
-        { "KOPANDA_SHOT_CAP_S", cap_s },
-        { "KOPANDA_SHOT_SCREEN", opts.shot_screen or "home" },
-    }
-    if not profile.color then
-        vars[#vars + 1] = { "EMULATE_BW_SCREEN", 1 }
-    end
-    local names = {}
-    for name in pairs(opts.env or {}) do
-        names[#names + 1] = name
-    end
-    table.sort(names)
-    for _, name in ipairs(names) do
-        vars[#vars + 1] = { name, opts.env[name] }
-    end
-
+    local vars = emulator_vars(scratch, profile, png, cap_s, opts.shot_screen, opts.env)
     local status = run_emulator(emulator, vars, library_dir, log, timeout_s, marker)
     local function fail(message)
         error(string.format("capture %s: %s\nscratch profile: %s\nlog %s, last lines:\n%s",
@@ -302,20 +335,102 @@ function M.capture(opts)
     if status ~= 0 then
         fail("emulator exited with status " .. tostring(status))
     end
-    if lfs.attributes(png, "mode") ~= "file" then
-        fail("emulator exited 0 without writing " .. png)
-    end
-    local sidecar_text = read_file(png .. ".json")
-    if not sidecar_text then
-        fail("no sidecar at " .. png .. ".json")
-    end
-    local sidecar = require("rapidjson").decode(sidecar_text)
-    if type(sidecar) ~= "table" then
-        fail("sidecar is not a JSON object: " .. sidecar_text)
-    end
+    local sidecar = read_shot(png, fail)
     local width, height = M.png_size(png)
     shell("rm -rf " .. quote(scratch))
     return { png = png, width = width, height = height, sidecar = sidecar, log = log, scratch = scratch }
+end
+
+local function listed(list, value)
+    for _, item in ipairs(list) do
+        if item == value then
+            return true
+        end
+    end
+    return false
+end
+
+-- Several starts of the emulator on one scratch profile, written once, as a device restarts
+-- KOReader: what one start leaves in KO_HOME (settings, patches, a moved plugin folder) is
+-- what the next one starts from. opts: capture's profile, plugin_dir, library_dir, out_dir,
+-- timeout_s (per start), emulator_dir and patches; extra_plugins, folders copied into the
+-- scratch's plugins/ beside the plugin, refused before anything is written when the emulator's
+-- own plugins/ holds a folder of the same name (KOReader would load both); and starts, a list
+-- of { env, shot, cap_s, accept, after }: env as capture's, for that start only; shot runs
+-- the capture patch (KOPANDA_SHOT set, the settle cap cap_s, default 20, on the home's signal),
+-- and a shot start that exits 0 must leave its PNG and sidecar; accept lists the exit statuses
+-- the start may end with (default { 0 }); after(result, scratch), when given, runs once the
+-- start has passed and before the next, so a spec can look at what that start left. A
+-- timed-out start or a status outside accept raises, naming the start. Returns
+-- { scratch, starts = { { status, log, png, sidecar } } } (png when the start wrote one,
+-- sidecar for a shot start that exited 0) and leaves the scratch, on success too, for the spec
+-- to inspect and remove.
+function M.run_starts(opts)
+    local emulator, profile_name, profile, library_dir = preflight("run_starts", opts)
+    for _, extra in ipairs(opts.extra_plugins or {}) do
+        if not is_dir(extra) then
+            error("run_starts: extra plugin is not a directory: " .. tostring(extra))
+        end
+        local shadow = emulator .. "/plugins/" .. basename(extra)
+        if lfs.attributes(shadow, "mode") then
+            error("run_starts: " .. shadow .. " exists; KOReader would load " .. basename(extra)
+                .. " from both paths")
+        end
+    end
+
+    local timeout_s = opts.timeout_s or 120
+    local out_dir = opts.out_dir or fresh_out_dir(profile_name)
+    local scratch = M.write_profile(out_dir .. "/profile-" .. profile_name, profile_name, opts.plugin_dir,
+        emulator, opts.patches)
+    for _, extra in ipairs(opts.extra_plugins or {}) do
+        local copy = scratch .. "/plugins/" .. basename(extra)
+        if not shell("cp -R " .. quote(extra) .. " " .. quote(copy)) then
+            error("run_starts: could not copy " .. extra .. " to " .. copy)
+        end
+    end
+
+    local results = {}
+    for i, start in ipairs(opts.starts) do
+        local name = string.format("%s-%d", profile_name, i)
+        local png = start.shot and out_dir .. "/" .. name .. ".png" or nil
+        local log = out_dir .. "/" .. name .. ".log"
+        local marker = out_dir .. "/" .. name .. ".timeout"
+        local cap_s = start.cap_s or 20
+        local vars = emulator_vars(scratch, profile, png, cap_s, nil, start.env)
+        local status = run_emulator(emulator, vars, library_dir, log, timeout_s, marker)
+        local function fail(message)
+            error(string.format("run_starts %s start %d: %s\nscratch profile: %s\nlog %s, last lines:\n%s",
+                profile_name, i, message, scratch, log, log_tail(log)))
+        end
+        if lfs.attributes(marker, "mode") then
+            fail("timed out after " .. timeout_s .. " s")
+        end
+        local accept = start.accept or { 0 }
+        if not listed(accept, status) then
+            local accepted = {}
+            for k, value in ipairs(accept) do
+                accepted[k] = tostring(value)
+            end
+            local why = string.format("emulator exited with status %s, not %s", tostring(status),
+                table.concat(accepted, " or "))
+            if start.shot and status == 3 then
+                why = why .. " (settle cap: no KoPandaSettled signal within " .. cap_s .. " s)"
+            end
+            fail(why)
+        end
+        local result = { status = status, log = log }
+        if png and status == 0 then
+            result.sidecar = read_shot(png, fail)
+        end
+        if png and lfs.attributes(png, "mode") == "file" then
+            result.png = png
+        end
+        results[i] = result
+        if start.after then
+            start.after(result, scratch)
+        end
+    end
+    return { scratch = scratch, starts = results }
 end
 
 return M

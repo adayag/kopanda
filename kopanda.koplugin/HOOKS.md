@@ -1526,6 +1526,64 @@ Upgrading KOReader walks this list.
 - Any failure logs `KOPANDA_SCENARIO: home fixture failed` and exits with status 4, which the
   driver reports with the log tail.
 
+### Multi-start runs (`run_starts`), exit 85 and no relaunch on macOS
+
+- `frontend/ui/uimanager.lua:1765-1769` (`restartKOReader` quits with 85); `reader.lua:312-313`
+  (`exitReader` returns a numeric exit code), `:328` (`os.exit` with it).
+- `frontend/device/sdl/device.lua:142` (`canRestart = notOSX`): the emulator on macOS doesn't
+  start itself again on 85, and running `./luajit reader.lua` directly has no launcher loop, so the
+  driver's next start is the relaunch. `run_starts` writes the scratch profile once and runs each
+  start on it, accepting the exit statuses that start lists (85 for a start that restarts, 3 for a
+  start the capture patch's settle cap ends). The capture patch is inactive in a start without
+  `shot` (`KOPANDA_SHOT` unset, `spec/emulator/patches/2-kopanda-capture.lua:8-11`).
+- Extra plugins (`extra_plugins`) are copied into `<KO_HOME>/plugins/`; one whose folder name the
+  emulator's own `plugins/` also holds would load twice, so the driver refuses it. That `plugins/`
+  is a symlink to `~/Projects/kodev/koreader/plugins` (scanned as `plugins`,
+  `frontend/pluginloader.lua:24`, `:177`), which holds the real `simpleui`, `bookshelf` and
+  `solariconpack`; the push spec's stand-in shell is therefore `spec/fixtures/push/shells/ennui.koplugin`,
+  which the coexistence guard matches lower-cased (`kopanda.koplugin/guards.lua:11-17`) and which
+  the driver's default disabled list, matched by exact name (`pluginloader.lua:211-212`), leaves on.
+
+### The push server (`spec/emulator/push_server.lua`): `socket.bind`
+
+- `common/socket.lua:27-40` (`bind`: a listening TCP socket, `reuseaddr` set); LuaSocket's
+  `getsockname`, `settimeout` and `accept`
+  (`base/build/arm64-apple-darwin23.5.0-debug/thirdparty/luasocket/source/src/tcp.c:47`, `:56`,
+  `:66`).
+- Bound to `127.0.0.1` on port 0, so the system picks a free port and parallel worktrees never
+  collide; the port is written to a file the spec waits for. `accept` with a timeout of the
+  server's lifetime returns nil once that long passes with no connection, and the server exits.
+  It runs as its own process: Busted blocks on the driver's `io.popen():read` while the emulator
+  runs.
+- KOReader's `socket.http` client (the pull's, the Studio menu entry above) reads the body by
+  `Content-Length`; every answer carries it and `Connection: close`.
+
+### The push-pull scenario (`spec/emulator/scenarios/2-scenario-push-pull.lua`)
+
+- Active when `KOPANDA_PUSH_ADDRESS` is set. Polls with `UIManager:scheduleIn` until
+  `FileManager.instance` (`frontend/apps/filemanager/filemanager.lua:447`) and KoPanda's
+  `push_pull` and `guards` modules are in `package.loaded` (required by `main.lua` at load, in the
+  refused instance too).
+- KoPanda's folder is the `path` the loader set on its module (`frontend/pluginloader.lua:248`),
+  found in `PluginLoader:loadPlugins()` (`:273-291`); the data folder is `DataStorage:getDataDir()`
+  (`datastorage.lua:16-20`, `KO_HOME`). The pull is `PushPull.pull` with `Guards.enabled_shell_names()`,
+  called directly: the emulator's Wi-Fi is off (`emulator_fake_wifi_connected` above), so
+  `NetworkMgr:runWhenConnected` is bypassed.
+- Then `UIManager:broadcastEvent(Event:new("Restart"))` (`frontend/ui/uimanager.lua:1042`,
+  `frontend/ui/event.lua:30`), as the restart offer does: `DeviceListener:onRestart`
+  (`frontend/device/devicelistener.lua:454-456`) closes the file manager
+  (`frontend/apps/filemanager/filemanagermenu.lua:998-1004`) and quits with 85. A failed pull logs
+  `KOPANDA_SCENARIO: <message>` and quits with 5.
+
+### The notices scenario (`spec/emulator/scenarios/2-scenario-notices.lua`)
+
+- Active when `KOPANDA_NOTICES` names a file. Wraps `UIManager.show`
+  (`frontend/ui/uimanager.lua:229`) at patch time, before any plugin runs (`reader.lua:190`), so
+  the plugin's `UIManager:show` calls go through it; an `InfoMessage`
+  (`frontend/ui/widget/infomessage.lua:47`) is told by its metatable, which `Widget:new` sets to the
+  class (`frontend/ui/widget/widget.lua:26-31`, `:40-48`). Each one's `text` is appended to the
+  file as one line before the original `show` runs; the spec reads the last line.
+
 ### `logger`
 
 - `frontend/logger.lua:71-90`.
