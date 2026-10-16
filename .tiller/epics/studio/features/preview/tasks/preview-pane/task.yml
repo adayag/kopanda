@@ -1,9 +1,10 @@
 id: T-ruuuqy
 key: studio/preview/preview-pane
 title: The preview pane beside the form, with both looks, night and its states
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-ld7mvc
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:2bbb0b4
         observed_at: 2026-10-16T21:49:07.337416Z
+branch: tiller/studio/preview/preview-pane
+review_ref:
+    branch: tiller/studio/preview/preview-pane
+    head:
+        kind: git_commit
+        value: git:26b8825
+        observed_at: 2026-10-16T22:51:30.901054Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T22:48:16.261003Z
+        against:
+            kind: git_commit
+            value: git:86c11fd
+            observed_at: 2026-10-16T22:48:16.260994Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-86c11fd-out-b735f7a5a74b4beffa0f38de92a870ad21a87b73395dd782248e7d3e642d5ed0.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T22:48:16.261003Z
+        against:
+            kind: git_commit
+            value: git:86c11fd
+            observed_at: 2026-10-16T22:48:16.260994Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-86c11fd-out-a311b2a27ebdd02d760797525d8ec89e3f65cf06f1e30a0e6436ac4d4ed29315.txt

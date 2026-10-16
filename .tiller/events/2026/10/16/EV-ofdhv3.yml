@@ -1,0 +1,16 @@
+id: EV-ofdhv3
+type: submit.task
+at: 2026-10-16T22:51:30.901516Z
+contributor: allen
+command: submit task T-ruuuqy
+targets:
+    - T-ruuuqy
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/preview/preview-pane
+        head: git:26b8825
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-pane/task.yml

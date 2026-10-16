@@ -89,9 +89,11 @@ const PUT_URL = "/api/profiles/colorsoft/settings/layout.rows";
 const FIT = `POST ${FIT_URL}`;
 const PUT = `PUT ${PUT_URL}`;
 
-/** The fit requests' rows. */
+/** The fit requests' rows; the preview pane's renders are not fit requests. */
 function fits(): unknown[] {
-  return sent("POST").map(([, body]) => (body as { rows: unknown }).rows);
+  return sent("POST")
+    .filter(([url]) => url === FIT_URL)
+    .map(([, body]) => (body as { rows: unknown }).rows);
 }
 
 /** The PUTs of layout.rows, as their values. */
@@ -439,7 +441,8 @@ describe("a change", () => {
     click("Remove row", card(1));
 
     expect(await screen.findByText("The home needs at least one row.")).toBeInTheDocument();
-    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "POST" || init?.method === "PUT")).toEqual([]);
+    expect(fits()).toEqual([]);
+    expect(sent("PUT")).toEqual([]);
   });
 
   it("clears a note at the next change", async () => {

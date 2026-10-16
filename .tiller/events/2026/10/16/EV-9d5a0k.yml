@@ -1,0 +1,13 @@
+id: EV-9d5a0k
+type: check.task
+at: 2026-10-16T22:51:26.359567Z
+contributor: allen
+command: check task T-ruuuqy
+targets:
+    - T-ruuuqy
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-pane/task.yml
