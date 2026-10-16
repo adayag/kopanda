@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type express from "express";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
-import type { AddressInfo } from "node:net";
+import type { AddressInfo, Socket } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import request from "supertest";
@@ -238,6 +239,46 @@ describe("POST /api/profiles/:id/preview", () => {
     ]);
     expect(starts[1]!.at).toBeGreaterThanOrEqual(ends[0]!.at);
     expect(ends[0]!.args).toEqual(starts[0]!.args);
+  });
+
+  it("never runs a request whose client has gone while its profile was read", async () => {
+    const queue = createPreviewQueue();
+    const signals: AbortSignal[] = [];
+    const counted: PreviewQueue = {
+      run: (job, signal) => {
+        signals.push(signal!);
+        return queue.run(job, signal);
+      },
+    };
+    const { app, record, runs } = setup("png", { queue: counted });
+    // The profile's file is a pipe, so its read waits until the test writes it.
+    const profileFile = path.join(path.dirname(record), "colorsoft", "profile.json");
+    fs.rmSync(profileFile);
+    execFileSync("mkfifo", [profileFile]);
+    const server = app.listen(0, "127.0.0.1");
+    cleanups.push(() => server.close());
+    await new Promise((resolve) => server.once("listening", resolve));
+    const closed = new Promise((resolve) => server.once("connection", (socket: Socket) => socket.once("close", resolve)));
+    const leaving = new AbortController();
+    const sent = fetch(`http://127.0.0.1:${(server.address() as AddressInfo).port}/api/profiles/colorsoft/preview`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ look: "diner", night: false }),
+      signal: leaving.signal,
+    }).catch((err: unknown) => err);
+
+    // Opening the pipe to write waits until the server has opened it to read.
+    const writer = await fs.promises.open(profileFile, "w");
+    leaving.abort();
+    expect(await sent).toBeInstanceOf(Error);
+    await closed;
+    await writer.writeFile(JSON.stringify(colorsoft));
+    await writer.close();
+
+    await vi.waitFor(() => expect(signals).toHaveLength(1));
+    expect(signals[0]!.aborted).toBe(true);
+    await queue.run(async () => undefined);
+    expect(runs()).toEqual([]);
   });
 });
 
