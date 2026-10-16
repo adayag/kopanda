@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Key } from "../schema";
 import type { ProfileWithPath } from "../server/profiles.js";
 import { ApiError, fetchProfile, fetchSettings, putSetting, type Settings } from "./api";
+import { LauncherEditor } from "./launcher/LauncherEditor";
 import { profileHref, screenFacts } from "./ProfileList";
 import { SettingsForm } from "./settings/SettingsForm";
 
@@ -108,8 +109,16 @@ export function ProfileScreen({ id, view = "form" }: { id: string; view?: Profil
                 errors={errors}
                 onWrite={write}
               />
+            ) : view === "launcher" ? (
+              <LauncherEditor
+                profileId={id}
+                settings={state.settings}
+                pending={pending}
+                errors={errors}
+                onWrite={write}
+              />
             ) : (
-              <EditorSlot id={id} title={view === "layout" ? "Layout" : "Launcher"} />
+              <EditorSlot id={id} title="Layout" />
             )}
           </section>
         </>
