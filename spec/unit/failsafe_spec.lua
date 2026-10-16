@@ -302,6 +302,28 @@ describe("KoPanda failing safe", function()
         end)
     end)
 
+    it("logs, shows no action list and adds nothing when the entry picker's action tree throws", function()
+        local Dispatcher = require("dispatcher")
+        local TouchMenu = require("ui/widget/touchmenu")
+        local add = stub(Dispatcher, "addSubMenu", function()
+            error("kopanda-test: action tree failed")
+        end)
+        finally(function()
+            add:revert()
+        end)
+        harness.show_fm()
+        harness.tick(2)
+        Home.close()
+        local added = spy.new(function() end)
+        require("entry_picker").pick("action", nil, added)
+        for _, widget in ipairs(harness.stack()) do
+            assert.is_not.equals(TouchMenu, getmetatable(widget[1]))
+        end
+        assert.spy(added).was_not.called()
+        file_manager_usable()
+        assert.is_true(logged_error("kopanda-test: action tree failed"))
+    end)
+
     describe("the dispatcher wrapper", function()
         local Dispatcher = require("dispatcher")
 

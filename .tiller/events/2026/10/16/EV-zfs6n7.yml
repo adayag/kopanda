@@ -1,0 +1,13 @@
+id: EV-zfs6n7
+type: claim.task
+at: 2026-10-16T03:18:09.586812Z
+contributor: allen
+command: claim task T-zghyve
+targets:
+    - T-zghyve
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/entry-picker/task.yml

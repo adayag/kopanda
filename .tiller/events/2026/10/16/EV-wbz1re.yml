@@ -1,0 +1,13 @@
+id: EV-wbz1re
+type: check.task
+at: 2026-10-16T03:34:48.700969Z
+contributor: allen
+command: check task T-zghyve
+targets:
+    - T-zghyve
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/entry-picker/task.yml

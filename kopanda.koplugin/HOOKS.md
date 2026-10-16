@@ -948,6 +948,57 @@ Upgrading KOReader walks this list.
   left out by `BookInfoManager.isCachedCoverInvalid`
   (`plugins/coverbrowser.koplugin/bookinfomanager.lua:1013-1030`; the featured cover's entry above).
 
+### The entry picker: `PathChooser`, the action tree, the plugin list and the label dialog
+
+- `ui/widget/pathchooser`: `frontend/ui/widget/pathchooser.lua:13-21` (`select_directory`,
+  `select_file`), `:104-155` (`onMenuHold` asks "Choose this folder?"; Choose calls
+  `onConfirm(path)` with the `realpath`, `:109`, then closes its dialog and the chooser,
+  `:151-155`). Opened as Folder shortcuts opens it
+  (`frontend/apps/filemanager/filemanagershortcuts.lua:427-439`): at the file browser's
+  `file_chooser.path`, or with no file browser the reader's `getLastDirFile()`
+  (`apps/reader/readerui`: `frontend/apps/reader/readerui.lua:565-579`), both read through
+  `package.loaded`. `onConfirm` runs guarded, so the chooser's own closes after it still run.
+- `dispatcher`: `Dispatcher:addSubMenu(caller, menu, location, settings)`
+  (`frontend/dispatcher.lua:1109-1170`) into a throwaway `caller` and scratch `location`; it runs
+  `Dispatcher:init` (`:1110`, a return once initialized, `:586`) and sets `caller.updated`
+  (`:924`, `:1125`), which nothing reads. Its order: "Nothing" at index 1 (`:1112-1131`), then one
+  item per `section_list` entry (`:1132-1140`), each with a `sub_item_table` (`:1167`): General,
+  Device, Screen and lights, File browser (indexes 2 to 5), then Reader, Reflowable and Fixed
+  layout; arrange, execute and QuickMenu items follow (`:1170-1378`). The picker keeps 2 to 5 and
+  refuses with a note unless there are at least eight items and each kept one has a
+  `sub_item_table`. A hold on a section clears its ticks (`:1155-1165`).
+- The scratch table's shape: `location[settings][id] = value` (`_addItem`'s `setValue`,
+  `:913-927`), with `settings.order` beside the ids once two are ticked (`_addToOrder`,
+  `:799-830`; `_itemsCount` leaves `settings` out, `:740-749`). `none` and `arg` actions store
+  `true` (`:931-940`); `absolutenumber` and `incrementalnumber` a spin value (`:943-1024`);
+  `string` and `configurable` an arg (`:1025-1067`). A launcher entry runs its action with `true`
+  (`launcher_entries.lua`'s `run`), so only a `true` one is taken.
+- Reader, reflowable and fixed-layout sections are dropped because `Dispatcher:isActionEnabled`
+  (`:1435-1449`) disables a `reader`, `rolling` or `paging` action with no reader up.
+- `Dispatcher.getDisplayList({ [id] = true })[1].text` (`:866-890`, `getNameFromItem` `:751-758`)
+  is the action's label before editing.
+- `pluginloader`: `PluginLoader:loadPlugins()` (`frontend/pluginloader.lua:273-292`, cached
+  after the first call; its first list is the enabled plugins), `isPluginLoaded` (`:567-569`),
+  `is_doc_only` (the file manager skips such a plugin, `frontend/apps/filemanager/filemanager.lua:419`),
+  `fullname or name` as the plugin manager labels it (`pluginloader.lua:104-109`). `kopanda` is
+  left out.
+- `ui/widget/inputdialog`: `frontend/ui/widget/inputdialog.lua:124-167` (`title`, `input`,
+  `buttons`), `:357` (`is_enter_default`), `:774-784` (`onCloseDialog` presses the button with
+  `id = "close"`, Cancel here), `:583` (`getInputText`), `:596` (`setInputText`, the spec's),
+  `:640` (`onShowKeyboard`, called after `show`, as `frontend/apps/filemanager/filemanagercollection.lua:1118-1119`
+  does), `:633-638` and `:786-797` (closing it closes its keyboard).
+- `util`: `util.trim` (`frontend/util.lua:52`); an all-space label is refused, the trimmed one
+  kept.
+- `ui/widget/touchmenu`, one tab: `TouchMenu:new{ width, tab_item_table = { items }, show_parent }`
+  with `items.icon = "appbar.settings"` (`frontend/ui/widget/touchmenu.lua:469-470`, `:539-548`, the
+  tab bar's icons), inside a full-screen `CenterContainer` as `FileManagerMenu:onShowMenu` shows its
+  menu (`frontend/apps/filemanager/filemanagermenu.lua:1006-1047`). `close_callback` replaces
+  the default close (`touchmenu.lua:500-504`); `closeMenu` (`:973-975`) calls it from a tap
+  outside (`:977-981`), `onClose` (`:983-985`) and Back at the top level (`:798-818`). The picker
+  closes the container itself, once. `onMenuSelect` (`:873-929`) opens a section and runs an
+  action item's callback.
+- `logger.err` for every guarded failure; the sheets are `sheet.lua`'s.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
