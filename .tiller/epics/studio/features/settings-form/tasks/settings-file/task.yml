@@ -1,9 +1,10 @@
 id: T-v4irt5
 key: studio/settings-form/settings-file
 title: Read and write a profile's settings file, with validators shared with the plugin
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,4 @@ accepted_against:
         kind: git_commit
         value: git:d92a0a4
         observed_at: 2026-10-16T17:50:20.355126Z
+branch: tiller/studio/settings-form/settings-file
