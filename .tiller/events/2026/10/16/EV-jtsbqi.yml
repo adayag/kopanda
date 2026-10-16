@@ -1,0 +1,13 @@
+id: EV-jtsbqi
+type: approve.tweak
+at: 2026-10-16T00:19:22.998222Z
+contributor: allen
+command: approve tweak TW-i9qml9
+targets:
+    - TW-i9qml9
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/tweaks/tighter-home-golden-tolerance/tweak.yml

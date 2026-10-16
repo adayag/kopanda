@@ -1,0 +1,13 @@
+id: EV-a0y67h
+type: approve.tweak
+at: 2026-10-16T00:19:21.74249Z
+contributor: allen
+command: approve tweak TW-w4mx7i
+targets:
+    - TW-w4mx7i
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/tweaks/cover-placeholder-word-split/tweak.yml

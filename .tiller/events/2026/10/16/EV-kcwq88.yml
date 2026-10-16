@@ -1,0 +1,13 @@
+id: EV-kcwq88
+type: approve.tweak
+at: 2026-10-16T00:19:22.061717Z
+contributor: allen
+command: approve tweak TW-ft6azu
+targets:
+    - TW-ft6azu
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/tweaks/flaky-probe-golden-colorsoft/tweak.yml

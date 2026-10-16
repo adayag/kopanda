@@ -1,8 +1,18 @@
 id: TW-ft6azu
 key: tweaks/flaky-probe-golden-colorsoft
 title: Probe golden on colorsoft captures a blank screen under tiller check
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 attached_to: T-xem8p9
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:70f4a444c71a66a75607f7f3c604837c7d75074f
+        path: .tiller/tweaks/flaky-probe-golden-colorsoft/tweak.md
+        observed_at: 2026-10-16T00:19:22.039878Z
+    commit:
+        kind: git_commit
+        value: git:e6f2573
+        observed_at: 2026-10-16T00:19:22.061616Z

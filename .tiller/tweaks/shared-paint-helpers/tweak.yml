@@ -1,8 +1,18 @@
 id: TW-a7nfpr
 key: tweaks/shared-paint-helpers
 title: One paint module for the fill, border and shadowed-box helpers
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 attached_to: F-e8jz6h
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:cba56032cb7ab6c54094b5d8ae19b839a0510ba1
+        path: .tiller/tweaks/shared-paint-helpers/tweak.md
+        observed_at: 2026-10-16T00:19:22.821963Z
+    commit:
+        kind: git_commit
+        value: git:e6f2573
+        observed_at: 2026-10-16T00:19:22.843489Z

@@ -1,8 +1,18 @@
 id: TW-d7y25x
 key: tweaks/weather-hyphen
 title: Plain hyphen in the weather widget's Wi-Fi line
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 attached_to: F-3ct1xn
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:97b4e3393bd8b4070ca0572c8e9bef8302300e6b
+        path: .tiller/tweaks/weather-hyphen/tweak.md
+        observed_at: 2026-10-16T00:19:23.130304Z
+    commit:
+        kind: git_commit
+        value: git:e6f2573
+        observed_at: 2026-10-16T00:19:23.154346Z

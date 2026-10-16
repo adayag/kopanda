@@ -1,8 +1,18 @@
 id: TW-npuwi0
 key: tweaks/main-requires-every-module
 title: A spec that main.lua requires every plugin module
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 attached_to: F-3ct1xn
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:510a3049987542a71c9a8a4185a42e9c0c363c3f
+        path: .tiller/tweaks/main-requires-every-module/tweak.md
+        observed_at: 2026-10-16T00:19:22.512862Z
+    commit:
+        kind: git_commit
+        value: git:e6f2573
+        observed_at: 2026-10-16T00:19:22.534551Z

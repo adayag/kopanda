@@ -1,7 +1,17 @@
 id: TW-cbgsdn
 key: tweaks/flaky-probe-capture-colorsoft
 title: The probe capture on colorsoft fails intermittently in a full bin/check
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:0c87351ed594fe076687541be9a7e0366964c297
+        path: .tiller/tweaks/flaky-probe-capture-colorsoft/tweak.md
+        observed_at: 2026-10-16T00:19:21.882698Z
+    commit:
+        kind: git_commit
+        value: git:e6f2573
+        observed_at: 2026-10-16T00:19:21.905546Z

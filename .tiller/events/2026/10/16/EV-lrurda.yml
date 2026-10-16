@@ -1,0 +1,13 @@
+id: EV-lrurda
+type: approve.tweak
+at: 2026-10-16T00:19:22.687853Z
+contributor: allen
+command: approve tweak TW-gs28tx
+targets:
+    - TW-gs28tx
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/tweaks/quiet-check-output/tweak.yml

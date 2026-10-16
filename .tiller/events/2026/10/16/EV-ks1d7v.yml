@@ -1,0 +1,13 @@
+id: EV-ks1d7v
+type: approve.tweak
+at: 2026-10-16T00:19:22.534673Z
+contributor: allen
+command: approve tweak TW-npuwi0
+targets:
+    - TW-npuwi0
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/tweaks/main-requires-every-module/tweak.yml
