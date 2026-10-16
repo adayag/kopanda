@@ -1,0 +1,201 @@
+{
+    "keys": [
+        {
+            "choices": [
+                {
+                    "label": "Diner",
+                    "value": "diner"
+                },
+                {
+                    "label": "Editorial",
+                    "value": "editorial"
+                }
+            ],
+            "default": "diner",
+            "group": "appearance",
+            "id": "look",
+            "label": "Look",
+            "type": "choice"
+        },
+        {
+            "choices": [
+                {
+                    "label": "Small",
+                    "value": "small"
+                },
+                {
+                    "label": "Medium",
+                    "value": "medium"
+                },
+                {
+                    "label": "Large",
+                    "value": "large"
+                }
+            ],
+            "default": "medium",
+            "group": "appearance",
+            "id": "text_size",
+            "label": "Text size",
+            "type": "choice"
+        },
+        {
+            "default": [
+                [
+                    {
+                        "share": 1,
+                        "widget": "date"
+                    },
+                    {
+                        "share": 1,
+                        "widget": "clock"
+                    }
+                ],
+                [
+                    {
+                        "share": 1,
+                        "widget": "featured"
+                    }
+                ],
+                [
+                    {
+                        "share": 1,
+                        "widget": "quote"
+                    }
+                ],
+                [
+                    {
+                        "share": 1,
+                        "widget": "launcher"
+                    }
+                ],
+                [
+                    {
+                        "share": 1,
+                        "widget": "weather"
+                    },
+                    {
+                        "share": 1,
+                        "widget": "stats"
+                    }
+                ]
+            ],
+            "group": "home",
+            "id": "layout.rows",
+            "label": "Layout",
+            "max_columns": 3,
+            "type": "rows",
+            "widgets": [
+                "date",
+                "clock",
+                "weather",
+                "quote",
+                "stats",
+                "featured",
+                "launcher"
+            ]
+        },
+        {
+            "default": {
+                "latitude": 41.85003,
+                "longitude": -87.65005,
+                "name": "Chicago, Illinois"
+            },
+            "group": "weather",
+            "id": "weather.location",
+            "label": "Weather location",
+            "type": "location"
+        },
+        {
+            "choices": [
+                {
+                    "label": "Fahrenheit",
+                    "value": "fahrenheit"
+                },
+                {
+                    "label": "Celsius",
+                    "value": "celsius"
+                }
+            ],
+            "default": "fahrenheit",
+            "group": "weather",
+            "id": "weather.units",
+            "label": "Units",
+            "type": "choice"
+        },
+        {
+            "choices": [
+                {
+                    "label": "Built-in",
+                    "value": "builtin"
+                }
+            ],
+            "default": "builtin",
+            "group": "quote",
+            "id": "quote.source",
+            "label": "Quote source",
+            "type": "choice"
+        },
+        {
+            "default": true,
+            "group": "stats",
+            "id": "stats.show",
+            "label": "Show reading stats",
+            "type": "boolean"
+        },
+        {
+            "default": false,
+            "group": "featured",
+            "id": "featured.pinned",
+            "label": "Featured book",
+            "type": "path"
+        },
+        {
+            "default": [
+                {
+                    "kind": "kopanda",
+                    "target": "library"
+                },
+                {
+                    "kind": "kopanda",
+                    "target": "series"
+                },
+                {
+                    "kind": "kopanda",
+                    "target": "authors"
+                },
+                {
+                    "kind": "koreader",
+                    "target": "history"
+                },
+                {
+                    "kind": "koreader",
+                    "target": "wifi"
+                },
+                {
+                    "kind": "kopanda",
+                    "target": "settings"
+                }
+            ],
+            "group": "launcher",
+            "id": "launcher.entries",
+            "label": "Launcher",
+            "max_entries": 6,
+            "targets": {
+                "kopanda": [
+                    "library",
+                    "series",
+                    "authors",
+                    "settings"
+                ],
+                "koreader": [
+                    "history",
+                    "favorites",
+                    "collections",
+                    "wifi"
+                ]
+            },
+            "type": "launcher"
+        }
+    ],
+    "version": 1
+}
