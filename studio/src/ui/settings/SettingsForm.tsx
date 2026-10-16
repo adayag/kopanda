@@ -39,6 +39,22 @@ function capitalised(id: string): string {
   return id.charAt(0).toUpperCase() + id.slice(1);
 }
 
+/** The line above the form or an editor for a file the studio won't write; nothing for a writable one. */
+export function FileState({ settings, version }: { settings: Settings; version: number }) {
+  if (settings.state === "read_only") {
+    return (
+      <p className="error">
+        This settings file is from schema version {settings.schema_version}, newer than this studio's {version}, so
+        it is shown and not written.
+      </p>
+    );
+  }
+  if (settings.state === "unreadable") {
+    return <p className="error">The studio can't read this settings file: {settings.reason}</p>;
+  }
+  return null;
+}
+
 export interface SettingsFormProps {
   /** The schema the form is generated from; a test hands its own. */
   schema?: Schema;
@@ -107,15 +123,7 @@ export function SettingsForm({
 
   return (
     <div className="settings-form">
-      {settings.state === "read_only" && (
-        <p className="error">
-          This settings file is from schema version {settings.schema_version}, newer than this studio's{" "}
-          {schema.version}, so it is shown and not written.
-        </p>
-      )}
-      {settings.state === "unreadable" && (
-        <p className="error">The studio can't read this settings file: {settings.reason}</p>
-      )}
+      <FileState settings={settings} version={schema.version} />
       {groups(schema.keys).map((group) => (
         <section key={group.id} className="setting-group">
           <h2>{capitalised(group.id)}</h2>

@@ -483,7 +483,7 @@ describe("the reports", () => {
 
 describe("the editors", () => {
   it.each([
-    ["Layout · 5 rows", "#/profiles/colorsoft/layout", "Layout"],
+    ["Layout · 5 rows", "#/profiles/colorsoft/layout", "Edit layout"],
     ["Launcher · 6 entries", "#/profiles/colorsoft/launcher", "Launcher"],
   ])("opens %s at its route, and Done returns to the form", async (link, hash, heading) => {
     await open(settings());
@@ -503,7 +503,7 @@ describe("the editors", () => {
   });
 
   it.each([
-    ["#/profiles/colorsoft/layout", "Layout"],
+    ["#/profiles/colorsoft/layout", "Edit layout"],
     ["#/profiles/colorsoft/launcher", "Launcher"],
   ])("shows the editor slot when loaded at %s", async (hash, heading) => {
     await open(settings(), {}, hash);
