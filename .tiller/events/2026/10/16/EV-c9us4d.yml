@@ -1,0 +1,16 @@
+id: EV-c9us4d
+type: submit.task
+at: 2026-10-16T14:52:37.17949Z
+contributor: allen
+command: submit task T-51vf9k
+targets:
+    - T-51vf9k
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/device-menus/editor-frame
+        head: git:00809ff
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/editor-frame/task.yml

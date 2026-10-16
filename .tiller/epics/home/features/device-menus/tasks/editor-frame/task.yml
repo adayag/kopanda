@@ -1,7 +1,7 @@
 id: T-51vf9k
 key: home/device-menus/editor-frame
 title: The full-screen editor frame, its look tokens and its icons
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -21,8 +21,8 @@ review_ref:
     branch: tiller/home/device-menus/editor-frame
     head:
         kind: git_commit
-        value: git:bfedcb4
-        observed_at: 2026-10-16T03:56:31.277893Z
+        value: git:00809ff
+        observed_at: 2026-10-16T14:52:37.179068Z
 gates:
     build:
         required: true
