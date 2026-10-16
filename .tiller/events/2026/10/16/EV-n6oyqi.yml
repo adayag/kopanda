@@ -1,0 +1,14 @@
+id: EV-n6oyqi
+type: add.task
+at: 2026-10-16T03:18:39.215833Z
+contributor: allen
+command: add task studio/settings-form/launcher-editor
+targets:
+    - T-48qqub
+after:
+    feature: F-k4yn5f
+    key: studio/settings-form/launcher-editor
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/launcher-editor/task.md
+    - path: .tiller/epics/studio/features/settings-form/tasks/launcher-editor/task.yml

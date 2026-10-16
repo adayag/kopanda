@@ -1,0 +1,14 @@
+id: EV-vytosr
+type: add.task
+at: 2026-10-16T03:18:39.132075Z
+contributor: allen
+command: add task studio/settings-form/catalog
+targets:
+    - T-zbcfes
+after:
+    feature: F-k4yn5f
+    key: studio/settings-form/catalog
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/catalog/task.md
+    - path: .tiller/epics/studio/features/settings-form/tasks/catalog/task.yml

@@ -1,0 +1,14 @@
+id: EV-471omf
+type: add.task
+at: 2026-10-16T03:18:39.045514Z
+contributor: allen
+command: add task studio/settings-form/layout-editor
+targets:
+    - T-ihpvfp
+after:
+    feature: F-k4yn5f
+    key: studio/settings-form/layout-editor
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/layout-editor/task.md
+    - path: .tiller/epics/studio/features/settings-form/tasks/layout-editor/task.yml

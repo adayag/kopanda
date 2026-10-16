@@ -1,0 +1,9 @@
+id: T-08n402
+key: studio/settings-form/form
+title: The generated form over every schema key
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-v4irt5

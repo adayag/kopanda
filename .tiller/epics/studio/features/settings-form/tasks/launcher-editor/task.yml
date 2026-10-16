@@ -1,0 +1,10 @@
+id: T-48qqub
+key: studio/settings-form/launcher-editor
+title: The launcher editor with the device's entry operations, pickers and icons
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-08n402
+    - T-zbcfes

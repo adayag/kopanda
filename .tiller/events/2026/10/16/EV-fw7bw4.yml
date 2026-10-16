@@ -1,0 +1,14 @@
+id: EV-fw7bw4
+type: add.task
+at: 2026-10-16T03:18:38.945106Z
+contributor: allen
+command: add task studio/settings-form/layout-fit
+targets:
+    - T-jslnv7
+after:
+    feature: F-k4yn5f
+    key: studio/settings-form/layout-fit
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/layout-fit/task.md
+    - path: .tiller/epics/studio/features/settings-form/tasks/layout-fit/task.yml

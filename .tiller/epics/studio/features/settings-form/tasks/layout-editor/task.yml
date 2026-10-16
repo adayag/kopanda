@@ -1,0 +1,10 @@
+id: T-ihpvfp
+key: studio/settings-form/layout-editor
+title: The layout editor with the device's row operations and fit refusal
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-08n402
+    - T-jslnv7

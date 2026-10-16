@@ -1,0 +1,7 @@
+id: T-v4irt5
+key: studio/settings-form/settings-file
+title: Read and write a profile's settings file, with validators shared with the plugin
+status: proposed
+blocked: false
+started: false
+proposed_by: allen

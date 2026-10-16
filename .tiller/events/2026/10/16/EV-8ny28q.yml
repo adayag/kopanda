@@ -1,0 +1,14 @@
+id: EV-8ny28q
+type: add.task
+at: 2026-10-16T03:18:38.854899Z
+contributor: allen
+command: add task studio/settings-form/location-search
+targets:
+    - T-wmf18g
+after:
+    feature: F-k4yn5f
+    key: studio/settings-form/location-search
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/location-search/task.md
+    - path: .tiller/epics/studio/features/settings-form/tasks/location-search/task.yml

@@ -1,0 +1,14 @@
+id: EV-zva56g
+type: add.task
+at: 2026-10-16T03:18:38.762156Z
+contributor: allen
+command: add task studio/settings-form/form
+targets:
+    - T-08n402
+after:
+    feature: F-k4yn5f
+    key: studio/settings-form/form
+    status: proposed
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/form/task.md
+    - path: .tiller/epics/studio/features/settings-form/tasks/form/task.yml
