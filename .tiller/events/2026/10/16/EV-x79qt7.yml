@@ -1,0 +1,15 @@
+id: EV-x79qt7
+type: start.task
+at: 2026-10-16T21:20:50.860271Z
+contributor: allen
+command: start task T-rl8eso
+targets:
+    - T-rl8eso
+before:
+    status: ready
+after:
+    branch: tiller/nav-bar/nav-bar/home-band
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/home-band/task.yml
