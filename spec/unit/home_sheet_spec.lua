@@ -3,14 +3,15 @@
 -- settings file. Each row is tapped where the sheet laid it out.
 describe("the home sheet", function()
     local harness = require("plugin_harness")
+    -- spec/home_gestures.lua, required before harness.load() puts the plugin's own home_gestures in
+    -- the require cache.
+    local gestures = require("home_gestures")
     local Dispatcher = require("dispatcher")
     local Event = require("ui/event")
     local InfoMessage = require("ui/widget/infomessage")
     local UIManager = require("ui/uimanager")
     local lfs = require("libs/libkoreader-lfs")
     local Home, HomeSheet, Sheet
-
-    local SETTINGS_TEXT = "KoPanda has no settings yet."
 
     -- Undo steps for the running test, run last first after it. busted keeps only a test's last
     -- finally, so the helpers can't each register one.
@@ -246,7 +247,7 @@ describe("the home sheet", function()
     end)
 
     describe("KoPanda settings", function()
-        it("opens the settings stub once", function()
+        it("opens the full settings list once", function()
             open_sheet()
             local open = spy.on(require("settings_menu"), "open")
             cleanup(function()
@@ -254,7 +255,10 @@ describe("the home sheet", function()
             end)
             tap("KoPanda settings")
             assert.spy(open).was.called(1)
-            assert.equals(SETTINGS_TEXT, message().text)
+            assert.spy(open).was.called_with()
+            local menu = gestures.settings_menu()
+            assert.is_not_nil(menu)
+            assert.equals(#require("schema").keys, #menu[1].tab_item_table[1])
         end)
     end)
 

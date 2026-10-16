@@ -5,24 +5,37 @@
 local assert = require("luassert")
 local harness = require("plugin_harness")
 local Event = require("ui/event")
-local InfoMessage = require("ui/widget/infomessage")
+local TouchMenu = require("ui/widget/touchmenu")
 local UIManager = require("ui/uimanager")
 
 local M = {}
-
-M.SETTINGS_TEXT = "KoPanda has no settings yet."
 
 function M.send(ges)
     UIManager:sendEvent(Event:new("Gesture", ges))
 end
 
--- The settings stub's message, wherever it is on the stack, or nil.
-function M.settings_message()
+-- KoPanda's settings menu (settings_menu.lua), wherever it is on the stack, or nil: the container
+-- holding a TouchMenu of one tab, which KOReader's own menus never are.
+function M.settings_menu()
     for _, widget in ipairs(harness.stack()) do
-        if getmetatable(widget) == InfoMessage and widget.text == M.SETTINGS_TEXT then
+        local menu = widget[1]
+        if getmetatable(menu) == TouchMenu and #menu.tab_item_table == 1 then
             return widget
         end
     end
+end
+
+-- The settings menu's rows as their schema keys, in order, or nil with no settings menu shown.
+function M.settings_keys()
+    local container = M.settings_menu()
+    if not container then
+        return nil
+    end
+    local keys = {}
+    for i, item in ipairs(container[1].tab_item_table[1]) do
+        keys[i] = item.kopanda_key
+    end
+    return keys
 end
 
 -- A file manager with its home up.

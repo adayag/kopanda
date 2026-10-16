@@ -6,7 +6,6 @@ describe("KoPanda's entry points", function()
     local DataStorage = require("datastorage")
     local Event = require("ui/event")
     local FileManager = require("apps/filemanager/filemanager")
-    local InfoMessage = require("ui/widget/infomessage")
     local LuaSettings = require("luasettings")
     local PluginLoader = require("pluginloader")
     local Screen = require("device").screen
@@ -191,13 +190,30 @@ describe("KoPanda's entry points", function()
             assert.equals(Home.shown, harness.top())
         end)
 
-        it("shows the settings stub from Settings", function()
+        -- The rows of Settings' submenu as their schema keys, checking it is a native submenu.
+        local function settings_keys(tabs)
+            local settings = kopanda_item(tabs).sub_item_table[2]
+            assert.is_nil(settings.callback)
+            assert.is_function(settings.sub_item_table_func)
+            local keys = {}
+            for i, item in ipairs(settings.sub_item_table_func()) do
+                keys[i] = item.kopanda_key
+            end
+            return keys
+        end
+
+        local function all_keys()
+            local keys = {}
+            for i, entry in ipairs(require("schema").keys) do
+                keys[i] = entry.id
+            end
+            return keys
+        end
+
+        it("holds the full settings list in Settings' submenu", function()
             local fm = fm_without_home()
             fm.menu:onShowMenu()
-            fm.menu:onCloseFileManagerMenu()
-            kopanda_item(fm.menu.tab_item_table).sub_item_table[2].callback()
-            harness.tick()
-            assert.equals(InfoMessage, getmetatable(harness.top()))
+            assert.same(all_keys(), settings_keys(fm.menu.tab_item_table))
         end)
 
         it("is in the reader's Tools", function()
@@ -207,6 +223,7 @@ describe("KoPanda's entry points", function()
             assert.is_table(item)
             assert.equals("Home", item.sub_item_table[1].text)
             assert.equals("Settings", item.sub_item_table[2].text)
+            assert.same(all_keys(), settings_keys(reader.menu.tab_item_table))
             assert.is_nil(find(reader.menu.tab_item_table, "kopanda_home"))
         end)
     end)

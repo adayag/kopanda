@@ -439,16 +439,16 @@ describe("the book sheet", function()
             assert.is_nil(Sheet.shown)
         end)
 
-        it("opens the settings stub on This widget's settings, once", function()
+        it("opens the featured group's settings on This widget's settings, once", function()
             history({ { a } })
             fm_with_home()
-            local opened = 0
-            replace(SettingsMenu, "open", function()
-                opened = opened + 1
+            local groups = {}
+            replace(SettingsMenu, "open", function(...)
+                groups[#groups + 1] = { ... }
             end)
             hold_book()
             tap("This widget's settings")
-            assert.equals(1, opened)
+            assert.same({ { "featured" } }, groups)
             assert.is_nil(Sheet.shown)
         end)
 

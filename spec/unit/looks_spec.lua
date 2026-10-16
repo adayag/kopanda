@@ -365,6 +365,7 @@ describe("looks", function()
                 editor.button_fill_color })
             assert.same({ "hairline", 1 }, { editor.card_outline_color, editor.card_outline_width })
             assert.same({ "ink", "hairline_light" }, { editor.selected_outline_color, editor.selected_fill_color })
+            assert.same({ x = 0, y = 0, color = false }, editor.card_shadow)
             assert.equals("hairline", editor.disabled_color)
             assert.same({ "display", 34, false, 0, 0.3, "ink" }, { parts.editor_title.face, parts.editor_title.size,
                 parts.editor_title.uppercase, parts.editor_title.tracking, parts.editor_title.line_height,
@@ -383,6 +384,7 @@ describe("looks", function()
             assert.same({ "outline", 3 }, { editor.card_outline_color, editor.card_outline_width })
             assert.same({ "outline", "mustard" }, { editor.selected_outline_color, editor.selected_fill_color })
             assert.same({ "outline", 2 }, { editor.row_rule_color, editor.row_rule_width })
+            assert.same({ x = 2, y = 2, color = "shadow" }, editor.card_shadow)
             assert.equals("muted", editor.disabled_color)
             assert.same({ "display", 30, "on_band" }, { parts.editor_title.face, parts.editor_title.size,
                 parts.editor_title.color })

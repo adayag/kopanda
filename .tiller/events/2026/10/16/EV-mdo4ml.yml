@@ -1,0 +1,14 @@
+id: EV-mdo4ml
+type: resume.task
+at: 2026-10-16T14:47:36.51659Z
+contributor: allen
+command: resume task T-51vf9k
+targets:
+    - T-51vf9k
+before:
+    status: in_review
+after:
+    reason: 'owner C19 review: soften Diner''s editor card shadows to a 2 px ink card_shadow token'
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/editor-frame/task.yml

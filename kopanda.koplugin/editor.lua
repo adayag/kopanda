@@ -8,7 +8,7 @@
 -- each row a list of controls { kind, rect, draw, run, disabled }. kind is one of card, button,
 -- arrow, box, kind_button, caption, note or row; rect { x, y, w, h } is the control's place in
 -- its row, the row as tall as its lowest control; draw(bb, x, y) paints it at its screen place;
--- run is called with no arguments on a tap, unless disabled. A card casts the look's tile shadow.
+-- run is called with no arguments on a tap, unless disabled. A card casts the editor's card shadow.
 -- Module state: Editor.shown, the editor on screen or nil. One at a time: showing one closes the
 -- one shown.
 local Device = require("device")
@@ -208,8 +208,8 @@ local function lay_out(editor, ctx)
         y = y + row_height(row)
     end
 
-    -- A card casts the look's tile shadow, under every control.
-    local shadow = look.shadow.tile
+    -- A card casts the editor's card shadow, under every control.
+    local shadow = tokens.card_shadow
     local shadow_color = color(shadow.color)
     if shadow_color then
         local sx, sy = scale(shadow.x), scale(shadow.y)
