@@ -1,4 +1,6 @@
 import type { LuaKey } from "../core/lua.js";
+import type { Health } from "../server/app.js";
+import type { Manifest } from "../server/bundle.js";
 import type { Candidate } from "../server/geocoding.js";
 import type { ProfileListing, ProfileWithPath } from "../server/profiles.js";
 import type { SettingsState } from "../server/settings-file.js";
@@ -57,8 +59,12 @@ export async function fetchProfile(id: string, signal?: AbortSignal): Promise<Pr
 }
 
 function profileUrl(id: string): string {
+  return `/api/profiles/${idSegment(id)}`;
+}
+
+function idSegment(id: string): string {
   if (id === "" || id === "." || id === "..") throw new ApiError(404, `no profile "${id}"`);
-  return `/api/profiles/${encodeURIComponent(id)}`;
+  return encodeURIComponent(id);
 }
 
 /** The settings file of the profile with this id. */
@@ -89,6 +95,16 @@ export async function checkFit(id: string, rows: unknown, signal?: AbortSignal):
     body: JSON.stringify({ rows }),
     signal,
   });
+}
+
+/** The address and port the studio is bound to, and its LAN addresses when it serves the LAN. */
+export function fetchHealth(signal?: AbortSignal): Promise<Health> {
+  return requestJson("/api/health", { signal });
+}
+
+/** The manifest of the profile's bundle as the Kindle would pull it now. */
+export async function fetchManifest(id: string, signal?: AbortSignal): Promise<Manifest> {
+  return requestJson(`/api/push/${idSegment(id)}/manifest`, { signal });
 }
 
 /** The places Open-Meteo offers for query, asked through the studio's server. */

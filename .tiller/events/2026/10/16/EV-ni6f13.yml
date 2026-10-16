@@ -1,0 +1,17 @@
+id: EV-ni6f13
+type: start.task
+at: 2026-10-16T19:42:00.682995Z
+contributor: allen
+command: start task T-janm6k
+targets:
+    - T-janm6k
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/studio/device-push
+    branch: tiller/studio/device-push/bundle-server
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/bundle-server/task.yml
+    - path: .tiller/epics/studio/features/device-push/feature.yml

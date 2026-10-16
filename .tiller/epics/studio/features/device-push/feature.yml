@@ -1,7 +1,7 @@
 id: F-9okxa7
 key: studio/device-push
 title: Wi-Fi pull with staged apply and rollback
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -14,6 +14,7 @@ order:
     - T-ghzxgk
     - T-8kwd74
 review_grain: feature
+branch: tiller/reviews/features/studio/device-push
 accepted_against:
     spec:
         kind: git_blob
