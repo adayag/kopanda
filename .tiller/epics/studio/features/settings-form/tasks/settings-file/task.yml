@@ -1,7 +1,17 @@
 id: T-v4irt5
 key: studio/settings-form/settings-file
 title: Read and write a profile's settings file, with validators shared with the plugin
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:ea65ebc5dc56f897101e9932745f9868d681a539
+        path: .tiller/epics/studio/features/settings-form/tasks/settings-file/task.md
+        observed_at: 2026-10-16T17:50:20.331471Z
+    commit:
+        kind: git_commit
+        value: git:d92a0a4
+        observed_at: 2026-10-16T17:50:20.355126Z

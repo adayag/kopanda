@@ -1,7 +1,17 @@
 id: T-jslnv7
 key: studio/settings-form/layout-fit
 title: bin/layout-fit runs the plugin's fit rule for a profile
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:5bfd7f248926a4068fbf902ed65783ae1dd566bd
+        path: .tiller/epics/studio/features/settings-form/tasks/layout-fit/task.md
+        observed_at: 2026-10-16T17:50:20.355503Z
+    commit:
+        kind: git_commit
+        value: git:d92a0a4
+        observed_at: 2026-10-16T17:50:20.378768Z

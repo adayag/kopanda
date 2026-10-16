@@ -1,10 +1,20 @@
 id: T-ihpvfp
 key: studio/settings-form/layout-editor
 title: The layout editor with the device's row operations and fit refusal
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-08n402
     - T-jslnv7
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:8a1732c9bcbcebecbac7a54318fc99453ad6c6bd
+        path: .tiller/epics/studio/features/settings-form/tasks/layout-editor/task.md
+        observed_at: 2026-10-16T17:50:20.447028Z
+    commit:
+        kind: git_commit
+        value: git:d92a0a4
+        observed_at: 2026-10-16T17:50:20.468549Z

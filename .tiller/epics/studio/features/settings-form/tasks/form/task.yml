@@ -1,9 +1,19 @@
 id: T-08n402
 key: studio/settings-form/form
 title: The generated form over every schema key
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-v4irt5
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:5984b990e87ee6179700ac5af21ea9cd8cf7f7ee
+        path: .tiller/epics/studio/features/settings-form/tasks/form/task.md
+        observed_at: 2026-10-16T17:50:20.400488Z
+    commit:
+        kind: git_commit
+        value: git:d92a0a4
+        observed_at: 2026-10-16T17:50:20.423612Z

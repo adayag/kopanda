@@ -1,0 +1,13 @@
+id: EV-i1ai3v
+type: approve.task
+at: 2026-10-16T17:50:20.468614Z
+contributor: allen
+command: approve task T-ihpvfp
+targets:
+    - T-ihpvfp
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/layout-editor/task.yml

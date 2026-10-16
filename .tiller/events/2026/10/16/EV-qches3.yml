@@ -1,0 +1,13 @@
+id: EV-qches3
+type: approve.task
+at: 2026-10-16T17:50:20.489416Z
+contributor: allen
+command: approve task T-48qqub
+targets:
+    - T-48qqub
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/launcher-editor/task.yml

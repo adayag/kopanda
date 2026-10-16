@@ -1,0 +1,13 @@
+id: EV-019qzz
+type: approve.task
+at: 2026-10-16T17:50:20.378868Z
+contributor: allen
+command: approve task T-jslnv7
+targets:
+    - T-jslnv7
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/studio/features/settings-form/tasks/layout-fit/task.yml

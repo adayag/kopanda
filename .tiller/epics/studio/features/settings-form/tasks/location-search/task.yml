@@ -1,9 +1,19 @@
 id: T-wmf18g
 key: studio/settings-form/location-search
 title: Weather location search through the studio server
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-08n402
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:bbf350756b38f788f8480c51e45b3dfeae612f84
+        path: .tiller/epics/studio/features/settings-form/tasks/location-search/task.md
+        observed_at: 2026-10-16T17:50:20.424023Z
+    commit:
+        kind: git_commit
+        value: git:d92a0a4
+        observed_at: 2026-10-16T17:50:20.446641Z
