@@ -172,6 +172,8 @@ describe("the entry picker", function()
             local sheet = Sheet.shown
             assert.is_not_nil(sheet)
             assert.equals("KoPanda screen", sheet.spec.header.heading)
+            assert.equals("picker", sheet.spec.name)
+            assert.equals("home", sheet.spec.band)
             assert.same({
                 { label = "Library", icon = "library" },
                 { label = "Series", icon = "series" },
@@ -381,6 +383,8 @@ describe("the entry picker", function()
             EntryPicker.pick("plugin", Home.shown.ctx, on_entry)
             local sheet = Sheet.shown
             assert.equals("Plugin", sheet.spec.header.heading)
+            assert.equals("picker", sheet.spec.name)
+            assert.equals("home", sheet.spec.band)
             assert.same({ "Loaded one" }, { sheet.rows[1].row.label, sheet.rows[2] and sheet.rows[2].row.label })
             tap_row(sheet, 1)
             assert.is_nil(Sheet.shown)
@@ -420,13 +424,28 @@ describe("the entry picker", function()
     end)
 
     describe("the label", function()
+        -- The label dialog for History, checked to have shown the keyboard (headless, the keyboard
+        -- never reports itself visible, so the call is what's checked; a luassert spy would
+        -- deep-copy the dialog it's called with).
         local function label_dialog()
             fm_with_home()
+            local show_keyboard = InputDialog.onShowKeyboard
+            local keyboard_for = {}
+            InputDialog.onShowKeyboard = function(self, ...)
+                keyboard_for[#keyboard_for + 1] = self
+                return show_keyboard(self, ...)
+            end
+            cleanup(function()
+                InputDialog.onShowKeyboard = show_keyboard
+            end)
             EntryPicker.pick("action", Home.shown.ctx, on_entry)
             local menu = action_menu()
             tick(menu, "General", { "History" })
             menu:onClose()
-            return shown(InputDialog)
+            local dialog = shown(InputDialog)
+            assert.equals(1, #keyboard_for)
+            assert.equals(dialog, keyboard_for[1])
+            return dialog
         end
 
         it("adds nothing on Cancel", function()
@@ -470,5 +489,27 @@ describe("the entry picker", function()
         end)
         assert.is_false(UIManager:isWidgetShown(dialog))
         assert.spy(err).was.called()
+    end)
+
+    it("logs and closes the label dialog when a step fails while it is up, adding nothing", function()
+        fm_with_home()
+        local err = spy.on(logger, "err")
+        local keyboard = stub(InputDialog, "onShowKeyboard", function()
+            error("kopanda-test: the keyboard failed")
+        end)
+        cleanup(function()
+            err:revert()
+            keyboard:revert()
+        end)
+        EntryPicker.pick("action", Home.shown.ctx, on_entry)
+        local menu = action_menu()
+        tick(menu, "General", { "History" })
+        assert.has_no.errors(function()
+            menu:onClose()
+        end)
+        assert.spy(keyboard).was.called()
+        assert.is_nil(shown(InputDialog))
+        assert.spy(err).was.called()
+        assert.same({}, got)
     end)
 end)

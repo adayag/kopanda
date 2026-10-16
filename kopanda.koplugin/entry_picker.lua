@@ -7,7 +7,6 @@ local CenterContainer = require("ui/widget/container/centercontainer")
 local Dispatcher = require("dispatcher")
 local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
-local LauncherEntries = require("launcher_entries")
 local PathChooser = require("ui/widget/pathchooser")
 local PluginLoader = require("pluginloader")
 local Schema = require("schema")
@@ -91,7 +90,7 @@ local function sheet(pick, ctx, heading, rows)
     for _, row in ipairs(rows) do
         row.run = guard(pick, "failed on a row:", row.run)
     end
-    Sheet.show({ name = "entry_picker", header = { heading = heading }, rows = rows }, ctx)
+    Sheet.show({ name = "picker", band = "home", header = { heading = heading }, rows = rows }, ctx)
 end
 
 local function screen_sheet(pick, ctx, kind, heading, by_target)
@@ -183,11 +182,15 @@ local function start_path()
     end
 end
 
+-- launcher_entries is required when a screen is picked, not at load: it requires home and
+-- settings_menu (launcher_entries.lua:6,8), which reach back here through the settings menu.
 local PICKERS = {
     kopanda = function(pick, ctx)
+        local LauncherEntries = require("launcher_entries")
         screen_sheet(pick, ctx, "kopanda", "KoPanda screen", LauncherEntries.KOPANDA)
     end,
     koreader = function(pick, ctx)
+        local LauncherEntries = require("launcher_entries")
         screen_sheet(pick, ctx, "koreader", "KOReader screen", LauncherEntries.KOREADER)
     end,
     directory = function(pick)
