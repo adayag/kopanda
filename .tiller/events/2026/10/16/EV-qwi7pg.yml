@@ -1,0 +1,16 @@
+id: EV-qwi7pg
+type: cancel.tweak
+at: 2026-10-16T02:20:14.827611Z
+contributor: allen
+command: cancel tweak TW-ft6azu
+targets:
+    - TW-ft6azu
+before:
+    status: ready
+after:
+    duplicate_of: TW-4ae71f
+    reason: 'Same root cause as TW-4ae71f (probe settle µs tie); fixed by PR #13'
+    resolution: duplicate
+    status: cancelled
+files:
+    - path: .tiller/tweaks/flaky-probe-golden-colorsoft/tweak.yml

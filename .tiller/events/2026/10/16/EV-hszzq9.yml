@@ -1,0 +1,16 @@
+id: EV-hszzq9
+type: cancel.tweak
+at: 2026-10-16T02:20:14.736952Z
+contributor: allen
+command: cancel tweak TW-cbgsdn
+targets:
+    - TW-cbgsdn
+before:
+    status: ready
+after:
+    duplicate_of: TW-4ae71f
+    reason: 'Same root cause as TW-4ae71f (probe settle µs tie); fixed by PR #13'
+    resolution: duplicate
+    status: cancelled
+files:
+    - path: .tiller/tweaks/flaky-probe-capture-colorsoft/tweak.yml
