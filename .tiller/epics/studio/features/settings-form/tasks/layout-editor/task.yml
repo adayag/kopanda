@@ -1,7 +1,7 @@
 id: T-ihpvfp
 key: studio/settings-form/layout-editor
 title: The layout editor with the device's row operations and fit refusal
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -20,3 +20,30 @@ accepted_against:
         value: git:d92a0a4
         observed_at: 2026-10-16T17:50:20.468549Z
 branch: tiller/studio/settings-form/layout-editor
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T19:08:48.74098Z
+        against:
+            kind: git_commit
+            value: git:def1f87
+            observed_at: 2026-10-16T19:08:48.740976Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-def1f87-out-6b773f04f5dc42dce7ecc2ca2cef1f5914797b3228dbac4c5cfb8ef1d241969f.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T19:08:48.74098Z
+        against:
+            kind: git_commit
+            value: git:def1f87
+            observed_at: 2026-10-16T19:08:48.740976Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-def1f87-out-5cdb161d24d0d0c01fef11d903253a788a23ded1467d7005ea693aeafc20a47b.txt
