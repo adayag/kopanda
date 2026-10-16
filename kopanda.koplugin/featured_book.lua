@@ -1,11 +1,11 @@
 -- The featured book: the one module that knows where it comes from. The pinned book when it
--- still exists, else the most recent book in KOReader's reading history that does; its title
--- and authors from CoverBrowser or the sidecar, its progress, status and pages from the sidecar,
--- its time left from the Statistics reading speed, and its chapter as KoPanda recorded it when
--- the book closed. Only reads: never the settings file, a sidecar or the history is written.
--- Every KOReader read is caught; a failure is logged and that part reads as absent.
+-- still exists, else the most recent book in KOReader's reading history that does; its title,
+-- authors, progress, status and pages from the book model (books.lua), its time left from the
+-- Statistics reading speed, and its chapter as KoPanda recorded it when the book closed. Only
+-- reads: never the settings file, a sidecar or the history is written. Every KOReader read is
+-- caught; a failure is logged and that part reads as absent.
 -- Module state: the pinned paths already logged as gone, so each is logged once per process.
-local DocSettings = require("docsettings")
+local Books = require("books")
 local ReadingStats = require("reading_stats")
 local Settings = require("settings")
 local State = require("state")
@@ -14,9 +14,6 @@ local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
 
 local FeaturedBook = {}
-
--- The statuses a sidecar's summary.status holds (frontend/ui/widget/booklist.lua:371-378).
-local STATUSES = { reading = true, abandoned = true, complete = true }
 
 local logged_gone = {}
 
@@ -76,33 +73,10 @@ local function featured_file()
     return try("the reading history", most_recent)
 end
 
--- The book's sidecar, opened light so nothing is written or removed: DocSettings:open removes
--- candidates it finds invalid (frontend/docsettings.lua:282-284). With no sidecar file,
--- openSettingsFile(nil) holds empty data (:301-315).
-local function sidecar(file)
-    return DocSettings.openSettingsFile((DocSettings:findSidecarFile(file)))
-end
-
--- The book's title and authors from CoverBrowser's cache, without a cover, or nil when
--- CoverBrowser is disabled (its folder joins package.path only when enabled) or hasn't indexed
--- the book (plugins/coverbrowser.koplugin/bookinfomanager.lua:325-404).
-local function cached_info(file)
-    local ok, BookInfoManager = pcall(require, "bookinfomanager")
-    if not ok then
-        return nil
-    end
-    return BookInfoManager:getBookInfo(file, false)
-end
-
 local function text(value)
     if type(value) == "string" and value ~= "" then
         return value
     end
-end
-
-local function joined(authors)
-    authors = text(authors)
-    return authors and (authors:gsub("\n", ", "))
 end
 
 -- The file name without its extension.
@@ -111,19 +85,14 @@ local function file_title(file)
     return name:match("^(.+)%.[^.]*$") or name
 end
 
--- The pages the sidecar records, in the order BookList reads them
--- (frontend/ui/widget/booklist.lua:298-306): pagemap_doc_pages with page labels on, else
--- doc_pages, else stats.pages unless 0 (crengine with Statistics off stores 0).
-local function sidecar_pages(doc)
-    local pages = doc:isTrue("pagemap_use_page_labels") and doc:readSetting("pagemap_doc_pages")
-        or doc:readSetting("doc_pages")
-    if pages == nil then
-        local stats = doc:readSetting("stats")
-        if type(stats) == "table" and stats.pages and stats.pages ~= 0 then
-            pages = stats.pages
-        end
-    end
-    return tonumber(pages)
+local function joined(authors)
+    return #authors > 0 and table.concat(authors, ", ") or nil
+end
+
+-- The record of file from the model, or, for a file gone since it was chosen, one named by its
+-- file name.
+local function record(file)
+    return Books.for_path(file) or { path = file, title = file_title(file), authors = {} }
 end
 
 -- The chapter recorded when file last closed under KoPanda: the recorded file compared through
@@ -150,29 +119,17 @@ function FeaturedBook.current()
         if not file then
             return nil
         end
-        local doc = try("the sidecar of " .. file, sidecar, file) or DocSettings.openSettingsFile(nil)
-        local info = try("CoverBrowser's book info for " .. file, cached_info, file) or {}
-        local props = doc:readSetting("doc_props")
-        if type(props) ~= "table" then
-            props = {}
-        end
-
-        local percent = doc:readSetting("percent_finished")
-        local has_percent = type(percent) == "number"
-        percent = has_percent and math.max(0, math.min(1, percent)) or 0
-
-        local summary = doc:readSetting("summary")
-        local status = type(summary) == "table" and summary.status
-        if not STATUSES[status] then
-            status = "reading"
-        end
+        local book = record(file)
+        local progress = Books.progress(book)
+        local percent = progress.percent
+        local has_percent = percent ~= nil
+        percent = percent or 0
 
         -- Time left over the Statistics book row's pages, the pages page_stat rescales to
         -- (plugins/statistics.koplugin/main.lua:422-452), as its own popup sums it (:1579).
         local seconds_left
-        local md5 = doc:readSetting("partial_md5_checksum")
-        if type(md5) == "string" and has_percent then
-            local rate, book_pages = ReadingStats.seconds_per_page(md5)
+        if progress.md5 and has_percent then
+            local rate, book_pages = ReadingStats.seconds_per_page(progress.md5)
             if rate and book_pages then
                 seconds_left = (book_pages - math.floor(percent * book_pages + 0.5)) * rate
             end
@@ -180,11 +137,12 @@ function FeaturedBook.current()
 
         return {
             file = file,
-            title = text(info.title) or text(props.title) or file_title(file),
-            authors = joined(info.authors) or joined(props.authors),
+            title = book.title,
+            authors = joined(book.authors),
             percent = percent,
-            status = status,
-            pages = sidecar_pages(doc),
+            -- "new" is a book never opened; the featured book shows one from the history.
+            status = progress.status == "new" and "reading" or progress.status,
+            pages = progress.pages,
             seconds_left = seconds_left,
             chapter = try("the recorded chapter", recorded_chapter, file),
         }
@@ -199,16 +157,11 @@ end
 -- One book for the picker: { file, title, authors }, read as current() reads them, a raising
 -- read logged and left out. authors may be nil.
 function FeaturedBook.describe(file)
-    local doc = try("the sidecar of " .. file, sidecar, file) or DocSettings.openSettingsFile(nil)
-    local info = try("CoverBrowser's book info for " .. file, cached_info, file) or {}
-    local props = doc:readSetting("doc_props")
-    if type(props) ~= "table" then
-        props = {}
-    end
+    local book = record(file)
     return {
         file = file,
-        title = text(info.title) or text(props.title) or file_title(file),
-        authors = joined(info.authors) or joined(props.authors),
+        title = book.title,
+        authors = joined(book.authors),
     }
 end
 

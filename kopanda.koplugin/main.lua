@@ -24,6 +24,7 @@ local time = require("ui/time")
 -- Required here only so they load while the plugin root is on package.path; the modules that
 -- use them get them from the require cache.
 require("book_sheet")
+require("books")
 require("edit_layout")
 require("editor")
 require("entries_edit")

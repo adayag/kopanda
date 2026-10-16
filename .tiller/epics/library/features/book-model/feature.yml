@@ -1,7 +1,7 @@
 id: F-alfeze
 key: library/book-model
 title: Book index keyed by id with cover and metadata cache
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -12,6 +12,7 @@ order:
     - T-1ms8w2
     - T-tvonaw
 review_grain: feature
+branch: tiller/reviews/features/library/book-model
 accepted_against:
     spec:
         kind: git_blob
