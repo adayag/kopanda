@@ -24,6 +24,83 @@ describe("bin/check", function()
         return output:match("KOPANDA_KO_HOME=([^\n]+)\n")
     end
 
+    local function line_count(text)
+        return select(2, text:gsub("\n", ""))
+    end
+
+    -- A scratch checkout holding only bin/, .luacheckrc, the spec helper and
+    -- environment_spec.lua under both spec layers, so a full run stays small.
+    local function small_checkout()
+        local copy = run("mktemp -d"):gsub("\n$", "")
+        local _, setup = run("cp -R '" .. root .. "/bin' '" .. root .. "/.luacheckrc' '" .. copy .. "'"
+            .. " && mkdir -p '" .. copy .. "/spec/unit' '" .. copy .. "/spec/emulator'"
+            .. " && cp '" .. root .. "/spec/helper.lua' '" .. copy .. "/spec/'"
+            .. " && cp '" .. root .. "/spec/unit/environment_spec.lua' '" .. copy .. "/spec/unit/'"
+            .. " && cp '" .. root .. "/spec/unit/environment_spec.lua' '" .. copy .. "/spec/emulator/'")
+        assert.equals(0, setup)
+        return copy
+    end
+
+    it("prints one summary line per stage on a green run, without per-test lines or library chatter", function()
+        local copy = small_checkout()
+        local output, status = run("'" .. copy .. "/bin/check'")
+        run("rm -rf '" .. copy .. "'")
+        assert.equals(0, status, output)
+        assert.is_true(line_count(output) < 20, output)
+        assert.truthy(output:find("\n== lint: luacheck\nTotal: 0 warnings / 0 errors in %d+ files\n== unit\n"), output)
+        local layer = "%[==========%] 7 tests from 1 test file ran%.[^\n]*\n%[  PASSED  %] 7 tests%.\n"
+        assert.truthy(output:find("\n== unit\n" .. layer .. "== emulator\n" .. layer .. "$"), output)
+        assert.falsy(contains(output, "ffi.findlib"))
+        assert.falsy(contains(output, "[ RUN"))
+        assert.falsy(contains(output, "[       OK ]"))
+        assert.falsy(contains(output, "environment_spec.lua"))
+    end)
+
+    it("names each file with a failing test and prints Busted's failure block in full", function()
+        local output, status = run("cd '" .. root .. "' && bin/check spec/fixtures/failing_spec.lua"
+            .. " spec/unit/environment_spec.lua")
+        assert.equals(1, status)
+        assert.truthy(contains(output, "\n[  FAILED  ] in spec/fixtures/failing_spec.lua\n"), output)
+        assert.truthy(contains(output, "failing_spec.lua:3: Expected objects to be equal.\nPassed in:\n(number) 2\n"
+            .. "Expected:\n(number) 1\n"), output)
+        assert.truthy(contains(output, "failing_spec.lua:7: Expected objects to be the same."), output)
+        assert.falsy(contains(output, "environment_spec.lua"))
+        assert.falsy(contains(output, "[ RUN"))
+        assert.falsy(contains(output, "ffi.findlib"))
+    end)
+
+    it("prints the error of a spec file that does not load", function()
+        local dir = run("mktemp -d"):gsub("\n$", "")
+        local _, setup = run("printf 'this is not lua(\\n' > '" .. dir .. "/unloadable_spec.lua'")
+        assert.equals(0, setup)
+        local output, status = run("'" .. check .. "' '" .. dir .. "/unloadable_spec.lua'")
+        run("rm -rf '" .. dir .. "'")
+        assert.equals(1, status)
+        assert.truthy(contains(output, "unloadable_spec.lua:1: '=' expected near 'is'"), output)
+        assert.falsy(contains(output, "has monolibtic"), output)
+    end)
+
+    it("prints Busted's per-test lines and KOReader's library chatter with --verbose", function()
+        local output, status = run("cd '" .. root .. "' && bin/check --verbose spec/unit/environment_spec.lua")
+        assert.equals(0, status, output)
+        assert.truthy(contains(output, "ffi.findlib"))
+        assert.truthy(contains(output, "[----------] Running tests from " .. root .. "/spec/unit/environment_spec.lua"))
+        assert.truthy(contains(output, "[ RUN      ]"))
+        assert.truthy(contains(output, "[       OK ]"))
+    end)
+
+    it("lists every file luacheck checked with --verbose after --lint, and only the total without it", function()
+        local copy = small_checkout()
+        local verbose, verbose_status = run("'" .. copy .. "/bin/check' --lint --verbose")
+        local quiet, quiet_status = run("'" .. copy .. "/bin/check' --lint")
+        run("rm -rf '" .. copy .. "'")
+        assert.equals(0, verbose_status, verbose)
+        assert.equals(0, quiet_status, quiet)
+        assert.truthy(contains(verbose, "Checking"), verbose)
+        assert.falsy(contains(quiet, "Checking"), quiet)
+        assert.falsy(contains(quiet, "\27"), quiet)
+    end)
+
     it("exits 1 on a spec with failing tests and names each failing test", function()
         local output, status = run("cd '" .. root .. "' && bin/check spec/fixtures/failing_spec.lua")
         assert.equals(1, status)
