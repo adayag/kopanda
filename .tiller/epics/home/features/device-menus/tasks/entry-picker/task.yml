@@ -1,7 +1,7 @@
 id: T-zghyve
 key: home/device-menus/entry-picker
 title: The add-an-entry picker for the five kinds
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:ac38233
         observed_at: 2026-10-16T03:17:38.040773Z
 branch: tiller/home/device-menus/entry-picker
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T03:33:26.004622Z
+        against:
+            kind: git_commit
+            value: git:432e956
+            observed_at: 2026-10-16T03:33:26.004616Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-432e956-out-b4077423f6aeffff82a01a49e02ade8e09f15e8373d45276c9eb99c66c7b397b.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T03:33:26.004622Z
+        against:
+            kind: git_commit
+            value: git:432e956
+            observed_at: 2026-10-16T03:33:26.004616Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-432e956-out-6cdb421987ae22acc0e6e549b4df8162269fdf219ab9f30453f9768e785bc958.txt
