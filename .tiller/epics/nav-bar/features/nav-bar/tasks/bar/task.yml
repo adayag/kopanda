@@ -1,7 +1,7 @@
 id: T-3648b1
 key: nav-bar/nav-bar/bar
 title: 'The nav bar: its tokens in both looks and its five tabs'
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -17,6 +17,12 @@ accepted_against:
         value: git:fae01e4
         observed_at: 2026-10-16T20:56:58.408991Z
 branch: tiller/nav-bar/nav-bar/bar
+review_ref:
+    branch: tiller/nav-bar/nav-bar/bar
+    head:
+        kind: git_commit
+        value: git:4328d4f
+        observed_at: 2026-10-16T21:20:12.627413Z
 gates:
     build:
         required: true
