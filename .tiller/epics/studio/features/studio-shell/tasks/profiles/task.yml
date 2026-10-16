@@ -1,9 +1,10 @@
 id: T-n4uwe9
 key: studio/studio-shell/profiles
 title: Device profiles on disk, seeded defaults and the profiles API
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-6yxswg
@@ -17,3 +18,4 @@ accepted_against:
         kind: git_commit
         value: git:25f054c
         observed_at: 2026-10-16T17:01:28.933438Z
+branch: tiller/studio/studio-shell/profiles
