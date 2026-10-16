@@ -83,9 +83,10 @@ export function LauncherEditor({ profileId, settings, pending, errors, onWrite }
         </p>
       )}
       <ol className="entries" aria-label="Entries">
-        {list.map((_, i) => (
+        {list.map((entry, i) => (
           <EntryRow
-            key={`${open ? folder : 0}:${i}`}
+            // A change to the entry at a slot remounts its row, closing any panel opened on the entry before.
+            key={`${open ? folder : 0}:${i}:${JSON.stringify(entry)}`}
             entries={entries}
             pos={open ? [folder!, i + 1] : [i + 1]}
             length={list.length}

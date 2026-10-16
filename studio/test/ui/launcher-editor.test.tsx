@@ -202,6 +202,23 @@ describe("each change is one PUT", () => {
     expect(await screen.findByRole("listitem", { name: "My books" })).toBeInTheDocument();
   });
 
+  it("saves a label on blur, trimmed; a blank one saves nothing", async () => {
+    const books = { kind: "directory", path: "/mnt/us/books", label: "books" };
+    await open(settings([L, books]));
+
+    fireEvent.click(within(row("books")).getByRole("button", { name: "books" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Label" }), { target: { value: " My books " } });
+    fireEvent.blur(screen.getByRole("textbox", { name: "Label" }));
+    await waitFor(() => expect(puts()).toEqual([[L, { ...books, label: "My books" }]]));
+    fireEvent.click(within(await screen.findByRole("listitem", { name: "My books" })).getByRole("button", { name: "My books" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Label" }), { target: { value: "   " } });
+    fireEvent.blur(screen.getByRole("textbox", { name: "Label" }));
+
+    await settle();
+    expect(puts()).toHaveLength(1);
+    expect(screen.queryByRole("textbox", { name: "Label" })).not.toBeInTheDocument();
+  });
+
   it("picks an action entry's icon from every catalog icon, the current one marked", async () => {
     await open(settings([L, HISTORY]));
 
@@ -248,6 +265,30 @@ describe("each change is one PUT", () => {
     const buttons = screen.getAllByRole("button");
     expect(buttons.length).toBeGreaterThan(10);
     for (const b of buttons) expect(b).toBeDisabled();
+  });
+});
+
+describe("a row's open panel belongs to its entry", () => {
+  it("closes a folder's remove question when the folder moves, so nothing else is removed", async () => {
+    await open(settings([L, S, TOOLS]));
+
+    fireEvent.click(button("Remove Tools"));
+    fireEvent.click(button("Move Tools up"));
+
+    await waitFor(() => expect(puts()).toEqual([[L, TOOLS, S]]));
+    await waitFor(() => expect(rows()).toEqual([row("Library"), row("Tools"), row("Series")]));
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(screen.queryByText("Remove Series and its 0 entries?")).not.toBeInTheDocument();
+  });
+
+  it("closes the icon picker when its entry moves", async () => {
+    await open(settings([L, HISTORY, act("x")]));
+
+    fireEvent.click(button("Icon of History"));
+    fireEvent.click(button("Move History down"));
+
+    await waitFor(() => expect(rows()).toEqual([row("Library"), row("X"), row("History")]));
+    expect(screen.queryByRole("group", { name: "Icon" })).not.toBeInTheDocument();
   });
 });
 
