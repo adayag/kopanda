@@ -243,32 +243,137 @@ describe("gestures on the KoPanda home", function()
         } }
         local home = Home.shown
         local size = Screen:getSize()
-        local ges = harness.gesture("tap", size.w - 10, size.h - 10)
+        -- Just above the nav bar, which wins in its band (D4), and still in the corner eighth
+        -- (DTAP_ZONE_BOTTOM_RIGHT, defaults.lua:69).
+        local y = home.nav.dimen.y - 5
+        assert.truthy(y >= size.h * 7 / 8)
+        local ges = harness.gesture("tap", size.w - 10, y)
         send(ges)
         assert.equals(ges, received)
         assert.equals(home, harness.top())
         -- The other corners are unbound: a tap there closes the home.
-        send(untapped(10, size.h - 10))
+        send(untapped(10, y))
         assert.is_nil(Home.shown)
         assert.equals(fm, harness.top())
     end)
 
+    -- The nav bar's band (the nav bar's C3, D4): a tap or a hold there goes to the bar before the
+    -- zones on the file manager; anything else passes through as before.
+    describe("in the nav bar's band", function()
+        -- A zone on the file manager over the corner eighth at ratio_x, as the Gestures plugin
+        -- registers its corner taps (plugins/gestures.koplugin/main.lua:985-990, :1287-1288).
+        local function bind_corner(fm, ratio_x)
+            local got = {}
+            fm:registerTouchZones{ {
+                id = "kopanda_spec_corner_" .. ratio_x,
+                ges = "tap",
+                screen_zone = { ratio_x = ratio_x, ratio_y = 7 / 8, ratio_w = 1 / 8, ratio_h = 1 / 8 },
+                handler = function(ges)
+                    got[#got + 1] = ges
+                    return true
+                end,
+            } }
+            return got
+        end
+
+        -- The centre of tab i of the shown home's bar.
+        local function tab_centre(i)
+            local bar = Home.shown.nav
+            local column = bar.columns[i]
+            return bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2),
+                bar.dimen.y + math.floor(bar.dimen.h / 2)
+        end
+
+        it("runs the Settings tab, not a corner zone, on a tap at the bottom-right corner", function()
+            local fm = fm_with_home()
+            local home = Home.shown
+            local got = bind_corner(fm, 7 / 8)
+            local size = Screen:getSize()
+            send(harness.gesture("tap", size.w - 10, size.h - 10))
+            assert.same({}, got)
+            assert.equals(settings_menu(), harness.top())
+            assert.equals(home, harness.top(2))
+            assert.same(all_keys(), gestures.settings_keys())
+        end)
+
+        it("runs the Home tab, which does nothing, not Gestures' frontlight corner, at the bottom-left", function()
+            -- Gestures binds the bottom-left corner tap to the frontlight on any device with one
+            -- (plugins/gestures.koplugin/defaults.lua:9), the emulator included
+            -- (frontend/device/sdl/device.lua:157).
+            local fm = fm_with_home()
+            local home = Home.shown
+            local got = bind_corner(fm, 0)
+            local size = Screen:getSize()
+            send(harness.gesture("tap", 10, size.h - 10))
+            assert.same({}, got)
+            assert.equals(home, Home.shown)
+            assert.equals(home, harness.top())
+        end)
+
+        it("closes the home and goes to the home folder once on a tap on the Library tab", function()
+            local fm = fm_with_home()
+            local on_home = fm.onHome
+            local calls = 0
+            fm.onHome = function(...)
+                calls = calls + 1
+                return on_home(...)
+            end
+            send(harness.gesture("tap", tab_centre(2)))
+            assert.equals(1, calls)
+            assert.is_nil(Home.shown)
+            assert.equals(fm, harness.top())
+        end)
+
+        it("still opens the full settings list on a swipe up starting in the band", function()
+            fm_with_home()
+            local home = Home.shown
+            local size = Screen:getSize()
+            local y = size.h - 10
+            assert.truthy(y >= home.nav.dimen.y)
+            send(swipe(size.w / 2, y, "north"))
+            assert.equals(settings_menu(), harness.top())
+            assert.equals(home, harness.top(2))
+            assert.same(all_keys(), gestures.settings_keys())
+        end)
+
+        it("does nothing on a tap in the band under KOReader's touch lock", function()
+            local fm = fm_with_home()
+            local home = Home.shown
+            local on_home = fm.onHome
+            local calls = 0
+            fm.onHome = function(...)
+                calls = calls + 1
+                return on_home(...)
+            end
+            UIManager:setIgnoreTouchInput(true)
+            finally(function()
+                UIManager:setIgnoreTouchInput(false)
+            end)
+            send(harness.gesture("tap", tab_centre(2)))
+            send(harness.gesture("tap", tab_centre(5)))
+            assert.equals(0, calls)
+            assert.is_nil(settings_menu())
+            assert.equals(home, Home.shown)
+            assert.equals(home, harness.top())
+        end)
+    end)
+
     -- Registers a stub widget with tap for every id of the default layout, each slot height
-    -- tall[id] (60 when unset), and returns a function giving the taps so far.
+    -- tall[id] (60 when unset) as the table holds it at each build, and returns a function giving
+    -- the taps so far.
     local function tappable_stubs(tall)
         local Widget = require("ui/widget/widget")
         local Geom = require("ui/geometry")
         local taps = 0
         local stubs = {}
         for _, id in ipairs({ "date", "clock", "quote", "weather", "stats" }) do
-            local h = tall[id] or 60
             stubs[id] = {
                 id = id,
                 height = function()
-                    return h
+                    return tall[id] or 60
                 end,
                 build = function(width)
-                    return Widget:new{ dimen = Geom:new{ w = width, h = h } }
+                    return Widget:new{ dimen = Geom:new{ w = width, h = tall[id] or 60 } }
                 end,
                 tap = function()
                     taps = taps + 1
@@ -302,9 +407,15 @@ describe("gestures on the KoPanda home", function()
 
     it("lets a corner zone on the file manager win over a tappable slot under it", function()
         local size = Screen:getSize()
-        local tall = math.floor(size.h * 0.67)
-        local taps = tappable_stubs({ quote = 20, weather = tall, stats = tall })
+        local tall = { quote = 20, weather = 20, stats = 20 }
+        local taps = tappable_stubs(tall)
         local fm = fm_with_home()
+        -- The last row grown to end on the nav bar's band, which takes its own taps first (D4),
+        -- so its bottom-right corner lies in the corner eighth just above the bar.
+        local stats = slot_of("stats").rect
+        tall.weather = Home.shown.nav.dimen.y - stats.y
+        tall.stats = tall.weather
+        Home.shown:refresh()
         local received
         fm:registerTouchZones{ {
             id = "kopanda_spec_corner_tap",
@@ -320,6 +431,8 @@ describe("gestures on the KoPanda home", function()
         local x, y = rect.x + rect.w - 5, rect.y + rect.h - 5
         assert.is_true(rect:contains(point(x, y)))
         assert.truthy(x >= size.w * 7 / 8 and y >= size.h * 7 / 8)
+        -- The last row ends above the nav bar, which takes its band first (D4).
+        assert.truthy(rect.y + rect.h <= home.nav.dimen.y)
         local ges = harness.gesture("tap", x, y)
         send(ges)
         assert.equals(ges, received)

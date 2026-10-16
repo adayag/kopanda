@@ -619,9 +619,12 @@ describe("the launcher widget", function()
             UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", x, y)))
         end
 
-        -- The launcher in a row of its own under the header, clear of KOReader's top menu zones.
+        -- The launcher in a row of its own under the header and the quote, clear of KOReader's top
+        -- menu zones: Diner's header, tightened to fit the home above the nav bar, no longer holds
+        -- it below DTAP_ZONE_MENU_EXT on the unit screen.
         local ROWS = {
             { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+            { { widget = "quote", share = 1 } },
             { { widget = "launcher", share = 1 } },
         }
 

@@ -31,9 +31,9 @@ function Home:init()
 end
 
 -- Builds the rows into self[1] and self.slots (each { widget, rect, module, built }), with
--- self.ctx the context every widget got (HomeRows.build).
+-- self.ctx the context every widget got and self.nav the nav bar, or nil (HomeRows.build).
 function Home:build()
-    self[1], self.slots, self.ctx = HomeRows.build(self)
+    self[1], self.slots, self.ctx, self.nav = HomeRows.build(self)
 end
 
 local function close_home(home)

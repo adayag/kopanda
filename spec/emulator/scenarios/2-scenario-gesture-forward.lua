@@ -1,10 +1,11 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
 -- by spec/emulator/gesture_forward_spec.lua. At patch time, before any plugin loads
 -- (reader.lua:190), it writes the Gestures plugin's settings file with the file manager's
--- bottom-right corner tap bound to History. On the first home it taps that corner, waits two
--- ticks, and reports, as a "scenario" KoPandaSettled signal, whether the file manager's History
--- list is shown and whether the home is still on the stack. Any failure is reported as a
--- "scenario" signal with error, so the spec fails with the message.
+-- bottom-right corner tap bound to History. On the first home it taps that corner just above the
+-- nav bar, which takes every tap in its band (KoPanda's nav bar, D4), waits two ticks, and
+-- reports, as a "scenario" KoPandaSettled signal, whether the file manager's History list is
+-- shown and whether the home is still on the stack. Any failure is reported as a "scenario"
+-- signal with error, so the spec fails with the message.
 local logger = require("logger")
 
 local ok, err = pcall(function()
@@ -59,13 +60,16 @@ local ok, err = pcall(function()
         }
     end)
 
-    -- A tap inside the bottom-right corner zone (DTAP_ZONE_BOTTOM_RIGHT, defaults.lua:69), with
-    -- the fields GestureRange:match reads (frontend/ui/gesturerange.lua:21-51).
+    -- A tap inside the bottom-right corner zone (DTAP_ZONE_BOTTOM_RIGHT, defaults.lua:69), 10 px
+    -- above the nav bar's band, with the fields GestureRange:match reads
+    -- (frontend/ui/gesturerange.lua:21-51). The bar's height is the active look's, as the home
+    -- reserves it.
     local tap_corner = guarded(function()
         local size = Screen:getSize()
+        local bar = require("nav_bar").height(require("looks").active(), Screen)
         UIManager:sendEvent(Event:new("Gesture", {
             ges = "tap",
-            pos = Geom:new{ x = size.w - 10, y = size.h - 10, w = 0, h = 0 },
+            pos = Geom:new{ x = size.w - 10, y = size.h - bar - 10, w = 0, h = 0 },
             time = time.now(),
         }))
         UIManager:nextTick(function()

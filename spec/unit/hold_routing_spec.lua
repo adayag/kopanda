@@ -241,6 +241,28 @@ describe("gestures on the KoPanda home", function()
             assert.equals(1, #calls)
         end)
 
+        -- D3: a hold on the nav bar is consumed and runs nothing.
+        it("opens no sheet and runs no slot's hold on a hold in the nav bar's band", function()
+            local held, calls = recording(nil)
+            stubs_with({ date = held, clock = held, quote = held, weather = held, stats = held })
+            fm_with_home()
+            local home = Home.shown
+            local bar = home.nav
+            local size = Screen:getSize()
+            for i, column in ipairs(bar.columns) do
+                hold(bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2),
+                    bar.dimen.y + math.floor(bar.dimen.h / 2))
+                assert.equals(home, harness.top(), "tab " .. i)
+            end
+            hold(10, size.h - 10)
+            hold(size.w - 10, size.h - 10)
+            assert.equals(0, #calls)
+            assert.equals(0, sheets_on_stack())
+            assert.is_nil(settings_menu())
+            assert.equals(home, Home.shown)
+            assert.equals(home, harness.top())
+        end)
+
         it("opens nothing on a hold under KOReader's touch lock", function()
             stubs_with({})
             fm_with_home()

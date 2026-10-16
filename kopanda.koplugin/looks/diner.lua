@@ -166,11 +166,16 @@ return {
 
     -- The home's page: its margins, the gaps between rows and between columns, where the free
     -- height goes, the header drawn with row 1 and the footer. HomeRetro.dc.html is the board.
+    -- Its row gap, the header's padding and the launcher's row gap are tightened to 62 % of the
+    -- board's, rounded, the least that fits the default rows above the nav bar at the small and
+    -- medium text sizes on the Colorsoft and the Paperwhite (owner, 2026-10-16: tighten the
+    -- home's spacing). The launcher's tile height is not: 104 is its icon, label and suffix at
+    -- the large text size.
     home = {
         -- The band and the stripe are full-bleed; every other row has a 40 px side gutter
         -- (HomeRetro.dc.html:17-19, :26).
         margin = { top = 0, side = 40, bottom = 0 },
-        row_gap = 22, -- the strip's and the launcher's top padding (HomeRetro.dc.html:47, :55)
+        row_gap = 14, -- the strip's and the launcher's top padding (HomeRetro.dc.html:47, :55; was 22)
         column_gap = 14, -- the launcher grid's gap (HomeRetro.dc.html:55)
         free_space = "before_footer", -- the stripe's margin-top: auto (HomeRetro.dc.html:82)
         -- A full-width band holding row 1, padded, over a 4 px ink edge (HomeRetro.dc.html:19).
@@ -181,14 +186,16 @@ return {
             rule_color = false,
             rule_width = 0,
             rule_space = 0,
-            padding = { top = 36, side = 40, bottom = 28 },
+            padding = { top = 22, side = 40, bottom = 17 }, -- was 36, 40, 28
             -- Its slots on its bottom, the clock's baseline level with the date
             -- (HomeRetro.dc.html:19, align-items: flex-end).
             align = "bottom",
         },
-        -- 22 px of 2 px ink lines every 10 px on paper, under a 4 px ink edge (HomeRetro.dc.html:82).
+        -- HomeRetro.dc.html:82 draws 22 px of 2 px ink lines every 10 px on paper under a 4 px
+        -- ink edge; the bar always shows on the home and NavBarC.dc.html:70 draws no stripe above
+        -- it, so the stripe has no height (was 22).
         footer = {
-            height = 22,
+            height = 0,
             stripe_color = "ink",
             gap_color = "paper",
             line_width = 2,
@@ -355,7 +362,7 @@ return {
     launcher = {
         columns = 3, -- HomeRetro.dc.html:55
         column_gap = 14, -- HomeRetro.dc.html:55
-        row_gap = 14, -- HomeRetro.dc.html:55
+        row_gap = 9, -- HomeRetro.dc.html:55; was 14, tightened with the home (home above)
         icon_size = 28, -- HomeRetro.dc.html:57
         icon_gap = false, -- the icon sits above the label, not beside it
         padding = { x = 14, y = 12 }, -- HomeRetro.dc.html:56

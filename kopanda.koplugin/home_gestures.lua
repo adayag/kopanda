@@ -115,7 +115,9 @@ local function hold(home, ges)
 end
 
 -- The home's gestures, in order, each step stopping at the first that consumes: its own swipe
--- up; the file manager's menu zones (top-zone tap and swipe down, by KOReader's own rules,
+-- up; a tap or a hold in the nav bar's band, which the bar takes (it runs the tapped tab; a hold
+-- runs nothing), before anything beneath can, Gestures' bottom corners included; the file
+-- manager's menu zones (top-zone tap and swipe down, by KOReader's own rules,
 -- filemanagermenu.lua:71-124, :1102-1114); a page swipe, consumed since there is nothing to
 -- page; the zones registered on the file manager itself, the Gestures plugin's among them
 -- (gestures main.lua:1287-1288), so a bound hold corner wins over the hold (:1124-1139); a hold
@@ -132,6 +134,9 @@ function HomeGestures.route(home, ges, close)
     home.own_step = nil
     if own_step == "settings" then
         SettingsMenu.open()
+        return true
+    end
+    if (own_step == "tap" or own_step == "hold") and home.nav and home.nav:handle(ges) then
         return true
     end
     local FileManager = package.loaded["apps/filemanager/filemanager"]

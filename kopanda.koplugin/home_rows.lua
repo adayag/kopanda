@@ -1,10 +1,11 @@
 -- The home's rows: the widget tree a home draws, built from the layout.rows setting as rows of
 -- widgets (layout.lua places them, widgets.lua finds them) in the active look, with its header
--- and footer chrome filled beneath them.
+-- and footer chrome filled beneath them and the nav bar in the band below them.
 local Blitbuffer = require("ffi/blitbuffer")
 local Geom = require("ui/geometry")
 local Layout = require("layout")
 local Looks = require("looks")
+local NavBar = require("nav_bar")
 local Settings = require("settings")
 local Widget = require("ui/widget/widget")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -25,7 +26,8 @@ local function fill(bb, x, y, rect, color)
 end
 
 -- The home's content: the filled chrome (paper, header, footer), then each slot's widget at
--- its place. The slot widgets are the array part, so free() and events reach them.
+-- its place, then the nav bar. The slot widgets and the bar are the array part, so free() and
+-- events reach them.
 local Rows = WidgetContainer:extend{
     name = "kopanda_home_rows",
 }
@@ -73,10 +75,12 @@ local function chrome(arranged, look, color)
 end
 
 -- Builds home's rows at home.dimen and returns them, the slots (each { widget, rect, module,
--- built }) and the context every widget got. A widget is drawn its slot's offset below the
--- slot's top (bottom-aligned in the header row, layout.lua). A slot whose widget has no module,
--- or whose height or build raises, is left blank at its column width and logged; the rest of
--- the home still builds.
+-- built }), the context every widget got and the nav bar, Home active, in the band layout.lua
+-- leaves below the rows, or nil. A widget is drawn its slot's offset below the slot's top
+-- (bottom-aligned in the header row, layout.lua). A slot whose widget has no module, or whose
+-- height or build raises, is left blank at its column width and logged; the rest of the home
+-- still builds. A bar whose build raises is logged and its band left as paper; a band of no
+-- height (the bar's height raised) gets no bar.
 function HomeRows.build(home)
     local look = Looks.active()
     local variant = Looks.variant()
@@ -131,7 +135,25 @@ function HomeRows.build(home)
             }
         end
     end
-    return rows, slots, ctx
+    local band, bar = arranged.nav, nil
+    if band.h > 0 then
+        local ok, result = pcall(NavBar.new, {
+            look = look,
+            variant = variant,
+            width = home.dimen.w,
+            where = "home",
+            listen = false,
+        })
+        if ok then
+            bar = result
+            bar.dimen.x, bar.dimen.y = band.x, band.y
+            rows[#rows + 1] = bar
+            rows.places[#rows] = { x = band.x, y = band.y }
+        else
+            logger.err("KoPanda: the nav bar failed to build; its band is left blank:", result)
+        end
+    end
+    return rows, slots, ctx, bar
 end
 
 return HomeRows
