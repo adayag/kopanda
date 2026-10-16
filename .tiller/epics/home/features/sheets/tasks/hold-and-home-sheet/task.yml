@@ -1,7 +1,7 @@
 id: T-odbt4w
 key: home/sheets/hold-and-home-sheet
 title: Hold routing on the home and the home sheet
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:ab80f5f
         observed_at: 2026-10-15T21:48:02.434245Z
+done_basis: ancestry
 gates:
     build:
         required: true

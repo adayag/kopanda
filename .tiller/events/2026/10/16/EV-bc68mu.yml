@@ -1,0 +1,14 @@
+id: EV-bc68mu
+type: sync.feature
+at: 2026-10-16T00:17:27.437476Z
+contributor: allen
+command: sync feature F-3ct1xn
+targets:
+    - F-3ct1xn
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/home/features/sheets/feature.yml

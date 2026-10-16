@@ -1,0 +1,14 @@
+id: EV-wvk7v6
+type: sync.task
+at: 2026-10-16T00:17:27.068918Z
+contributor: allen
+command: sync task T-8hhlio
+targets:
+    - T-8hhlio
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/folder-sheet/task.yml

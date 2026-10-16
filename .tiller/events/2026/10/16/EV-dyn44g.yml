@@ -1,0 +1,14 @@
+id: EV-dyn44g
+type: sync.task
+at: 2026-10-16T00:17:26.9816Z
+contributor: allen
+command: sync task T-odbt4w
+targets:
+    - T-odbt4w
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/home/features/sheets/tasks/hold-and-home-sheet/task.yml

@@ -1,7 +1,7 @@
 id: T-b26ryy
 key: home/sheets/sheet
 title: The sheet component and its tokens in both looks
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:915bd7c
         observed_at: 2026-10-15T21:23:06.301586Z
+done_basis: ancestry
 gates:
     build:
         required: true

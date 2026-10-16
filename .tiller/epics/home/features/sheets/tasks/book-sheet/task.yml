@@ -1,7 +1,7 @@
 id: T-pupoys
 key: home/sheets/book-sheet
 title: The book sheet, its read status sub-sheet and the featured-book picker
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:75a32b4
         observed_at: 2026-10-15T22:35:16.69896Z
+done_basis: ancestry
 gates:
     build:
         required: true

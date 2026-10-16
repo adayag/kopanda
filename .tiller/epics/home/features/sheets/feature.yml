@@ -1,7 +1,7 @@
 id: F-3ct1xn
 key: home/sheets
 title: Tap acts, hold opens a sheet
-status: active
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -33,6 +33,23 @@ accepted_against:
         kind: git_commit
         value: git:78d4d3c
         observed_at: 2026-10-15T20:24:27.991622Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:32e71277a10f3ed4fc7369c25e34429a0d80b439
+        path: .tiller/epics/home/features/sheets/feature.md
+        observed_at: 2026-10-16T00:17:27.392943Z
+    eval:
+        kind: git_blob
+        value: git:744dbcf6418b1741ee00ab3eb74c0b6062a65537
+        path: .tiller/epics/home/features/sheets/feature.eval.md
+        observed_at: 2026-10-16T00:17:27.392943Z
+    commit:
+        kind: git_commit
+        value: git:cc3f855
+        observed_at: 2026-10-16T00:17:26.808064Z
+    surfaces: []
+done_basis: rollup
 gates:
     build:
         required: true

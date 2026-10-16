@@ -1,7 +1,7 @@
 id: T-w3g6jh
 key: home/sheets/goldens
 title: Sheet goldens in both looks and the sheet paint budget
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -26,6 +26,7 @@ review_ref:
         kind: git_commit
         value: git:a8b5d01
         observed_at: 2026-10-16T00:02:31.506015Z
+done_basis: ancestry
 gates:
     build:
         required: true
