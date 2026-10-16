@@ -200,9 +200,9 @@ local function settle(home, opts)
 end
 
 -- opts: widget (a pre-built home to show; default: a fresh build), started (time.monotonic()
--- at the start of the show path), prebuilt, finished (called once, after the first paint's
--- settled signal or on a caught failure, with true only when the home painted and its paint
--- didn't fail). On any error the home is taken off the stack and the file browser beneath is
+-- at the start of the show path), prebuilt, finished (called once: with true after the home's
+-- first paint, or with false when the home closes before painting or its build, show or paint
+-- fails). On any error the home is taken off the stack and the file browser beneath is
 -- left as it is.
 function Home.show(opts)
     local home

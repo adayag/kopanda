@@ -149,6 +149,31 @@ describe("the pull's probation and notices", function()
                 harness.tick(2)
                 assert.same({ { n = 1, false } }, calls)
             end)
+
+            -- The close runs finished from the home's onCloseWidget, inside UIManager:close,
+            -- which takes the widget off the stack only after its CloseWidget event
+            -- (frontend/ui/uimanager.lua:298-312).
+            it("a finished that throws on a close before the paint leaves no home on the stack", function()
+                local fm = harness.show_fm()
+                harness.tick(2)
+                Home.close()
+                Home.show{
+                    started = time.monotonic(),
+                    finished = function()
+                        error("kopanda-test: finished failed")
+                    end,
+                }
+                local home = Home.shown
+                local cover = WidgetContainer:new{ dimen = Screen:getSize(), covers_fullscreen = true }
+                UIManager:show(cover)
+                harness.tick(3)
+                Home.close()
+                harness.tick(2)
+                assert.is_false(UIManager:isWidgetShown(home))
+                UIManager:close(cover)
+                harness.tick(2)
+                assert.equals(fm, harness.top())
+            end)
         end)
 
         it("gets false after a paint that throws", function()
