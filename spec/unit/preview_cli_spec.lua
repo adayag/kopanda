@@ -129,6 +129,33 @@ describe("bin/preview", function()
         assert.equals("PNG", read(out))
     end)
 
+    it("makes a relative out path absolute against the caller's directory", function()
+        local emulator = fake_emulator()
+        local caller = scratch .. "/caller"
+        assert(lfs.mkdir(caller))
+        local stdout, stderr = scratch .. "/stdout", scratch .. "/stderr"
+        local command = string.format("cd '%s' && TMPDIR='%s' FAKE_RECORD='%s' KOPANDA_EMULATOR='%s' FAKE_MODE=success"
+            .. " '%s/bin/preview' 1264 1680 300 color diner day out.png > '%s' 2> '%s'",
+            caller, scratch .. "/tmp", scratch .. "/record", emulator, root, stdout, stderr)
+        local quoted = command:gsub("'", "'\\''")
+        local pipe = assert(io.popen("sh -c '" .. quoted .. "'; echo $?"))
+        local status = tonumber(pipe:read("*a"):match("(%d+)%s*$"))
+        pipe:close()
+        assert.equals(0, status, read(stderr))
+        -- Both directories by their physical path: os.tmpname's /tmp is /private/tmp on macOS.
+        local function physical(dir)
+            local resolve = assert(io.popen("cd '" .. dir .. "' 2>/dev/null && pwd -P"))
+            local path = resolve:read("*l")
+            resolve:close()
+            return path
+        end
+        local png = read(stdout):match('^{"png":"([^"]*)"')
+        local png_dir = png and png:match("^(/.*)/out%.png$")
+        assert.truthy(png_dir, png)
+        assert.equals(physical(caller), physical(png_dir))
+        assert.equals("PNG", read(caller .. "/out.png"))
+    end)
+
     it("copies the settings file into the scratch KO_HOME the script runs under", function()
         local emulator = fake_emulator()
         write(emulator .. "/luajit", table.concat({

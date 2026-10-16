@@ -57,19 +57,25 @@ describe("bin/preview", function()
         return path
     end
 
-    -- Runs bin/preview <device> <look> <variant> <out> [settings]; returns out, the decoded JSON
-    -- line, stdout and stderr, asserting exit 0.
-    local function preview(device, look, variant, settings)
-        local out = fresh("out.png")
+    -- Runs bin/preview <device> <look> <variant> <out> [settings] with env (NAME=value words)
+    -- before it; returns the exit status, stdout and stderr.
+    local function run(device, look, variant, out, settings, env)
         local stdout, stderr = fresh("stdout"), fresh("stderr")
-        local command = string.format("cd '%s' && env -u KOPANDA_UPDATE_GOLDENS TMPDIR='%s' bin/preview %s %s %s '%s'%s"
-            .. " > '%s' 2> '%s'", root, tmp, device, look, variant, out,
+        local command = string.format("cd '%s' && env -u KOPANDA_UPDATE_GOLDENS TMPDIR='%s' %s"
+            .. " bin/preview %s %s %s '%s'%s > '%s' 2> '%s'", root, tmp, env or "", device, look, variant, out,
             settings and (" '" .. settings .. "'") or "", stdout, stderr)
         local quoted = command:gsub("'", "'\\''")
         local pipe = assert(io.popen("sh -c '" .. quoted .. "'; echo $?"))
         local status = tonumber(pipe:read("*a"):match("(%d+)%s*$"))
         pipe:close()
-        local out_text, err_text = read(stdout), read(stderr)
+        return status, read(stdout), read(stderr)
+    end
+
+    -- Runs bin/preview <device> <look> <variant> <out> [settings]; returns out, the decoded JSON
+    -- line, stdout and stderr, asserting exit 0.
+    local function preview(device, look, variant, settings)
+        local out = fresh("out.png")
+        local status, out_text, err_text = run(device, look, variant, out, settings)
         assert.equals(0, status, err_text)
         return out, rapidjson.decode(out_text), out_text, err_text
     end
@@ -116,6 +122,8 @@ describe("bin/preview", function()
         local fahrenheit = preview(COLORSOFT, "diner", "day", settings_file(paris("fahrenheit")))
         -- 16° against 61°: two swapped digits, fewer pixels than compare's default lets through.
         assert.is_false(compare.compare(celsius, fahrenheit, { max_fraction = HOME_MAX_FRACTION }).ok)
+        -- A celsius render with no reading at all differs by thousands of pixels, past the default.
+        assert.is_true(compare.compare(celsius, fahrenheit).ok, "the same weather row; only the temperature differs")
     end)
 
     it("renders the look it is given, not the look the settings file stores", function()
@@ -126,6 +134,28 @@ describe("bin/preview", function()
         assert.is_true(checked.ok)
         assert.equals('return { ["schema_version"] = 1, ["look"] = "editorial" }\n', read(settings),
             "the profile's file is not written")
+    end)
+
+    it("exits 1 with the driver's message, no Lua position before it, first on stderr", function()
+        -- An emulator directory like the real one, every entry linked, but whose own plugins/
+        -- holds a kopanda.koplugin: the driver refuses before KOReader starts.
+        local emulator = fresh("emulator")
+        finally(function()
+            os.execute("rm -rf '" .. emulator .. "'")
+        end)
+        local real = os.getenv("KOPANDA_EMULATOR")
+        local build = string.format("set -e; mkdir '%s'; for e in '%s'/* '%s'/.[!.]*; do"
+            .. ' if [ -e "$e" ] && [ "${e##*/}" != plugins ]; then ln -s "$e" \'%s\'/; fi; done;'
+            .. " mkdir '%s/plugins'; ln -s '%s'/plugins/* '%s/plugins/';"
+            .. " mkdir '%s/plugins/kopanda.koplugin'",
+            emulator, real, real, emulator, emulator, real, emulator, emulator)
+        assert.equals(0, os.execute(build))
+        local status, stdout, stderr = run(COLORSOFT, "diner", "day", fresh("out.png"), nil,
+            "KOPANDA_EMULATOR='" .. emulator .. "'")
+        assert.equals(1, status, stderr)
+        assert.equals("", stdout)
+        assert.equals("capture: " .. emulator .. "/plugins/kopanda.koplugin exists;"
+            .. " KOReader would load the plugin from both paths", stderr:match("^([^\n]*)"))
     end)
 
     it("renders a grey device at its own size", function()

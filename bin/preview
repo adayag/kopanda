@@ -10,8 +10,8 @@
 # "height": h, "paint_ms": n }; 1 when the render fails, its message (the driver's carries the
 # emulator log's last lines) alone on stderr; 2 when the script refuses to run.
 #
-# The scratch KO_HOME is removed on exit, a SIGTERM's included once the running child exits; a
-# SIGKILL leaves it under TMPDIR.
+# The scratch KO_HOME is removed on exit. On SIGTERM the trap removes it at once, leaving the
+# running LuaJIT to the caller's kill of the process group; a SIGKILL leaves it under TMPDIR.
 set -euo pipefail
 
 KOPANDA_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"

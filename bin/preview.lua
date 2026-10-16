@@ -66,7 +66,9 @@ local ok, err = pcall(function()
 end)
 
 if not ok then
-    io.stderr:write(tostring(err), "\n")
+    -- The message alone: the position error() puts before it (the driver's file and line) goes.
+    local message = tostring(err):gsub("^[^\n]-%.lua:%d+: ", "", 1)
+    io.stderr:write(message, "\n")
     os.exit(1)
 end
 os.exit(0)
