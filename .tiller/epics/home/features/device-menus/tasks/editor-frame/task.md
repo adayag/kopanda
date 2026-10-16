@@ -12,8 +12,8 @@ are on `main` at `ca26783`. This task starts after `sheets` has merged (the feat
    `looks/diner.lua`, exactly the paths and values of the feature's "Tokens" tables, each value with its
    board line in a comment (Editorial) or "no board" and the direction doc's reason (Diner). Read
    `looks_spec.lua`'s rules first (`:83` identical paths, `:173` colours only by role, `:202` type part
-   shape) and keep every value inside them. Cards cast the look's existing `shadow.tile`
-   (`looks/diner.lua:83`, `looks/editorial.lua:83`); no shadow token is added.
+   shape) and keep every value inside them. Cards cast the editor's own `card_shadow`
+   (`{ x, y, color }`: Editorial `false`, Diner 2 px in `shadow`), not `shadow.tile`.
 2. **Icons.** Add `icons/chevron_up.svg`, `icons/chevron_down.svg` and `icons/action.svg`: Lucide's
    `chevron-up`, `chevron-down` and `zap`, coordinates rounded, `stroke="#000000"`,
    `stroke-width="2"`, as `icons/sun.svg` is written. Register each in `Icons.entries` (`icons.lua:13-54`)
@@ -39,7 +39,7 @@ are on `main` at `ca26783`. This task starts after `sheets` has merged (the feat
      as `TintedIcon`s (`tinted_icon.lua:23-60`), fills and borders through the RGB32 calls for a colour
      (`home_rows.lua:16-25`'s `fill`). Every colour through `Looks.palette(ctx.look, ctx.variant)`
      (`looks.lua:63`), never by name.
-   - **Shadows:** a card with `shadow.tile.color` gets a filled rectangle offset by its `x` and `y`,
+   - **Shadows:** a card with `card_shadow.color` gets a filled rectangle offset by its `x` and `y`,
      drawn first; Editorial's is `false`, so none.
    - **Too tall:** rows of the body that don't fit above the foot are left out, logged once.
    - **Input:** `ges_events.TapEditor`, a tap anywhere. The first control whose rect contains the

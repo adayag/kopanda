@@ -20,18 +20,18 @@ branch: tiller/reviews/features/home/device-menus
 accepted_against:
     spec:
         kind: git_blob
-        value: git:8499f9d6ba16e1686013195ce5a2daaeb5afec66
+        value: git:eadbd6b1df2fdd1d875b30a662ca62dd73ec7162
         path: .tiller/epics/home/features/device-menus/feature.md
-        observed_at: 2026-10-16T14:25:20.539959Z
+        observed_at: 2026-10-16T14:51:06.521346Z
     eval:
         kind: git_blob
         value: git:1e4f4424e271fc02773c14c3320ed22524acde57
         path: .tiller/epics/home/features/device-menus/feature.eval.md
-        observed_at: 2026-10-16T14:25:20.539959Z
+        observed_at: 2026-10-16T14:51:06.521346Z
     commit:
         kind: git_commit
-        value: git:f0aab8d
-        observed_at: 2026-10-16T14:25:20.576403Z
+        value: git:4a485d2
+        observed_at: 2026-10-16T14:51:06.558828Z
 gates:
     build:
         required: true
