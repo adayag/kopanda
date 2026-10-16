@@ -1,7 +1,7 @@
 id: T-6nh4m4
 key: home/device-menus/edit-layout
 title: 'Edit layout: the row operations and the screen'
-status: in_review
+status: in_progress
 blocked: false
 started: true
 owner: allen
@@ -29,7 +29,7 @@ gates:
     build:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-16T04:14:25.631091Z
         against:
@@ -42,7 +42,7 @@ gates:
     tests:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-16T04:14:25.631091Z
         against:
