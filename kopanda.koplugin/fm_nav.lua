@@ -130,7 +130,7 @@ end
 -- class while the original runs, so the chooser it builds reads it through its metatable
 -- (frontend/ui/widget/widget.lua:26-48) at Menu:init (frontend/ui/widget/menu.lua:701-704), and
 -- put back on every path, the original's own error re-raised unchanged; then the frame goes
--- in (on a failure, logged, fm[1] stays the original's fm_ui).
+-- in (on a failure, logged, fm[1] stays the original's fm_ui, at the screen's height).
 function FmNav.install()
     if installed then
         return
@@ -159,9 +159,13 @@ function FmNav.install()
         if not call_ok then
             error(err, 0)
         end
+        local fm_ui = fm[1]
         local wrap_ok, wrap_err = pcall(wrap, fm, previous, look, band, started)
         if not wrap_ok then
             logger.err("KoPanda: the file browser's nav bar failed to build:", wrap_err)
+            -- The chooser was built short of the band; fm_ui at the screen's height paints its
+            -- background over the band too (framecontainer.lua:115-126), so the band is paper.
+            fm_ui.height = Screen:getHeight()
         end
     end
 end

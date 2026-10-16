@@ -339,6 +339,9 @@ Upgrading KOReader walks this list.
   `tickAfterNext` as the home does (the entries above).
 - A failed bar paint fills the band white, the chooser's paper (`fm_ui`'s background,
   `filemanager.lua:349`), through `paint.lua` (`base/ffi/blitbuffer.lua:1704`, `paintRect`).
+  A failed bar build leaves `fm_ui` as `fm[1]` with its `height` set to the screen's:
+  `frontend/ui/widget/container/framecontainer.lua:115-126` (`FrameContainer:paintTo` paints
+  its background over `self.height or my_size.h`), so the band under the short chooser is paper.
 - Guarded by the tripwire in `spec/unit/fm_nav_spec.lua`, which checks KOReader's unwrapped
   function is defined at `filemanager.lua:116`, that it leaves `fm[1]` a `FrameContainer` holding
   only `fm.file_chooser`, named `"filemanager"`, and that a chooser built with

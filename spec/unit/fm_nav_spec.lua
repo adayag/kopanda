@@ -375,6 +375,21 @@ describe("the file browser's nav bar", function()
             assert.equals(1, #signals)
         end)
 
+        -- The frame painted first is replaced before its signal's tick, so only the frame that
+        -- replaced it, painted next, sends one.
+        it("goes out once when a reinit replaces the frame before its paint settles", function()
+            local fm = harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            assert.equals(fm, harness.top())
+            fm[1]:paintTo(Screen.bb, 0, 0)
+            fm:reinit()
+            harness.tick(2)
+            UIManager:setDirty(fm, "ui")
+            harness.tick(2)
+            assert.equals(1, #signals)
+        end)
+
         it("does not go out for a paint under the home", function()
             local fm = harness.show_fm()
             harness.tick(2)
@@ -403,13 +418,20 @@ describe("the file browser's nav bar", function()
             local failing = false
             FileManager.setupLayout = function(...)
                 if failing then
-                    error(failure)
+                    error(failure, 0)
                 end
                 return real(...)
             end
             local fm = fm_on_top()
             failing = true
             local ok, err = pcall(fm.reinit, fm)
+            failing = false
+            assert.is_false(ok)
+            assert.equals(failure, err)
+            assert.is_nil(rawget(FileChooser, "height"))
+            failure = "kopanda-test: setupLayout failed"
+            failing = true
+            ok, err = pcall(fm.reinit, fm)
             failing = false
             assert.is_false(ok)
             assert.equals(failure, err)
@@ -425,6 +447,12 @@ describe("the file browser's nav bar", function()
             assert.equals(FrameContainer, getmetatable(fm[1]))
             assert.equals(fm.file_chooser, fm[1][1])
             assert.truthy(logged_count("kopanda-test: bar failed") > 0)
+            local w, h = Screen:getWidth(), Screen:getHeight()
+            local bb = Blitbuffer.new(w, h, Blitbuffer.TYPE_BBRGB32)
+            bb:fill(Blitbuffer.COLOR_BLACK)
+            fm:paintTo(bb, 0, 0)
+            assert.same({ 255, 255, 255 }, rgb_at(bb, math.floor(w / 2), h - 2))
+            bb:free()
             usable(fm)
         end)
 
