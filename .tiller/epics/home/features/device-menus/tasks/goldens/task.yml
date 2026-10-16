@@ -1,7 +1,7 @@
 id: T-7y2lph
 key: home/device-menus/goldens
 title: Goldens of both screens in both looks and their paint budget
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,12 @@ accepted_against:
         value: git:ac38233
         observed_at: 2026-10-16T03:17:38.152338Z
 branch: tiller/home/device-menus/goldens
+review_ref:
+    branch: tiller/home/device-menus/goldens
+    head:
+        kind: git_commit
+        value: git:91bc020
+        observed_at: 2026-10-16T14:31:28.527081Z
 gates:
     build:
         required: true
