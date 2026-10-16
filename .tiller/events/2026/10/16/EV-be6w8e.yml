@@ -1,0 +1,13 @@
+id: EV-be6w8e
+type: approve.task
+at: 2026-10-16T17:01:28.912408Z
+contributor: allen
+command: approve task T-dwsmmb
+targets:
+    - T-dwsmmb
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/schema-contract/task.yml

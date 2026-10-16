@@ -1,0 +1,13 @@
+id: EV-g927dx
+type: approve.feature
+at: 2026-10-16T17:01:28.852494Z
+contributor: allen
+command: approve feature F-kglqs4
+targets:
+    - F-kglqs4
+before:
+    status: specced
+after:
+    status: ready
+files:
+    - path: .tiller/epics/studio/features/studio-shell/feature.yml

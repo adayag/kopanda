@@ -1,9 +1,19 @@
 id: T-dwsmmb
 key: studio/studio-shell/schema-contract
 title: Checked-in schema JSON, its npm regeneration and the equality spec
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-6yxswg
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:c032a7a04be42842f43d765e1af8ec26b14aca43
+        path: .tiller/epics/studio/features/studio-shell/tasks/schema-contract/task.md
+        observed_at: 2026-10-16T17:01:28.892774Z
+    commit:
+        kind: git_commit
+        value: git:25f054c
+        observed_at: 2026-10-16T17:01:28.912316Z

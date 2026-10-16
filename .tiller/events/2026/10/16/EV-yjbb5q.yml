@@ -1,0 +1,13 @@
+id: EV-yjbb5q
+type: configure.feature
+at: 2026-10-16T17:01:37.885449Z
+contributor: allen
+command: configure feature studio/studio-shell --review-grain feature
+targets:
+    - F-kglqs4
+before:
+    review_grain: ""
+after:
+    review_grain: feature
+files:
+    - path: .tiller/epics/studio/features/studio-shell/feature.yml

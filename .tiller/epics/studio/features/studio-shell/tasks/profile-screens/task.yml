@@ -1,9 +1,19 @@
 id: T-txsef1
 key: studio/studio-shell/profile-screens
 title: First screen lists profiles and opens one
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-n4uwe9
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:6c0d2d690dd6ec44a57a9807b332b77620a65d69
+        path: .tiller/epics/studio/features/studio-shell/tasks/profile-screens/task.md
+        observed_at: 2026-10-16T17:01:28.933895Z
+    commit:
+        kind: git_commit
+        value: git:25f054c
+        observed_at: 2026-10-16T17:01:28.954413Z

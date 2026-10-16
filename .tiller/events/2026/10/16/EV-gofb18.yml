@@ -1,0 +1,13 @@
+id: EV-gofb18
+type: approve.task
+at: 2026-10-16T17:01:28.933559Z
+contributor: allen
+command: approve task T-n4uwe9
+targets:
+    - T-n4uwe9
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/studio/features/studio-shell/tasks/profiles/task.yml

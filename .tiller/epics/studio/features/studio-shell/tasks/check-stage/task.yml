@@ -1,9 +1,19 @@
 id: T-q590ja
 key: studio/studio-shell/check-stage
 title: bin/check gains the studio's typecheck, lint and tests
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-6yxswg
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:191d7d9f47d7db58afc5af402a6a07c878b2516c
+        path: .tiller/epics/studio/features/studio-shell/tasks/check-stage/task.md
+        observed_at: 2026-10-16T17:01:28.873734Z
+    commit:
+        kind: git_commit
+        value: git:25f054c
+        observed_at: 2026-10-16T17:01:28.892443Z
