@@ -1,0 +1,14 @@
+id: EV-wamyq3
+type: resume.task
+at: 2026-10-16T14:53:14.379149Z
+contributor: allen
+command: resume task T-7y2lph
+targets:
+    - T-7y2lph
+before:
+    status: in_review
+after:
+    reason: 'owner C19 review: regenerate the screen goldens with the 2 px card shadow and the lighter selected outline'
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/goldens/task.yml

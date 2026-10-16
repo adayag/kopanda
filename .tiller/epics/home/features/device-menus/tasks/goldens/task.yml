@@ -24,32 +24,32 @@ review_ref:
     branch: tiller/home/device-menus/goldens
     head:
         kind: git_commit
-        value: git:91bc020
-        observed_at: 2026-10-16T14:31:28.527081Z
+        value: git:6738fcf
+        observed_at: 2026-10-16T15:03:46.806689Z
 gates:
     build:
         required: true
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-16T14:29:58.57751Z
+        run_at: 2026-10-16T15:02:07.420917Z
         against:
             kind: git_commit
-            value: git:f6ccd2b
-            observed_at: 2026-10-16T14:29:58.577501Z
+            value: git:85c2e81
+            observed_at: 2026-10-16T15:02:07.420908Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/build-f6ccd2b-out-b5584b8585602aecb07e159e0cecbeba4a99cf698cbb033a5256011a36cb59cc.txt
+              ref: artifacts/tiller/gates/build-85c2e81-out-2550ea2748c53a1f9118a6624cd320cb7fb15060ff6d75d1c1fb1275decb7a51.txt
     tests:
         required: true
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-16T14:29:58.57751Z
+        run_at: 2026-10-16T15:02:07.420917Z
         against:
             kind: git_commit
-            value: git:f6ccd2b
-            observed_at: 2026-10-16T14:29:58.577501Z
+            value: git:85c2e81
+            observed_at: 2026-10-16T15:02:07.420908Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/tests-f6ccd2b-out-db5d5931012b4493b112e6d77c0a9a0c84b6a429711558cb1cd712625ff1c701.txt
+              ref: artifacts/tiller/gates/tests-85c2e81-out-57658099fe4a408d6c75533051e68980ca77747e816036d11d64a7a4d918772e.txt
