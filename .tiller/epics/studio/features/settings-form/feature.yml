@@ -16,6 +16,7 @@ order:
     - T-ihpvfp
     - T-zbcfes
     - T-48qqub
+review_grain: feature
 accepted_against:
     spec:
         kind: git_blob
