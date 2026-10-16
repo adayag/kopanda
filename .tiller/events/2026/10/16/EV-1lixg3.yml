@@ -1,0 +1,14 @@
+id: EV-1lixg3
+type: add.task
+at: 2026-10-16T22:04:06.801855Z
+contributor: allen
+command: add task library/book-model/records
+targets:
+    - T-n450u3
+after:
+    feature: F-alfeze
+    key: library/book-model/records
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/records/task.md
+    - path: .tiller/epics/library/features/book-model/tasks/records/task.yml

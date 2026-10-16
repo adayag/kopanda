@@ -1,0 +1,13 @@
+id: EV-bo1bii
+type: spec.feature
+at: 2026-10-16T22:05:48.874099Z
+contributor: allen
+command: spec feature F-alfeze
+targets:
+    - F-alfeze
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/library/features/book-model/feature.yml

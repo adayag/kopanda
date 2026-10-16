@@ -1,0 +1,14 @@
+id: EV-ivltal
+type: add.task
+at: 2026-10-16T22:04:07.00773Z
+contributor: allen
+command: add task library/book-model/index
+targets:
+    - T-tvonaw
+after:
+    feature: F-alfeze
+    key: library/book-model/index
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/index/task.md
+    - path: .tiller/epics/library/features/book-model/tasks/index/task.yml
