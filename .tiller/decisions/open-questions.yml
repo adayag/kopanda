@@ -5,5 +5,10 @@ questions:
       owner: allen
       blocks:
         - F-rce9ko
-      status: open
+      status: answered
+      answer: 'Both: a hold on the nav bar''s Settings tab (reserved by nav-bar D3; works on the home and over the file browser) and a new KoPanda launcher target the owner can place on the home. Not the home sheet.'
+      answer_revision:
+        kind: git_commit
+        value: git:45fd7e9
+        observed_at: 2026-10-16T19:40:34.490738Z
       source: design/2026-10-13-kopanda-ui-direction.md

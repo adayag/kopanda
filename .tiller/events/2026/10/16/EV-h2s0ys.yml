@@ -1,0 +1,11 @@
+id: EV-h2s0ys
+type: answer.question
+at: 2026-10-16T19:40:34.491057Z
+contributor: allen
+command: answer question Q-irxgmk
+targets:
+    - Q-irxgmk
+after:
+    status: answered
+files:
+    - path: .tiller/decisions/open-questions.yml
