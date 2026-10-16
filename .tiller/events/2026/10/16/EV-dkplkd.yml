@@ -1,0 +1,13 @@
+id: EV-dkplkd
+type: attest.feature
+at: 2026-10-16T17:47:27.324521Z
+contributor: allen
+command: attest feature F-kglqs4
+targets:
+    - F-kglqs4
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/studio/features/studio-shell/feature.yml
