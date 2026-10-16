@@ -1,0 +1,15 @@
+id: EV-a6hmfs
+type: start.task
+at: 2026-10-16T21:01:28.872143Z
+contributor: allen
+command: start task T-8kwd74
+targets:
+    - T-8kwd74
+before:
+    status: ready
+after:
+    branch: tiller/studio/device-push/emulator-push
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/emulator-push/task.yml

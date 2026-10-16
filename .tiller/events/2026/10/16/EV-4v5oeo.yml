@@ -1,0 +1,13 @@
+id: EV-4v5oeo
+type: claim.task
+at: 2026-10-16T21:01:28.714156Z
+contributor: allen
+command: claim task T-8kwd74
+targets:
+    - T-8kwd74
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/emulator-push/task.yml
