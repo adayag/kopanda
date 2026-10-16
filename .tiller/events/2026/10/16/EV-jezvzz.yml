@@ -1,0 +1,13 @@
+id: EV-jezvzz
+type: approve.feature
+at: 2026-10-16T14:25:20.576829Z
+contributor: allen
+command: approve feature F-sn4px5
+targets:
+    - F-sn4px5
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/home/features/device-menus/feature.yml
