@@ -1,0 +1,16 @@
+id: EV-1iukst
+type: submit.task
+at: 2026-10-16T22:59:35.537877Z
+contributor: allen
+command: submit task T-ld7mvc
+targets:
+    - T-ld7mvc
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/studio/preview/preview-api
+        head: git:30db749
+    status: in_review
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-api/task.yml
