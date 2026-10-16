@@ -1,0 +1,13 @@
+id: EV-a25lzd
+type: check.task
+at: 2026-10-16T03:32:19.460261Z
+contributor: allen
+command: check task T-cbmaw1
+targets:
+    - T-cbmaw1
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/location-search/task.yml

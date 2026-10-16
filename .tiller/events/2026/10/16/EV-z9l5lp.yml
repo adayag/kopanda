@@ -1,0 +1,14 @@
+id: EV-z9l5lp
+type: resume.task
+at: 2026-10-16T14:47:36.706104Z
+contributor: allen
+command: resume task T-6nh4m4
+targets:
+    - T-6nh4m4
+before:
+    status: in_review
+after:
+    reason: 'owner C19 review: the selected column''s outline one board px heavier, not doubled'
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/edit-layout/task.yml

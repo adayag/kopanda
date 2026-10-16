@@ -1,0 +1,11 @@
+id: EV-xkgl8n
+type: submit.feature
+at: 2026-10-16T17:05:31.315066Z
+contributor: allen
+command: submit feature home/device-menus
+targets:
+    - F-sn4px5
+after:
+    pr: 18
+files:
+    - path: .tiller/epics/home/features/device-menus/feature.yml

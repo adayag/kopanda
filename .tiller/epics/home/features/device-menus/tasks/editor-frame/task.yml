@@ -1,17 +1,52 @@
 id: T-51vf9k
 key: home/device-menus/editor-frame
 title: The full-screen editor frame, its look tokens and its icons
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
         kind: git_blob
-        value: git:c19afb9b42ea3f582b5dd4b297e10104e32addd4
+        value: git:c57fdabbbb0a817ea4b47804c292c6c5cde9c738
         path: .tiller/epics/home/features/device-menus/tasks/editor-frame/task.md
-        observed_at: 2026-10-16T03:17:37.997516Z
+        observed_at: 2026-10-16T14:51:06.769362Z
     commit:
         kind: git_commit
-        value: git:ac38233
-        observed_at: 2026-10-16T03:17:38.018765Z
+        value: git:4a485d2
+        observed_at: 2026-10-16T14:51:06.792147Z
+branch: tiller/home/device-menus/editor-frame
+review_ref:
+    branch: tiller/home/device-menus/editor-frame
+    head:
+        kind: git_commit
+        value: git:00809ff
+        observed_at: 2026-10-16T14:52:37.179068Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T14:51:11.968793Z
+        against:
+            kind: git_commit
+            value: git:f085576
+            observed_at: 2026-10-16T14:51:11.968788Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-f085576-out-50536fb83f07033837eb84b995af12b45181949ea447a3c8fb4efdd172bcfe56.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T14:51:11.968793Z
+        against:
+            kind: git_commit
+            value: git:f085576
+            observed_at: 2026-10-16T14:51:11.968788Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-f085576-out-9458b7acc76d07ead4b16f7a300c4fb1461440f7bb90d5726cd57e6ef68388e2.txt

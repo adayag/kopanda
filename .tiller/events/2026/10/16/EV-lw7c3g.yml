@@ -1,0 +1,13 @@
+id: EV-lw7c3g
+type: check.task
+at: 2026-10-16T14:52:41.759599Z
+contributor: allen
+command: check task T-6nh4m4
+targets:
+    - T-6nh4m4
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/edit-layout/task.yml

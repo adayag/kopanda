@@ -302,6 +302,194 @@ describe("KoPanda failing safe", function()
         end)
     end)
 
+    it("logs, shows no action list and adds nothing when the entry picker's action tree throws", function()
+        local Dispatcher = require("dispatcher")
+        local TouchMenu = require("ui/widget/touchmenu")
+        local add = stub(Dispatcher, "addSubMenu", function()
+            error("kopanda-test: action tree failed")
+        end)
+        finally(function()
+            add:revert()
+        end)
+        harness.show_fm()
+        harness.tick(2)
+        Home.close()
+        local added = spy.new(function() end)
+        require("entry_picker").pick("action", nil, added)
+        for _, widget in ipairs(harness.stack()) do
+            assert.is_not.equals(TouchMenu, getmetatable(widget[1]))
+        end
+        assert.spy(added).was_not.called()
+        file_manager_usable()
+        assert.is_true(logged_error("kopanda-test: action tree failed"))
+    end)
+
+    describe("an editor screen", function()
+        local Editor
+
+        local function editors_on_stack()
+            local count = 0
+            for _, widget in ipairs(harness.stack()) do
+                if widget.name == "kopanda_editor" then
+                    count = count + 1
+                end
+            end
+            return count
+        end
+
+        -- An editor of one card over the file manager, the home closed; card may change the card.
+        local function show(card)
+            harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            assert.equals(FileManager.instance, harness.top())
+            Editor = require("editor")
+            Editor.show({
+                screen = "edit_layout",
+                aside = "Home",
+                title = "Edit layout",
+                body = function(_, width)
+                    local control = { kind = "card", rect = { x = 0, y = 0, w = width, h = 100 },
+                        draw = function() end, run = function() end }
+                    if card then
+                        card(control)
+                    end
+                    return { { control } }
+                end,
+                foot = function()
+                    return {}
+                end,
+            })
+        end
+
+        local function no_editor()
+            assert.equals(0, editors_on_stack())
+            assert.is_nil(Editor.shown)
+        end
+
+        it("leaves the file manager on top when its body throws in the show", function()
+            show(function()
+                error("kopanda-test: editor build failed")
+            end)
+            no_editor()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: editor build failed"))
+        end)
+
+        it("closes itself from the next tick when its paint throws", function()
+            show(function(control)
+                control.draw = function()
+                    error("kopanda-test: editor paint failed")
+                end
+            end)
+            assert.equals(Editor.shown, harness.top())
+            local ok = pcall(harness.tick, 3)
+            assert.is_true(ok)
+            no_editor()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: editor paint failed"))
+        end)
+
+        it("logs and leaves no editor when edit layout's read of the settings throws", function()
+            harness.show_fm()
+            harness.tick(2)
+            Editor = require("editor")
+            local Settings = require("settings")
+            local get = Settings.get
+            Settings.get = function(key)
+                if key == "layout.rows" then
+                    error("kopanda-test: layout read failed")
+                end
+                return get(key)
+            end
+            local ok = pcall(require("edit_layout").open)
+            Settings.get = get
+            assert.is_true(ok)
+            no_editor()
+            assert.is_true(logged_error("kopanda-test: layout read failed"))
+            Home.close()
+            file_manager_usable()
+        end)
+
+        it("closes itself when a control's run throws", function()
+            show(function(control)
+                control.run = function()
+                    error("kopanda-test: editor run failed")
+                end
+            end)
+            local place = Editor.shown.places[2]
+            local rect = place.rect
+            local ok = pcall(UIManager.sendEvent, UIManager, Event:new("Gesture",
+                harness.gesture("tap", rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2))))
+            assert.is_true(ok)
+            no_editor()
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: editor run failed"))
+        end)
+    end)
+
+    describe("launcher management", function()
+        local Editor, LauncherManage
+
+        -- The file manager on top, its home closed, and launcher management's modules loaded.
+        local function over_fm()
+            harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            assert.equals(FileManager.instance, harness.top())
+            Editor = require("editor")
+            LauncherManage = require("launcher_manage")
+        end
+
+        it("draws every row as unavailable and logs when resolving each entry throws", function()
+            over_fm()
+            local LauncherEntries = require("launcher_entries")
+            local available = stub(LauncherEntries, "available", function()
+                error("kopanda-test: resolve failed")
+            end)
+            finally(function()
+                available:revert()
+            end)
+            LauncherManage.open{}
+            local editor = Editor.shown
+            assert.is_not_nil(editor)
+            assert.equals(editor, harness.top())
+            local rows = 0
+            for _, place in ipairs(editor.places) do
+                if place.control.name == "entry" then
+                    rows = rows + 1
+                    assert.is_true(place.control.muted)
+                end
+            end
+            assert.truthy(rows > 0)
+            local ok = pcall(harness.tick, 3)
+            assert.is_true(ok)
+            assert.equals(editor, Editor.shown)
+            assert.is_true(logged_error("kopanda-test: resolve failed"))
+            Editor.close()
+            file_manager_usable()
+        end)
+
+        it("leaves no editor and logs when reading the launcher throws in open", function()
+            over_fm()
+            local Settings = require("settings")
+            local get = stub(Settings, "get", function()
+                error("kopanda-test: launcher read failed")
+            end)
+            finally(function()
+                get:revert()
+            end)
+            LauncherManage.open{}
+            get:revert()
+            assert.is_nil(Editor.shown)
+            for _, widget in ipairs(harness.stack()) do
+                assert.is_not.equals("kopanda_editor", widget.name)
+            end
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: launcher read failed"))
+        end)
+    end)
+
     describe("the dispatcher wrapper", function()
         local Dispatcher = require("dispatcher")
 
@@ -537,6 +725,149 @@ describe("KoPanda failing safe", function()
             harness.tick()
             file_manager_usable()
             assert.is_true(logged_error("kopanda-test: tools home failed"))
+        end)
+
+        it("gives an empty Settings submenu, logged, when building its rows throws", function()
+            -- A schema key whose fields raise when read, so the row builder throws inside items.
+            local keys = require("schema").keys
+            keys[#keys + 1] = setmetatable({}, {
+                __index = function()
+                    error("kopanda-test: settings rows failed")
+                end,
+            })
+            finally(function()
+                keys[#keys] = nil
+            end)
+            local fm = menu_without_home()
+            local tools
+            for _, tab in ipairs(fm.menu.tab_item_table) do
+                if tab.id == "tools" then
+                    tools = tab
+                end
+            end
+            local kopanda
+            for _, item in ipairs(tools) do
+                if item.id == "kopanda" then
+                    kopanda = item
+                end
+            end
+            assert.same({}, kopanda.sub_item_table[2].sub_item_table_func())
+            assert.is_true(logged_error("kopanda-test: settings rows failed"))
+            fm.menu:onCloseFileManagerMenu()
+            file_manager_usable()
+        end)
+    end)
+
+    describe("the place search", function()
+        local ButtonDialog = require("ui/widget/buttondialog")
+        local NetworkMgr = require("ui/network/manager")
+        local http = require("socket.http")
+        local rapidjson = require("rapidjson")
+        local stubs, picks
+
+        -- KoPanda's dialogs and notes from the search still on the window stack, by text or title.
+        local function search_widgets()
+            local left = {}
+            for _, widget in ipairs(harness.stack()) do
+                local label = widget.text or widget.title
+                if label == "Weather location" or label == "Searching…" or label == "Choose a place" then
+                    left[#left + 1] = label
+                end
+            end
+            return left
+        end
+
+        -- Closes the home over the file manager, opens the search and searches for query.
+        local function search_for(query)
+            harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            local LocationSearch = require("location_search")
+            LocationSearch.ask(function(location)
+                picks[#picks + 1] = location
+            end)
+            local dialog
+            for _, widget in ipairs(harness.stack()) do
+                if widget.title == "Weather location" then
+                    dialog = widget
+                end
+            end
+            dialog:setInputText(query)
+            for _, b in ipairs(dialog.button_table.buttons_layout[1]) do
+                if b.text == "Search" then
+                    b.callback()
+                end
+            end
+        end
+
+        -- Closes whatever note the search left on top of the file manager.
+        local function dismiss_notes()
+            while harness.top() ~= require("apps/filemanager/filemanager").instance do
+                UIManager:close(harness.top())
+            end
+        end
+
+        before_each(function()
+            picks = {}
+            stubs = {
+                request = stub(http, "request", function(request)
+                    request.sink('{"results":[{"name":"Chicago","admin1":"Illinois","country":"United States",'
+                        .. '"latitude":41.85003,"longitude":-87.65005}]}')
+                    return 1, 200, {}, "HTTP 200"
+                end),
+                is_connected = stub(NetworkMgr, "isConnected", function()
+                    return true
+                end),
+                warn = spy.on(logger, "warn"),
+            }
+        end)
+
+        after_each(function()
+            for _, s in pairs(stubs) do
+                s:revert()
+            end
+        end)
+
+        it("logs a decode that throws, closes the searching note and picks nothing", function()
+            stubs.decode = stub(rapidjson, "decode", function()
+                error("kopanda-test: decode failed")
+            end)
+            search_for("Chicago")
+            assert.same({}, search_widgets())
+            assert.same({}, picks)
+            local found = false
+            for _, call in ipairs(stubs.warn.calls) do
+                for _, arg in ipairs(call.vals) do
+                    found = found or tostring(arg):find("kopanda-test: decode failed", 1, true) ~= nil
+                end
+            end
+            assert.is_true(found)
+            dismiss_notes()
+            file_manager_usable()
+        end)
+
+        it("logs a search that throws while its note is up, closes the note and picks nothing", function()
+            local LocationSearch = require("location_search")
+            stubs.search = stub(LocationSearch, "search", function()
+                error("kopanda-test: search failed")
+            end)
+            search_for("Chicago")
+            assert.same({}, search_widgets())
+            assert.same({}, picks)
+            assert.is_true(logged_error("kopanda-test: search failed"))
+            file_manager_usable()
+        end)
+
+        it("logs a chooser that throws, closes the searching note and picks nothing", function()
+            stubs.new = stub(ButtonDialog, "new", function()
+                error("kopanda-test: chooser failed")
+            end)
+            search_for("Chicago")
+            assert.same({}, search_widgets())
+            assert.same({}, picks)
+            assert.is_true(logged_error("kopanda-test: chooser failed"))
+            dismiss_notes()
+            file_manager_usable()
         end)
     end)
 end)

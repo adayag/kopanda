@@ -1,0 +1,13 @@
+id: EV-8x8gzt
+type: claim.task
+at: 2026-10-16T14:09:12.232926Z
+contributor: allen
+command: claim task T-7y2lph
+targets:
+    - T-7y2lph
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/goldens/task.yml

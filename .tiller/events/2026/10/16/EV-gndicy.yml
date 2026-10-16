@@ -1,0 +1,13 @@
+id: EV-gndicy
+type: claim.task
+at: 2026-10-16T03:57:05.005574Z
+contributor: allen
+command: claim task T-6nh4m4
+targets:
+    - T-6nh4m4
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/edit-layout/task.yml

@@ -93,7 +93,7 @@ function HomeGestures.own_zones(home)
 end
 
 -- A hold on the home: inside a slot whose widget has hold, that hold, unless it returns false;
--- inside a slot whose widget has none, its settings (the stub until device-menus); otherwise,
+-- inside a slot whose widget has none, the settings of its group, its settings_prefix; otherwise,
 -- outside every slot, in a blank slot with no module or after a false, the home's sheet, whose
 -- paint_ms runs from this step's entry. home_sheet is required here, not at load: it reaches
 -- launcher_entries, which requires home (launcher_entries.lua:5), which requires this module.
@@ -103,7 +103,7 @@ local function hold(home, ges)
     local module = slot and slot.module
     if module then
         if not module.hold then
-            SettingsMenu.open()
+            SettingsMenu.open(module.settings_prefix)
             return true
         end
         if module.hold(home.ctx, ges, slot.built) ~= false then

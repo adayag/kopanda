@@ -1,0 +1,13 @@
+id: EV-mnjkuc
+type: attest.feature
+at: 2026-10-16T17:02:21.942295Z
+contributor: allen
+command: attest feature F-sn4px5
+targets:
+    - F-sn4px5
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/home/features/device-menus/feature.yml

@@ -1,0 +1,16 @@
+id: EV-v3m3wv
+type: submit.task
+at: 2026-10-16T03:32:24.623747Z
+contributor: allen
+command: submit task T-cbmaw1
+targets:
+    - T-cbmaw1
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/device-menus/location-search
+        head: git:e9dd9e9
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/location-search/task.yml

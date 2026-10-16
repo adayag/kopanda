@@ -1,7 +1,7 @@
 id: F-sn4px5
 key: home/device-menus
 title: Generated settings menu, edit layout and launcher management
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -16,18 +16,167 @@ order:
     - T-ij3256
     - T-7y2lph
 review_grain: feature
+branch: tiller/reviews/features/home/device-menus
+pr: 18
 accepted_against:
     spec:
         kind: git_blob
-        value: git:0df2797f642ed4b5dc1b3baee47436dd5e89e590
+        value: git:6e01f05b165e586483ff5bbcff666f6d5a82f423
         path: .tiller/epics/home/features/device-menus/feature.md
-        observed_at: 2026-10-16T03:17:37.96391Z
+        observed_at: 2026-10-16T15:02:06.897251Z
     eval:
         kind: git_blob
         value: git:1e4f4424e271fc02773c14c3320ed22524acde57
         path: .tiller/epics/home/features/device-menus/feature.eval.md
-        observed_at: 2026-10-16T03:17:37.96391Z
+        observed_at: 2026-10-16T15:02:06.897251Z
     commit:
         kind: git_commit
-        value: git:ac38233
-        observed_at: 2026-10-16T03:17:37.996697Z
+        value: git:66f4b27
+        observed_at: 2026-10-16T15:02:06.938144Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T17:02:30.932192Z
+        against:
+            kind: git_commit
+            value: git:ca85afb
+            observed_at: 2026-10-16T17:02:30.931395Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-ca85afb-out-0a70db98a20949d15557c7267121421e0bbf6d79c860f0e683e0f3252cf7d262.txt
+    evals:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T17:02:30.932192Z
+        against:
+            kind: git_commit
+            value: git:ca85afb
+            observed_at: 2026-10-16T17:02:30.931395Z
+        criteria:
+            C1:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C1-ca85afb-out-c02094db6f59b9e8fb05ff9b1fb06868a430a54f7b16bb38c2f65eec93f93eeb.txt
+            C2:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C2-ca85afb-out-b83bff0daa41889b2275cba05bd29867c425d42e2aee57afc20e90ff191580ff.txt
+            C3:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C3-ca85afb-out-e559e082fc4755748e8df945c942a6642394198931c38b5fe090be74e3b213ab.txt
+            C4:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C4-ca85afb-out-46606fc8f5685dbfc8cdac68ef3d4afc6458360287684853d5598bb70a6dfe8e.txt
+            C5:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C5-ca85afb-out-fe431e8a010a185f7c191ccec662d94caa775d9fd78321519dc79c7bbbd84ce7.txt
+            C6:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C6-ca85afb-out-9e564cf4cddf41b97788a5de1d7322ecad582bc3d0b9de855e2354c45f1fb3d1.txt
+            C7:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C7-ca85afb-out-4be46c51d6e76b49fb729eb3c769e49e213e07da5f8ed8f837362cdb01a7f689.txt
+            C8:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C8-ca85afb-out-bece9a71927f70d71b33db51261fe99cda5e3809a15c6b3996817c0473ac9dda.txt
+            C9:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C9-ca85afb-out-52bf3207e8eeac7d718326bf35cd8def3fe7f03d5ea1afd82cdaa0504c4ec695.txt
+            C10:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C10-ca85afb-out-87bd772ae260ffd1307a9045539d99522e7c430c74a32546a16a5a1537abccb6.txt
+            C11:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C11-ca85afb-out-bb27380d2e4c2faf8b282e02ee515f820e4278ec1314c01711e6302063d5464c.txt
+            C12:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C12-ca85afb-out-43e54a7a819c436487b9be46278f9183067f9f96c3bec8528aa1fccc05e218f7.txt
+            C13:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C13-ca85afb-out-e63a0886c4b34c1948d50fd248d47d82b48498cb93349d5d90b1672151cba232.txt
+            C14:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C14-ca85afb-out-a0828e2b9818865956fdc3b72730ca7cb8d0b5d6adb68d4ec3311d215504456b.txt
+            C15:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C15-ca85afb-out-653abb41f466eee1710f366e345bdf5b423b5664bd9437c9e4f7e6431bf3e6d7.txt
+            C16:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C16-ca85afb-out-8dab5e59ca710652b2aad968519d89131daa21f2d502b29b3e0efa1066f511e3.txt
+            C17:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C17-ca85afb-out-6f4995c42f85249f88b7a5304683ff06d7794f06e6fa7fb442f4ee029402e70d.txt
+            C18:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C18-ca85afb-out-20760cc7f25e2392cf8772bb2c2c8347526b0779a74da179496b5cb2cf798c43.txt
+            C19:
+                status: pass
+            C20:
+                status: pass
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T17:02:30.932192Z
+        against:
+            kind: git_commit
+            value: git:ca85afb
+            observed_at: 2026-10-16T17:02:30.931395Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-ca85afb-out-49bbb990172d8b560472e93607e4225423d85325e0419e3fe251b2079844a0ff.txt
+attestations:
+    - id: AT-oweuf2
+      target:
+        kind: criterion
+        id: C19
+      status: pass
+      by: allen
+      at: 2026-10-16T17:00:46.190419Z
+    - id: AT-fa5jko
+      target:
+        kind: criterion
+        id: C20
+      status: pass
+      by: allen
+      at: 2026-10-16T17:02:21.94178Z

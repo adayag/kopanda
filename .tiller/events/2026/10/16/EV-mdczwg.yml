@@ -1,0 +1,16 @@
+id: EV-mdczwg
+type: submit.task
+at: 2026-10-16T03:34:48.965327Z
+contributor: allen
+command: submit task T-zghyve
+targets:
+    - T-zghyve
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/device-menus/entry-picker
+        head: git:5d2fb62
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/entry-picker/task.yml

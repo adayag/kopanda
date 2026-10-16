@@ -1,11 +1,13 @@
 -- The sheet: a panel of rows drawn in the look over the home, opened by a hold or a tap and
 -- closed by a tap outside it, a tap on a row, KOReader's Back or the Back key. It knows nothing
 -- about books or the home: its opener hands it a spec,
---   { name, band, header, rows }
+--   { name, band, header, rows, hold }
 -- name: what the settled signal reports; band: which <band>_band_color token Diner's header
--- takes; header: { heading, aside, aside_beside } or a book's { cover, title, author, meta }
+-- takes; header: { heading, aside, aside_beside, hint } or a book's { cover, title, author, meta }
 -- (cover a built widget, the sheet's to free), or nil; rows: { icon, label, detail, chip,
--- muted, tick, run } each, run called with no arguments.
+-- muted, tick, run } each, run called with no arguments; hold, optional, called with no
+-- arguments on a hold inside the panel, after the sheet has closed. A sheet without hold
+-- ignores holds.
 -- Module state: Sheet.shown, the sheet on screen or nil. One sheet at a time: showing one
 -- closes the one shown.
 local Blitbuffer = require("ffi/blitbuffer")
@@ -84,9 +86,9 @@ local function part_of(look, name, muted)
 end
 
 -- Lays out the sheet's spec under ctx in variant into a Panel, and returns it with the panel's
--- rectangle, the rectangle with its shadow, the header's rectangle (or nil) and the rows' places
--- ({ row, rect, label, detail }), all in screen coordinates, and how many rows it left out. A
--- missing icon is logged once per build.
+-- rectangle, the rectangle with its shadow, the header's rectangle (or nil), the hint's (or nil)
+-- and the rows' places ({ row, rect, label, detail }), all in screen coordinates, and how many
+-- rows it left out. A missing icon is logged once per build.
 local function build(spec, ctx, variant)
     local look = ctx.look
     local tokens = look.sheet
@@ -126,7 +128,7 @@ local function build(spec, ctx, variant)
     local y = outline + rule + scale(tokens.padding.top)
 
     -- The header.
-    local header_rect
+    local header_rect, hint_rect
     local header = spec.header
     if header then
         local book = header.cover ~= nil
@@ -171,13 +173,27 @@ local function build(spec, ctx, variant)
             local heading = Typeset.line(look.type.sheet_heading, header.heading or "", inner_w, bctx)
             local heading_w = heading:getSize().w
             local parts = { { widget = heading, x = inner_x } }
+            local gap = scale(tokens.aside_gap)
+            -- What the heading, and an aside beside it, leave on the header's left.
+            local left_w = heading_w
             if header.aside then
-                local gap = scale(tokens.aside_gap)
                 local aside = Typeset.line(look.type.sheet_aside, header.aside,
                     math.max(1, inner_w - heading_w - gap), bctx)
                 local aside_w = aside:getSize().w
                 local x = header.aside_beside and inner_x + heading_w + gap or inner_x + inner_w - aside_w
                 parts[#parts + 1] = { widget = aside, x = x }
+                if header.aside_beside then
+                    left_w = heading_w + gap + aside_w
+                end
+            end
+            -- The hint at the header's right (FolderOpen.dc.html:40).
+            if header.hint then
+                local hint = Typeset.line(look.type.sheet_aside, header.hint,
+                    math.max(1, inner_w - left_w - gap), bctx)
+                local hint_size = hint:getSize()
+                local part = { widget = hint, x = inner_x + inner_w - hint_size.w }
+                parts[#parts + 1] = part
+                hint_rect = part
             end
             -- On one baseline, as the boards align them (HoldHome:35-37).
             local ascent, descent = 0, 0
@@ -188,7 +204,12 @@ local function build(spec, ctx, variant)
             end
             inner_h = ascent + descent
             for _, part in ipairs(parts) do
-                add(part.widget, part.x, inner_y + ascent - part.baseline)
+                part.y = inner_y + ascent - part.baseline
+                add(part.widget, part.x, part.y)
+            end
+            if hint_rect then
+                local hint_size = hint_rect.widget:getSize()
+                hint_rect = { x = hint_rect.x, y = hint_rect.y, w = hint_size.w, h = hint_size.h }
             end
         end
         local header_h = scale(pad.top) + inner_h + scale(pad.bottom)
@@ -362,6 +383,7 @@ local function build(spec, ctx, variant)
         panel = Geom:new{ x = box_x, y = box_y, w = box_w, h = box_h },
         rect = Geom:new{ x = box_x, y = box_y, w = box_w + shadow_x, h = box_h + shadow_y },
         header = moved(header_rect),
+        hint = moved(hint_rect),
         rows = rows,
         left_out = left_out,
     }
@@ -380,6 +402,7 @@ local function lay_out(sheet, variant)
     sheet.panel = laid.panel
     sheet.rect = laid.rect
     sheet.header_rect = laid.header
+    sheet.hint_rect = laid.hint
     sheet.rows = laid.rows
     sheet.variant = variant
     if old then
@@ -394,6 +417,13 @@ function Sheet:init()
     self.ges_events.TapSheet = {
         GestureRange:new{ ges = "tap", range = Geom:new{ x = 0, y = 0, w = size.w, h = size.h } },
     }
+    -- A hold inside the panel, only for a spec with one; the range is a function, so a rebuild's
+    -- panel is the one matched (frontend/ui/gesturerange.lua:25-37).
+    if self.spec.hold then
+        self.ges_events.HoldSheet = {
+            GestureRange:new{ ges = "hold", range = function() return self.panel end },
+        }
+    end
     -- As ButtonDialog binds it (frontend/ui/widget/buttondialog.lua:98-108).
     if Device:hasKeys() then
         self.key_events.Close = { { Device.input.group.Back } }
@@ -564,6 +594,18 @@ function Sheet:onTapSheet(_, ges)
     local ok, err = pcall(tap, self, ges)
     if not ok then
         fail(self, "failed on a tap:", err)
+    end
+    return true
+end
+
+-- A hold inside the panel of a sheet whose spec has hold closes the sheet, then runs it.
+function Sheet:onHoldSheet()
+    local ok, err = pcall(function()
+        close_sheet(self)
+        self.spec.hold()
+    end)
+    if not ok then
+        fail(self, "failed on a hold:", err)
     end
     return true
 end

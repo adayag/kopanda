@@ -70,7 +70,7 @@ end
 -- The response body for url, or nil and why not. socket.http is looked up here, not at load,
 -- so a spec can stub it. socketutil's timeouts are reset on every path, a raising request
 -- included (frontend/socketutil.lua:52-70; the pattern of frontend/ui/wikipedia.lua:146-215).
-local function get(url)
+function Weather.get(url)
     local chunks = {}
     local http = require("socket.http")
     socketutil:set_timeout(5, 10)
@@ -97,7 +97,7 @@ end
 function Weather.fetch()
     local ok, err = pcall(function()
         local location, units = Settings.get("weather.location"), Settings.get("weather.units")
-        local body, why = get(Weather.url(location, units))
+        local body, why = Weather.get(Weather.url(location, units))
         if not body then
             error(why, 0)
         end

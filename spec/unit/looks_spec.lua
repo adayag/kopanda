@@ -107,7 +107,14 @@ describe("looks", function()
                     "sheet.inset.side", "sheet.book_band_color", "sheet.header_padding.top",
                     "sheet.book_header_padding.bottom", "sheet.row_rule_color", "sheet.status_chip_color",
                     "sheet.chip_padding.x", "type.sheet_heading.face", "type.sheet_aside.color",
-                    "type.sheet_chip.size" }) do
+                    "type.sheet_chip.size", "editor.padding.top", "editor.header_band_color",
+                    "editor.header_rule_width", "editor.body_gap", "editor.button_padding.y", "editor.card_padding.x",
+                    "editor.selected_fill_color", "editor.arrow_size", "editor.disabled_color",
+                    "editor.box_padding.y", "editor.row_rule_color", "editor.control_size",
+                    "editor.kind_columns", "type.editor_aside.tracking", "type.editor_title.size",
+                    "type.editor_button.face", "type.editor_caption.color", "type.editor_box.face",
+                    "type.editor_share.color", "type.editor_label.size", "type.editor_kind.uppercase",
+                    "type.editor_note.line_height" }) do
                 local found = false
                 for _, path in ipairs(diner) do
                     found = found or path == wanted
@@ -344,6 +351,45 @@ describe("looks", function()
                         part.color }, id .. " " .. name)
                 end
             end
+        end)
+
+        -- The editor frame's tokens (EditLayout.dc.html:19-43 under
+        -- .tiller/design/2026-10-13-kopanda-screens/); Diner has no board and takes its own vocabulary.
+        it("give Editorial's editor block and parts the boards' values", function()
+            local editor, parts = looks.editorial.editor, looks.editorial.type
+            assert.same({ top = 40, side = 40, bottom = 28 }, editor.padding)
+            assert.same({ false, false }, { editor.header_band_color, editor.header_text_color })
+            assert.same({ "ink", 1, 16 }, { editor.header_rule_color, editor.header_rule_width, editor.header_gap })
+            assert.equals(18, editor.body_gap)
+            assert.same({ "ink", 1, false }, { editor.button_outline_color, editor.button_outline_width,
+                editor.button_fill_color })
+            assert.same({ "hairline", 1 }, { editor.card_outline_color, editor.card_outline_width })
+            assert.same({ "ink", "hairline_light" }, { editor.selected_outline_color, editor.selected_fill_color })
+            assert.same({ x = 0, y = 0, color = false }, editor.card_shadow)
+            assert.equals("hairline", editor.disabled_color)
+            assert.same({ "display", 34, false, 0, 0.3, "ink" }, { parts.editor_title.face, parts.editor_title.size,
+                parts.editor_title.uppercase, parts.editor_title.tracking, parts.editor_title.line_height,
+                parts.editor_title.color })
+            assert.same({ "text", 11, true, 0.14, "muted" }, { parts.editor_aside.face, parts.editor_aside.size,
+                parts.editor_aside.uppercase, parts.editor_aside.tracking, parts.editor_aside.color })
+        end)
+
+        it("give Diner's editor block its band header, outlines and mustard selection", function()
+            local editor, parts = looks.diner.editor, looks.diner.type
+            assert.same({ "band", "on_band" }, { editor.header_band_color, editor.header_text_color })
+            assert.same({ "outline", 3 }, { editor.header_rule_color, editor.header_rule_width })
+            assert.equals(18, editor.body_gap)
+            assert.same({ "outline", 3, "paper" }, { editor.button_outline_color, editor.button_outline_width,
+                editor.button_fill_color })
+            assert.same({ "outline", 3 }, { editor.card_outline_color, editor.card_outline_width })
+            assert.same({ "outline", "mustard" }, { editor.selected_outline_color, editor.selected_fill_color })
+            assert.same({ "outline", 2 }, { editor.row_rule_color, editor.row_rule_width })
+            assert.same({ x = 2, y = 2, color = "shadow" }, editor.card_shadow)
+            assert.equals("muted", editor.disabled_color)
+            assert.same({ "display", 30, "on_band" }, { parts.editor_title.face, parts.editor_title.size,
+                parts.editor_title.color })
+            assert.same({ "strong", 11, true, 0.1, "on_band" }, { parts.editor_aside.face, parts.editor_aside.size,
+                parts.editor_aside.uppercase, parts.editor_aside.tracking, parts.editor_aside.color })
         end)
 
         it("align both looks' header row to its bottom", function()

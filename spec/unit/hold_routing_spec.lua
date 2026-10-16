@@ -9,7 +9,8 @@ describe("gestures on the KoPanda home", function()
     local Home
 
     local send = gestures.send
-    local settings_message = gestures.settings_message
+    local settings_menu = gestures.settings_menu
+    local settings_keys = gestures.settings_keys
     local fm_with_home = gestures.fm_with_home
     local slot_of = gestures.slot_of
     local point = gestures.point
@@ -122,7 +123,7 @@ describe("gestures on the KoPanda home", function()
             assert.equals("home", Sheet.shown.spec.name)
             assert.equals(home, harness.top(2))
             assert.equals(home, Home.shown)
-            assert.is_nil(settings_message())
+            assert.is_nil(settings_menu())
         end)
 
         it("opens the home sheet on a hold in a blank slot that has no widget module", function()
@@ -149,7 +150,7 @@ describe("gestures on the KoPanda home", function()
             assert.equals(ges, calls[1][2])
             assert.equals(slot_of("quote").built, calls[1][3])
             assert.equals(0, sheets_on_stack())
-            assert.is_nil(settings_message())
+            assert.is_nil(settings_menu())
             assert.equals(home, harness.top())
         end)
 
@@ -177,8 +178,16 @@ describe("gestures on the KoPanda home", function()
             assert.is_true(Home.shown:onGesture(harness.gesture("hold", x, y)))
             assert.spy(open).was.called(1)
             assert.equals(0, sheets_on_stack())
-            assert.equals(settings_message(), harness.top())
+            assert.equals(settings_menu(), harness.top())
             assert.equals(home, harness.top(2))
+        end)
+
+        it("opens the quote's settings, cut to its group, on a hold on the quote", function()
+            fm_with_home()
+            assert.is_nil(slot_of("quote").module.hold)
+            hold(centre_of("quote"))
+            assert.same({ "quote.source" }, settings_keys())
+            assert.equals(0, sheets_on_stack())
         end)
 
         -- As the Gestures plugin registers hold_top_right_corner (gestures main.lua:1128-1131,
@@ -218,7 +227,7 @@ describe("gestures on the KoPanda home", function()
             assert.equals(1, zone_calls())
             assert.equals(0, #calls)
             assert.equals(0, sheets_on_stack())
-            assert.is_nil(settings_message())
+            assert.is_nil(settings_menu())
             assert.equals(home, harness.top())
         end)
 
@@ -243,7 +252,7 @@ describe("gestures on the KoPanda home", function()
             hold(empty_point())
             hold(centre_of("weather"))
             assert.equals(0, sheets_on_stack())
-            assert.is_nil(settings_message())
+            assert.is_nil(settings_menu())
             assert.equals(home, harness.top())
         end)
 
@@ -260,7 +269,7 @@ describe("gestures on the KoPanda home", function()
             assert.equals(sheet, harness.top())
             assert.equals(home, harness.top(2))
             assert.equals(1, sheets_on_stack())
-            assert.is_nil(settings_message())
+            assert.is_nil(settings_menu())
         end)
 
         it("takes its sheet with it when the home is closed", function()

@@ -1,9 +1,10 @@
 id: T-7y2lph
 key: home/device-menus/goldens
 title: Goldens of both screens in both looks and their paint budget
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-6nh4m4
@@ -18,3 +19,37 @@ accepted_against:
         kind: git_commit
         value: git:ac38233
         observed_at: 2026-10-16T03:17:38.152338Z
+branch: tiller/home/device-menus/goldens
+review_ref:
+    branch: tiller/home/device-menus/goldens
+    head:
+        kind: git_commit
+        value: git:6738fcf
+        observed_at: 2026-10-16T15:03:46.806689Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T15:02:07.420917Z
+        against:
+            kind: git_commit
+            value: git:85c2e81
+            observed_at: 2026-10-16T15:02:07.420908Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-85c2e81-out-2550ea2748c53a1f9118a6624cd320cb7fb15060ff6d75d1c1fb1275decb7a51.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T15:02:07.420917Z
+        against:
+            kind: git_commit
+            value: git:85c2e81
+            observed_at: 2026-10-16T15:02:07.420908Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-85c2e81-out-57658099fe4a408d6c75533051e68980ca77747e816036d11d64a7a4d918772e.txt

@@ -1,0 +1,13 @@
+id: EV-jt3ln3
+type: claim.task
+at: 2026-10-16T03:57:05.840026Z
+contributor: allen
+command: claim task T-h9dkvy
+targets:
+    - T-h9dkvy
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/launcher-manage/task.yml

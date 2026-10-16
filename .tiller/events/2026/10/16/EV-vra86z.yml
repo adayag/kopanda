@@ -1,0 +1,17 @@
+id: EV-vra86z
+type: start.task
+at: 2026-10-16T03:18:08.92817Z
+contributor: allen
+command: start task T-51vf9k
+targets:
+    - T-51vf9k
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/home/device-menus
+    branch: tiller/home/device-menus/editor-frame
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/editor-frame/task.yml
+    - path: .tiller/epics/home/features/device-menus/feature.yml

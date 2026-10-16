@@ -1,0 +1,13 @@
+id: EV-o58gyo
+type: check.task
+at: 2026-10-16T15:03:46.548475Z
+contributor: allen
+command: check task T-7y2lph
+targets:
+    - T-7y2lph
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/goldens/task.yml

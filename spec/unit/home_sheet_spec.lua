@@ -3,15 +3,15 @@
 -- settings file. Each row is tapped where the sheet laid it out.
 describe("the home sheet", function()
     local harness = require("plugin_harness")
+    -- spec/home_gestures.lua, required before harness.load() puts the plugin's own home_gestures in
+    -- the require cache.
+    local gestures = require("home_gestures")
     local Dispatcher = require("dispatcher")
     local Event = require("ui/event")
     local InfoMessage = require("ui/widget/infomessage")
     local UIManager = require("ui/uimanager")
     local lfs = require("libs/libkoreader-lfs")
     local Home, HomeSheet, Sheet
-
-    local EDIT_LAYOUT_TEXT = "Edit layout comes with the settings menus."
-    local SETTINGS_TEXT = "KoPanda has no settings yet."
 
     -- Undo steps for the running test, run last first after it. busted keeps only a test's last
     -- finally, so the helpers can't each register one.
@@ -131,22 +131,17 @@ describe("the home sheet", function()
     end)
 
     describe("Edit layout", function()
-        it("shows its note with no timeout over the home and schedules nothing", function()
+        it("opens the edit layout screen over the home, with no note", function()
             open_sheet()
             local home = Home.shown
-            local schedule = spy.on(UIManager, "scheduleIn")
-            cleanup(function()
-                schedule:revert()
-            end)
             tap("Edit layout")
-            assert.spy(schedule).was_not.called()
-            local note = message()
-            assert.is_not_nil(note)
-            assert.equals(EDIT_LAYOUT_TEXT, note.text)
-            assert.is_nil(note.timeout)
-            assert.equals(note, harness.top())
+            local Editor = require("editor")
+            assert.is_not_nil(Editor.shown)
+            assert.equals("edit_layout", Editor.shown.spec.screen)
+            assert.equals(Editor.shown, harness.top())
             assert.equals(home, harness.top(2))
             assert.equals(home, Home.shown)
+            assert.is_nil(message())
             assert.is_nil(Sheet.shown)
         end)
     end)
@@ -252,7 +247,7 @@ describe("the home sheet", function()
     end)
 
     describe("KoPanda settings", function()
-        it("opens the settings stub once", function()
+        it("opens the full settings list once", function()
             open_sheet()
             local open = spy.on(require("settings_menu"), "open")
             cleanup(function()
@@ -260,7 +255,10 @@ describe("the home sheet", function()
             end)
             tap("KoPanda settings")
             assert.spy(open).was.called(1)
-            assert.equals(SETTINGS_TEXT, message().text)
+            assert.spy(open).was.called_with()
+            local menu = gestures.settings_menu()
+            assert.is_not_nil(menu)
+            assert.equals(#require("schema").keys, #menu[1].tab_item_table[1])
         end)
     end)
 

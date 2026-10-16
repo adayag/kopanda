@@ -11,7 +11,7 @@ describe("gestures on the KoPanda home", function()
     local Home
 
     local send = gestures.send
-    local settings_message = gestures.settings_message
+    local settings_menu = gestures.settings_menu
     local fm_with_home = gestures.fm_with_home
     local slot_of = gestures.slot_of
     local point = gestures.point
@@ -56,15 +56,55 @@ describe("gestures on the KoPanda home", function()
         harness.teardown()
     end)
 
-    it("opens the settings stub on a swipe up from the bottom edge", function()
+    -- Every schema key, in order: the full settings list.
+    local function all_keys()
+        local keys = {}
+        for i, entry in ipairs(require("schema").keys) do
+            keys[i] = entry.id
+        end
+        return keys
+    end
+
+    it("opens the full settings list on a swipe up from the bottom edge", function()
         fm_with_home()
         local home = Home.shown
         local size = Screen:getSize()
         send(swipe(size.w / 2, size.h * 15 / 16, "north"))
-        local message = settings_message()
-        assert.is_not_nil(message)
-        assert.equals(message, harness.top())
+        local menu = settings_menu()
+        assert.is_not_nil(menu)
+        assert.equals(menu, harness.top())
         assert.equals(home, harness.top(2))
+        assert.same(all_keys(), gestures.settings_keys())
+    end)
+
+    -- A hold on a slot whose widget has no hold of its own opens the settings for its group: the
+    -- widget module's settings_prefix.
+    describe("a hold on a widget without a hold", function()
+        local function hold_on(id)
+            local rect = slot_of(id).rect
+            send(harness.gesture("hold", rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2)))
+        end
+
+        it("opens the weather's two settings over the home", function()
+            fm_with_home()
+            local home = Home.shown
+            hold_on("weather")
+            assert.equals(settings_menu(), harness.top())
+            assert.equals(home, harness.top(2))
+            assert.same({ "weather.location", "weather.units" }, gestures.settings_keys())
+        end)
+
+        it("opens the stats' one setting", function()
+            fm_with_home()
+            hold_on("stats")
+            assert.same({ "stats.show" }, gestures.settings_keys())
+        end)
+
+        it("opens the full list from the date, whose group has no keys", function()
+            fm_with_home()
+            hold_on("date")
+            assert.same(all_keys(), gestures.settings_keys())
+        end)
     end)
 
     it("leaves a swipe up the bottom-left corner, inside the left edge band, alone", function()
@@ -72,7 +112,7 @@ describe("gestures on the KoPanda home", function()
         local home = Home.shown
         local size = Screen:getSize()
         send(swipe(size.w / 16, size.h * 15 / 16, "north"))
-        assert.is_nil(settings_message())
+        assert.is_nil(settings_menu())
         assert.equals(home, harness.top())
     end)
 
@@ -81,7 +121,7 @@ describe("gestures on the KoPanda home", function()
         local home = Home.shown
         local size = Screen:getSize()
         send(swipe(size.w * 15 / 16, size.h * 15 / 16, "north"))
-        assert.is_nil(settings_message())
+        assert.is_nil(settings_menu())
         assert.equals(home, harness.top())
     end)
 
@@ -90,7 +130,7 @@ describe("gestures on the KoPanda home", function()
         local home = Home.shown
         local size = Screen:getSize()
         send(swipe(size.w / 2, size.h / 2, "north"))
-        assert.is_nil(settings_message())
+        assert.is_nil(settings_menu())
         assert.equals(home, harness.top())
     end)
 
@@ -347,7 +387,7 @@ describe("gestures on the KoPanda home", function()
         end)
         local size = Screen:getSize()
         send(swipe(size.w / 2, size.h * 15 / 16, "north"))
-        assert.is_nil(settings_message())
+        assert.is_nil(settings_menu())
         assert.equals(home, harness.top())
         send(harness.gesture("tap", size.w / 2, size.h / 2))
         assert.equals(home, Home.shown)
@@ -378,7 +418,7 @@ describe("gestures on the KoPanda home", function()
         send(harness.gesture("tap", size.w / 2, size.h / 2))
         assert.equals(fm, harness.top())
         send(swipe(size.w / 2, size.h * 15 / 16, "north"))
-        assert.is_nil(settings_message())
+        assert.is_nil(settings_menu())
     end)
 
     it("opens no settings on a swipe up from the bottom edge in the reader", function()
@@ -387,7 +427,7 @@ describe("gestures on the KoPanda home", function()
         assert.equals(reader, harness.top())
         local size = Screen:getSize()
         send(swipe(size.w / 2, size.h * 15 / 16, "north"))
-        assert.is_nil(settings_message())
+        assert.is_nil(settings_menu())
     end)
 
     -- A Gestures action runs Dispatcher:execute, which sends its event with UIManager:sendEvent

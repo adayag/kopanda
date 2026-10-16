@@ -303,6 +303,45 @@ return {
         sheet_chip = {
             face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
         },
+        -- The editor screens have no Diner board: the direction doc's vocabulary ("The two looks"),
+        -- the header's aside and title on the band as the home's date and clock are (HomeRetro.dc.html:22-24),
+        -- the rest in the look's label style and Editorial's sizes.
+        -- no board: Editorial's line height, so the default layout's five rows fit above the foot
+        editor_aside = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.1, line_height = 0.3, color = "on_band",
+        },
+        -- no board: Editorial's line height
+        editor_title = {
+            face = "display", size = 30, uppercase = false, tracking = 0, line_height = 0.3, color = "on_band",
+        },
+        -- no board: Editorial's line height
+        editor_button = {
+            face = "display", size = 11, uppercase = true, tracking = 0.1, line_height = 0.3, color = "ink",
+        },
+        -- no board: Editorial's line height
+        editor_caption = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.1, line_height = 0.3, color = "muted",
+        },
+        -- no board: Editorial's line height
+        editor_box = {
+            face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
+        },
+        -- no board: Editorial's line height
+        editor_share = {
+            face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0.3, color = "muted",
+        },
+        -- no board: Editorial's line height, so six rows fit above the add-an-entry foot
+        editor_label = {
+            face = "strong", size = 16, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
+        },
+        -- no board: Editorial's line height
+        editor_kind = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.08, line_height = 0.3, color = "muted",
+        },
+        -- no board: Editorial's line height
+        editor_note = {
+            face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0.3, color = "muted",
+        },
     },
 
     -- The launcher: a grid of outlined tiles with the tile shadow, the first three on accents.
@@ -338,5 +377,42 @@ return {
         button_padding = { x = 14, y = 9 },
         button_fill_color = "mustard",
         button_outline_color = "outline",
+    },
+    -- The editor screens, edit layout and launcher management. No board draws Diner's: the
+    -- direction doc's vocabulary ("The two looks"), a teal header band, 3 px ink outlines, hard
+    -- 2 px shadows on cards (card_shadow) and a flat mustard fill for the selected card; spacing as
+    -- Editorial's boards give it.
+    editor = {
+        padding = { top = 40, side = 40, bottom = 28 }, -- no board: Editorial's
+        header_band_color = "band", -- no board: the home's teal header band (HomeRetro.dc.html)
+        header_text_color = "on_band", -- no board: the band's text (HomeRetro.dc.html:19)
+        header_rule_color = "outline", -- no board: the doc's ink strokes
+        header_rule_width = 3, -- no board: stroke.outline
+        header_gap = 16, -- no board: Editorial's
+        body_gap = 18, -- no board: Editorial's
+        button_outline_color = "outline", -- no board: the doc's ink strokes
+        button_outline_width = 3, -- no board: stroke.outline
+        button_fill_color = "paper", -- no board: a paper button on the band
+        button_padding = { x = 14, y = 8 }, -- no board: Editorial's
+        card_gap = 10, -- no board: 10, so the default layout's five rows fit with one selected (owner decision)
+        card_padding = { x = 14, y = 12 }, -- no board: Editorial's
+        card_outline_color = "outline", -- no board: the doc's ink outlines
+        card_outline_width = 3, -- no board: stroke.outline
+        card_shadow = { x = 2, y = 2, color = "shadow" }, -- owner: half the home tiles' 4, so the screens read lighter
+        selected_outline_color = "outline", -- no board: the doc's ink outlines
+        selected_fill_color = "mustard", -- no board: the doc's flat accent fills
+        arrow_size = 28, -- no board: Editorial's
+        arrow_gap = 14, -- no board: Editorial's
+        disabled_color = "muted", -- no board: Diner has no hairline
+        box_padding = { x = 12, y = 10 }, -- no board: Editorial's
+        box_gap = 8, -- no board: Editorial's
+        row_padding = { y = 14 }, -- no board: Editorial's
+        row_rule_color = "outline", -- no board: the doc's ink strokes
+        row_rule_width = 2, -- no board: the sheets' row rules (sheet.row_rule_width)
+        icon_size = 22, -- no board: Editorial's
+        icon_gap = 14, -- no board: Editorial's
+        control_size = 30, -- no board: Editorial's
+        kind_gap = 8, -- no board: Editorial's
+        kind_columns = 2, -- no board: Editorial's
     },
 }

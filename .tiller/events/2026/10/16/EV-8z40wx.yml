@@ -1,0 +1,16 @@
+id: EV-8z40wx
+type: submit.task
+at: 2026-10-16T14:31:28.527264Z
+contributor: allen
+command: submit task T-7y2lph
+targets:
+    - T-7y2lph
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/device-menus/goldens
+        head: git:91bc020
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/goldens/task.yml

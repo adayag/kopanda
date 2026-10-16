@@ -1,0 +1,13 @@
+id: EV-ukbp41
+type: check.task
+at: 2026-10-16T14:27:12.986248Z
+contributor: allen
+command: check task T-ij3256
+targets:
+    - T-ij3256
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/settings-menu/task.yml

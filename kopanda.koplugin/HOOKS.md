@@ -111,6 +111,9 @@ Upgrading KOReader walks this list.
   (`close`, which sends `CloseWidget` at `:300`), `:881-888` (`isWidgetShown`).
 - The home is shown and closed with `"full"`; a home that reached the stack before failing
   is taken off it.
+- The editor frame (`editor.lua`) is shown and closed the same way, with `"full"`, and is
+  `covers_fullscreen` as the home is, so nothing beneath it is painted while it is up; an editor
+  that reached the stack before failing is taken off it.
 
 ### `UIManager.event_hook`, the settled signal
 
@@ -161,7 +164,7 @@ Upgrading KOReader walks this list.
   at gesture time, in `home_gestures.lua`. The home's own zones (touch lock entry below) cover
   the screen at the home's build size and test these bands in their handlers.
 - Screen ratios. A tap inside the top menu zones leaves the home up. The swipe up that
-  opens the settings stub starts in the bottom edge band and outside the left and right bands,
+  opens the settings menu starts in the bottom edge band and outside the left and right bands,
   where Gestures binds frontlight and warmth swipes by default
   (`plugins/gestures.koplugin/defaults.lua:14-17`; it binds nothing to a bottom-edge swipe up,
   `:20-21`). A west or east swipe outside the top and bottom bands is consumed.
@@ -183,8 +186,7 @@ Upgrading KOReader walks this list.
 - `ui/widget/infomessage`: `frontend/ui/widget/infomessage.lua:47` (the class), `:52-53`
   (`text`, `timeout`), `:263-292` (`onShow` schedules the close when `timeout` is set).
 - Shown from `UIManager:nextTick`. The refusal message has no timeout and is raised once per
-  process from a file-manager instance. The boot guard's notice has a timeout of 8 s. The
-  settings stub (`settings_menu.lua`) shows one with no timeout.
+  process from a file-manager instance. The boot guard's notice has a timeout of 8 s.
 
 ### The runtime state file, `settings/kopanda/state.lua`
 
@@ -263,7 +265,7 @@ Upgrading KOReader walks this list.
   its comment at `:311-321` notes that a subclass overriding `onGesture` escapes the swap);
   `frontend/ui/uimanager.lua:142-145` (`UIManager:setIgnoreTouchInput`), `:268-271` (`show`
   lifts the lock for the widget shown).
-- The home overrides `onGesture`, so its own steps, the swipe up to the settings stub, the
+- The home overrides `onGesture`, so its own steps, the swipe up to the settings menu, the
   closing tap and the hold, are touch zones on the home (`kopanda_home_swipe_up`,
   `kopanda_home_tap`, `kopanda_home_hold`, made in `home_gestures.lua`) run through
   `InputContainer.onGesture(home, ges)`: under the lock they match nothing and the settings
@@ -617,6 +619,81 @@ Upgrading KOReader walks this list.
 - The sun and moon go through `IconWidget` (the swatch entry above), which renders an SVG with
   `RenderImage:renderSVGImageFile` (`frontend/ui/widget/imagewidget.lua:175`).
 
+### The place search: `InputDialog`, `ButtonDialog`, `forceRePaint`, `util` and the geocoding endpoint
+
+- `ui/widget/inputdialog`: `frontend/ui/widget/inputdialog.lua:124-167` (the class; `title`,
+  `input_hint`, `buttons`), `:354-362` (Enter runs the button marked `is_enter_default`), `:583`
+  (`getInputText`), `:640` (`onShowKeyboard`), `:633` (`onCloseWidget` closes the keyboard with the
+  dialog). The Cancel button's `id = "close"` follows `:25`.
+- `ui/widget/buttondialog`: `frontend/ui/widget/buttondialog.lua:1-40` (rows of buttons with
+  `text` and `callback`), `:62-75` (`buttons`, `title`), `:187-189` and `:217` (a table taller than
+  the screen scrolls in a `ScrollableContainer`). Ten candidates and Cancel at most.
+- `ui/uimanager`: `frontend/ui/uimanager.lua:1404` (`forceRePaint` drains the paint queue now), so the
+  "Searching…" note is on screen before the fetch blocks the UI loop; `show` and `close` as above.
+- `ui/widget/infomessage`: the notes and "Searching…" have no timeout, so no timer
+  (`frontend/ui/widget/infomessage.lua:283-290`).
+- `util`: `frontend/util.lua:52` (`trim`), `:1443` (`urlEncode`, RFC 3986 unreserved characters
+  kept, a space as `%20`).
+- `ui/network/manager`: `isConnected` as the weather entry above; offline the search says so and
+  fetches nothing.
+- The fetch is the weather's `Weather.get` (`socketutil` timeouts and their reset, `socket.http`), and
+  the body is decoded with `rapidjson` in a `pcall`, as the weather entry above.
+- Open-Meteo's geocoding endpoint, read live on 2026-10-15:
+  `https://geocoding-api.open-meteo.com/v1/search?name=<query>&count=10&language=en&format=json`, plus
+  `&countryCode=US` for a five-digit ZIP code. A match returns `{ results = [ { id, name, latitude,
+  longitude, elevation, feature_code, country_code, admin1_id.., timezone, population, postcodes,
+  country_id, country, admin1..admin4 } ], generationtime_ms }`; no match returns only
+  `{ generationtime_ms }`. "60614" with `countryCode=US` returned one result, Chicago, Illinois, at
+  41.85003, -87.65005. The recorded responses are `spec/fixtures/geocoding/*.json`.
+
+### The settings menu: `TouchMenu`'s items, one tab and closing
+
+- `menu.lua` builds the rows as `TouchMenu` items, which `ui/widget/touchmenu` reads as
+  follows: `frontend/ui/widget/touchmenu.lua:73-96` (`enabled`, `checked_func`, `radio` draw a
+  radio or check mark), `:107` and `frontend/ui/widget/menu.lua:1610-1621` (`Menu.getMenuText`:
+  `text_func` is read on every redraw, and an item with `sub_item_table_func` gets the submenu
+  arrow), `:715` (`separator` draws a line before the next item), `:892-911`
+  (`sub_item_table_func` is called on tap; an empty table opens nothing), `:913-926` (the
+  `callback` gets the menu; with `checked_func` the menu redraws, with `keep_menu_open` it stays,
+  otherwise it closes after the callback), `:671` (`updateItems`, which the location row calls
+  after a pick). `TouchMenu` doesn't catch a callback's error, so every function `menu.lua` hands
+  it is guarded.
+- Tools › KoPanda › Settings is a native submenu: its `sub_item_table_func` returns the rows,
+  or `{}` when building them fails.
+- `settings_menu.lua` shows the rows on their own in a `TouchMenu` with one tab:
+  `tab_item_table = { items }` with `items.icon = "appbar.settings"`, the icon of KOReader's own
+  settings tab (`frontend/apps/filemanager/filemanagermenu.lua:37`). Tabs are read from each
+  tab table's `icon` (`touchmenu.lua:540`); with one icon `TouchMenuBar:init`'s separator and
+  before-last branches don't run (`:373`, `:421`). `settings_menu_spec.lua` builds, paints and
+  closes one.
+- The container is `FileManagerMenu:onShowMenu`'s pattern
+  (`frontend/apps/filemanager/filemanagermenu.lua:1006-1047`): a full-screen
+  `ui/widget/container/centercontainer` with `ignore = "height"` holding the `TouchMenu`, whose
+  `show_parent` it is. KoPanda's menu sets no `close_callback`, so the default closes the
+  container (`touchmenu.lua:499-504`), from a tap outside the menu (`:508-512`, `:977-981`), the
+  Back key (`:531`) or the up arrow at the top level (`:798-814`); `onCloseWidget` asks for a
+  full-screen `flashui` (`:987-998`). It saves no tab index, unlike `FileManagerMenu`'s close
+  (`filemanagermenu.lua:1051-1052`).
+- `util`: `frontend/util.lua:146` (`tableEquals`), so a tap on the value already stored, a place
+  table included, writes nothing.
+- `ui/network/manager`: `isConnected` as the weather entry above, before the one weather fetch
+  that follows a write of the weather's place or units while a home is shown.
+- `ui/widget/infomessage`: "Couldn't save <label>." has no timeout, so no timer
+  (`frontend/ui/widget/infomessage.lua:283-290`).
+- The Layout and Launcher rows open their screens from `UIManager:nextTick`, after the menu has
+  closed itself (`touchmenu.lua:920-926`).
+
+### Edit layout: `util.tableDeepCopy` and its notes
+
+- `util`: `frontend/util.lua:184-203` (`tableDeepCopy`). `Settings.get` hands back the stored
+  table itself, so `edit_layout.lua` copies `layout.rows` when it opens, and every
+  `rows_edit.lua` operation copies the rows it is given before changing them.
+- `ui/widget/infomessage`: a refused change ("That won't fit on the home.", "Couldn't save the
+  layout." and `rows_edit.lua`'s notes) shows a note with no timeout, so no timer
+  (`frontend/ui/widget/infomessage.lua:52-53`, `:283-290`).
+- Its pickers are `sheet.lua`'s sheets over the editor frame; the frame is the editor entries
+  above.
+
 ### The featured cover: CoverBrowser's `bookinfomanager`, `ImageWidget` and the bounded check
 
 - `bookinfomanager` (`plugins/coverbrowser.koplugin/bookinfomanager.lua`), reached by
@@ -808,14 +885,20 @@ Upgrading KOReader walks this list.
   `frontend/device/key.lua:60-92`).
 - KOReader's Back: the dispatcher's `fm_back` sends the `Back` event (`frontend/dispatcher.lua:169`)
   to the top widget, the sheet, whose `onBack` closes it and consumes it.
+- The editor frame binds both as the sheet does: `key_events.Close = { { Device.input.group.Back } }`
+  only where `Device:hasKeys()` (`buttondialog.lua:98-108`), and `onBack` for the `Back` event
+  (`frontend/dispatcher.lua:169`), each closing it. Its taps are one `ges_events.TapEditor` whose
+  range is a function returning its `dimen` (`frontend/ui/gesturerange.lua:25-37`), so a rebuild at
+  a new size moves it.
 - Taps: `ges_events.TapSheet`, one `GestureRange` (`frontend/ui/gesturerange.lua:14`, `:21-51`)
   over the whole screen, consumed wherever it lands, as `ButtonDialog:onTapClose` consumes a tap
   (`buttondialog.lua:347-352`), so `sendEvent` offers it to no window below
   (`frontend/ui/uimanager.lua:988-1031`). Under KOReader's touch lock `ges_events` are filtered as
   the home's zones are (the touch-lock entry above).
 - Holds: a hold's lift sends `hold_release` to the top widget, by then the sheet
-  (`frontend/device/gesturedetector.lua:1346-1356`); the sheet registers nothing for `hold`,
-  `hold_release`, `hold_pan` or swipes, so they reach only the active widgets below.
+  (`frontend/device/gesturedetector.lua:1346-1356`); the sheet registers nothing for `hold`
+  (unless its spec has a `hold`, the launcher management entry below), `hold_release`,
+  `hold_pan` or swipes, so they reach only the active widgets below.
 - The settled signal goes from a `nextTick` (`frontend/ui/uimanager.lua:431-433`) that the
   sheet's first good `paintTo` schedules: it runs from the next `_checkTasks`, past that
   `_repaint` (`handleInput` `:1542-1564`). Nothing is scheduled before the paint, so a sheet
@@ -920,6 +1003,78 @@ Upgrading KOReader walks this list.
   CoverBrowser's cache and never asks for an extraction; a cached cover too small for the box is
   left out by `BookInfoManager.isCachedCoverInvalid`
   (`plugins/coverbrowser.koplugin/bookinfomanager.lua:1013-1030`; the featured cover's entry above).
+
+### The entry picker: `PathChooser`, the action tree, the plugin list and the label dialog
+
+- `ui/widget/pathchooser`: `frontend/ui/widget/pathchooser.lua:13-21` (`select_directory`,
+  `select_file`), `:104-155` (`onMenuHold` asks "Choose this folder?"; Choose calls
+  `onConfirm(path)` with the `realpath`, `:109`, then closes its dialog and the chooser,
+  `:151-155`). Opened as Folder shortcuts opens it
+  (`frontend/apps/filemanager/filemanagershortcuts.lua:427-439`): at the file browser's
+  `file_chooser.path`, or with no file browser the reader's `getLastDirFile()`
+  (`apps/reader/readerui`: `frontend/apps/reader/readerui.lua:565-579`), both read through
+  `package.loaded`. `onConfirm` runs guarded, so the chooser's own closes after it still run.
+- `dispatcher`: `Dispatcher:addSubMenu(caller, menu, location, settings)`
+  (`frontend/dispatcher.lua:1109-1170`) into a throwaway `caller` and scratch `location`; it runs
+  `Dispatcher:init` (`:1110`, a return once initialized, `:586`) and sets `caller.updated`
+  (`:924`, `:1125`), which nothing reads. Its order: "Nothing" at index 1 (`:1112-1131`), then one
+  item per `section_list` entry (`:1132-1140`), each with a `sub_item_table` (`:1167`): General,
+  Device, Screen and lights, File browser (indexes 2 to 5), then Reader, Reflowable and Fixed
+  layout; arrange, execute and QuickMenu items follow (`:1170-1378`). The picker keeps 2 to 5 and
+  refuses with a note unless there are at least eight items and each kept one has a
+  `sub_item_table`. A hold on a section clears its ticks (`:1155-1165`).
+- The scratch table's shape: `location[settings][id] = value` (`_addItem`'s `setValue`,
+  `:913-927`), with `settings.order` beside the ids once two are ticked (`_addToOrder`,
+  `:799-830`; `_itemsCount` leaves `settings` out, `:740-749`). `none` and `arg` actions store
+  `true` (`:931-940`); `absolutenumber` and `incrementalnumber` a spin value (`:943-1024`);
+  `string` and `configurable` an arg (`:1025-1067`). A launcher entry runs its action with `true`
+  (`launcher_entries.lua`'s `run`), so only a `true` one is taken.
+- Reader, reflowable and fixed-layout sections are dropped because `Dispatcher:isActionEnabled`
+  (`:1435-1449`) disables a `reader`, `rolling` or `paging` action with no reader up.
+- `Dispatcher.getDisplayList({ [id] = true })[1].text` (`:866-890`, `getNameFromItem` `:751-758`)
+  is the action's label before editing.
+- `pluginloader`: `PluginLoader:loadPlugins()` (`frontend/pluginloader.lua:273-292`, cached
+  after the first call; its first list is the enabled plugins), `isPluginLoaded` (`:567-569`),
+  `is_doc_only` (the file manager skips such a plugin, `frontend/apps/filemanager/filemanager.lua:419`),
+  `fullname or name` as the plugin manager labels it (`pluginloader.lua:104-109`). `kopanda` is
+  left out.
+- `ui/widget/inputdialog`: `frontend/ui/widget/inputdialog.lua:124-167` (`title`, `input`,
+  `buttons`), `:357` (`is_enter_default`), `:774-784` (`onCloseDialog` presses the button with
+  `id = "close"`, Cancel here), `:583` (`getInputText`), `:596` (`setInputText`, the spec's),
+  `:640` (`onShowKeyboard`, called after `show`, as `frontend/apps/filemanager/filemanagercollection.lua:1118-1119`
+  does), `:633-638` and `:786-797` (closing it closes its keyboard).
+- `util`: `util.trim` (`frontend/util.lua:52`); an all-space label is refused, the trimmed one
+  kept.
+- `ui/widget/touchmenu`, one tab: `TouchMenu:new{ width, tab_item_table = { items }, show_parent }`
+  with `items.icon = "appbar.settings"` (`frontend/ui/widget/touchmenu.lua:469-470`, `:539-548`, the
+  tab bar's icons), inside a full-screen `CenterContainer` as `FileManagerMenu:onShowMenu` shows its
+  menu (`frontend/apps/filemanager/filemanagermenu.lua:1006-1047`). `close_callback` replaces
+  the default close (`touchmenu.lua:500-504`); `closeMenu` (`:973-975`) calls it from a tap
+  outside (`:977-981`), `onClose` (`:983-985`) and Back at the top level (`:798-818`). The picker
+  closes the container itself, once. `onMenuSelect` (`:873-929`) opens a section and runs an
+  action item's callback.
+- `logger.err` for every guarded failure; the sheets are `sheet.lua`'s.
+
+### Launcher management: `ConfirmBox`, the sheet's hold and `util`'s table copies
+
+- `ui/widget/confirmbox`: `frontend/ui/widget/confirmbox.lua:45-51` (`text`, `ok_text`,
+  `ok_callback`, `cancel_callback`), `:62` (`init`), `:107-122` (Cancel runs `cancel_callback`,
+  OK runs `ok_callback`, each then closes the box), `:242-247` (`onClose`, from the Back key and
+  from a tap outside it, `:249-254`, runs `cancel_callback`). Removing a launcher folder asks
+  through it, `ok_text = "Remove"`; Cancel writes nothing, and the `ok_callback` runs guarded.
+- `util`: `util.tableDeepCopy` (`frontend/util.lua:184-202`) copies `launcher.entries` before
+  every list operation, since `Settings.get` hands back the stored table; `util.tableEquals`
+  (`:146-174`) finds the folder sheet's folder among the stored entries, the sheet holding the
+  entry the launcher was built with.
+- The sheet's hold: `ges_events.HoldSheet`, a `GestureRange` of `ges = "hold"` whose range is a
+  function returning the panel (`frontend/ui/gesturerange.lua:25-37`), registered only for a spec
+  with `hold`. The sheet closes, then runs it; the lift's `hold_release`
+  (`frontend/device/gesturedetector.lua:1346-1356`) reaches the editor it opened, which has no
+  handler for it.
+- The launcher's hold: the home's hold step (`home_gestures.lua`) calls the widget's `hold`,
+  which returns nothing, so the step takes the hold as done and opens no settings.
+- The editor's Done runs the spec's `done` when it has one, a folder's list opened from the top
+  level going back to it; the frame's show and close are the editor entries above.
 
 ### Widget and support modules
 

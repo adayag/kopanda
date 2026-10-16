@@ -1,0 +1,16 @@
+id: EV-ive7gf
+type: submit.task
+at: 2026-10-16T14:08:53.603055Z
+contributor: allen
+command: submit task T-h9dkvy
+targets:
+    - T-h9dkvy
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/device-menus/launcher-manage
+        head: git:410da5b
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/launcher-manage/task.yml

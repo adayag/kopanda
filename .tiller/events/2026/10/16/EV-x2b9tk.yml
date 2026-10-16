@@ -1,0 +1,13 @@
+id: EV-x2b9tk
+type: claim.task
+at: 2026-10-16T03:18:08.799728Z
+contributor: allen
+command: claim task T-51vf9k
+targets:
+    - T-51vf9k
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/editor-frame/task.yml

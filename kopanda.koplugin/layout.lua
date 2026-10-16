@@ -264,9 +264,15 @@ function Layout.arrange(rows, ctx)
 end
 
 -- Whether every row of rows fits ctx's screen: true exactly when the placement drops nothing.
--- What the edit-layout screen asks before it adds a row.
+-- The edit-layout screen asks Layout.overflow instead.
 function Layout.fits(rows, ctx)
     return #arrange(rows, ctx, place).dropped == 0
+end
+
+-- How many rows of rows the placement leaves out on ctx's screen, unlogged: what the
+-- edit-layout screen compares before and after a change.
+function Layout.overflow(rows, ctx)
+    return #arrange(rows, ctx, place).dropped
 end
 
 local TEXT_SCALE = { small = 0.85, medium = 1, large = 1.15 }

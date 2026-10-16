@@ -1,0 +1,16 @@
+id: EV-glx4bt
+type: submit.task
+at: 2026-10-16T03:56:31.278049Z
+contributor: allen
+command: submit task T-51vf9k
+targets:
+    - T-51vf9k
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/home/device-menus/editor-frame
+        head: git:bfedcb4
+    status: in_review
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/editor-frame/task.yml

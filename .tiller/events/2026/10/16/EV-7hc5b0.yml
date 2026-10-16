@@ -1,0 +1,15 @@
+id: EV-7hc5b0
+type: start.task
+at: 2026-10-16T03:57:05.158168Z
+contributor: allen
+command: start task T-6nh4m4
+targets:
+    - T-6nh4m4
+before:
+    status: ready
+after:
+    branch: tiller/home/device-menus/edit-layout
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/home/features/device-menus/tasks/edit-layout/task.yml

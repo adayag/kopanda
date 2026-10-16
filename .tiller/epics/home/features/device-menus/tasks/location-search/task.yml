@@ -1,9 +1,10 @@
 id: T-cbmaw1
 key: home/device-menus/location-search
 title: Weather location search through Open-Meteo's geocoding
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,37 @@ accepted_against:
         kind: git_commit
         value: git:ac38233
         observed_at: 2026-10-16T03:17:38.062173Z
+branch: tiller/home/device-menus/location-search
+review_ref:
+    branch: tiller/home/device-menus/location-search
+    head:
+        kind: git_commit
+        value: git:e9dd9e9
+        observed_at: 2026-10-16T03:32:24.623534Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T03:30:57.738716Z
+        against:
+            kind: git_commit
+            value: git:669d110
+            observed_at: 2026-10-16T03:30:57.738704Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-669d110-out-e88d23dbf48e1b01b04b79ef6a21b33d344b335d53f896999318909e0aff5346.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T03:30:57.738716Z
+        against:
+            kind: git_commit
+            value: git:669d110
+            observed_at: 2026-10-16T03:30:57.738704Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-669d110-out-72e6005a2b53e9349eac4126b9fa219bc96fa49caf5fa6bbc230b60f57d9f87a.txt

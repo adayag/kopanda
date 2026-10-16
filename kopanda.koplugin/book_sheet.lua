@@ -248,7 +248,7 @@ function BookSheet.open(ctx, built, opts)
             icon = "settings",
             label = "This widget's settings",
             run = function()
-                SettingsMenu.open()
+                SettingsMenu.open("featured")
             end,
         },
     }

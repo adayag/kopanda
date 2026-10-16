@@ -283,6 +283,46 @@ return {
         },
         -- Not drawn: Editorial has no chips. Its plain detail's style.
         sheet_chip = { face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
+        -- The editor screens' aside over the title, "Home" (EditLayout.dc.html:21), at the editor's line
+        -- height of 0.3, which every editor part takes so the default layout's five rows fit above the
+        -- foot (owner decision).
+        editor_aside = {
+            face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0.3, color = "muted",
+        },
+        -- Their title, "Edit layout" (EditLayout.dc.html:22), at the same line height.
+        editor_title = {
+            face = "display", size = 34, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
+        },
+        -- A button's text, "Done"; the board's weight 600 is the strong face's 500 (EditLayout.dc.html:24),
+        -- at the same line height.
+        editor_button = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0.3, color = "ink",
+        },
+        -- A card's caption, "Row 1 · two columns" (EditLayout.dc.html:35), at the same line height.
+        editor_caption = {
+            face = "text", size = 11, uppercase = true, tracking = 0.12, line_height = 0.3, color = "muted",
+        },
+        -- A column box's widget (EditLayout.dc.html:37), at the same line height.
+        editor_box = {
+            face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
+        },
+        -- Its share, "1/2" (EditLayout.dc.html:37), at the same line height.
+        editor_share = {
+            face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0.3, color = "muted",
+        },
+        -- A launcher entry's label (LauncherManage.dc.html:32), at the browser's normal line height
+        -- of about 1.3, so six rows fit above the add-an-entry foot (owner decision).
+        editor_label = {
+            face = "strong", size = 16, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
+        },
+        -- Its kind line (LauncherManage.dc.html:33), at the same line height.
+        editor_kind = {
+            face = "text", size = 11, uppercase = true, tracking = 0.1, line_height = 0.3, color = "muted",
+        },
+        -- The note under the kinds (LauncherManage.dc.html:103), at the same line height.
+        editor_note = {
+            face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0.3, color = "muted",
+        },
     },
 
     -- The launcher: a grid of text rows, each under a hairline in tile.rule_color.
@@ -316,5 +356,42 @@ return {
         button_padding = { x = 14, y = 9 }, -- "Open the Library" (EmptyStates.dc.html:38)
         button_fill_color = false, -- unfilled (EmptyStates.dc.html:38)
         button_outline_color = "ink", -- its 1 px ink border, stroke.outline (EmptyStates.dc.html:38)
+    },
+    -- The editor screens, edit layout and launcher management: a header of an aside over a title
+    -- and a Done button above an ink rule, then hairline cards or rows (EditLayout.dc.html,
+    -- LauncherManage.dc.html). Cards cast card_shadow, none here.
+    editor = {
+        padding = { top = 40, side = 40, bottom = 28 }, -- EditLayout.dc.html:19, :101
+        header_band_color = false, -- Editorial's header is on paper
+        header_text_color = false,
+        header_rule_color = "ink", -- EditLayout.dc.html:19
+        header_rule_width = 1, -- EditLayout.dc.html:19
+        header_gap = 16, -- the header's padding above the rule (EditLayout.dc.html:19)
+        body_gap = 18, -- the rule to the first card (EditLayout.dc.html:27)
+        button_outline_color = "ink", -- EditLayout.dc.html:24
+        button_outline_width = 1, -- EditLayout.dc.html:24
+        button_fill_color = false, -- transparent (EditLayout.dc.html:24)
+        button_padding = { x = 14, y = 8 }, -- EditLayout.dc.html:24
+        card_gap = 12, -- EditLayout.dc.html:27
+        card_padding = { x = 14, y = 12 }, -- EditLayout.dc.html:29
+        card_outline_color = "hairline", -- EditLayout.dc.html:29
+        card_outline_width = 1, -- EditLayout.dc.html:29
+        card_shadow = { x = 0, y = 0, color = false }, -- the boards draw none (EditLayout.dc.html:29)
+        selected_outline_color = "ink", -- EditLayout.dc.html:43
+        -- The board's #e9e6dc is in no palette; hairline_light (#e2dfd4) is the nearest role (EditLayout.dc.html:43).
+        selected_fill_color = "hairline_light",
+        arrow_size = 28, -- EditLayout.dc.html:30-32
+        arrow_gap = 14, -- EditLayout.dc.html:29
+        disabled_color = "hairline", -- EditLayout.dc.html:90
+        box_padding = { x = 12, y = 10 }, -- EditLayout.dc.html:37
+        box_gap = 8, -- EditLayout.dc.html:36
+        row_padding = { y = 14 }, -- LauncherManage.dc.html:29
+        row_rule_color = "hairline", -- LauncherManage.dc.html:29
+        row_rule_width = 1, -- LauncherManage.dc.html:29
+        icon_size = 22, -- LauncherManage.dc.html:30
+        icon_gap = 14, -- LauncherManage.dc.html:29
+        control_size = 30, -- LauncherManage.dc.html:35
+        kind_gap = 8, -- LauncherManage.dc.html:97
+        kind_columns = 2, -- LauncherManage.dc.html:97
     },
 }
