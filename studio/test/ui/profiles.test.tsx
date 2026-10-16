@@ -47,6 +47,16 @@ function settingsOf(profile: { id: string; has_settings: boolean }) {
   };
 }
 
+const HASH = "0123456789ab".padEnd(64, "0");
+
+/** The profile screen's push block's two requests, the studio on loopback. */
+function pushRoutes(id: string): Record<string, () => Response> {
+  return {
+    "/api/health": () => json({ ok: true, host: "127.0.0.1", port: 4490, addresses: [] }),
+    [`/api/push/${id}/manifest`]: () => json({ format: 1, profile: id, hash: HASH, files: [] }),
+  };
+}
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -191,13 +201,20 @@ describe("opening a profile", () => {
       "/api/profiles/paperwhite": () =>
         json({ ...paperwhite, settings_path: settingsPath("paperwhite") }),
       "/api/profiles/paperwhite/settings": () => json(settingsOf(paperwhite)),
+      ...pushRoutes("paperwhite"),
     });
 
     render(<App />);
 
     expect(screen.queryByText("Loading profiles")).not.toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Paperwhite" })).toBeInTheDocument();
-    expect(requestedUrls()).toEqual(["/api/profiles/paperwhite", "/api/profiles/paperwhite/settings"]);
+    expect(await screen.findByText(HASH.slice(0, 12))).toBeInTheDocument();
+    expect(requestedUrls()).toEqual([
+      "/api/profiles/paperwhite",
+      "/api/profiles/paperwhite/settings",
+      "/api/health",
+      "/api/push/paperwhite/manifest",
+    ]);
   });
 
   it("shows No profile <id> for a 404, with a way back to the list", async () => {
@@ -237,10 +254,12 @@ describe("opening a profile", () => {
       "/api/profiles/colorsoft": () =>
         json({ ...colorsoft, settings_path: settingsPath("colorsoft") }),
       "/api/profiles/colorsoft/settings": () => json(settingsOf(colorsoft)),
+      ...pushRoutes("colorsoft"),
     });
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: /Colorsoft/ }));
     await screen.findByRole("heading", { name: "Colorsoft" });
+    await screen.findByText(HASH.slice(0, 12));
 
     listing = { dir: DIR, profiles: [colorsoft, paperwhite] };
     fireEvent.click(screen.getByRole("link", { name: "Profiles" }));
@@ -250,6 +269,8 @@ describe("opening a profile", () => {
       "/api/profiles",
       "/api/profiles/colorsoft",
       "/api/profiles/colorsoft/settings",
+      "/api/health",
+      "/api/push/colorsoft/manifest",
       "/api/profiles",
     ]);
   });

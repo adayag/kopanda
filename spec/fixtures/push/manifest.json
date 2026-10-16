@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "profile": "vector",
+  "hash": "816677e3226298c8595cf059ccd4d962c3701ca5893b84e2afe6a146eb1c0f38",
+  "files": [
+    {
+      "path": "plugin/_meta.lua",
+      "size": 28,
+      "sha256": "4578c67203db57e94f57684e359b7f174a13ddcb344d7b39e73af41beffae629"
+    },
+    {
+      "path": "plugin/icons/a.svg",
+      "size": 42,
+      "sha256": "fb91f9a03c202c5f160eef644da6f2f704b19ac5c5f8b4c124e1b0b485ad57a0"
+    },
+    {
+      "path": "plugin/main.lua",
+      "size": 9,
+      "sha256": "7df8f0cd9e1cd0b204a760783671c0ccca4a3258dc7c51f59e9e2295c6c25315"
+    },
+    {
+      "path": "settings.lua",
+      "size": 68,
+      "sha256": "6c879ce139047d8ca1388c22159dc6fce8baacc77d7c9b5c4ac420f26a187db9"
+    }
+  ]
+}
