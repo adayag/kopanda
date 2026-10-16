@@ -230,4 +230,28 @@ describe("Books with a source", function()
             assert.is_true(was_logged("progress broke on purpose"))
         end)
     end)
+
+    describe("the index", function()
+        it("lists a source's path-less book under its authors and series from Books.all()", function()
+            local BookIndex = package.loaded["book_index"]
+            remote({
+                DUNE,
+                { id = "remote:messiah", title = "Dune Messiah", authors = { "Frank Herbert" }, series = "Dune",
+                    series_index = 2 },
+                { id = "remote:omens", title = "Good Omens", authors = { "Terry Pratchett", "Neil Gaiman" } },
+            })
+            local authors = BookIndex.authors(Books.all())
+            assert.same({ "Frank Herbert", "Neil Gaiman", "Terry Pratchett" },
+                { authors[1].name, authors[2].name, authors[3].name })
+            assert.equals(3, #authors)
+            assert.same({ "remote:dune", "remote:messiah" }, ids(authors[1].books))
+            assert.same({ "remote:omens" }, ids(authors[2].books))
+            assert.same({ "remote:omens" }, ids(authors[3].books))
+            assert.is_nil(authors[1].books[1].path)
+            local series = BookIndex.series(Books.all())
+            assert.equals(1, #series)
+            assert.equals("Dune", series[1].name)
+            assert.same({ "remote:dune", "remote:messiah" }, ids(series[1].books))
+        end)
+    end)
 end)
