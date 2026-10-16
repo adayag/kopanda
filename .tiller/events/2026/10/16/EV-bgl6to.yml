@@ -1,0 +1,13 @@
+id: EV-bgl6to
+type: claim.task
+at: 2026-10-16T19:42:00.441311Z
+contributor: allen
+command: claim task T-janm6k
+targets:
+    - T-janm6k
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/device-push/tasks/bundle-server/task.yml
