@@ -1,0 +1,13 @@
+id: EV-2btox4
+type: check.task
+at: 2026-10-16T22:32:25.529063Z
+contributor: allen
+command: check task T-ld7mvc
+targets:
+    - T-ld7mvc
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-api/task.yml
