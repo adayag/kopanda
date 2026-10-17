@@ -1,0 +1,11 @@
+id: EV-p4hgvk
+type: submit.feature
+at: 2026-10-17T01:29:58.1863Z
+contributor: allen
+command: submit feature library/book-model
+targets:
+    - F-alfeze
+after:
+    pr: 24
+files:
+    - path: .tiller/epics/library/features/book-model/feature.yml
