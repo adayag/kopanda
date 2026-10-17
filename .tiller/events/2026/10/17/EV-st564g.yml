@@ -1,0 +1,14 @@
+id: EV-st564g
+type: submit.task
+at: 2026-10-17T03:08:14.447002Z
+contributor: allen
+command: submit task T-anr3s4
+targets:
+    - T-anr3s4
+before:
+    status: check
+after:
+    pr: 26
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/order/task.yml

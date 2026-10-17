@@ -111,4 +111,31 @@ function BookIndex.series(records)
     return entries_of(groups, by_series_index)
 end
 
+-- The particles kept with the last word of a name (library direction doc, "Authors").
+local PARTICLES = {
+    de = true, du = true, da = true, di = true, del = true, della = true,
+    der = true, den = true, van = true, von = true, le = true, la = true,
+}
+
+-- The surname key of an author's name, lowercased: its last word, joined with the words before
+-- it while each is a particle, so "Ursula K. Le Guin" keys as "le guin" and "Plato" as "plato".
+-- Words are split on runs of spaces. nil for a name with no word or one that is not a string.
+function BookIndex.surname(name)
+    if type(name) ~= "string" then
+        return nil
+    end
+    local words = {}
+    for word in name:lower():gmatch("[^ ]+") do
+        words[#words + 1] = word
+    end
+    local first = #words
+    if first == 0 then
+        return nil
+    end
+    while first > 1 and PARTICLES[words[first - 1]] do
+        first = first - 1
+    end
+    return table.concat(words, " ", first)
+end
+
 return BookIndex

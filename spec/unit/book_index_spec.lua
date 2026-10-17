@@ -284,4 +284,37 @@ describe("BookIndex", function()
             assert.same({ { "Dune", { "d", "m", "c", "n", "z" } } }, shape(entries))
         end)
     end)
+
+    -- cover-grid C1, D10: the last word, lowercased, with the particles before it kept.
+    describe("surname", function()
+        it("keys a two-word name by its last word, lowercased", function()
+            assert.equals("shelley", BookIndex.surname("Mary Shelley"))
+        end)
+
+        it("keeps a particle before the last word", function()
+            assert.equals("le guin", BookIndex.surname("Ursula K. Le Guin"))
+            assert.equals("de gaulle", BookIndex.surname("Charles de Gaulle"))
+            assert.equals("van beethoven", BookIndex.surname("Ludwig van Beethoven"))
+        end)
+
+        it("keeps every particle in a run before the last word, and no word before them", function()
+            assert.equals("van der waals", BookIndex.surname("Johannes Diderik van der Waals"))
+            assert.equals("de la cruz", BookIndex.surname("Juana Inés de la Cruz"))
+        end)
+
+        it("keys a one-word name as itself", function()
+            assert.equals("plato", BookIndex.surname("Plato"))
+        end)
+
+        it("splits on any run of spaces", function()
+            assert.equals("le guin", BookIndex.surname("  Ursula  K.   Le  Guin "))
+        end)
+
+        it("gives nil for an empty name or one that is not a string", function()
+            assert.is_nil(BookIndex.surname(""))
+            assert.is_nil(BookIndex.surname("   "))
+            assert.is_nil(BookIndex.surname(nil))
+            assert.is_nil(BookIndex.surname(42))
+        end)
+    end)
 end)

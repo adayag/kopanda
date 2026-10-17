@@ -1,0 +1,13 @@
+id: EV-aijpub
+type: check.task
+at: 2026-10-17T03:07:45.190856Z
+contributor: allen
+command: check task T-anr3s4
+targets:
+    - T-anr3s4
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/order/task.yml
