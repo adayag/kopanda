@@ -12,6 +12,7 @@ depends_on:
     - F-k4yn5f
 review_grain: feature
 branch: tiller/reviews/features/studio/preview
+pr: 23
 accepted_against:
     spec:
         kind: git_blob
