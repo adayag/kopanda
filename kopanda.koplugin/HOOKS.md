@@ -128,7 +128,10 @@ Upgrading KOReader walks this list.
 - `frontend/ui/uimanager.lua:53`; `frontend/ui/hook_container.lua:88-98` (`execute`, which
   runs nothing with no listener).
 - After the home's first paint the plugin executes `KoPandaSettled` with `{ screen, paint_ms,
-  settle_ms, prebuilt }`, once per home; the capture harness entry below is the listener.
+  cpu_ms, settle_ms, prebuilt }`, once per home; the capture harness entry below is the listener.
+  The sheet, editor, swatch and file-browser signals carry `paint_ms` and `cpu_ms` too.
+  `cpu_ms` is `os.clock()` process CPU time over the same span as `paint_ms`, stamped through
+  `paint_clock.lua`.
   `paint_ms` runs from the start of the show path to the end of the home's first `paintTo`;
   `settle_ms` runs on to the signal, which the first `paintTo`'s `nextTick`
   (`uimanager.lua:431-433`) queues behind tasks already due on the tick after the paint, such
@@ -162,7 +165,7 @@ Upgrading KOReader walks this list.
 - Shown and closed like the home: `covers_fullscreen`, `UIManager:show`/`close` with `"full"`,
   a full-screen tap zone through `registerTouchZones`
   (`frontend/ui/widget/container/inputcontainer.lua:144`), `onGesture` (`:266`) and `paintTo`
-  (`:73`) each in a `pcall`, and the settled signal with `screen = "swatch"` and `paint_ms`.
+  (`:73`) each in a `pcall`, and the settled signal with `screen = "swatch"`, `paint_ms` and `cpu_ms`.
   The signal runs from a `nextTick` (`frontend/ui/uimanager.lua:431-433`) that the swatch's
   first `paintTo` schedules, past that `_repaint`, and is not sent when that paint failed;
   nothing is scheduled before the paint, as for the home (the `nextTick` and `tickAfterNext`
@@ -1535,7 +1538,7 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
 - `frontend/ui/uimanager.lua:53`; `frontend/ui/hook_container.lua:34-41` (`register`),
   `:88-98` (`execute`).
 - A `HookContainer`. The capture patch registers a `KoPandaSettled` listener and the plugin
-  under test executes it with `{ screen, paint_ms, settle_ms, prebuilt }`. The patch shoots on the first
+  under test executes it with `{ screen, paint_ms, cpu_ms, settle_ms, prebuilt }`. The patch shoots on the first
   signal whose `screen` is `KOPANDA_SHOT_SCREEN` (default `home`) and copies the signal's
   string, number and boolean arguments into the sidecar. Listeners run in registration order
   (`hook_container.lua:94-96`), and a listener may execute the hook again from inside its own
