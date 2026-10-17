@@ -734,6 +734,209 @@ describe("looks", function()
             end
         end)
 
+        -- The series and authors screens' block and parts (series-and-authors "Tokens", SeriesC,
+        -- SeriesBooksC, AuthorsC and AuthorBooksA under .tiller/design/2026-10-16-kopanda-library-screens/;
+        -- the undrawn ones by analogy, D26). Diner's row.padding.y is the owner's fit, 11 not the board's 12,
+        -- for five series rows a page at the Colorsoft (2026-10-17).
+        local SHELF_BOARD = {
+            diner = {
+                series_fill_color = "pink", authors_fill_color = "teal",
+                detail = { padding = { top = 22, side = 40, bottom = 18 }, back_gap = 10 },
+                back = { fill_color = "paper", outline_width = 2, padding = { left = 6, right = 10, y = 4 },
+                    icon_size = 14, gap = 6 },
+                list = { padding_top = 22, side = 40, row_gap = 14 },
+                row = { padding = { x = 16, y = 11 }, gap = 18, line_gap = 3, outline_width = 3,
+                    shadow = { x = 4, y = 4 }, rule_width = 0, rule_color = "ink" },
+                stack = { cover_w = 38, cover_h = 56, offset_x = 10, offset_y = 2, outline_width = 2,
+                    outline_color = "outline" },
+                chip = { padding = { x = 7, y = 1 }, outline_width = 2, under_way_fill_color = "mustard",
+                    finished_fill_color = "teal", not_started_fill_color = "paper", up_next_fill_color = "paper",
+                    not_downloaded_fill_color = "pink" },
+                books = { padding_top = 24, row_gap = 18 },
+                book = { index_w = 40, cover_w = 64, cover_h = 96, cover_outline_width = 2, line_gap = 6,
+                    bar_height = 10, bar_outline_width = 2, badge_size = 28, badge_outline_width = 2,
+                    badge_icon_size = 14, badge_inset = -10 },
+                next = { fill_color = "mustard", shadow = { x = 6, y = 6 }, line_gap = 4, text_color = "on_accent" },
+                groups = { padding_top = 22, gap = 12 },
+                group = { outline_width = 3, shadow = { x = 4, y = 4 }, rule_width = 0, rule_color = "ink",
+                    letter_w = 48, letter_fill_color = "mustard", letter_rule_width = 3 },
+                author = { padding = { x = 16, y = 11 }, rule_width = 2, rule_color = "outline" },
+                -- Main.dc.html:32's 200 less the one-author header's 26 px over the library's (lead).
+                author_grid = { cover_h = 174 },
+                up_next = { fill_color = "paper", outline_width = 2 },
+            },
+            editorial = {
+                series_fill_color = false, authors_fill_color = false,
+                detail = { padding = { top = 26, side = 40, bottom = 16 }, back_gap = 14 },
+                back = { fill_color = false, outline_width = 0, padding = { left = 0, right = 0, y = 0 },
+                    icon_size = 14, gap = 6 },
+                list = { padding_top = 22, side = 40, row_gap = 0 },
+                row = { padding = { x = 0, y = 14 }, gap = 18, line_gap = 3, outline_width = 0,
+                    shadow = { x = 0, y = 0 }, rule_width = 1, rule_color = "hairline" },
+                stack = { cover_w = 38, cover_h = 56, offset_x = 10, offset_y = 2, outline_width = 1,
+                    outline_color = "paper" },
+                chip = { padding = { x = 0, y = 0 }, outline_width = 0, under_way_fill_color = false,
+                    finished_fill_color = false, not_started_fill_color = false, up_next_fill_color = false,
+                    not_downloaded_fill_color = false },
+                books = { padding_top = 24, row_gap = 0 },
+                book = { index_w = 40, cover_w = 64, cover_h = 96, cover_outline_width = 0, line_gap = 6,
+                    bar_height = 4, bar_outline_width = 0, badge_size = 24, badge_outline_width = 1,
+                    badge_icon_size = 14, badge_inset = 6 },
+                next = { fill_color = false, shadow = { x = 0, y = 0 }, line_gap = 4, text_color = "ink" },
+                groups = { padding_top = 22, gap = 0 },
+                group = { outline_width = 0, shadow = { x = 0, y = 0 }, rule_width = 1, rule_color = "hairline",
+                    letter_w = 48, letter_fill_color = false, letter_rule_width = 0 },
+                author = { padding = { x = 16, y = 11 }, rule_width = 1, rule_color = "hairline_light" },
+                author_grid = { cover_h = 206 },
+                up_next = { fill_color = "paper", outline_width = 0 },
+            },
+        }
+
+        local SHELF_PARTS = {
+            diner = {
+                shelf_detail_title = { "display", 36, false, -0.01, -0.05, "on_accent" },
+                shelf_back = { "display", 11, true, 0.08, 0, "ink" },
+                series_name = { "display", 19, false, 0, 0.1, "ink" },
+                series_sub = { "text", 13, false, 0, 0, "ink" },
+                shelf_chip = { "display", 10, true, 0.08, 0, "on_accent" },
+                shelf_chip_plain = { "display", 10, true, 0.08, 0, "ink" },
+                book_index = { "display", 40, false, 0, 0, "ink" },
+                book_row_title = { "display", 20, false, 0, 0.1, "ink" },
+                book_next_note = { "accent", 22, false, 0, 0, "on_accent" },
+                book_row_note = { "text", 13, false, 0, 0, "ink" },
+                author_letter = { "display", 24, false, 0, 0, "on_accent" },
+                author_name = { "strong", 17, false, 0, 0, "ink" },
+                author_count = { "display", 11, true, 0.08, 0, "ink" },
+                shelf_empty = { "display", 12, true, 0.08, 0, "ink" },
+                shelf_label = { "display", 11, true, 0.08, 0, "on_accent" },
+            },
+            editorial = {
+                shelf_detail_title = { "display", 34, false, 0, 0, "ink" },
+                shelf_back = { "strong", 11, true, 0.14, 0, "text" },
+                series_name = { "display", 20, false, 0, 0.1, "ink" },
+                series_sub = { "text", 12, false, 0, 0, "muted" },
+                shelf_chip = { "strong", 10, true, 0.14, 0, "muted" },
+                shelf_chip_plain = { "strong", 10, true, 0.14, 0, "ink" },
+                book_index = { "display", 30, false, 0, 0, "ink" },
+                book_row_title = { "display", 18, false, 0, 0.1, "ink" },
+                book_next_note = { "strong", 10, true, 0.14, 0, "ink" },
+                book_row_note = { "text", 12, false, 0, 0, "muted" },
+                author_letter = { "display", 24, false, 0, 0, "ink" },
+                author_name = { "strong", 15, false, 0, 0, "ink" },
+                author_count = { "strong", 11, true, 0.12, 0, "muted" },
+                shelf_empty = { "text", 11, true, 0.14, 0, "muted" },
+                shelf_label = { "strong", 11, true, 0.12, 0, "text" },
+            },
+        }
+
+        -- The look file's lines inside its shelf block.
+        local function shelf_lines(id)
+            local lines, inside = {}, false
+            for line in io.lines(harness.plugin_dir .. "/looks/" .. id .. ".lua") do
+                if line:match("^    shelf = {") then
+                    inside = true
+                elseif inside and line:match("^    },") then
+                    break
+                end
+                if inside then
+                    lines[#lines + 1] = line
+                end
+            end
+            return lines
+        end
+
+        it("give both looks every shelf path and part", function()
+            for _, id in ipairs(ids) do
+                local wanted = {}
+                for _, path in ipairs(paths(SHELF_BOARD[id])) do
+                    wanted[#wanted + 1] = "shelf." .. path
+                end
+                local got = {}
+                for _, path in ipairs(paths(looks[id])) do
+                    if path:match("^shelf%.") then
+                        got[#got + 1] = path
+                    end
+                end
+                assert.same(wanted, got, id)
+                for part in pairs(SHELF_PARTS[id]) do
+                    assert.is_table(looks[id].type[part], id .. " has no type." .. part)
+                end
+            end
+        end)
+
+        it("give the shelf block and parts their values, the one-author cover cut commented D14", function()
+            for _, id in ipairs(ids) do
+                local lines = shelf_lines(id)
+                assert.truthy(#lines > 0, id .. " has no shelf block")
+                for _, path in ipairs(paths(SHELF_BOARD[id])) do
+                    local board, value = at(SHELF_BOARD[id], path), at(looks[id].shelf, path)
+                    if value ~= board then
+                        local where = id .. " shelf." .. path .. " = " .. tostring(value)
+                        assert.equals("author_grid.cover_h", path, where .. " is not " .. tostring(board))
+                        assert.is_true(value < board, where .. " is not below " .. board)
+                        local commented = false
+                        for _, line in ipairs(lines) do
+                            if line:find("cover_h = " .. value .. "%f[^%d]")
+                                    and line:find("D14: board " .. board, 1, true) then
+                                commented = true
+                            end
+                        end
+                        assert.is_true(commented, where .. " has no \"D14: board " .. board .. "\" on its line")
+                    end
+                end
+                for part, values in pairs(SHELF_PARTS[id]) do
+                    assert.same(values, part_values(looks[id].type[part]), id .. " type." .. part)
+                end
+            end
+        end)
+
+        -- Every shelf length is commented with its board line or the lead's analogy (D26).
+        it("comment every shelf value with its board line or the lead's analogy", function()
+            for _, id in ipairs(ids) do
+                for _, line in ipairs(shelf_lines(id)) do
+                    local code, comment = line:match("^(.-)%s*%-%-%s*(.*)$")
+                    code = code or line
+                    if code:match("[%w_]+ = [^{]") then
+                        assert.truthy(comment and (comment:find("%.dc%.html:%d") or comment:find("lead")),
+                            id .. ": " .. line)
+                    end
+                end
+            end
+        end)
+
+        -- The colours the looks lack by day: Diner has no hairline, Editorial no outline by day and no
+        -- accents (looks/diner.lua:25-26, looks/editorial.lua:26-30).
+        it("name in the shelf block only colours the look draws by day", function()
+            local lacking = { diner = { "hairline", "hairline_light" },
+                editorial = { "outline", "mustard", "pink", "teal" } }
+            for _, id in ipairs(ids) do
+                local function walk(node, prefix)
+                    for k, v in pairs(node) do
+                        if type(v) == "table" then
+                            walk(v, prefix .. k .. ".")
+                        elseif tostring(k):match("color$") then
+                            for _, role in ipairs(lacking[id]) do
+                                assert.is_not.equals(role, v, id .. " shelf." .. prefix .. k)
+                            end
+                        end
+                    end
+                end
+                walk(looks[id].shelf or {}, "")
+                for part in pairs(SHELF_PARTS[id]) do
+                    local entry = looks[id].type[part] or {}
+                    for _, role in ipairs(lacking[id]) do
+                        assert.is_not.equals(role, entry.color, id .. " type." .. part)
+                    end
+                end
+            end
+        end)
+
+        -- Diner's badge overhangs the cover by a negative inset; Editorial's sits inside it.
+        it("give the one-series badge's inset as a number, Diner's negative", function()
+            assert.is_true(looks.diner.shelf.book.badge_inset < 0)
+            assert.is_true(looks.editorial.shelf.book.badge_inset > 0)
+        end)
+
         -- The sort and status sheets' additions to the sheet block and parts (cover-grid "The pickers"):
         -- Diner's from SortC.dc.html; Editorial's sort sheet is not drawn, so its are its plain sheet's
         -- style with no selected fill.

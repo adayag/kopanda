@@ -448,6 +448,58 @@ return {
         },
         -- "1 / 24" between the pager's arrows (GridA.dc.html:85, :87).
         pager_label = { face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted" },
+        -- The series and authors screens' parts (AuthorBooksA.dc.html and GridA.dc.html under
+        -- .tiller/design/2026-10-16-kopanda-library-screens/); Editorial's series list, one series and
+        -- authors list are undrawn, so theirs are the lead's by analogy (D26). Weights 500 and 600 are
+        -- the strong face.
+        -- One author's name under the count, CSS line height 1 (AuthorBooksA.dc.html:26).
+        shelf_detail_title = {
+            face = "display", size = 34, uppercase = false, tracking = 0, line_height = 0, color = "ink",
+        },
+        -- The back control's label (AuthorBooksA.dc.html:20, weight 600).
+        shelf_back = { face = "strong", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "text" },
+        -- lead: by analogy with SeriesC.dc.html:35, in the display face as a tile's placeholder title.
+        series_name = {
+            face = "display", size = 20, uppercase = false, tracking = 0, line_height = 0.1, color = "ink",
+        },
+        -- lead: by analogy with SeriesC.dc.html:36, in the muted text of GridA.dc.html:25.
+        series_sub = { face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "muted" },
+        -- A chip's label, plain small caps (AuthorBooksA.dc.html:79).
+        shelf_chip = {
+            face = "strong", size = 10, uppercase = true, tracking = 0.14, line_height = 0, color = "muted",
+        },
+        -- A marked chip's label in ink (AuthorBooksA.dc.html:52, weight 600).
+        shelf_chip_plain = {
+            face = "strong", size = 10, uppercase = true, tracking = 0.14, line_height = 0, color = "ink",
+        },
+        -- lead: by analogy with SeriesBooksC.dc.html:34, in the display face.
+        book_index = { face = "display", size = 30, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        -- lead: by analogy with SeriesBooksC.dc.html:37, in the display face.
+        book_row_title = {
+            face = "display", size = 18, uppercase = false, tracking = 0, line_height = 0.1, color = "ink",
+        },
+        -- "Read this one next" in small caps: Editorial has no accent face (AuthorBooksA.dc.html:52).
+        book_next_note = {
+            face = "strong", size = 10, uppercase = true, tracking = 0.14, line_height = 0, color = "ink",
+        },
+        -- lead: by analogy with SeriesBooksC.dc.html:60, in series_sub's style.
+        book_row_note = { face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "muted" },
+        -- lead: by analogy with AuthorsC.dc.html:29, in the display face.
+        author_letter = {
+            face = "display", size = 24, uppercase = false, tracking = 0, line_height = 0, color = "ink",
+        },
+        -- lead: by analogy with AuthorsC.dc.html:31.
+        author_name = { face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        -- lead: by analogy with AuthorsC.dc.html:33, in the pickers' small caps (GridA.dc.html:25).
+        author_count = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "muted",
+        },
+        -- The empty note, as the library's (pager_label, GridA.dc.html:85).
+        shelf_empty = { face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted" },
+        -- The header's static label, "Under way first", as the pickers (GridA.dc.html:25).
+        shelf_label = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "text",
+        },
     },
 
     -- The launcher: a grid of text rows, each under a hairline in tile.rule_color.
@@ -639,6 +691,105 @@ return {
             prev_icon_color = "ink", -- a live arrow, as the next one (GridA.dc.html:88)
             next_icon_color = "ink", -- GridA.dc.html:88
             label_in_words = false, -- "1 / 24" (GridA.dc.html:87)
+        },
+    },
+    -- The series and authors screens: the library's header on paper, rows and groups ruled in
+    -- hairlines rather than boxed, unoutlined covers, plain small-caps chips, and the up-next book
+    -- marked by type (AuthorBooksA.dc.html and GridA.dc.html under
+    -- .tiller/design/2026-10-16-kopanda-library-screens/). Editorial's series list, one series and
+    -- authors list are undrawn: their tokens are the lead's by analogy (D26).
+    shelf = {
+        series_fill_color = false, -- lead: by analogy with GridA.dc.html:19, no band
+        authors_fill_color = false, -- lead: by analogy with GridA.dc.html:19, no band
+        detail = {
+            padding = { top = 26, side = 40, bottom = 16 }, -- AuthorBooksA.dc.html:19
+            back_gap = 14, -- AuthorBooksA.dc.html:19
+        },
+        back = {
+            fill_color = false, -- plain text (AuthorBooksA.dc.html:20)
+            outline_width = 0, -- AuthorBooksA.dc.html:20
+            padding = { left = 0, right = 0, y = 0 }, -- AuthorBooksA.dc.html:20
+            icon_size = 14, -- AuthorBooksA.dc.html:21
+            gap = 6, -- AuthorBooksA.dc.html:20
+        },
+        list = {
+            padding_top = 22, -- lead: by analogy with SeriesC.dc.html:27
+            side = 40, -- lead: by analogy with SeriesC.dc.html:27
+            row_gap = 0, -- lead: by analogy with SeriesC.dc.html:27, rows ruled not boxed
+        },
+        row = {
+            padding = { x = 0, y = 14 }, -- lead: by analogy with GridA.dc.html's hairline rows
+            gap = 18, -- lead: by analogy with SeriesC.dc.html:28
+            line_gap = 3, -- lead: by analogy with SeriesC.dc.html:34
+            outline_width = 0, -- lead: by analogy with GridA.dc.html's hairline rows
+            shadow = { x = 0, y = 0 }, -- lead: by analogy with GridA.dc.html's hairline rows
+            rule_width = 1, -- lead: by analogy with GridA.dc.html's hairline rows
+            rule_color = "hairline", -- lead: by analogy with GridA.dc.html's hairline rows
+        },
+        stack = {
+            cover_w = 38, -- lead: by analogy with SeriesC.dc.html:30-32
+            cover_h = 56, -- lead: by analogy with SeriesC.dc.html:30-32
+            offset_x = 10, -- lead: by analogy with SeriesC.dc.html:30-32
+            offset_y = 2, -- lead: by analogy with SeriesC.dc.html:30-32
+            outline_width = 1, -- lead: an edge to part the overlapped covers
+            outline_color = "paper", -- lead: an edge to part the overlapped covers
+        },
+        chip = {
+            padding = { x = 0, y = 0 }, -- lead: small caps, as GridA.dc.html:73
+            outline_width = 0, -- lead: small caps, as GridA.dc.html:73
+            under_way_fill_color = false, -- lead: small caps, as GridA.dc.html:73
+            finished_fill_color = false, -- lead: small caps, as GridA.dc.html:73
+            not_started_fill_color = false, -- lead: small caps, as GridA.dc.html:73
+            up_next_fill_color = false, -- lead: small caps, as GridA.dc.html:73
+            not_downloaded_fill_color = false, -- lead: small caps, as GridA.dc.html:73
+        },
+        books = {
+            padding_top = 24, -- lead: by analogy with SeriesBooksC.dc.html:32
+            row_gap = 0, -- lead: by analogy with SeriesBooksC.dc.html:32, ruled rows
+        },
+        book = {
+            index_w = 40, -- lead: by analogy with SeriesBooksC.dc.html:34
+            cover_w = 64, -- lead: by analogy with SeriesBooksC.dc.html:35
+            cover_h = 96, -- lead: by analogy with SeriesBooksC.dc.html:35
+            cover_outline_width = 0, -- lead: Editorial's covers unoutlined, GridA.dc.html:43
+            line_gap = 6, -- lead: by analogy with SeriesBooksC.dc.html:36
+            bar_height = 4, -- GridA.dc.html:46's strip
+            bar_outline_width = 0, -- GridA.dc.html:46's strip
+            badge_size = 24, -- lead: GridA.dc.html:66 scaled to the cover
+            badge_outline_width = 1, -- lead: GridA.dc.html:66 scaled to the cover
+            badge_icon_size = 14, -- lead: GridA.dc.html:66 scaled to the cover
+            badge_inset = 6, -- lead: GridA.dc.html:66 scaled to the cover, inside the corner
+        },
+        next = {
+            fill_color = false, -- lead: Editorial marks by type, AuthorBooksA.dc.html:52
+            shadow = { x = 0, y = 0 }, -- lead: Editorial marks by type, AuthorBooksA.dc.html:52
+            line_gap = 4, -- lead: by analogy with SeriesBooksC.dc.html:45
+            text_color = "ink", -- lead: Editorial marks by type, AuthorBooksA.dc.html:52
+        },
+        groups = {
+            padding_top = 22, -- lead: by analogy with AuthorsC.dc.html:27
+            gap = 0, -- lead: by analogy with AuthorsC.dc.html:27, ruled groups
+        },
+        group = {
+            outline_width = 0, -- lead: ruled groups, by analogy with AuthorsC.dc.html:28
+            shadow = { x = 0, y = 0 }, -- lead: ruled groups, by analogy with AuthorsC.dc.html:28
+            rule_width = 1, -- lead: ruled groups, by analogy with AuthorsC.dc.html:28
+            rule_color = "hairline", -- lead: ruled groups, by analogy with AuthorsC.dc.html:28
+            letter_w = 48, -- lead: by analogy with AuthorsC.dc.html:29
+            letter_fill_color = false, -- lead: by analogy with AuthorsC.dc.html:29, no fill
+            letter_rule_width = 0, -- lead: by analogy with AuthorsC.dc.html:29, no rule
+        },
+        author = {
+            padding = { x = 16, y = 11 }, -- lead: by analogy with AuthorsC.dc.html:31
+            rule_width = 1, -- lead: Editorial's row rules, by analogy with AuthorsC.dc.html:31
+            rule_color = "hairline_light", -- lead: Editorial's row rules, by analogy with AuthorsC.dc.html:31
+        },
+        author_grid = {
+            cover_h = 198, -- D14: board 206 (AuthorBooksA.dc.html:32), so two rows fit
+        },
+        up_next = {
+            fill_color = "paper", -- lead: as the library's not-downloaded chip (library.not_downloaded)
+            outline_width = 0, -- lead: as the library's not-downloaded chip (library.not_downloaded)
         },
     },
 }

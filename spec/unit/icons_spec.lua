@@ -90,6 +90,22 @@ describe("icons", function()
         end
     end)
 
+    -- The series and authors screens draw back as their back control and the pager's arrow, forward
+    -- as the pager's other arrow and download on a path-less book (series-and-authors "Tokens").
+    it("uses back, forward and download in the series and authors screens", function()
+        local places = {}
+        for _, entry in ipairs(Icons.entries) do
+            places[entry.id] = {}
+            for _, place in ipairs(entry.used_in) do
+                places[entry.id][place] = true
+            end
+        end
+        for _, id in ipairs({ "back", "forward", "download" }) do
+            assert.is_true(places[id] and places[id].series, id .. " in series")
+            assert.is_true(places[id] and places[id].authors, id .. " in authors")
+        end
+    end)
+
     -- forward is back mirrored, so the pager's two arrows match (back.svg's M15 5l-7 7 7 7); download
     -- is the boards' arrow to a line (Main.dc.html:67, GridA.dc.html:67).
     it("draws forward as back's mirror and download as the boards' arrow to a line", function()
