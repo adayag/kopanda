@@ -185,7 +185,8 @@
                     "library",
                     "series",
                     "authors",
-                    "settings"
+                    "settings",
+                    "quick_settings"
                 ],
                 "koreader": [
                     "history",

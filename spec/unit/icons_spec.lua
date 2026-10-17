@@ -43,8 +43,8 @@ describe("icons", function()
         assert.same({
             "action", "authors", "back", "bookmark", "check", "chevron_down", "chevron_up", "close",
             "download", "folder", "forward", "history", "home", "info", "layout", "library", "list", "moon",
-            "open_book", "plugin_missing", "plus", "power", "rotation_lock", "screenshot", "series", "settings",
-            "sun", "sync", "terminal", "wifi", "wifi_off",
+            "open_book", "plugin_missing", "plus", "power", "quick_settings", "rotation_lock", "screenshot",
+            "series", "settings", "sun", "sync", "terminal", "wifi", "wifi_off",
         }, ids)
     end)
 
@@ -59,6 +59,20 @@ describe("icons", function()
         end
         assert.is_true(places.plus["title bar"])
         assert.is_true(places.check["title bar"])
+    end)
+
+    -- The launcher draws quick_settings as the quick-settings sheet's entry, and the sheet's Wi-Fi
+    -- cell draws wifi_off when the radio is off (quick-settings feature, D9).
+    it("uses quick_settings in the launcher and wifi_off in quick settings", function()
+        local places = {}
+        for _, entry in ipairs(Icons.entries) do
+            places[entry.id] = {}
+            for _, place in ipairs(entry.used_in) do
+                places[entry.id][place] = true
+            end
+        end
+        assert.is_true(places.quick_settings and places.quick_settings.launcher)
+        assert.is_true(places.wifi_off["quick settings"])
     end)
 
     -- The library draws forward and back as the pager's arrows and back as the folder's back mark,

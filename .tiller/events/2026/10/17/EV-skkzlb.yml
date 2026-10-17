@@ -1,0 +1,11 @@
+id: EV-skkzlb
+type: submit.feature
+at: 2026-10-17T07:14:22.304612Z
+contributor: allen
+command: submit feature bars/quick-settings
+targets:
+    - F-rce9ko
+after:
+    pr: 34
+files:
+    - path: .tiller/epics/bars/features/quick-settings/feature.yml

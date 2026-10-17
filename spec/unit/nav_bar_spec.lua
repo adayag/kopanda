@@ -466,16 +466,66 @@ describe("the nav bar", function()
     end)
 
     describe("a hold and other gestures", function()
-        it("a hold on any column is consumed and runs nothing", function()
+        local time = require("ui/time")
+
+        -- bars/quick-settings' C8: the Settings hold opens the sheet, its start taken at the hold.
+        it("a hold in the Settings column opens the quick-settings sheet once and is consumed", function()
+            local QuickSettings = require("quick_settings")
             for _, id in ipairs(Looks.ids()) do
-                local bar = bar_for(id, "home")
-                local calls = spy(NavBar, "run")
-                for i = 1, 5 do
-                    assert.is_true(bar:handle(harness.gesture("hold", centre(bar, i))), id .. " " .. i)
+                for _, where in ipairs({ "home", "file_browser" }) do
+                    local bar = bar_for(id, where)
+                    local runs = spy(NavBar, "run")
+                    local opens = spy(QuickSettings, "open")
+                    local before = time.monotonic()
+                    assert.is_true(bar:handle(harness.gesture("hold", centre(bar, 5))), id .. " " .. where)
+                    local after = time.monotonic()
+                    assert.equals(1, #opens, id .. " " .. where)
+                    local started = opens[1][1].started
+                    assert.is_number(started.wall, id .. " " .. where)
+                    assert.is_number(started.cpu, id .. " " .. where)
+                    assert.is_true(started.wall >= before and started.wall <= after, id .. " " .. where)
+                    assert.same({}, runs, id .. " " .. where)
+                    bar:free()
                 end
-                assert.same({}, calls)
-                bar:free()
             end
+        end)
+
+        -- bars/quick-settings' C9: every other hold on the bar is consumed and runs nothing.
+        it("a hold on Home, Library, Authors or History, or in Editorial's side padding, runs nothing", function()
+            local QuickSettings = require("quick_settings")
+            for _, id in ipairs(Looks.ids()) do
+                for _, where in ipairs({ "home", "file_browser" }) do
+                    local bar = bar_for(id, where)
+                    local runs = spy(NavBar, "run")
+                    local opens = spy(QuickSettings, "open")
+                    for i = 1, 4 do
+                        assert.is_true(bar:handle(harness.gesture("hold", centre(bar, i))), id .. " " .. i)
+                    end
+                    assert.same({}, runs, id .. " " .. where)
+                    assert.same({}, opens, id .. " " .. where)
+                    bar:free()
+                end
+            end
+            local bar = bar_for("editorial", "home")
+            local opens = spy(QuickSettings, "open")
+            assert.is_true(bar:handle(harness.gesture("hold", 2, bar.dimen.y + 5)))
+            assert.is_true(bar:handle(harness.gesture("hold", Screen:getWidth() - 2, bar.dimen.y + 5)))
+            assert.same({}, opens)
+            bar:free()
+        end)
+
+        it("a Settings hold whose open raises is logged with the tab's name and still consumed", function()
+            spy(require("quick_settings"), "open", "boom")
+            local logged = spy(logger, "err")
+            local bar = bar_for("diner", "file_browser")
+            assert.is_true(bar:handle(harness.gesture("hold", centre(bar, 5))))
+            local found = false
+            for _, call in ipairs(logged) do
+                local text = table.concat({ tostring(call[1]), tostring(call[2]), tostring(call[3]) }, " ")
+                found = found or (text:find("Settings", 1, true) ~= nil and text:find("boom", 1, true) ~= nil)
+            end
+            assert.is_true(found, "no log names the Settings tab and its error")
+            bar:free()
         end)
 
         it("a swipe on the bar or a hold above it is not consumed", function()

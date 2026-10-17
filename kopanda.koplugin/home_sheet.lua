@@ -5,10 +5,10 @@
 local EditLayout = require("edit_layout")
 local Home = require("home")
 local LauncherEntries = require("launcher_entries")
+local PaintClock = require("paint_clock")
 local SettingsMenu = require("settings_menu")
 local Sheet = require("sheet")
 local Weather = require("weather")
-local time = require("ui/time")
 
 local HomeSheet = {}
 
@@ -55,7 +55,7 @@ local function spec(ctx)
                 icon = "layout",
                 label = "Edit layout",
                 run = function()
-                    EditLayout.open{ started = time.monotonic() }
+                    EditLayout.open{ started = PaintClock.now() }
                 end,
             },
             {
@@ -88,8 +88,8 @@ local function spec(ctx)
     }
 end
 
--- Shows the home sheet over the home. opts.started, the time.monotonic() the hold took, is
--- passed to Sheet.show, which counts paint_ms from it.
+-- Shows the home sheet over the home. opts.started, the PaintClock stamp the hold took, is
+-- passed to Sheet.show, which counts paint_ms and cpu_ms from it.
 function HomeSheet.open(ctx, opts)
     Sheet.show(spec(ctx), ctx, opts)
 end

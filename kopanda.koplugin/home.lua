@@ -8,11 +8,11 @@ local HomeGestures = require("home_gestures")
 local HomeRows = require("home_rows")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local Looks = require("looks")
+local PaintClock = require("paint_clock")
 local Sheet = require("sheet")
 local UIManager = require("ui/uimanager")
 local Weather = require("weather")
 local logger = require("logger")
-local time = require("ui/time")
 local Screen = require("device").screen
 
 local Home = InputContainer:extend{
@@ -155,8 +155,9 @@ end
 
 -- Signals the home's first paint on the dev loop's settled hook, once per home, then runs the
 -- finished callback. A home whose paint failed sends no signal: the screen shows the file
--- browser, not the home. paint_ms runs from opts.started to the first paint; settle_ms runs on
--- to this signal, which lands behind whatever other tasks came due after the paint.
+-- browser, not the home. paint_ms runs from opts.started to the first paint, and cpu_ms on the
+-- CPU clock; settle_ms runs on to this signal, which lands behind whatever other tasks came due
+-- after the paint.
 local function settle(home, opts)
     if home.settled then
         return
@@ -164,11 +165,13 @@ local function settle(home, opts)
     home.settled = true
     if not home.paint_failed then
         local ok, err = pcall(function()
-            local now = time.monotonic()
+            local now = PaintClock.now()
+            local paint_ms, cpu_ms = PaintClock.ms(PaintClock.since(opts.started, home.painted_at or now))
             UIManager.event_hook:execute("KoPandaSettled", {
                 screen = "home",
-                paint_ms = time.to_ms((home.painted_at or now) - opts.started),
-                settle_ms = time.to_ms(now - opts.started),
+                paint_ms = paint_ms,
+                cpu_ms = cpu_ms,
+                settle_ms = (PaintClock.ms(PaintClock.since(opts.started, now))),
                 prebuilt = opts.prebuilt == true,
             })
         end)
@@ -199,7 +202,7 @@ local function settle(home, opts)
     finish(opts, home.painted_at ~= nil and not home.paint_failed)
 end
 
--- opts: widget (a pre-built home to show; default: a fresh build), started (time.monotonic()
+-- opts: widget (a pre-built home to show; default: a fresh build), started (a PaintClock stamp
 -- at the start of the show path), prebuilt, finished (called once: with true after the home's
 -- first paint, or with false when the home closes before painting or its build, show or paint
 -- fails). On any error the home is taken off the stack and the file browser beneath is
@@ -299,7 +302,7 @@ end
 function Home:paintTo(bb, x, y)
     local ok, err = pcall(paint, self, bb, x, y)
     if ok and not self.painted_at then
-        self.painted_at = time.monotonic()
+        self.painted_at = PaintClock.now()
     end
     if not ok and not self.paint_failed then
         self.paint_failed = true

@@ -102,7 +102,7 @@ return {
             type = "launcher",
             max_entries = 6,
             targets = {
-                kopanda = { "library", "series", "authors", "settings" },
+                kopanda = { "library", "series", "authors", "settings", "quick_settings" },
                 koreader = { "history", "favorites", "collections", "wifi" },
             },
             default = {

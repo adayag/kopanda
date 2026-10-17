@@ -351,6 +351,71 @@ describe("KoPanda failing safe", function()
         end)
     end)
 
+    describe("the quick-settings sheet", function()
+        local QuickSettings, Sheet
+
+        before_each(function()
+            QuickSettings = require("quick_settings")
+            Sheet = require("sheet")
+        end)
+
+        it("closes the home onto the file browser when its open raises from a launcher tap", function()
+            -- The launcher in a row of its own, clear of KOReader's top menu zones
+            -- (launcher_widget_spec.lua, "taps through the real home").
+            assert.is_true(require("settings").set("layout.rows", {
+                { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                { { widget = "quote", share = 1 } },
+                { { widget = "launcher", share = 1 } },
+            }))
+            QuickSettings.open = function()
+                error("kopanda-test: quick settings open failed")
+            end
+            -- The launcher's run reaches QuickSettings.open as a quick_settings tile's does.
+            package.loaded["launcher_entries"].run = function()
+                require("quick_settings").open{}
+            end
+            harness.show_fm()
+            harness.tick(2)
+            local built
+            for _, slot in ipairs(Home.shown.slots) do
+                if slot.widget == "launcher" then
+                    built = slot.built
+                end
+            end
+            local rect = built.rects[1]
+            local x = built.painted_at.x + rect.x + math.floor(rect.w / 2)
+            local y = built.painted_at.y + rect.y + math.floor(rect.h / 2)
+            local ok = pcall(UIManager.sendEvent, UIManager, Event:new("Gesture", harness.gesture("tap", x, y)))
+            assert.is_true(ok)
+            for _, widget in ipairs(harness.stack()) do
+                assert.is_not.equals("kopanda_sheet", widget.name)
+            end
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: quick settings open failed"))
+        end)
+
+        it("closes itself over the bare file browser when its body raises at its first paint", function()
+            harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            local body = QuickSettings.body
+            QuickSettings.body = function(...)
+                local made = body(...)
+                made.widget.paintTo = function()
+                    error("kopanda-test: quick settings paint failed")
+                end
+                return made
+            end
+            QuickSettings.open{}
+            assert.equals(Sheet.shown, harness.top())
+            local ok = pcall(harness.tick, 3)
+            assert.is_true(ok)
+            assert.is_nil(Sheet.shown)
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: quick settings paint failed"))
+        end)
+    end)
+
     it("logs, shows no action list and adds nothing when the entry picker's action tree throws", function()
         local Dispatcher = require("dispatcher")
         local TouchMenu = require("ui/widget/touchmenu")

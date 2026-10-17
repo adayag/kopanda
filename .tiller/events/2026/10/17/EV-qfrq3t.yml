@@ -1,0 +1,14 @@
+id: EV-qfrq3t
+type: sync.task
+at: 2026-10-17T07:14:48.570219Z
+contributor: allen
+command: sync task T-s3rp5n
+targets:
+    - T-s3rp5n
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/sheet-body/task.yml

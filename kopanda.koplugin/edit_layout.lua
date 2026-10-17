@@ -430,7 +430,7 @@ local function spec(state)
     }
 end
 
--- Opens edit layout on the stored layout.rows. opts.started is the time.monotonic() the tap
+-- Opens edit layout on the stored layout.rows. opts.started is the PaintClock stamp the tap
 -- that opened it took, which the settled signal's paint_ms runs from; opts.selected, a row to
 -- start selected. A failure is logged and leaves no screen.
 function EditLayout.open(opts)

@@ -1,0 +1,19 @@
+id: TW-wghsy7
+key: tweaks/sidecar-once-per-build
+title: The featured book's sidecar is parsed twice per home build
+status: ready
+blocked: false
+started: false
+proposed_by: allen
+attached_to: T-gj4d8q
+source: .tiller/reviews/2026-10-17-efficiency-review.md#L63-L70
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:d46e6303d48d7c5a0fcfa5e23fcf7ae6da3878e8
+        path: .tiller/tweaks/sidecar-once-per-build/tweak.md
+        observed_at: 2026-10-17T07:16:23.409122Z
+    commit:
+        kind: git_commit
+        value: git:5aa14a6
+        observed_at: 2026-10-17T07:16:23.434548Z

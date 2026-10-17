@@ -1,9 +1,10 @@
 id: T-czph2w
 key: bars/quick-settings/settings-hold
 title: A hold on the nav bar's Settings tab opens the sheet, on the home and over the file browser
-status: ready
+status: done
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-n6wve0
@@ -17,3 +18,38 @@ accepted_against:
         kind: git_commit
         value: git:a955bb4
         observed_at: 2026-10-17T03:37:34.574687Z
+branch: tiller/bars/quick-settings/settings-hold
+review_ref:
+    branch: tiller/bars/quick-settings/settings-hold
+    head:
+        kind: git_commit
+        value: git:018a885
+        observed_at: 2026-10-17T06:50:21.579172Z
+done_basis: ancestry
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T06:46:37.215218Z
+        against:
+            kind: git_commit
+            value: git:be0451e
+            observed_at: 2026-10-17T06:46:37.215215Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-be0451e-out-a283f23683c13ee85186dd01d78995d0d7791c2c85e3318492c7f105d1131cba.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T06:46:37.215218Z
+        against:
+            kind: git_commit
+            value: git:be0451e
+            observed_at: 2026-10-17T06:46:37.215215Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-be0451e-out-2e7fa67e8cee66899074ee6b5f257f205db5814e3e5658597052836ec74b2d33.txt

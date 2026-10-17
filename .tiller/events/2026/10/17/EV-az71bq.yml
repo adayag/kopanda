@@ -1,0 +1,13 @@
+id: EV-az71bq
+type: claim.task
+at: 2026-10-17T04:49:25.526602Z
+contributor: allen
+command: claim task T-2x7tk6
+targets:
+    - T-2x7tk6
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/launcher-target/task.yml

@@ -17,12 +17,12 @@ local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local Looks = require("looks")
 local Paint = require("paint")
+local PaintClock = require("paint_clock")
 local Settings = require("settings")
 local Typeset = require("typeset")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
-local time = require("ui/time")
 local Screen = Device.screen
 
 -- The built frame: its fills and borders, then its text widgets, then the cards' shadows and
@@ -288,9 +288,11 @@ local function settle(editor)
     end
     editor.settled = true
     local ok, err = pcall(function()
+        local paint_ms, cpu_ms = PaintClock.ms(PaintClock.since(editor.started, editor.painted_at))
         UIManager.event_hook:execute("KoPandaSettled", {
             screen = editor.spec.screen,
-            paint_ms = time.to_ms(editor.painted_at - editor.started),
+            paint_ms = paint_ms,
+            cpu_ms = cpu_ms,
         })
     end)
     if not ok then
@@ -299,10 +301,11 @@ local function settle(editor)
 end
 
 -- Shows the editor of spec, closing the one shown, and returns it. opts.started is the
--- time.monotonic() its opener took, which paint_ms runs from; without it, the start of the show.
+-- PaintClock stamp its opener took, which paint_ms and cpu_ms run from; without it, the start of
+-- the show.
 -- A failure is logged, takes the editor off the stack and returns nil.
 function Editor.show(spec, opts)
-    local started = opts and opts.started or time.monotonic()
+    local started = opts and opts.started or PaintClock.now()
     local editor
     local ok, err = pcall(function()
         Editor.close()
@@ -373,7 +376,7 @@ end
 function Editor:paintTo(bb, x, y)
     local ok, err = pcall(paint, self, bb, x, y)
     if ok and not self.painted_at then
-        self.painted_at = time.monotonic()
+        self.painted_at = PaintClock.now()
         if self.settle_waiting then
             UIManager:nextTick(function()
                 settle(self)

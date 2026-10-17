@@ -1,0 +1,14 @@
+id: EV-jshqqc
+type: sync.feature
+at: 2026-10-17T07:14:49.118111Z
+contributor: allen
+command: sync feature F-rce9ko
+targets:
+    - F-rce9ko
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/bars/features/quick-settings/feature.yml

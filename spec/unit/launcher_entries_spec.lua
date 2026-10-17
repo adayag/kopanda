@@ -10,6 +10,7 @@ describe("LauncherEntries", function()
     local ffiutil = require("ffi/util")
     local lfs = require("libs/libkoreader-lfs")
     local logger = require("logger")
+    local time = require("ui/time")
     local LauncherEntries, Home
 
     -- Undo steps for the running test, run last first after it. busted keeps only a test's last
@@ -221,6 +222,11 @@ describe("LauncherEntries", function()
                 LauncherEntries.resolve({ kind = "koreader", target = "collections" }))
         end)
 
+        it("reads Quick settings as ready with its icon", function()
+            assert.same({ label = "Quick settings", icon = "quick_settings", state = "ready" },
+                LauncherEntries.resolve({ kind = "kopanda", target = "quick_settings" }))
+        end)
+
         it("reads Wi-Fi as off when the radio is off and ready when it is on", function()
             local wifi = { kind = "koreader", target = "wifi" }
             set_wifi(false)
@@ -355,6 +361,29 @@ describe("LauncherEntries", function()
             LauncherEntries.run({ kind = "kopanda", target = "settings" }, {})
             assert.stub(open).was.called(1)
             assert.stub(open).was.called_with()
+        end)
+
+        it("shows the quick-settings sheet over the home, its paint_ms counted from the run", function()
+            fm_with_home()
+            local home = Home.shown
+            local Sheet = require("sheet")
+            local show = spy.on(Sheet, "show")
+            cleanup(function()
+                show:revert()
+            end)
+            local before = time.monotonic()
+            LauncherEntries.run({ kind = "kopanda", target = "quick_settings" }, home.ctx)
+            local after = time.monotonic()
+            assert.spy(show).was.called(1)
+            local opts = show.calls[1].vals[3]
+            assert.is_number(opts.started.wall)
+            assert.is_number(opts.started.cpu)
+            assert.truthy(before <= opts.started.wall and opts.started.wall <= after)
+            local sheet = Sheet.shown
+            assert.equals("quick_settings", sheet.spec.name)
+            assert.equals(sheet, harness.top())
+            assert.equals(home, harness.top(2))
+            assert.equals(home, Home.shown)
         end)
     end)
 

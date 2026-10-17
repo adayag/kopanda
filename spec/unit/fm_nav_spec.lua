@@ -263,7 +263,7 @@ describe("the file browser's nav bar", function()
             assert.same({}, zone)
         end)
 
-        it("runs nothing for a hold, which reaches no zone beneath", function()
+        it("runs nothing for a hold outside Settings, which reaches no zone beneath", function()
             local fm = fm_on_top()
             local runs = record_runs()
             local homes = 0
@@ -271,13 +271,53 @@ describe("the file browser's nav bar", function()
                 homes = homes + 1
             end
             local zone = zone_on(fm, "hold", { ratio_x = 0, ratio_y = 7 / 8, ratio_w = 1, ratio_h = 1 / 8 })
-            for i = 1, 5 do
+            for i = 1, 4 do
                 send(harness.gesture("hold", tab_centre(fm[1].bar, i)))
             end
             assert.same({}, runs)
             assert.equals(0, homes)
             assert.is_nil(Home.shown)
+            assert.is_nil(package.loaded["sheet"].shown)
+            assert.equals(fm, harness.top())
             assert.same({}, zone)
+        end)
+
+        -- bars/quick-settings' C8: over the bare file browser, the Settings hold opens the
+        -- quick-settings sheet, whose Night cell (its sixth area, quick_settings_spec.lua, "the
+        -- areas") then toggles night mode.
+        it("opens the quick-settings sheet over the file manager on a hold on Settings", function()
+            local night_mode = rawget(Screen, "night_mode")
+            local had, setting = G_reader_settings:has("night_mode"), G_reader_settings:readSetting("night_mode")
+            restores[#restores + 1] = function()
+                Screen.night_mode = night_mode
+                if had then
+                    G_reader_settings:saveSetting("night_mode", setting)
+                else
+                    G_reader_settings:delSetting("night_mode")
+                end
+            end
+            G_reader_settings:saveSetting("night_mode", false)
+            Screen.night_mode = false
+            local fm = fm_on_top()
+            local Sheet = package.loaded["sheet"]
+            local zone = zone_on(fm, "hold", { ratio_x = 0, ratio_y = 7 / 8, ratio_w = 1, ratio_h = 1 / 8 })
+            send(harness.gesture("hold", tab_centre(fm[1].bar, 5)))
+            assert.is_not_nil(Sheet.shown)
+            assert.equals("quick_settings", Sheet.shown.spec.name)
+            assert.equals(Sheet.shown, harness.top())
+            assert.equals(fm, harness.top(2))
+            assert.is_nil(Home.shown)
+            assert.same({}, zone)
+            harness.tick(3)
+            local night = Sheet.shown.areas[6].rect
+            send(harness.gesture("tap", night.x + math.floor(night.w / 2), night.y + math.floor(night.h / 2)))
+            assert.is_true(Screen.night_mode)
+            assert.is_true(G_reader_settings:isTrue("night_mode"))
+            -- Back to day through the same cell, so the screen's inversion is KOReader's to undo.
+            harness.tick(2)
+            night = Sheet.shown.areas[6].rect
+            send(harness.gesture("tap", night.x + math.floor(night.w / 2), night.y + math.floor(night.h / 2)))
+            assert.is_false(Screen.night_mode)
         end)
 
         it("leaves a tap on a book row above the band to the chooser", function()
@@ -387,6 +427,45 @@ describe("the file browser's nav bar", function()
             UIManager:setDirty(fm, "ui")
             harness.tick(2)
             assert.equals(1, #signals)
+        end)
+
+        -- A reinit lays out a new frame: its band's height, read once the layout has begun, takes
+        -- 2 ms of CPU, the wait for the repaint 500 ms and the file browser's paint 4 ms.
+        it("counts cpu_ms on the CPU clock over the layout and the paint, not the time between", function()
+            local fm = fm_on_top()
+            harness.tick(2)
+            assert.equals(1, #signals)
+            local setup, height = FileManager.setupLayout, NavBar.height
+            restores[#restores + 1] = function()
+                FileManager.setupLayout, NavBar.height = setup, height
+            end
+            harness.with_cpu_clock(1, function(cpu)
+                local laying_out, counted = false, false
+                FileManager.setupLayout = function(...)
+                    laying_out = true
+                    setup(...)
+                    laying_out = false
+                end
+                NavBar.height = function(...)
+                    if laying_out and not counted then
+                        counted = true
+                        cpu.now = cpu.now + 0.002
+                    end
+                    return height(...)
+                end
+                fm:reinit()
+                assert.is_true(counted)
+                cpu.now = cpu.now + 0.5
+                local fm_ui = fm[1].fm_ui
+                local fm_ui_paint = fm_ui.paintTo
+                fm_ui.paintTo = function(...)
+                    cpu.now = cpu.now + 0.004
+                    return fm_ui_paint(...)
+                end
+                harness.tick(3)
+            end)
+            assert.equals(2, #signals)
+            assert.equals(6, signals[2].cpu_ms)
         end)
 
         -- The frame painted first is replaced before its signal's tick, so only the frame that

@@ -1,0 +1,14 @@
+id: EV-a88517
+type: add.tweak
+at: 2026-10-17T07:10:26.610554Z
+contributor: allen
+command: add tweak state-set-many
+targets:
+    - TW-soxspy
+after:
+    attached_to: T-gj4d8q
+    key: tweaks/state-set-many
+    status: proposed
+files:
+    - path: .tiller/tweaks/state-set-many/tweak.md
+    - path: .tiller/tweaks/state-set-many/tweak.yml

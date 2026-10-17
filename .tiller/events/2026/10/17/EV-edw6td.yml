@@ -1,0 +1,14 @@
+id: EV-edw6td
+type: sync.task
+at: 2026-10-17T07:14:49.016931Z
+contributor: allen
+command: sync task T-czph2w
+targets:
+    - T-czph2w
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/settings-hold/task.yml

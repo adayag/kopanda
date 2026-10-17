@@ -1,0 +1,13 @@
+id: EV-wk5564
+type: claim.task
+at: 2026-10-17T05:35:13.997332Z
+contributor: allen
+command: claim task T-czph2w
+targets:
+    - T-czph2w
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/settings-hold/task.yml

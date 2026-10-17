@@ -124,6 +124,8 @@ return {
         book_band_color = "pink", -- HoldBookC.dc.html:31
         home_band_color = "mustard", -- HoldHomeC.dc.html:31
         folder_band_color = "teal", -- no board draws Diner's folder sheet
+        -- No board: the nav bar's band, the Settings tab the sheet rises from (nav.fill_color)
+        quick_settings_band_color = "band",
         header_rule_color = "outline", -- HoldBookC.dc.html:31
         header_rule_width = 3, -- HoldBookC.dc.html:31
         header_padding = { top = 16, side = 20, bottom = 16 }, -- HoldHomeC.dc.html:31
@@ -149,6 +151,41 @@ return {
         selected_fill_color = "teal", -- the current choice's row (SortC.dc.html:45)
         aside_above_gap = 2, -- "for this folder" over "Sort" (SortC.dc.html:39)
         sublabel_gap = 2, -- a row's label over its second line (SortC.dc.html:46)
+    },
+
+    -- The quick-settings sheet's body. No board draws Diner's: its own sheet's rows and rules, its
+    -- progress bar for the levels, its chips' 2 px outline for the buttons and tiles, the on tile
+    -- an ink fill with paper text (the direction doc's "The two looks"); the rest Editorial's
+    -- (QuickSettings.dc.html).
+    quick_settings = {
+        padding_x = 20, -- the sheet's row_padding.x, above
+        first_section_padding = { top = 15, bottom = 15 }, -- the sheet's row_padding.y
+        section_padding = { top = 15, bottom = 15 }, -- the sheet's row_padding.y
+        section_gap = 10, -- no board: Editorial's (QuickSettings.dc.html:40)
+        section_rule_width = 2, -- the sheet's row_rule_width
+        section_rule_color = "outline", -- the sheet's row_rule_color
+        control_gap = 12, -- no board: Editorial's (QuickSettings.dc.html:44)
+        button_w = 44, -- no board: Editorial's (QuickSettings.dc.html:45)
+        button_h = 36, -- no board: Editorial's (QuickSettings.dc.html:45)
+        button_outline_width = 2, -- the sheet's chip_outline_width
+        button_outline_color = "outline", -- the doc: strokes are ink
+        button_fill_color = "paper", -- the sheet's fill_color
+        level_h = 14, -- progress.height
+        level_outline_width = 2, -- progress.outline_width
+        level_outline_color = "outline", -- progress.outline_color
+        level_fill_color = "mustard", -- progress.fill_color
+        level_track_color = "paper", -- progress.track_color
+        grid_gap = 10, -- no board: Editorial's (QuickSettings.dc.html:62)
+        -- The sheet's row_padding.y above; below, its row_padding.x, since the sheet has no bottom padding
+        grid_padding = { top = 15, bottom = 20 },
+        cell_padding = { top = 14, bottom = 12 }, -- no board: Editorial's (QuickSettings.dc.html:63)
+        cell_gap = 8, -- no board: Editorial's (QuickSettings.dc.html:63)
+        cell_icon_size = 24, -- no board: Editorial's (QuickSettings.dc.html:64)
+        cell_outline_width = 2, -- the owner's 2 px outlined tiles
+        cell_outline_color = "outline", -- the doc: strokes are ink
+        cell_fill_color = "paper", -- the sheet's fill_color
+        on_fill_color = "ink", -- the owner: the on state an ink fill
+        on_text_color = "paper", -- with paper text
     },
 
     -- An outlined box on an accent.
@@ -321,6 +358,18 @@ return {
         },
         -- A row's second line, "Last opened first", weight 500 in the board's ink (SortC.dc.html:48).
         sheet_sublabel = { face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        -- A quick-settings bar's label and value; no board: sheet_detail's style.
+        quick_label = {
+            face = "strong", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "muted",
+        },
+        -- The bars' minus and plus; no board: sheet_row's face at Editorial's size (QuickSettings.dc.html:45).
+        quick_button = {
+            face = "strong", size = 18, uppercase = false, tracking = 0, line_height = 0, color = "ink",
+        },
+        -- A quick-settings tile's label; no board: sheet_chip's style.
+        quick_cell = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
+        },
         -- The editor screens have no Diner board: the direction doc's vocabulary ("The two looks"),
         -- the header's aside and title on the band as the home's date and clock are (HomeRetro.dc.html:22-24),
         -- the rest in the look's label style and Editorial's sizes.

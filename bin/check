@@ -10,7 +10,7 @@
 #                          output, KOReader's library-loading chatter included
 #
 # Without --verbose each stage prints luacheck's total or Busted's suite summary, plus each file with
-# a failing test and Busted's failure blocks in full.
+# a failing test and Busted's failure blocks in full, and any line a test starts with "[  NOTE    ] ".
 #
 # Exit 0 on success, 1 when a stage fails, 2 when the script refuses to run.
 set -euo pipefail
@@ -73,8 +73,9 @@ run_studio() {
 }
 
 # Reads Busted's gtest output and keeps what a reader needs: a test's lines only when it fails or
-# errors, after the name of its file; Busted's own messages, such as a spec file that does not
-# load; and the suite summary. A test that ends the process is printed after its [ RUN ] line, the
+# errors, after the name of its file, except a line it starts with "[  NOTE    ] ", kept as it comes
+# (the paint budget's word that it didn't judge wall time); Busted's own messages, such as a spec
+# file that does not load; and the suite summary. A test that ends the process is printed after its [ RUN ] line, the
 # only place its name appears. It drops gtest's per-file and per-test lines and the lines KOReader's
 # ffi/loadlib.lua:59,68,72,91,106,136,168-170 logs whenever a process loads a library.
 summarize() {
@@ -90,6 +91,7 @@ summarize() {
             if (index(file, root) == 1) file = substr(file, length(root) + 1)
         }
         /^\[ RUN      \] / { intest = 1; buffered = 0; running = $0; next }
+        /^\[  NOTE    \] / { print; next }
         intest && /^\[(       OK | SKIPPED  )\] / { intest = 0; next }
         intest && /^\[(  FAILED  |  ERROR   )\] / { buffer[++buffered] = $0; intest = 0; flush(); next }
         intest { buffer[++buffered] = $0; next }

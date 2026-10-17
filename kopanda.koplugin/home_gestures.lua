@@ -2,8 +2,8 @@
 -- home's onGesture (home.lua) calls route through a pcall.
 local Geom = require("ui/geometry")
 local InputContainer = require("ui/widget/container/inputcontainer")
+local PaintClock = require("paint_clock")
 local SettingsMenu = require("settings_menu")
-local time = require("ui/time")
 local Screen = require("device").screen
 
 local HomeGestures = {}
@@ -99,7 +99,7 @@ end
 -- paint_ms runs from this step's entry. home_sheet is required here, not at load: it reaches
 -- launcher_entries, which requires home (launcher_entries.lua:5), which requires this module.
 local function hold(home, ges)
-    local started = time.monotonic()
+    local started = PaintClock.now()
     local slot = home:slotAt(ges.pos)
     local module = slot and slot.module
     if module then
@@ -138,11 +138,12 @@ end
 
 -- The home's gestures, in order, each step stopping at the first that consumes: its own swipe
 -- up; a tap or a hold in the nav bar's band, which the bar takes (it runs the tapped tab; a hold
--- runs nothing), before anything beneath can, Gestures' bottom corners included; the forward
--- step above, so a hold corner bound on the file manager wins over the hold (gestures
--- main.lua:1124-1139); a hold runs the hold step above; a tap outside the top menu zones runs the
--- tapped slot's widget when it acts on taps, and otherwise, or when that tap returns false, closes
--- the home onto the file browser through close(home).
+-- on Settings opens the quick-settings sheet, any other hold runs nothing), before anything
+-- beneath can, Gestures' bottom corners included; the forward step above, so a hold corner bound
+-- on the file manager wins over the hold (gestures main.lua:1124-1139); a hold runs the hold step
+-- above; a tap outside the top menu zones runs the tapped slot's widget when it acts on taps, and
+-- otherwise, or when that tap returns false, closes the home onto the file browser through
+-- close(home).
 function HomeGestures.route(home, ges, close)
     home.own_step = nil
     -- The home's own zones, under KOReader's touch lock (see own_zones).

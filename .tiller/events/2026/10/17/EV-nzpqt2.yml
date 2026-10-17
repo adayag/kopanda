@@ -1,0 +1,15 @@
+id: EV-nzpqt2
+type: start.task
+at: 2026-10-17T05:35:10.743432Z
+contributor: allen
+command: start task T-phfsk7
+targets:
+    - T-phfsk7
+before:
+    status: ready
+after:
+    branch: tiller/bars/quick-settings/goldens
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/goldens/task.yml

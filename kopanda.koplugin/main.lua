@@ -14,6 +14,7 @@ local Home = require("home")
 local InfoMessage = require("ui/widget/infomessage")
 local Library = require("library")
 local MenuEntries = require("menu_entries")
+local PaintClock = require("paint_clock")
 local PushNotice = require("push_notice")
 local SchemaMenu = require("menu")
 local State = require("state")
@@ -59,6 +60,7 @@ require("paint")
 require("push_apply")
 require("push_bundle")
 require("push_pull")
+require("quick_settings")
 require("quotes")
 require("reading_stats")
 require("rows_edit")
@@ -66,6 +68,7 @@ require("schema")
 require("settings")
 require("settings_menu")
 require("sheet")
+require("sheet_layout")
 require("tinted_icon")
 require("title_bar")
 require("typeset")
@@ -128,7 +131,7 @@ end
 
 -- Shows the home unless one is up or the file manager has gone since the show was scheduled:
 -- the pending home when there is one at the screen's size, a fresh build otherwise. started is
--- when the show path began (default: now).
+-- the PaintClock stamp of when the show path began (default: now).
 function KoPanda:showHome(started)
     if Home.shown then
         return
@@ -137,7 +140,7 @@ function KoPanda:showHome(started)
     if not (FileManager and FileManager.instance) then
         return
     end
-    started = started or time.monotonic()
+    started = started or PaintClock.now()
     local opts = { started = started }
     -- The home built when the last book closed, if it still fits the screen.
     local function use_pending()
@@ -238,7 +241,7 @@ function KoPanda:onShow()
         return
     end
     if Home.pending then
-        local show_ok, show_err = pcall(self.showHome, self, time.monotonic())
+        local show_ok, show_err = pcall(self.showHome, self, PaintClock.now())
         if not show_ok then
             logger.err("KoPanda: could not show the home:", show_err)
         end

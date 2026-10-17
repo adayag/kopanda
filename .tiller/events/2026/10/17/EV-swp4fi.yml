@@ -1,0 +1,16 @@
+id: EV-swp4fi
+type: submit.task
+at: 2026-10-17T06:59:30.969541Z
+contributor: allen
+command: submit task T-phfsk7
+targets:
+    - T-phfsk7
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/bars/quick-settings/goldens
+        head: git:c03aed0
+    status: in_review
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/goldens/task.yml

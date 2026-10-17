@@ -1,0 +1,13 @@
+id: EV-v3iyax
+type: start.tweak
+at: 2026-10-17T04:35:21.804427Z
+contributor: allen
+command: start tweak TW-f9nvsm
+targets:
+    - TW-f9nvsm
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/flaky-layout-editor-fit-after-done/tweak.yml

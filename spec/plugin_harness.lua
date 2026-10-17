@@ -189,6 +189,22 @@ function M.at_paperwhite(fn)
     M.at_screen(1236, 1648, fn)
 end
 
+-- Runs fn(cpu) with os.clock answering cpu.now, which starts at at and which fn moves by hand, so a
+-- case can tell a settled signal's cpu_ms from its wall-clock paint_ms. The real os.clock comes
+-- back afterwards, even when fn raises.
+function M.with_cpu_clock(at, fn)
+    local clock = os.clock
+    local cpu = { now = at }
+    os.clock = function() -- luacheck: ignore 122
+        return cpu.now
+    end
+    local ok, err = pcall(fn, cpu)
+    os.clock = clock -- luacheck: ignore 122
+    if not ok then
+        error(err, 0)
+    end
+end
+
 -- Closes any reader and file manager, then everything left on the stack, and drops every
 -- scheduled task, so the next spec starts from an empty UI.
 function M.teardown()

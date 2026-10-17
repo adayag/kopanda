@@ -1,0 +1,13 @@
+id: EV-eo8l47
+type: claim.task
+at: 2026-10-17T04:49:20.486254Z
+contributor: allen
+command: claim task T-n6wve0
+targets:
+    - T-n6wve0
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/controls/task.yml

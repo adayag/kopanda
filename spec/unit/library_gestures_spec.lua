@@ -107,21 +107,58 @@ describe("gestures on the library", function()
     local FULL = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = 1 }
 
     describe("in the nav bar's band", function()
-        it("runs the tapped tab first and runs nothing on a hold, both consumed", function()
+        -- The centre of the bar's column for the tab at index i (NavBar.TABS).
+        local function column_centre(bar, i)
+            local column = bar.columns[i]
+            return bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2),
+                bar.dimen.y + math.floor(bar.dimen.h / 2)
+        end
+
+        it("runs the tapped tab first, opens quick settings on a hold on Settings, and runs nothing on another "
+            .. "hold, all consumed", function()
             install()
             local library, fm = fixture.show()
             local got = bind(fm, "kopanda_spec_bar_corner", "tap", { ratio_x = 7 / 8, ratio_y = 7 / 8, ratio_w = 1 / 8,
                 ratio_h = 1 / 8 })
+            local held = bind(fm, "kopanda_spec_bar_hold", "hold", FULL)
             local runs = spy(NavBar, "run")
+            local Sheet = package.loaded["sheet"]
             local bar = library.nav
-            local column = bar.columns[5]
-            local x = bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2)
-            local y = bar.dimen.y + math.floor(bar.dimen.h / 2)
+            local x, y = column_centre(bar, 5)
             send(harness.gesture("tap", x, y))
+            assert.same({ { "settings", "library" } }, runs)
+            assert.equals(library, harness.top())
+            for _, i in ipairs({ 1, 4 }) do
+                send(harness.gesture("hold", column_centre(bar, i)))
+                assert.is_nil(Sheet.shown)
+                assert.equals(library, harness.top())
+            end
             send(harness.gesture("hold", x, y))
             assert.same({ { "settings", "library" } }, runs)
             assert.same({}, got)
-            assert.equals(library, harness.top())
+            assert.same({}, held)
+            assert.is_not_nil(Sheet.shown)
+            assert.equals("quick_settings", Sheet.shown.spec.name)
+            assert.equals(Sheet.shown, harness.top())
+            assert.equals(library, harness.top(2))
+            assert.equals(library, Library.shown)
+        end)
+
+        it("closes the library onto the file browser, not the home, when quick settings held open over it fails",
+            function()
+            install()
+            local library, fm = fixture.show()
+            local Home = package.loaded["home"]
+            local Sheet = package.loaded["sheet"]
+            local home_closes = spy(Home, "close")
+            spy(package.loaded["quick_settings"], "body", function()
+                error("kopanda-test: quick settings failed")
+            end)
+            send(harness.gesture("hold", column_centre(library.nav, 5)))
+            assert.is_nil(Sheet.shown)
+            assert.is_nil(Library.shown)
+            assert.same({}, home_closes)
+            assert.equals(fm, harness.top())
         end)
     end)
 

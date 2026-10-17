@@ -6,12 +6,12 @@ local Dispatcher = require("dispatcher")
 local Home = require("home")
 local InfoMessage = require("ui/widget/infomessage")
 local LibraryOrder = require("library_order")
+local PaintClock = require("paint_clock")
 local SettingsMenu = require("settings_menu")
 local UIManager = require("ui/uimanager")
 local T = require("ffi/util").template
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
-local time = require("ui/time")
 
 local LauncherEntries = {}
 
@@ -21,6 +21,7 @@ LauncherEntries.KOPANDA = {
     series = { label = "Series", icon = "series" },
     authors = { label = "Authors", icon = "authors" },
     settings = { label = "Settings", icon = "settings" },
+    quick_settings = { label = "Quick settings", icon = "quick_settings" },
 }
 
 -- KOReader's screens, by target, each run by one dispatcher id (frontend/dispatcher.lua:68,
@@ -147,6 +148,12 @@ local KOPANDA_RUN = {
     settings = function()
         SettingsMenu.open()
     end,
+    quick_settings = function()
+        -- The tap's start, which the sheet's paint_ms runs from. quick_settings requires this
+        -- module, so it is required here, at call time.
+        local started = PaintClock.now()
+        require("quick_settings").open{ started = started }
+    end,
 }
 
 -- The note for an entry that can't run, by its cause.
@@ -175,7 +182,7 @@ function LauncherEntries.run(entry, ctx)
     if kind == "folder" then
         -- The tap's start, which the sheet's paint_ms runs from. folder_sheet requires this
         -- module, so it is required here, at call time.
-        local started = time.monotonic()
+        local started = PaintClock.now()
         require("folder_sheet").open(entry, ctx, { started = started })
         return
     end

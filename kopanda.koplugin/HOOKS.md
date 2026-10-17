@@ -130,7 +130,10 @@ Upgrading KOReader walks this list.
 - `frontend/ui/uimanager.lua:53`; `frontend/ui/hook_container.lua:88-98` (`execute`, which
   runs nothing with no listener).
 - After the home's first paint the plugin executes `KoPandaSettled` with `{ screen, paint_ms,
-  settle_ms, prebuilt }`, once per home; the capture harness entry below is the listener.
+  cpu_ms, settle_ms, prebuilt }`, once per home; the capture harness entry below is the listener.
+  The sheet, editor, swatch and file-browser signals carry `paint_ms` and `cpu_ms` too.
+  `cpu_ms` is `os.clock()` process CPU time over the same span as `paint_ms`, stamped through
+  `paint_clock.lua`.
   `paint_ms` runs from the start of the show path to the end of the home's first `paintTo`;
   `settle_ms` runs on to the signal, which the first `paintTo`'s `nextTick`
   (`uimanager.lua:431-433`) queues behind tasks already due on the tick after the paint, such
@@ -164,7 +167,7 @@ Upgrading KOReader walks this list.
 - Shown and closed like the home: `covers_fullscreen`, `UIManager:show`/`close` with `"full"`,
   a full-screen tap zone through `registerTouchZones`
   (`frontend/ui/widget/container/inputcontainer.lua:144`), `onGesture` (`:266`) and `paintTo`
-  (`:73`) each in a `pcall`, and the settled signal with `screen = "swatch"` and `paint_ms`.
+  (`:73`) each in a `pcall`, and the settled signal with `screen = "swatch"`, `paint_ms` and `cpu_ms`.
   The signal runs from a `nextTick` (`frontend/ui/uimanager.lua:431-433`) that the swatch's
   first `paintTo` schedules, past that `_repaint`, and is not sent when that paint failed;
   nothing is scheduled before the paint, as for the home (the `nextTick` and `tickAfterNext`
@@ -1266,8 +1269,23 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   the home's zones are (the touch-lock entry above).
 - Holds: a hold's lift sends `hold_release` to the top widget, by then the sheet
   (`frontend/device/gesturedetector.lua:1346-1356`); the sheet registers nothing for `hold`
-  (unless its spec has a `hold`, the launcher management entry below), `hold_release`,
-  `hold_pan` or swipes, so they reach only the active widgets below.
+  (unless its spec has a `hold`, the launcher management entry below, or a `body`),
+  `hold_release`, `hold_pan` or swipes, so they reach only the active widgets below. Its
+  `onTapSheet` and `onHoldSheet` read the gesture's `pos` from their second argument:
+  `InputContainer:onGesture` sends `Event:new(eventname, gsseq.args, ev)`
+  (`frontend/ui/widget/container/inputcontainer.lua:273-280`).
+- The body's in-place redraw, after a stay-open area's `tap` or `hold`, on a `refresh_on` event or
+  on `Sheet.redraw()`: only while `UIManager:isWidgetShown(sheet)` (`frontend/ui/uimanager.lua:881-888`),
+  it re-lays the panel out and calls `UIManager:setDirty(sheet, "ui", old:combine(new))`
+  (`:659`), the `"ui"` refresh `FrontLightWidget:update` asks for its frame
+  (`frontend/ui/widget/frontlightwidget.lua:430-437`). `Geom:combine` is `Geom.boundingBox` of
+  the two rectangles (`frontend/ui/geometry.lua:151-153`), so a panel that changed height leaves
+  nothing stale. Under a KOReader dialog the dirty mark only queues the sheet; `_repaint` paints
+  the dialog over it again (the first entry above).
+- `refresh_on`: each name `N` becomes the sheet's `onN`, the handler an `Event` named `N` calls
+  (`frontend/ui/event.lua:32`, `frontend/ui/widget/eventlistener.lua:34-39`). It returns nothing;
+  `UIManager:broadcastEvent` offers the event to every window whatever a handler returns
+  (`frontend/ui/uimanager.lua:1042-1061`), so the windows beneath the sheet hear it too.
 - The settled signal goes from a `nextTick` (`frontend/ui/uimanager.lua:431-433`) that the
   sheet's first good `paintTo` schedules: it runs from the next `_checkTasks`, past that
   `_repaint` (`handleInput` `:1542-1564`). Nothing is scheduled before the paint, so a sheet
@@ -1276,6 +1294,110 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
 - The home closing by any path, KOReader's own close included, closes a shown sheet with it:
   `UIManager:close` sends `CloseWidget` before it walks the stack (`frontend/ui/uimanager.lua:298-300`),
   and the home's `onCloseWidget` calls `Sheet.close` in a `pcall`.
+
+### The quick-settings sheet: the power device, the radio, `night_mode` and `lock_rotation`
+
+`quick_settings.lua` reads these each time the sheet lays out, each read in its own `pcall`, and
+acts through the routes below when an area is tapped or held, each action inside the sheet's area
+guard (`sheet.lua`).
+
+- `Device:hasFrontlight()`, `Device:hasNaturalLight()` and `Device:hasBattery()`: `no`, `no` and `yes`
+  by default (`frontend/device/generic/device.lua:89`, `:109-110`), all `yes` in the emulator
+  (`frontend/device/sdl/device.lua:155-158`). Without the frontlight neither bar shows; without
+  natural light the warmth bar doesn't.
+- `Device:getPowerDevice()` is `Device.powerd` (`frontend/device/generic/device.lua:395-397`).
+- The power device's scales: `BasePowerD`'s `fl_min`, `fl_max`, `fl_warmth_min` and `fl_warmth_max`
+  default to 0, 10, 0 and 100 (`frontend/device/generic/powerd.lua:7-11`); `new` sets
+  `warmth_scale = 100 / fl_warmth_max` (`:36-39`). The Kindles' are 0-24 for both
+  (`frontend/device/kindle/powerd.lua:8-11`), the emulator's 0-100 with the light at 50 and the
+  warmth at 50 (`frontend/device/sdl/powerd.lua:4-12`).
+- `powerd:frontlightIntensity()` (`frontend/device/generic/powerd.lua:126-133`): the native
+  intensity, 0 without a frontlight or with the light off; the brightness bar's value, its fill
+  that over `fl_max`.
+- `powerd:frontlightWarmth()` (`:169-175`) is the warmth on KOReader's 0-100 scale;
+  `toNativeWarmth` (`:233-235`) rounds it over `warmth_scale` to the device's native step, and
+  `fromNativeWarmth` (`:237-239`) is its inverse. The warmth bar's value is the native warmth, its
+  fill (value - `fl_warmth_min`) over (`fl_warmth_max` - `fl_warmth_min`).
+- `powerd:getCapacity()` (`:254-270`): the battery's percent, read from the hardware at most once a
+  minute; the header's "Battery N%". The emulator's is the Mac's battery
+  (`frontend/device/sdl/powerd.lua:28-33`).
+- `NetworkMgr:isWifiOn()` (`frontend/ui/network/manager.lua:182-185`, replaced per device; the
+  emulator's reads `emulator_fake_wifi_connected`, `frontend/device/sdl/device.lua:478-500`): the
+  Wi-Fi cell's state.
+- `G_reader_settings` key `night_mode`, read with `isTrue` (`frontend/luasettings.lua:124`), which
+  `DeviceListener:onToggleNightMode` saves (`frontend/device/devicelistener.lua:14-27`): the Night
+  cell's state.
+- `G_reader_settings` key `lock_rotation`, KOReader's "Keep current rotation across views", read with
+  `isTrue` as its menu item reads it and flipped by that item's `flipNilOrFalse`
+  (`frontend/ui/elements/screen_rotation_menu_table.lua:64-77`); the file browser keeps its rotation
+  while it is set (`frontend/apps/filemanager/filemanager.lua:63-69`) and the reader neither
+  applies nor saves a book's (`frontend/apps/reader/modules/readerview.lua:971`, `:1223`). The
+  Rotation lock cell's state.
+- The cells greyed where the launcher couldn't run their entries go through
+  `LauncherEntries.available` (the launcher's entries above): Wi-Fi's `toggle_wifi`, whose
+  condition is `Device:hasWifiToggle()` (`frontend/dispatcher.lua:124`); Sleep's `suspend`, whose
+  condition is `Device:canSuspend()` (`:94`); Sync books' `cwngsync_sync_now`, registered by the
+  `cwngsync` plugin (`cwngsync.koplugin/main.lua:282-283` at `df90d5e`), which needs
+  `PluginLoader:isPluginLoaded("cwngsync")` (`frontend/pluginloader.lua:567-569`) and the action
+  listed by `Dispatcher.getDisplayList` (`frontend/dispatcher.lua:866-890`).
+
+- Why the actions broadcast: `UIManager:sendEvent` offers an event to the top window and its
+  active widgets, then below it only to each window's active widgets and to windows flagged
+  `is_always_active` (`frontend/ui/uimanager.lua:962-1035`); `broadcastEvent` offers it to every
+  window whatever a handler returns (`:1042-1061`). The file manager's `devicelistener` and
+  `networklistener` are ordinary modules (`frontend/apps/filemanager/filemanager.lua:379-389`,
+  `:414-415`), its Screenshoter the one module registered as an active widget (`:400-403`), and
+  plugin instances are registered without (`:418-429`). Under the sheet the file manager is no
+  active widget (the dispatch bridge flags it only while the home is shown), so the light and
+  night mode are broadcast.
+- Brightness: `SetFlIntensity` with the native intensity, clamped by the sheet to
+  `[0, fl_max]`, reaches `DeviceListener:onSetFlIntensity`, which turns the light off at `n <= 0`,
+  else `setIntensity(n)`, then `updateResumeFrontlightState()` (`frontend/device/devicelistener.lua:116-125`).
+  `turnOffFrontlight` and `turnOnFrontlight` (`frontend/device/generic/powerd.lua:144-167`) return
+  early on no change; `setIntensity` (`:216-226`) returns early on an unchanged value (`:218`) and
+  normalises to `[fl_min, fl_max]` through `normalizeIntensity` (`:210-213`), and every setter broadcasts
+  `FrontlightStateChanged` through `stateChanged` (`:318-323`). A tap steps from
+  `frontlightIntensity()`, 0 with the light off, so plus from off sets 1, as the Kindle's
+  `turnOnFrontlightHW` turns it on at its lowest step (`frontend/device/kindle/powerd.lua:57-76`);
+  the Kindle sets the light through lipc's `flIntensity` (`:124-160`).
+- Warmth: `SetFlWarmth` with the native warmth, clamped by the sheet to
+  `[fl_warmth_min, fl_warmth_max]`, reaches `onSetFlWarmth`, which clamps only to 0-100 before
+  `fromNativeWarmth` (`devicelistener.lua:156-165`); `setWarmth` (`powerd.lua:242-252`) returns
+  early on an unchanged value (`:244`) and normalises to 0-100 (`normalizeWarmth`, `:228-231`). The Kindle reads and writes lipc's
+  `currentAmberLevel` (`frontend/device/kindle/powerd.lua:162-178`). Both handlers exist only with
+  a frontlight (`devicelistener.lua:58`), the condition that shows the bars.
+- Night: `ToggleNightMode`, broadcast as KOReader's night mode menu item does
+  (`frontend/ui/elements/common_settings_menu_table.lua:266-271`); `DeviceListener:onToggleNightMode`
+  toggles the screen, marks every window dirty `"full"` and saves `night_mode`
+  (`devicelistener.lua:14-27`), so the sheet rebuilds in the night palette at its next paint (the
+  sheet above).
+- Rotation lock: `G_reader_settings:flipNilOrFalse("lock_rotation")`, the menu item's callback
+  (`frontend/ui/elements/screen_rotation_menu_table.lua:73-75`).
+- Wi-Fi: as KOReader's Wi-Fi menu item (`frontend/ui/network/manager.lua:899-922`):
+  `queryNetworkState()` caches `is_wifi_on` and `is_connected` (`:651-654`); fully connected,
+  `toggleWifiOff(cb, true)` (`:447-457`), whose `disableWifi` broadcasts `NetworkDisconnecting`
+  (`:413`), then `NetworkDisconnected` and `cb` once the radio is down (`:405-411`); on but not
+  connected, `promptWifi(cb, false, true)` (`:490`); else `toggleWifiOn(cb, false, true)`
+  (`:433-445`), which broadcasts `NetworkConnecting` (`:74`) and, once the connectivity check
+  passes, `NetworkConnected` before `cb` (`:96-116`). A failed connection broadcasts nothing
+  (`:44-63`, comment `:56`). `cb` is `Sheet.redraw`; the sheet also redraws on `NetworkConnected`
+  and `NetworkDisconnected` (`refresh_on`), returning nothing, so the home hears them too. The
+  emulator's fake flips `emulator_fake_wifi_connected` at once and broadcasts after `scheduleIn(2)`
+  (`frontend/device/sdl/device.lua:478-500`); on the Kindle `turnOnWifi` may show the network list
+  over the sheet (`frontend/device/kindle/device.lua:424-447`).
+- Close-first actions: the sheet's close takes it off the window stack at once and marks what is
+  beneath dirty (`frontend/ui/uimanager.lua:290-313`); then `LauncherEntries.run` checks the entry
+  again and runs it (the launcher's entries above), reaching the file manager over the bare file
+  browser directly and under the home through the dispatch bridge. Sleep is `suspend`
+  (`frontend/dispatcher.lua:94`) → `DeviceListener:onRequestSuspend` → `UIManager:suspend()`
+  (`devicelistener.lua:458-460`; `uimanager.lua:1679-1686`). Screenshot first calls
+  `UIManager:forceRePaint()` (`uimanager.lua:1404-1406`), so the screen beneath is painted, then
+  runs `screenshot` (`dispatcher.lua:86`) → `Screenshoter:onScreenshot`, which shoots the
+  framebuffer as it is with `Screen:shot` (`frontend/ui/widget/screenshoter.lua:50-70`). Sync books
+  is cwngsync's `cwngsync_sync_now`: at `df90d5e` of `new-usemame/cwngsync.koplugin` the plugin is
+  named `cwngsync` (`cwngsync.koplugin/main.lua:43`), registers the action with event
+  `CWNGSyncSyncNow` (`:282-283`) and handles it with `onCWNGSyncSyncNow` (`:310-313`). A greyed
+  Wi-Fi, Sync books or Sleep cell runs its entry after the close too, for the launcher's note.
 
 ### The hold on the home: the `hold` gesture, Gestures' hold corners and the home sheet's rows
 
@@ -1303,10 +1425,12 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   (`DTAP_ZONE_TOP_RIGHT`, `defaults.lua:67`: x from 1106 and y under 210 on the Colorsoft) covers
   the right end of both looks' clock, so a hold there refreshes the hidden file chooser and opens
   no sheet.
-- A hold in the nav bar's band is the bar's and runs nothing, before the zones on the file
-  manager (gestures under the home, above): Gestures' bottom hold corners
-  (`hold_bottom_left_corner`, `hold_bottom_right_corner`, `plugins/gestures.koplugin/main.lua:1124-1139`)
-  don't fire there, and neither a slot's hold nor the home sheet runs.
+- A hold in the nav bar's band is the bar's, before the zones on the file manager (gestures
+  under the home, above): Gestures' bottom hold corners (`hold_bottom_left_corner`,
+  `hold_bottom_right_corner`, `plugins/gestures.koplugin/main.lua:1124-1139`) don't fire there,
+  and neither a slot's hold nor the home sheet runs. A hold on the Settings tab opens the
+  quick-settings sheet over the home, and over the bare file browser through the bar's own
+  `ges_events`; a hold anywhere else on the bar runs nothing.
 - The home sheet's Sleep row is the dispatcher's `suspend` (`frontend/dispatcher.lua:94`, listed
   only with `Device:canSuspend()`), run through `LauncherEntries.run` and the dispatch bridge as
   the launcher's action entries are: its `RequestSuspend` reaches the file manager's
@@ -1605,7 +1729,7 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
 - `frontend/ui/uimanager.lua:53`; `frontend/ui/hook_container.lua:34-41` (`register`),
   `:88-98` (`execute`).
 - A `HookContainer`. The capture patch registers a `KoPandaSettled` listener and the plugin
-  under test executes it with `{ screen, paint_ms, settle_ms, prebuilt }`. The patch shoots on the first
+  under test executes it with `{ screen, paint_ms, cpu_ms, settle_ms, prebuilt }`. The patch shoots on the first
   signal whose `screen` is `KOPANDA_SHOT_SCREEN` (default `home`) and copies the signal's
   string, number and boolean arguments into the sidecar. Listeners run in registration order
   (`hook_container.lua:94-96`), and a listener may execute the hook again from inside its own
@@ -1817,6 +1941,26 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `DTAP_ZONE_*` corners (`defaults.lua:66-69`, read through `G_defaults:readSetting`). No
   `hold_release` follows. The capture is taken on the sheet's own signal
   (`shot_screen = "sheet"`); a failure is sent as a `"sheet"` signal with `error`.
+
+### The quick-settings scenario (`spec/emulator/scenarios/2-scenario-quick-settings.lua`)
+
+- Run after the home fixture by `quick_settings_golden_spec.lua`. It writes nothing. On the first
+  home's settled signal, from `nextTick`, it sets `getCapacity` on the instance
+  `Device:getPowerDevice()` returns to one returning 84, shadowing `BasePowerD:getCapacity`
+  (`frontend/device/generic/powerd.lua:254`), so the header never reads the Mac's battery
+  (`frontend/device/sdl/powerd.lua:28-33`); it sets `NetworkMgr.isWifiOn` to one returning true;
+  then it opens the sheet through
+  `package.loaded["quick_settings"]` (a userpatch can't `require` it by name once the plugin's
+  path is gone, "`package.path` during plugin load" above) with `started` a `paint_clock.lua`
+  stamp, `{ wall = time.monotonic(), cpu = os.clock() }`.
+  The capture is taken on the sheet's own signal (`shot_screen = "sheet"`); a failure is sent as
+  a `"sheet"` signal with `error`. The Wi-Fi cell reads on: the sheet reads
+  `NetworkMgr:isWifiOn()` (`quick_settings.lua:103`), which the stub shadows, while the
+  emulator's `isConnected` keeps the original `isWifiOn` function
+  (`frontend/device/sdl/device.lua:497-500`) and so the driver's
+  `emulator_fake_wifi_connected` false (`emulator_fake_wifi_connected` above); the patch errors
+  if `isConnected` reads true, so no weather fetch runs. The home isn't rebuilt, so its launcher
+  keeps the Wi-Fi entry it resolved off (`launcher_entries.lua:92-94`).
 
 ### The home fixture (`spec/emulator/scenarios/2-scenario-home-fixture.lua`)
 

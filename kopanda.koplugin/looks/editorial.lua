@@ -122,6 +122,7 @@ return {
         book_band_color = false, -- Editorial's headers have no band
         home_band_color = false,
         folder_band_color = false,
+        quick_settings_band_color = false,
         header_rule_color = "ink", -- HoldBook.dc.html:35
         header_rule_width = 1, -- HoldBook.dc.html:35
         header_padding = { top = 22, side = 0, bottom = 16 }, -- HoldHome.dc.html:35
@@ -147,6 +148,39 @@ return {
         selected_fill_color = false,
         aside_above_gap = 2,
         sublabel_gap = 2,
+    },
+
+    -- The quick-settings sheet's body: two ruled sections of a label row over a minus button, a
+    -- level bar and a plus button, then a three-column grid of outlined tiles, the on tile in ink
+    -- (QuickSettings.dc.html:40-87).
+    quick_settings = {
+        padding_x = 0, -- QuickSettings.dc.html:34; the sheet's 40 side padding holds it
+        first_section_padding = { top = 18, bottom = 16 }, -- QuickSettings.dc.html:40
+        section_padding = { top = 16, bottom = 16 }, -- QuickSettings.dc.html:51
+        section_gap = 10, -- QuickSettings.dc.html:40
+        section_rule_width = 1, -- QuickSettings.dc.html:40, :51
+        section_rule_color = "hairline", -- QuickSettings.dc.html:40, :51
+        control_gap = 12, -- QuickSettings.dc.html:44
+        button_w = 44, -- QuickSettings.dc.html:45
+        button_h = 36, -- QuickSettings.dc.html:45
+        button_outline_width = 1, -- QuickSettings.dc.html:45
+        button_outline_color = "ink", -- QuickSettings.dc.html:45
+        button_fill_color = false, -- QuickSettings.dc.html:45, transparent
+        level_h = 10, -- QuickSettings.dc.html:46, inside its outline
+        level_outline_width = 1, -- QuickSettings.dc.html:46
+        level_outline_color = "ink", -- QuickSettings.dc.html:46
+        level_fill_color = "ink", -- QuickSettings.dc.html:46
+        level_track_color = false, -- QuickSettings.dc.html:46, no track
+        grid_gap = 10, -- QuickSettings.dc.html:62
+        grid_padding = { top = 18, bottom = 0 }, -- QuickSettings.dc.html:62; the sheet's 28 bottom padding follows
+        cell_padding = { top = 14, bottom = 12 }, -- QuickSettings.dc.html:63
+        cell_gap = 8, -- QuickSettings.dc.html:63
+        cell_icon_size = 24, -- QuickSettings.dc.html:64
+        cell_outline_width = 1, -- QuickSettings.dc.html:63
+        cell_outline_color = "ink", -- QuickSettings.dc.html:63
+        cell_fill_color = false, -- QuickSettings.dc.html:67, transparent
+        on_fill_color = "ink", -- QuickSettings.dc.html:63
+        on_text_color = "paper", -- QuickSettings.dc.html:63
     },
 
     -- Small caps, muted.
@@ -299,6 +333,19 @@ return {
         -- A row's second line: no board draws it here; the detail's face in sentence case.
         sheet_sublabel = {
             face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "muted",
+        },
+        -- A quick-settings bar's label and value, "Brightness" and "12" (QuickSettings.dc.html:41).
+        quick_label = {
+            face = "text", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "muted",
+        },
+        -- The bars' minus and plus, the button's inherited Plex 400 (QuickSettings.dc.html:45).
+        quick_button = {
+            face = "text", size = 18, uppercase = false, tracking = 0, line_height = 0, color = "ink",
+        },
+        -- A quick-settings tile's label, "Wi-Fi on" (QuickSettings.dc.html:63); the board's weight 600 is
+        -- the strong face's 500, the heaviest Plex this look ships.
+        quick_cell = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "ink",
         },
         -- The editor screens' aside over the title, "Home" (EditLayout.dc.html:21), at the editor's line
         -- height of 0.3, which every editor part takes so the default layout's five rows fit above the
