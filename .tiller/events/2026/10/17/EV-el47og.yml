@@ -1,0 +1,14 @@
+id: EV-el47og
+type: submit.tweak
+at: 2026-10-17T07:43:31.884462Z
+contributor: allen
+command: submit tweak TW-9atgka
+targets:
+    - TW-9atgka
+before:
+    status: check
+after:
+    pr: 37
+    status: in_review
+files:
+    - path: .tiller/tweaks/tinted-icon-mask-cache/tweak.yml
