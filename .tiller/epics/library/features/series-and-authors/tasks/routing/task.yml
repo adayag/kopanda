@@ -1,9 +1,10 @@
 id: T-8j0bc0
 key: library/series-and-authors/routing
 title: Entry points, the Authors tab, More by this author and the return after a book closes
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-m5pho3
@@ -17,3 +18,4 @@ accepted_against:
         kind: git_commit
         value: git:56440d9
         observed_at: 2026-10-17T07:51:40.87985Z
+branch: tiller/library/series-and-authors/routing
