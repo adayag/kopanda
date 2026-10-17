@@ -1,0 +1,13 @@
+id: EV-c6obn5
+type: attest.feature
+at: 2026-10-17T03:32:20.337744Z
+contributor: allen
+command: attest feature F-iwl43d
+targets:
+    - F-iwl43d
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/bars/features/title-bar/feature.yml

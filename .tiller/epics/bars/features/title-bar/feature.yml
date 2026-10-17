@@ -46,7 +46,7 @@ gates:
         kind: command
         status: pending
         run_by: allen
-        run_at: 2026-10-17T03:27:17.120712Z
+        run_at: 2026-10-17T03:32:20.33758Z
         against:
             kind: git_commit
             value: git:2274038
@@ -118,7 +118,7 @@ gates:
                     - kind: command_output
                       ref: artifacts/tiller/gates/eval-C13-2274038-out-4fefbcd7b99ead17e2d5f9f239343686ae1965b5d4d90be2c825079786de7270.txt
             C14:
-                status: needs_attestation
+                status: pass
             C15:
                 status: needs_attestation
     tests:
@@ -134,3 +134,11 @@ gates:
         evidence:
             - kind: command_output
               ref: artifacts/tiller/gates/tests-2274038-out-f2593f627153dff24239e854470a21c1b8e4f6662af43bbe80c71e2b553c1d61.txt
+attestations:
+    - id: AT-xtyerp
+      target:
+        kind: criterion
+        id: C14
+      status: pass
+      by: allen
+      at: 2026-10-17T03:32:20.33758Z
