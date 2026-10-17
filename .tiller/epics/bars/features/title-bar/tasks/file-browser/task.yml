@@ -1,7 +1,7 @@
 id: T-le8x0f
 key: bars/title-bar/file-browser
 title: 'The title bar in KOReader''s file browser: the one-shot swap, its pickers, failsafe and tripwire'
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         value: git:c18ec4f
         observed_at: 2026-10-17T01:34:14.125573Z
 branch: tiller/bars/title-bar/file-browser
+pr: 27
 gates:
     build:
         required: true
