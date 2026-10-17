@@ -1,0 +1,11 @@
+id: EV-kjfs6c
+type: claim.bug
+at: 2026-10-17T20:46:25.248182Z
+contributor: allen
+command: claim bug bugs/library-prebuild-stale-and-wasted
+targets:
+    - B-fip6q6
+after:
+    owner: allen
+files:
+    - path: .tiller/bugs/library-prebuild-stale-and-wasted/bug.yml

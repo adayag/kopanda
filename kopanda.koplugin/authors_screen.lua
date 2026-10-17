@@ -7,7 +7,7 @@
 -- next unread carrying the Up next chip (D5, D19). The nav bar lights Authors. Who the authors are,
 -- in what order, and which books are up next is shelf_order.lua's; the groups are shelf_rows.lua's
 -- and the tiles library_tiles.lua's.
--- Module state: AuthorsScreen.shown and AuthorsScreen.pending, the chrome's slots.
+-- Module state: AuthorsScreen.shown, the chrome's slot.
 -- AuthorsScreen.on_open(view, page), run when a tap's book open goes ahead, records the return in
 -- the chrome's LibraryChrome.return_to.
 local Books = require("books")
@@ -368,8 +368,8 @@ function AuthorsScreen:refresh()
     LibraryChrome.Window.refresh(self)
 end
 
--- opts: view ({ kind = "list" }, the default, or { kind = "author", name }), page, widget and
--- started (LibraryChrome.show's). Returns the window shown, or nil.
+-- opts: view ({ kind = "list" }, the default, or { kind = "author", name }), page and started
+-- (LibraryChrome.show's). Returns the window shown, or nil.
 function AuthorsScreen.show(opts)
     opts = opts or {}
     return LibraryChrome.show(AuthorsScreen, opts, { showing = opts.view, page = opts.page })

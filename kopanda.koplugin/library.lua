@@ -1,14 +1,12 @@
 -- The library: a window on the chrome (library_chrome.lua) showing one folder a page at a time
--- (cover-grid "The window"). The chrome holds its show and close, its paint and settled signal,
--- its pager, nav bar and gesture route, the events that keep it current and the pre-build on a
--- book's close; what it draws is library_view.lua's, what a folder shows and the memory
--- library_order.lua's, and its covers library_covers.lua's. Here are what a tap on each of its
--- own parts does, where it was left, the return a book's open records and the root check its
--- paint runs (context-menu D6).
--- Module state: Library.shown, the library on screen or nil, and Library.pending, one built on
--- book close and not yet shown, or nil, both the chrome's slots; Library.return_to, { dir, page }
--- a book was opened from, which the next file manager's show returns to (D4), or nil, in memory
--- only; Library.on_picker(kind), run on a tap on the "sort" or "status" picker, a hook
+-- (cover-grid "The window"). The chrome holds its show and close, its paint and settled signal, its
+-- pager, nav bar and gesture route and the events that keep it current; what it draws is
+-- library_view.lua's, what a folder shows and the memory library_order.lua's, and its covers
+-- library_covers.lua's. Here are what a tap on each of its own parts does, where it was left, the
+-- return a book's open records and the root check its paint runs (context-menu D6).
+-- Module state: Library.shown, the library on screen or nil, the chrome's slot; Library.return_to,
+-- { dir, page } a book was opened from, which the next file manager's show returns to (D4), or nil,
+-- in memory only; Library.on_picker(kind), run on a tap on the "sort" or "status" picker, a hook
 -- library_pickers.lua fills (here a no-op).
 local LibraryChrome = require("library_chrome")
 local LibraryCovers = require("library_covers")
@@ -16,7 +14,6 @@ local LibraryOrder = require("library_order")
 local LibraryView = require("library_view")
 local logger = require("logger")
 local UIManager = require("ui/uimanager")
-local ffiutil = require("ffi/util")
 
 local Library = LibraryChrome.Window:extend{
     name = "kopanda_library",
@@ -131,8 +128,8 @@ function Library.hit(x, y)
     return { kind = "empty" }
 end
 
--- opts: widget (a pre-built library to show; default: a fresh build at dir and page), dir (default:
--- the library's root), page, started (LibraryChrome.show's). Returns the library shown, or nil.
+-- opts: dir (default: the library's root), page, started (LibraryChrome.show's). Returns the
+-- library shown, or nil.
 function Library.show(opts)
     opts = opts or {}
     return LibraryChrome.show(Library, opts, { dir = opts.dir, page = opts.page })
@@ -142,16 +139,6 @@ function Library.close()
     if Library.shown then
         LibraryChrome.close()
     end
-end
-
--- The closed book's tile is rebuilt; a failure leaves the tile as built. The kept listing is
--- filtered and sorted again at the next build, so a page turned to does so with the book's new
--- progress wherever the book is.
-function Library:book_closed(file)
-    -- A file's record id, as books.lua's record() makes it.
-    local id = "file:" .. (ffiutil.realpath(file) or file)
-    LibraryView.forget(self.kept, id)
-    LibraryCovers.rebuild_tiles(self, { [id] = true }, "the closed book's tile")
 end
 
 -- The re-list of the metadata events and of the sheets (a Hide, a hidden folder shown again, a

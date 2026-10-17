@@ -70,19 +70,21 @@ Upgrading KOReader walks this list.
   browser follows from `ReaderUI:onHome` `:935-940`, `showFileManager` `:581-596` and the
   reader menu's file-browser tab `frontend/apps/reader/modules/readermenu.lua:65-74`.
 - A reader instance's `onCloseDocument` first records the book's chapter for the featured book
-  (the featured book entry below), then, when a return is recorded, builds the window it names
-  into the chrome's pending window (`LibraryChrome.pending`, `library_chrome.lua`, not shown):
-  the library at its `Library.return_to` (the library's return entry below), or the Series or
-  Authors window at the view and page of `LibraryChrome.return_to`, recorded from the same
+  (the featured book entry below), then, when a return is recorded, leaves it as the open
+  recorded it: the library's `Library.return_to` (the library's return entry below), or the
+  Series or Authors window's view and page in `LibraryChrome.return_to`, recorded from the same
   `caller_pre_callback`; or else sets `Home.just_closed`; and returns nothing, so the event
-  reaches later modules. It builds no home: the close, `showFileManager`, `showFiles`,
-  `UIManager:show` and the file manager's `Show` run in one call stack with no `_repaint`
-  between them, so a build at the close would save no time, and it would read the sidecar
-  before the reader saves it (`:893`, through `UIManager:close`'s `FlushSettings`,
-  `frontend/ui/uimanager.lua:298`; `:876-878` skips the earlier save when the reader is its own
-  dialog, `:126-127`).
-- The next file-manager `Show` puts the pending window up, or clears the mark and builds and
-  shows the home, synchronously, before the UI loop's next `_repaint`
+  reaches later modules. The return is checked first, so a close with one sets no mark. It
+  builds no window and no home: the close, `showFileManager`, `showFiles`, `UIManager:show` and
+  the file manager's `Show` run in one call stack with no `_repaint` between them, so a build at
+  the close would save no time, and it would read the sidecar before the reader saves it
+  (`:893`, through `UIManager:close`'s `FlushSettings`, `frontend/ui/uimanager.lua:298`;
+  `:876-878` skips the earlier save when the reader is its own dialog, `:126-127`): the closed
+  book's progress, the header's count and the status filter's membership would be those of the
+  last save.
+- The next file-manager `Show` takes the return and builds and shows the window it names, or
+  clears the mark and builds and shows the home, synchronously, before the UI loop's next
+  `_repaint`
   (`frontend/ui/uimanager.lua:1537-1564`: `_checkTasks` at `:1543`, `_repaint` at `:1563`). A
   deferred show would lose when the close runs inside a scheduled task (KOReader's end-of-book
   file-browser action, `frontend/apps/reader/modules/readerstatus.lua:144-148`): `nextTick`
@@ -99,19 +101,16 @@ Upgrading KOReader walks this list.
   (`:609`). A reader instance's `onCloseDocument` sets no mark when it is set. Exit does not set
   it and marks the close, but no `Show` follows. A reader instance's `init` (a new reader,
   `readerui.lua:464-478`) clears the mark, since no file browser followed the last close.
-- The chrome window's pre-build happens there too and is wasted. That `init` drops and frees the
-  pending window; exit drops it with the process. A switch keeps the return, so the next close
-  builds the window again.
+- With a return recorded the close builds nothing either way, and the return stands: a reload or
+  a switch keeps it, so the next close's `Show` returns to the window; exit drops it with the
+  process.
 
 ### `setRotationMode` in `showFiles`
 
 - `frontend/apps/filemanager/filemanager.lua:1322` (`showFiles` resets the rotation before
   building the file manager), `:63-69` (`setRotationMode`).
-- The home after a book close is built inside the file manager's `Show`, after `showFiles` reset
-  the rotation, so it is always built at the screen's size then. The screen can have another
-  size at show than at close, so a pending chrome window whose `dimen` differs from
-  `Screen:getSize()` is dropped (`free()`,
-  `frontend/ui/widget/container/widgetcontainer.lua:110-117`) and a fresh one built.
+- The home or the chrome window after a book close is built inside the file manager's `Show`,
+  after `showFiles` reset the rotation, so it is always built at the screen's size then, once.
 
 ### `covers_fullscreen` in `UIManager:_repaint`
 
@@ -1775,8 +1774,8 @@ guard (`sheet.lua`).
 - An open that fails after that broadcast shows a file manager with no `CloseDocument` before it:
   `showReaderCoroutine`'s crash path (`readerui.lua:734`), no document (`:754`) and a locked
   document left locked (`:764`), each through `showFileManager` (`:581-596`), which builds a new file
-  manager with `FileManager:showFiles` when none is open. Its `Show` finds the return and no pending
-  library, so the library is built afresh at the return. The unsupported-file path (`:672`) runs
+  manager with `FileManager:showFiles` when none is open. Its `Show` finds the return and builds
+  the library at it, as after a close. The unsupported-file path (`:672`) runs
   before the broadcast, with the file manager and the library still up; its return stands until
   the next file manager's `Show`, or until the file manager closes with the library already closed
   (the next entry).
@@ -1788,7 +1787,7 @@ guard (`sheet.lua`).
   residual: with such a stale return and the library still up, a book opened from History over it
   still closes to the library.
 - The Series and Authors windows' return (`LibraryChrome.return_to`) follows the same paths: a
-  failed open shows the window afresh at the return, and the file manager's `CloseWidget` drops a
+  failed open builds the window at the return, and the file manager's `CloseWidget` drops a
   return whose window has already closed.
 - The return lives in module state only, so a restart shows the home.
 - `FileChooser:changeToPath(path)` (`frontend/ui/widget/filechooser.lua:341-371`; the launcher's
