@@ -1,0 +1,13 @@
+id: EV-od0zy5
+type: start.tweak
+at: 2026-10-17T20:46:31.193673Z
+contributor: allen
+command: start tweak TW-s7jikb
+targets:
+    - TW-s7jikb
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/task-gate-skips-emulator/tweak.yml
