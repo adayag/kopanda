@@ -107,6 +107,7 @@ describe("LibrarySheets.hold", function()
             local SeriesScreen = package.loaded["series_screen"]
             local series = SeriesScreen.hit(centre(screen.rows[1].rect))
             assert.equals("series", series.kind)
+            local open_record = spy.on(package.loaded["book_sheet"], "open_record")
             for _, hit in ipairs({ series, { kind = "empty" } }) do
                 LibrarySheets.hold(screen, hit, earlier())
                 assert.is_nil(Sheet.shown)
@@ -114,6 +115,7 @@ describe("LibrarySheets.hold", function()
             end
             LibrarySheets.hold(screen, nil, earlier())
             assert.is_nil(Sheet.shown)
+            assert.spy(open_record).was_not_called()
             harness.tick(3)
             assert.same({}, settled)
         end)
@@ -141,11 +143,13 @@ describe("LibrarySheets.hold", function()
             local AuthorsScreen = package.loaded["authors_screen"]
             local author = AuthorsScreen.hit(centre(screen.rows[1].rect))
             assert.equals("author", author.kind)
+            local open_record = spy.on(package.loaded["book_sheet"], "open_record")
             for _, hit in ipairs({ author, { kind = "empty" } }) do
                 LibrarySheets.hold(screen, hit, earlier())
                 assert.is_nil(Sheet.shown)
                 assert.equals(screen, harness.top())
             end
+            assert.spy(open_record).was_not_called()
             harness.tick(3)
             assert.same({}, settled)
         end)

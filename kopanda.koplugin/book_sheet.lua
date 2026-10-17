@@ -341,10 +341,9 @@ function BookSheet.open_record(record, window, ctx, opts)
             return record.authors[1]
         end,
     }, ctx, opts and opts.beneath)
-    local authors = record.authors or {}
     local header = {
         title = record.title,
-        author = #authors > 0 and table.concat(authors, ", ") or nil,
+        author = #record.authors > 0 and table.concat(record.authors, ", ") or nil,
         meta = record_meta(record, os.time()),
     }
     -- The cover last, as BookSheet.open's.
