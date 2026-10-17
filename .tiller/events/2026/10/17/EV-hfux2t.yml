@@ -1,0 +1,13 @@
+id: EV-hfux2t
+type: approve.bug
+at: 2026-10-17T05:05:38.586482Z
+contributor: allen
+command: approve bug B-mobbtn
+targets:
+    - B-mobbtn
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/bugs/edit-layout-quote-day/bug.yml

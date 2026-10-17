@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { useLayoutEffect } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { schema } from "../../src/schema";
 import { App } from "../../src/ui/App";
 import type { Settings } from "../../src/ui/api";
+import { LayoutEditor, type LayoutEditorProps } from "../../src/ui/layout/LayoutEditor";
 
 const colorsoft = {
   id: "colorsoft",
@@ -484,6 +486,31 @@ describe("a change", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(puts()).toEqual([]);
+  });
+
+  it("ignores a fit answer after Done for a change made before the editor's effects ran", async () => {
+    // A click can land between the editor's commit and its passive effects (a loaded test run, a fast
+    // user); a parent's layout effect forces that ordering here.
+    const fit = deferred<Response>();
+    route({ [FIT]: () => fit.promise });
+    const onWrite = vi.fn<LayoutEditorProps["onWrite"]>(async () => true);
+    function ClickOnCommit() {
+      useLayoutEffect(() => {
+        screen.getByRole("button", { name: "Move row 2 up" }).click();
+      }, []);
+      return (
+        <LayoutEditor profileId="colorsoft" settings={withRows(FOUR)} pending={false} error={undefined} onWrite={onWrite} />
+      );
+    }
+
+    const { unmount } = render(<ClickOnCommit />);
+    expect(fits()).toHaveLength(1);
+    unmount();
+    fit.resolve(json({ checked: true, current: 0, proposed: 0 }));
+    await fit.promise;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(onWrite).not.toHaveBeenCalled();
   });
 
   it("edits the default when the stored layout is refused, and the first write replaces it", async () => {

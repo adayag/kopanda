@@ -1,0 +1,11 @@
+id: EV-0tfy9y
+type: claim.tweak
+at: 2026-10-17T04:35:21.723731Z
+contributor: allen
+command: claim tweak tweaks/flaky-layout-editor-fit-after-done
+targets:
+    - TW-f9nvsm
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/flaky-layout-editor-fit-after-done/tweak.yml

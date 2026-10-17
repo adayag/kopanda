@@ -1,0 +1,14 @@
+id: EV-kunqgc
+type: sync.tweak
+at: 2026-10-17T05:27:40.159589Z
+contributor: allen
+command: sync tweak TW-f9nvsm
+targets:
+    - TW-f9nvsm
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/flaky-layout-editor-fit-after-done/tweak.yml
