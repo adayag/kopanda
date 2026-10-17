@@ -57,9 +57,11 @@ local VIEWS = {
 -- The fixture books, kept under their own names, with their own metadata and covers.
 local ORIGINALS = { "a-christmas-carol.epub", "frankenstein.epub", "the-time-machine.epub" }
 
--- The copies' metadata, by file name: public-domain titles and authors. Seven series, so the
--- Series list runs to two pages of five: three under way (Christmas Books, The Leatherstocking
--- Tales, Sherlock Holmes), one finished (Alice), and three not started, two of them on page 2.
+-- The copies' metadata, by file name: public-domain titles and authors. Eight series, the copies'
+-- seven and Frankenstein's own (its EPUB's belongs-to-collection, which CoverBrowser reads as a
+-- series), so the Series list runs to two pages of five: three under way (Christmas Books, The
+-- Leatherstocking Tales, Sherlock Holmes), one finished (Alice), and four not started, three of
+-- them on page 2.
 -- Arthur Conan Doyle has six books, three in Sherlock Holmes (one of them the path-less source
 -- book) and three outside it, two rows of three on his own grid. The Wrong Box has two authors.
 -- Authors' surnames start with B, C, D, O, S, T and W.
