@@ -1,7 +1,7 @@
 id: T-7g6ybl
 key: bars/quick-settings/panel
 title: 'The quick-settings panel: its tokens in both looks, its state and its paint'
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:a955bb4
         observed_at: 2026-10-17T03:37:34.485201Z
 branch: tiller/bars/quick-settings/panel
+review_ref:
+    branch: tiller/bars/quick-settings/panel
+    head:
+        kind: git_commit
+        value: git:5cd2e3b
+        observed_at: 2026-10-17T04:48:34.975563Z
 gates:
     build:
         required: true
