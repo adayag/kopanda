@@ -1,7 +1,7 @@
 id: TW-f9nvsm
 key: tweaks/flaky-layout-editor-fit-after-done
 title: The layout editor's fit-after-Done test fails intermittently in a full bin/check
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         value: git:d5f972d
         observed_at: 2026-10-17T04:34:24.557108Z
 branch: tiller/tweaks/flaky-layout-editor-fit-after-done
+pr: 32
 gates:
     build:
         required: true
