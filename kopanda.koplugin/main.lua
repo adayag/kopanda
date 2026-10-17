@@ -309,12 +309,17 @@ function KoPanda:onCloseDocument()
 end
 
 -- The file manager closing (quit, or a book opening) takes the home and the library with it; a
--- window left on the stack would keep KOReader from quitting.
+-- window left on the stack would keep KOReader from quitting. A return recorded by an open that
+-- never closed the file manager (a refused file) is dropped once the library has closed, so a
+-- book opened from anywhere else closes to the home.
 function KoPanda:onCloseWidget()
     if self.refused then
         return
     end
     if self.in_fm then
+        if not Library.shown then
+            Library.return_to = nil
+        end
         Home.close()
         Library.close()
     end

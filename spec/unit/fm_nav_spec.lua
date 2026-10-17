@@ -220,8 +220,14 @@ describe("the file browser's nav bar", function()
                 homes = homes + 1
                 return true
             end
+            local runs = spy.on(package.loaded["launcher_entries"], "run")
+            finally(function()
+                runs:revert()
+            end)
             send(harness.gesture("tap", tab_centre(fm[1].bar, 2)))
             local Library = package.loaded["library"]
+            assert.spy(runs).was.called(1)
+            assert.spy(runs).was.called_with({ kind = "kopanda", target = "library" })
             assert.is_not_nil(Library.shown)
             assert.equals(Library.shown, harness.top())
             assert.equals(fm, harness.top(2))

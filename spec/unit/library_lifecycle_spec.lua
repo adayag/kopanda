@@ -329,6 +329,16 @@ describe("the library's lifecycle", function()
             assert.spy(shows).was_not_called()
         end)
 
+        it("shows nothing through the plugin's showLibrary once the file manager has gone", function()
+            assert.is_nil(require("apps/filemanager/filemanager").instance)
+            local shows = spy.on(UIManager, "show")
+            require("pluginloader").enabled_plugins[1]:showLibrary{}
+            UIManager.show:revert()
+            assert.is_nil(Library.shown)
+            assert.spy(shows).was_not_called()
+            assert.is_nil(harness.top())
+        end)
+
         it("closes the library with the file manager", function()
             local fm = fm_with_home()
             run_target()
@@ -562,6 +572,54 @@ describe("the library's lifecycle", function()
             assert.is_nil(Library.shown)
             assert.equals(Home.shown, harness.top())
         end)
+
+        -- An open KOReader refuses after the pre-callback ran, so the file manager never closes: a
+        -- file gone since the listing (readerui.lua:621-626) or of no supported type
+        -- (readerui.lua:671-674). The real openFile runs.
+        for _, case in ipairs({
+            { "a file of no supported type", "notes.kopanda-unknown", true },
+            { "a file gone since the listing", "gone.epub", false },
+        }) do
+            it("drops the return of an open refused for " .. case[1] .. " once the library closes, so a "
+                .. "book then opened from the home closes to the home", function()
+                    local path = require("datastorage"):getDataDir() .. "/" .. case[2]
+                    os.remove(path)
+                    if case[3] then
+                        local file = assert(io.open(path, "w"))
+                        file:write("not a book")
+                        file:close()
+                    end
+                    local id = "file:" .. path
+                    local books = fixture.books(7, sub.path)
+                    books[8] = { id = id, path = path, title = "Frankenstein", authors = {} }
+                    fixture.install({ [ROOT] = { folders = { sub } }, [sub.path] = { books = books } })
+                    assert.is_true(LibraryOrder.choose(sub.path, "title", "all"))
+                    util.openFile = real_open
+                    local library, fm = at_page_two()
+                    local tile
+                    for _, t in ipairs(library.tiles) do
+                        if t.record and t.record.id == id then
+                            tile = t
+                        end
+                    end
+                    UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", fixture.centre(tile.rect))))
+                    os.remove(path)
+                    assert.is_not_nil(Library.return_to)
+                    local refusal = harness.top()
+                    assert.is_truthy(refusal.text and refusal.text:find(case[2], 1, true))
+                    UIManager:close(refusal)
+                    assert.equals(library, harness.top())
+                    package.loaded["nav_bar"].run("home", "library")
+                    assert.equals(Home.shown, harness.top())
+                    fm:onShowingReader()
+                    read_and_close()
+                    assert.is_nil(Library.pending)
+                    harness.show_fm()
+                    harness.tick(2)
+                    assert.is_nil(Library.shown)
+                    assert.equals(Home.shown, harness.top())
+                end)
+        end
 
         it("leaves a book opened over the library from elsewhere, such as History, closing to the home", function()
             local _, fm = at_page_two()

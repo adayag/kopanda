@@ -1093,7 +1093,12 @@ describe("KoPanda failing safe", function()
         it("logs a book's open that throws and leaves the page as it was", function()
             local library = fixture.show()
             local tiles = widgets(library)
-            require("apps/filemanager/filemanagerutil").openFile = function()
+            local util = require("apps/filemanager/filemanagerutil")
+            local real_open = util.openFile
+            finally(function()
+                util.openFile = real_open
+            end)
+            util.openFile = function()
                 error("kopanda-test: open failed")
             end
             UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", fixture.centre(library.tiles[1].rect))))

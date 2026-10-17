@@ -1526,7 +1526,15 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   manager with `FileManager:showFiles` when none is open. Its `Show` finds the return and no pending
   library, so the library is built afresh at the return. The unsupported-file path (`:672`) runs
   before the broadcast, with the file manager and the library still up; its return stands until
-  the next file manager's `Show`.
+  the next file manager's `Show`, or until the file manager closes with the library already closed
+  (the next entry).
+- Three opens run the pre-callback and never close the file manager: a file gone since the listing
+  (`readerui.lua:621-626`), the unsupported file (`:671-674`) and an auxiliary provider, which opens
+  over the file manager (`frontend/apps/filemanager/filemanager.lua:1623-1629`). Their return stands
+  while the library is up. The file manager's `CloseWidget` drops it when the library has already
+  closed (the Home tab, say), so a book then opened from the home closes to the home. Accepted
+  residual: with such a stale return and the library still up, a book opened from History over it
+  still closes to the library.
 - The return lives in module state only, so a restart shows the home.
 - `FileChooser:changeToPath(path)` (`frontend/ui/widget/filechooser.lua:341-371`; the launcher's
   entries above): a library that fails to build when shown leaves the file browser at the folder it

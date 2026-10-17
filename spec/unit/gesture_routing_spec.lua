@@ -322,8 +322,14 @@ describe("gestures on the KoPanda home", function()
                 calls = calls + 1
                 return on_home(...)
             end
+            local runs = spy.on(package.loaded["launcher_entries"], "run")
+            finally(function()
+                runs:revert()
+            end)
             send(harness.gesture("tap", tab_centre(2)))
             local Library = package.loaded["library"]
+            assert.spy(runs).was.called(1)
+            assert.spy(runs).was.called_with({ kind = "kopanda", target = "library" })
             assert.equals(0, calls)
             assert.is_nil(Home.shown)
             assert.is_not_nil(Library.shown)
