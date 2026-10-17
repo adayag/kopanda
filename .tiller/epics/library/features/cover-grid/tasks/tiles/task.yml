@@ -1,7 +1,17 @@
 id: T-d53f8e
 key: library/cover-grid/tiles
 title: Library tokens, three icons and the tile widgets fitted to two rows
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:e383071c8aa22a12c2f40526c40912c184fe851b
+        path: .tiller/epics/library/features/cover-grid/tasks/tiles/task.md
+        observed_at: 2026-10-17T02:22:50.193171Z
+    commit:
+        kind: git_commit
+        value: git:943d0fa
+        observed_at: 2026-10-17T02:22:50.214946Z

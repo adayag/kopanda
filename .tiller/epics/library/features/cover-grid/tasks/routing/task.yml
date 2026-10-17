@@ -1,9 +1,19 @@
 id: T-t5ho4x
 key: library/cover-grid/routing
 title: Entry points into the library and the return after a book closes
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-cb345p
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:2fe88e10115bcf51a7f008b4a51ac3b84cd7b55a
+        path: .tiller/epics/library/features/cover-grid/tasks/routing/task.md
+        observed_at: 2026-10-17T02:22:50.236987Z
+    commit:
+        kind: git_commit
+        value: git:943d0fa
+        observed_at: 2026-10-17T02:22:50.258767Z

@@ -1,0 +1,13 @@
+id: EV-28zslc
+type: approve.task
+at: 2026-10-17T02:22:50.236659Z
+contributor: allen
+command: approve task T-cb345p
+targets:
+    - T-cb345p
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/screen/task.yml

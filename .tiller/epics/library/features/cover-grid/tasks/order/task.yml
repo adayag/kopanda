@@ -1,7 +1,17 @@
 id: T-anr3s4
 key: library/cover-grid/order
 title: Sort, status filter, paging and per-folder memory in the state file
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:a2d9fca09666d4a5694e7b6db678e85e1f97112e
+        path: .tiller/epics/library/features/cover-grid/tasks/order/task.md
+        observed_at: 2026-10-17T02:22:50.171989Z
+    commit:
+        kind: git_commit
+        value: git:943d0fa
+        observed_at: 2026-10-17T02:22:50.192755Z

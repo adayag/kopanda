@@ -1,0 +1,13 @@
+id: EV-ue476r
+type: approve.task
+at: 2026-10-17T02:22:50.283001Z
+contributor: allen
+command: approve task T-eia0v5
+targets:
+    - T-eia0v5
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/pickers/task.yml

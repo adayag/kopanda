@@ -1,0 +1,13 @@
+id: EV-q3h12l
+type: approve.feature
+at: 2026-10-17T02:22:50.171573Z
+contributor: allen
+command: approve feature F-2nt0fx
+targets:
+    - F-2nt0fx
+before:
+    status: specced
+after:
+    status: ready
+files:
+    - path: .tiller/epics/library/features/cover-grid/feature.yml
