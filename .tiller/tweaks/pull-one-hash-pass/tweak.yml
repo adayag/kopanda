@@ -1,9 +1,10 @@
 id: TW-x4pkgz
 key: tweaks/pull-one-hash-pass
 title: A pull reads and hashes every file twice
-status: ready
+status: check
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: F-9okxa7
 source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L150-L158
@@ -17,3 +18,31 @@ accepted_against:
         kind: git_commit
         value: git:525b5a5
         observed_at: 2026-10-17T16:06:09.216363Z
+branch: tiller/tweaks/pull-one-hash-pass
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:26:58.186202Z
+        against:
+            kind: git_commit
+            value: git:9d7d31c
+            observed_at: 2026-10-17T16:26:58.186199Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-9d7d31c-out-ac18a9aa32db244e134c464b70b29658685df6b3cc145544b5d1dfcdf404de80.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:26:58.186202Z
+        against:
+            kind: git_commit
+            value: git:9d7d31c
+            observed_at: 2026-10-17T16:26:58.186199Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-9d7d31c-out-611e8e804d866190638431c00d4faac025a39b1c494569c396dc7e14f711078c.txt
