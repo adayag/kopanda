@@ -1,7 +1,7 @@
 id: TW-bl79zr
 key: tweaks/quote-memo
 title: The quote is shaped and rendered on every home build
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         value: git:525b5a5
         observed_at: 2026-10-17T16:06:08.224804Z
 branch: tiller/tweaks/quote-memo
+pr: 42
 gates:
     build:
         required: true

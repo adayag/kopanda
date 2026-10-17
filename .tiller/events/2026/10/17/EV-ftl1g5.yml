@@ -1,0 +1,14 @@
+id: EV-ftl1g5
+type: submit.tweak
+at: 2026-10-17T17:44:48.18212Z
+contributor: allen
+command: submit tweak TW-bl79zr
+targets:
+    - TW-bl79zr
+before:
+    status: check
+after:
+    pr: 42
+    status: in_review
+files:
+    - path: .tiller/tweaks/quote-memo/tweak.yml
