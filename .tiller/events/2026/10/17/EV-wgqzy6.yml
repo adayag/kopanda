@@ -1,0 +1,16 @@
+id: EV-wgqzy6
+type: submit.task
+at: 2026-10-17T04:19:50.880636Z
+contributor: allen
+command: submit task T-cb345p
+targets:
+    - T-cb345p
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/cover-grid/screen
+        head: git:612cc0c
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/screen/task.yml
