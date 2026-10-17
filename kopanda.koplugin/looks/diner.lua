@@ -151,6 +151,17 @@ return {
         selected_fill_color = "teal", -- the current choice's row (SortC.dc.html:45)
         aside_above_gap = 2, -- "for this folder" over "Sort" (SortC.dc.html:39)
         sublabel_gap = 2, -- a row's label over its second line (SortC.dc.html:46)
+        -- The library's folder sheet (context-menu D11): its band, and the box its folder icon sits in
+        -- as the header's cover, the icon tinted (TintedIcon) so night's paper doesn't hide it.
+        library_folder_band_color = "pink", -- HoldFolderC.dc.html:35
+        folder_box = {
+            size = 60, -- HoldFolderC.dc.html:36
+            outline_width = 2, -- HoldFolderC.dc.html:36
+            outline_color = "outline", -- HoldFolderC.dc.html:36
+            fill_color = "paper", -- HoldFolderC.dc.html:36
+            icon_size = 34, -- HoldFolderC.dc.html:37
+            icon_color = "ink", -- HoldFolderC.dc.html:37
+        },
     },
 
     -- The quick-settings sheet's body. No board draws Diner's: its own sheet's rows and rules, its

@@ -968,6 +968,40 @@ describe("looks", function()
             end
         end)
 
+        -- The folder sheet's band and icon box (context-menu "Tokens", D11, D17): Diner's from
+        -- HoldFolderC.dc.html:35-37; Editorial's undrawn, so no band and its folder tile's box, each
+        -- value commented with its board line or the lead's analogy.
+        it("give the folder sheet's band and box the boards' values, each commented", function()
+            local wanted = {
+                diner = { band = "pink", box = { size = 60, outline_width = 2, outline_color = "outline",
+                    fill_color = "paper", icon_size = 34, icon_color = "ink" } },
+                editorial = { band = false, box = { size = 60, outline_width = 1, outline_color = "hairline",
+                    fill_color = "paper", icon_size = 34, icon_color = "ink" } },
+            }
+            for _, id in ipairs(ids) do
+                assert.equals(wanted[id].band, looks[id].sheet.library_folder_band_color, id)
+                assert.same(wanted[id].box, looks[id].sheet.folder_box, id)
+                local lines, inside = {}, false
+                for line in io.lines(harness.plugin_dir .. "/looks/" .. id .. ".lua") do
+                    if line:match("^%s+library_folder_band_color = ") then
+                        lines[#lines + 1] = line
+                    elseif line:match("^%s+folder_box = {") then
+                        inside = true
+                    elseif inside and line:match("^%s+},") then
+                        inside = false
+                    elseif inside then
+                        lines[#lines + 1] = line
+                    end
+                end
+                assert.equals(7, #lines, id)
+                for _, line in ipairs(lines) do
+                    local comment = line:match("%-%-%s*(.*)$")
+                    assert.truthy(comment and (comment:find("%.dc%.html:%d") or comment:find("lead")),
+                        id .. ": " .. line)
+                end
+            end
+        end)
+
         -- D7: the bar always shows on the home, and NavBarC:70 draws no stripe above it; NavBar:19,
         -- :61 leave 20 px under Editorial's last row.
         it("give Diner no footer stripe and Editorial a 20 px bottom margin above the bar", function()

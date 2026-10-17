@@ -2,10 +2,11 @@
 -- The orders (cover-grid D3, D8, D9): folders first by the title order of their names, then the
 -- books the status keeps, in the sort's order; every order ends on id, so it is total. Pages
 -- hold six items. The memory (D11): the sort and status per folder, by its realpath, and the
--- folder and page the library was left at, under the runtime state file's one key `library`
--- = { folders = { [realpath] = { sort, status } }, at = { dir, page } }; never a setting.
--- Module state: this session's choices and folder left, read before the file, so a choice
--- whose write failed still holds until the plugin reloads.
+-- folder and page the library was left at, and the folders hidden from the grid (context-menu
+-- D1), under the runtime state file's one key `library` = { folders = { [realpath] = { sort,
+-- status } }, at = { dir, page }, hidden = { [realpath] = true } }; never a setting.
+-- Module state: this session's choices, folder left and hides and unhides, read before the file,
+-- so one whose write failed still holds until the plugin reloads.
 local BookIndex = require("book_index")
 local State = require("state")
 local ffiutil = require("ffi/util")
@@ -19,7 +20,8 @@ local SORTS = { recent = true, title = true, author = true, series = true }
 local STATUSES = { reading = "reading", finished = "complete", all = true }
 local DEFAULT_SORT, DEFAULT_STATUS = "recent", "all"
 
-local session = { folders = {} }
+-- session.hidden: [realpath] = true for a hide, false for an unhide, this session.
+local session = { folders = {}, hidden = {} }
 
 -- The title order's key: lowercase, one leading "the ", "a " or "an " dropped. Exported for the
 -- series list's order (series-and-authors D12).
@@ -189,11 +191,12 @@ local function is_page(page)
     return type(page) == "number" and page >= 1 and page == math.floor(page)
 end
 
--- The stored memory, its malformed parts left out and logged: { folders, at }, each entry a
--- { sort, status } with each field valid or nil, at a { dir, page } or nil.
+-- The stored memory, its malformed parts left out and logged: { folders, at, hidden }, each
+-- folders entry a { sort, status } with each field valid or nil, at a { dir, page } or nil,
+-- hidden the entries that map a string to true.
 local function stored()
     local value = State.get("library")
-    local memory = { folders = {} }
+    local memory = { folders = {}, hidden = {} }
     if value == nil then
         return memory
     end
@@ -222,13 +225,25 @@ local function stored()
     elseif at ~= nil then
         bad = true
     end
+    if type(value.hidden) == "table" then
+        for path, flag in pairs(value.hidden) do
+            if type(path) == "string" and flag == true then
+                memory.hidden[path] = true
+            else
+                bad = true
+            end
+        end
+    elseif value.hidden ~= nil then
+        bad = true
+    end
     if bad then
         logger.warn("KoPanda: the library's memory has malformed parts; reading them as the defaults")
     end
     return memory
 end
 
--- Writes the stored memory with this session's choices and folder left over it.
+-- Writes the stored memory with this session's choices, folder left and hides and unhides over
+-- it; an empty folders or hidden part is written as no key.
 local function write()
     local memory = stored()
     for path, choice in pairs(session.folders) do
@@ -237,8 +252,13 @@ local function write()
     if session.at then
         memory.at = { dir = session.at.dir, page = session.at.page }
     end
-    if next(memory.folders) == nil then
-        memory.folders = nil
+    for path, flag in pairs(session.hidden) do
+        memory.hidden[path] = flag or nil
+    end
+    for _, part in ipairs({ "folders", "hidden" }) do
+        if next(memory[part]) == nil then
+            memory[part] = nil
+        end
     end
     return State.set("library", memory)
 end
@@ -278,6 +298,49 @@ function LibraryOrder.leave(dir, page)
         return false
     end
     session.at = { dir = dir, page = page }
+    return write()
+end
+
+-- Whether path is hidden from its parent's grid, under hidden (stored().hidden) with this session's
+-- hides and unhides over it, by its realpath.
+local function hidden_in(hidden, path)
+    local key = real(path)
+    local flag = session.hidden[key]
+    if flag == nil then
+        return hidden[key] == true
+    end
+    return flag
+end
+
+-- Whether the folder at path is hidden (context-menu D1), by its realpath, so its other names are too.
+function LibraryOrder.is_hidden(path)
+    return hidden_in(stored().hidden, path)
+end
+
+-- The folders of the list ({ name, path } each, as Books.folder gives them) that are not hidden,
+-- in their order.
+function LibraryOrder.visible(folders)
+    local hidden = stored().hidden
+    local kept = {}
+    for _, folder in ipairs(folders) do
+        if not hidden_in(hidden, folder.path) then
+            kept[#kept + 1] = folder
+        end
+    end
+    return kept
+end
+
+-- Hides the folder at path from its parent's grid, by its realpath; Books.folder and Books.all
+-- still list it. Returns whether the state file took it; either way it holds for the session.
+function LibraryOrder.hide(path)
+    session.hidden[real(path)] = true
+    return write()
+end
+
+-- Shows the folder at path in its parent's grid again, its key gone from the state file. Returns
+-- whether the state file took it; either way it holds for the session.
+function LibraryOrder.unhide(path)
+    session.hidden[real(path)] = false
     return write()
 end
 

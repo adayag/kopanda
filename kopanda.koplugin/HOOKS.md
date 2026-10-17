@@ -255,7 +255,9 @@ Upgrading KOReader walks this list.
   `saveSetting(key, nil)` sets it to nil (`frontend/luasettings.lua:102-105`), so `flush` leaves
   it out, and `State.set`'s read-back takes the absent key as the nil it was given.
 - The library's memory (`library_order.lua`) is one key, `library`, a table:
-  `{ folders = { [realpath] = { sort, status } }, at = { dir, page } }`. `saveSetting` keeps the
+  `{ folders = { [realpath] = { sort, status } }, at = { dir, page }, hidden = { [realpath] = true } }`,
+  `hidden` the folders the folder sheet's Hide left out of their parent's grid (context-menu D1),
+  an empty set written as no key. `saveSetting` keeps the
   table as given and `flush` serialises it whole (`frontend/luasettings.lua:102`, `:270-275`), so
   the `dofile` read-back gives a new table: `State.set` compares it key by key, recursively, as
   `settings.lua` compares its own read-back. A malformed part reads as the defaults, logged; a
@@ -1717,6 +1719,30 @@ guard (`sheet.lua`).
 - `FileChooser:changeToPath(path)` (`frontend/ui/widget/filechooser.lua:341-371`; the launcher's
   entries above): a library that fails to build when shown leaves the file browser at the folder it
   was to show, the nearest existing ancestor when the folder has gone (`:342-346`).
+
+### The folder sheet: `FileManager:setHome`, `home_dir`, the `ConfirmBox`'s order and the close's dirty marking
+
+- Set as library root (`library_sheets.lua`) calls `FileManager.instance:setHome(path)`
+  (`frontend/apps/filemanager/filemanager.lua:873-887`), the instance read through `package.loaded`
+  at tap time. It shows a `ConfirmBox` with "Set '%1' as HOME folder?" and `ok_text` "Set as HOME"
+  (`:875-877`) and returns. Its `ok_callback` (`:878-885`) updates the folder shortcut `home_dir`
+  (`:879`), saves `home_dir` in `G_reader_settings` (`:880`), updates the title bar's path (`:881`)
+  and, under `lock_home_folder` when no shortcut was refreshed, refreshes the chooser (`:882-884`).
+  A Cancel runs none of it. KoPanda never writes `home_dir`; the library's root stays
+  `filemanagerutil.getHomeFolder()` (`frontend/apps/filemanager/filemanagerutil.lua:25-27`; the book
+  records' entry above).
+- `ui/widget/confirmbox`: OK runs `ok_callback` and then closes the box
+  (`frontend/ui/widget/confirmbox.lua:115-121`, unless `keep_dialog_open`, `:119`); Cancel runs
+  `cancel_callback` and then closes it (`:108-114`). So `home_dir` is saved before the close.
+- `UIManager:close` (`frontend/ui/uimanager.lua:290-360`) then marks dirty every widget on the stack
+  from the topmost one that covers the full screen up (`:349-353`), the library (`covers_fullscreen`)
+  among them, so the library repaints once the box is gone. Its paint (`library.lua`'s
+  `Library:paintTo`, before the chrome's) compares `getHomeFolder()` by realpath with the root the
+  library was built under and, when they differ, shows the new root at page 1 and stores it as where
+  the library was left (`LibraryOrder.leave`); a check that raises is logged and the paint goes on.
+- Hide stores the folder's realpath under the state file's `library.hidden` (the runtime state
+  file's entry above) and touches nothing in KOReader: `Books.folder` and `Books.all` still list the
+  folder (the book records' entry above); only the library's grid leaves it out.
 
 ### Widget and support modules
 

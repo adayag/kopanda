@@ -3,7 +3,8 @@
 -- its pager, nav bar and gesture route, the events that keep it current and the pre-build on a
 -- book's close; what it draws is library_view.lua's, what a folder shows and the memory
 -- library_order.lua's, and its covers library_covers.lua's. Here are what a tap on each of its
--- own parts does, where it was left and the return a book's open records.
+-- own parts does, where it was left, the return a book's open records and the root check its
+-- paint runs (context-menu D6).
 -- Module state: Library.shown, the library on screen or nil, and Library.pending, one built on
 -- book close and not yet shown, or nil, both the chrome's slots; Library.return_to, { dir, page }
 -- a book was opened from, which the next file manager's show returns to (D4), or nil, in memory
@@ -19,7 +20,7 @@ local ffiutil = require("ffi/util")
 local Library = LibraryChrome.Window:extend{
     name = "kopanda_library",
     screen = "library",
-    fields = { "dir", "tiles", "box", "note" },
+    fields = { "dir", "root", "tiles", "box", "note" },
     dir = nil,
 }
 
@@ -46,8 +47,12 @@ function Library:view()
     return self.dir or LibraryView.root()
 end
 
+-- The build keeps root, KOReader's home folder it was built under, for the root check.
 function Library:build(dir, page)
-    return LibraryView.build(dir, page)
+    local root = LibraryView.root()
+    local built = LibraryView.build(dir, page)
+    built.root = root
+    return built
 end
 
 -- Opens record's file as the file browser's own tap does (D15; filemanager.lua:160-169), which
@@ -65,6 +70,11 @@ function Library:open(record)
     end)
 end
 
+-- Shows folder ({ name, path }) at its page: a tap on its tile, and its sheet's Open.
+function Library:open_folder(folder)
+    self:go(folder.path, page_for(folder.path))
+end
+
 -- The back control, the title inside a sub-folder: up one folder, at its page.
 function Library:back()
     local parent = LibraryView.parent_of(self.dir)
@@ -78,7 +88,7 @@ function Library:action_at(pos)
         if LibraryChrome.inside(tile.rect, pos) then
             if tile.folder then
                 return function()
-                    self:go(tile.folder.path, page_for(tile.folder.path))
+                    self:open_folder(tile.folder)
                 end
             end
             return function()
@@ -143,6 +153,28 @@ function Library:request_covers()
     LibraryCovers.request(self, function()
         return Library.shown == self
     end)
+end
+
+-- The root check (context-menu D6): when KOReader's home folder is no longer the one the library
+-- was built under (Set as library root's OK, whose ConfirmBox's close marks the library dirty),
+-- the library shows the new root at page 1, recorded as where it was left.
+local function check_root(library)
+    local root = LibraryView.root()
+    if LibraryView.same_dir(root, library.root) then
+        return
+    end
+    library.root = root
+    library:go(root, 1)
+    LibraryOrder.leave(root, 1)
+end
+
+-- The root check before the chrome's paint; a check that raises is logged and the paint goes on.
+function Library:paintTo(bb, x, y)
+    local ok, err = pcall(check_root, self)
+    if not ok then
+        logger.err("KoPanda: the library could not check its root:", err)
+    end
+    LibraryChrome.Window.paintTo(self, bb, x, y)
 end
 
 -- The folder and page the library was left at are stored (D11).
