@@ -1,0 +1,13 @@
+id: EV-l8wua5
+type: start.bug
+at: 2026-10-17T20:46:25.336274Z
+contributor: allen
+command: start bug B-fip6q6
+targets:
+    - B-fip6q6
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/bugs/library-prebuild-stale-and-wasted/bug.yml
