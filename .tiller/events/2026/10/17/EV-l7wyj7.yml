@@ -1,0 +1,13 @@
+id: EV-l7wyj7
+type: check.task
+at: 2026-10-17T14:42:56.468452Z
+contributor: allen
+command: check task T-8j0bc0
+targets:
+    - T-8j0bc0
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/routing/task.yml
