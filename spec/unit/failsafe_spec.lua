@@ -1214,6 +1214,37 @@ describe("KoPanda failing safe", function()
             as_it_was(library, tiles)
         end)
 
+        it("logs an off-page arrival whose re-read throws and still rebuilds the page's tile that arrived", function()
+            local arrive
+            local off_page = fixture.book("Book 99")
+            package.loaded["book_covers"].request = function(records, _, on_arrival)
+                arrive = function()
+                    on_arrival({ records[1], off_page })
+                end
+            end
+            local library = fixture.show()
+            local tiles = widgets(library)
+            local books = package.loaded["books"]
+            local with_progress = books.with_progress
+            books.with_progress = function(path)
+                if path == off_page.path then
+                    error("kopanda-test: off-page re-read failed")
+                end
+                return with_progress(path)
+            end
+            assert.is_function(arrive)
+            local ok = pcall(arrive)
+            assert.is_true(ok)
+            assert.is_true(logged_error("kopanda-test: off-page re-read failed"))
+            assert.is_true(logged_error("the library could not keep the covers that arrived off its page"))
+            assert.is_false(logged_error("the library's cover arrival failed"))
+            assert.equals(library, harness.top())
+            assert.is_not.equals(tiles[1], library.tiles[1].widget)
+            for i = 2, #tiles do
+                assert.equals(tiles[i], library.tiles[i].widget, "tile " .. i)
+            end
+        end)
+
         -- context-menu C8 ("Failure behaviour"): the hold and the sheets it opens.
         -- Holds rect's centre on library, as the UI loop hands the top window a gesture; returns
         -- whether the library consumed it.

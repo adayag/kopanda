@@ -357,6 +357,7 @@ describe("the library's kept listing", function()
             library:turn(1)
             assert.equals(0, #listed)
             assert.equals(arrived.id, library.tiles[1].record.id)
+            assert.equals(seventh, library.tiles[1].record.path)
             assert.equals("Book 07 Revised", library.tiles[1].record.title)
         end)
 

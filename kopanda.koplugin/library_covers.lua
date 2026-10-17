@@ -94,7 +94,7 @@ local function renew_off_page(library, arrived)
         end
         for _, record in ipairs(arrived) do
             if not on_page[record.id] then
-                local fresh = Books.get(record.id)
+                local fresh = record.path and Books.with_progress(record.path) or Books.get(record.id)
                 if fresh then
                     LibraryView.renew(library.kept, fresh)
                 end
