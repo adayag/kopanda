@@ -1,0 +1,13 @@
+id: EV-j9linl
+type: approve.bug
+at: 2026-10-17T20:44:22.571051Z
+contributor: allen
+command: approve bug B-61alhe
+targets:
+    - B-61alhe
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/bugs/launcher-target-under-home/bug.yml

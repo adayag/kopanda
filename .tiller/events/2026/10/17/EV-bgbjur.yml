@@ -1,0 +1,13 @@
+id: EV-bgbjur
+type: approve.tweak
+at: 2026-10-17T20:44:24.583348Z
+contributor: allen
+command: approve tweak TW-s7jikb
+targets:
+    - TW-s7jikb
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/tweaks/task-gate-skips-emulator/tweak.yml

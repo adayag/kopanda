@@ -1,8 +1,18 @@
 id: TW-wny5j4
 key: tweaks/shared-book-open
 title: One book-open in the chrome, not three copies
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 attached_to: F-yaihx9
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:12719a2be059bd746547bf87f3ee88b349260179
+        path: .tiller/tweaks/shared-book-open/tweak.md
+        observed_at: 2026-10-17T20:44:24.048164Z
+    commit:
+        kind: git_commit
+        value: git:d5aeb78
+        observed_at: 2026-10-17T20:44:24.071029Z

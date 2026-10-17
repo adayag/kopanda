@@ -1,0 +1,13 @@
+id: EV-h4dztf
+type: approve.bug
+at: 2026-10-17T20:44:22.30319Z
+contributor: allen
+command: approve bug B-25sffy
+targets:
+    - B-25sffy
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/bugs/chapter-stale-after-other-write/bug.yml

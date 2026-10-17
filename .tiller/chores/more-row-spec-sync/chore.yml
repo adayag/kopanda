@@ -1,8 +1,18 @@
 id: CH-7z6mm5
 key: chores/more-row-spec-sync
 title: Amend the sheets and device-menus specs for the More-row paging
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 source: .tiller/reviews/2026-10-17-efficiency-pass2-followups.md#L50-L56
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:38165442ed58b660c56600d144288a8769f3a8b3
+        path: .tiller/chores/more-row-spec-sync/chore.md
+        observed_at: 2026-10-17T20:44:23.317217Z
+    commit:
+        kind: git_commit
+        value: git:d5aeb78
+        observed_at: 2026-10-17T20:44:23.339772Z

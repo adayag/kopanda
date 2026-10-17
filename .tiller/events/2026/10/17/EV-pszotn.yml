@@ -1,0 +1,13 @@
+id: EV-pszotn
+type: approve.tweak
+at: 2026-10-17T20:44:24.071172Z
+contributor: allen
+command: approve tweak TW-wny5j4
+targets:
+    - TW-wny5j4
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/tweaks/shared-book-open/tweak.yml
