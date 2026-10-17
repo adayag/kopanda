@@ -1,7 +1,7 @@
 id: T-anr3s4
 key: library/cover-grid/order
 title: Sort, status filter, paging and per-folder memory in the state file
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:943d0fa
         observed_at: 2026-10-17T02:22:50.192755Z
 branch: tiller/library/cover-grid/order
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T03:04:36.183434Z
+        against:
+            kind: git_commit
+            value: git:e357504
+            observed_at: 2026-10-17T03:04:36.183424Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-e357504-out-1065ac92e60ed3824d3a93820de08d35f4762aa0aebec56b81d5bd9e00cb5532.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T03:04:36.183434Z
+        against:
+            kind: git_commit
+            value: git:e357504
+            observed_at: 2026-10-17T03:04:36.183424Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-e357504-out-bed7f1707c9294b08064af26e176d1fcde58381fd451a0271ceca9e8db481d7a.txt
