@@ -24,24 +24,24 @@ gates:
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-17T21:22:38.751011Z
+        run_at: 2026-10-17T21:45:44.804994Z
         against:
             kind: git_commit
-            value: git:20e68ab
-            observed_at: 2026-10-17T21:22:38.75101Z
+            value: git:f2015b4
+            observed_at: 2026-10-17T21:45:44.804993Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/build-20e68ab-out-77efe24112a8845fadf873b9db93cc3fae663f02b9d148cbf7c454133610bf71.txt
-    tests:
+              ref: artifacts/tiller/gates/build-f2015b4-out-e86c724ebfcdbb90d75e035573fb4fb74a7c7bac8e381bd9156a06dbbed7e0e3.txt
+    unit_tests:
         required: true
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-17T21:22:38.751011Z
+        run_at: 2026-10-17T21:45:44.804994Z
         against:
             kind: git_commit
-            value: git:20e68ab
-            observed_at: 2026-10-17T21:22:38.75101Z
+            value: git:f2015b4
+            observed_at: 2026-10-17T21:45:44.804993Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/tests-20e68ab-out-fc6b0c9ee148b84b0fda4d43b43ee6fd8081dfc2ace69988ef84b767ced8a47b.txt
+              ref: artifacts/tiller/gates/unit_tests-f2015b4-out-e39dbfd866f287acfe7fd7abb1e0d8c9ee0d6ce8544aaddb9e200e1aaa591b27.txt
