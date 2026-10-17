@@ -6,6 +6,8 @@
 --   screen, its name in the settled signal and the log; fields, the keys of its build it keeps;
 --   build(view, page), a LibraryChrome.build of view at page; view(), the view it shows;
 --   action_at(pos), the action a tap on its own parts runs, or nil; back(), the back control's tap;
+--   hit(x, y), what lies at a point on the window of its class shown, which a hold's sheet is for;
+--   open(record), a tap's open of a book; refresh(), its re-list;
 --   request_covers(), after a page's first paint; book_closed(file), when it is taken pending after
 --   that book closed (default: the view rebuilt); closing(), its part of the close. A window listing
 --   the whole library asks for its covers through LibraryChrome.request_records.
@@ -25,10 +27,12 @@ local Home = require("home")
 local HomeGestures = require("home_gestures")
 local Icons = require("icons")
 local InputContainer = require("ui/widget/container/inputcontainer")
+local LibrarySheets = require("library_sheets")
 local LibraryTiles = require("library_tiles")
 local Looks = require("looks")
 local NavBar = require("nav_bar")
 local Paint = require("paint")
+local PaintClock = require("paint_clock")
 local Sheet = require("sheet")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
@@ -704,12 +708,28 @@ function Window:onCloseWidget()
     end
 end
 
+-- The hold step (context-menu "Holds"): what lies at pos (window.hit) handed to LibrarySheets.hold,
+-- which opens its sheet over the window, paint_ms from this step's entry. A hit or dispatch that
+-- raises is logged and the hold consumed, the window left as it was.
+local function hold_step(window, pos)
+    local started = PaintClock.now()
+    local ok, err = pcall(function()
+        local hit = window.hit and window.hit(pos.x, pos.y)
+        LibrarySheets.hold(window, hit, started)
+    end)
+    if not ok then
+        logger.err("KoPanda: the " .. window.screen .. "'s hold failed:", err)
+    end
+    return true
+end
+
 -- The window's gestures, in order, each step stopping at the first that consumes: a tap or a hold
 -- in the nav bar's band, which the bar takes; a tap on a part of the window that acts on taps
 -- (window:tap); a west or east swipe outside the top and bottom edge bands turns the page,
--- mirrored as Menu:onSwipe reads it (frontend/ui/widget/menu.lua:1518-1523); a hold runs nothing;
--- then the home's forward step (HomeGestures.forward), so the top menu, Gestures' corner zones and
--- its edge-band swipes still work. Whatever none of them takes is consumed.
+-- mirrored as Menu:onSwipe reads it (frontend/ui/widget/menu.lua:1518-1523); then the home's
+-- forward step (HomeGestures.forward), so the top menu, Gestures' corner zones and its edge-band
+-- swipes still work, and a hold corner bound on the file manager wins over the hold, as on the home
+-- (home_gestures.lua); then a hold runs the hold step. Whatever none of them takes is consumed.
 function Window:routeGesture(ges)
     self.own_step = nil
     InputContainer.onGesture(self, ges)
@@ -725,10 +745,12 @@ function Window:routeGesture(ges)
         self:turn(BD.flipDirectionIfMirroredUILayout(ges.direction) == "west" and 1 or -1)
         return true
     end
-    if own_step == "hold" then
+    if HomeGestures.forward(ges) then
         return true
     end
-    HomeGestures.forward(ges)
+    if own_step == "hold" then
+        return hold_step(self, ges.pos)
+    end
     return true
 end
 

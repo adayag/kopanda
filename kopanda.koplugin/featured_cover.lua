@@ -211,9 +211,23 @@ function FeaturedCover.framed(record, w, h, ctx, frame)
     return box
 end
 
+-- The featured cover's frame in look, as FeaturedCover.framed takes it: the look's cover stroke,
+-- radius and shadow and the featured placeholder's padding and parts. The book sheet frames a
+-- library record's cover in it too.
+function FeaturedCover.frame(look)
+    return {
+        outline_color = "outline",
+        outline_width = look.stroke.outline,
+        radius = look.radius.cover,
+        shadow = look.shadow.cover,
+        padding = look.featured.cover_padding,
+        title = look.type.cover_title,
+        authors = look.type.cover_authors,
+    }
+end
+
 -- The framed cover box for book ({ file, title, authors }, or nil for the first run) in a w by
--- h box under ctx: FeaturedCover.framed in the look's cover stroke, radius and shadow and the
--- featured placeholder's padding and parts, or the first run's dashed frame.
+-- h box under ctx: FeaturedCover.framed in FeaturedCover.frame, or the first run's dashed frame.
 function FeaturedCover.build(book, w, h, ctx)
     local look = ctx.look
     if not book then
@@ -239,15 +253,8 @@ function FeaturedCover.build(book, w, h, ctx)
     if book.authors and book.authors ~= "" then
         authors[1] = book.authors
     end
-    return FeaturedCover.framed({ path = book.file, title = book.title, authors = authors }, w, h, ctx, {
-        outline_color = "outline",
-        outline_width = look.stroke.outline,
-        radius = look.radius.cover,
-        shadow = look.shadow.cover,
-        padding = look.featured.cover_padding,
-        title = look.type.cover_title,
-        authors = look.type.cover_authors,
-    })
+    return FeaturedCover.framed({ path = book.file, title = book.title, authors = authors }, w, h, ctx,
+        FeaturedCover.frame(look))
 end
 
 -- Whether to ask CoverBrowser to extract a cover for info, its getBookInfo row or nil, in a box

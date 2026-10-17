@@ -1,0 +1,15 @@
+id: EV-o8jjeq
+type: start.task
+at: 2026-10-17T16:45:14.262431Z
+contributor: allen
+command: start task T-1rl35j
+targets:
+    - T-1rl35j
+before:
+    status: ready
+after:
+    branch: tiller/library/context-menu/book-sheet
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/book-sheet/task.yml

@@ -927,4 +927,311 @@ describe("the book sheet", function()
             assert.is_nil(Sheet.shown)
         end)
     end)
+
+    -- context-menu C3, D2, D5, D13: the sheet over a book record from the library or a shelf screen,
+    -- shown over a window that stands for the one held on: its own open and re-list are recorded,
+    -- its close is the sheet's screen beneath. The file manager's home stays up beneath the window,
+    -- so a callback reaching the home would show.
+    describe("over a library record", function()
+        local BookSheet, Books, Looks
+        local a
+
+        before_each(function()
+            BookSheet = require("book_sheet")
+            Books = require("books")
+            Looks = require("looks")
+            a = book("a.epub")
+        end)
+
+        -- A window as the library's and the shelf screens' are to the sheet: ctx, open(record),
+        -- refresh() and close(), each call recorded.
+        local function window()
+            local w = {
+                screen = "library",
+                ctx = { look = Looks.active(), variant = Looks.variant(), screen = Screen },
+                opened = {},
+                refreshes = 0,
+                closes = 0,
+            }
+            function w:open(record)
+                self.opened[#self.opened + 1] = record
+            end
+            function w:refresh()
+                self.refreshes = self.refreshes + 1
+            end
+            function w.close()
+                w.closes = w.closes + 1
+            end
+            return w
+        end
+
+        -- Opens record's sheet over a fresh window above the home; returns the window and the file
+        -- manager.
+        local function open(record)
+            local fm = fm_with_home()
+            local w = window()
+            BookSheet.open_record(record, w, w.ctx, { beneath = w })
+            return w, fm
+        end
+
+        local function remote(authors)
+            return { id = "shelf:frankenstein", source = "shelf", title = "Frankenstein", authors = authors or {} }
+        end
+
+        it("is headed with the record's title, its authors joined, and its cover through FeaturedCover.framed, "
+            .. "asking no extraction", function()
+            sidecar(a, '{ doc_props = { title = "Frankenstein", authors = "Mary Shelley\\nPercy Shelley" } }')
+            local record = Books.for_path(a)
+            fm_with_home()
+            local extractions = 0
+            package.loaded.bookinfomanager = {
+                getBookInfo = function()
+                    return nil
+                end,
+                isCachedCoverInvalid = function()
+                    return true
+                end,
+                extractInBackground = function()
+                    extractions = extractions + 1
+                    return true
+                end,
+                isExtractingInBackground = function()
+                    return false
+                end,
+            }
+            local framed_calls = {}
+            local framed = FeaturedCover.framed
+            replace(FeaturedCover, "framed", function(framed_record, w, h, ctx, frame)
+                local cover = framed(framed_record, w, h, ctx, frame)
+                framed_calls[#framed_calls + 1] = { record = framed_record, w = w, h = h, frame = frame, cover = cover }
+                return cover
+            end)
+            local builds = 0
+            local build = FeaturedCover.build
+            replace(FeaturedCover, "build", function(...)
+                builds = builds + 1
+                return build(...)
+            end)
+            local w = window()
+            BookSheet.open_record(record, w, w.ctx, { beneath = w })
+            harness.tick(3)
+            local spec = Sheet.shown.spec
+            assert.equals("book", spec.name)
+            assert.equals("book", spec.band)
+            assert.equals(w, Sheet.shown.beneath)
+            assert.equals("Frankenstein", spec.header.title)
+            assert.equals("Mary Shelley, Percy Shelley", spec.header.author)
+            local look = w.ctx.look
+            assert.equals(0, builds)
+            assert.equals(1, #framed_calls)
+            local call = framed_calls[1]
+            assert.equals(record, call.record)
+            assert.equals(Screen:scaleBySize(look.sheet.cover_w), call.w)
+            assert.equals(Screen:scaleBySize(look.sheet.cover_h), call.h)
+            -- The featured cover's own frame.
+            assert.equals("outline", call.frame.outline_color)
+            assert.equals(look.stroke.outline, call.frame.outline_width)
+            assert.equals(look.radius.cover, call.frame.radius)
+            assert.equals(look.shadow.cover, call.frame.shadow)
+            assert.equals(look.featured.cover_padding, call.frame.padding)
+            assert.equals(look.type.cover_title, call.frame.title)
+            assert.equals(look.type.cover_authors, call.frame.authors)
+            assert.equals(call.cover, spec.header.cover)
+            assert.equals(0, extractions)
+        end)
+
+        describe("meta line", function()
+            local function meta(now)
+                local result
+                at(now, function()
+                    open(Books.for_path(a))
+                    result = Sheet.shown.spec.header.meta
+                end)
+                return result
+            end
+
+            it("reads the percent and when it was opened for a book under way", function()
+                sidecar(a, '{ percent_finished = 0.4, summary = { status = "reading" } }')
+                local now = local_time(2026, 10, 15, 15)
+                history({ { a, local_time(2026, 10, 12, 10) } })
+                assert.equals("40% · opened 3 days ago", meta(now))
+            end)
+
+            it("reads 100% for a finished book", function()
+                sidecar(a, '{ percent_finished = 0.97, summary = { status = "complete" } }')
+                history({})
+                assert.equals("100%", meta(local_time(2026, 10, 15, 15)))
+            end)
+
+            it("is left out for a new book with no history", function()
+                history({})
+                assert.is_nil(meta(local_time(2026, 10, 15, 15)))
+            end)
+
+            it("reads only when it was opened for a book with history but no sidecar", function()
+                local now = local_time(2026, 10, 15, 15)
+                history({ { a, now - 3600 } })
+                assert.equals("opened today", meta(now))
+            end)
+
+            it("has no chapter, though the home's featured chapter names this book", function()
+                assert.is_true(State.set("featured_chapter_file", a))
+                assert.is_true(State.set("featured_chapter", "Letter IV"))
+                sidecar(a, '{ percent_finished = 0.4 }')
+                history({})
+                assert.equals("40%", meta(local_time(2026, 10, 15, 15)))
+            end)
+        end)
+
+        it("lists Open, Book details, Read status and More by this author with their icons", function()
+            open(Books.for_path(a))
+            local got = {}
+            for i, row in ipairs(Sheet.shown.spec.rows) do
+                got[i] = { row.label, row.icon, row.muted == true }
+            end
+            assert.same({
+                { "Open", "open_book", false },
+                { "Book details", "info", false },
+                { "Read status", "bookmark", false },
+                { "More by this author", "authors", false },
+            }, got)
+            local status, more = place_of("Read status").row, place_of("More by this author").row
+            assert.equals("New ›", status.detail)
+            assert.equals("status", status.chip)
+            assert.equals("›", more.detail)
+        end)
+
+        it("runs the window's own open once with the record on Open", function()
+            local record = Books.for_path(a)
+            local w = open(record)
+            tap("Open")
+            assert.equals(1, #w.opened)
+            assert.equals(record, w.opened[1])
+            assert.is_nil(Sheet.shown)
+        end)
+
+        it("shows KOReader's book details for the record's path on Book details, once", function()
+            local _, fm = open(Books.for_path(a))
+            local shown = {}
+            fm.bookinfo.show = function(_, file)
+                shown[#shown + 1] = file
+            end
+            tap("Book details")
+            assert.same({ a }, shown)
+            assert.is_nil(Sheet.shown)
+        end)
+
+        it("re-lists the window once, and refreshes no home, when the status sub-sheet writes", function()
+            sidecar(a, '{ summary = { status = "reading" } }')
+            local w = open(Books.for_path(a))
+            local refreshes = count_refreshes()
+            tap("Read status")
+            assert.equals("status", Sheet.shown.spec.name)
+            assert.equals(w, Sheet.shown.beneath)
+            tap("Finished")
+            assert.equals("complete", sidecar_data(a).summary.status)
+            assert.equals(1, w.refreshes)
+            assert.equals(0, refreshes.n)
+            assert.is_nil(Sheet.shown)
+        end)
+
+        it("re-lists the window once and shows no sheet when the record's file went since the build", function()
+            local record = Books.for_path(a)
+            assert(os.remove(a))
+            local w = open(record)
+            assert.equals(1, w.refreshes)
+            assert.is_nil(Sheet.shown)
+        end)
+
+        describe("on More by this author", function()
+            local AuthorsScreen
+
+            before_each(function()
+                AuthorsScreen = require("authors_screen")
+                local home_dir = G_reader_settings:readSetting("home_dir")
+                G_reader_settings:saveSetting("home_dir", books_dir)
+                cleanup(function()
+                    G_reader_settings:saveSetting("home_dir", home_dir)
+                end)
+                sidecar(a, '{ doc_props = { title = "Frankenstein", authors = "Mary Shelley\\nPercy Shelley" } }')
+                local b = book("b.epub")
+                sidecar(b, '{ doc_props = { title = "Zastrozzi", authors = "Percy Shelley" } }')
+            end)
+
+            -- Taps More by this author on record's sheet; returns the Authors window it showed.
+            local function more_by(record)
+                open(record)
+                tap("More by this author")
+                local screen = AuthorsScreen.shown
+                assert.is_not_nil(screen)
+                assert.equals(screen, harness.top())
+                assert.is_nil(Sheet.shown)
+                return screen
+            end
+
+            it("shows the record's first author's books", function()
+                local screen = more_by(Books.for_path(a))
+                assert.same({ { kind = "author", name = "Mary Shelley" }, 1 }, { screen:view(), screen.page })
+                assert.equals(1, #screen.tiles)
+                assert.equals(a, screen.tiles[1].record.path)
+            end)
+
+            it("shows the Authors list for a record with no author", function()
+                local screen = more_by(remote())
+                assert.same({ { kind = "list" }, 1 }, { screen:view(), screen.page })
+            end)
+        end)
+
+        describe("for a book not downloaded", function()
+            it("reads Not downloaded and greys Open, Book details and Read status, with no run or status", function()
+                open(remote({ "Mary Shelley" }))
+                local spec = Sheet.shown.spec
+                assert.equals("Not downloaded", spec.header.meta)
+                assert.equals("Mary Shelley", spec.header.author)
+                local got = {}
+                for i, row in ipairs(spec.rows) do
+                    got[i] = { row.label, row.icon, row.muted == true, row.run ~= nil }
+                end
+                assert.same({
+                    { "Open", "open_book", true, false },
+                    { "Book details", "info", true, false },
+                    { "Read status", "bookmark", true, false },
+                    { "More by this author", "authors", false, true },
+                }, got)
+                assert.is_nil(place_of("Read status").row.detail)
+            end)
+
+            for _, label in ipairs({ "Open", "Book details", "Read status" }) do
+                it("closes the sheet and runs nothing on a tap on " .. label, function()
+                    local w, fm = open(remote())
+                    local shown = 0
+                    fm.bookinfo.show = function()
+                        shown = shown + 1
+                    end
+                    local top = harness.top(2)
+                    tap(label)
+                    assert.is_nil(Sheet.shown)
+                    assert.equals(top, harness.top())
+                    assert.same({}, w.opened)
+                    assert.equals(0, w.refreshes)
+                    assert.equals(0, shown)
+                end)
+            end
+
+            it("still shows the author's books on More by this author", function()
+                local home_dir = G_reader_settings:readSetting("home_dir")
+                G_reader_settings:saveSetting("home_dir", books_dir)
+                cleanup(function()
+                    G_reader_settings:saveSetting("home_dir", home_dir)
+                end)
+                sidecar(a, '{ doc_props = { title = "Frankenstein", authors = "Mary Shelley" } }')
+                open(remote({ "Mary Shelley" }))
+                tap("More by this author")
+                local screen = require("authors_screen").shown
+                assert.is_not_nil(screen)
+                assert.same({ kind = "author", name = "Mary Shelley" }, screen:view())
+                assert.equals(a, screen.tiles[1].record.path)
+            end)
+        end)
+    end)
 end)
