@@ -16,6 +16,7 @@ describe("the swatch screen", function()
     local original_paint = InputContainer.paintTo
     local original_color_enabled = Screen.isColorEnabled
     local original_now = time.now
+    local original_repaint = UIManager._repaint
 
     local function swatches_on_stack()
         local count = 0
@@ -194,6 +195,7 @@ describe("the swatch screen", function()
             settled_listener = nil
         end
         time.now = original_now
+        UIManager._repaint = original_repaint
         InputContainer.paintTo = original_paint
         Screen.isColorEnabled = original_color_enabled
         G_reader_settings:delSetting("night_mode")
@@ -260,11 +262,21 @@ describe("the swatch screen", function()
         -- 447-456, 1537-1564): so a tickAfterNext from the show can land before the first paint.
         describe("while the clock stands still", function()
             -- Holds UIManager's clock (time.now) where it is until the test ends, then opens the
-            -- swatch and ticks; returns each swatch signal with the swatch as it stood then.
+            -- swatch and ticks; returns each swatch signal with the swatch as it stood then and
+            -- whether it came from inside UIManager's repaint.
             local function settle_held()
                 local frozen = original_now()
                 time.now = function()
                     return frozen
+                end
+                local in_repaint = false
+                UIManager._repaint = function(...)
+                    in_repaint = true
+                    local ok, err = pcall(original_repaint, ...)
+                    in_repaint = false
+                    if not ok then
+                        error(err, 0)
+                    end
                 end
                 local events = {}
                 settled_listener = function(args)
@@ -274,6 +286,7 @@ describe("the swatch screen", function()
                             args = args,
                             painted_at = top.painted_at,
                             started = top.started,
+                            in_repaint = in_repaint,
                         }
                     end
                 end
@@ -288,6 +301,10 @@ describe("the swatch screen", function()
                 assert.equals(1, #events)
                 assert.is_not_nil(events[1].painted_at)
                 assert.equals(time.to_ms(events[1].painted_at - events[1].started), events[1].args.paint_ms)
+                assert.is_false(events[1].in_repaint)
+                UIManager:setDirty(harness.top(), "full")
+                harness.tick(2)
+                assert.equals(1, #events)
             end)
 
             it("sends no signal for a paint that throws", function()
@@ -299,6 +316,7 @@ describe("the swatch screen", function()
                 end
                 assert.same({}, settle_held())
                 assert.is_true(logged_error("kopanda-test: swatch paint failed"))
+                assert.is_false(logged_error("the swatch settled signal failed"))
             end)
         end)
     end)
