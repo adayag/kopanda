@@ -1,0 +1,13 @@
+id: EV-jgerac
+type: check.bug
+at: 2026-10-17T05:20:50.817131Z
+contributor: allen
+command: check bug B-mobbtn
+targets:
+    - B-mobbtn
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/bugs/edit-layout-quote-day/bug.yml
