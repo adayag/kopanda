@@ -37,12 +37,12 @@ end
 
 -- Whether a and b hold the same values: equal, or tables with the same keys whose values are
 -- the same, all the way down.
-local function same(a, b)
+function State.same(a, b)
     if type(a) ~= "table" or type(b) ~= "table" then
         return a == b
     end
     for k, v in pairs(a) do
-        if not same(v, b[k]) then
+        if not State.same(v, b[k]) then
             return false
         end
     end
@@ -74,7 +74,7 @@ local function write(list)
         file:flush()
         local read_ok, data = pcall(dofile, dir() .. "/state.lua")
         for _, pair in ipairs(list) do
-            if not (read_ok and type(data) == "table" and same(data[pair[1]], pair[2])) then
+            if not (read_ok and type(data) == "table" and State.same(data[pair[1]], pair[2])) then
                 error("the file did not take " .. tostring(pair[1]))
             end
         end

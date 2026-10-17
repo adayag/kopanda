@@ -20,6 +20,10 @@ local STATUSES = { reading = "reading", finished = "complete", all = true }
 local DEFAULT_SORT, DEFAULT_STATUS = "recent", "all"
 
 local session = { folders = {} }
+-- The memory as last written to the file, nil before this process's first write and after a
+-- failed one: a close that would store it again is skipped. Neither session nor the State cache
+-- can say that, both holding a write that failed.
+local written
 
 -- The title order's key: lowercase, one leading "the ", "a " or "an " dropped.
 local function title_key(text)
@@ -226,8 +230,9 @@ local function stored()
     return memory
 end
 
--- Writes the stored memory with this session's choices and folder left over it.
-local function write()
+-- Writes the stored memory with this session's choices and folder left over it. With
+-- unless_written, skips the write when that memory is the one last written.
+local function write(unless_written)
     local memory = stored()
     for path, choice in pairs(session.folders) do
         memory.folders[path] = { sort = choice.sort, status = choice.status }
@@ -238,7 +243,12 @@ local function write()
     if next(memory.folders) == nil then
         memory.folders = nil
     end
-    return State.set("library", memory)
+    if unless_written and State.same(memory, written) then
+        return true
+    end
+    local ok = State.set("library", memory)
+    written = ok and memory or nil
+    return ok
 end
 
 -- { sort, status } for dir: this session's choice, else the stored one, else Recent and All.
@@ -268,15 +278,16 @@ function LibraryOrder.left()
 end
 
 -- Stores dir and page as where the library was left. A dir that is not a string or a page that
--- is not a whole number from 1 is refused, logged, and nothing is stored. Returns whether the
--- state file took it; either way a well-formed one holds for the session.
+-- is not a whole number from 1 is refused, logged, and nothing is stored. Nothing is written
+-- when the file already holds it, the memory unchanged since the last write. Returns whether the
+-- state file holds it; either way a well-formed one holds for the session.
 function LibraryOrder.leave(dir, page)
     if type(dir) ~= "string" or not is_page(page) then
         logger.warn("KoPanda: no library folder", dir, "or page", page, "to leave at")
         return false
     end
     session.at = { dir = dir, page = page }
-    return write()
+    return write(true)
 end
 
 return LibraryOrder
