@@ -228,6 +228,12 @@ Upgrading KOReader walks this list.
   `studio_profile` (the profile id to pull) here. An emptied address clears its key:
   `saveSetting(key, nil)` sets it to nil (`frontend/luasettings.lua:102-105`), so `flush` leaves
   it out, and `State.set`'s read-back takes the absent key as the nil it was given.
+- The library's memory (`library_order.lua`) is one key, `library`, a table:
+  `{ folders = { [realpath] = { sort, status } }, at = { dir, page } }`. `saveSetting` keeps the
+  table as given and `flush` serialises it whole (`frontend/luasettings.lua:102`, `:270-275`), so
+  the `dofile` read-back gives a new table: `State.set` compares it key by key, recursively, as
+  `settings.lua` compares its own read-back. A malformed part reads as the defaults, logged; a
+  failed write leaves the choice in `library_order.lua`'s module state for the session.
 
 ### The settings file, `settings/kopanda/settings.lua`
 
@@ -1264,6 +1270,20 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   CoverBrowser's cache and never asks for an extraction; a cached cover too small for the box is
   left out by `BookInfoManager.isCachedCoverInvalid`
   (`plugins/coverbrowser.koplugin/bookinfomanager.lua:1013-1030`; the featured cover's entry above).
+
+### The library's order: `ReadHistory.hist` and its times
+
+- `readhistory`: `frontend/readhistory.lua:15-18` (`ReadHistory.hist`), entries built at `:25-36`
+  with `time` and `file`, the realpath of the opened file (`:26`). A time is set when a book opens,
+  `addItem` (`:313`; the entry moved to the head with the time now, `:322-334`), and when it
+  closes, `updateLastBookTime` (`:343-350`; `frontend/apps/reader/readerui.lua:882`), so the list
+  is most recent first. `library_order.lua`'s `history_times` walks it once per call, required at
+  call time, keeping each file's first (newest) time. Never written.
+- `ffi/util`: `realpath` (`base/ffi/util.lua:171-176`, nil for a missing path). Each entry's `file`
+  is realpathed to `"file:" .. path`, the id `books.lua` gives a file's record, so an entry whose
+  file is gone has no id and is skipped.
+- The Recent sort is this time, not the file's access time, which KOReader's own "last read date"
+  sort reads (`frontend/ui/widget/booklist.lua:43-55`; `addItem` touches it, `readhistory.lua:324`).
 
 ### The entry picker: `PathChooser`, the action tree, the plugin list and the label dialog
 

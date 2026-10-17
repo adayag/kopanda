@@ -364,4 +364,31 @@ describe("KoPanda's guards", function()
             assert.is_false(stored())
         end)
     end)
+
+    -- cover-grid C2, D11: the library's memory is a table, which the read-back must take.
+    describe("State.set", function()
+        local value = {
+            folders = { ["/books/sci-fi"] = { sort = "title", status = "reading" } },
+            at = { dir = "/books/sci-fi", page = 2 },
+        }
+
+        it("stores a table value, reports it written, and reads it back equal", function()
+            local State = require("state")
+            assert.is_true(State.set("kopanda_test_table", value))
+            assert.same(value, LuaSettings:open(harness.state_file):readSetting("kopanda_test_table"))
+            assert.same(value, State.get("kopanda_test_table"))
+        end)
+
+        it("still reports false for a table value when the state folder is a file", function()
+            local f = assert(io.open(harness.state_dir, "w"))
+            f:close()
+            local logged = spy.on(logger, "err")
+            finally(function()
+                logged:revert()
+                os.remove(harness.state_dir)
+            end)
+            assert.is_false(require("state").set("kopanda_test_table", value))
+            assert.spy(logged).was_called()
+        end)
+    end)
 end)
