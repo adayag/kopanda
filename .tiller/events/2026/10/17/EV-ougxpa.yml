@@ -1,0 +1,14 @@
+id: EV-ougxpa
+type: add.tweak
+at: 2026-10-17T20:42:18.146111Z
+contributor: allen
+command: add tweak task-gate-skips-emulator
+targets:
+    - TW-s7jikb
+after:
+    attached_to: F-l0kw8m
+    key: tweaks/task-gate-skips-emulator
+    status: proposed
+files:
+    - path: .tiller/tweaks/task-gate-skips-emulator/tweak.md
+    - path: .tiller/tweaks/task-gate-skips-emulator/tweak.yml

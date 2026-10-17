@@ -1,0 +1,8 @@
+id: TW-s7jikb
+key: tweaks/task-gate-skips-emulator
+title: Task gates run the unit layers; the emulator layer runs at the feature check
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: F-l0kw8m

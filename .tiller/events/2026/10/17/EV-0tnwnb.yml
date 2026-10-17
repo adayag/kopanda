@@ -1,0 +1,14 @@
+id: EV-0tnwnb
+type: add.chore
+at: 2026-10-17T20:42:18.035094Z
+contributor: allen
+command: add chore fewer-goldens-per-feature
+targets:
+    - CH-58w77v
+after:
+    attached_to: F-l0kw8m
+    key: chores/fewer-goldens-per-feature
+    status: proposed
+files:
+    - path: .tiller/chores/fewer-goldens-per-feature/chore.md
+    - path: .tiller/chores/fewer-goldens-per-feature/chore.yml
