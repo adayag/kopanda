@@ -1,7 +1,7 @@
 id: B-e2tfz0
 key: bugs/chapter-write-retry
 title: A failed chapter write is not retried on the next close
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:525b5a5
         observed_at: 2026-10-17T16:06:09.46438Z
 branch: tiller/bugs/chapter-write-retry
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:25:57.701623Z
+        against:
+            kind: git_commit
+            value: git:918a871
+            observed_at: 2026-10-17T16:25:57.701621Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-918a871-out-5a8b68bd1d97b35c7a5ecfdcd4fa0fc8e79adf669ddf5c97aabdc6b84f8ac45c.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:25:57.701623Z
+        against:
+            kind: git_commit
+            value: git:918a871
+            observed_at: 2026-10-17T16:25:57.701621Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-918a871-out-142e24950624cd4599e0ed440e1d17199c024ccb155aad88faf14c01977d5098.txt
