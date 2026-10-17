@@ -1,7 +1,7 @@
 id: T-3cuakg
 key: library/cwng-placeholders/placeholders
 title: cwngsync's placeholders read as not downloaded on every surface that draws a book
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:30d3a29
         observed_at: 2026-10-17T21:40:49.862416Z
 branch: tiller/library/cwng-placeholders/placeholders
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T22:34:40.738116Z
+        against:
+            kind: git_commit
+            value: git:6440337
+            observed_at: 2026-10-17T22:34:40.738109Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-6440337-out-760fc0fb2dde66a8dc4a36652237e1bdbd2ee73fda5d81419498274b747c4b05.txt
+    unit_tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T22:34:40.738116Z
+        against:
+            kind: git_commit
+            value: git:6440337
+            observed_at: 2026-10-17T22:34:40.738109Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/unit_tests-6440337-out-c959722ead844ed46672d9f26cf3b8e93d5e9f4166d2767cb2c07919f96de144.txt

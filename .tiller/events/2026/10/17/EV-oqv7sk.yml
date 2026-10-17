@@ -1,0 +1,13 @@
+id: EV-oqv7sk
+type: check.task
+at: 2026-10-17T22:37:18.882509Z
+contributor: allen
+command: check task T-3cuakg
+targets:
+    - T-3cuakg
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/placeholders/task.yml
