@@ -1,0 +1,16 @@
+id: EV-y9pglc
+type: submit.task
+at: 2026-10-17T15:44:36.070903Z
+contributor: allen
+command: submit task T-m36ahd
+targets:
+    - T-m36ahd
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/series-and-authors/goldens
+        head: git:fa8c185
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/goldens/task.yml

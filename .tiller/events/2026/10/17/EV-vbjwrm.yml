@@ -1,0 +1,15 @@
+id: EV-vbjwrm
+type: start.task
+at: 2026-10-17T14:43:07.671148Z
+contributor: allen
+command: start task T-m36ahd
+targets:
+    - T-m36ahd
+before:
+    status: ready
+after:
+    branch: tiller/library/series-and-authors/goldens
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/goldens/task.yml
