@@ -20,15 +20,15 @@ branch: tiller/reviews/features/library/cover-grid
 accepted_against:
     spec:
         kind: git_blob
-        value: git:55b4076a5ae62d24164c03a0bde1cc2d3be9b28f
+        value: git:8270973ae86240eb45609bcb5c31fcf4d8334a94
         path: .tiller/epics/library/features/cover-grid/feature.md
-        observed_at: 2026-10-17T02:22:50.132936Z
+        observed_at: 2026-10-17T07:07:50.243063Z
     eval:
         kind: git_blob
         value: git:4c9c4eed3249236eb5f26ec05153d08ca6391645
         path: .tiller/epics/library/features/cover-grid/feature.eval.md
-        observed_at: 2026-10-17T02:22:50.132936Z
+        observed_at: 2026-10-17T07:07:50.243063Z
     commit:
         kind: git_commit
-        value: git:943d0fa
-        observed_at: 2026-10-17T02:22:50.171383Z
+        value: git:a885a83
+        observed_at: 2026-10-17T07:07:50.280946Z
