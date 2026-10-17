@@ -1083,7 +1083,8 @@ describe("the book sheet", function()
             end)
         end)
 
-        it("lists Open, Book details, Read status and More by this author with their icons", function()
+        it("lists Open, Book details, Read status, More by this author, Add to the home and Delete with their "
+            .. "icons", function()
             open(Books.for_path(a))
             local got = {}
             for i, row in ipairs(Sheet.shown.spec.rows) do
@@ -1094,6 +1095,8 @@ describe("the book sheet", function()
                 { "Book details", "info", false },
                 { "Read status", "bookmark", false },
                 { "More by this author", "authors", false },
+                { "Add to the home", "home_plus", false },
+                { "Delete…", "trash", false },
             }, got)
             local status, more = place_of("Read status").row, place_of("More by this author").row
             assert.equals("New ›", status.detail)
@@ -1182,8 +1185,235 @@ describe("the book sheet", function()
             end)
         end)
 
+        -- context-menu C4, D8: Add to the home pins the book as the home's picker does, by its
+        -- realpath, with the window left as it was and no home refresh.
+        describe("on Add to the home", function()
+            local function settings_table()
+                return dofile(harness.settings_file)
+            end
+
+            local function pinned()
+                Settings._reset()
+                return Settings.get("featured.pinned")
+            end
+
+            -- A symlink beside a to it.
+            local function link_to_a()
+                local link = books_dir .. "/link.epub"
+                assert.equals(0, os.execute(string.format("ln -s %q %q", a, link)))
+                return link
+            end
+
+            it("is the row after More by this author, with home_plus, unticked with no pin", function()
+                open(Books.for_path(a))
+                local got = Sheet.shown.spec.rows
+                assert.equals("More by this author", got[4].label)
+                local row = got[5]
+                assert.same({ "Add to the home", "home_plus", false }, { row.label, row.icon, row.tick == true })
+                assert.is_function(row.run)
+            end)
+
+            it("stores the realpath of a book reached through a symlink, changes no other setting, and leaves "
+                .. "the window and the home as they were", function()
+                local link = link_to_a()
+                local record = Books.for_path(link)
+                assert.equals(link, record.path)
+                assert.is_true(Settings.set("stats.show", false))
+                local before = settings_table()
+                local w = open(record)
+                local refreshes = count_refreshes()
+                tap("Add to the home")
+                assert.equals(a, pinned())
+                local after = settings_table()
+                assert.equals(a, after["featured.pinned"])
+                after["featured.pinned"] = nil
+                assert.same(before, after)
+                assert.is_nil(Sheet.shown)
+                assert.same({ 0, 0, 0 }, { refreshes.n, w.refreshes, w.closes })
+            end)
+
+            it("reads On the home, ticked, for the book featured.pinned names through another path, and a tap "
+                .. "leaves the settings file byte-identical", function()
+                assert.is_true(Settings.set("featured.pinned", link_to_a()))
+                local before = bytes(harness.settings_file)
+                local w = open(Books.for_path(a))
+                local row = Sheet.shown.spec.rows[5]
+                assert.same({ "On the home", "home_plus", true }, { row.label, row.icon, row.tick })
+                local refreshes = count_refreshes()
+                tap("On the home")
+                assert.equals(before, bytes(harness.settings_file))
+                assert.is_nil(Sheet.shown)
+                assert.same({ 0, 0, 0 }, { refreshes.n, w.refreshes, w.closes })
+            end)
+
+            it("reads Add to the home, unticked, for a pin to a file that has gone", function()
+                assert.is_true(Settings.set("featured.pinned", books_dir .. "/gone.epub"))
+                open(Books.for_path(a))
+                local row = Sheet.shown.spec.rows[5]
+                assert.same({ "Add to the home", false }, { row.label, row.tick == true })
+            end)
+
+            it("logs a refused write and changes nothing", function()
+                assert.is_true(Settings.set("stats.show", false))
+                local before = bytes(harness.settings_file)
+                local w = open(Books.for_path(a))
+                local refreshes = count_refreshes()
+                replace(Settings, "set", function()
+                    return false, "refused on purpose"
+                end)
+                local logged = spy_errors()
+                tap("Add to the home")
+                assert.is_true(logged("refused on purpose"))
+                assert.equals(before, bytes(harness.settings_file))
+                assert.is_nil(Sheet.shown)
+                assert.same({ 0, 0, 0 }, { refreshes.n, w.refreshes, w.closes })
+            end)
+        end)
+
+        -- context-menu C4, D7: Delete is KOReader's own delete confirm, whose post-delete callback
+        -- re-lists the window.
+        describe("on Delete", function()
+            local ConfirmBox = require("ui/widget/confirmbox")
+            local FileManager = require("apps/filemanager/filemanager")
+            local InfoMessage = require("ui/widget/infomessage")
+
+            -- The widget on the stack whose class is class, or nil.
+            local function shown(class)
+                for _, widget in ipairs(harness.stack()) do
+                    if getmetatable(widget) == class then
+                        return widget
+                    end
+                end
+            end
+
+            -- Counts the archive check KOReader adds to the confirm, each still added.
+            local function count_archive_checks()
+                local count = { n = 0 }
+                local add = FileManager.addMetadataArcCheckButton
+                replace(FileManager, "addMetadataArcCheckButton", function(...)
+                    count.n = count.n + 1
+                    return add(...)
+                end)
+                return count
+            end
+
+            -- Taps Delete… on record's sheet; returns the window and the confirm shown.
+            local function confirm(record)
+                local w = open(record)
+                tap("Delete…")
+                assert.is_nil(Sheet.shown)
+                return w, assert(shown(ConfirmBox), "no confirm")
+            end
+
+            -- As the confirm's Delete and Cancel buttons do (frontend/ui/widget/confirmbox.lua:107-122).
+            local function press_ok(box)
+                box.ok_callback()
+                UIManager:close(box)
+            end
+
+            local function press_cancel(box)
+                box.cancel_callback()
+                UIManager:close(box)
+            end
+
+            it("is the last row, with trash", function()
+                open(Books.for_path(a))
+                local got = Sheet.shown.spec.rows
+                assert.equals(6, #got)
+                assert.same({ "Delete…", "trash" }, { got[6].label, got[6].icon })
+            end)
+
+            it("shows KOReader's delete confirm for the realpath of a book reached through a symlink, with no "
+                .. "archive check for a book with no sidecar", function()
+                local link = books_dir .. "/link.epub"
+                assert.equals(0, os.execute(string.format("ln -s %q %q", a, link)))
+                local checks = count_archive_checks()
+                local w, box = confirm(Books.for_path(link))
+                assert.equals(box, harness.top())
+                assert.is_truthy(box.text:find("Delete file permanently?", 1, true))
+                assert.is_truthy(box.text:find(a, 1, true))
+                assert.is_falsy(box.text:find(link, 1, true))
+                assert.equals("Delete", box.ok_text)
+                assert.equals(0, checks.n)
+                assert.equals(0, w.refreshes)
+            end)
+
+            it("removes the file on the confirm's Delete, then re-lists the window once", function()
+                local w, box = confirm(Books.for_path(a))
+                local refreshes = count_refreshes()
+                press_ok(box)
+                assert.is_nil(lfs.attributes(a, "mode"))
+                assert.same({ 1, 0, 0 }, { w.refreshes, w.closes, refreshes.n })
+                assert.is_nil(shown(ConfirmBox))
+            end)
+
+            it("adds KOReader's archive check for a book with a full sidecar, and its Delete removes the file "
+                .. "and the sidecar", function()
+                sidecar(a, '{ doc_props = { title = "Frankenstein" }, partial_md5_checksum = "0123abcd" }')
+                local checks = count_archive_checks()
+                local w, box = confirm(Books.for_path(a))
+                assert.equals(1, checks.n)
+                press_ok(box)
+                assert.is_nil(lfs.attributes(a, "mode"))
+                assert.is_nil(lfs.attributes(sidecar_path(a), "mode"))
+                assert.equals(1, w.refreshes)
+            end)
+
+            it("re-lists nothing and keeps the file on Cancel", function()
+                local w, box = confirm(Books.for_path(a))
+                press_cancel(box)
+                assert.equals("file", lfs.attributes(a, "mode"))
+                assert.equals(0, w.refreshes)
+                assert.is_nil(shown(ConfirmBox))
+            end)
+
+            it("shows KOReader's Failed to delete and re-lists nothing when the delete fails", function()
+                local w, box = confirm(Books.for_path(a))
+                local remove = os.remove
+                replace(os, "remove", function(path)
+                    if path == a then
+                        return nil, "refused on purpose"
+                    end
+                    return remove(path)
+                end)
+                press_ok(box)
+                local notice = assert(shown(InfoMessage), "no notice")
+                assert.is_truthy(notice.text:find("Failed to delete", 1, true))
+                assert.equals("file", lfs.attributes(a, "mode"))
+                assert.equals(0, w.refreshes)
+            end)
+
+            it("leaves a deleted pinned book in featured.pinned, the home featuring the history's next book",
+                function()
+                local b = book("b.epub")
+                history({ { a, os.time() - 60 }, { b, os.time() - 120 } })
+                assert.is_true(Settings.set("featured.pinned", a))
+                assert.equals(a, FeaturedBook.current().file)
+                local _, box = confirm(Books.for_path(a))
+                press_ok(box)
+                Settings._reset()
+                assert.equals(a, Settings.get("featured.pinned"))
+                assert.equals(b, FeaturedBook.current().file)
+            end)
+
+            it("logs and shows no confirm without a file manager instance", function()
+                local w = open(Books.for_path(a))
+                replace(FileManager, "instance", nil)
+                local warned = spy.on(logger, "warn")
+                cleanup(function()
+                    logger.warn:revert()
+                end)
+                tap("Delete…")
+                assert.spy(warned).was_called()
+                assert.is_nil(shown(ConfirmBox))
+                assert.equals("file", lfs.attributes(a, "mode"))
+                assert.equals(0, w.refreshes)
+            end)
+        end)
+
         describe("for a book not downloaded", function()
-            it("reads Not downloaded and greys Open, Book details and Read status, with no run or status", function()
+            it("reads Not downloaded and greys Open, Book details, Read status, Add to the home and Delete, with no "
+                .. "run or status", function()
                 open(remote({ "Mary Shelley" }))
                 local spec = Sheet.shown.spec
                 assert.equals("Not downloaded", spec.header.meta)
@@ -1197,6 +1427,8 @@ describe("the book sheet", function()
                     { "Book details", "info", true, false },
                     { "Read status", "bookmark", true, false },
                     { "More by this author", "authors", false, true },
+                    { "Add to the home", "home_plus", true, false },
+                    { "Delete…", "trash", true, false },
                 }, got)
                 assert.is_nil(place_of("Read status").row.detail)
             end)
@@ -1217,6 +1449,26 @@ describe("the book sheet", function()
                     assert.equals(0, shown)
                 end)
             end
+
+            it("closes the sheet and writes nothing on a tap on Add to the home", function()
+                local before = bytes(harness.settings_file)
+                local w = open(remote())
+                local top = harness.top(2)
+                tap("Add to the home")
+                assert.is_nil(Sheet.shown)
+                assert.equals(top, harness.top())
+                assert.equals(before, bytes(harness.settings_file))
+                assert.same({ 0, 0 }, { w.refreshes, w.closes })
+            end)
+
+            it("closes the sheet and shows no confirm on a tap on Delete", function()
+                local w = open(remote())
+                local top = harness.top(2)
+                tap("Delete…")
+                assert.is_nil(Sheet.shown)
+                assert.equals(top, harness.top())
+                assert.same({ 0, 0 }, { w.refreshes, w.closes })
+            end)
 
             it("still shows the author's books on More by this author", function()
                 local home_dir = G_reader_settings:readSetting("home_dir")
