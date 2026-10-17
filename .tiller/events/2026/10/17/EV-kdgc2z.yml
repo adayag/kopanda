@@ -1,0 +1,13 @@
+id: EV-kdgc2z
+type: check.task
+at: 2026-10-17T02:14:19.748787Z
+contributor: allen
+command: check task T-nzshf0
+targets:
+    - T-nzshf0
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/bar/task.yml

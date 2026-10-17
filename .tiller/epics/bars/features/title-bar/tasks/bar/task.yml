@@ -1,7 +1,7 @@
 id: T-nzshf0
 key: bars/title-bar/bar
 title: 'The title bar widget: its tokens in both looks, the plus icon and its paint'
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:c18ec4f
         observed_at: 2026-10-17T01:34:14.102976Z
 branch: tiller/bars/title-bar/bar
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T02:11:22.803564Z
+        against:
+            kind: git_commit
+            value: git:3878a0e
+            observed_at: 2026-10-17T02:11:22.803558Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-3878a0e-out-6ce8b7db3b79fe022a0a6bf9b8364d7c9fadbc39aca9fcc6cd95994f6dac0e76.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T02:11:22.803564Z
+        against:
+            kind: git_commit
+            value: git:3878a0e
+            observed_at: 2026-10-17T02:11:22.803558Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-3878a0e-out-9862e6249de9edfe78f4f63686fde7c1b1883b19f822376ec3482a9817d9943a.txt
