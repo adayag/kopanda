@@ -1,0 +1,13 @@
+id: EV-da3ng8
+type: check.task
+at: 2026-10-17T05:26:40.925625Z
+contributor: allen
+command: check task T-n6wve0
+targets:
+    - T-n6wve0
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/controls/task.yml

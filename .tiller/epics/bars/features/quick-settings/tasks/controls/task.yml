@@ -1,7 +1,7 @@
 id: T-n6wve0
 key: bars/quick-settings/controls
 title: 'The panel''s controls: light and warmth steps, toggles, close-first actions and their routing'
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:a955bb4
         observed_at: 2026-10-17T03:37:34.506287Z
 branch: tiller/bars/quick-settings/controls
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T05:23:14.181577Z
+        against:
+            kind: git_commit
+            value: git:a04bddc
+            observed_at: 2026-10-17T05:23:14.181562Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-a04bddc-out-2b5120af0e21e6b48727ee33aa721c609388d21a33672947cd2580741c8d6028.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T05:23:14.181577Z
+        against:
+            kind: git_commit
+            value: git:a04bddc
+            observed_at: 2026-10-17T05:23:14.181562Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-a04bddc-out-3416092a71cd13adf7d640c6c1bd84d7752b38207289bc541f3143a0606f409e.txt
