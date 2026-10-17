@@ -251,7 +251,9 @@ The library takes its gestures through its own touch zones, which KOReader's tou
 (`frontend/ui/widget/container/inputcontainer.lua:299-309`, `:322-350`; as the home, `home_gestures.lua:47-54`),
 in this order:
 
-1. **The nav bar's band:** a tap runs its tab, a hold nothing, both consumed (`bar:handle`, `nav_bar.lua:198-215`).
+1. **The nav bar's band:** a tap runs its tab; a hold on Settings opens the quick-settings sheet over the
+   library, as on every bar (`nav-bar`'s quick settings, merged from `main`; owner), and any other hold runs
+   nothing; all consumed (`bar:handle`, `nav_bar.lua`).
 2. **Tap:** on a downloaded book, opens it (D15) after recording the return (Book close, below); on a
    not-downloaded book, nothing; on a folder tile, shows that folder at its remembered page; on the title
    inside a sub-folder, goes up one folder (D5); on a picker, its sheet (The pickers), through a
