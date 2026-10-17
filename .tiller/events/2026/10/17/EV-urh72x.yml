@@ -1,0 +1,16 @@
+id: EV-urh72x
+type: submit.task
+at: 2026-10-17T12:29:27.972466Z
+contributor: allen
+command: submit task T-hxf2vf
+targets:
+    - T-hxf2vf
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/series-and-authors/chrome
+        head: git:ea41cdc
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/chrome/task.yml

@@ -1,0 +1,16 @@
+id: EV-jmmfcj
+type: submit.task
+at: 2026-10-17T16:15:05.979555Z
+contributor: allen
+command: submit task T-m36ahd
+targets:
+    - T-m36ahd
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/series-and-authors/goldens
+        head: git:64bec0f
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/goldens/task.yml

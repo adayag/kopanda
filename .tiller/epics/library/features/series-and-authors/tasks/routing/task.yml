@@ -1,9 +1,10 @@
 id: T-8j0bc0
 key: library/series-and-authors/routing
 title: Entry points, the Authors tab, More by this author and the return after a book closes
-status: ready
+status: done
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-m5pho3
@@ -17,3 +18,38 @@ accepted_against:
         kind: git_commit
         value: git:56440d9
         observed_at: 2026-10-17T07:51:40.87985Z
+branch: tiller/library/series-and-authors/routing
+review_ref:
+    branch: tiller/library/series-and-authors/routing
+    head:
+        kind: git_commit
+        value: git:6a96981
+        observed_at: 2026-10-17T14:42:56.797363Z
+done_basis: ancestry
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T14:38:53.100134Z
+        against:
+            kind: git_commit
+            value: git:294d8d9
+            observed_at: 2026-10-17T14:38:53.10013Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-294d8d9-out-ddbf24a0a4fdde030f769a2c0ff15ccfc4695d57a4a1f8ea98de61130003bdee.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T14:38:53.100134Z
+        against:
+            kind: git_commit
+            value: git:294d8d9
+            observed_at: 2026-10-17T14:38:53.10013Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-294d8d9-out-313bef634139c3d829fc951bb208278457aa9901c3c5fc8f014e565c79102de3.txt

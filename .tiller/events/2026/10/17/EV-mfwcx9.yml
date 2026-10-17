@@ -1,0 +1,14 @@
+id: EV-mfwcx9
+type: sync.task
+at: 2026-10-17T16:42:13.5019Z
+contributor: allen
+command: sync task T-y7g8mr
+targets:
+    - T-y7g8mr
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/series/task.yml

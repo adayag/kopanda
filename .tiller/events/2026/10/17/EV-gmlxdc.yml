@@ -1,0 +1,13 @@
+id: EV-gmlxdc
+type: claim.task
+at: 2026-10-17T14:43:07.486839Z
+contributor: allen
+command: claim task T-m36ahd
+targets:
+    - T-m36ahd
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/goldens/task.yml

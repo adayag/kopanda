@@ -25,7 +25,8 @@ local session = { folders = {} }
 -- can say that, both holding a write that failed.
 local written
 
--- The title order's key: lowercase, one leading "the ", "a " or "an " dropped.
+-- The title order's key: lowercase, one leading "the ", "a " or "an " dropped. Exported for the
+-- series list's order (series-and-authors D12).
 local function title_key(text)
     local key = text:lower()
     for _, article in ipairs({ "the ", "a ", "an " }) do
@@ -35,6 +36,7 @@ local function title_key(text)
     end
     return key
 end
+LibraryOrder.title_key = title_key
 
 -- a before b by keys, each a string or nil, a nil after every string; nil when they are equal.
 local function before(ka, kb)

@@ -59,8 +59,9 @@ Upgrading KOReader walks this list.
 - `frontend/ui/uimanager.lua:300` (`UIManager:close` sends it);
   `frontend/apps/filemanager/filemanager.lua:819-826` (`onClose`, on quit), `:842-849`
   (`onShowingReader`, when a book opens).
-- Reaches the plugin instance as an array child; the instance closes the home and the library,
-  either of which would otherwise keep KOReader from quitting.
+- Reaches the plugin instance as an array child; the instance closes the home and the chrome
+  window (the library, Series or Authors), either of which would otherwise keep KOReader from
+  quitting.
 
 ### `CloseDocument`, the mark on book close
 
@@ -69,15 +70,18 @@ Upgrading KOReader walks this list.
   browser follows from `ReaderUI:onHome` `:935-940`, `showFileManager` `:581-596` and the
   reader menu's file-browser tab `frontend/apps/reader/modules/readermenu.lua:65-74`.
 - A reader instance's `onCloseDocument` first records the book's chapter for the featured book
-  (the featured book entry below), then builds the library into `Library.pending` (not shown)
-  when a return to the library is recorded (the library's return entry below), or else sets
-  `Home.just_closed`, and returns nothing, so the event reaches later modules. It builds no
-  home: the close, `showFileManager`, `showFiles`, `UIManager:show` and the file manager's
-  `Show` run in one call stack with no `_repaint` between them, so a build at the close would
-  save no time, and it would read the sidecar before the reader saves it (`:893`, through
-  `UIManager:close`'s `FlushSettings`, `frontend/ui/uimanager.lua:298`; `:876-878` skips the
-  earlier save when the reader is its own dialog, `:126-127`).
-- The next file-manager `Show` puts the pending library up, or clears the mark and builds and
+  (the featured book entry below), then, when a return is recorded, builds the window it names
+  into the chrome's pending window (`LibraryChrome.pending`, `library_chrome.lua`, not shown):
+  the library at its `Library.return_to` (the library's return entry below), or the Series or
+  Authors window at the view and page of `LibraryChrome.return_to`, recorded from the same
+  `caller_pre_callback`; or else sets `Home.just_closed`; and returns nothing, so the event
+  reaches later modules. It builds no home: the close, `showFileManager`, `showFiles`,
+  `UIManager:show` and the file manager's `Show` run in one call stack with no `_repaint`
+  between them, so a build at the close would save no time, and it would read the sidecar
+  before the reader saves it (`:893`, through `UIManager:close`'s `FlushSettings`,
+  `frontend/ui/uimanager.lua:298`; `:876-878` skips the earlier save when the reader is its own
+  dialog, `:126-127`).
+- The next file-manager `Show` puts the pending window up, or clears the mark and builds and
   shows the home, synchronously, before the UI loop's next `_repaint`
   (`frontend/ui/uimanager.lua:1537-1564`: `_checkTasks` at `:1543`, `_repaint` at `:1563`). A
   deferred show would lose when the close runs inside a scheduled task (KOReader's end-of-book
@@ -95,9 +99,9 @@ Upgrading KOReader walks this list.
   (`:609`). A reader instance's `onCloseDocument` sets no mark when it is set. Exit does not set
   it and marks the close, but no `Show` follows. A reader instance's `init` (a new reader,
   `readerui.lua:464-478`) clears the mark, since no file browser followed the last close.
-- The library's pre-build happens there too and is wasted. That `init` drops and frees the
-  pending library; exit drops it with the process. A switch keeps the library's return, so the
-  next close builds the library again.
+- The chrome window's pre-build happens there too and is wasted. That `init` drops and frees the
+  pending window; exit drops it with the process. A switch keeps the return, so the next close
+  builds the window again.
 
 ### `setRotationMode` in `showFiles`
 
@@ -105,9 +109,9 @@ Upgrading KOReader walks this list.
   building the file manager), `:63-69` (`setRotationMode`).
 - The home after a book close is built inside the file manager's `Show`, after `showFiles` reset
   the rotation, so it is always built at the screen's size then. The screen can have another
-  size at show than at close, so a pending library whose `dimen` differs from `Screen:getSize()`
-  is dropped (`free()`, `frontend/ui/widget/container/widgetcontainer.lua:110-117`) and a fresh
-  one built.
+  size at show than at close, so a pending chrome window whose `dimen` differs from
+  `Screen:getSize()` is dropped (`free()`,
+  `frontend/ui/widget/container/widgetcontainer.lua:110-117`) and a fresh one built.
 
 ### `covers_fullscreen` in `UIManager:_repaint`
 
@@ -1123,13 +1127,18 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `true` (`:744`), or `false` when the fork fails (`:724`). One subprocess walks the batch's
   files in order, extracting each (`:702-711`). Asked only from `BookCovers.request`, at most once
   per file per process unless a later request replaced the one that asked for it (its
-  extraction terminated, `:695`), with every wanted file of the batch in one call; the featured
-  cover asks through `FeaturedCover.after_show`, never from `build` or `paintTo`.
+  extraction terminated, `:695`) or the check gave up on it at its cap (below), with every wanted
+  file of the batch in one call; the featured cover asks through `FeaturedCover.after_show`, the
+  library for its page (`library_covers.lua`), and the Series and Authors windows, once per show,
+  for every book of the library at the library grid's cover box (`LibraryChrome.request_records`,
+  `library_chrome.lua`), each from the next tick after a paint, never from `build` or `paintTo`.
 - `isExtractingInBackground()` (`:685-687`), the only completion signal, counts CoverBrowser's own
   jobs too. CoverBrowser polls it once a second (`plugins/coverbrowser.koplugin/covermenu.lua:164-175`);
   `book_covers.lua` does the same through `UIManager:scheduleIn` (`frontend/ui/uimanager.lua:413`)
-  for at most 30 checks, and `BookCovers.cancel` (through `FeaturedCover.cancel`) drops it with
-  `UIManager:unschedule` (`:518`).
+  for at most 30 checks, and `BookCovers.cancel` (through `FeaturedCover.cancel`, and a library
+  window's close) drops it with `UIManager:unschedule` (`:518`). The cap: on a large library the
+  extraction outlives the 30 checks, so the 30th forgets the files that had not arrived, and a later
+  request, which terminates that extraction, asks for them again.
 - It turns false only when CoverBrowser's collector reaps the extraction's pid, every
   `subprocesses_collect_interval` = 10 s (`bookinfomanager.lua:139`; `collectSubprocesses`
   `:627-650`, first scheduled by `extractInBackground` at `:735-742`), so a cover written at 2 s
@@ -1664,6 +1673,8 @@ guard (`sheet.lua`).
   manager it then calls `ui:openFile` (`:519`). `library.lua`'s `Library:open` passes the file manager
   as `ui` and a callback running `Library.on_open(dir, page)`. The module is required at call time,
   as `books.lua` requires it.
+- The page keys, the swipes and the metadata events below are the chrome's
+  (`library_chrome.lua`'s `LibraryChrome.Window`, which the library extends).
 - The page keys, as `Menu:registerKeyEvents` sets them (`frontend/ui/widget/menu.lua:984-992`):
   only when `Device:hasKeys()` (`:985`), `NextPage` on `Input.group.PgFwd` and `PrevPage` on
   `Input.group.PgBack` (`:991-992`; the groups at `frontend/device/input.lua:119-120`), read from
@@ -1682,9 +1693,9 @@ guard (`sheet.lua`).
   cover change (`frontend/apps/filemanager/filemanagerbookinfo.lua:276-277`, `:556-557`), to every
   window, a handler's true return stopping none (`frontend/ui/uimanager.lua:1042-1061`). The
   library re-lists its folder on each and returns nothing.
-- The library's touch zones, its `onGesture` and its paint follow the home's (the `InputContainer`,
-  touch lock, `covers_fullscreen` and `nextTick` entries above), and its covers the featured cover's
-  bounded check (`book_covers.lua`, the featured cover's entry above).
+- The library's touch zones, its `onGesture` and its paint, the chrome's, follow the home's (the
+  `InputContainer`, touch lock, `covers_fullscreen` and `nextTick` entries above), and its covers
+  the featured cover's bounded check (`book_covers.lua`, the featured cover's entry above).
 
 ### The library's return: `caller_pre_callback`, `onShowingReader`, the failed-open paths and `changeToPath`
 
@@ -1712,6 +1723,9 @@ guard (`sheet.lua`).
   closed (the Home tab, say), so a book then opened from the home closes to the home. Accepted
   residual: with such a stale return and the library still up, a book opened from History over it
   still closes to the library.
+- The Series and Authors windows' return (`LibraryChrome.return_to`) follows the same paths: a
+  failed open shows the window afresh at the return, and the file manager's `CloseWidget` drops a
+  return whose window has already closed.
 - The return lives in module state only, so a restart shows the home.
 - `FileChooser:changeToPath(path)` (`frontend/ui/widget/filechooser.lua:341-371`; the launcher's
   entries above): a library that fails to build when shown leaves the file browser at the folder it

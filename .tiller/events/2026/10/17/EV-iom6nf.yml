@@ -1,0 +1,13 @@
+id: EV-iom6nf
+type: approve.task
+at: 2026-10-17T16:43:29.35521Z
+contributor: allen
+command: approve task T-1rl35j
+targets:
+    - T-1rl35j
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/book-sheet/task.yml

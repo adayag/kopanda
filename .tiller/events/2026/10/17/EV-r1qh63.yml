@@ -1,0 +1,13 @@
+id: EV-r1qh63
+type: claim.task
+at: 2026-10-17T07:52:37.728731Z
+contributor: allen
+command: claim task T-05lpro
+targets:
+    - T-05lpro
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/index/task.yml

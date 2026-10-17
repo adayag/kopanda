@@ -214,9 +214,10 @@ describe("the library's kept listing", function()
         harness.show_fm()
         harness.tick(2)
         require("home").close()
-        Library.prebuild(fixture.ROOT, 2, books[1].path)
+        local LibraryChrome = package.loaded["library_chrome"]
+        LibraryChrome.prebuild(Library, { dir = fixture.ROOT, page = 2 }, books[1].path)
         progress[books[1].id] = { status = "complete" }
-        local library = Library.show{ widget = Library.take_pending() }
+        local library = Library.show{ widget = LibraryChrome.take_pending() }
         harness.tick(2)
         assert.equals(2, library.page)
         library:turn(-1)

@@ -173,6 +173,26 @@ describe("library tiles", function()
             end)
         end)
 
+        -- The one-author grid's own cover box (series-and-authors "The fit"): only the cover's height
+        -- and what hangs from it change.
+        it("takes an optional cover height in board pixels, as the one-author grid's", function()
+            each_profile(function(where)
+                for _, id in ipairs({ "diner", "editorial" }) do
+                    local ctx = ctx_for(id)
+                    local cover_h = ctx.look.shelf.author_grid.cover_h
+                    local plain = LibraryTiles.geometry(Screen:getWidth(), ctx)
+                    local own = LibraryTiles.geometry(Screen:getWidth(), ctx, cover_h)
+                    local label = id .. " at " .. where
+                    assert.equals(scale(cover_h), own.cover_h, label)
+                    assert.equals(scale(ctx.look.library.grid.cover_h), plain.cover_h, label)
+                    assert.same(plain.columns, own.columns, label)
+                    assert.equals(plain.cover_w, own.cover_w, label)
+                    assert.equals(plain.strip_y - plain.cover_h, own.strip_y - own.cover_h, label)
+                    assert.equals(plain.height - plain.cover_h, own.height - own.cover_h, label)
+                end
+            end)
+        end)
+
         it("splits the width inside the side padding into three columns at the look's gap", function()
             each_profile(function(where)
                 for _, id in ipairs({ "diner", "editorial" }) do
@@ -592,6 +612,55 @@ describe("library tiles", function()
                         10 * Screen:getWidth(), ctx)
                     assert.equals(free:getSize().w, built.chip[1]:getSize().w, label .. ": the label is cut")
                     free:free()
+                    built:free()
+                end
+            end)
+        end)
+
+        -- D5, D19: "Up next" on the cover's foot where Not downloaded goes; on a path-less record it
+        -- replaces that chip and the badge stays. The tile keeps its height.
+        it("puts the Up next chip on the cover's foot, in place of Not downloaded, the badge kept", function()
+            covers()
+            each_profile(function(where)
+                for _, id in ipairs({ "diner", "editorial" }) do
+                    local ctx = ctx_for(id)
+                    local label = id .. " at " .. where
+                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx, ctx.look.shelf.author_grid.cover_h)
+                    local plain = LibraryTiles.book(record(), { status = "new" }, box, ctx)
+                    local plain_h = plain:getSize().h
+                    plain:free()
+
+                    local built = LibraryTiles.book(record(), { status = "new" }, box, ctx, { label = "Up next" })
+                    assert.equals(plain_h, built:getSize().h, label)
+                    assert.is_table(built.chip, label)
+                    assert.is_nil(built.badge, label)
+                    assert.is_true(has_text(built.chip, "UP NEXT"), label)
+                    local chip, chip_size = built:place(built.chip), built.chip:getSize()
+                    assert.is_true(chip.x >= 0 and chip.x + chip_size.w <= box.cover_w, label .. " chip across")
+                    assert.is_true(chip.y + chip_size.h <= box.cover_h, label .. " chip below the cover")
+                    assert.is_true(chip.y + chip_size.h >= box.cover_h - scale(40), label .. " chip off the foot")
+                    local bb, at = paint(built)
+                    local tokens = ctx.look.shelf.up_next
+                    assert.is_true(near(role(ctx, tokens.fill_color),
+                        at(chip.x + scale(tokens.outline_width) + 1, chip.y + math.floor(chip_size.h / 2))),
+                        label .. " the chip's fill")
+                    bb:free()
+                    built:free()
+
+                    local remote_plain = LibraryTiles.book(remote(), { status = "new" }, box, ctx)
+                    local nd_place = remote_plain:place(remote_plain.chip)
+                    remote_plain:free()
+                    built = LibraryTiles.book(remote(), { status = "new" }, box, ctx, { label = "Up next" })
+                    assert.equals(plain_h, built:getSize().h, label .. " path-less")
+                    assert.is_table(built.badge, label .. " path-less badge")
+                    assert.is_true(has_text(built.chip, "UP NEXT"), label .. " path-less chip")
+                    assert.is_false(has_text(built, "NOT DOWNLOADED"), label .. " path-less")
+                    local up = built:place(built.chip)
+                    assert.equals(nd_place.x, up.x, label .. " at Not downloaded's place")
+                    local badge, size = built:place(built.badge), built.badge:getSize().w
+                    local up_size = built.chip:getSize()
+                    assert.is_true(up.x + up_size.w <= badge.x or up.y + up_size.h <= badge.y
+                        or up.y >= badge.y + size, label .. " chip under the badge")
                     built:free()
                 end
             end)

@@ -9,7 +9,6 @@ describe("the book sheet", function()
     local DataStorage = require("datastorage")
     local DocSettings = require("docsettings")
     local Event = require("ui/event")
-    local InfoMessage = require("ui/widget/infomessage")
     local ReadHistory = require("readhistory")
     local UIManager = require("ui/uimanager")
     local ffiutil = require("ffi/util")
@@ -19,8 +18,6 @@ describe("the book sheet", function()
     local util = require("util")
     local Screen = require("device").screen
     local Featured, FeaturedBook, FeaturedCover, Home, HomeRows, Settings, SettingsMenu, Sheet, State
-
-    local NOTE = "Authors are coming with the library."
 
     -- Undo steps for the running test, run last first after it.
     local cleanups = {}
@@ -425,18 +422,79 @@ describe("the book sheet", function()
             assert.is_nil(Sheet.shown)
         end)
 
-        it("shows the authors note with no timeout on More by this author", function()
-            history({ { a } })
-            fm_with_home()
-            local home = Home.shown
-            hold_book()
-            tap("More by this author")
-            local note = harness.top()
-            assert.equals(InfoMessage, getmetatable(note))
-            assert.equals(NOTE, note.text)
-            assert.is_nil(note.timeout)
-            assert.equals(home, harness.top(2))
-            assert.is_nil(Sheet.shown)
+        -- series-and-authors C8, D6: the first-listed author's own books, read from the book's
+        -- record on the tap, or the Authors list for a book with no author. The library is
+        -- books_dir, so the Authors window lists these books.
+        describe("on More by this author", function()
+            local AuthorsScreen, Books
+
+            before_each(function()
+                AuthorsScreen = require("authors_screen")
+                Books = require("books")
+                local home_dir = G_reader_settings:readSetting("home_dir")
+                G_reader_settings:saveSetting("home_dir", books_dir)
+                cleanup(function()
+                    G_reader_settings:saveSetting("home_dir", home_dir)
+                end)
+            end)
+
+            -- Taps More by this author on a's sheet, running before_tap (if given) between the hold
+            -- and the tap; returns the Authors window shown, checking it went up over the file
+            -- manager with the sheet and the home closed, and that the book's record was read on
+            -- the tap alone.
+            local function more_by(before_tap)
+                local fm = fm_with_home()
+                hold_book()
+                if before_tap then
+                    before_tap()
+                end
+                local reads = spy.on(Books, "for_path")
+                cleanup(function()
+                    Books.for_path:revert()
+                end)
+                assert.spy(reads).was_not_called()
+                tap("More by this author")
+                assert.spy(reads).was_called(1)
+                assert.spy(reads).was_called_with(a)
+                local screen = AuthorsScreen.shown
+                assert.is_not_nil(screen)
+                assert.equals(screen, harness.top())
+                assert.equals(fm, harness.top(2))
+                assert.is_nil(Home.shown)
+                assert.is_nil(Sheet.shown)
+                return screen
+            end
+
+            it("shows the first author's books for a book with two", function()
+                sidecar(a, '{ doc_props = { title = "Frankenstein", authors = "Mary Shelley\\nPercy Shelley" } }')
+                local b = book("b.epub")
+                sidecar(b, '{ doc_props = { title = "Zastrozzi", authors = "Percy Shelley" } }')
+                history({ { a } })
+                local screen = more_by()
+                assert.same({ { kind = "author", name = "Mary Shelley" }, 1 }, { screen:view(), screen.page })
+                assert.equals(1, #screen.tiles)
+                assert.equals(a, screen.tiles[1].record.path)
+            end)
+
+            it("shows the Authors list for a book with no author", function()
+                sidecar(a, '{ doc_props = { title = "Frankenstein" } }')
+                local b = book("b.epub")
+                sidecar(b, '{ doc_props = { title = "Zastrozzi", authors = "Percy Shelley" } }')
+                history({ { a } })
+                local screen = more_by()
+                assert.same({ { kind = "list" }, 1 }, { screen:view(), screen.page })
+            end)
+
+            it("shows the Authors list when the book's file went between the hold and the tap", function()
+                sidecar(a, '{ doc_props = { title = "Frankenstein", authors = "Mary Shelley" } }')
+                local b = book("b.epub")
+                sidecar(b, '{ doc_props = { title = "Zastrozzi", authors = "Percy Shelley" } }')
+                history({ { a } })
+                local screen = more_by(function()
+                    assert(os.remove(a))
+                end)
+                assert.same({ { kind = "list" }, 1 }, { screen:view(), screen.page })
+            end)
         end)
 
         it("opens the featured group's settings on This widget's settings, once", function()

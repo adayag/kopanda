@@ -1,0 +1,11 @@
+id: EV-zf5qju
+type: submit.feature
+at: 2026-10-17T16:41:02.321357Z
+contributor: allen
+command: submit feature library/series-and-authors
+targets:
+    - F-yaihx9
+after:
+    pr: 41
+files:
+    - path: .tiller/epics/library/features/series-and-authors/feature.yml

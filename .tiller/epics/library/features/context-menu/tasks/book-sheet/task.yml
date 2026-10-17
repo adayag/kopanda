@@ -1,7 +1,17 @@
 id: T-1rl35j
 key: library/context-menu/book-sheet
 title: The book sheet over a library record, opened by a hold on a book in the library and on the one-series and one-author screens
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:980e5b56f23f77b49e2fa110ce916dde809d7aac
+        path: .tiller/epics/library/features/context-menu/tasks/book-sheet/task.md
+        observed_at: 2026-10-17T16:43:29.330984Z
+    commit:
+        kind: git_commit
+        value: git:febf828
+        observed_at: 2026-10-17T16:43:29.355147Z

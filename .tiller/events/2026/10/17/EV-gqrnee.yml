@@ -1,0 +1,17 @@
+id: EV-gqrnee
+type: start.task
+at: 2026-10-17T07:52:26.673713Z
+contributor: allen
+command: start task T-hxf2vf
+targets:
+    - T-hxf2vf
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/library/series-and-authors
+    branch: tiller/library/series-and-authors/chrome
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/chrome/task.yml
+    - path: .tiller/epics/library/features/series-and-authors/feature.yml

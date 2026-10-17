@@ -3,7 +3,8 @@
 -- given, never for a file already asked, a path-less record or a cover that fits; a check once a
 -- second while extraction runs, at most 30, each calling on_arrival once with exactly the records
 -- that arrived; the last check's cover read; alive(), cancel, a replacing request (one made from
--- on_arrival too, raising or not), files given up staying asked and a failed fork.
+-- on_arrival too, raising or not), files given up by the last check asked again later and a failed
+-- fork.
 -- bookinfomanager is stubbed in package.loaded, since this file sorts before
 -- books_coverbrowser_spec.lua, which loads the real one; UIManager's scheduleIn and unschedule
 -- record their calls; each case restores them in finally.
@@ -502,14 +503,19 @@ describe("BookCovers", function()
             assert.same({ files(A, B), files(B, C) }, bim.extracted)
         end)
 
-        it("keeps a file given up after the last check asked, through a later request", function()
+        -- series-and-authors "Extraction", the cap: after 30 checks with the extraction still running,
+        -- the last check forgets the files that did not arrive, as a replacing request forgets its
+        -- pending ones, so a later request asks for them again; a file that arrived is not asked.
+        it("asks again, at a later request, for a file the last check gave up on, and not for one that arrived",
+            function()
             local arrived = {}
             local bim = manager{
                 info = function(file) return arrived[file] and usable(nil) or nil end,
                 extracting = { true },
             }
             local queue = stub(bim)
-            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            BookCovers.request({ { path = A }, { path = B } }, SPECS, function() end, always)
+            arrived[B] = true
             local checks = 0
             while #queue > 0 do
                 run_next(queue)
@@ -521,8 +527,25 @@ describe("BookCovers", function()
             arrived[C] = true
             run_next(queue)
             assert.same({ { check = 0, paths = { C } } }, calls)
+            BookCovers.request({ { path = A }, { path = B } }, SPECS, function() end, always)
+            assert.same({ files(A, B), files(C), files(A) }, bim.extracted)
+        end)
+
+        -- The other half of the cap: an extraction that ended before the 30th check had its chance
+        -- at every file, so the last check keeps a file that did not arrive asked.
+        it("never asks again for a file that did not arrive when the extraction ended before the cap", function()
+            local bim = manager{ info = function() return nil end, extracting = { true, false } }
+            local queue = stub(bim)
             BookCovers.request({ { path = A } }, SPECS, function() end, always)
-            assert.same({ files(A), files(C) }, bim.extracted)
+            local checks = 0
+            while #queue > 0 do
+                run_next(queue)
+                checks = checks + 1
+            end
+            assert.equals(2, checks)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            assert.same({ files(A) }, bim.extracted)
+            assert.equals(0, #queue)
         end)
 
         it("schedules nothing for a fork that fails, logged, and never asks for its files again", function()

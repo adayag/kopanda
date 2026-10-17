@@ -4,10 +4,10 @@
 -- the tab, a hold on Settings opens the quick-settings sheet, any other hold on the bar is consumed
 -- and runs nothing, and every other gesture passes through.
 --
--- launcher_entries, quick_settings and library are required at call time: launcher_entries requires
--- home (launcher_entries.lua:6), which reaches this module through home_rows, so a load-time require
--- would loop, quick_settings requires launcher_entries, and library reaches this module through
--- library_view.
+-- launcher_entries, quick_settings, library, series_screen and authors_screen are required at call
+-- time: launcher_entries requires home (launcher_entries.lua:6), which reaches this module through
+-- home_rows, so a load-time require would loop, quick_settings requires launcher_entries, and the
+-- chrome windows reach this module through library_chrome.
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local Icons = require("icons")
@@ -32,8 +32,9 @@ NavBar.TABS = {
     { id = "settings", label = "Settings", icon = "settings" },
 }
 
--- The active tab's id, by where the bar is: no screen of Authors, History or Settings carries it.
-local ACTIVE = { home = "home", file_browser = "library", library = "library" }
+-- The active tab's id, by where the bar is: the Authors window lights Authors; the Series window
+-- lights none, and no screen of History or Settings carries the bar.
+local ACTIVE = { home = "home", file_browser = "library", library = "library", authors = "authors" }
 
 -- The y of a tab's content from the bar's top: below the edge, or below the active rule where
 -- the rule is the longer, so every tab's content starts at one top; then the tab's padding.
@@ -63,19 +64,22 @@ function NavBar.height(look, screen)
         + label_height(look, screen) + screen:scaleBySize(nav.padding_bottom)
 end
 
--- Runs the tab id from where, "home", "file_browser" or "library". An error is logged with the
--- tab's name and goes no further, so the screen under the bar stays as it was.
+-- The window module each chrome window's bar closes on Home, by where.
+local WINDOWS = { library = "library", series = "series_screen", authors = "authors_screen" }
+
+-- Runs the tab id from where, "home", "file_browser", "library", "series" or "authors". An error is logged
+-- with the tab's name and goes no further, so the screen under the bar stays as it was.
 function NavBar.run(id, where)
     local ok, err = pcall(function()
         if id == "home" then
             -- On the home, Home is the screen already. From the file browser, KoPanda's instance,
             -- registered under its name (frontend/apps/filemanager/filemanager.lua:379-389, :424);
-            -- from the library, the same once the library has closed onto the file browser. The
-            -- library is required now: it requires this module.
-            if where == "library" then
-                require("library").close()
+            -- from a chrome window, the same once the window has closed onto the file browser. The
+            -- window's module is required now: it requires this module.
+            if WINDOWS[where] then
+                require(WINDOWS[where]).close()
             end
-            if where == "file_browser" or where == "library" then
+            if where == "file_browser" or WINDOWS[where] then
                 package.loaded["apps/filemanager/filemanager"].instance.kopanda:goHome()
             end
         elseif id == "history" then

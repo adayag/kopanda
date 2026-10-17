@@ -1,7 +1,17 @@
 id: T-m9850d
 key: library/context-menu/icons
 title: Seven board icons in the registry, the swatch's fourth icon row and the regenerated catalog
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:1f6f5f26f032a71f7f5fa28b6ee5381ff1a484ea
+        path: .tiller/epics/library/features/context-menu/tasks/icons/task.md
+        observed_at: 2026-10-17T16:43:29.307084Z
+    commit:
+        kind: git_commit
+        value: git:febf828
+        observed_at: 2026-10-17T16:43:29.330514Z

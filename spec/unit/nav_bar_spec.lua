@@ -423,6 +423,26 @@ describe("the nav bar", function()
             assert.equals(fm.kopanda, home_calls[1][1])
             assert.same({}, entry_calls)
         end)
+        -- series-and-authors C8, D17.
+        it("Authors from the home and from the file browser shows the Authors list at its first page", function()
+            local fixture = require("shelf_fixture")
+            fixture.install({ fixture.book("Earthsea", { authors = { "Ursula K. Le Guin" } }) })
+            local Home, AuthorsScreen = package.loaded["home"], package.loaded["authors_screen"]
+            local fm = harness.show_fm()
+            harness.tick(2)
+            assert.is_not_nil(Home.shown)
+            for _, where in ipairs({ "home", "file_browser" }) do
+                NavBar.run("authors", where)
+                local screen = AuthorsScreen.shown
+                assert.is_not_nil(screen, where)
+                assert.equals(screen, harness.top(), where)
+                assert.equals(fm, harness.top(2), where)
+                assert.is_nil(Home.shown, where)
+                assert.same({ { kind = "list" }, 1 }, { screen:view(), screen.page }, where)
+                AuthorsScreen.close()
+                assert.equals(fm, harness.top(), where)
+            end
+        end)
     end)
 
     -- cover-grid C6: the library window carries the bar with Library lit.
@@ -462,6 +482,52 @@ describe("the nav bar", function()
             assert.equals(library, Library.shown)
             assert.equals(library, harness.top())
             assert.same({ fixture.ROOT, 1 }, { library.dir, library.page })
+        end)
+    end)
+
+    -- series-and-authors C4: the Series window carries the bar with no tab lit.
+    describe("on the Series window", function()
+        it("lights no tab", function()
+            for _, id in ipairs(Looks.ids()) do
+                local bar = bar_for(id, "series")
+                assert.is_nil(bar.active, id)
+                bar:free()
+            end
+        end)
+
+        it("runs Home by closing the window and showing the home", function()
+            local fixture = require("shelf_fixture")
+            fixture.install(fixture.series("Earthsea", 2))
+            local Home, SeriesScreen = package.loaded["home"], package.loaded["series_screen"]
+            local screen = fixture.show()
+            NavBar.run("home", "series")
+            assert.is_nil(SeriesScreen.shown)
+            assert.is_false(require("ui/uimanager"):isWidgetShown(screen))
+            assert.is_not_nil(Home.shown)
+            assert.equals(Home.shown, harness.top())
+        end)
+    end)
+
+    -- series-and-authors C5: the Authors window carries the bar with Authors lit.
+    describe("on the Authors window", function()
+        it("lights Authors", function()
+            for _, id in ipairs(Looks.ids()) do
+                local bar = bar_for(id, "authors")
+                assert.equals("authors", NavBar.TABS[bar.active].id, id)
+                bar:free()
+            end
+        end)
+
+        it("runs Home by closing the window and showing the home", function()
+            local fixture = require("shelf_fixture")
+            fixture.install({ fixture.book("Earthsea", { authors = { "Ursula K. Le Guin" } }) })
+            local Home, AuthorsScreen = package.loaded["home"], package.loaded["authors_screen"]
+            local screen = fixture.show_authors()
+            NavBar.run("home", "authors")
+            assert.is_nil(AuthorsScreen.shown)
+            assert.is_false(require("ui/uimanager"):isWidgetShown(screen))
+            assert.is_not_nil(Home.shown)
+            assert.equals(Home.shown, harness.top())
         end)
     end)
 

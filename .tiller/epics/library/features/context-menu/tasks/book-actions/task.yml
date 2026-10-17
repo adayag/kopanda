@@ -1,10 +1,20 @@
 id: T-lnzmw0
 key: library/context-menu/book-actions
 title: Add to the home and Delete on the library's book sheet
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-1rl35j
     - T-m9850d
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:79a699b40dfedb35d558651641cae0fe3d21b346
+        path: .tiller/epics/library/features/context-menu/tasks/book-actions/task.md
+        observed_at: 2026-10-17T16:43:29.355577Z
+    commit:
+        kind: git_commit
+        value: git:febf828
+        observed_at: 2026-10-17T16:43:29.379214Z

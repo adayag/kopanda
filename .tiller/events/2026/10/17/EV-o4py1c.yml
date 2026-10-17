@@ -1,0 +1,13 @@
+id: EV-o4py1c
+type: claim.task
+at: 2026-10-17T07:52:44.426095Z
+contributor: allen
+command: claim task T-qrlexd
+targets:
+    - T-qrlexd
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/rows/task.yml

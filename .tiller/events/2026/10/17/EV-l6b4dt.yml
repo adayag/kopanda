@@ -1,0 +1,13 @@
+id: EV-l6b4dt
+type: check.feature
+at: 2026-10-17T16:22:24.111622Z
+contributor: allen
+command: check feature F-yaihx9
+targets:
+    - F-yaihx9
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/library/features/series-and-authors/feature.yml

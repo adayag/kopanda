@@ -1,9 +1,10 @@
 id: T-05lpro
 key: library/series-and-authors/index
 title: Series state, author order, letter groups and the pagings as pure logic
-status: ready
+status: done
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,38 @@ accepted_against:
         kind: git_commit
         value: git:56440d9
         observed_at: 2026-10-17T07:51:40.789741Z
+branch: tiller/library/series-and-authors/index
+review_ref:
+    branch: tiller/library/series-and-authors/index
+    head:
+        kind: git_commit
+        value: git:c7a33b3
+        observed_at: 2026-10-17T12:18:36.562993Z
+done_basis: ancestry
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T12:14:42.727753Z
+        against:
+            kind: git_commit
+            value: git:1794d24
+            observed_at: 2026-10-17T12:14:42.727739Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-1794d24-out-d724739120934321b8f7f08d647a0e5d152a527ccabee0122b606dce8836cc03.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T12:14:42.727753Z
+        against:
+            kind: git_commit
+            value: git:1794d24
+            observed_at: 2026-10-17T12:14:42.727739Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-1794d24-out-9c1358d2d8f55935577ed7dc51af23b7898177a058b3723c57887e270edeb7d7.txt

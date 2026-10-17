@@ -254,6 +254,19 @@ describe("the file browser's nav bar", function()
             }, runs)
         end)
 
+        -- series-and-authors C8, D17.
+        it("shows the Authors list over the file browser from Authors", function()
+            local fixture = require("shelf_fixture")
+            fixture.install({ fixture.book("Earthsea", { authors = { "Ursula K. Le Guin" } }) })
+            local fm = fm_on_top()
+            send(harness.gesture("tap", tab_centre(fm[1].bar, 3)))
+            local screen = package.loaded["authors_screen"].shown
+            assert.is_not_nil(screen)
+            assert.equals(screen, harness.top())
+            assert.equals(fm, harness.top(2))
+            assert.same({ { kind = "list" }, 1 }, { screen:view(), screen.page })
+        end)
+
         it("runs Settings and not a corner zone bound on the file manager", function()
             local fm = fm_on_top()
             local runs = record_runs()

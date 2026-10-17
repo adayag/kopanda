@@ -1,0 +1,14 @@
+id: EV-6836zp
+type: resume.task
+at: 2026-10-17T15:54:36.514731Z
+contributor: allen
+command: resume task T-m36ahd
+targets:
+    - T-m36ahd
+before:
+    status: in_review
+after:
+    reason: 'owner C16 feedback: a gap above the pager on every list (shelf.list.pager_gap), Diner row padding y 9 to keep five series rows; goldens regenerated'
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/goldens/task.yml
