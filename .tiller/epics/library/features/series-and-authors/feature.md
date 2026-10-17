@@ -221,10 +221,11 @@ on `paper`, `ink` (cover-grid feature.md:244-246).
 | `shelf.list.padding_top`, `side`, `row_gap` | 22, 40, 0 (lead: by analogy, rows ruled not boxed) | 22, 40, 14 (SeriesC:27) |
 | `shelf.row.padding` x, y; `gap`; `outline_width`; `shadow` x, y; `rule_width`, `rule_color` | 0, 14; 18; 0; 0, 0; 1, `hairline` (lead: by analogy with GridA's hairlines) | 16, 11; 18; 3; 4, 4; 0, `ink` (SeriesC:28; y 11 not the board's 12: the owner's fit, 2026-10-17, five rows a page at the Colorsoft) |
 | `shelf.row.line_gap` | 3 (lead: by analogy with SeriesC:34) | 3 (SeriesC:34) |
-| `shelf.stack.cover_w`, `cover_h`, `offset_x`, `offset_y`, `outline_width`, `outline_color` | 38, 56, 10, 2, 1, `paper` (lead: an edge to part the overlapped covers) | 38, 56, 10, 2, 2, `outline` (SeriesC:29-33) |
+| `shelf.stack.cover_w`, `cover_h`, `offset_x`, `offset_y`, `outline_width`, `outline_color` | 38, 56, 10, 2, 1, `paper` (lead: an edge to part the overlapped covers) | 38, 56, 10, 2, 2, `outline` (SeriesC:29-33; `cover_w` and `cover_h` the outer box, the outline inside it, so the stack keeps the board's 60-high room and the five-row fit) |
 | `shelf.chip.padding` x, y; `outline_width`; `under_way_fill_color`, `finished_fill_color`, `not_started_fill_color`, `up_next_fill_color`, `not_downloaded_fill_color` | 0, 0; 0; false × 5 (lead: small caps, as GridA:73) | 7, 1; 2; `mustard`, `teal`, `paper`, `paper`, `pink` (SeriesC:39, :76, :88; SeriesBooksC:49, :62) |
 | `shelf.books.padding_top`, `row_gap` | 24, 0 (lead: ruled rows) | 24, 18 (SeriesBooksC:32) |
-| `shelf.book.index_w`, `cover_w`, `cover_h`, `cover_outline_width`, `line_gap` | 40, 64, 96, 0, 6 (lead: Editorial's covers unoutlined, GridA:43) | 40, 64, 96, 2, 6 (SeriesBooksC:34-36) |
+| `shelf.book.padding` x, y | 0, 14 (lead: by analogy with SeriesBooksC:33) | 16, 14 (SeriesBooksC:33) |
+| `shelf.book.index_w`, `cover_w`, `cover_h`, `cover_outline_width`, `line_gap` | 40, 64, 96, 0, 6 (lead: Editorial's covers unoutlined, GridA:43) | 40, 64, 96, 2, 6 (SeriesBooksC:34-36; `cover_w` and `cover_h` the content, the outline outside it, as the board's CSS: the owner, 2026-10-17) |
 | `shelf.book.bar_height`, `bar_outline_width` | 4, 0 (GridA:46's strip) | 10, 2 (SeriesBooksC:38) |
 | `shelf.next.fill_color`, `shadow` x, y; `line_gap`; `text_color` | false, 0, 0; 4; `ink` (lead: Editorial marks by type, AuthorBooksA:52) | `mustard`, 6, 6; 4; `on_accent` (SeriesBooksC:42, :45) |
 | `shelf.book.badge_size`, `badge_outline_width`, `badge_icon_size`, `badge_inset` | 24, 1, 14, 6 (lead: GridA:66 scaled to the cover) | 28, 2, 14, −10 (SeriesBooksC:54-55) |
