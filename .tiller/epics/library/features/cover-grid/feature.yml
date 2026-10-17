@@ -21,18 +21,18 @@ pr: 35
 accepted_against:
     spec:
         kind: git_blob
-        value: git:8270973ae86240eb45609bcb5c31fcf4d8334a94
+        value: git:e711e20659e170806b9cdaaec36030ab77a8bd6d
         path: .tiller/epics/library/features/cover-grid/feature.md
-        observed_at: 2026-10-17T07:07:50.243063Z
+        observed_at: 2026-10-17T07:42:08.052969Z
     eval:
         kind: git_blob
         value: git:4c9c4eed3249236eb5f26ec05153d08ca6391645
         path: .tiller/epics/library/features/cover-grid/feature.eval.md
-        observed_at: 2026-10-17T07:07:50.243063Z
+        observed_at: 2026-10-17T07:42:08.052969Z
     commit:
         kind: git_commit
-        value: git:a885a83
-        observed_at: 2026-10-17T07:07:50.280946Z
+        value: git:4ea24ec
+        observed_at: 2026-10-17T07:42:08.089528Z
 gates:
     build:
         required: true
