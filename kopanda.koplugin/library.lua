@@ -50,7 +50,7 @@ local function page_for(dir)
     return 1
 end
 
-local FIELDS = { "dir", "page", "pages", "dimen", "ctx", "header", "tiles", "box", "pager", "note", "nav" }
+local FIELDS = { "dir", "page", "pages", "dimen", "ctx", "header", "tiles", "box", "pager", "note", "nav", "kept" }
 
 -- Puts built in place of what the library showed, and frees that.
 local function apply(library, built)
@@ -86,10 +86,10 @@ function Library:init()
     self.covers_due = true
 end
 
--- Builds dir at page in place and repaints. A failure is logged and leaves the page as it was.
--- Returns whether it built.
-local function rebuild(library, dir, page)
-    local ok, built = pcall(LibraryView.build, dir, page)
+-- Builds dir at page in place from kept (LibraryView.build's) and repaints. A failure is logged and
+-- leaves the page as it was. Returns whether it built.
+local function rebuild(library, dir, page, kept)
+    local ok, built = pcall(LibraryView.build, dir, page, kept)
     if not ok then
         logger.err("KoPanda: could not build the library at", dir, "page", page, ":", built)
         return false
@@ -100,10 +100,12 @@ local function rebuild(library, dir, page)
 end
 
 -- Shows dir at page (clamped to its pages) in place, its covers asked for after its first paint.
--- The check in flight goes on: a request that starts a new batch replaces it, and its arrivals
--- rebuild only the tiles the page shows. A failure is logged and leaves the page as it was.
+-- The folder shown is not listed again: its kept listing is sliced, or filtered and sorted again
+-- under a choice made since; another folder is listed. The check in flight goes on: a request
+-- that starts a new batch replaces it, and its arrivals rebuild only the tiles the page shows. A
+-- failure is logged and leaves the page as it was.
 function Library:go(dir, page)
-    if not rebuild(self, dir, page) then
+    if not rebuild(self, dir, page, self.kept) then
         return
     end
     self.covers_due = true
@@ -287,7 +289,8 @@ end
 -- current variant; one of another size (showFiles resets the rotation) or variant is dropped.
 -- Returns the library or nil. The closed book's tile is rebuilt, since the reader saves its
 -- sidecar after CloseDocument, when the library was built (frontend/apps/reader/readerui.lua:887,
--- then :874-877 on its close at :893); a failure leaves the tile as built.
+-- then :874-877 on its close at :893); a failure leaves the tile as built. Its progress the build
+-- kept is forgotten, so a page turned to reads it again wherever the book is.
 function Library.take_pending()
     local pending = Library.pending
     if not pending then
@@ -302,6 +305,7 @@ function Library.take_pending()
     if pending.closed then
         -- A file's record id, as books.lua's record() makes it.
         local id = "file:" .. (ffiutil.realpath(pending.closed) or pending.closed)
+        LibraryView.forget(pending.kept, id)
         LibraryCovers.rebuild_tiles(pending, { [id] = true }, "the closed book's tile")
     end
     return pending
@@ -313,7 +317,7 @@ end
 local function paint(library, bb, x, y)
     local size = Screen:getSize()
     if library.ctx.variant ~= Looks.variant() or size.w ~= library.dimen.w or size.h ~= library.dimen.h then
-        apply(library, LibraryView.build(library.dir, library.page))
+        apply(library, LibraryView.build(library.dir, library.page, library.kept))
     end
     InputContainer.paintTo(library, bb, x, y)
 end

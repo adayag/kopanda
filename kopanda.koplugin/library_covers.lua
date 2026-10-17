@@ -5,6 +5,7 @@
 local BookCovers = require("book_covers")
 local Books = require("books")
 local LibraryTiles = require("library_tiles")
+local LibraryView = require("library_view")
 local UIManager = require("ui/uimanager")
 local logger = require("logger")
 
@@ -12,16 +13,18 @@ local LibraryCovers = {}
 
 -- Rebuilds in place the tiles of the books whose ids are keys of ids, from their records read again
 -- (a title that came with an extraction replaces the file name) and their progress read now,
--- keeping the page's order. A failure is logged with what and leaves every tile as it was. Returns
--- how many tiles it rebuilt.
+-- keeping the page's order; the library's kept listing takes each record and progress
+-- (LibraryView.renew), so the next build filters and sorts with them. A failure is logged with what
+-- and leaves every tile as it was. Returns how many tiles it rebuilt.
 function LibraryCovers.rebuild_tiles(library, ids, what)
     local fresh = {}
     local ok, err = pcall(function()
         for _, tile in ipairs(library.tiles) do
             if tile.record and ids[tile.record.id] then
                 local record = Books.get(tile.record.id) or tile.record
-                fresh[#fresh + 1] = { tile = tile, record = record,
-                    widget = LibraryTiles.book(record, Books.progress(record), library.box, library.ctx) }
+                local progress = Books.progress(record)
+                fresh[#fresh + 1] = { tile = tile, record = record, progress = progress,
+                    widget = LibraryTiles.book(record, progress, library.box, library.ctx) }
             end
         end
     end)
@@ -37,6 +40,7 @@ function LibraryCovers.rebuild_tiles(library, ids, what)
         local old = library[1][tile.index]
         library[1][tile.index] = entry.widget
         tile.widget, tile.record = entry.widget, entry.record
+        LibraryView.renew(library.kept, entry.record, entry.progress)
         old:free()
     end
     return #fresh
