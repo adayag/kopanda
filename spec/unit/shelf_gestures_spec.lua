@@ -1,19 +1,82 @@
--- The Series window's gestures (series-and-authors C6, D9, D11, D17), in the chrome's order: the nav
--- bar's band; a tap on a series row, a book row, the back control or a pager arrow; "Under way first"
--- inert, so its tap reaches the file manager's menu zones; a west or east swipe, but not one in the
--- top or bottom edge band; the page keys; a hold consumed; and everything else to the zones on the
--- file manager. SeriesScreen.hit names what lies under a point. KOReader's touch lock filters the
--- window's own zones.
+-- The Series and Authors windows' gestures (series-and-authors C6, D9, D11, D17), in the chrome's
+-- order: the nav bar's band; a tap on a series or author row, a book row or tile, the back control
+-- or a pager arrow; "Under way first" and "By surname" inert, so their taps reach the file manager's
+-- menu zones; a west or east swipe, but not one in the top or bottom edge band; the page keys; a
+-- hold consumed; and everything else to the zones on the file manager. SeriesScreen.hit and
+-- AuthorsScreen.hit name what lies under a point. KOReader's touch lock filters the windows' own
+-- zones.
+local harness = require("plugin_harness")
+local fixture = require("shelf_fixture")
+local centre = require("library_fixture").centre
+local Device = require("device")
+local Event = require("ui/event")
+local InputContainer = require("ui/widget/container/inputcontainer")
+local Key = require("device/key")
+local Screen = Device.screen
+local UIManager = require("ui/uimanager")
+
+local restores = {}
+
+-- Replaces t[name] with a recorder of each call's arguments that then runs body, if any.
+local function spy(t, name, body)
+    local calls, original = {}, rawget(t, name)
+    restores[#restores + 1] = function()
+        t[name] = original
+    end
+    t[name] = function(...)
+        calls[#calls + 1] = { ... }
+        if body then
+            return body(...)
+        end
+    end
+    return calls
+end
+
+local function send(ges)
+    UIManager:sendEvent(Event:new("Gesture", ges))
+end
+
+local function swipe(x, y, direction)
+    local ges = harness.gesture("swipe", x, y)
+    ges.direction = direction
+    ges.distance = Screen:scaleBySize(300)
+    return ges
+end
+
+local function tap_on(rect)
+    send(harness.gesture("tap", centre(rect)))
+end
+
+-- A zone on the file manager over rect's ratios, as the Gestures plugin registers its corner taps
+-- (plugins/gestures.koplugin/main.lua:985-990, :1287-1288), and the gestures it got.
+local function bind(fm, id, ges, zone)
+    local got = {}
+    fm:registerTouchZones{ {
+        id = id,
+        ges = ges,
+        screen_zone = zone,
+        handler = function(g)
+            got[#got + 1] = g
+            return true
+        end,
+        overrides = ges == "swipe" and { "filemanager_swipe" } or nil,
+    } }
+    return got
+end
+
+local FULL = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = 1 }
+
+-- Undoes the spies and the touch lock, and empties the UI.
+local function reset()
+    for i = #restores, 1, -1 do
+        restores[i]()
+    end
+    restores = {}
+    InputContainer:setIgnoreTouchInput(false)
+    harness.teardown()
+end
+
 describe("gestures on the Series window", function()
-    local harness = require("plugin_harness")
-    local fixture = require("shelf_fixture")
-    local centre = require("library_fixture").centre
-    local Device = require("device")
-    local Event = require("ui/event")
-    local InputContainer = require("ui/widget/container/inputcontainer")
-    local Key = require("device/key")
-    local Screen = Device.screen
-    local UIManager = require("ui/uimanager")
     local NavBar, SeriesScreen
 
     local LIST = { kind = "list" }
@@ -32,52 +95,13 @@ describe("gestures on the Series window", function()
         return fixture.install(records)
     end
 
-    local restores = {}
-
-    -- Replaces t[name] with a recorder of each call's arguments that then runs body, if any.
-    local function spy(t, name, body)
-        local calls, original = {}, rawget(t, name)
-        restores[#restores + 1] = function()
-            t[name] = original
-        end
-        t[name] = function(...)
-            calls[#calls + 1] = { ... }
-            if body then
-                return body(...)
-            end
-        end
-        return calls
-    end
-
     before_each(function()
         harness.load()
         NavBar = package.loaded["nav_bar"]
         SeriesScreen = package.loaded["series_screen"]
     end)
 
-    after_each(function()
-        for i = #restores, 1, -1 do
-            restores[i]()
-        end
-        restores = {}
-        InputContainer:setIgnoreTouchInput(false)
-        harness.teardown()
-    end)
-
-    local function send(ges)
-        UIManager:sendEvent(Event:new("Gesture", ges))
-    end
-
-    local function swipe(x, y, direction)
-        local ges = harness.gesture("swipe", x, y)
-        ges.direction = direction
-        ges.distance = Screen:scaleBySize(300)
-        return ges
-    end
-
-    local function tap_on(rect)
-        send(harness.gesture("tap", centre(rect)))
-    end
+    after_each(reset)
 
     local function row_of(screen, name)
         for _, row in ipairs(screen.rows) do
@@ -88,24 +112,6 @@ describe("gestures on the Series window", function()
     end
 
     -- A zone on the file manager over rect's ratios, as the Gestures plugin registers its corner taps
-    -- (plugins/gestures.koplugin/main.lua:985-990, :1287-1288), and the gestures it got.
-    local function bind(fm, id, ges, zone)
-        local got = {}
-        fm:registerTouchZones{ {
-            id = id,
-            ges = ges,
-            screen_zone = zone,
-            handler = function(g)
-                got[#got + 1] = g
-                return true
-            end,
-            overrides = ges == "swipe" and { "filemanager_swipe" } or nil,
-        } }
-        return got
-    end
-
-    local FULL = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = 1 }
-
     it("in the nav bar's band runs the tapped tab first, with where series", function()
         install()
         local screen, fm = fixture.show()
@@ -308,5 +314,208 @@ describe("gestures on the Series window", function()
         assert.same({}, runs)
         assert.same({ LIST, 1 }, { screen.showing, screen.page })
         assert.equals(screen, harness.top())
+    end)
+end)
+
+describe("gestures on the Authors window", function()
+    local AuthorsScreen, NavBar
+
+    local LIST = { kind = "list" }
+    local GRID = { kind = "author", name = "Jo Grid" }
+    local LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+    -- Thirty authors of one book each, "Ann A01" to "Ann D30" by their letters, two pages or more;
+    -- and Jo Grid's seven books, the first not downloaded (in a series, so first in D16's order).
+    local function install()
+        local records = {}
+        for i = 1, 30 do
+            local letter = LETTERS:sub((i - 1) % 26 + 1, (i - 1) % 26 + 1)
+            records[i] = fixture.book(("Book %02d"):format(i), { authors = { ("Ann %s%02d"):format(letter, i) } })
+        end
+        records[#records + 1] = fixture.remote("Untold",
+            { series = "Alpha", series_index = 1, authors = { "Jo Grid" } })
+        for i = 1, 6 do
+            records[#records + 1] = fixture.book("Grid " .. i, { authors = { "Jo Grid" } })
+        end
+        return fixture.install(records)
+    end
+
+    before_each(function()
+        harness.load()
+        AuthorsScreen = package.loaded["authors_screen"]
+        NavBar = package.loaded["nav_bar"]
+    end)
+
+    after_each(reset)
+
+    local function row_of(screen, name)
+        for _, row in ipairs(screen.rows) do
+            if row.entry.name == name then
+                return row
+            end
+        end
+    end
+
+    local function tile_of(screen, title)
+        for _, tile in ipairs(screen.tiles) do
+            if tile.record.title == title then
+                return tile
+            end
+        end
+    end
+
+    it("in the nav bar's band runs the tapped tab first, with where authors", function()
+        install()
+        local screen, fm = fixture.show_authors()
+        local got = bind(fm, "kopanda_spec_bar_tap", "tap", FULL)
+        local runs = spy(NavBar, "run")
+        local bar = screen.nav
+        local column = bar.columns[5]
+        send(harness.gesture("tap", bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2),
+            bar.dimen.y + math.floor(bar.dimen.h / 2)))
+        assert.same({ { "settings", "authors" } }, runs)
+        assert.same({}, got)
+        assert.equals(screen, harness.top())
+    end)
+
+    describe("a tap", function()
+        it("on an author row shows that author at their first page", function()
+            install()
+            local screen = fixture.show_authors()
+            tap_on(row_of(screen, "Ann A01").rect)
+            assert.same({ kind = "author", name = "Ann A01" }, screen.showing)
+            assert.equals(1, screen.page)
+            assert.equals("Book 01", screen.tiles[1].record.title)
+            assert.equals(screen, AuthorsScreen.shown)
+        end)
+
+        it("on the back control returns to the list at the page holding the author", function()
+            install()
+            local screen = fixture.show_authors(LIST, 2)
+            local row = screen.rows[2]
+            local name = row.entry.name
+            tap_on(row.rect)
+            assert.same({ kind = "author", name = name }, screen.showing)
+            tap_on(screen.header.back_rect)
+            assert.same(LIST, screen.showing)
+            assert.equals(2, screen.page)
+            assert.is_not_nil(row_of(screen, name))
+        end)
+
+        it("on a downloaded book's tile opens it through filemanagerutil.openFile, on_open run first", function()
+            install()
+            local screen, fm = fixture.show_authors(GRID)
+            local order = {}
+            local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile", function(_, _, pre)
+                order[#order + 1] = "open"
+                pre()
+            end)
+            local returns = spy(AuthorsScreen, "on_open", function()
+                order[#order + 1] = "return"
+            end)
+            local tile = tile_of(screen, "Grid 2")
+            tap_on(tile.rect)
+            assert.equals(1, #opened)
+            assert.equals(fm, opened[1][1])
+            assert.equals(tile.record.path, opened[1][2])
+            assert.same({ { GRID, 1 } }, returns)
+            assert.same({ "open", "return" }, order)
+        end)
+
+        it("on a book not downloaded does nothing and is consumed", function()
+            install()
+            local screen, fm = fixture.show_authors(GRID)
+            local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile")
+            local got = bind(fm, "kopanda_spec_full_tap", "tap", FULL)
+            tap_on(tile_of(screen, "Untold").rect)
+            assert.same({}, opened)
+            assert.same({}, got)
+            assert.same(GRID, screen.showing)
+            assert.equals(screen, harness.top())
+        end)
+
+        it("on By surname is the header's empty space and opens the file manager's menu", function()
+            install()
+            local screen, fm = fixture.show_authors()
+            tap_on(screen.header.right[1])
+            assert.same(LIST, screen.showing)
+            assert.is_not_nil(fm.menu.menu_container)
+            assert.equals(fm.menu.menu_container, harness.top())
+            assert.equals(screen, harness.top(2))
+        end)
+
+        it("on a live pager arrow turns the page, in the list and one author, and on a dead one does nothing",
+            function()
+            install()
+            local screen = fixture.show_authors()
+            local pages = screen.pages
+            assert.is_true(pages >= 2)
+            tap_on(screen.pager.prev.rect)
+            assert.equals(1, screen.page)
+            for page = 2, pages do
+                tap_on(screen.pager.next.rect)
+                assert.equals(page, screen.page)
+            end
+            tap_on(screen.pager.next.rect)
+            assert.equals(pages, screen.page)
+            screen:go(GRID, 1)
+            assert.equals(2, screen.pages)
+            tap_on(screen.pager.next.rect)
+            assert.same({ GRID, 2 }, { screen.showing, screen.page })
+            tap_on(screen.pager.next.rect)
+            assert.equals(2, screen.page)
+            tap_on(screen.pager.prev.rect)
+            assert.equals(1, screen.page)
+        end)
+    end)
+
+    it("pages the list with a west or east swipe, without wrapping, and with the page keys", function()
+        install()
+        local screen = fixture.show_authors()
+        local size = Screen:getSize()
+        local x, y = size.w / 2, size.h / 2
+        send(swipe(x, y, "east"))
+        assert.equals(1, screen.page)
+        send(swipe(x, y, "west"))
+        assert.equals(2, screen.page)
+        send(swipe(x, y, "east"))
+        assert.equals(1, screen.page)
+        UIManager:sendEvent(Event:new("KeyPress", Key:new("RPgFwd", {})))
+        assert.equals(2, screen.page)
+        UIManager:sendEvent(Event:new("KeyPress", Key:new("RPgBack", {})))
+        assert.equals(1, screen.page)
+    end)
+
+    it("runs nothing on a hold, reaches no zone on the file manager, and consumes it", function()
+        install()
+        local screen, fm = fixture.show_authors()
+        local got = bind(fm, "kopanda_spec_hold", "hold", FULL)
+        send(harness.gesture("hold", centre(screen.rows[1].rect)))
+        assert.same(LIST, screen.showing)
+        screen:go(GRID, 1)
+        local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile")
+        send(harness.gesture("hold", centre(tile_of(screen, "Grid 1").rect)))
+        send(harness.gesture("hold", centre(screen.header.back_rect)))
+        assert.same({}, got)
+        assert.same({}, opened)
+        assert.same(GRID, screen.showing)
+        assert.equals(screen, harness.top())
+    end)
+
+    it("AuthorsScreen.hit names the author, the book or empty space under a point, and nil with none shown",
+        function()
+        install()
+        assert.is_nil(AuthorsScreen.hit(10, 10))
+        local screen = fixture.show_authors()
+        local row = screen.rows[1]
+        assert.same({ kind = "author", entry = row.entry }, AuthorsScreen.hit(row.rect.x, row.rect.y))
+        assert.equals("author", AuthorsScreen.hit(row.rect.x + row.rect.w - 1, row.rect.y + row.rect.h - 1).kind)
+        local last = screen.rows[#screen.rows]
+        assert.same({ kind = "empty" }, AuthorsScreen.hit(last.rect.x, last.rect.y + last.rect.h))
+        assert.same({ kind = "empty" }, AuthorsScreen.hit(centre(screen.header.rect)))
+        screen:go(GRID, 1)
+        local tile = tile_of(screen, "Untold")
+        assert.same({ kind = "book", record = tile.record }, AuthorsScreen.hit(centre(tile.rect)))
+        assert.same({ kind = "empty" }, AuthorsScreen.hit(tile.rect.x + tile.rect.w, tile.rect.y))
     end)
 end)

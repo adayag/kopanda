@@ -1,8 +1,8 @@
--- Helpers shared by the Series window's specs (spec/unit/series_screen_spec.lua,
--- shelf_gestures_spec.lua, shelf_lifecycle_spec.lua and the series cases of failsafe_spec.lua and
--- nav_bar_spec.lua): records given to Books.all in place of the disk, under a root that exists
--- nowhere, and the window shown over a file manager. Each reads the plugin's modules at call time,
--- so it sees the ones the spec's harness.load() left loaded.
+-- Helpers shared by the Series and Authors windows' specs (spec/unit/series_screen_spec.lua,
+-- authors_screen_spec.lua, shelf_gestures_spec.lua, shelf_lifecycle_spec.lua and the series and
+-- authors cases of failsafe_spec.lua and nav_bar_spec.lua): records given to Books.all in place of
+-- the disk, under a root that exists nowhere, and the window shown over a file manager. Each reads
+-- the plugin's modules at call time, so it sees the ones the spec's harness.load() left loaded.
 -- Busted gives a spec file its assert; a module required from one takes luassert, the same table.
 local assert = require("luassert")
 local harness = require("plugin_harness")
@@ -73,17 +73,27 @@ function M.install(records, progress)
     return calls
 end
 
--- A file manager with the home closed and the Series window shown at view (default: the list) and
--- page, painted and settled.
-function M.show(view, page)
+-- A file manager with the home closed and the window of module shown at view and page, painted and
+-- settled.
+local function show(module, view, page)
     local fm = harness.show_fm()
     harness.tick(2)
     require("home").close()
-    local screen = require("series_screen").show{ view = view, page = page }
+    local screen = require(module).show{ view = view, page = page }
     assert.is_not_nil(screen)
     harness.tick(2)
     assert.equals(screen, harness.top())
     return screen, fm
+end
+
+-- The Series window shown at view (default: the list) and page.
+function M.show(view, page)
+    return show("series_screen", view, page)
+end
+
+-- The Authors window shown at view (default: the list) and page.
+function M.show_authors(view, page)
+    return show("authors_screen", view, page)
 end
 
 -- The series names of the window's rows on its page, or the titles of its book rows.

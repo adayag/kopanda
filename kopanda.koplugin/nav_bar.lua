@@ -4,10 +4,10 @@
 -- the tab, a hold on Settings opens the quick-settings sheet, any other hold on the bar is consumed
 -- and runs nothing, and every other gesture passes through.
 --
--- launcher_entries, quick_settings, library and series_screen are required at call time:
--- launcher_entries requires home (launcher_entries.lua:6), which reaches this module through
--- home_rows, so a load-time require would loop, quick_settings requires launcher_entries, and library
--- and series_screen reach this module through library_chrome.
+-- launcher_entries, quick_settings, library, series_screen and authors_screen are required at call
+-- time: launcher_entries requires home (launcher_entries.lua:6), which reaches this module through
+-- home_rows, so a load-time require would loop, quick_settings requires launcher_entries, and the
+-- chrome windows reach this module through library_chrome.
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local Icons = require("icons")
@@ -32,8 +32,9 @@ NavBar.TABS = {
     { id = "settings", label = "Settings", icon = "settings" },
 }
 
--- The active tab's id, by where the bar is: no screen of Authors, History or Settings carries it.
-local ACTIVE = { home = "home", file_browser = "library", library = "library" }
+-- The active tab's id, by where the bar is: the Authors window lights Authors; the Series window
+-- lights none, and no screen of History or Settings carries the bar.
+local ACTIVE = { home = "home", file_browser = "library", library = "library", authors = "authors" }
 
 -- The y of a tab's content from the bar's top: below the edge, or below the active rule where
 -- the rule is the longer, so every tab's content starts at one top; then the tab's padding.
@@ -64,9 +65,9 @@ function NavBar.height(look, screen)
 end
 
 -- The window module each chrome window's bar closes on Home, by where.
-local WINDOWS = { library = "library", series = "series_screen" }
+local WINDOWS = { library = "library", series = "series_screen", authors = "authors_screen" }
 
--- Runs the tab id from where, "home", "file_browser", "library" or "series". An error is logged
+-- Runs the tab id from where, "home", "file_browser", "library", "series" or "authors". An error is logged
 -- with the tab's name and goes no further, so the screen under the bar stays as it was.
 function NavBar.run(id, where)
     local ok, err = pcall(function()
