@@ -1,0 +1,13 @@
+id: EV-08lljx
+type: check.tweak
+at: 2026-10-17T21:47:12.53544Z
+contributor: allen
+command: check tweak TW-43jvrb
+targets:
+    - TW-43jvrb
+before:
+    status: check
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/shelf-screens-keep-rows/tweak.yml
