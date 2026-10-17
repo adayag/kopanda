@@ -1379,6 +1379,15 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   (`Screen:isColorEnabled`, the looks entry above);
   `base/ffi/framebuffer.lua:348` (`getWidth`), `:352` (`getHeight`), `:414` (`scaleBySize`).
 - `logger`: `frontend/logger.lua:96` (`warn`), `:97` (`err`); see the harness entry `logger` below.
+- `ui/widget/titlebar`: `frontend/ui/widget/titlebar.lua:20-84` (`TitleBar`, an `OverlapGroup`
+  extension with no `new` of its own), `:395-402` (`paintTo` sets `dimen.x` and `y`), `:443-468`
+  (`setSubTitle`, `setLeftIcon` and `setRightIcon` mark `self.dimen` dirty under `show_parent`);
+  KoPanda's file-manager title bar (`title_bar.lua`) extends it and replaces `init`, `paintTo`,
+  `getHeight`, the setters and the layout generators.
+- `ui/widget/overlapgroup`: `frontend/ui/widget/overlapgroup.lua:42-56` (`init` replaces
+  `self.dimen` with a new `Geom` of its size), `:22-39` (`getSize`, that size), the title bar's
+  `init` and size; its `free` is `WidgetContainer:free`
+  (`frontend/ui/widget/container/widgetcontainer.lua:110`), which frees the bar's listener.
 
 ## Capture harness (`spec/emulator/`)
 

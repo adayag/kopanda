@@ -118,7 +118,14 @@ describe("looks", function()
                     "nav.padding_x", "nav.padding_top", "nav.padding_bottom", "nav.icon_size", "nav.icon_gap",
                     "nav.icon_color", "nav.active_icon_color", "nav.active_rule_width", "nav.active_rule_color",
                     "nav.active_fill_color", "nav.divider_width", "nav.divider_color", "type.nav_label.face",
-                    "type.nav_label.tracking", "type.nav_label_active.face", "type.nav_label_active.color" }) do
+                    "type.nav_label.tracking", "type.nav_label_active.face", "type.nav_label_active.color",
+                    "title_bar.fill_color", "title_bar.padding.top", "title_bar.padding.side",
+                    "title_bar.padding.bottom", "title_bar.edge_width", "title_bar.edge_color", "title_bar.line_gap",
+                    "title_bar.picker_gap", "title_bar.sort_fill_color", "title_bar.status_fill_color",
+                    "title_bar.picker_outline_width", "title_bar.picker_outline_color", "title_bar.picker_padding.x",
+                    "title_bar.picker_padding.y", "title_bar.icon_size", "title_bar.icon_color",
+                    "title_bar.count_on_shelf", "type.title_bar_count.face", "type.title_bar_title.size",
+                    "type.title_bar_sort.tracking", "type.title_bar_status.color" }) do
                 local found = false
                 for _, path in ipairs(diner) do
                     found = found or path == wanted
@@ -440,6 +447,52 @@ describe("looks", function()
             }, nav_values(look))
             assert.same({ "strong", 12, true, 0.04, 0, "ink" }, part_values(look.type.nav_label))
             assert.same({ "display", 12, true, 0.04, 0, "on_accent" }, part_values(look.type.nav_label_active))
+        end)
+
+        -- The file manager's title bar (Library.dc.html:17-27, LibraryC.dc.html:19-27 under
+        -- .tiller/design/2026-10-13-kopanda-screens/).
+        local function title_bar_values(look)
+            local bar = look.title_bar
+            return {
+                fill_color = bar.fill_color,
+                padding = { top = bar.padding.top, side = bar.padding.side, bottom = bar.padding.bottom },
+                edge_width = bar.edge_width, edge_color = bar.edge_color, line_gap = bar.line_gap,
+                picker_gap = bar.picker_gap, sort_fill_color = bar.sort_fill_color,
+                status_fill_color = bar.status_fill_color, picker_outline_width = bar.picker_outline_width,
+                picker_outline_color = bar.picker_outline_color,
+                picker_padding = { x = bar.picker_padding.x, y = bar.picker_padding.y },
+                icon_size = bar.icon_size, icon_color = bar.icon_color, count_on_shelf = bar.count_on_shelf,
+            }
+        end
+
+        it("give Editorial's title bar block and parts the boards' values", function()
+            local look = looks.editorial
+            assert.same({
+                fill_color = "paper", padding = { top = 40, side = 40, bottom = 16 },
+                edge_width = 1, edge_color = "ink", line_gap = 2, picker_gap = 20,
+                sort_fill_color = false, status_fill_color = false,
+                picker_outline_width = 0, picker_outline_color = false, picker_padding = { x = 0, y = 0 },
+                icon_size = 16, icon_color = "text", count_on_shelf = false,
+            }, title_bar_values(look))
+            assert.same({ "text", 11, true, 0.14, 0, "muted" }, part_values(look.type.title_bar_count))
+            assert.same({ "display", 34, false, 0, 0, "ink" }, part_values(look.type.title_bar_title))
+            assert.same({ "strong", 11, true, 0.12, 0, "text" }, part_values(look.type.title_bar_sort))
+            assert.same({ "strong", 11, true, 0.12, 0, "text" }, part_values(look.type.title_bar_status))
+        end)
+
+        it("give Diner's title bar block and parts the boards' values", function()
+            local look = looks.diner
+            assert.same({
+                fill_color = "mustard", padding = { top = 30, side = 40, bottom = 20 },
+                edge_width = 4, edge_color = "ink", line_gap = 2, picker_gap = 10,
+                sort_fill_color = "paper", status_fill_color = "pink",
+                picker_outline_width = 2, picker_outline_color = "outline", picker_padding = { x = 10, y = 4 },
+                icon_size = 16, icon_color = "on_accent", count_on_shelf = true,
+            }, title_bar_values(look))
+            assert.same({ "accent", 24, false, 0, 0, "on_accent" }, part_values(look.type.title_bar_count))
+            assert.same({ "display", 40, false, -0.01, -0.05, "on_accent" }, part_values(look.type.title_bar_title))
+            assert.same({ "display", 11, true, 0.08, 0, "ink" }, part_values(look.type.title_bar_sort))
+            assert.same({ "display", 11, true, 0.08, 0, "on_accent" }, part_values(look.type.title_bar_status))
         end)
 
         -- D7: the bar always shows on the home, and NavBarC:70 draws no stripe above it; NavBar:19,

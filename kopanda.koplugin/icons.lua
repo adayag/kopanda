@@ -52,7 +52,8 @@ Icons.entries = {
     { id = "back", label = "Back", used_in = { "settings menu" }, file = "icons/back.svg" },
     { id = "close", label = "Close", used_in = { "settings menu", "edit layout", "launcher management" },
       file = "icons/close.svg" },
-    { id = "check", label = "Checked", used_in = { "settings menu", "sheets" }, file = "icons/check.svg" },
+    { id = "check", label = "Checked", used_in = { "settings menu", "sheets", "title bar" },
+      file = "icons/check.svg" },
     -- Lucide's `chevron-up` icon (ISC; see icons/LICENSE-lucide.txt).
     { id = "chevron_up", label = "Move up", used_in = { "edit layout", "launcher management" },
       file = "icons/chevron_up.svg" },
@@ -62,6 +63,8 @@ Icons.entries = {
     -- Lucide's `zap` icon, coordinates rounded (ISC; see icons/LICENSE-lucide.txt).
     { id = "action", label = "Action or plugin entry", used_in = { "launcher", "launcher management" },
       file = "icons/action.svg" },
+    -- Lucide's `plus` icon (ISC; see icons/LICENSE-lucide.txt).
+    { id = "plus", label = "Plus", used_in = { "title bar" }, file = "icons/plus.svg" },
 }
 
 -- The path of the icon file for id, in the form Fonts.path gives a plugin file, or nil for an
