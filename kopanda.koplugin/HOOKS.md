@@ -1841,6 +1841,59 @@ guard (`sheet.lua`).
   extraction request for the folder's books (the featured cover's entry above). Until a book's row
   is written again its tile shows the sidecar's title or the file name on the typographic cover.
 
+### cwngsync's placeholders
+
+cwngsync is the owner's own sync plugin, not bundled with KOReader. Its citations are to
+`new-usemame/cwngsync.koplugin` at `df90d5e` (v4.1.46, its `main.lua:46`), relative to
+`cwngsync.koplugin/`, read from a read-only clone; KoPanda never vendors or requires its files. An
+update on the Kindle can rename what is cited here: every call is wrapped, so KOReader stays usable,
+but the badge would quietly go. Re-check this entry when cwngsync updates.
+
+- The instance: `cloud_books.lua` reads `FileManager.instance.cwngsync` through `package.loaded`, as
+  the `FileManager.instance` entry above reads `instance.kopanda`. `registerModule` stores a module
+  under its name (`frontend/apps/filemanager/filemanager.lua:379-384`) and each plugin instance is
+  registered by its plugin's name (`:424`); cwngsync's is `cwngsync` (cwngsync `main.lua:43`). Its
+  runtime's functions are mixed into the plugin class as methods (cwngsync `main.lua:2555-2565`).
+  With no file manager (in the reader) or no `cwngsync` on it, nothing is a placeholder, silently.
+- `isConfigured` (cwngsync `cwng_library_runtime.lua:144-149`): a server, user name and password
+  are set. False reads as no placeholders, silently. `libraryEnabled` (`:154-156`) is not asked,
+  since cwngsync's own open asks only `isConfigured` (`:1000`).
+- `getLibraryState` (`cwng_library_runtime.lua:104-118`): the in-memory state, read from
+  `cwngsync_library.lua` and, when the revisions match, `cwngsync_library_list.lua` in the settings
+  folder (`:86-102`) the first time anything in the process asks, then kept. cwngsync asks on its
+  first sync, so KoPanda's first listing may be the one that reads it. The state's shape is
+  `{ version, revision, books = { ["<book_id>"] = { kind = "placeholder"|"downloaded", path, size,
+  ... } } }` (`cwng_library.lua:17-20`). `CloudBooks.index()` reads `books` itself, as
+  `placeholderIndex` does (`cwng_library.lua:420-426`), taking each entry with `kind ==
+  "placeholder"`, a string `path` and a number `size`; it does not require `cwng_library`, which
+  resolves only while cwngsync is enabled (`frontend/pluginloader.lua:283-287`). A missing method, a
+  raising call or a state with no `books` table is logged and reads as no placeholders. One read per
+  public `Books` call (`books.lua`), so `Books.all` stats each recorded path once and opens no zip.
+- The test KoPanda mirrors: a file is a placeholder when the state records its path, as the same
+  string, as `kind = "placeholder"` (`placeholderAt`, `cwng_library.lua:404-412`) and its size is
+  still the recorded one (`isLibraryPlaceholder`, `cwng_library_runtime.lua:234-239`), which is the
+  test `openLibraryPlaceholder` makes before it takes a file over (`:999-1009`). So whatever is
+  badged, cwngsync's open downloads. `isLibraryPlaceholder` itself is not called: it walks every
+  record per path. cwngsync records `join(root, book.filename)` (`cwng_library.lua:41-43`, `:187`)
+  and KoPanda lists `join(dir, name)` under `home_dir` (`books.lua`'s scan), so the strings match
+  when `home_dir` names the CWNG root, or a parent of it, the same way; given another way (a
+  symlink, another mount name) nothing is badged and the book reads as downloaded, and cwngsync's
+  open hook would miss that path too, so the badge never claims what the download can't do. The
+  size check also reads a book being downloaded right: cwngsync renames the real book over the
+  placeholder before it records it as downloaded.
+- Why not `libraryPlaceholderTest` (`cwng_library_runtime.lua:245-260`): for a file under the root
+  with no record it opens the file's zip (`readPlaceholderId`, `:187-210`), disk work per tile on a
+  paint, and it accepts files `openLibraryPlaceholder` refuses for lack of a record (`:1002-1003`).
+- Delete is greyed on a placeholder: a recorded placeholder whose file is gone is created again on
+  cwngsync's next sync (`create_placeholder`, `cwng_library.lua:259-262`).
+- Open is unchanged: cwngsync replaces `ReaderUI.showReader` with a hook that hands a placeholder to
+  `openLibraryPlaceholder`, which downloads it and then opens it (`cwng_library_runtime.lua:1034-1050`),
+  so the library's open, which reaches `showReader` through `filemanagerutil.openFile` (the library
+  window's entry above), downloads and opens a placeholder.
+- Read status is unchanged: with auto sync on, cwngsync wraps `filemanagerutil.saveSummary` and
+  queues a placeholder's status by its book id (`cwng_auto_sync.lua:186-229`), so a status written
+  from the book sheet's Read status reaches its server.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
