@@ -1,0 +1,17 @@
+id: EV-dyyty8
+type: start.task
+at: 2026-10-17T01:36:01.584134Z
+contributor: allen
+command: start task T-nzshf0
+targets:
+    - T-nzshf0
+before:
+    status: ready
+after:
+    aggregate_branch: ""
+    branch: tiller/bars/title-bar/bar
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/bar/task.yml
+    - path: .tiller/epics/bars/features/title-bar/feature.yml

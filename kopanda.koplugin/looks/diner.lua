@@ -356,6 +356,24 @@ return {
         nav_label_active = {
             face = "display", size = 12, uppercase = true, tracking = 0.04, line_height = 0, color = "on_accent",
         },
+        -- The file browser's book count over its title, in Caveat at its default weight
+        -- (LibraryC.dc.html:21; CSS line height 1), in the band's dark text.
+        title_bar_count = {
+            face = "accent", size = 24, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
+        },
+        -- Its title (LibraryC.dc.html:22, weight 800); CSS line height 0.95, as the clock's -0.1 for 0.9.
+        title_bar_title = {
+            face = "display", size = 40, uppercase = false, tracking = -0.01, line_height = -0.05,
+            color = "on_accent",
+        },
+        -- The sort chip's label, ink on paper (LibraryC.dc.html:25, weight 800).
+        title_bar_sort = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
+        },
+        -- The status chip's label on pink (LibraryC.dc.html:26, weight 800), the dark text on accents.
+        title_bar_status = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
+        },
     },
 
     -- The launcher: a grid of outlined tiles with the tile shadow, the first three on accents.
@@ -447,5 +465,23 @@ return {
         active_fill_color = "mustard", -- NavBarC.dc.html:71
         divider_width = 3, -- NavBarC.dc.html:71, :75, :79, :83; none on the last tab (:87)
         divider_color = "outline", -- the doc: strokes are ink (NavBarC.dc.html:71)
+    },
+    -- The file browser's title bar: a mustard band over a 4 px ink edge, a handwritten count over the
+    -- title, and the pickers as outlined chips, sort on paper and status on pink (LibraryC.dc.html:19-27).
+    title_bar = {
+        fill_color = "mustard", -- LibraryC.dc.html:19
+        padding = { top = 30, side = 40, bottom = 20 }, -- LibraryC.dc.html:19
+        edge_width = 4, -- LibraryC.dc.html:19
+        edge_color = "ink", -- LibraryC.dc.html:19
+        line_gap = 2, -- the count to the title (LibraryC.dc.html:20)
+        picker_gap = 10, -- LibraryC.dc.html:24
+        sort_fill_color = "paper", -- LibraryC.dc.html:25
+        status_fill_color = "pink", -- LibraryC.dc.html:26
+        picker_outline_width = 2, -- LibraryC.dc.html:25-26
+        picker_outline_color = "outline", -- the look's chip outline (chip.outline_color), ink by day
+        picker_padding = { x = 10, y = 4 }, -- LibraryC.dc.html:25
+        icon_size = 16, -- no board draws the plus: the pickers' size
+        icon_color = "on_accent", -- no board draws the plus: the band's dark text
+        count_on_shelf = true, -- "142 books on the shelf" (LibraryC.dc.html:21)
     },
 }

@@ -335,6 +335,22 @@ return {
         nav_label_active = {
             face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "ink",
         },
+        -- The file browser's book count over its title (Library.dc.html:21); the board's 400 is the text face.
+        title_bar_count = {
+            face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted",
+        },
+        -- Its title (Library.dc.html:22, weight 500); CSS line height 1, as the date's 0.
+        title_bar_title = {
+            face = "display", size = 34, uppercase = false, tracking = 0, line_height = 0, color = "ink",
+        },
+        -- The sort picker (Library.dc.html:24-25); the board's weight 600 is the strong face's 500.
+        title_bar_sort = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "text",
+        },
+        -- The status picker (Library.dc.html:24, :26), as the sort picker.
+        title_bar_status = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "text",
+        },
     },
 
     -- The launcher: a grid of text rows, each under a hairline in tile.rule_color.
@@ -424,5 +440,23 @@ return {
         active_fill_color = false, -- the active tab has no fill (NavBar.dc.html:69)
         divider_width = 0, -- no dividers between tabs (NavBar.dc.html:69-87)
         divider_color = false,
+    },
+    -- The file browser's title bar: a count over a serif title, and the sort and status pickers as
+    -- plain text, above a 1 px ink edge on paper (Library.dc.html:17-27).
+    title_bar = {
+        fill_color = "paper", -- the page under the header (Library.dc.html:17)
+        padding = { top = 40, side = 40, bottom = 16 }, -- Library.dc.html:19
+        edge_width = 1, -- Library.dc.html:19
+        edge_color = "ink", -- Library.dc.html:19
+        line_gap = 2, -- the count to the title (Library.dc.html:20)
+        picker_gap = 20, -- Library.dc.html:24
+        sort_fill_color = false, -- the pickers are plain text (Library.dc.html:25-26)
+        status_fill_color = false,
+        picker_outline_width = 0, -- no box (Library.dc.html:25-26)
+        picker_outline_color = false,
+        picker_padding = { x = 0, y = 0 }, -- no box (Library.dc.html:25-26)
+        icon_size = 16, -- no board draws the plus: the pickers' size
+        icon_color = "text", -- no board draws the plus: the pickers' colour (Library.dc.html:24)
+        count_on_shelf = false, -- "142 books" (Library.dc.html:21)
     },
 }

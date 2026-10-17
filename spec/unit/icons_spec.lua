@@ -43,9 +43,22 @@ describe("icons", function()
         assert.same({
             "action", "authors", "back", "bookmark", "check", "chevron_down", "chevron_up", "close",
             "folder", "history", "home", "info", "layout", "library", "list", "moon", "open_book",
-            "plugin_missing", "power", "rotation_lock", "screenshot", "series", "settings", "sun", "sync",
+            "plugin_missing", "plus", "power", "rotation_lock", "screenshot", "series", "settings", "sun", "sync",
             "terminal", "wifi", "wifi_off",
         }, ids)
+    end)
+
+    -- The title bar draws plus, or check in select mode (title-bar feature, D10).
+    it("uses plus and check in the title bar", function()
+        local places = {}
+        for _, entry in ipairs(Icons.entries) do
+            places[entry.id] = {}
+            for _, place in ipairs(entry.used_in) do
+                places[entry.id][place] = true
+            end
+        end
+        assert.is_true(places.plus["title bar"])
+        assert.is_true(places.check["title bar"])
     end)
 
     it("has one entry per svg file under icons/ and a file for every entry", function()
