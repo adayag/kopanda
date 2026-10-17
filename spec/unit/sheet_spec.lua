@@ -1034,6 +1034,36 @@ describe("the sheet", function()
             end
         end)
 
+        it("doesn't re-lay out or refresh a sheet that an area's tap closed", function()
+            local log = {}
+            local spec = body_spec(log)
+            local body = spec.body
+            spec.body = function(...)
+                local built = body(...)
+                local tap = built.areas[1].tap
+                built.areas[1].tap = function()
+                    tap()
+                    Sheet.close()
+                end
+                return built
+            end
+            local home = Home.shown
+            Sheet.show(spec, ctx_for("diner"))
+            harness.tick(3)
+            local sheet = Sheet.shown
+            local dirty, restore = record(UIManager, "setDirty")
+            send(harness.gesture("tap", area(sheet, 1)))
+            restore()
+            assert.same({ { shown = true, calls = 1 } }, log.stay_tap)
+            assert.equals(1, log.calls)
+            for _, call in ipairs(dirty) do
+                assert.is_not.equals(sheet, call[2])
+            end
+            assert.equals(1, log.widgets[1].frees)
+            assert.is_nil(Sheet.shown)
+            assert.equals(home, harness.top())
+        end)
+
         it("closes the sheet before running an area with close_first, and doesn't re-lay out", function()
             local log = {}
             Sheet.show(body_spec(log), ctx_for("editorial"))
