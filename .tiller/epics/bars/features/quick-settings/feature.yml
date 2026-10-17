@@ -1,7 +1,7 @@
 id: F-rce9ko
 key: bars/quick-settings
 title: Quick settings sheet
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -16,6 +16,7 @@ order:
     - T-phfsk7
     - T-czph2w
 review_grain: feature
+branch: tiller/reviews/features/bars/quick-settings
 accepted_against:
     spec:
         kind: git_blob
