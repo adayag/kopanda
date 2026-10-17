@@ -1,0 +1,8 @@
+id: B-61alhe
+key: bugs/launcher-target-under-home
+title: Library and Authors targets act on a window hidden under the home
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: F-yaihx9

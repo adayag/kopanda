@@ -1,0 +1,14 @@
+id: EV-or80l4
+type: add.tweak
+at: 2026-10-17T15:31:32.274214Z
+contributor: allen
+command: add tweak shared-book-open
+targets:
+    - TW-wny5j4
+after:
+    attached_to: F-yaihx9
+    key: tweaks/shared-book-open
+    status: proposed
+files:
+    - path: .tiller/tweaks/shared-book-open/tweak.md
+    - path: .tiller/tweaks/shared-book-open/tweak.yml
