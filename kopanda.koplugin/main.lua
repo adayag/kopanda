@@ -13,6 +13,7 @@ local Guards = require("guards")
 local Home = require("home")
 local InfoMessage = require("ui/widget/infomessage")
 local Library = require("library")
+local LibraryChrome = require("library_chrome")
 local MenuEntries = require("menu_entries")
 local PaintClock = require("paint_clock")
 local PushNotice = require("push_notice")
@@ -45,7 +46,6 @@ require("launcher_entries")
 require("launcher_manage")
 require("layout")
 require("library_covers")
-require("library_gestures")
 require("library_order")
 require("library_pickers")
 require("library_tiles")
@@ -112,7 +112,7 @@ function KoPanda:init()
         -- reload), so the home or library built for it is not needed.
         if not self.in_fm then
             Home.drop_pending()
-            Library.drop_pending()
+            LibraryChrome.drop_pending()
         end
         -- DispatcherRegisterActions is broadcast once, from Dispatcher:init (frontend/dispatcher.lua:585-586,
         -- :645), which can run before this instance exists, so the action is also registered here.
@@ -216,7 +216,7 @@ local function show_return(kopanda)
     local back = Library.return_to
     Library.return_to = nil
     local started = time.monotonic()
-    local pending = Library.take_pending()
+    local pending = LibraryChrome.take_pending()
     kopanda:showLibrary{ widget = pending, dir = back.dir, page = back.page, started = started }
 end
 
@@ -307,8 +307,9 @@ function KoPanda:onCloseDocument()
     end
     local back = Library.return_to
     if back then
-        if not Library.pending then
-            Library.prebuild(back.dir, back.page, self.ui.document and self.ui.document.file)
+        if not LibraryChrome.pending then
+            LibraryChrome.prebuild(Library, { dir = back.dir, page = back.page },
+                self.ui.document and self.ui.document.file)
         end
         return
     end
@@ -331,7 +332,7 @@ function KoPanda:onCloseWidget()
             Library.return_to = nil
         end
         Home.close()
-        Library.close()
+        LibraryChrome.close()
     end
 end
 

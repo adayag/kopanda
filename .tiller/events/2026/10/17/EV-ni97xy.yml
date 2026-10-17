@@ -1,0 +1,13 @@
+id: EV-ni97xy
+type: check.task
+at: 2026-10-17T12:23:06.155338Z
+contributor: allen
+command: check task T-hxf2vf
+targets:
+    - T-hxf2vf
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/chrome/task.yml

@@ -1,7 +1,7 @@
 id: T-hxf2vf
 key: library/series-and-authors/chrome
 title: Factor the library's window chrome into a shared module, the library unchanged
-status: in_progress
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,36 @@ accepted_against:
         value: git:56440d9
         observed_at: 2026-10-17T07:51:40.76675Z
 branch: tiller/library/series-and-authors/chrome
+review_ref:
+    branch: tiller/library/series-and-authors/chrome
+    head:
+        kind: git_commit
+        value: git:ea41cdc
+        observed_at: 2026-10-17T12:29:27.972303Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T12:18:52.715666Z
+        against:
+            kind: git_commit
+            value: git:3ce3033
+            observed_at: 2026-10-17T12:18:52.715659Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-3ce3033-out-09f7436199d6cf52419bbf91ea2bd0a585d9f6d099781c6406dfc1e76f0a2432.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T12:18:52.715666Z
+        against:
+            kind: git_commit
+            value: git:3ce3033
+            observed_at: 2026-10-17T12:18:52.715659Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-3ce3033-out-cdfb33a1a4f36cbfafef3bd1eed3ed86f81525076a096a540c03df2470788f4a.txt
