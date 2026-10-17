@@ -1,0 +1,13 @@
+id: EV-jndlvs
+type: check.task
+at: 2026-10-17T14:14:40.365036Z
+contributor: allen
+command: check task T-y7g8mr
+targets:
+    - T-y7g8mr
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/series/task.yml

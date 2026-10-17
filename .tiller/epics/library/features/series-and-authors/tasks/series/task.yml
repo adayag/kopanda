@@ -1,7 +1,7 @@
 id: T-y7g8mr
 key: library/series-and-authors/series
 title: 'The Series window: the list and one series, on the shared chrome'
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -31,26 +31,26 @@ gates:
     build:
         required: true
         kind: command
-        status: stale
+        status: pass
         run_by: allen
-        run_at: 2026-10-17T13:39:06.78348Z
+        run_at: 2026-10-17T14:10:49.206738Z
         against:
             kind: git_commit
-            value: git:eb425af
-            observed_at: 2026-10-17T13:39:06.783475Z
+            value: git:8609a18
+            observed_at: 2026-10-17T14:10:49.206734Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/build-eb425af-out-f10f8a622cf4f2c894b68615bbaf5eaa14fd0abd798189cdcf53be9e55fb906b.txt
+              ref: artifacts/tiller/gates/build-8609a18-out-0f5fe6e66bce26d88598cb9555d9ed1fea7c7f515cc3d2c9932304271a1a403e.txt
     tests:
         required: true
         kind: command
-        status: stale
+        status: pass
         run_by: allen
-        run_at: 2026-10-17T13:39:06.78348Z
+        run_at: 2026-10-17T14:10:49.206738Z
         against:
             kind: git_commit
-            value: git:eb425af
-            observed_at: 2026-10-17T13:39:06.783475Z
+            value: git:8609a18
+            observed_at: 2026-10-17T14:10:49.206734Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/tests-eb425af-out-69aace6061d198ae87f1649f5b6b8fec28d0fc815fe91d4e2efbf6e5c6733bff.txt
+              ref: artifacts/tiller/gates/tests-8609a18-out-ae9edd45177b5ae15cb4177471af8055e8663eedb9b692a0ee20734813dad199.txt
