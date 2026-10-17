@@ -101,10 +101,10 @@ function KoPanda:init()
             return
         end
         self.in_fm = in_fm
-        -- A reader starting means no file browser followed the last close (a switch or a
-        -- reload), so the home built for it is not needed.
+        -- A reader starting means no file browser followed the last close, so that close is no
+        -- longer one the next Show should answer at once.
         if not self.in_fm then
-            Home.drop_pending()
+            Home.just_closed = false
         end
         -- DispatcherRegisterActions is broadcast once, from Dispatcher:init (frontend/dispatcher.lua:585-586,
         -- :645), which can run before this instance exists, so the action is also registered here.
@@ -122,9 +122,8 @@ function KoPanda:init()
     end
 end
 
--- Shows the home unless one is up or the file manager has gone since the show was scheduled:
--- the pending home when there is one at the screen's size, a fresh build otherwise. started is
--- the PaintClock stamp of when the show path began (default: now).
+-- Builds and shows the home unless one is up or the file manager has gone since the show was
+-- scheduled. started is the PaintClock stamp of when the show path began (default: now).
 function KoPanda:showHome(started)
     if Home.shown then
         return
@@ -135,14 +134,6 @@ function KoPanda:showHome(started)
     end
     started = started or PaintClock.now()
     local opts = { started = started }
-    -- The home built when the last book closed, if it still fits the screen.
-    local function use_pending()
-        local pending = Home.take_pending()
-        if pending then
-            opts.widget = pending
-            opts.prebuilt = true
-        end
-    end
     if not first_show_done then
         first_show_done = true
         -- Still set from the last start: that home never finished drawing. Skip it this once,
@@ -150,7 +141,6 @@ function KoPanda:showHome(started)
         -- start, so then the home shows without a guard.
         if State.get("boot_pending") then
             if State.set("boot_pending", false) then
-                Home.drop_pending()
                 UIManager:nextTick(function()
                     local ok, err = pcall(function()
                         UIManager:show(InfoMessage:new{
@@ -167,7 +157,6 @@ function KoPanda:showHome(started)
                 return
             end
             logger.err("KoPanda: could not clear the boot guard flag; showing the home unguarded")
-            use_pending()
             Home.show(opts)
             return
         end
@@ -181,16 +170,19 @@ function KoPanda:showHome(started)
             end
         end
     end
-    use_pending()
     Home.show(opts)
 end
 
--- The file manager's Show. With a home pending (a book just closed) it goes up at once, inside
--- Show, so it is on the stack before the next repaint even when the close ran from a scheduled
--- task, and nothing of start_with follows a book close. Otherwise the home goes up from the
--- next tick, so it lands over whatever KOReader shows synchronously after showFiles (history,
--- favorites, folder shortcuts). Returns nothing: a true return would stop Show reaching later
--- modules.
+-- The file manager's Show. Right after a book closed, the home is built and goes up at once,
+-- inside Show, so it is on the stack before the next repaint even when the close ran from a
+-- scheduled task, and nothing of start_with follows a book close. The UI loop runs due tasks and
+-- then repaints (frontend/ui/uimanager.lua:1537-1564); a nextTick from inside a task, as when the
+-- end-of-book action closes the book (frontend/apps/reader/modules/readerstatus.lua:144-148),
+-- is due at a fresh time.now() (uimanager.lua:416), later than the _now that pass runs tasks to
+-- (:1082, :1090), so it would land after that repaint and the file browser would be painted
+-- first. Otherwise the home goes up from the next tick, so it lands over whatever KOReader shows
+-- synchronously after showFiles (history, favorites, folder shortcuts). Returns nothing: a true
+-- return would stop Show reaching later modules.
 function KoPanda:onShow()
     if self.refused then
         return
@@ -198,7 +190,8 @@ function KoPanda:onShow()
     if not self.in_fm then
         return
     end
-    if Home.pending then
+    if Home.just_closed then
+        Home.just_closed = false
         local show_ok, show_err = pcall(self.showHome, self, PaintClock.now())
         if not show_ok then
             logger.err("KoPanda: could not show the home:", show_err)
@@ -245,20 +238,25 @@ local function record_chapter(ui)
     end
 end
 
--- A reader closing its book: record its chapter for the featured book, then build the home
--- now, so the file browser that usually follows shows it without a build. CloseDocument also
--- fires on reload, switch and exit, with no file browser after; that build is wasted, which is
--- accepted since the home is cheap to build, and the next reader's init drops it. Returns
--- nothing, so the event reaches later modules.
+-- A reader closing its book: record its chapter for the featured book, then mark the close, so
+-- the file manager's Show that usually follows builds the home at once. The home is built there,
+-- after the reader saved its sidecar (UIManager:close's FlushSettings,
+-- frontend/apps/reader/readerui.lua:893) and Statistics, whose handler runs after this one,
+-- flushed the closing session. A reload or switch sets tearing_down before closing
+-- (readerui.lua:952, :973; reader to reader, :600, :609) and marks nothing; exit marks the
+-- close, but no Show follows. Returns nothing, so the event reaches later modules.
 function KoPanda:onCloseDocument()
     if self.refused then
         return
     end
     record_chapter(self.ui)
-    if self.in_fm or Home.pending then
+    if self.in_fm then
         return
     end
-    Home.prebuild()
+    if self.ui and self.ui.tearing_down then
+        return
+    end
+    Home.just_closed = true
 end
 
 -- The file manager closing (quit, or a book opening) takes the home with it; a home left on

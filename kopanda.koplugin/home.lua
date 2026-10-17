@@ -1,8 +1,8 @@
 -- The KoPanda home: a full-screen widget over the file browser, built from the layout.rows
 -- setting as rows of widgets (home_rows.lua builds them), drawn in the active look with its
 -- header and footer; its gestures are routed by home_gestures.lua.
--- Module state: Home.shown, the home on screen or nil; Home.pending, a home built on book
--- close and not yet shown, or nil.
+-- Module state: Home.shown, the home on screen or nil; Home.just_closed, true when a book closed
+-- in this process and no file-manager Show has consumed that close yet.
 local FeaturedCover = require("featured_cover")
 local HomeGestures = require("home_gestures")
 local HomeRows = require("home_rows")
@@ -22,7 +22,7 @@ local Home = InputContainer:extend{
 }
 
 Home.shown = nil
-Home.pending = nil
+Home.just_closed = false
 
 function Home:init()
     self.dimen = Screen:getSize()
@@ -172,7 +172,6 @@ local function settle(home, opts)
                 paint_ms = paint_ms,
                 cpu_ms = cpu_ms,
                 settle_ms = (PaintClock.ms(PaintClock.since(opts.started, now))),
-                prebuilt = opts.prebuilt == true,
             })
         end)
         if not ok then
@@ -202,15 +201,14 @@ local function settle(home, opts)
     finish(opts, home.painted_at ~= nil and not home.paint_failed)
 end
 
--- opts: widget (a pre-built home to show; default: a fresh build), started (a PaintClock stamp
--- at the start of the show path), prebuilt, finished (called once: with true after the home's
--- first paint, or with false when the home closes before painting or its build, show or paint
--- fails). On any error the home is taken off the stack and the file browser beneath is
--- left as it is.
+-- Builds a home and shows it. opts: started (a PaintClock stamp at the start of the show path),
+-- finished (called once: with true after the home's first paint, or with false when the home
+-- closes before painting or its build, show or paint fails). On any error the home is taken off
+-- the stack and the file browser beneath is left as it is.
 function Home.show(opts)
     local home
     local ok, err = pcall(function()
-        home = opts.widget or Home:new{}
+        home = Home:new{}
         Home.shown = home
         UIManager:show(home, "full")
         -- The home settles from its first paint, or from its close if that comes first; nothing
@@ -233,56 +231,6 @@ function Home.close()
     if Home.shown then
         close_home(Home.shown)
     end
-end
-
--- Builds a home and keeps it as Home.pending, not shown. A failed build is logged and leaves
--- nothing pending, so the next show builds afresh.
-function Home.prebuild()
-    local ok, home = pcall(Home.new, Home, {})
-    if ok then
-        Home.pending = home
-    else
-        logger.err("KoPanda: could not pre-build the home:", home)
-    end
-end
-
--- Forgets the pending home and frees it.
-function Home.drop_pending()
-    local pending = Home.pending
-    Home.pending = nil
-    if pending then
-        local ok, err = pcall(pending.free, pending)
-        if not ok then
-            logger.err("KoPanda: could not free the pending home:", err)
-        end
-    end
-end
-
--- Hands over the pending home when it was built at the screen's current size and in the current
--- variant; one of another size (the screen rotated since) or variant (night mode toggled since)
--- is dropped. Returns the home or nil. Each slot whose widget has refresh updates it first: the
--- home was built on CloseDocument before Statistics, whose handler runs later, flushed the
--- closing book's session. A failed refresh is logged and leaves that slot as built.
-function Home.take_pending()
-    local pending = Home.pending
-    if not pending then
-        return nil
-    end
-    local size = Screen:getSize()
-    if pending.dimen.w ~= size.w or pending.dimen.h ~= size.h or pending.ctx.variant ~= Looks.variant() then
-        Home.drop_pending()
-        return nil
-    end
-    Home.pending = nil
-    for _, slot in ipairs(pending.slots) do
-        if slot.module and slot.module.refresh then
-            local ok, err = pcall(slot.module.refresh, slot.built, pending.ctx)
-            if not ok then
-                logger.err("KoPanda: the home widget", slot.widget, "failed to refresh:", err)
-            end
-        end
-    end
-    return pending
 end
 
 -- Paints the home, rebuilt first when the variant changed since its build. Night mode toggled

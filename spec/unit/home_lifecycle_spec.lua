@@ -67,7 +67,6 @@ describe("the KoPanda home over the file browser", function()
         assert.equals(1, #signals)
         assert.is_true(signals[1].after_paint)
         assert.equals("home", signals[1].args.screen)
-        assert.is_false(signals[1].args.prebuilt)
         assert.is_number(signals[1].args.paint_ms)
     end)
 

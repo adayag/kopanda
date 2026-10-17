@@ -150,16 +150,4 @@ function Stats.build(width, ctx)
     }
 end
 
--- Reads the numbers again into built, a widget build returned. A home pre-built on CloseDocument
--- is built before Statistics flushes the closing book's session, since KoPanda's handler runs
--- first, so the home calls this when it shows the pre-built home.
-function Stats.refresh(built, ctx)
-    if not built[1] then
-        return
-    end
-    local new = line(built.dimen.w, ctx)
-    built[1]:free()
-    built[1] = new
-end
-
 return Stats

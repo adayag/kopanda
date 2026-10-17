@@ -60,19 +60,21 @@ end
 
 -- Holds a capture's settled signal (its sidecar) to the budget under label: prints its times, then
 -- judges cpu_ms, and paint_ms unless the host is loaded, which it prints a note for instead, a
--- line bin/check keeps from a passing test. host is { load, cores } (default: M.host(), read now).
-function M.check(label, sidecar, host)
+-- line bin/check keeps from a passing test. host is { load, cores } (default: M.host(), read now);
+-- ms is the budget (default: M.MS), for a screen held to a tighter one.
+function M.check(label, sidecar, host, ms)
     host = host or M.host()
+    ms = ms or M.MS
     local paint_ms, cpu_ms = sidecar.paint_ms, sidecar.cpu_ms
     assert.is_number(paint_ms, label .. ": no paint_ms")
     assert.is_number(cpu_ms, label .. ": no cpu_ms")
     print(string.format("%s: paint_ms=%s cpu_ms=%s", label, paint_ms, cpu_ms))
     assert.truthy(paint_ms > 0, string.format("%s: paint_ms %s", label, paint_ms))
-    assert.truthy(cpu_ms <= M.MS, string.format("%s: cpu_ms %s over the %d ms budget", label, cpu_ms, M.MS))
+    assert.truthy(cpu_ms <= ms, string.format("%s: cpu_ms %s over the %d ms budget", label, cpu_ms, ms))
     local judged, line = M.judges_wall(host.load, host.cores)
     if judged then
-        assert.truthy(paint_ms <= M.MS,
-            string.format("%s: paint_ms %s over the %d ms budget", label, paint_ms, M.MS))
+        assert.truthy(paint_ms <= ms,
+            string.format("%s: paint_ms %s over the %d ms budget", label, paint_ms, ms))
     else
         print("[  NOTE    ] " .. label .. ": " .. line)
     end
