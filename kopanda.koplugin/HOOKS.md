@@ -1734,9 +1734,9 @@ guard (`sheet.lua`).
 - `BookMetadataChanged` and `InvalidateMetadataCache` are broadcast when book details or a custom
   cover change (`frontend/apps/filemanager/filemanagerbookinfo.lua:276-277`, `:556-557`), to every
   window, a handler's true return stopping none (`frontend/ui/uimanager.lua:1042-1061`). One change
-  sends two or three (`filemanagerbookinfo.lua:276-280`), so the library, over the chrome's handlers that refresh on each
-  (`library_chrome.lua`), marks itself stale on each, returns nothing, and re-lists its folder once from one `nextTick` (`frontend/ui/uimanager.lua:431-433`)
-  if it is still shown. The book-info page broadcasts from its close callback after
+  sends two or three (`filemanagerbookinfo.lua:276-280`), so each of the chrome's windows (the
+  library, Series and Authors; `library_chrome.lua`) marks itself stale on each, returns nothing,
+  and re-lists once from one `nextTick` (`frontend/ui/uimanager.lua:431-433`) if it is still shown. The book-info page broadcasts from its close callback after
   `UIManager:close` (`frontend/ui/widget/keyvaluepage.lua:841-846`), inside the input dispatch at
   the end of `handleInput` (`uimanager.lua:1607-1620`, run again from `:1663`), so that tick runs at
   the next pass's `_checkTasks`, before the `_repaint` that paints the close (`:1537-1564`).

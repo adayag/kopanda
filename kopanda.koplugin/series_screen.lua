@@ -47,7 +47,7 @@ local function scale(px)
     return Screen:scaleBySize(px)
 end
 
--- Books.progress, each record read once per build: D3's states and the book rows share it.
+-- Books.progress, each record read once per sort: D3's states and the book rows share it.
 local function progress_once()
     local seen = {}
     return function(record)
@@ -58,14 +58,28 @@ local function progress_once()
     end
 end
 
+-- The window's series in D12's order and their progress, kept on the window as { records, entries
+-- (ShelfOrder.series of records), progress }: a page turn, a view change or a repaint in another
+-- variant or size sorts nothing; a show (a new window), refresh() and a cover arrival's re-read
+-- records (window.records replaced) sort again.
+local function sorted(self)
+    local kept = self.kept
+    if not kept or kept.records ~= self.records then
+        local progress = progress_once()
+        kept = { records = self.records, entries = ShelfOrder.series(self.records, progress), progress = progress }
+        self.kept = kept
+    end
+    return kept
+end
+
 -- What view at page shows from the window's records on a screen w by h under ctx, before any widget
 -- is built: { view, the list instead for a series no entry has any more (D23); entry, the series
--- shown or nil; entries, ShelfOrder.series; progress; header_h; top, the rows' first y; gap; width;
+-- shown or nil; entries and progress, the kept sort's; header_h; top, the rows' first y; gap; width;
 -- rows, each { h, entry or record }; pages, ShelfOrder.pages of them between the header and
 -- ShelfRows.pager_reserve above the pager; page, clamped }.
 local function plan(self, view, page, w, h, ctx)
-    local progress = progress_once()
-    local entries = ShelfOrder.series(self.records, progress)
+    local kept = sorted(self)
+    local entries, progress = kept.entries, kept.progress
     local entry
     if view.kind == "series" then
         for _, candidate in ipairs(entries) do
@@ -306,12 +320,13 @@ function SeriesScreen:request_covers()
     LibraryChrome.request_records(self)
 end
 
--- The metadata events re-list: the books read again, then the view rebuilt. A failed read is logged
--- and the view rebuilt from the books as they were.
+-- The metadata events and the sheets re-list: the kept sort dropped, the books read again, then the
+-- view rebuilt. A failed read is logged and the view rebuilt from the books as they were.
 function SeriesScreen:refresh()
     if SeriesScreen.shown ~= self then
         return
     end
+    self.kept = nil
     local ok, records = pcall(Books.all)
     if ok then
         self.records = records
