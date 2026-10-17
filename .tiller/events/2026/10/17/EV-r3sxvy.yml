@@ -1,0 +1,13 @@
+id: EV-r3sxvy
+type: claim.task
+at: 2026-10-17T04:03:03.653335Z
+contributor: allen
+command: claim task T-7g6ybl
+targets:
+    - T-7g6ybl
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/panel/task.yml
