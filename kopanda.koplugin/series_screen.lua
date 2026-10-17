@@ -98,11 +98,29 @@ local function plan(self, view, page, w, h, ctx)
     return p
 end
 
--- The keys of p's page in order, the view and the page count first (a series row's its name and its
--- books' ids, a book row's its id), and the ids of the records the page draws anything of: every
--- book of a series row, each book row's.
+-- The number of entries under way, D10's second count.
+local function under_way_count(entries)
+    local n = 0
+    for _, candidate in ipairs(entries) do
+        if candidate.state == "under_way" then
+            n = n + 1
+        end
+    end
+    return n
+end
+
+-- The keys of p's page in order, the view, the page count and the header's counts first (the
+-- list's series and under-way counts; one series' author part and book count), then a series row's
+-- name and its books' ids, a book row's id; and the ids of the records the page draws anything of:
+-- every book of a series row, each book row's.
 local function page_keys(p)
-    local keys, drawn = { p.view.kind .. "\0" .. (p.view.name or "") .. "\0" .. #p.pages }, {}
+    local head = { p.view.kind, p.view.name or "", #p.pages }
+    if p.entry then
+        head[4], head[5], head[6] = p.entry.author or "", tostring(p.entry.others), p.entry.total
+    else
+        head[4], head[5] = #p.entries, under_way_count(p.entries)
+    end
+    local keys, drawn = { table.concat(head, "\0") }, {}
     for _, row in ipairs(p.pages[p.page].rows) do
         if row.entry then
             local ids = { row.entry.name }
@@ -142,12 +160,7 @@ local function count_text(p, look)
     if #p.entries == 0 then
         return "No series"
     end
-    local under_way = 0
-    for _, candidate in ipairs(p.entries) do
-        if candidate.state == "under_way" then
-            under_way = under_way + 1
-        end
-    end
+    local under_way = under_way_count(p.entries)
     local text = #p.entries .. " series"
     return under_way > 0 and text .. join .. under_way .. " under way" or text
 end

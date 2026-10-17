@@ -7,6 +7,7 @@
 describe("the Series window's lifecycle", function()
     local harness = require("plugin_harness")
     local fixture = require("shelf_fixture")
+    local text_of = require("library_fixture").text
     local UIManager = require("ui/uimanager")
     local BookCovers, Books, LibraryTiles, SeriesScreen
 
@@ -163,6 +164,80 @@ describe("the Series window's lifecycle", function()
             requests[1].on_arrival({ records[6] })
         end)
         assert.is_true(n > 0)
+    end)
+
+    -- A copy of record with fields over it, as Books.get gives an arrival's re-read record.
+    local function changed(record, fields)
+        local fresh = {}
+        for k, v in pairs(record) do
+            fresh[k] = v
+        end
+        for k, v in pairs(fields) do
+            fresh[k] = v
+        end
+        return fresh
+    end
+
+    -- Five series rows fill a page here, so shelf()'s seven take two pages, the second with room.
+    it("repaints the list's count for a series an arrival adds off the page shown", function()
+        local records = shelf()
+        fixture.install(records)
+        local screen = show()
+        local before = fixture.names(screen)
+        assert.equals(2, screen.pages)
+        assert.equals("7 series", text_of(screen.header.aside))
+        local loose = records[#records]
+        records[#records] = changed(loose, { series = "Zebra Tales", series_index = 1 })
+        local n = dirties(screen, function()
+            requests[1].on_arrival({ loose })
+        end)
+        assert.same(before, fixture.names(screen))
+        assert.equals(2, screen.pages)
+        assert.is_true(n > 0)
+        assert.equals("8 series", text_of(screen.header.aside))
+    end)
+
+    it("repaints the list's under-way count for a series that starts off the page shown", function()
+        local records = shelf()
+        local progress = {}
+        fixture.install(records, progress)
+        local screen = show(LIST)
+        screen:go(LIST, 2)
+        harness.tick(2)
+        local before = fixture.names(screen)
+        assert.same({ "Series 06", "Series 07" }, before)
+        assert.equals("7 series", text_of(screen.header.aside))
+        local started = records[5]
+        assert.equals("Series 03", started.series)
+        progress[started.id] = { status = "reading" }
+        local n = dirties(screen, function()
+            requests[1].on_arrival({ started })
+        end)
+        assert.same(before, fixture.names(screen))
+        assert.equals(2, screen.pages)
+        assert.is_true(n > 0)
+        assert.equals("7 series, 1 under way", text_of(screen.header.aside))
+    end)
+
+    -- Three book rows fill a page here, so four books take two pages and a fifth fits the second.
+    it("repaints one series' count for a book an arrival adds off the page shown", function()
+        local records = fixture.series("Long", 4)
+        records[#records + 1] = fixture.book("Loose", { authors = { "Ann Author" } })
+        fixture.install(records)
+        local screen = show({ kind = "series", name = "Long" })
+        local before = fixture.names(screen)
+        assert.same({ "Long 1", "Long 2", "Long 3" }, before)
+        assert.equals(2, screen.pages)
+        assert.equals("Ann Author, 4 books", text_of(screen.header.aside))
+        local loose = records[#records]
+        records[#records] = changed(loose, { series = "Long", series_index = 5 })
+        local n = dirties(screen, function()
+            requests[1].on_arrival({ loose })
+        end)
+        assert.same(before, fixture.names(screen))
+        assert.equals(2, screen.pages)
+        assert.is_true(n > 0)
+        assert.equals("Ann Author, 5 books", text_of(screen.header.aside))
     end)
 
     it("is no longer checked once the window closes", function()
