@@ -1,0 +1,14 @@
+id: EV-gykj4w
+type: add.task
+at: 2026-10-17T03:26:24.034163Z
+contributor: allen
+command: add task library/series-and-authors/chrome
+targets:
+    - T-hxf2vf
+after:
+    feature: F-yaihx9
+    key: library/series-and-authors/chrome
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/chrome/task.md
+    - path: .tiller/epics/library/features/series-and-authors/tasks/chrome/task.yml

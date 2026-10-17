@@ -1,0 +1,9 @@
+id: T-m36ahd
+key: library/series-and-authors/goldens
+title: Series and authors goldens on the Colorsoft, the paint budget and the device check
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-8j0bc0

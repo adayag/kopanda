@@ -1,0 +1,14 @@
+id: EV-bvr6ev
+type: add.task
+at: 2026-10-17T03:26:24.324329Z
+contributor: allen
+command: add task library/series-and-authors/series
+targets:
+    - T-y7g8mr
+after:
+    feature: F-yaihx9
+    key: library/series-and-authors/series
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/series/task.md
+    - path: .tiller/epics/library/features/series-and-authors/tasks/series/task.yml

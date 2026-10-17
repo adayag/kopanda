@@ -1,0 +1,13 @@
+id: EV-z5ranq
+type: spec.feature
+at: 2026-10-17T03:35:38.840163Z
+contributor: allen
+command: spec feature F-yaihx9
+targets:
+    - F-yaihx9
+before:
+    status: draft
+after:
+    status: specced
+files:
+    - path: .tiller/epics/library/features/series-and-authors/feature.yml

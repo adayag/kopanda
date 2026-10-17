@@ -12,6 +12,7 @@ require("fonts") -- loaded now for the looks and swatch modules, which reach it 
 local Guards = require("guards")
 local Home = require("home")
 local InfoMessage = require("ui/widget/infomessage")
+local Library = require("library")
 local MenuEntries = require("menu_entries")
 local PushNotice = require("push_notice")
 local SchemaMenu = require("menu")
@@ -42,7 +43,6 @@ require("icons")
 require("launcher_entries")
 require("launcher_manage")
 require("layout")
-require("library")
 require("library_gestures")
 require("library_order")
 require("library_tiles")
@@ -103,9 +103,10 @@ function KoPanda:init()
         end
         self.in_fm = in_fm
         -- A reader starting means no file browser followed the last close (a switch or a
-        -- reload), so the home built for it is not needed.
+        -- reload), so the home or library built for it is not needed.
         if not self.in_fm then
             Home.drop_pending()
+            Library.drop_pending()
         end
         -- DispatcherRegisterActions is broadcast once, from Dispatcher:init (frontend/dispatcher.lua:585-586,
         -- :645), which can run before this instance exists, so the action is also registered here.
@@ -186,7 +187,35 @@ function KoPanda:showHome(started)
     Home.show(opts)
 end
 
--- The file manager's Show. With a home pending (a book just closed) it goes up at once, inside
+-- Shows the library with opts (Library.show's) unless the file manager has gone since the show
+-- was asked for; the caller has closed the home. The library takes no part in the boot guard,
+-- which only the process's first show, the home's, arms. A library that fails to build is logged
+-- by Library.show and the file browser left at the folder (opts.dir, else the library's root).
+function KoPanda:showLibrary(opts)
+    local FileManager = package.loaded["apps/filemanager/filemanager"]
+    local fm = FileManager and FileManager.instance
+    if not fm then
+        return
+    end
+    if Library.show(opts) then
+        return
+    end
+    fm.file_chooser:changeToPath(opts.dir or require("library_view").root())
+end
+
+-- The return after a book opened from the library (cover-grid D4), cleared as it is taken: the
+-- library pre-built on its close when one fits the screen, else one built afresh at the return
+-- (another size or variant, or a failed open that sent no CloseDocument).
+local function show_return(kopanda)
+    local back = Library.return_to
+    Library.return_to = nil
+    local started = time.monotonic()
+    local pending = Library.take_pending()
+    kopanda:showLibrary{ widget = pending, dir = back.dir, page = back.page, started = started }
+end
+
+-- The file manager's Show. With a return to the library recorded, the library goes up at once,
+-- as a pending home does. With a home pending (a book just closed) it goes up at once, inside
 -- Show, so it is on the stack before the next repaint even when the close ran from a scheduled
 -- task, and nothing of start_with follows a book close. Otherwise the home goes up from the
 -- next tick, so it lands over whatever KOReader shows synchronously after showFiles (history,
@@ -197,6 +226,13 @@ function KoPanda:onShow()
         return
     end
     if not self.in_fm then
+        return
+    end
+    if Library.return_to then
+        local show_ok, show_err = pcall(show_return, self)
+        if not show_ok then
+            logger.err("KoPanda: could not show the library:", show_err)
+        end
         return
     end
     if Home.pending then
@@ -246,30 +282,46 @@ local function record_chapter(ui)
     end
 end
 
--- A reader closing its book: record its chapter for the featured book, then build the home
--- now, so the file browser that usually follows shows it without a build. CloseDocument also
--- fires on reload, switch and exit, with no file browser after; that build is wasted, which is
--- accepted since the home is cheap to build, and the next reader's init drops it. Returns
--- nothing, so the event reaches later modules.
+-- A reader closing its book: record its chapter for the featured book, then build the screen
+-- the file browser that usually follows shows, so it shows without a build: the library at the
+-- return when the book was opened from the library, else the home. CloseDocument also fires on
+-- reload, switch and exit, with no file browser after; that build is wasted, which is accepted,
+-- and the next reader's init drops it. Returns nothing, so the event reaches later modules.
 function KoPanda:onCloseDocument()
     if self.refused then
         return
     end
     record_chapter(self.ui)
-    if self.in_fm or Home.pending then
+    if self.in_fm then
+        return
+    end
+    local back = Library.return_to
+    if back then
+        if not Library.pending then
+            Library.prebuild(back.dir, back.page, self.ui.document and self.ui.document.file)
+        end
+        return
+    end
+    if Home.pending then
         return
     end
     Home.prebuild()
 end
 
--- The file manager closing (quit, or a book opening) takes the home with it; a home left on
--- the stack would keep KOReader from quitting.
+-- The file manager closing (quit, or a book opening) takes the home and the library with it; a
+-- window left on the stack would keep KOReader from quitting. A return recorded by an open that
+-- never closed the file manager (a refused file) is dropped once the library has closed, so a
+-- book opened from anywhere else closes to the home.
 function KoPanda:onCloseWidget()
     if self.refused then
         return
     end
     if self.in_fm then
+        if not Library.shown then
+            Library.return_to = nil
+        end
         Home.close()
+        Library.close()
     end
 end
 

@@ -3,9 +3,10 @@
 -- memory library_order.lua's, and its gestures' order library_gestures.lua's; here are its show
 -- and close, its paint and settled signal, what a tap on each part does, its covers and the events
 -- that keep it current.
--- Module state: Library.shown, the library on screen or nil; Library.on_open(dir, page), run when
--- a tap's book open goes ahead, and Library.on_picker(kind), run on a tap on the "sort" or
--- "status" picker, hooks the rest of KoPanda fills (here they do nothing).
+-- Module state: Library.shown, the library on screen or nil; Library.pending, one built on book
+-- close and not yet shown, or nil; Library.return_to, { dir, page } a book was opened from, which
+-- the next file manager's show returns to (D4), or nil, in memory only; Library.on_picker(kind),
+-- run on a tap on the "sort" or "status" picker, a hook the rest of KoPanda fills (here a no-op).
 local BookCovers = require("book_covers")
 local Books = require("books")
 local Device = require("device")
@@ -18,6 +19,7 @@ local Looks = require("looks")
 local UIManager = require("ui/uimanager")
 local logger = require("logger")
 local time = require("ui/time")
+local ffiutil = require("ffi/util")
 local Screen = Device.screen
 
 local Library = InputContainer:extend{
@@ -29,8 +31,13 @@ local Library = InputContainer:extend{
 }
 
 Library.shown = nil
+Library.pending = nil
+Library.return_to = nil
 
-function Library.on_open(_dir, _page) end
+-- Run when a tap's book open goes ahead: the book closes back to dir at page.
+function Library.on_open(dir, page)
+    Library.return_to = { dir = dir, page = page }
+end
 
 function Library.on_picker(_kind) end
 
@@ -200,22 +207,18 @@ function Library.hit(x, y)
     return { kind = "empty" }
 end
 
--- Rebuilds the arrived records' tiles in place from their records read again (a title that came
--- with the extraction replaces the file name), keeping the page's order, and repaints. A failure
--- is logged and leaves every tile as it was.
-local function on_arrival(library, arrived)
-    if Library.shown ~= library then
-        return
-    end
+-- Rebuilds in place the tiles of the books whose ids are keys of ids, from their records read again
+-- (a title that came with an extraction replaces the file name) and their progress read now,
+-- keeping the page's order. A failure is logged with what and leaves every tile as it was. Returns
+-- how many tiles it rebuilt.
+local function rebuild_tiles(library, ids, what)
     local fresh = {}
     local ok, err = pcall(function()
-        for _, record in ipairs(arrived) do
-            for _, tile in ipairs(library.tiles) do
-                if tile.record and tile.record.id == record.id then
-                    local read = Books.get(record.id) or tile.record
-                    fresh[#fresh + 1] = { tile = tile, record = read,
-                        widget = LibraryTiles.book(read, Books.progress(read), library.box, library.ctx) }
-                end
+        for _, tile in ipairs(library.tiles) do
+            if tile.record and ids[tile.record.id] then
+                local record = Books.get(tile.record.id) or tile.record
+                fresh[#fresh + 1] = { tile = tile, record = record,
+                    widget = LibraryTiles.book(record, Books.progress(record), library.box, library.ctx) }
             end
         end
     end)
@@ -223,8 +226,8 @@ local function on_arrival(library, arrived)
         for _, entry in ipairs(fresh) do
             entry.widget:free()
         end
-        logger.err("KoPanda: the library's cover arrival failed:", err)
-        return
+        logger.err("KoPanda: " .. what .. " failed:", err)
+        return 0
     end
     for _, entry in ipairs(fresh) do
         local tile = entry.tile
@@ -233,7 +236,19 @@ local function on_arrival(library, arrived)
         tile.widget, tile.record = entry.widget, entry.record
         old:free()
     end
-    if #fresh > 0 then
+    return #fresh
+end
+
+-- Rebuilds the arrived records' tiles and repaints.
+local function on_arrival(library, arrived)
+    if Library.shown ~= library then
+        return
+    end
+    local ids = {}
+    for _, record in ipairs(arrived) do
+        ids[record.id] = true
+    end
+    if rebuild_tiles(library, ids, "the library's cover arrival") > 0 then
         UIManager:setDirty(library, "ui")
     end
 end
@@ -278,26 +293,28 @@ local function settle(library, opts)
     local ok, err = pcall(UIManager.event_hook.execute, UIManager.event_hook, "KoPandaSettled", {
         screen = "library",
         paint_ms = time.to_ms((library.painted_at or time.monotonic()) - opts.started),
+        prebuilt = opts.prebuilt,
     })
     if not ok then
         logger.err("KoPanda: the library's settled signal failed:", err)
     end
 end
 
--- opts: dir (default: the library's root), page, started (time.monotonic() at the start of the
--- show path, which paint_ms runs from; default: now). Closes a library shown, then shows a new one
--- and returns it. On any error it is taken off the stack and nil returned, logged, the screen
--- beneath left as it is.
+-- opts: widget (a pre-built library to show; default: a fresh build at dir and page), dir (default:
+-- the library's root), page, started (time.monotonic() at the start of the show path, which
+-- paint_ms runs from; default: now). Closes a library shown, then shows this one and returns it;
+-- its settled signal says whether it was pre-built. On any error it is taken off the stack and nil
+-- returned, logged, the screen beneath left as it is.
 function Library.show(opts)
     opts = opts or {}
     local started = opts.started or time.monotonic()
     local library
     local ok, err = pcall(function()
         Library.close()
-        library = Library:new{ dir = opts.dir, page = opts.page }
+        library = opts.widget or Library:new{ dir = opts.dir, page = opts.page }
         Library.shown = library
         UIManager:show(library, "full")
-        library.settle_opts = { started = started }
+        library.settle_opts = { started = started, prebuilt = opts.widget ~= nil }
     end)
     if ok then
         return library
@@ -314,6 +331,56 @@ function Library.close()
     if Library.shown then
         close_library(Library.shown)
     end
+end
+
+-- Builds the library at dir and page and keeps it as Library.pending, not shown; closed is the
+-- file of the book that just closed, whose tile take_pending rebuilds. A failed build is logged and
+-- leaves nothing pending, so the show builds afresh.
+function Library.prebuild(dir, page, closed)
+    Library.drop_pending()
+    local ok, library = pcall(Library.new, Library, { dir = dir, page = page })
+    if not ok then
+        logger.err("KoPanda: could not pre-build the library:", library)
+        return
+    end
+    library.closed = closed
+    Library.pending = library
+end
+
+-- Forgets the pending library and frees it.
+function Library.drop_pending()
+    local pending = Library.pending
+    Library.pending = nil
+    if pending then
+        local ok, err = pcall(pending.free, pending)
+        if not ok then
+            logger.err("KoPanda: could not free the pending library:", err)
+        end
+    end
+end
+
+-- Hands over the pending library when it was built at the screen's current size and in the
+-- current variant; one of another size (showFiles resets the rotation) or variant is dropped.
+-- Returns the library or nil. The closed book's tile is rebuilt, since the reader saves its
+-- sidecar after CloseDocument, when the library was built (frontend/apps/reader/readerui.lua:887,
+-- then :874-877 on its close at :893); a failure leaves the tile as built.
+function Library.take_pending()
+    local pending = Library.pending
+    if not pending then
+        return nil
+    end
+    local size = Screen:getSize()
+    if pending.dimen.w ~= size.w or pending.dimen.h ~= size.h or pending.ctx.variant ~= Looks.variant() then
+        Library.drop_pending()
+        return nil
+    end
+    Library.pending = nil
+    if pending.closed then
+        -- A file's record id, as books.lua's record() makes it.
+        local id = "file:" .. (ffiutil.realpath(pending.closed) or pending.closed)
+        rebuild_tiles(pending, { [id] = true }, "the closed book's tile")
+    end
+    return pending
 end
 
 -- Paints the library, rebuilt first when the variant or the screen's size changed since its build

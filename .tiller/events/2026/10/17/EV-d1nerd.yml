@@ -1,0 +1,13 @@
+id: EV-d1nerd
+type: approve.task
+at: 2026-10-17T03:37:34.506359Z
+contributor: allen
+command: approve task T-n6wve0
+targets:
+    - T-n6wve0
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/controls/task.yml

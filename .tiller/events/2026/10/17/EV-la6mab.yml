@@ -1,0 +1,13 @@
+id: EV-la6mab
+type: start.bug
+at: 2026-10-17T04:35:19.111775Z
+contributor: allen
+command: start bug B-0wpe5u
+targets:
+    - B-0wpe5u
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/bugs/swatch-settle-before-paint/bug.yml

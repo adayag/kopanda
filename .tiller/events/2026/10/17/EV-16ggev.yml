@@ -1,0 +1,14 @@
+id: EV-16ggev
+type: add.task
+at: 2026-10-17T03:26:24.140541Z
+contributor: allen
+command: add task library/series-and-authors/index
+targets:
+    - T-05lpro
+after:
+    feature: F-yaihx9
+    key: library/series-and-authors/index
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/index/task.md
+    - path: .tiller/epics/library/features/series-and-authors/tasks/index/task.yml

@@ -1,0 +1,20 @@
+id: EV-3q6e6n
+type: link.feature
+at: 2026-10-17T03:14:03.773089Z
+contributor: allen
+command: link feature F-yaihx9
+targets:
+    - F-yaihx9
+before:
+    depends_on:
+        - F-alfeze
+        - F-ydcqb0
+after:
+    added:
+        - F-2nt0fx
+    depends_on:
+        - F-alfeze
+        - F-ydcqb0
+        - F-2nt0fx
+files:
+    - path: .tiller/epics/library/features/series-and-authors/feature.yml

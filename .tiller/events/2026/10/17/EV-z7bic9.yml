@@ -1,0 +1,14 @@
+id: EV-z7bic9
+type: add.task
+at: 2026-10-17T03:26:24.416055Z
+contributor: allen
+command: add task library/series-and-authors/authors
+targets:
+    - T-m5pho3
+after:
+    feature: F-yaihx9
+    key: library/series-and-authors/authors
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/authors/task.md
+    - path: .tiller/epics/library/features/series-and-authors/tasks/authors/task.yml

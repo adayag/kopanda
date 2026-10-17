@@ -255,4 +255,391 @@ describe("the library's lifecycle", function()
             assert.same({ dir = sub.path, page = 2 }, package.loaded["library_order"].left())
         end)
     end)
+
+    -- cover-grid C8, D6: the ways in. The library target is what the launcher's entry, the Library
+    -- tab everywhere and the featured widget's first-run button run.
+    describe("entry points", function()
+        local Home, LauncherEntries, NavBar
+        local sub = fixture.folder("Sci-fi")
+
+        before_each(function()
+            Home = package.loaded["home"]
+            LauncherEntries = package.loaded["launcher_entries"]
+            NavBar = package.loaded["nav_bar"]
+            fixture.install({ [ROOT] = { folders = { sub }, books = fixture.books(8) },
+                [sub.path] = { books = fixture.books(8, sub.path) } })
+        end)
+
+        local function fm_with_home()
+            local fm = harness.show_fm()
+            harness.tick(2)
+            assert.equals(Home.shown, harness.top())
+            return fm
+        end
+
+        local function run_target()
+            LauncherEntries.run({ kind = "kopanda", target = "library" }, {})
+        end
+
+        -- The library shown on top of fm at dir and page, with the home closed.
+        local function library_at(fm, dir, page)
+            local library = Library.shown
+            assert.is_not_nil(library)
+            assert.equals(library, harness.top())
+            assert.equals(fm, harness.top(2))
+            assert.is_nil(Home.shown)
+            assert.same({ dir, page }, { library.dir, library.page })
+            return library
+        end
+
+        it("the first time, closes the home and shows the root's first page", function()
+            local fm = fm_with_home()
+            run_target()
+            library_at(fm, ROOT, 1)
+        end)
+
+        it("from the file browser's Library tab shows the library over it", function()
+            local fm = fm_with_home()
+            Home.close()
+            NavBar.run("library", "file_browser")
+            library_at(fm, ROOT, 1)
+        end)
+
+        it("shows the folder and page last left, after the Home tab closed the library onto the home", function()
+            local fm = fm_with_home()
+            run_target()
+            Library.shown:go(sub.path, 2)
+            NavBar.run("home", "library")
+            assert.is_nil(Library.shown)
+            assert.equals(Home.shown, harness.top())
+            run_target()
+            library_at(fm, sub.path, 2)
+        end)
+
+        it("on the library's own Library tab goes to the root's first page in place", function()
+            local fm = fm_with_home()
+            run_target()
+            local library = Library.shown
+            library:go(sub.path, 2)
+            harness.tick(2)
+            local shows = spy.on(UIManager, "show")
+            NavBar.run("library", "library")
+            UIManager.show:revert()
+            assert.equals(library, library_at(fm, ROOT, 1))
+            assert.spy(shows).was_not_called()
+        end)
+
+        it("shows nothing through the plugin's showLibrary once the file manager has gone", function()
+            assert.is_nil(require("apps/filemanager/filemanager").instance)
+            local shows = spy.on(UIManager, "show")
+            require("pluginloader").enabled_plugins[1]:showLibrary{}
+            UIManager.show:revert()
+            assert.is_nil(Library.shown)
+            assert.spy(shows).was_not_called()
+            assert.is_nil(harness.top())
+        end)
+
+        it("closes the library with the file manager", function()
+            local fm = fm_with_home()
+            run_target()
+            local library = Library.shown
+            assert.is_not_nil(library)
+            fm:onClose()
+            assert.is_nil(Library.shown)
+            assert.is_false(UIManager:isWidgetShown(library))
+        end)
+    end)
+
+    -- cover-grid C8, D4: a book opened from the library closes back to it. KOReader's open is
+    -- stubbed at filemanagerutil.openFile; the test then does what an open that goes ahead does:
+    -- the pre-callback (filemanagerutil.lua:500-502), the file manager closing for the reader
+    -- (filemanager.lua:842-849), a real reader closed (readerui.lua:870-893) and a new file manager
+    -- shown (readerui.lua:581-596), as prebuild_spec.lua drives the home's.
+    describe("after a book opened from it closes", function()
+        local Event = require("ui/event")
+        local Geom = require("ui/geometry")
+        local ffiutil = require("ffi/util")
+        local Home, LibraryOrder, Looks, util, real_open, opened, progress, signals, listener
+        local BOOK = harness.library .. "/frankenstein.epub"
+        local ID = "file:" .. ffiutil.realpath(BOOK)
+        local sub = fixture.folder("Sci-fi")
+
+        before_each(function()
+            Home = package.loaded["home"]
+            LibraryOrder = package.loaded["library_order"]
+            Looks = package.loaded["looks"]
+            util = require("apps/filemanager/filemanagerutil")
+            real_open = util.openFile
+            opened = nil
+            util.openFile = function(ui, file, pre)
+                opened = { ui = ui, file = file, pre = pre }
+            end
+            -- Seven books and the real one in sub, by title: page 2 is Book 07 and Frankenstein.
+            local books = fixture.books(7, sub.path)
+            books[8] = { id = ID, path = BOOK, title = "Frankenstein", authors = {} }
+            progress = { [ID] = { status = "new" } }
+            fixture.install({ [ROOT] = { folders = { sub } }, [sub.path] = { books = books } }, progress)
+            assert.is_true(LibraryOrder.choose(sub.path, "title", "all"))
+            signals = {}
+            listener = function(args)
+                if args.screen == "library" then
+                    signals[#signals + 1] = args
+                end
+            end
+            UIManager.event_hook:register("KoPandaSettled", listener)
+        end)
+
+        after_each(function()
+            util.openFile = real_open
+            UIManager.event_hook:unregister("KoPandaSettled", listener)
+        end)
+
+        local function titles(library)
+            local out = {}
+            for i, tile in ipairs(library.tiles) do
+                out[i] = tile.record and tile.record.title or tile.folder.name
+            end
+            return out
+        end
+
+        local function book_tile(library)
+            for _, tile in ipairs(library.tiles) do
+                if tile.record and tile.record.id == ID then
+                    return tile
+                end
+            end
+        end
+
+        -- The library at sub's page 2 over a file manager, painted and settled; the file manager.
+        local function at_page_two()
+            local fm = harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            local library = Library.show{ dir = sub.path, page = 2 }
+            harness.tick(2)
+            assert.same({ "Book 07", "Frankenstein" }, titles(library))
+            signals = {}
+            return library, fm
+        end
+
+        -- A tap on the book's tile, the open asked of KOReader.
+        local function tap_book(library)
+            UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", fixture.centre(book_tile(library).rect))))
+            assert.equals(BOOK, opened.file)
+        end
+
+        -- The open going ahead: KOReader's pre-callback, then the file manager closing for the reader.
+        local function goes_ahead(fm)
+            opened.pre()
+            fm:onShowingReader()
+        end
+
+        local function read_and_close(book)
+            local reader = harness.open_reader(book)
+            harness.tick(2)
+            reader:onClose()
+        end
+
+        it("shows it pre-built in one show at the same folder, sort, status and page, with the progress "
+            .. "saved after the close", function()
+                local library, fm = at_page_two()
+                tap_book(library)
+                goes_ahead(fm)
+                assert.is_nil(Library.shown)
+                read_and_close()
+                local pending = Library.pending
+                assert.is_not_nil(pending)
+                assert.is_false(UIManager:isWidgetShown(pending))
+                assert.is_nil(Home.pending)
+                assert.is_nil(book_tile(pending).widget.strip)
+                -- The reader writes its sidecar after CloseDocument. The record read again is the
+                -- listing's, so the title stays the spec's.
+                progress[ID] = { status = "reading", percent = 0.4 }
+                Books.get = function() return nil end
+                local builds = spy.on(Library, "new")
+                local new_fm = harness.show_fm()
+                assert.equals(pending, harness.top())
+                assert.equals(new_fm, harness.top(2))
+                assert.equals(pending, Library.shown)
+                assert.is_nil(Library.pending)
+                harness.tick(4)
+                Library.new:revert()
+                assert.spy(builds).was_not_called()
+                assert.equals(pending, harness.top())
+                assert.is_nil(Home.shown)
+                assert.same({ sub.path, 2 }, { pending.dir, pending.page })
+                assert.same({ sort = "title", status = "all" }, LibraryOrder.choice(pending.dir))
+                assert.same({ "Book 07", "Frankenstein" }, titles(pending))
+                assert.is_not_nil(book_tile(pending).widget.strip)
+                assert.equals(1, #signals)
+                assert.is_true(signals[1].prebuilt)
+                assert.is_number(signals[1].paint_ms)
+            end)
+
+        for _, case in ipairs({
+            { "another size", function(pending)
+                local size = require("device").screen:getSize()
+                pending.dimen = Geom:new{ x = 0, y = 0, w = size.h, h = size.w }
+            end },
+            { "another variant", function(pending)
+                pending.ctx.variant = Looks.variant() == "night" and "day" or "night"
+            end },
+        }) do
+            it("drops one pre-built at " .. case[1] .. " and builds it afresh at the same page", function()
+                local library, fm = at_page_two()
+                tap_book(library)
+                goes_ahead(fm)
+                read_and_close()
+                local pending = Library.pending
+                case[2](pending)
+                local freed = spy.on(pending, "free")
+                harness.show_fm()
+                harness.tick(2)
+                local shown = Library.shown
+                assert.is_not_nil(shown)
+                assert.is_not.equals(pending, shown)
+                assert.equals(shown, harness.top())
+                assert.is_nil(Library.pending)
+                assert.spy(freed).was_called()
+                assert.same({ sub.path, 2 }, { shown.dir, shown.page })
+                assert.same({ "Book 07", "Frankenstein" }, titles(shown))
+            end)
+        end
+
+        it("after a failed open, with no book closed, shows the library afresh at the same page", function()
+            local library, fm = at_page_two()
+            tap_book(library)
+            goes_ahead(fm)
+            harness.show_fm()
+            harness.tick(2)
+            local shown = Library.shown
+            assert.is_not_nil(shown)
+            assert.equals(shown, harness.top())
+            assert.is_nil(Home.shown)
+            assert.same({ sub.path, 2 }, { shown.dir, shown.page })
+            assert.equals(1, #signals)
+            assert.is_false(signals[1].prebuilt)
+        end)
+
+        it("comes back after another book opened from inside the reader", function()
+            local library, fm = at_page_two()
+            tap_book(library)
+            goes_ahead(fm)
+            read_and_close()
+            local pending = Library.pending
+            local freed = spy.on(pending, "free")
+            local switched = harness.open_reader("the-time-machine.epub")
+            assert.is_nil(Library.pending)
+            assert.spy(freed).was_called()
+            harness.tick(2)
+            switched:onClose()
+            assert.is_not_nil(Library.pending)
+            harness.show_fm()
+            harness.tick(2)
+            assert.equals(Library.shown, harness.top())
+            assert.same({ sub.path, 2 }, { Library.shown.dir, Library.shown.page })
+        end)
+
+        it("records no return for a cancelled open, so a book closed later lands on the home", function()
+            local library, fm = at_page_two()
+            tap_book(library)
+            assert.equals(library, harness.top())
+            package.loaded["nav_bar"].run("home", "library")
+            fm:onShowingReader()
+            read_and_close()
+            assert.is_nil(Library.pending)
+            harness.show_fm()
+            harness.tick(2)
+            assert.is_nil(Library.shown)
+            assert.equals(Home.shown, harness.top())
+        end)
+
+        it("takes the return once: a book then opened from the home closes to the home", function()
+            local library, fm = at_page_two()
+            tap_book(library)
+            goes_ahead(fm)
+            read_and_close()
+            local new_fm = harness.show_fm()
+            harness.tick(2)
+            assert.equals(Library.shown, harness.top())
+            package.loaded["nav_bar"].run("home", "library")
+            assert.equals(Home.shown, harness.top())
+            new_fm:onShowingReader()
+            read_and_close()
+            assert.is_nil(Library.pending)
+            harness.show_fm()
+            harness.tick(2)
+            assert.is_nil(Library.shown)
+            assert.equals(Home.shown, harness.top())
+        end)
+
+        -- An open KOReader refuses after the pre-callback ran, so the file manager never closes: a
+        -- file gone since the listing (readerui.lua:621-626) or of no supported type
+        -- (readerui.lua:671-674). The real openFile runs.
+        for _, case in ipairs({
+            { "a file of no supported type", "notes.kopanda-unknown", true },
+            { "a file gone since the listing", "gone.epub", false },
+        }) do
+            it("drops the return of an open refused for " .. case[1] .. " once the library closes, so a "
+                .. "book then opened from the home closes to the home", function()
+                    local path = require("datastorage"):getDataDir() .. "/" .. case[2]
+                    os.remove(path)
+                    if case[3] then
+                        local file = assert(io.open(path, "w"))
+                        file:write("not a book")
+                        file:close()
+                    end
+                    local id = "file:" .. path
+                    local books = fixture.books(7, sub.path)
+                    books[8] = { id = id, path = path, title = "Frankenstein", authors = {} }
+                    fixture.install({ [ROOT] = { folders = { sub } }, [sub.path] = { books = books } })
+                    assert.is_true(LibraryOrder.choose(sub.path, "title", "all"))
+                    util.openFile = real_open
+                    local library, fm = at_page_two()
+                    local tile
+                    for _, t in ipairs(library.tiles) do
+                        if t.record and t.record.id == id then
+                            tile = t
+                        end
+                    end
+                    UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", fixture.centre(tile.rect))))
+                    os.remove(path)
+                    assert.is_not_nil(Library.return_to)
+                    local refusal = harness.top()
+                    assert.is_truthy(refusal.text and refusal.text:find(case[2], 1, true))
+                    UIManager:close(refusal)
+                    assert.equals(library, harness.top())
+                    package.loaded["nav_bar"].run("home", "library")
+                    assert.equals(Home.shown, harness.top())
+                    fm:onShowingReader()
+                    read_and_close()
+                    assert.is_nil(Library.pending)
+                    harness.show_fm()
+                    harness.tick(2)
+                    assert.is_nil(Library.shown)
+                    assert.equals(Home.shown, harness.top())
+                end)
+        end
+
+        it("leaves a book opened over the library from elsewhere, such as History, closing to the home", function()
+            local _, fm = at_page_two()
+            fm:onShowingReader()
+            read_and_close()
+            harness.show_fm()
+            harness.tick(2)
+            assert.is_nil(Library.shown)
+            assert.equals(Home.shown, harness.top())
+        end)
+
+        it("keeps the return in memory only: after a restart the file manager shows the home", function()
+            local library, fm = at_page_two()
+            tap_book(library)
+            goes_ahead(fm)
+            harness.load()
+            harness.show_fm()
+            harness.tick(2)
+            assert.is_nil(package.loaded["library"].shown)
+            assert.equals(package.loaded["home"].shown, harness.top())
+        end)
+    end)
 end)

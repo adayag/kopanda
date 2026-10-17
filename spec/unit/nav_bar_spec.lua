@@ -447,6 +447,22 @@ describe("the nav bar", function()
             assert.is_not_nil(Home.shown)
             assert.equals(Home.shown, harness.top())
         end)
+
+        -- cover-grid C8, D6.
+        it("runs Library by going to the root's first page in place", function()
+            local fixture = require("library_fixture")
+            local sub = fixture.folder("Sci-fi")
+            fixture.install({ [fixture.ROOT] = { folders = { sub } },
+                [sub.path] = { books = fixture.books(8, sub.path) } })
+            finally(fixture.restore)
+            local Library = package.loaded["library"]
+            local library = fixture.show(sub.path, 2)
+            assert.same({ sub.path, 2 }, { library.dir, library.page })
+            NavBar.run("library", "library")
+            assert.equals(library, Library.shown)
+            assert.equals(library, harness.top())
+            assert.same({ fixture.ROOT, 1 }, { library.dir, library.page })
+        end)
     end)
 
     describe("a hold and other gestures", function()

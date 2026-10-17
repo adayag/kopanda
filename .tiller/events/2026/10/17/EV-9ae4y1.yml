@@ -1,0 +1,15 @@
+id: EV-9ae4y1
+type: start.task
+at: 2026-10-17T04:20:01.314829Z
+contributor: allen
+command: start task T-t5ho4x
+targets:
+    - T-t5ho4x
+before:
+    status: ready
+after:
+    branch: tiller/library/cover-grid/routing
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/routing/task.yml
