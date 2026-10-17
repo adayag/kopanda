@@ -1,7 +1,7 @@
 id: B-mobbtn
 key: bugs/edit-layout-quote-day
 title: Edit-layout add-column spec fails on days with a long quote
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         observed_at: 2026-10-17T05:05:38.586325Z
 branch: tiller/bugs/edit-layout-quote-day
 pr: 31
+done_basis: ancestry
 gates:
     build:
         required: true
