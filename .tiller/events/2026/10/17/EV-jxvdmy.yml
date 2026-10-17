@@ -1,0 +1,15 @@
+id: EV-jxvdmy
+type: start.task
+at: 2026-10-17T07:52:37.864969Z
+contributor: allen
+command: start task T-05lpro
+targets:
+    - T-05lpro
+before:
+    status: ready
+after:
+    branch: tiller/library/series-and-authors/index
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/index/task.yml

@@ -1,9 +1,10 @@
 id: T-05lpro
 key: library/series-and-authors/index
 title: Series state, author order, letter groups and the pagings as pure logic
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,4 @@ accepted_against:
         kind: git_commit
         value: git:56440d9
         observed_at: 2026-10-17T07:51:40.789741Z
+branch: tiller/library/series-and-authors/index
