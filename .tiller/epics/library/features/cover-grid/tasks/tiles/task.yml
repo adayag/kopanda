@@ -1,7 +1,7 @@
 id: T-d53f8e
 key: library/cover-grid/tiles
 title: Library tokens, three icons and the tile widgets fitted to two rows
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:aebbd10
         observed_at: 2026-10-17T03:10:22.029107Z
 branch: tiller/library/cover-grid/tiles
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T03:30:37.514026Z
+        against:
+            kind: git_commit
+            value: git:c14a32f
+            observed_at: 2026-10-17T03:30:37.514022Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-c14a32f-out-486d51a396c0d34eb3897e27597adb44777933de16a6a1f9fb899c7168b800c0.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T03:30:37.514026Z
+        against:
+            kind: git_commit
+            value: git:c14a32f
+            observed_at: 2026-10-17T03:30:37.514022Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-c14a32f-out-f058d79a013b530f6a9ebe7e06b7315036a31938ebc1706a0cea5e73490e3060.txt
