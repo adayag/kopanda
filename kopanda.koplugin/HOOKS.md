@@ -1215,7 +1215,9 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `colorblitFromRGB32` for a colour (`:1422-1437`), split by `Blitbuffer.isColor8` (`:2712`)
   as `home_rows.lua` fills; both take the mask's 8-bit value as the colour's alpha
   (`setPixelColorize`, `:990-1006`; `setPixelColorizeRGB32`, `:1009-1027`). The mask is built
-  once per build and freed with the widget (`free`).
+  once per file and size and kept in the module's cache for the process, as `ImageWidget` keeps
+  its renders in `ImageCache` by file and size (`frontend/ui/widget/imagewidget.lua:147-160`);
+  the widget's `free` lets go of it without freeing it. A failed render is not cached.
 - This replaces `ImageWidget`'s `dim`, which only lightens and assumes a white ground; the note at
   `frontend/ui/widget/imagewidget.lua:570-579` proposes the mask method used here.
 - The tiles and rows: `paintRect` and `paintRectRGB32`, `paintBorder` and `paintBorderRGB32`, as

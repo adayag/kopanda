@@ -1,0 +1,13 @@
+id: EV-onofi4
+type: start.tweak
+at: 2026-10-17T07:17:44.11886Z
+contributor: allen
+command: start tweak TW-9atgka
+targets:
+    - TW-9atgka
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/tinted-icon-mask-cache/tweak.yml
