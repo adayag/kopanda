@@ -693,6 +693,217 @@ describe("KoPanda failing safe", function()
         end)
     end)
 
+    -- fm_nav.lua's one-shot TitleBar.new and title_bar.lua's bar in the file manager.
+    describe("the file browser's title bar", function()
+        local Blitbuffer = require("ffi/blitbuffer")
+        local FileChooser = require("ui/widget/filechooser")
+        local FrameContainer = require("ui/widget/container/framecontainer")
+        local TitleBar = require("ui/widget/titlebar")
+        local restores = {}
+
+        after_each(function()
+            for i = #restores, 1, -1 do
+                restores[i]()
+            end
+            restores = {}
+        end)
+
+        -- Sets t[name] to value for the case.
+        local function stub(t, name, value)
+            local original = rawget(t, name)
+            restores[#restores + 1] = function()
+                t[name] = original
+            end
+            t[name] = value
+        end
+
+        -- A file manager with its home closed.
+        local function file_manager()
+            local fm = harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            harness.tick()
+            return fm
+        end
+
+        local function logged_count(text)
+            local count = 0
+            for _, call in ipairs(logged.calls) do
+                for _, arg in ipairs(call.vals) do
+                    if tostring(arg):find(text, 1, true) then
+                        count = count + 1
+                        break
+                    end
+                end
+            end
+            return count
+        end
+
+        local function paint(fm)
+            local size = Screen:getSize()
+            local bb = Blitbuffer.new(size.w, size.h, Blitbuffer.TYPE_BBRGB32)
+            fm:paintTo(bb, 0, 0)
+            bb:free()
+        end
+
+        -- A gesture at the centre of the bar's area named area, after a paint.
+        local function at_area(bar, ges, area)
+            local a = bar.areas[area]
+            return harness.gesture(ges, bar.dimen.x + a.x + math.floor(a.w / 2),
+                bar.dimen.y + math.floor(bar.dimen.h / 2))
+        end
+
+        it("leaves KOReader's layout and title bar when the look raises", function()
+            stub(package.loaded["looks"], "active", function()
+                error("kopanda-test: look failed")
+            end)
+            local fm = file_manager()
+            assert.equals(TitleBar, getmetatable(fm.title_bar))
+            assert.equals(FrameContainer, getmetatable(fm[1]))
+            assert.equals(Screen:getHeight(), fm.file_chooser.dimen.h)
+            file_manager_usable()
+            assert.is_true(logged_error("kopanda-test: look failed"))
+        end)
+
+        it("gives the file manager KOReader's title bar, Home button and all, when KoPanda's raises", function()
+            stub(package.loaded["title_bar"], "new", function()
+                error("kopanda-test: title bar failed")
+            end)
+            local fm = file_manager()
+            assert.equals(TitleBar, getmetatable(fm.title_bar))
+            assert.equals(fm.title_bar, fm.file_chooser.title_bar)
+            assert.equals("home", fm.title_bar.left_button.icon)
+            assert.is_not_nil(fm.title_bar.right_button)
+            assert.is_nil(fm.title_bar.fm)
+            assert.is_nil(fm.title_bar.on_sort)
+            assert.is_nil(rawget(TitleBar, "new"))
+            file_manager_usable()
+            assert.equals(1, logged_count("kopanda-test: title bar failed"))
+        end)
+
+        it("re-raises setupLayout's own error, after its bar or before it, with TitleBar.new put back", function()
+            local fm = file_manager()
+            local failure = { "kopanda-test: setupLayout failed" }
+            -- After the bar: the chooser's build raises (filemanager.lua:138).
+            stub(FileChooser, "new", function()
+                error(failure, 0)
+            end)
+            local ok, err = pcall(fm.reinit, fm)
+            FileChooser.new = nil
+            assert.is_false(ok)
+            assert.equals(failure, err)
+            assert.is_nil(rawget(TitleBar, "new"))
+            assert.is_nil(rawget(FileChooser, "height"))
+            -- Before it: the bar's attributes raise as they are read (filemanager.lua:123), with the
+            -- band's height read without scaling.
+            stub(package.loaded["nav_bar"], "height", function()
+                return 40
+            end)
+            stub(Screen, "scaleBySize", function()
+                error(failure, 0)
+            end)
+            ok, err = pcall(fm.reinit, fm)
+            Screen.scaleBySize = nil
+            assert.is_false(ok)
+            assert.equals(failure, err)
+            assert.is_nil(rawget(TitleBar, "new"))
+            assert.is_nil(rawget(FileChooser, "height"))
+            file_manager_usable()
+        end)
+
+        it("logs a raising state read once over two paints", function()
+            local fm = file_manager()
+            stub(package.loaded["title_bar"], "state", function()
+                error("kopanda-test: state failed")
+            end)
+            paint(fm)
+            paint(fm)
+            assert.equals(1, logged_count("kopanda-test: state failed"))
+            file_manager_usable()
+        end)
+
+        it("logs a raising paint once and still paints the chooser's rows", function()
+            local fm = file_manager()
+            stub(package.loaded["title_bar"], "paintBuilt", function()
+                error("kopanda-test: title paint failed")
+            end)
+            local items = fm.file_chooser.item_group
+            local item_paint = items.paintTo
+            local rows = 0
+            items.paintTo = function(...)
+                rows = rows + 1
+                return item_paint(...)
+            end
+            paint(fm)
+            paint(fm)
+            assert.equals(2, rows)
+            assert.equals(1, logged_count("kopanda-test: title paint failed"))
+            file_manager_usable()
+        end)
+
+        it("logs a raising tap and leaves it to KOReader's menu zone", function()
+            local fm = file_manager()
+            stub(package.loaded["title_bar"], "handle", function()
+                error("kopanda-test: tap failed")
+            end)
+            UIManager:sendEvent(Event:new("Gesture", at_area(fm.title_bar, "tap", "sort")))
+            assert.equals(1, logged_count("kopanda-test: tap failed"))
+            assert.is_not_nil(fm.menu.menu_container)
+            assert.equals(fm.menu.menu_container, harness.top())
+            fm.menu:onCloseFileManagerMenu()
+            file_manager_usable()
+        end)
+
+        it("logs a raising title hold and leaves it unconsumed", function()
+            local fm = file_manager()
+            fm.onShowFolderMenu = function()
+                error("kopanda-test: hold failed")
+            end
+            local received = {}
+            fm:registerTouchZones{ {
+                id = "kopanda_spec_failsafe_title_hold",
+                ges = "hold",
+                screen_zone = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = 1 / 4 },
+                handler = function(ges)
+                    received[#received + 1] = ges
+                    return true
+                end,
+            } }
+            UIManager:sendEvent(Event:new("Gesture", at_area(fm.title_bar, "hold", "title")))
+            assert.equals(1, #received)
+            assert.equals(1, logged_count("kopanda-test: hold failed"))
+            assert.equals(fm, harness.top())
+            file_manager_usable()
+        end)
+
+        it("logs a raising picker menu and shows nothing", function()
+            local fm = file_manager()
+            fm.menu.getSortingMenuTable = function()
+                error("kopanda-test: sort menu failed")
+            end
+            UIManager:sendEvent(Event:new("Gesture", at_area(fm.title_bar, "tap", "sort")))
+            assert.equals(fm, harness.top())
+            assert.equals(1, logged_count("kopanda-test: sort menu failed"))
+            -- KOReader's own menu builds the same table.
+            fm.menu.getSortingMenuTable = nil
+            file_manager_usable()
+        end)
+
+        it("logs a raising picker build and leaves nothing shown over the file manager", function()
+            local fm = file_manager()
+            local TouchMenu = require("ui/widget/touchmenu")
+            stub(TouchMenu, "new", function()
+                error("kopanda-test: picker build failed")
+            end)
+            UIManager:sendEvent(Event:new("Gesture", at_area(fm.title_bar, "tap", "sort")))
+            assert.equals(fm, harness.top())
+            assert.equals(1, logged_count("kopanda-test: picker build failed"))
+            -- KOReader's own menu is a TouchMenu too.
+            TouchMenu.new = nil
+            file_manager_usable()
+        end)
+    end)
+
     it("shows the home and logs when the state file can't be written", function()
         -- A plain file where settings/kopanda should be: the directory can't be made.
         local f = assert(io.open(harness.state_dir, "w"))

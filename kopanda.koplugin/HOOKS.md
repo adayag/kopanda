@@ -435,6 +435,8 @@ Upgrading KOReader walks this list.
   `onSetRotationMode`, `:71-79`) and the keyboard connect handlers (`:816-817`).
   `registerModule` (`:379-389`) registers KoPanda's instance as `fm.kopanda` (`:424`), which the
   wrapper checks with its `refused` flag.
+- The same wrapper swaps the original's one `TitleBar:new` call (`:118-136`) for KoPanda's title
+  bar: see "The file browser's title bar" below.
 - `frontend/ui/widget/filechooser.lua:18` (`FileChooser` extends `BookList`), `:98-106` (its
   `init` calls `BookList.init`); `frontend/ui/widget/booklist.lua:11-16` (`BookList` extends
   `Menu`), `:276-279` (its `init` calls `Menu.init`); `frontend/ui/widget/pathchooser.lua:13`
@@ -476,6 +478,102 @@ Upgrading KOReader walks this list.
   only `fm.file_chooser`, named `"filemanager"`, and that a chooser built with
   `FileChooser.height` set has that height. `spec/plugin_harness.lua` puts the unwrapped function
   back on each load.
+
+### The file browser's title bar: `TitleBar.new` inside `setupLayout`, its consumers and the sort and status menus
+
+- `frontend/ui/widget/titlebar.lua:20-84` (`TitleBar`, an `OverlapGroup` extension with no `new`
+  of its own), `frontend/ui/widget/widget.lua:26-47` (`Widget:new`, found through the metatable,
+  makes the class the instance's metatable and runs `init`): `rawget(TitleBar, "new")` is nil, and
+  `filemanager.lua:34` and `frontend/ui/widget/menu.lua:22` hold the module table, so a `new`
+  field set on it is what `TitleBar:new` finds. `fm_nav.lua` sets one, a one-shot, only while the
+  original `setupLayout` runs, beside `FileChooser.height`, and puts the prior value (nil) back on
+  every path: first thing in the one-shot (so `KoTitleBar:new`, which would find it through
+  `TitleBar`, and any later call build as KOReader does) and again after the original returns or
+  raises, before its error is re-raised unchanged.
+- `frontend/apps/filemanager/filemanager.lua:116-154`: `setupLayout` builds the bar first
+  (`:118-136`) with title `self.title` (`_("KOReader")`, `:48`), `left_icon = "home"`, its tap
+  `onHome` (`:865-871`) and its hold `onShowFolderMenu` (`:131`, `:1351-1438`),
+  `right_icon = "plus"` or `"check"` in select mode (`:132`) with its tap `onShowPlusMenu`
+  (`:134`, `:778-786`) and `right_icon_hold_callback = false` (`:135`), then
+  `FileChooser:new{ ..., custom_title_bar = self.title_bar }` (`:138-154`, `:150`); `Menu:init`
+  builds no bar of its own then (`menu.lua:721`). The one-shot builds `KoTitleBar` from a shallow
+  copy of those attributes, keeping `show_parent`, `right_icon_tap_callback` and
+  `left_icon_hold_callback`, plus `fm`, the look the band was measured in and the two pickers'
+  callbacks; on a raise it logs and builds KOReader's `TitleBar` from the untouched attributes.
+- The bar replaces `TitleBar`'s `init`, `paintTo` (`titlebar.lua:395-402`), `getHeight`, the
+  setters (`:443-468`) and the layout generators (`:470-494`), and keeps what the chooser and
+  KOReader call on it:
+  - `getHeight()`: `Menu:_recalculateDimen` (`menu.lua:666-669`, the items' available height),
+    on every `updateItems` (`:1085`) and at init (`:909`).
+  - `dimen.h`: CoverBrowser's `_recalculateDimen`, list and mosaic
+    (`plugins/coverbrowser.koplugin/listmenu.lua:836-845`, `mosaicmenu.lua:782-803`), installed
+    on `FileChooser` (`plugins/coverbrowser.koplugin/main.lua:687`, `:696`), on every re-measure.
+    The bar's height never changes, so its rows stay put.
+  - `getSize()`: the chooser's header (`menu.lua:891`; `OverlapGroup:getSize`,
+    `frontend/ui/widget/overlapgroup.lua:22-39`).
+  - `setTitle(text, no_refresh)`: `Menu:switchItemTable` (`menu.lua:1208-1214`); the file
+    chooser passes no title (`frontend/ui/widget/filechooser.lua:338`).
+  - `setSubTitle(text, no_refresh)`: `FileManager:updateTitleBarPath` (`filemanager.lua:108-112`)
+    on `PathChanged` (`:114`), setting home (`:881`), the home-folder menu items
+    (`frontend/apps/filemanager/filemanagermenu.lua:326`, `:338`) and a shortcut rename
+    (`frontend/apps/filemanager/filemanagershortcuts.lua:88`). The bar keeps no text and marks
+    itself dirty, as KOReader's does (`titlebar.lua:443-454`), so the next paint re-reads.
+  - `setRightIcon(icon)`: select mode on and off (`filemanager.lua:514-530`, `:518`, `:526`) and
+    "Select in file browser" (`frontend/apps/filemanager/filemanagerfilesearcher.lua:621`,
+    `frontend/apps/filemanager/filemanagercollection.lua:472`).
+  - `setLeftIcon(icon)`: `Menu:setTitleBarLeftIcon` (`menu.lua:1564-1566`); a no-op here.
+  - `generateVerticalLayout()`: `Menu:mergeTitleBarIntoLayout` (`menu.lua:1167-1183`) from
+    `updateItems` (`:1156`) and CoverBrowser's (`plugins/coverbrowser.koplugin/covermenu.lua:89`);
+    `generateHorizontalLayout()` has no caller. Both return `{}`, so key navigation stays the
+    chooser's.
+  - `left_icon_hold_callback`: run by a hold on the title, which is consumed with its
+    `hold_release`, as `IconButton` pairs a hold it took with its release
+    (`frontend/ui/widget/iconbutton.lua:146-170`), so the release reaches no `MovableContainer`.
+  - `left_button.image.dimen`: the folder menu's anchor (`filemanager.lua:1430-1437`), read when
+    the menu first paints (`frontend/ui/widget/container/movablecontainer.lua:195-198`,
+    `ensureAnchor` at `:124-170`), which fills only nil fields (`:137-140`) and puts the menu
+    above the anchor when it fits, else below (`:152-161`). The bar keeps it, in place, at the
+    title column's box from the bar's top, so the menu opens under the title.
+- What the bar reads at paint, and why at paint: its title from `fm.file_chooser.path` against
+  `filemanagerutil.getHomeFolder()` (`frontend/apps/filemanager/filemanagerutil.lua:25-27`), both
+  through `ffiUtil.realpath`, compared as KOReader compares (`:33`; the chooser's path is a
+  realpath, `filechooser.lua:341-348`); its count from the chooser's `item_table`, whose files
+  carry `is_file` (`filechooser.lua:174`, built by `genItemTable`, `:244-296`) and pass the status
+  filter (`FileChooser.show_filter.status`, `:22`, tested in `show_file`, `:88-96`); its sort label
+  from `getCollate` (`:206-215`, the collates `frontend/ui/widget/booklist.lua:20-270`); its status
+  label from `BookList.getBookStatusString` (`booklist.lua:371-378`, `:386-389`). Every change
+  reaches it through a repaint already (the feature's D11): `changeToPath` sends `PathChanged`
+  before it refreshes (`filechooser.lua:366-369`), a sort (`filemanager.lua:1685-1690`) or filter
+  change refreshes with no `PathChanged`, and every refresh ends in `switchItemTable` and
+  `updateItems` (`menu.lua:1199-1242`), which mark the chooser, header included, dirty
+  (`:1158-1163`). So no second hook into KOReader and no event is needed; the bar compares what
+  it reads with what it last built and rebuilds only on a change.
+- The pickers: `FmNav.open_sort` and `FmNav.open_status` show the `sub_item_table` of
+  `fm.menu:getSortingMenuTable()` or `fm.menu:getShowFilterMenuTable()`
+  (`frontend/apps/filemanager/filemanagermenu.lua:873-957`), `fm.menu` being the registered
+  module (`filemanager.lua:404`, `:379-389`), as one tab under `appbar.filebrowser`, the file
+  browser settings tab's icon (`filemanagermenu.lua:36`), in a `TouchMenu` inside a full-screen
+  `CenterContainer`, as the settings menu entry above. Both tables are built fresh on each open,
+  so their callbacks reach the current chooser (`:943-945`, `:883-885`, `:896-903`). "Reverse
+  sorting" and "Folders and files mixed" are left in KOReader's menu: they exist only as cached
+  `menu_items` (`:449-473`) holding the chooser of the moment the cache was built (`:130`), and
+  the cache outlives a re-layout (`:1120-1129`). A checked item keeps the menu open after a pick
+  (`frontend/ui/widget/touchmenu.lua:913-927`).
+- A tap on the title is not taken, so it reaches the file manager's menu zones as a tap on
+  KOReader's title does (`filemanagermenu.lua:71-124`; KOReader's `defaults.lua:59-60`,
+  `DTAP_ZONE_MENU` and `DTAP_ZONE_MENU_EXT`). The bar's listener is an `InputContainer`, so
+  KOReader's touch lock silences it (`frontend/ui/widget/container/inputcontainer.lua:299-309`).
+- Every other title bar stays KOReader's: every `Menu` builds one (`menu.lua:717-745`), the
+  FM-styled ones included (`:637`, `:735-741`; Collections,
+  `filemanagercollection.lua:702`, `:868`, `:1154`; shortcuts, `filemanagershortcuts.lua:220`),
+  History's and Collections' lists among them (`frontend/apps/filemanager/filemanagerhistory.lua:59-61`,
+  `filemanagercollection.lua:76-81`, registered at `filemanager.lua:405`, `:407`).
+- Guarded by the tripwire in `spec/unit/fm_title_bar_spec.lua`, run against KOReader's unwrapped
+  `setupLayout`: `TitleBar` has no `new` of its own; the first `TitleBar.new` call comes before
+  the first `FileChooser.new`, with `left_icon = "home"`, `right_icon = "plus"` and both
+  callbacks; afterwards `fm.title_bar` is that bar and the chooser's `title_bar` the same table,
+  and the chooser's available height is its inner height less the bar's `getHeight()` and its page
+  footer. An upgrade walks this entry before changing the pin.
 
 ### Main menu registration, both apps
 

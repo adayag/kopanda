@@ -1,0 +1,14 @@
+id: EV-1zbxzl
+type: submit.task
+at: 2026-10-17T03:17:45.346089Z
+contributor: allen
+command: submit task T-le8x0f
+targets:
+    - T-le8x0f
+before:
+    status: check
+after:
+    pr: 27
+    status: in_review
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/file-browser/task.yml

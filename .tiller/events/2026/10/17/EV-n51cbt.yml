@@ -1,0 +1,15 @@
+id: EV-n51cbt
+type: start.task
+at: 2026-10-17T02:16:18.15388Z
+contributor: allen
+command: start task T-le8x0f
+targets:
+    - T-le8x0f
+before:
+    status: ready
+after:
+    branch: tiller/bars/title-bar/file-browser
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/file-browser/task.yml

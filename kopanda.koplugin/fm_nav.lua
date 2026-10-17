@@ -1,16 +1,21 @@
 -- The nav bar under KOReader's file browser. FmNav.install() wraps FileManager.setupLayout
 -- (frontend/apps/filemanager/filemanager.lua:116-359) once per process: the file chooser it
 -- builds is made short of the bar's band, then the file manager's first child, the original's
--- fm_ui, goes inside a frame that holds it and a bar with Library active in the band. Every
+-- fm_ui, goes inside a frame that holds it and a bar with Library active in the band. The
+-- file manager's title bar is KoPanda's, built in place of KOReader's for that one call. Every
 -- step of KoPanda's fails safe: an error is logged and KOReader's own layout stands.
 -- Module state: whether the wrapper is installed in this process.
 local Blitbuffer = require("ffi/blitbuffer")
+local CenterContainer = require("ui/widget/container/centercontainer")
 local FileChooser = require("ui/widget/filechooser")
 local FileManager = require("apps/filemanager/filemanager")
+local KoTitleBar = require("title_bar")
 local Looks = require("looks")
 local NavBar = require("nav_bar")
 local Paint = require("paint")
 local Screen = require("device").screen
+local TitleBar = require("ui/widget/titlebar")
+local TouchMenu = require("ui/widget/touchmenu")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
@@ -123,14 +128,78 @@ local function wrap(fm, previous, look, band, started)
     end
 end
 
+-- Shows the one tab of KOReader's own items that fm.menu[which] builds, as SettingsMenu.open
+-- shows KoPanda's (settings_menu.lua), under the icon of KOReader's file browser settings tab
+-- (frontend/apps/filemanager/filemanagermenu.lua:36). The items are built fresh on each open, so
+-- their callbacks reach the current chooser (:873-957). A failure is logged and shows nothing.
+local function open_tab(fm, which, what)
+    local ok, err = pcall(function()
+        local items = fm.menu[which](fm.menu).sub_item_table
+        items.icon = "appbar.filebrowser"
+        local container = CenterContainer:new{ dimen = Screen:getSize(), ignore = "height" }
+        container[1] = TouchMenu:new{
+            width = Screen:getWidth(),
+            tab_item_table = { items },
+            show_parent = container,
+        }
+        UIManager:show(container)
+    end)
+    if not ok then
+        logger.err("KoPanda: could not open the file browser's " .. what .. " menu:", err)
+    end
+end
+
+-- The title bar's sort picker: KOReader's sort items.
+function FmNav.open_sort(fm)
+    open_tab(fm, "getSortingMenuTable", "sort")
+end
+
+-- The title bar's status picker: KOReader's book status filter.
+function FmNav.open_status(fm)
+    open_tab(fm, "getShowFilterMenuTable", "status")
+end
+
+-- What TitleBar.new is while the wrapped setupLayout runs, so the file manager's one
+-- TitleBar:new call (filemanager.lua:118-136) builds KoPanda's bar in look: it puts prior, the
+-- class's own new (nil, so Widget:new is found again), back first, so KoTitleBar:new and any later
+-- call build as KOReader does; then builds the bar from a copy of KOReader's attributes, its
+-- callbacks and show_parent included, plus fm, the look and the pickers. A build that raises is
+-- logged and KOReader's own bar is built from the untouched attributes.
+local function one_shot(fm, look, prior)
+    return function(class, attrs, ...)
+        TitleBar.new = prior
+        local ok, bar = pcall(function()
+            local copy = {}
+            for key, value in pairs(attrs) do
+                copy[key] = value
+            end
+            copy.fm = fm
+            copy.look = look
+            copy.on_sort = function()
+                FmNav.open_sort(fm)
+            end
+            copy.on_status = function()
+                FmNav.open_status(fm)
+            end
+            return KoTitleBar:new(copy)
+        end)
+        if ok then
+            return bar
+        end
+        logger.err("KoPanda: the file browser's title bar failed to build:", bar)
+        return TitleBar.new(class, attrs, ...)
+    end
+end
+
 -- Wraps FileManager.setupLayout, once per process. Unless the file manager has KoPanda's
 -- instance, registered under its name (filemanager.lua:379-389), and it isn't refused, the
 -- original runs alone. Otherwise the band's height for the active look is taken first (on a
 -- failure, logged, the original runs alone at full height); FileChooser.height is set on the
 -- class while the original runs, so the chooser it builds reads it through its metatable
 -- (frontend/ui/widget/widget.lua:26-48) at Menu:init (frontend/ui/widget/menu.lua:701-704), and
--- put back on every path, the original's own error re-raised unchanged; then the frame goes
--- in (on a failure, logged, fm[1] stays the original's fm_ui, at the screen's height).
+-- TitleBar.new is the one-shot that builds KoPanda's title bar in the band's look; both are put
+-- back on every path, the original's own error re-raised unchanged; then the frame goes in (on a
+-- failure, logged, fm[1] stays the original's fm_ui, at the screen's height).
 function FmNav.install()
     if installed then
         return
@@ -153,9 +222,12 @@ function FmNav.install()
         end
         local previous = fm[1]
         local height = rawget(FileChooser, "height")
+        local new = rawget(TitleBar, "new")
         FileChooser.height = Screen:getHeight() - band
+        TitleBar.new = one_shot(fm, look, new)
         local call_ok, err = pcall(original, fm, ...)
         FileChooser.height = height
+        TitleBar.new = new
         if not call_ok then
             error(err, 0)
         end
