@@ -139,8 +139,11 @@ describe("the library goldens", function()
 
     -- Left by the routing task (cover-grid D4): its book-close scenario opens its book with
     -- ReaderUI:showReader on the home's settle, not from the library.
-    it("close a book opened from the library onto the pre-built library, the file browser never painted",
-            function()
+    -- The book opens from the sub-folder, so same_dir fails on a library that came back at the
+    -- root. The capture library holds one page per folder, so same_page is trivially true here;
+    -- the page kept across a close is the unit specs' to prove.
+    it("close a book opened from a sub-folder onto the pre-built library at that folder, "
+            .. "the file browser never painted", function()
         local result = capture{ profile = "colorsoft", step = "book", screen = "scenario" }
         local sidecar = result.sidecar
         assert.is_nil(sidecar.error, sidecar.error)

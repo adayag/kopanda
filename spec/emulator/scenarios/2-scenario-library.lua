@@ -21,17 +21,19 @@
 -- (launcher_entries.lua), which closes the home and shows the library; then, per
 -- KOPANDA_LIBRARY_STEP:
 --   - root: nothing more; the library's own settled signal is the capture's;
---   - folder: before the target runs, the library is recorded as left in the sub-folder at its
---     first page (library_order.lua, LibraryOrder.leave), so the target shows the sub-folder in one
---     show, whose settled signal is the capture's;
+--   - folder and book: before the target runs, the library is recorded as left in the sub-folder
+--     at its first page (library_order.lua, LibraryOrder.leave), so the target shows the sub-folder
+--     in one show; for folder, its settled signal is the capture's;
 --   - sort: on the library's settled signal, from the next tick, a tap at the centre of the sort
 --     picker, which opens the sort sheet; the sheet's settled signal is the capture's;
---   - book: on the library's settled signal, from the next tick, a tap at the centre of the first
---     downloaded book's tile, which opens it; once the reader has it, from a scheduled task, the
---     reader goes home, as book_close's scenario closes its book; on the next library's settled
---     signal it reports, as a "scenario" signal, whether that library was pre-built, its
+--   - book: on the sub-folder's settled signal, from the next tick, a tap at the centre of its
+--     first downloaded book's tile, which opens it; once the reader has it, from a scheduled task,
+--     the reader goes home, as book_close's scenario closes its book; on the next library's
+--     settled signal it reports, as a "scenario" signal, whether that library was pre-built, its
 --     paint_ms, how often the file manager painted between the close and that signal, and whether
---     it shows the folder and page the book was opened from.
+--     it shows the folder and page the book was opened from. The book opens from the sub-folder,
+--     not the root, so a library that came back at the root fails same_dir; the capture library
+--     holds one page per folder, so the page is 1 either way.
 -- A failure before the UI runs exits with status 4, as the home fixture does, since a half-made
 -- library would be captured as if it were the golden's; one after is reported as a settled signal
 -- with error on the screen the step's capture shoots, so the spec fails with the message.
@@ -184,7 +186,7 @@ local ok, err = pcall(function()
     end
 
     local open_library = guarded(function()
-        if step == "folder" then
+        if step == "folder" or step == "book" then
             if not require("library_order").leave(sub, 1) then
                 error("could not record the library as left in " .. sub)
             end
