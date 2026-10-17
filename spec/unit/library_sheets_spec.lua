@@ -381,5 +381,50 @@ describe("LibrarySheets.hold", function()
             end
             assert.equals(library, harness.top())
         end)
+
+        -- Seven sub-folders, so the seventh's tile opens page 2 (six tiles a page), with n books
+        -- (Book 01, ...) after them.
+        local function seven_folders(n)
+            local folders = {}
+            for i, name in ipairs({ "Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf" }) do
+                folders[i] = library_fixture.folder(name)
+            end
+            library_fixture.install({ [ROOT] = { folders = folders, books = library_fixture.books(n) } })
+            return folders[7]
+        end
+
+        it("hides a folder held on page 2 and keeps the library on page 2 without its tile", function()
+            local golf = seven_folders(3)
+            local library = library_fixture.show(ROOT, 2)
+            assert.equals(2, library.page)
+            assert.equals("Golf", library.tiles[1].folder.name)
+            hold_folder(library, 1)
+            tap("Hide")
+            assert.is_nil(Sheet.shown)
+            assert.is_true(LibraryOrder.is_hidden(golf.path))
+            assert.same({ ROOT, 2 }, { library.dir, library.page })
+            assert.equals(3, #library.tiles)
+            for i, tile in ipairs(library.tiles) do
+                assert.equals("book", tile.kind)
+                assert.equals(("Book %02d"):format(i), tile.record.title)
+            end
+            assert.equals(library, harness.top())
+        end)
+
+        it("clamps to the last page when hiding empties page 2", function()
+            local golf = seven_folders(0)
+            local library = library_fixture.show(ROOT, 2)
+            assert.equals(1, #library.tiles)
+            assert.equals("Golf", library.tiles[1].folder.name)
+            hold_folder(library, 1)
+            tap("Hide")
+            assert.is_true(LibraryOrder.is_hidden(golf.path))
+            assert.same({ ROOT, 1 }, { library.dir, library.page })
+            assert.equals(6, #library.tiles)
+            for _, tile in ipairs(library.tiles) do
+                assert.is_not.equals("Golf", tile.folder.name)
+            end
+            assert.equals(library, harness.top())
+        end)
     end)
 end)

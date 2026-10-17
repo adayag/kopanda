@@ -157,7 +157,8 @@ end
 
 -- The root check (context-menu D6): when KOReader's home folder is no longer the one the library
 -- was built under (Set as library root's OK, whose ConfirmBox's close marks the library dirty),
--- the library shows the new root at page 1, recorded as where it was left.
+-- the library shows the new root at page 1, recorded as where it was left. A build that fails
+-- leaves the library where it was, and where it was left unchanged.
 local function check_root(library)
     local root = LibraryView.root()
     if LibraryView.same_dir(root, library.root) then
@@ -165,7 +166,9 @@ local function check_root(library)
     end
     library.root = root
     library:go(root, 1)
-    LibraryOrder.leave(root, 1)
+    if LibraryView.same_dir(library.dir, root) then
+        LibraryOrder.leave(library.dir, library.page)
+    end
 end
 
 -- The root check before the chrome's paint; a check that raises is logged and the paint goes on.

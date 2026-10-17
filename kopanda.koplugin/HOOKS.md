@@ -256,12 +256,12 @@ Upgrading KOReader walks this list.
   it out, and `State.set`'s read-back takes the absent key as the nil it was given.
 - The library's memory (`library_order.lua`) is one key, `library`, a table:
   `{ folders = { [realpath] = { sort, status } }, at = { dir, page }, hidden = { [realpath] = true } }`,
-  `hidden` the folders the folder sheet's Hide left out of their parent's grid (context-menu D1),
-  an empty set written as no key. `saveSetting` keeps the
-  table as given and `flush` serialises it whole (`frontend/luasettings.lua:102`, `:270-275`), so
-  the `dofile` read-back gives a new table: `State.set` compares it key by key, recursively, as
-  `settings.lua` compares its own read-back. A malformed part reads as the defaults, logged; a
-  failed write leaves the choice in `library_order.lua`'s module state for the session.
+  `hidden` the folders the folder sheet's Hide left out of their parent's grid (context-menu D1), an
+  empty set written as no key. `saveSetting` keeps the table as given and `flush` serialises it
+  whole (`frontend/luasettings.lua:102`, `:270-275`), so the `dofile` read-back gives a new table:
+  `State.set` compares it key by key, recursively, as `settings.lua` compares its own read-back. A
+  malformed part reads as the defaults, logged; a failed write leaves the choice in
+  `library_order.lua`'s module state for the session.
 
 ### The settings file, `settings/kopanda/settings.lua`
 
@@ -1720,7 +1720,7 @@ guard (`sheet.lua`).
   entries above): a library that fails to build when shown leaves the file browser at the folder it
   was to show, the nearest existing ancestor when the folder has gone (`:342-346`).
 
-### The folder sheet: `FileManager:setHome`, `home_dir`, the `ConfirmBox`'s order and the close's dirty marking
+### The folder sheet: `FileManager:setHome`, `home_dir`, `ConfirmBox` order, `UIManager:close`
 
 - Set as library root (`library_sheets.lua`) calls `FileManager.instance:setHome(path)`
   (`frontend/apps/filemanager/filemanager.lua:873-887`), the instance read through `package.loaded`

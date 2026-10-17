@@ -494,7 +494,7 @@ describe("the library window", function()
     end)
 
     -- context-menu C1, C5, D6: KOReader's home folder changed under the shown library (Set as library
-    -- root's OK, whose ConfirmBox close marks the library dirty, frontend/ui/uimanager.lua:349-354).
+    -- root's OK, whose ConfirmBox close marks the library dirty, frontend/ui/uimanager.lua:349-353).
     describe("the root", function()
         local sub
 
@@ -524,6 +524,26 @@ describe("the library window", function()
             local library = fixture.show(ROOT, 2)
             local frame = library[1]
             local left = LibraryOrder.left()
+            UIManager:setDirty(library, "ui")
+            harness.tick(2)
+            assert.equals(frame, library[1])
+            assert.same({ ROOT, 2 }, { library.dir, library.page })
+            assert.same(left, LibraryOrder.left())
+        end)
+
+        it("leaves where it was left unchanged when the new root fails to build", function()
+            local library = fixture.show(ROOT, 2)
+            local frame = library[1]
+            local left = LibraryOrder.left()
+            local LibraryView = package.loaded["library_view"]
+            local build = LibraryView.build
+            LibraryView.build = function(dir, page)
+                if dir == sub.path then
+                    error("kopanda-test: the new root failed to build")
+                end
+                return build(dir, page)
+            end
+            G_reader_settings:saveSetting("home_dir", sub.path)
             UIManager:setDirty(library, "ui")
             harness.tick(2)
             assert.equals(frame, library[1])
