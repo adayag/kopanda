@@ -1,0 +1,10 @@
+id: T-lmmmgv
+key: library/cover-grid/goldens
+title: Library goldens on both profiles, the paint budget and the device check
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-t5ho4x
+    - T-eia0v5

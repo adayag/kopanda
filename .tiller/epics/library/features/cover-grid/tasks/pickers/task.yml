@@ -1,0 +1,10 @@
+id: T-eia0v5
+key: library/cover-grid/pickers
+title: Sort and status sheets over the library, and sheets closing the screen beneath
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-cb345p
+    - T-t5ho4x

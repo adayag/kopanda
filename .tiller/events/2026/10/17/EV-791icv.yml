@@ -1,0 +1,14 @@
+id: EV-791icv
+type: add.task
+at: 2026-10-17T02:08:38.806233Z
+contributor: allen
+command: add task library/cover-grid/tiles
+targets:
+    - T-d53f8e
+after:
+    feature: F-2nt0fx
+    key: library/cover-grid/tiles
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/tiles/task.md
+    - path: .tiller/epics/library/features/cover-grid/tasks/tiles/task.yml

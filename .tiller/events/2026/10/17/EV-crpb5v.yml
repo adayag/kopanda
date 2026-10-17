@@ -1,0 +1,14 @@
+id: EV-crpb5v
+type: add.task
+at: 2026-10-17T02:08:38.990898Z
+contributor: allen
+command: add task library/cover-grid/routing
+targets:
+    - T-t5ho4x
+after:
+    feature: F-2nt0fx
+    key: library/cover-grid/routing
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/routing/task.md
+    - path: .tiller/epics/library/features/cover-grid/tasks/routing/task.yml

@@ -1,0 +1,10 @@
+id: T-cb345p
+key: library/cover-grid/screen
+title: 'The library window: header, page, pager, nav bar, gestures and covers'
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-anr3s4
+    - T-d53f8e

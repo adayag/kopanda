@@ -1,0 +1,14 @@
+id: EV-nddlw0
+type: add.task
+at: 2026-10-17T02:08:39.170006Z
+contributor: allen
+command: add task library/cover-grid/goldens
+targets:
+    - T-lmmmgv
+after:
+    feature: F-2nt0fx
+    key: library/cover-grid/goldens
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/goldens/task.md
+    - path: .tiller/epics/library/features/cover-grid/tasks/goldens/task.yml

@@ -1,0 +1,14 @@
+id: EV-mgkwql
+type: add.task
+at: 2026-10-17T02:08:39.079842Z
+contributor: allen
+command: add task library/cover-grid/pickers
+targets:
+    - T-eia0v5
+after:
+    feature: F-2nt0fx
+    key: library/cover-grid/pickers
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/pickers/task.md
+    - path: .tiller/epics/library/features/cover-grid/tasks/pickers/task.yml

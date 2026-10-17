@@ -1,0 +1,14 @@
+id: EV-3ujfoj
+type: add.task
+at: 2026-10-17T02:08:38.699597Z
+contributor: allen
+command: add task library/cover-grid/order
+targets:
+    - T-anr3s4
+after:
+    feature: F-2nt0fx
+    key: library/cover-grid/order
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/order/task.md
+    - path: .tiller/epics/library/features/cover-grid/tasks/order/task.yml

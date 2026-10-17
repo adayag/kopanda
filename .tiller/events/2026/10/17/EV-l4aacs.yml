@@ -1,0 +1,18 @@
+id: EV-l4aacs
+type: link.task
+at: 2026-10-17T02:21:34.29225Z
+contributor: allen
+command: link task T-eia0v5
+targets:
+    - T-eia0v5
+before:
+    depends_on:
+        - T-cb345p
+after:
+    added:
+        - T-t5ho4x
+    depends_on:
+        - T-cb345p
+        - T-t5ho4x
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/pickers/task.yml

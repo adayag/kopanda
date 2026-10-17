@@ -1,0 +1,9 @@
+id: T-t5ho4x
+key: library/cover-grid/routing
+title: Entry points into the library and the return after a book closes
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-cb345p

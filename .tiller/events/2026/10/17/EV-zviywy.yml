@@ -1,0 +1,14 @@
+id: EV-zviywy
+type: add.task
+at: 2026-10-17T02:08:38.895525Z
+contributor: allen
+command: add task library/cover-grid/screen
+targets:
+    - T-cb345p
+after:
+    feature: F-2nt0fx
+    key: library/cover-grid/screen
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/screen/task.md
+    - path: .tiller/epics/library/features/cover-grid/tasks/screen/task.yml
