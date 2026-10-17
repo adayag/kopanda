@@ -388,6 +388,10 @@ return {
         library_picker = {
             face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
         },
+        -- The status picker's label on its pink chip (Main.dc.html:26), the dark text on accents.
+        library_picker_status = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
+        },
         -- A tile's title, one line, CSS line height 1.2 (Main.dc.html:47, weight 800).
         tile_title = {
             face = "display", size = 12, uppercase = true, tracking = 0.04, line_height = 0.2, color = "ink",
@@ -596,6 +600,9 @@ return {
             prev_fill_color = "paper", -- Main.dc.html:86
             next_fill_color = "mustard", -- Main.dc.html:88
             dead_color = false, -- Main draws no dead arrow: it is left out (cover-grid D16)
+            prev_icon_color = "ink", -- on the paper box (Main.dc.html:86)
+            next_icon_color = "on_accent", -- on the mustard box, dark by night too (Main.dc.html:88)
+            label_in_words = true, -- "Page 1 of 24" (Main.dc.html:87)
         },
     },
 }

@@ -1472,6 +1472,39 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   child (`frontend/ui/widget/container/widgetcontainer.lua:110-117`), `ImageWidget` its
   `image_disposable` image (the featured cover's entry above) and `TintedIcon` its mask.
 
+### The library window: `filemanagerutil.openFile`, the page keys, `Menu:onSwipe`'s directions and the metadata events
+
+- A tap on a downloaded book opens it as the file browser's own tap does
+  (`frontend/apps/filemanager/filemanager.lua:160-169`, `filemanagerutil.openFile(file_manager,
+  item.path)` at `:166`): `filemanagerutil.openFile(ui, file, caller_pre_callback, ...)`
+  (`frontend/apps/filemanager/filemanagerutil.lua:498-532`) runs `caller_pre_callback` first inside
+  its `openFile` (`:500-502`), which runs at once or from the "Open this file?" confirm's OK when
+  `file_ask_to_open` is set (`:523-528`), so a cancelled confirm runs no callback; in the file
+  manager it then calls `ui:openFile` (`:519`). `library.lua`'s `Library:open` passes the file manager
+  as `ui` and a callback running `Library.on_open(dir, page)`. The module is required at call time,
+  as `books.lua` requires it.
+- The page keys, as `Menu:registerKeyEvents` sets them (`frontend/ui/widget/menu.lua:984-992`):
+  only when `Device:hasKeys()` (`:985`), `NextPage` on `Input.group.PgFwd` and `PrevPage` on
+  `Input.group.PgBack` (`:991-992`; the groups at `frontend/device/input.lua:119-120`), read from
+  `Device.input`, the device's `Input` (`frontend/device/generic/device.lua:285`). `hasKeys` is `no`
+  by default (`frontend/device/generic/device.lua:92`), `yes` on the emulator
+  (`frontend/device/sdl/device.lua:73`); the Colorsoft's class declares none
+  (`frontend/device/kindle/device.lua:1208-1220`) and Kindle init turns it on when it finds a
+  frame-tap input (`:553-556`, `:673-679`). `InputContainer:_init` gives each instance its own
+  `key_events` (`frontend/ui/widget/container/inputcontainer.lua:57-64`) and `onKeyPress` sends the
+  matched name as an event to the widget (`:238-250`).
+- A west swipe pages forward and an east one back, as `Menu:onSwipe` reads them
+  (`frontend/ui/widget/menu.lua:1518-1539`), through `BD.flipDirectionIfMirroredUILayout`
+  (`ui/bidi`, `frontend/ui/bidi.lua:162`), outside the top and bottom edge bands (the `G_defaults`
+  entry above); a swipe in a band goes to the home's forward step (the gestures entry above).
+- `BookMetadataChanged` and `InvalidateMetadataCache` are broadcast when book details or a custom
+  cover change (`frontend/apps/filemanager/filemanagerbookinfo.lua:276-277`, `:556-557`), to every
+  window, a handler's true return stopping none (`frontend/ui/uimanager.lua:1042-1061`). The
+  library re-lists its folder on each and returns nothing.
+- The library's touch zones, its `onGesture` and its paint follow the home's (the `InputContainer`,
+  touch lock, `covers_fullscreen` and `nextTick` entries above), and its covers the featured cover's
+  bounded check (`book_covers.lua`, the featured cover's entry above).
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
@@ -1503,6 +1536,8 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
 - `ui/font`: `frontend/ui/font.lua:269-276` (`getFace` scales the size by
   `Screen:scaleBySize` itself).
 - `ui/geometry`: `frontend/ui/geometry.lua:37` (`Geom:new`), `:255-266` (`contains`).
+- `ui/bidi`: `frontend/ui/bidi.lua:162` (`flipDirectionIfMirroredUILayout`, the library window's
+  entry above).
 - `ui/gesturerange`: `frontend/ui/gesturerange.lua:14` (`new`, `ges` and `range`), `:21-51`
   (`match`); the sheet's tap range.
 - `ffi/blitbuffer`: `base/ffi/blitbuffer.lua:2717` (`COLOR_WHITE`), `:2653-2683`
