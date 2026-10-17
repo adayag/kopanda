@@ -433,7 +433,8 @@ describe("KoPanda's guards", function()
             assert.same(value, State.get("kopanda_test_table"))
         end)
 
-        it("refuses an undefined key as State.set does: false and logged, not raised", function()
+        it("refuses what it can't store as State.set does: a nil key to set, a non-table to "
+            .. "set_many; false and logged, not raised", function()
             local State = require("state")
             local logged = spy.on(logger, "err")
             finally(function()
@@ -463,6 +464,20 @@ describe("KoPanda's guards", function()
             assert.spy(logged).was_called(1)
             assert.is_false(State.set_many({ kopanda_test_file = "/b.epub", kopanda_test_chapter = "II" }))
             assert.spy(logged).was_called(2)
+        end)
+
+        it("reads back every key: false when only one of several doesn't take", function()
+            local State = require("state")
+            local write = util.writeToFile
+            finally(function()
+                util.writeToFile = write
+            end)
+            assert.is_true(State.set_many({ kopanda_test_a = "1", kopanda_test_b = "1" }))
+            -- The write is dropped, so the read-back finds the values stored before.
+            util.writeToFile = function() end
+            assert.is_false(State.set_many({ kopanda_test_a = "2", kopanda_test_b = "1" }))
+            State.set_many({ kopanda_test_a = "1", kopanda_test_b = "1" })
+            assert.is_false(State.set_many({ kopanda_test_a = "1", kopanda_test_b = "2" }))
         end)
     end)
 end)
