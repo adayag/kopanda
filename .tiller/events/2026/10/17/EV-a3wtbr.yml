@@ -1,0 +1,13 @@
+id: EV-a3wtbr
+type: add.feature
+at: 2026-10-17T20:44:50.137584Z
+contributor: allen
+command: add feature library/cwng-placeholders
+targets:
+    - F-yy4zaa
+after:
+    key: library/cwng-placeholders
+    status: draft
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/feature.md
+    - path: .tiller/epics/library/features/cwng-placeholders/feature.yml
