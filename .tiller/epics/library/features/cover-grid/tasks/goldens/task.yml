@@ -1,9 +1,10 @@
 id: T-lmmmgv
 key: library/cover-grid/goldens
 title: Library goldens on both profiles, the paint budget and the device check
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-t5ho4x
@@ -18,3 +19,4 @@ accepted_against:
         kind: git_commit
         value: git:943d0fa
         observed_at: 2026-10-17T02:22:50.304331Z
+branch: tiller/library/cover-grid/goldens
