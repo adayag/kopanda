@@ -238,21 +238,6 @@ function SeriesScreen:build(view, page)
     end)
 end
 
--- Opens record's file as the file browser's own tap does (cover-grid D15; filemanager.lua:160-169),
--- as the library does (library.lua), running SeriesScreen.on_open with the view and page once the
--- open goes ahead (filemanagerutil.lua:498-502).
-function SeriesScreen:open(record)
-    local FileManager = package.loaded["apps/filemanager/filemanager"]
-    local fm = FileManager and FileManager.instance
-    if not fm then
-        return
-    end
-    local view, page = self.showing, self.page
-    require("apps/filemanager/filemanagerutil").openFile(fm, record.path, function()
-        SeriesScreen.on_open(view, page)
-    end)
-end
-
 -- The back control, on one series: the list at the page holding that series (D17).
 function SeriesScreen:back()
     local name = self.showing.name

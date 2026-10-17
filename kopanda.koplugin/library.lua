@@ -56,21 +56,6 @@ function Library:build(dir, page)
     return built
 end
 
--- Opens record's file as the file browser's own tap does (D15; filemanager.lua:160-169), which
--- asks first when the owner set "ask before opening", running Library.on_open with the folder and
--- page once the open goes ahead (filemanagerutil.lua:498-502).
-function Library:open(record)
-    local FileManager = package.loaded["apps/filemanager/filemanager"]
-    local fm = FileManager and FileManager.instance
-    if not fm then
-        return
-    end
-    local dir, page = self.dir, self.page
-    require("apps/filemanager/filemanagerutil").openFile(fm, record.path, function()
-        Library.on_open(dir, page)
-    end)
-end
-
 -- Shows folder ({ name, path }) at its page: a tap on its tile, and its sheet's Open.
 function Library:open_folder(folder)
     self:go(folder.path, page_for(folder.path))
