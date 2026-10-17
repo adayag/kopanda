@@ -1,0 +1,15 @@
+id: EV-5p5fuw
+type: cancel.chore
+at: 2026-10-17T21:54:27.325688Z
+contributor: allen
+command: cancel chore CH-7z6mm5
+targets:
+    - CH-7z6mm5
+before:
+    status: ready
+after:
+    reason: 'done feature prose cannot be re-pinned by an amendment; B-0vcqvc and PR #42 record the More-row paging'
+    resolution: invalid
+    status: cancelled
+files:
+    - path: .tiller/chores/more-row-spec-sync/chore.yml
