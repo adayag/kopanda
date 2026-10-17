@@ -216,13 +216,18 @@ local function settle(home, opts)
     finish(opts, home.painted_at ~= nil and not home.paint_failed)
 end
 
--- Builds a home and shows it. opts: started (a PaintClock stamp at the start of the show path),
--- finished (called once: with true after the home's first paint, or with false when the home
--- closes before painting or its build, show or paint fails). On any error the home is taken off
--- the stack and the file browser beneath is left as it is.
+-- Builds a home and shows it, closing the chrome window shown first (the library, Series or
+-- Authors), as a window's show closes the home (LibraryChrome.show): one of them is up at a time,
+-- so no home hides a window that a target run from it would act on in place. opts: started (a
+-- PaintClock stamp at the start of the show path), finished (called once: with true after the
+-- home's first paint, or with false when the home closes before painting or its build, show or
+-- paint fails). On any error the home is taken off the stack and the file browser beneath is left
+-- as it is.
 function Home.show(opts)
     local home
     local ok, err = pcall(function()
+        -- library_chrome requires this module, so it is required here, at call time.
+        require("library_chrome").close()
         home = Home:new{}
         Home.shown = home
         UIManager:show(home, "full")
