@@ -44,9 +44,9 @@ gates:
     evals:
         required: true
         kind: command
-        status: pending
+        status: pass
         run_by: allen
-        run_at: 2026-10-16T22:59:42.074282Z
+        run_at: 2026-10-17T01:28:53.498807Z
         against:
             kind: git_commit
             value: git:1671c24
@@ -88,7 +88,7 @@ gates:
                     - kind: command_output
                       ref: artifacts/tiller/gates/eval-C7-1671c24-out-ad41b0dfbad80c37ec00738e0fd54ed82b3caf3f94cf7df64b81f55945d75a39.txt
             C8:
-                status: needs_attestation
+                status: pass
             C9:
                 status: pass
                 evidence:
@@ -107,3 +107,11 @@ gates:
         evidence:
             - kind: command_output
               ref: artifacts/tiller/gates/tests-1671c24-out-31dcc1a2e1b06f95d17c0a4e69c7b1572fab9f3245ed05f24b6a14eab804203c.txt
+attestations:
+    - id: AT-rlagel
+      target:
+        kind: criterion
+        id: C8
+      status: pass
+      by: allen
+      at: 2026-10-17T01:28:53.498807Z
