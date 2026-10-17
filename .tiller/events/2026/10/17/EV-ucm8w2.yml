@@ -1,0 +1,16 @@
+id: EV-ucm8w2
+type: submit.task
+at: 2026-10-17T04:48:34.975875Z
+contributor: allen
+command: submit task T-7g6ybl
+targets:
+    - T-7g6ybl
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/bars/quick-settings/panel
+        head: git:5cd2e3b
+    status: in_review
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/panel/task.yml

@@ -1,9 +1,10 @@
 id: T-2x7tk6
 key: bars/quick-settings/launcher-target
 title: Quick settings as a KoPanda launcher target with its registry icon, schema and studio catalog
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-7g6ybl
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:a955bb4
         observed_at: 2026-10-17T03:37:34.529034Z
+branch: tiller/bars/quick-settings/launcher-target
+review_ref:
+    branch: tiller/bars/quick-settings/launcher-target
+    head:
+        kind: git_commit
+        value: git:338f3a2
+        observed_at: 2026-10-17T05:35:00.20606Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T05:31:31.644356Z
+        against:
+            kind: git_commit
+            value: git:4e298c9
+            observed_at: 2026-10-17T05:31:31.644352Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-4e298c9-out-3e071030128e578e0481055754b1f3c2a9dfef10f34167e7ce85ed348cade95b.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T05:31:31.644356Z
+        against:
+            kind: git_commit
+            value: git:4e298c9
+            observed_at: 2026-10-17T05:31:31.644352Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-4e298c9-out-61d0933f448c94d9d71ef17a17ec94b4c2e63465831e2a112b30cfd215be6ba4.txt

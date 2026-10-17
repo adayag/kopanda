@@ -1,0 +1,13 @@
+id: EV-rvwcgh
+type: check.task
+at: 2026-10-17T06:59:25.304647Z
+contributor: allen
+command: check task T-phfsk7
+targets:
+    - T-phfsk7
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/goldens/task.yml

@@ -1,0 +1,16 @@
+id: EV-hdjvuw
+type: submit.task
+at: 2026-10-17T06:50:21.580396Z
+contributor: allen
+command: submit task T-czph2w
+targets:
+    - T-czph2w
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/bars/quick-settings/settings-hold
+        head: git:018a885
+    status: in_review
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/settings-hold/task.yml

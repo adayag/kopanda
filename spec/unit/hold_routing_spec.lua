@@ -241,7 +241,14 @@ describe("gestures on the KoPanda home", function()
             assert.equals(1, #calls)
         end)
 
-        -- D3: a hold on the nav bar is consumed and runs nothing.
+        local function tab_centre(bar, i)
+            local column = bar.columns[i]
+            return bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2),
+                bar.dimen.y + math.floor(bar.dimen.h / 2)
+        end
+
+        -- D3, and bars/quick-settings' C9: a hold on the nav bar outside its Settings column is
+        -- consumed and runs nothing.
         it("opens no sheet and runs no slot's hold on a hold in the nav bar's band", function()
             local held, calls = recording(nil)
             stubs_with({ date = held, clock = held, quote = held, weather = held, stats = held })
@@ -249,18 +256,32 @@ describe("gestures on the KoPanda home", function()
             local home = Home.shown
             local bar = home.nav
             local size = Screen:getSize()
-            for i, column in ipairs(bar.columns) do
-                hold(bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2),
-                    bar.dimen.y + math.floor(bar.dimen.h / 2))
+            for i = 1, 4 do
+                hold(tab_centre(bar, i))
                 assert.equals(home, harness.top(), "tab " .. i)
             end
             hold(10, size.h - 10)
-            hold(size.w - 10, size.h - 10)
             assert.equals(0, #calls)
             assert.equals(0, sheets_on_stack())
             assert.is_nil(settings_menu())
             assert.equals(home, Home.shown)
             assert.equals(home, harness.top())
+        end)
+
+        -- bars/quick-settings' C8: the Settings hold opens the quick-settings sheet over the home.
+        it("opens the quick-settings sheet over the home and no home sheet on a hold on Settings", function()
+            local held, calls = recording(nil)
+            stubs_with({ date = held, clock = held, quote = held, weather = held, stats = held })
+            fm_with_home()
+            local home = Home.shown
+            hold(tab_centre(home.nav, 5))
+            assert.is_true(sheet_shown())
+            assert.equals("quick_settings", Sheet.shown.spec.name)
+            assert.equals(home, harness.top(2))
+            assert.equals(home, Home.shown)
+            assert.equals(1, sheets_on_stack())
+            assert.equals(0, #calls)
+            assert.is_nil(settings_menu())
         end)
 
         it("opens nothing on a hold under KOReader's touch lock", function()

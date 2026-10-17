@@ -125,7 +125,21 @@ describe("looks", function()
                     "title_bar.picker_outline_width", "title_bar.picker_outline_color", "title_bar.picker_padding.x",
                     "title_bar.picker_padding.y", "title_bar.icon_size", "title_bar.icon_color",
                     "title_bar.count_on_shelf", "type.title_bar_count.face", "type.title_bar_title.size",
-                    "type.title_bar_sort.tracking", "type.title_bar_status.color" }) do
+                    "type.title_bar_sort.tracking", "type.title_bar_status.color",
+                    "sheet.quick_settings_band_color", "quick_settings.padding_x",
+                    "quick_settings.first_section_padding.top", "quick_settings.section_padding.bottom",
+                    "quick_settings.section_gap", "quick_settings.section_rule_width",
+                    "quick_settings.section_rule_color", "quick_settings.control_gap", "quick_settings.button_w",
+                    "quick_settings.button_h", "quick_settings.button_outline_width",
+                    "quick_settings.button_outline_color", "quick_settings.button_fill_color",
+                    "quick_settings.level_h", "quick_settings.level_outline_width",
+                    "quick_settings.level_outline_color", "quick_settings.level_fill_color",
+                    "quick_settings.level_track_color", "quick_settings.grid_gap", "quick_settings.grid_padding.top",
+                    "quick_settings.grid_padding.bottom", "quick_settings.cell_padding.top",
+                    "quick_settings.cell_padding.bottom", "quick_settings.cell_gap", "quick_settings.cell_icon_size",
+                    "quick_settings.cell_outline_width", "quick_settings.cell_outline_color",
+                    "quick_settings.cell_fill_color", "quick_settings.on_fill_color", "quick_settings.on_text_color",
+                    "type.quick_label.face", "type.quick_button.size", "type.quick_cell.color" }) do
                 local found = false
                 for _, path in ipairs(diner) do
                     found = found or path == wanted
@@ -453,6 +467,61 @@ describe("looks", function()
             assert.same({ "strong", 12, true, 0.04, 0, "ink" }, part_values(look.type.nav_label))
             assert.same({ "display", 12, true, 0.04, 0, "on_accent" }, part_values(look.type.nav_label_active))
         end)
+
+        -- The quick-settings sheet: Editorial's from its board (QuickSettings.dc.html:34-87 under
+        -- .tiller/design/2026-10-13-kopanda-screens/), Diner's from its own sheet, progress bar and
+        -- chip tokens, as the quick-settings feature's "Tokens" gives them.
+        local QUICK_SETTINGS = {
+            editorial = {
+                band = false,
+                block = {
+                    padding_x = 0, first_section_padding = { top = 18, bottom = 16 },
+                    section_padding = { top = 16, bottom = 16 }, section_gap = 10, section_rule_width = 1,
+                    section_rule_color = "hairline", control_gap = 12, button_w = 44, button_h = 36,
+                    button_outline_width = 1, button_outline_color = "ink", button_fill_color = false,
+                    level_h = 10, level_outline_width = 1, level_outline_color = "ink", level_fill_color = "ink",
+                    level_track_color = false, grid_gap = 10, grid_padding = { top = 18, bottom = 0 },
+                    cell_padding = { top = 14, bottom = 12 }, cell_gap = 8, cell_icon_size = 24,
+                    cell_outline_width = 1, cell_outline_color = "ink", cell_fill_color = false,
+                    on_fill_color = "ink", on_text_color = "paper",
+                },
+                parts = {
+                    quick_label = { "text", 11, true, 0.12, 0, "muted" },
+                    quick_button = { "text", 18, false, 0, 0, "ink" },
+                    quick_cell = { "strong", 11, true, 0.1, 0, "ink" },
+                },
+            },
+            diner = {
+                band = "band",
+                block = {
+                    padding_x = 20, first_section_padding = { top = 15, bottom = 15 },
+                    section_padding = { top = 15, bottom = 15 }, section_gap = 10, section_rule_width = 2,
+                    section_rule_color = "outline", control_gap = 12, button_w = 44, button_h = 36,
+                    button_outline_width = 2, button_outline_color = "outline", button_fill_color = "paper",
+                    level_h = 14, level_outline_width = 2, level_outline_color = "outline",
+                    level_fill_color = "mustard", level_track_color = "paper", grid_gap = 10,
+                    grid_padding = { top = 15, bottom = 20 }, cell_padding = { top = 14, bottom = 12 },
+                    cell_gap = 8, cell_icon_size = 24, cell_outline_width = 2, cell_outline_color = "outline",
+                    cell_fill_color = "paper", on_fill_color = "ink", on_text_color = "paper",
+                },
+                parts = {
+                    quick_label = { "strong", 12, true, 0.08, 0, "muted" },
+                    quick_button = { "strong", 18, false, 0, 0, "ink" },
+                    quick_cell = { "display", 11, true, 0.08, 0, "ink" },
+                },
+            },
+        }
+
+        for _, id in ipairs(ids) do
+            it("give " .. id .. "'s quick settings block and parts their values", function()
+                local wanted = QUICK_SETTINGS[id]
+                assert.equals(wanted.band, looks[id].sheet.quick_settings_band_color)
+                assert.same(wanted.block, looks[id].quick_settings)
+                for name, values in pairs(wanted.parts) do
+                    assert.same(values, part_values(looks[id].type[name]), id .. " type." .. name)
+                end
+            end)
+        end
 
         -- The file manager's title bar (Library.dc.html:17-27, LibraryC.dc.html:19-27 under
         -- .tiller/design/2026-10-13-kopanda-screens/).

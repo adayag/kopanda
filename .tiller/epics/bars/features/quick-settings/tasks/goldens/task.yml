@@ -1,9 +1,10 @@
 id: T-phfsk7
 key: bars/quick-settings/goldens
 title: Quick-settings goldens in both looks on the Colorsoft and their paint budget
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-n6wve0
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:a955bb4
         observed_at: 2026-10-17T03:37:34.552234Z
+branch: tiller/bars/quick-settings/goldens
+review_ref:
+    branch: tiller/bars/quick-settings/goldens
+    head:
+        kind: git_commit
+        value: git:c03aed0
+        observed_at: 2026-10-17T06:59:30.969295Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T06:55:54.533844Z
+        against:
+            kind: git_commit
+            value: git:06267e6
+            observed_at: 2026-10-17T06:55:54.533837Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-06267e6-out-b50be621cb29077f70e10b64c010da4a01be5e20af65d04ef4514b44ecf4f364.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T06:55:54.533844Z
+        against:
+            kind: git_commit
+            value: git:06267e6
+            observed_at: 2026-10-17T06:55:54.533837Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-06267e6-out-76a8bc1b0c58f3ef48ecaf1becca27ad3e8c923d42b2f26c55607cc93cea2cad.txt

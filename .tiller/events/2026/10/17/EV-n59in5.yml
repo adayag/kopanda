@@ -1,0 +1,13 @@
+id: EV-n59in5
+type: attest.feature
+at: 2026-10-17T07:13:42.115235Z
+contributor: allen
+command: attest feature F-rce9ko
+targets:
+    - F-rce9ko
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/bars/features/quick-settings/feature.yml

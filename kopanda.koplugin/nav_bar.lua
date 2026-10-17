@@ -1,11 +1,12 @@
 -- The nav bar: five tabs across a screen's bottom, Home, Library, Authors, History and Settings,
 -- drawn from the look's nav tokens. The home and the file browser each build one with their own
 -- tab active and set its dimen's x and y where they place it. A tap in a tab's column runs the
--- tab, a hold anywhere on the bar is consumed and runs nothing, and every other gesture passes
--- through.
+-- tab, a hold on Settings opens the quick-settings sheet, any other hold on the bar is consumed
+-- and runs nothing, and every other gesture passes through.
 --
--- launcher_entries is required at call time: it requires home (launcher_entries.lua:6), which
--- reaches this module through home_rows, so a load-time require would loop.
+-- launcher_entries and quick_settings are required at call time: launcher_entries requires home
+-- (launcher_entries.lua:6), which reaches this module through home_rows, so a load-time require
+-- would loop, and quick_settings requires launcher_entries.
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local Icons = require("icons")
@@ -13,6 +14,7 @@ local InputContainer = require("ui/widget/container/inputcontainer")
 local Layout = require("layout")
 local Looks = require("looks")
 local Paint = require("paint")
+local PaintClock = require("paint_clock")
 local Screen = require("device").screen
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
@@ -195,13 +197,30 @@ function Bar:column_at(pos)
     return nil
 end
 
--- Whether the bar consumes ges: a tap on it runs the tab under it, if any; a hold on it runs
--- nothing; anything else, or anything off the bar, is left to what lies beneath.
+-- Opens the quick-settings sheet, its paint_ms from now. An error is logged with the tab's name
+-- and goes no further, so the screen under the bar stays as it was.
+local function open_quick_settings()
+    local ok, err = pcall(function()
+        require("quick_settings").open{ started = PaintClock.now() }
+    end)
+    if not ok then
+        logger.err("KoPanda: the nav bar's Settings hold failed:", err)
+    end
+end
+
+-- Whether the bar consumes ges: a tap on it runs the tab under it, if any; a hold on Settings
+-- opens the quick-settings sheet (bars/quick-settings, "The Settings-tab hold"), and a hold
+-- anywhere else on it runs nothing; anything else, or anything off the bar, is left to what lies
+-- beneath.
 function Bar:handle(ges)
     if not inside(self.dimen, ges.pos) then
         return false
     end
     if ges.ges == "hold" then
+        local tab = self:column_at(ges.pos)
+        if tab and tab.id == "settings" then
+            open_quick_settings()
+        end
         return true
     end
     if ges.ges == "tap" then
