@@ -1,0 +1,9 @@
+id: TW-y0pzxw
+key: tweaks/doc-props-anchor-per-path
+title: A cover arrival evicts the featured book's doc_props anchor
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: T-gj4d8q
+source: .tiller/reviews/2026-10-17-efficiency-pass2-followups.md#L22-L33

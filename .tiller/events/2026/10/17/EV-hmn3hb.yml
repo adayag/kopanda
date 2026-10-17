@@ -1,0 +1,13 @@
+id: EV-hmn3hb
+type: check.bug
+at: 2026-10-17T16:36:29.561867Z
+contributor: allen
+command: check bug B-0vcqvc
+targets:
+    - B-0vcqvc
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/bugs/entry-picker-plugins-unreachable/bug.yml

@@ -1,0 +1,13 @@
+id: EV-wuc69z
+type: check.chore
+at: 2026-10-17T17:44:02.72241Z
+contributor: allen
+command: check chore CH-au9w25
+targets:
+    - CH-au9w25
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/chores/stale-efficiency-docs/chore.yml

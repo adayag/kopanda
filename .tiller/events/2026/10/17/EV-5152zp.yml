@@ -1,0 +1,14 @@
+id: EV-5152zp
+type: submit.tweak
+at: 2026-10-17T17:44:47.188778Z
+contributor: allen
+command: submit tweak TW-bpvicu
+targets:
+    - TW-bpvicu
+before:
+    status: check
+after:
+    pr: 42
+    status: in_review
+files:
+    - path: .tiller/tweaks/cover-arrival-regional-refresh/tweak.yml

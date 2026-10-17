@@ -99,9 +99,11 @@ describe("the library's lifecycle", function()
             end
             fresh.title = "Zebra Stripes"
             local got = {}
-            Books.get = function(id)
-                got[#got + 1] = id
-                return id == fresh.id and fresh or nil
+            Books.with_progress = function(path)
+                got[#got + 1] = path
+                if path == fresh.path then
+                    return fresh, { status = "new" }
+                end
             end
             local dirty = {}
             local set_dirty = UIManager.setDirty
@@ -112,7 +114,7 @@ describe("the library's lifecycle", function()
             local ok, err = pcall(requests[1].on_arrival, { books[2] })
             UIManager.setDirty = set_dirty
             assert.is_true(ok, tostring(err))
-            assert.same({ books[2].id }, got)
+            assert.same({ books[2].path }, got)
             assert.same(order, page_ids(library))
             assert.equals("Zebra Stripes", library.tiles[2].record.title)
             assert.is_true(fixture.texts(library.tiles[2].widget)[1] ~= nil)
@@ -133,6 +135,94 @@ describe("the library's lifecycle", function()
                 marked = marked or widget == library
             end
             assert.is_true(marked, "the library is set dirty")
+        end)
+
+        it("rebuild an arrived path-less book's tile from its record read again by its id", function()
+            local books = fixture.books(3)
+            local remote = fixture.remote("Remote")
+            books[#books + 1] = remote
+            fixture.install({ [ROOT] = { books = books } })
+            local library = show()
+            local at
+            for i, tile in ipairs(library.tiles) do
+                if tile.record and tile.record.id == remote.id then
+                    at = i
+                end
+            end
+            assert.is_not_nil(at, "the path-less book has a tile")
+            local fresh = {}
+            for k, v in pairs(remote) do
+                fresh[k] = v
+            end
+            fresh.title = "Remote Retitled"
+            local got = {}
+            Books.get = function(id)
+                got[#got + 1] = id
+                if id == remote.id then
+                    return fresh
+                end
+            end
+            local ok, err = pcall(requests[1].on_arrival, { remote })
+            assert.is_true(ok, tostring(err))
+            assert.same({ remote.id }, got)
+            assert.equals("Remote Retitled", library.tiles[at].record.title)
+        end)
+
+        -- Each setDirty an arrival makes: the widget, and what its refresh function gives after the
+        -- paint (UIManager:setDirty's function form, frontend/ui/uimanager.lua:536-537, :728-731).
+        local function arrive(arrival, arrived)
+            local calls = {}
+            local set_dirty = UIManager.setDirty
+            UIManager.setDirty = function(manager, widget, refresh, ...)
+                calls[#calls + 1] = { widget = widget, refresh = refresh, rest = select("#", ...) }
+                return set_dirty(manager, widget, refresh, ...)
+            end
+            local ok, err = pcall(arrival, arrived)
+            UIManager.setDirty = set_dirty
+            assert.is_true(ok, tostring(err))
+            return calls
+        end
+
+        -- rect widened by over, as a plain table.
+        local function widened(rect, over)
+            return { x = rect.x, y = rect.y - over.top, w = rect.w + over.right,
+                h = rect.h + over.top + over.bottom }
+        end
+
+        it("refresh only the arrived tile's rect and its overhang, dithered, after the paint", function()
+            local books = fixture.books(4)
+            fixture.install({ [ROOT] = { books = books } })
+            local library = show()
+            local calls = arrive(requests[1].on_arrival, { books[2] })
+            assert.equals(1, #calls)
+            assert.equals(library, calls[1].widget)
+            assert.equals("function", type(calls[1].refresh))
+            assert.equals(0, calls[1].rest)
+            local mode, region, dither = calls[1].refresh()
+            assert.equals("ui", mode)
+            assert.is_true(dither)
+            local over = require("library_tiles").overhang(library.box, library.ctx)
+            assert.is_true(over.top > 0 and over.right > 0, "Diner's badge and shadow reach past the box")
+            assert.same(widened(library.tiles[2].rect, over),
+                { x = region.x, y = region.y, w = region.w, h = region.h })
+        end)
+
+        it("refresh after a page turn only the arrived tiles the page shows, and nothing for none", function()
+            local books = fixture.books(14)
+            fixture.install({ [ROOT] = { books = books } })
+            local library = show()
+            local arrival = requests[1].on_arrival
+            library:go(ROOT, 2)
+            harness.tick(2)
+            assert.same({}, arrive(arrival, { books[1], books[2] }))
+            local calls = arrive(arrival, { books[1], books[8], books[9] })
+            assert.equals(1, #calls)
+            local _, region = calls[1].refresh()
+            local over = require("library_tiles").overhang(library.box, library.ctx)
+            local a, b = widened(library.tiles[2].rect, over), widened(library.tiles[3].rect, over)
+            assert.equals(books[8].id, library.tiles[2].record.id)
+            assert.same({ x = a.x, y = a.y, w = b.x + b.w - a.x, h = a.h },
+                { x = region.x, y = region.y, w = region.w, h = region.h })
         end)
 
         it("are asked again for a new page's books", function()
@@ -182,7 +272,7 @@ describe("the library's lifecycle", function()
                 package.loaded.bookinfomanager = loaded
             end)
             BookCovers.request, BookCovers.cancel = real.request, real.cancel
-            Books.get = function() return nil end
+            Books.with_progress = function() return nil end
             local library = Library.show{ dir = ROOT }
             harness.tick(2)
             assert.equals(1, #extracted)
@@ -223,7 +313,7 @@ describe("the library's lifecycle", function()
             local books = fixture.books(8)
             fixture.install({ [ROOT] = { books = books } })
             local library = show()
-            Books.get = function() return nil end
+            Books.with_progress = function() return nil end
             -- Records each free of widget in freed under name, then frees it.
             local freed = {}
             local function watch(name, widget)
@@ -455,7 +545,7 @@ describe("the library's lifecycle", function()
                 -- The reader writes its sidecar after CloseDocument. The record read again is the
                 -- listing's, so the title stays the spec's.
                 progress[ID] = { status = "reading", percent = 0.4 }
-                Books.get = function() return nil end
+                Books.with_progress = function() return nil end
                 local builds = spy.on(Library, "new")
                 local new_fm = harness.show_fm()
                 assert.equals(pending, harness.top())

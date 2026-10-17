@@ -1,0 +1,14 @@
+id: EV-f5jt37
+type: sync.tweak
+at: 2026-10-17T17:53:56.155437Z
+contributor: allen
+command: sync tweak TW-zih0x2
+targets:
+    - TW-zih0x2
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/metadata-events-coalesced/tweak.yml

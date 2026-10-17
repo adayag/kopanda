@@ -1,0 +1,14 @@
+id: EV-z4ztrf
+type: submit.chore
+at: 2026-10-17T17:44:50.015885Z
+contributor: allen
+command: submit chore CH-au9w25
+targets:
+    - CH-au9w25
+before:
+    status: check
+after:
+    pr: 42
+    status: in_review
+files:
+    - path: .tiller/chores/stale-efficiency-docs/chore.yml

@@ -248,7 +248,7 @@ function SheetLayout.build(spec, ctx, variant)
     local row_w = content_w - 2 * pad_x
     local indent = spec.flush and 0 or icon_size + row_gap
     local built, unknown = {}, {}
-    for _, row in ipairs(spec.rows or {}) do
+    local function build_row(row)
         local b = { row = row }
         local ink = row.muted and "muted" or "ink"
         local icon_id = row.tick and "check" or row.icon
@@ -294,36 +294,73 @@ function SheetLayout.build(spec, ctx, variant)
             b.text_h = b.text_h + scale(tokens.sublabel_gap) + b.sublabel:getSize().h
         end
         b.content_h = math.max(icon_size, b.text_h, b.detail_h or 0)
-        built[#built + 1] = b
+        return b
+    end
+    for _, row in ipairs(spec.rows or {}) do
+        built[#built + 1] = build_row(row)
     end
 
     -- As many rows as fit above the screen's foot less the inset; the last kept one takes the
-    -- last row's foot and no rule.
+    -- last row's foot and no rule. height(n, tail) is the panel's with the first n rows, and
+    -- tail, a built row, after them.
     local row_rule = scale(tokens.row_rule_width)
     local foot = scale(tokens.padding.bottom) + outline
     local last_bottom = scale(tokens.last_row_bottom)
     local max_h = size.h - scale(tokens.inset.bottom)
     local kept = #built
-    local function height(n)
+    local function height(n, tail)
+        local count = n + (tail and 1 or 0)
         local h = y + foot
-        for i = 1, n do
-            h = h + pad_y + built[i].content_h + (i < n and pad_y + row_rule or last_bottom)
+        for i = 1, count do
+            local b = i <= n and built[i] or tail
+            h = h + pad_y + b.content_h + (i < count and pad_y + row_rule or last_bottom)
         end
         return h
     end
     while kept > 0 and height(kept) > max_h do
         kept = kept - 1
     end
-    local left_out = #built - kept
-    if left_out > 0 then
-        for i = kept + 1, #built do
-            local b = built[i]
-            for _, widget in pairs({ b.icon, b.detail, b.label, b.sublabel, b.check }) do
-                widget:free()
-            end
-            built[i] = nil
+    local function free_row(b)
+        for _, widget in pairs({ b.icon, b.detail, b.label, b.sublabel, b.check }) do
+            widget:free()
         end
     end
+    -- With spec.more, rows left out after at least one that fits are paged: the last slot that
+    -- fits beside one or more rows takes a More row, whose run hands spec.more.run the rows
+    -- after the ones kept, in order. Without a row beside it, it would page nothing, so the rows
+    -- are left out as without more.
+    local more
+    if spec.more and kept > 0 and kept < #built then
+        local has_icons = false
+        for _, row in ipairs(spec.rows) do
+            has_icons = has_icons or row.icon ~= nil
+        end
+        more = build_row({ label = spec.more.label or "More…", icon = has_icons and "list" or nil })
+        local n = kept
+        while n > 0 and height(n, more) > max_h do
+            n = n - 1
+        end
+        if n > 0 then
+            kept = n
+            local rest = {}
+            for i = kept + 1, #built do
+                rest[#rest + 1] = built[i].row
+            end
+            local run = spec.more.run
+            more.row.run = function()
+                run(rest)
+            end
+        else
+            free_row(more)
+            more = nil
+        end
+    end
+    local left_out = more and 0 or #built - kept
+    for i = kept + 1, #built do
+        free_row(built[i])
+        built[i] = nil
+    end
+    built[#built + 1] = more
 
     local rows = {}
     for i, b in ipairs(built) do

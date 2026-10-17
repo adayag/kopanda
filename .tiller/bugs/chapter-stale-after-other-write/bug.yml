@@ -1,0 +1,9 @@
+id: B-25sffy
+key: bugs/chapter-stale-after-other-write
+title: Another key's failed state write leaves the chapter stale with the retry flag clear
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: T-o0ptat
+source: .tiller/reviews/2026-10-17-efficiency-pass2-followups.md#L7-L20

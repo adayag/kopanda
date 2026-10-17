@@ -1,0 +1,11 @@
+id: EV-lazkow
+type: claim.bug
+at: 2026-10-17T16:09:48.977699Z
+contributor: allen
+command: claim bug bugs/entry-picker-plugins-unreachable
+targets:
+    - B-0vcqvc
+after:
+    owner: allen
+files:
+    - path: .tiller/bugs/entry-picker-plugins-unreachable/bug.yml

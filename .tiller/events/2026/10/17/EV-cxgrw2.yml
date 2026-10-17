@@ -1,0 +1,13 @@
+id: EV-cxgrw2
+type: check.tweak
+at: 2026-10-17T16:45:38.807007Z
+contributor: allen
+command: check tweak TW-6fwvl6
+targets:
+    - TW-6fwvl6
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/quick-settings-one-redraw/tweak.yml

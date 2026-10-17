@@ -1,0 +1,9 @@
+id: TW-43jvrb
+key: tweaks/shelf-screens-keep-rows
+title: The series and authors screens re-sort every page turn and refresh on every metadata event
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: F-yaihx9
+source: .tiller/reviews/2026-10-17-efficiency-pass2-followups.md#L35-L48

@@ -353,4 +353,146 @@ describe("the quote of the day", function()
             assert.equals(0, built:getSize().h)
         end)
     end)
+
+    describe("the text box memo", function()
+        local Event = require("ui/event")
+        local TextBoxWidget = require("ui/widget/textboxwidget")
+        local own_new = rawget(TextBoxWidget, "new")
+        local constructed
+
+        before_each(function()
+            constructed = 0
+            local inherited = TextBoxWidget.new
+            TextBoxWidget.new = function(...)
+                constructed = constructed + 1
+                return inherited(...)
+            end
+        end)
+
+        after_each(function()
+            TextBoxWidget.new = own_new
+        end)
+
+        -- A source of two entries no other test draws, so a test's first build finds no box kept
+        -- from before it.
+        local function two_days(tag)
+            Quote.sources.builtin = {
+                { text = "The words for one day, " .. tag .. ".", author = "A", work = "W" },
+                { text = "The words for the next day, " .. tag .. ".", author = "A", work = "W" },
+            }
+        end
+
+        local function next_day(ctx)
+            ctx.now = ctx.now + 86400
+            return ctx
+        end
+
+        -- The pixels of built's text box, painted into a scratch buffer, that differ from the
+        -- box's top-left pixel, its background.
+        local function ink(built)
+            local size = built:getSize()
+            local bb = Blitbuffer.new(size.w, size.h, Blitbuffer.TYPE_BBRGB32)
+            bb:fill(Blitbuffer.COLOR_WHITE)
+            built:paintTo(bb, 0, 0)
+            local box = built.text_box:getSize()
+            local paper = bb:getPixel(built.text_x, built.text_y):getColorRGB32()
+            local count = 0
+            for y = built.text_y, built.text_y + box.h - 1 do
+                for x = built.text_x, built.text_x + box.w - 1 do
+                    local c = bb:getPixel(x, y):getColorRGB32()
+                    if c.r ~= paper.r or c.g ~= paper.g or c.b ~= paper.b then
+                        count = count + 1
+                    end
+                end
+            end
+            bb:free()
+            return count
+        end
+
+        it("shapes the text once for two builds of a day at a width, again the next day or at another width",
+            function()
+                two_days("shapes")
+                local first = Quote.build(500, ctx_for("diner"))
+                local second = Quote.build(500, ctx_for("diner"))
+                assert.equals(1, constructed)
+                assert.equals(first.text_box, second.text_box)
+                local tomorrow = Quote.build(500, next_day(ctx_for("diner")))
+                assert.equals(2, constructed)
+                local narrower = Quote.build(400, next_day(ctx_for("diner")))
+                assert.equals(3, constructed)
+                for _, built in ipairs({ first, second, tomorrow, narrower }) do
+                    built:free()
+                end
+            end)
+
+        it("shapes the text again for another look, variant, text size or colour rendering", function()
+            two_days("inputs")
+            local night = ctx_for("editorial", "large")
+            night.variant = "night"
+            local ctxs = { ctx_for("diner"), ctx_for("editorial"), ctx_for("editorial", "large"), night }
+            local built = {}
+            for i, ctx in ipairs(ctxs) do
+                built[i] = Quote.build(500, ctx)
+                assert.equals(i, constructed)
+            end
+            local own = rawget(Screen, "isColorEnabled")
+            local colour = Screen:isColorEnabled()
+            Screen.isColorEnabled = function() return not colour end
+            local ok, err = pcall(function()
+                built[#built + 1] = Quote.build(500, night)
+            end)
+            Screen.isColorEnabled = own
+            assert(ok, err)
+            assert.equals(#built, constructed)
+            for _, quote in ipairs(built) do
+                quote:free()
+            end
+        end)
+
+        it("still paints the third home's quote after the first home's is freed and the second's closed", function()
+            two_days("paints")
+            local first = Quote.build(500, ctx_for("editorial"))
+            local second = Quote.build(500, ctx_for("editorial"))
+            local third = Quote.build(500, ctx_for("editorial"))
+            assert.equals(1, constructed)
+            first:free()
+            -- As UIManager:close sends it (frontend/ui/uimanager.lua:300).
+            second:handleEvent(Event:new("CloseWidget"))
+            assert.truthy(ink(third) > 0)
+            third:free()
+        end)
+
+        it("lets go of its box once when freed and then closed", function()
+            two_days("once")
+            local first = Quote.build(500, ctx_for("diner"))
+            local second = Quote.build(500, ctx_for("diner"))
+            first:free()
+            first:handleEvent(Event:new("CloseWidget"))
+            local narrow = Quote.build(400, ctx_for("diner"))
+            assert.is_not_nil(second.text_box._bb)
+            assert.truthy(ink(second) > 0)
+            second:free()
+            narrow:free()
+        end)
+
+        it("holds one box, and frees one it moved on from once no quote holds it", function()
+            two_days("holds")
+            local wide = Quote.build(500, ctx_for("diner"))
+            local wide_box = wide.text_box
+            local narrow = Quote.build(400, ctx_for("diner"))
+            -- The memo has moved on, but the wide quote still holds its box and paints it.
+            assert.truthy(ink(wide) > 0)
+            -- Closed, as a closing home passes CloseWidget down to it.
+            wide:handleEvent(Event:new("CloseWidget"))
+            -- TextBoxWidget:free drops its buffer (frontend/ui/widget/textboxwidget.lua:1298-1301).
+            assert.is_nil(wide_box._bb)
+            assert.truthy(ink(narrow) > 0)
+            local narrow_box = narrow.text_box
+            narrow:free()
+            assert.is_not_nil(narrow_box._bb)
+            local narrowest = Quote.build(300, ctx_for("diner"))
+            assert.is_nil(narrow_box._bb)
+            narrowest:free()
+        end)
+    end)
 end)

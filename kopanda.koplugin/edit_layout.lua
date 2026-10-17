@@ -2,8 +2,8 @@
 -- (editor.lua). A card per row with its arrows, caption and a box per column; a tap selects a
 -- row, a tap on a selected card's box selects that column, and the selected card shows its
 -- buttons. The foot adds a row or resets. Each change is a rows_edit operation, checked
--- against the home's fit, written once through Settings.set, then the shown home and the
--- screen are refreshed once. The selection is the screen's, never stored.
+-- against the home's fit, written once through Settings.set, then the screen is refreshed once
+-- and the shown home once the editor closes. The selection is the screen's, never stored.
 local Editor = require("editor")
 local Home = require("home")
 local Icons = require("icons")
@@ -106,9 +106,26 @@ local function picker(state, heading, rows)
     Sheet.show({ name = "picker", band = "home", header = { heading = heading }, rows = rows }, state.editor.ctx)
 end
 
+-- What Layout.overflow's count depends on beyond the rows that can change through the editor:
+-- the look, the text size and the size of the screen it measures on. A row whose data changes
+-- under the editor (a weather reading arriving, the quote of the day turning over) changes the
+-- count without changing the key; apply catches that by measuring the rows shown again before
+-- it refuses an edit.
+local function fit_key(ctx)
+    return { look = ctx.look, text_size = ctx.text_size, w = Layout.screen:getWidth(),
+        h = Layout.screen:getHeight() }
+end
+
+local function same_key(a, b)
+    return a.look == b.look and a.text_size == b.text_size and a.w == b.w and a.h == b.h
+end
+
 -- Applies an operation's result: its note when refused; "That won't fit on the home." when it
--- leaves out more home rows than the rows shown; otherwise writes it, takes it and selection,
--- and refreshes the shown home and the screen. A failed write is logged and changes nothing.
+-- leaves out more home rows than the rows shown; otherwise writes it, takes it, its overflow and
+-- selection, defers the shown home's refresh to the editor's close and refreshes the screen. The
+-- shown rows' overflow is kept in state.fit while its key holds, so an edit measures only its
+-- new rows, and the shown rows are measured again only when the edit would be refused. A failed
+-- write is logged and changes nothing.
 local function apply(state, new, why, selection)
     if not new then
         if why then
@@ -117,7 +134,15 @@ local function apply(state, new, why, selection)
         return
     end
     local ctx = state.editor.ctx
-    if Layout.overflow(new, ctx) > Layout.overflow(state.rows, ctx) then
+    local key = fit_key(ctx)
+    if not (state.fit and same_key(state.fit.key, key)) then
+        state.fit = { key = key, overflow = Layout.overflow(state.rows, ctx) }
+    end
+    local overflow = Layout.overflow(new, ctx)
+    if overflow > state.fit.overflow then
+        state.fit.overflow = Layout.overflow(state.rows, ctx)
+    end
+    if overflow > state.fit.overflow then
         note("That won't fit on the home.")
         return
     end
@@ -128,9 +153,10 @@ local function apply(state, new, why, selection)
         return
     end
     state.rows = new
+    state.fit.overflow = overflow
     state.selected = selection
     if Home.shown then
-        Home.shown:refresh()
+        Home.shown:defer_refresh()
     end
     state.editor:refresh()
 end

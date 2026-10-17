@@ -1,9 +1,10 @@
 id: B-0vcqvc
 key: bugs/entry-picker-plugins-unreachable
 title: The entry picker's Plugin sheet shows 13 of 28 plugins and the rest can't be picked
-status: ready
+status: done
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: F-sn4px5
 source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L242
@@ -17,3 +18,33 @@ accepted_against:
         kind: git_commit
         value: git:525b5a5
         observed_at: 2026-10-17T16:06:09.704905Z
+branch: tiller/bugs/entry-picker-plugins-unreachable
+pr: 42
+done_basis: ancestry
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:32:47.634875Z
+        against:
+            kind: git_commit
+            value: git:fa4df9d
+            observed_at: 2026-10-17T16:32:47.634874Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-fa4df9d-out-8392623877d65285ba46870ca359c54c6ac230e22fb1503c7f16236543b778fd.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:32:47.634875Z
+        against:
+            kind: git_commit
+            value: git:fa4df9d
+            observed_at: 2026-10-17T16:32:47.634874Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-fa4df9d-out-7be91f885c7d346541c9fe9ec84f59bd1161d3d438eddcb1e02dc546bc6f9b6e.txt

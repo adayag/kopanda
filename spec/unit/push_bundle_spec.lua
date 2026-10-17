@@ -246,6 +246,53 @@ describe("the push bundle", function()
             os.execute("rm -rf '" .. dir .. "'")
         end)
 
+        it("reads each file once", function()
+            local doc = vectors()
+            local open = spy.on(io, "open")
+            local ok, verified = pcall(PushBundle.verify_files, dir, doc)
+            open:revert()
+            assert.is_true(ok, verified)
+            assert.is_true(verified)
+            assert.spy(open).was.called(#doc.files)
+            for _, file in ipairs(doc.files) do
+                assert.spy(open).was.called_with(dir .. "/" .. file.path, "rb")
+            end
+        end)
+
+        it("verifies a file of several blocks, and refuses it with two blocks swapped", function()
+            local blocks = { ("1"):rep(65536), ("2"):rep(65536), "tail" }
+            write(dir .. "/plugin/big.bin", table.concat(blocks))
+            local doc = vectors()
+            table.insert(doc.files, 2, {
+                path = "plugin/big.bin",
+                size = 2 * 65536 + 4,
+                sha256 = PushBundle.sha256_file(dir .. "/plugin/big.bin"),
+            })
+            doc.hash = PushBundle.bundle_hash(dir, doc.files)
+            assert.is_true(PushBundle.verify_files(dir, doc))
+            write(dir .. "/plugin/big.bin", blocks[2] .. blocks[1] .. blocks[3])
+            doc.files[2].sha256 = PushBundle.sha256_file(dir .. "/plugin/big.bin")
+            local ok, why = PushBundle.verify_files(dir, doc)
+            assert.is_nil(ok)
+            assert.truthy(why:find("bundle hash", 1, true))
+        end)
+
+        it("refuses a manifest whose paths are out of byte order", function()
+            local doc = vectors()
+            doc.files[1], doc.files[2] = doc.files[2], doc.files[1]
+            local ok, why = PushBundle.verify_files(dir, doc)
+            assert.is_nil(ok)
+            assert.truthy(why:find("byte order", 1, true))
+        end)
+
+        it("refuses a manifest that names a path twice", function()
+            local doc = vectors()
+            table.insert(doc.files, 2, doc.files[1])
+            local ok, why = PushBundle.verify_files(dir, doc)
+            assert.is_nil(ok)
+            assert.truthy(why:find("byte order", 1, true))
+        end)
+
         it("refuses a missing file", function()
             os.remove(dir .. "/plugin/icons/a.svg")
             local ok, why = PushBundle.verify_files(dir, vectors())
@@ -264,6 +311,18 @@ describe("the push bundle", function()
         it("refuses a file of the right size and the wrong sha256", function()
             local text = read(dir .. "/plugin/main.lua")
             write(dir .. "/plugin/main.lua", ("x"):rep(#text))
+            local ok, why = PushBundle.verify_files(dir, vectors())
+            assert.is_nil(ok)
+            assert.truthy(why:find("plugin/main.lua", 1, true))
+        end)
+
+        it("refuses a file it cannot read", function()
+            assert.truthy(os.execute("chmod 000 '" .. dir .. "/plugin/main.lua'"))
+            local readable = io.open(dir .. "/plugin/main.lua", "rb")
+            if readable then
+                readable:close()
+                return pending("chmod 000 does not stop reading as root")
+            end
             local ok, why = PushBundle.verify_files(dir, vectors())
             assert.is_nil(ok)
             assert.truthy(why:find("plugin/main.lua", 1, true))

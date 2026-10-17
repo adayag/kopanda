@@ -1,0 +1,13 @@
+id: EV-hi3lf0
+type: start.bug
+at: 2026-10-17T16:09:45.081882Z
+contributor: allen
+command: start bug B-e2tfz0
+targets:
+    - B-e2tfz0
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/bugs/chapter-write-retry/bug.yml
