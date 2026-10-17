@@ -22,18 +22,18 @@ branch: tiller/reviews/features/library/series-and-authors
 accepted_against:
     spec:
         kind: git_blob
-        value: git:f1c181031a915662581f9982bdf68299c78eb737
+        value: git:0fac9badd9ff5c6cfd21886346dcbc4ae6520972
         path: .tiller/epics/library/features/series-and-authors/feature.md
-        observed_at: 2026-10-17T13:05:16.315257Z
+        observed_at: 2026-10-17T15:55:38.507042Z
     eval:
         kind: git_blob
         value: git:1ffd21c760c4cc56e09df2db27034a0c5880b7df
         path: .tiller/epics/library/features/series-and-authors/feature.eval.md
-        observed_at: 2026-10-17T13:05:16.315257Z
+        observed_at: 2026-10-17T15:55:38.507042Z
     commit:
         kind: git_commit
-        value: git:27bfea6
-        observed_at: 2026-10-17T13:05:16.351231Z
+        value: git:2745adb
+        observed_at: 2026-10-17T15:55:38.542427Z
 gates:
     build:
         required: true
