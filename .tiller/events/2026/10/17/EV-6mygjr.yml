@@ -1,0 +1,13 @@
+id: EV-6mygjr
+type: check.tweak
+at: 2026-10-17T07:41:47.678678Z
+contributor: allen
+command: check tweak TW-soxspy
+targets:
+    - TW-soxspy
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/state-set-many/tweak.yml
