@@ -1,7 +1,7 @@
 id: T-cb345p
 key: library/cover-grid/screen
 title: 'The library window: header, page, pager, nav bar, gestures and covers'
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -20,3 +20,30 @@ accepted_against:
         value: git:943d0fa
         observed_at: 2026-10-17T02:22:50.236539Z
 branch: tiller/library/cover-grid/screen
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T04:16:44.828553Z
+        against:
+            kind: git_commit
+            value: git:f3bccbb
+            observed_at: 2026-10-17T04:16:44.828548Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-f3bccbb-out-488f531d0678a2f1a5211daa3c259af9c59e65463fcaa9ef2ac4adebae1c5827.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T04:16:44.828553Z
+        against:
+            kind: git_commit
+            value: git:f3bccbb
+            observed_at: 2026-10-17T04:16:44.828548Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-f3bccbb-out-5a7c3e7aaea61477cdecd0e0b66b83b3ffc5331714b7dbda199717c27759fd3e.txt
