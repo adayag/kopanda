@@ -1,9 +1,10 @@
 id: TW-hmdt1d
 key: tweaks/reading-stats-memo
 title: The Statistics database is opened twice per home build, uncached
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: T-wgis3w
 source: .tiller/reviews/2026-10-17-efficiency-review.md#L27-L38
@@ -17,3 +18,4 @@ accepted_against:
         kind: git_commit
         value: git:5aa14a6
         observed_at: 2026-10-17T07:16:23.362176Z
+branch: tiller/tweaks/reading-stats-memo

@@ -1,0 +1,13 @@
+id: EV-1fm8yz
+type: start.tweak
+at: 2026-10-17T07:17:45.088155Z
+contributor: allen
+command: start tweak TW-hmdt1d
+targets:
+    - TW-hmdt1d
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/reading-stats-memo/tweak.yml

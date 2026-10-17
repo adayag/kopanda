@@ -1,0 +1,11 @@
+id: EV-69lb7e
+type: claim.tweak
+at: 2026-10-17T07:17:45.002101Z
+contributor: allen
+command: claim tweak tweaks/reading-stats-memo
+targets:
+    - TW-hmdt1d
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/reading-stats-memo/tweak.yml
