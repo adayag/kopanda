@@ -308,11 +308,10 @@ end
 -- :446-453, :476-480). A failed lookup is logged and records the chapter as "", so the book
 -- keeps no chapter from an earlier close. Both keys go in one write, skipped when they hold
 -- these values already, since each write fsyncs on the way to the home. A failed write is logged
--- and the chapter cleared, so an old chapter never pairs with a new file. A failed write leaves
--- State's in-memory copy ahead of the file, so chapter_unsaved holds off the skip until a write
--- succeeds: the skip compares against the last successful write.
-local chapter_unsaved = false
-
+-- and the chapter cleared, so an old chapter never pairs with a new file. A failed state write,
+-- this one or any other key's, can leave State's in-memory copy ahead of the file, so
+-- State.unsaved() holds off the skip until a write succeeds: the skip compares against the last
+-- successful state write.
 local function record_chapter(ui)
     if not (ui and ui.document and ui.toc) then
         return
@@ -324,14 +323,11 @@ local function record_chapter(ui)
     end
     chapter = chapter or ""
     local set_ok, err = pcall(function()
-        if not chapter_unsaved and State.get("featured_chapter_file") == ui.document.file
+        if not State.unsaved() and State.get("featured_chapter_file") == ui.document.file
                 and State.get("featured_chapter") == chapter then
             return
         end
-        if State.set_many({ featured_chapter_file = ui.document.file, featured_chapter = chapter }) then
-            chapter_unsaved = false
-        else
-            chapter_unsaved = true
+        if not State.set_many({ featured_chapter_file = ui.document.file, featured_chapter = chapter }) then
             logger.err("KoPanda: could not record the chapter, clearing it")
             State.set("featured_chapter", "")
         end
