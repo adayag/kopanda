@@ -986,9 +986,10 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   entry covers the page (`:446-453`), filling an unfilled TOC itself (`:383-384`). Called on
   `CloseDocument`, which is sent before the document closes (`readerui.lua:887`, `:891`), with
   `self.ui.document.file`; both go into the runtime state file as `featured_chapter_file` and
-  `featured_chapter` in one `State.set_many` write, skipped when the last successful write left
-  those values (not when `State`'s in-memory copy holds them, which a failed write leaves ahead
-  of the file).
+  `featured_chapter` in one `State.set_many` write, skipped when the last successful state write
+  left those values (not when `State`'s in-memory copy holds them, which a failed write of any
+  state key leaves ahead of the file: `util.writeToFile` opens it `"wb"`, `frontend/util.lua:1130`,
+  so a full disk truncates it). `State.unsaved()` says whether the last state write failed.
   A raising lookup is logged and records the chapter as `""`, and a failed
   write clears `featured_chapter`, so no earlier chapter survives either.
 

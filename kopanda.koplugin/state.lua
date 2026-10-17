@@ -2,7 +2,7 @@
 -- settings/kopanda/state.lua. Not a setting: no schema entry, and the studio never sees it.
 -- A missing or corrupt file reads as empty. Every call catches its own errors, and callers
 -- treat a failure as the flag being absent.
--- Module state: the opened file, on first use.
+-- Module state: the opened file, on first use, and whether the last write failed.
 local DataStorage = require("datastorage")
 local LuaSettings = require("luasettings")
 local lfs = require("libs/libkoreader-lfs")
@@ -11,6 +11,7 @@ local logger = require("logger")
 local State = {}
 
 local settings
+local unsaved = false
 
 local function dir()
     return DataStorage:getSettingsDir() .. "/kopanda"
@@ -58,7 +59,9 @@ end
 -- Returns true when written, false otherwise. LuaSettings:flush neither creates the directory
 -- nor reports a failed write (frontend/luasettings.lua:270-275, frontend/util.lua:1131-1133),
 -- so the directory is made and checked first, and the file is read back after, a table value
--- compared key by key.
+-- compared key by key. A failed write sets unsaved, since it can leave the in-memory copy ahead
+-- of the file; a successful one clears it, since a flush writes the whole copy
+-- (frontend/luasettings.lua:273).
 local function write(list)
     local ok, err = pcall(function()
         if lfs.attributes(dir(), "mode") ~= "directory" then
@@ -81,9 +84,18 @@ local function write(list)
     end)
     if not ok then
         logger.err("KoPanda: could not write the state file:", err)
+        unsaved = true
         return false
     end
+    unsaved = false
     return true
+end
+
+-- Whether the last write failed, so State.get may hold values the file doesn't: a failed
+-- flush can truncate the file (util.writeToFile opens it "wb", frontend/util.lua:1130) after
+-- each key went into the in-memory copy. Cleared by the next successful write of any key.
+function State.unsaved()
+    return unsaved
 end
 
 -- Stores value under key and writes the file at once; a nil value clears the key.

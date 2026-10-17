@@ -375,6 +375,47 @@ describe("closing a book shows the home at the file manager's Show", function()
             end)
         end
 
+        -- B-25sffy: another key's failed write leaves the disk behind State's in-memory copy too.
+        -- util.writeToFile opens the file "wb" before writing (frontend/util.lua:1130), so a full
+        -- disk truncates it: the chapter is gone from the file but still in that copy. The next
+        -- close at the same chapter must write it again.
+        it("writes again on the next close at the same chapter after another key's failed write", function()
+            local util = require("util")
+            local write = util.writeToFile
+            reader_kopanda("Letter IV"):onCloseDocument()
+            assert.equals("Letter IV", dofile(harness.state_file).featured_chapter)
+            local errored = spy.on(logger, "err")
+            util.writeToFile = function(_, filepath)
+                local truncated = assert(io.open(filepath, "wb"))
+                truncated:close()
+                return nil, "no space left on device"
+            end
+            finally(function()
+                util.writeToFile = write
+                logger.err:revert()
+            end)
+            assert.is_false(State.set("x", 1))
+            util.writeToFile = write
+            assert.is_nil(dofile(harness.state_file))
+            -- the in-memory copy still holds the chapter: it has run ahead of the disk
+            assert.equals("Letter IV", State.get("featured_chapter"))
+            assert.spy(errored).was_called()
+            local writes = 0
+            util.writeToFile = function(...)
+                writes = writes + 1
+                return write(...)
+            end
+            order = {}
+            reader_kopanda("Letter IV"):onCloseDocument()
+            assert.same({ "set featured_chapter featured_chapter_file" }, order)
+            assert.equals(1, writes)
+            assert.equals(file, dofile(harness.state_file).featured_chapter_file)
+            assert.equals("Letter IV", dofile(harness.state_file).featured_chapter)
+            order = {}
+            reader_kopanda("Letter IV"):onCloseDocument()
+            assert.same({}, order)
+        end)
+
         it("writes nothing with no document, and still marks the close", function()
             local kopanda = reader_kopanda("Letter IV")
             kopanda.ui.document = nil
