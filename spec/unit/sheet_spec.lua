@@ -906,4 +906,399 @@ describe("the sheet", function()
         assert.equals(3, #Sheet.shown.rows)
         assert.equals(Sheet.shown, harness.top())
     end)
+
+    describe("a body", function()
+        -- How many of the calls spied on logger.err carry text.
+        local function errors(errored, text)
+            local count = 0
+            for _, call in ipairs(errored.calls) do
+                for _, arg in ipairs(call.vals) do
+                    if tostring(arg):find(text, 1, true) then
+                        count = count + 1
+                    end
+                end
+            end
+            return count
+        end
+
+        -- A sheet spec with a body in place of rows. Each call of body makes a new widget of the
+        -- content's width and heights[n] tall at its nth call (default 200), counting its paints
+        -- (where) and frees, and three areas: stay (tap and hold spies), closer (close_first, a
+        -- tap spy) and inert (no handlers). log keeps the calls, each call's variant, the widgets,
+        -- and for each spy its runs and whether the sheet was shown when it ran. raise names a
+        -- spy (or "body", from the body's second call) that raises after it records.
+        local function body_spec(log, heights, raise)
+            log.calls, log.variants, log.widgets = 0, {}, {}
+            log.stay_tap, log.stay_hold, log.closer = {}, {}, {}
+            local function spy_on(list, name)
+                return function()
+                    list[#list + 1] = { shown = Sheet.shown and UIManager:isWidgetShown(Sheet.shown) or false,
+                        calls = log.calls }
+                    if raise == name then
+                        error("kopanda-test: " .. name .. " failed")
+                    end
+                end
+            end
+            return {
+                name = "test_body",
+                band = "home",
+                header = { heading = "Body" },
+                body = function(bctx, content_w)
+                    log.calls = log.calls + 1
+                    log.variants[log.calls] = bctx.variant
+                    if raise == "body" and log.calls > 1 then
+                        error("kopanda-test: body failed")
+                    end
+                    local h = heights and heights[log.calls] or 200
+                    local widget = { frees = 0, where = {} }
+                    function widget.getSize()
+                        return Geom:new{ w = content_w, h = h }
+                    end
+                    function widget.paintTo(_, _, x, y)
+                        widget.where[#widget.where + 1] = { x = x, y = y }
+                    end
+                    function widget.free()
+                        widget.frees = widget.frees + 1
+                    end
+                    log.widgets[log.calls] = widget
+                    return {
+                        widget = widget,
+                        areas = {
+                            { rect = { x = 0, y = 0, w = 100, h = 50 },
+                                tap = spy_on(log.stay_tap, "stay_tap"), hold = spy_on(log.stay_hold, "stay_hold") },
+                            { rect = { x = 0, y = 60, w = 100, h = 50 }, close_first = true,
+                                tap = spy_on(log.closer, "closer") },
+                            { rect = { x = 0, y = 120, w = 100, h = 50 } },
+                        },
+                    }
+                end,
+            }
+        end
+
+        local function area(sheet, i)
+            return centre(sheet.areas[i].rect)
+        end
+
+        it("lays its widget out under the header at the content's left and frees it once on close", function()
+            local log = {}
+            Sheet.show(body_spec(log), ctx_for("diner"))
+            local sheet = Sheet.shown
+            assert.equals(1, log.calls)
+            local size = Screen:getSize()
+            local bb = buffer(size.w, size.h, false)
+            sheet:paintTo(bb, 0, 0)
+            bb:free()
+            local widget, header = log.widgets[1], sheet.header_rect
+            assert.equals(1, #widget.where)
+            local rule = Screen:scaleBySize(Looks.get("diner").sheet.header_rule_width)
+            assert.same({ x = header.x, y = header.y + header.h + rule }, widget.where[1])
+            local at = widget.where[1]
+            assert.same({ at.x, at.y, 100, 50 }, { sheet.areas[1].rect.x, sheet.areas[1].rect.y,
+                sheet.areas[1].rect.w, sheet.areas[1].rect.h })
+            assert.equals(at.y + 60, sheet.areas[2].rect.y)
+            assert.truthy(sheet.panel.y + sheet.panel.h >= at.y + 200)
+            assert.equals(0, #sheet.rows)
+            assert.equals(0, widget.frees)
+            Sheet.close()
+            assert.equals(1, widget.frees)
+        end)
+
+        it("runs a tap in an area with the sheet shown, then re-lays out with one ui refresh of the union", function()
+            for _, heights in ipairs({ { 200, 300 }, { 300, 200 } }) do
+                local where = heights[1] .. " then " .. heights[2]
+                local log = {}
+                Sheet.show(body_spec(log, heights), ctx_for("diner"))
+                harness.tick(3)
+                local sheet = Sheet.shown
+                local old = sheet.rect
+                local dirty, restore = record(UIManager, "setDirty")
+                send(harness.gesture("tap", area(sheet, 1)))
+                restore()
+                assert.same({ { shown = true, calls = 1 } }, log.stay_tap, where)
+                assert.equals(2, log.calls, where)
+                assert.equals(sheet, Sheet.shown, where)
+                assert.equals(sheet, harness.top(), where)
+                local new = sheet.rect
+                assert.is_not.equals(old.h, new.h, where)
+                assert.equals(1, #dirty, where)
+                assert.equals(sheet, dirty[1][2], where)
+                assert.equals("ui", dirty[1][3], where)
+                local region = dirty[1][4]
+                local top, bottom = math.min(old.y, new.y), math.max(old.y + old.h, new.y + new.h)
+                local left, right = math.min(old.x, new.x), math.max(old.x + old.w, new.x + new.w)
+                assert.same({ left, top, right - left, bottom - top },
+                    { region.x, region.y, region.w, region.h }, where)
+                assert.equals(1, log.widgets[1].frees, where)
+                assert.equals(0, log.widgets[2].frees, where)
+                Sheet.close()
+            end
+        end)
+
+        it("doesn't re-lay out or refresh a sheet that an area's tap closed", function()
+            local log = {}
+            local spec = body_spec(log)
+            local body = spec.body
+            spec.body = function(...)
+                local built = body(...)
+                local tap = built.areas[1].tap
+                built.areas[1].tap = function()
+                    tap()
+                    Sheet.close()
+                end
+                return built
+            end
+            local home = Home.shown
+            Sheet.show(spec, ctx_for("diner"))
+            harness.tick(3)
+            local sheet = Sheet.shown
+            local dirty, restore = record(UIManager, "setDirty")
+            send(harness.gesture("tap", area(sheet, 1)))
+            restore()
+            assert.same({ { shown = true, calls = 1 } }, log.stay_tap)
+            assert.equals(1, log.calls)
+            for _, call in ipairs(dirty) do
+                assert.is_not.equals(sheet, call[2])
+            end
+            assert.equals(1, log.widgets[1].frees)
+            assert.is_nil(Sheet.shown)
+            assert.equals(home, harness.top())
+        end)
+
+        it("closes the sheet before running an area with close_first, and doesn't re-lay out", function()
+            local log = {}
+            Sheet.show(body_spec(log), ctx_for("editorial"))
+            send(harness.gesture("tap", area(Sheet.shown, 2)))
+            assert.same({ { shown = false, calls = 1 } }, log.closer)
+            assert.equals(1, log.calls)
+            assert.is_nil(Sheet.shown)
+            assert.equals(0, sheets_on_stack())
+            assert.equals(Home.shown, harness.top())
+        end)
+
+        it("logs a close_first area that raises and leaves the home", function()
+            local errored = spy.on(logger, "err")
+            finally(function()
+                logger.err:revert()
+            end)
+            local log = {}
+            local home = Home.shown
+            Sheet.show(body_spec(log, nil, "closer"), ctx_for("diner"))
+            send(harness.gesture("tap", area(Sheet.shown, 2)))
+            assert.equals(1, #log.closer)
+            assert.is_nil(Sheet.shown)
+            assert.equals(home, Home.shown)
+            assert.equals(home, harness.top())
+            assert.equals(1, errors(errored, "kopanda-test: closer failed"))
+        end)
+
+        it("runs a hold in an area with hold and keeps the sheet; a hold on an area without runs nothing", function()
+            local log = {}
+            Sheet.show(body_spec(log), ctx_for("diner"))
+            local sheet = Sheet.shown
+            send(harness.gesture("hold", area(sheet, 1)))
+            assert.same({ { shown = true, calls = 1 } }, log.stay_hold)
+            assert.same({}, log.stay_tap)
+            assert.equals(2, log.calls)
+            assert.equals(sheet, harness.top())
+            send(harness.gesture("hold", area(sheet, 3)))
+            assert.equals(1, #log.stay_hold)
+            assert.equals(2, log.calls)
+            assert.equals(sheet, Sheet.shown)
+            assert.equals(sheet, harness.top())
+        end)
+
+        it("runs the spec's hold, after closing, on a hold on an area without one", function()
+            local log, held = {}, {}
+            local spec = body_spec(log)
+            spec.hold = function()
+                held[#held + 1] = Sheet.shown or false
+            end
+            Sheet.show(spec, ctx_for("editorial"))
+            local sheet = Sheet.shown
+            send(harness.gesture("hold", area(sheet, 1)))
+            assert.equals(1, #log.stay_hold)
+            assert.same({}, held)
+            assert.equals(sheet, Sheet.shown)
+            send(harness.gesture("hold", area(sheet, 3)))
+            assert.same({ false }, held)
+            assert.is_nil(Sheet.shown)
+            assert.equals(Home.shown, harness.top())
+        end)
+
+        it("consumes a tap on an area without tap or on the header, runs nothing and keeps the sheet", function()
+            local log = {}
+            Sheet.show(body_spec(log), ctx_for("diner"))
+            local sheet = Sheet.shown
+            for _, pos in ipairs({ { area(sheet, 3) }, { centre(sheet.header_rect) } }) do
+                assert.is_true(sheet:handleEvent(Event:new("Gesture", harness.gesture("tap", pos[1], pos[2]))))
+            end
+            assert.same({}, log.stay_tap)
+            assert.same({}, log.closer)
+            assert.equals(1, log.calls)
+            assert.equals(sheet, Sheet.shown)
+            assert.equals(sheet, harness.top())
+            send(harness.gesture("tap", Screen:getWidth() / 2, math.floor(sheet.panel.y / 2)))
+            assert.is_nil(Sheet.shown)
+            assert.same({}, log.stay_tap)
+            assert.equals(Home.shown, harness.top())
+        end)
+
+        it("logs an area's tap that raises, keeps the sheet and re-lays it out", function()
+            local errored = spy.on(logger, "err")
+            finally(function()
+                logger.err:revert()
+            end)
+            local log = {}
+            Sheet.show(body_spec(log, nil, "stay_tap"), ctx_for("diner"))
+            local sheet = Sheet.shown
+            local dirty, restore = record(UIManager, "setDirty")
+            send(harness.gesture("tap", area(sheet, 1)))
+            restore()
+            assert.equals(1, #log.stay_tap)
+            assert.equals(1, errors(errored, "kopanda-test: stay_tap failed"))
+            assert.equals(sheet, Sheet.shown)
+            assert.equals(sheet, harness.top())
+            assert.equals(2, log.calls)
+            assert.equals(1, #dirty)
+        end)
+
+        it("closes the sheet and the home and logs when body raises on a re-layout", function()
+            local errored = spy.on(logger, "err")
+            finally(function()
+                logger.err:revert()
+            end)
+            local log = {}
+            Sheet.show(body_spec(log, nil, "body"), ctx_for("editorial"))
+            send(harness.gesture("tap", area(Sheet.shown, 1)))
+            assert.equals(1, #log.stay_tap)
+            assert.is_nil(Sheet.shown)
+            assert.equals(0, sheets_on_stack())
+            assert.is_nil(Home.shown)
+            assert.equals(1, errors(errored, "kopanda-test: body failed"))
+        end)
+
+        it("shows over the bare file manager, which is on top again when body raises", function()
+            local errored = spy.on(logger, "err")
+            finally(function()
+                logger.err:revert()
+            end)
+            local ctx = ctx_for("diner")
+            local fm = harness.top(2)
+            Home.close()
+            assert.is_nil(Home.shown)
+            assert.equals(fm, harness.top())
+            local log = {}
+            Sheet.show(body_spec(log, nil, "body"), ctx)
+            local sheet = Sheet.shown
+            assert.equals(sheet, harness.top())
+            assert.equals(fm, harness.top(2))
+            send(harness.gesture("tap", area(sheet, 1)))
+            assert.is_nil(Sheet.shown)
+            assert.equals(fm, harness.top())
+            assert.equals(require("apps/filemanager/filemanager").instance, fm)
+            assert.equals(1, errors(errored, "kopanda-test: body failed"))
+        end)
+
+        it("re-lays out on each refresh_on event without consuming it", function()
+            local log = {}
+            local spec = body_spec(log)
+            spec.refresh_on = { "TestRefresh" }
+            local home = Home.shown
+            local heard = 0
+            home.onTestRefresh = function()
+                heard = heard + 1
+            end
+            Sheet.show(spec, ctx_for("diner"))
+            local sheet = Sheet.shown
+            local dirty, restore = record(UIManager, "setDirty")
+            UIManager:broadcastEvent(Event:new("TestRefresh"))
+            assert.equals(2, log.calls)
+            assert.equals(1, heard)
+            assert.is_falsy((sheet:handleEvent(Event:new("TestRefresh"))))
+            restore()
+            assert.equals(3, log.calls)
+            assert.equals(2, #dirty)
+            assert.equals(sheet, harness.top())
+        end)
+
+        it("redraws the shown sheet on Sheet.redraw, and does nothing with none", function()
+            Sheet.redraw()
+            assert.equals(Home.shown, harness.top())
+            local log = {}
+            Sheet.show(body_spec(log), ctx_for("editorial"))
+            local sheet = Sheet.shown
+            local dirty, restore = record(UIManager, "setDirty")
+            Sheet.redraw()
+            restore()
+            assert.equals(2, log.calls)
+            assert.equals(1, #dirty)
+            assert.equals(sheet, dirty[1][2])
+            Sheet.close()
+            Sheet.redraw()
+            assert.equals(2, log.calls)
+        end)
+
+        it("asks body again in the night variant at the next paint after night mode turns on", function()
+            local had_color = G_reader_settings:has("color_rendering")
+            local color_rendering = G_reader_settings:readSetting("color_rendering")
+            local night_mode = rawget(Screen, "night_mode")
+            local size = Screen:getSize()
+            local bb = buffer(size.w, size.h, false)
+            finally(function()
+                Screen.night_mode = night_mode
+                if had_color then
+                    G_reader_settings:saveSetting("color_rendering", color_rendering)
+                else
+                    G_reader_settings:delSetting("color_rendering")
+                end
+                bb:free()
+            end)
+            G_reader_settings:saveSetting("color_rendering", true)
+            Screen.night_mode = false
+            local log = {}
+            Sheet.show(body_spec(log), ctx_for("diner"))
+            local sheet = Sheet.shown
+            sheet:paintTo(bb, 0, 0)
+            assert.same({ "day" }, log.variants)
+            Screen.night_mode = true
+            bb:setInverse(1)
+            sheet:paintTo(bb, 0, 0)
+            assert.same({ "day", "night" }, log.variants)
+            assert.equals(1, log.widgets[1].frees)
+            assert.equals(1, #log.widgets[2].where)
+        end)
+
+        it("puts a body taller than the screen at the top and logs it once, not again on a redraw", function()
+            local warned = spy.on(logger, "warn")
+            finally(function()
+                warned:revert()
+            end)
+            local h = Screen:getSize().h
+            local log = {}
+            Sheet.show(body_spec(log, { h, h }), ctx_for("diner"))
+            local sheet = Sheet.shown
+            assert.equals(0, sheet.panel.y)
+            assert.equals(1, warnings(warned, "taller than the screen"))
+            Sheet.redraw()
+            assert.equals(2, log.calls)
+            assert.equals(0, sheet.panel.y)
+            assert.equals(1, warnings(warned, "taller than the screen"))
+        end)
+
+        it("is left out, logged, when the spec has rows too", function()
+            local warned = spy.on(logger, "warn")
+            finally(function()
+                warned:revert()
+            end)
+            local log = {}
+            local spec = body_spec(log)
+            spec.rows = three_rows().rows
+            Sheet.show(spec, ctx_for("diner"))
+            assert.equals(3, #Sheet.shown.rows)
+            assert.equals(0, #Sheet.shown.areas)
+            assert.equals(0, log.calls)
+            assert.equals(1, warnings(warned, "both rows and a body"))
+            assert.equals(Sheet.shown, harness.top())
+        end)
+    end)
 end)

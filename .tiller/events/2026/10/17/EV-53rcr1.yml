@@ -1,0 +1,13 @@
+id: EV-53rcr1
+type: claim.task
+at: 2026-10-17T03:38:15.891253Z
+contributor: allen
+command: claim task T-s3rp5n
+targets:
+    - T-s3rp5n
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/sheet-body/task.yml

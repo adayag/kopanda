@@ -1,0 +1,16 @@
+id: EV-s1eabd
+type: submit.task
+at: 2026-10-17T04:02:56.878322Z
+contributor: allen
+command: submit task T-s3rp5n
+targets:
+    - T-s3rp5n
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/bars/quick-settings/sheet-body
+        head: git:8dd1b32
+    status: in_review
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/sheet-body/task.yml
