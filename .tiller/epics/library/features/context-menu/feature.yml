@@ -52,7 +52,7 @@ gates:
         kind: command
         status: pending
         run_by: allen
-        run_at: 2026-10-17T19:31:33.110084Z
+        run_at: 2026-10-17T20:28:34.33985Z
         against:
             kind: git_commit
             value: git:babfbe3
@@ -134,7 +134,7 @@ gates:
                     - kind: command_output
                       ref: artifacts/tiller/gates/eval-C15-babfbe3-out-b9d1822ae1ebe08f12ca4806c0bf342fce29cf0b9b8962563b0b10db6d42503e.txt
             C16:
-                status: needs_attestation
+                status: pass
             C17:
                 status: needs_attestation
     tests:
@@ -150,3 +150,11 @@ gates:
         evidence:
             - kind: command_output
               ref: artifacts/tiller/gates/tests-babfbe3-out-73a3310ae15d78fccd239af220734fca4559ff100132b0bc175e95b39f426ec2.txt
+attestations:
+    - id: AT-7azf0w
+      target:
+        kind: criterion
+        id: C16
+      status: pass
+      by: allen
+      at: 2026-10-17T20:28:34.33985Z
