@@ -1,0 +1,9 @@
+id: T-xtol0q
+key: library/cwng-placeholders/download-row
+title: Download on a placeholder's book sheet, through cwngsync, without opening the book
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-3cuakg

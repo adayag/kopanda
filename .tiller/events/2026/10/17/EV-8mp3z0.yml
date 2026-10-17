@@ -1,0 +1,14 @@
+id: EV-8mp3z0
+type: add.task
+at: 2026-10-17T20:53:27.530474Z
+contributor: allen
+command: add task library/cwng-placeholders/placeholders
+targets:
+    - T-3cuakg
+after:
+    feature: F-yy4zaa
+    key: library/cwng-placeholders/placeholders
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/placeholders/task.md
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/placeholders/task.yml

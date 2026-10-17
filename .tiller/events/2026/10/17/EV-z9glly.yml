@@ -1,0 +1,14 @@
+id: EV-z9glly
+type: add.task
+at: 2026-10-17T20:53:29.23115Z
+contributor: allen
+command: add task library/cwng-placeholders/goldens
+targets:
+    - T-lk235s
+after:
+    feature: F-yy4zaa
+    key: library/cwng-placeholders/goldens
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/goldens/task.md
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/goldens/task.yml

@@ -1,0 +1,13 @@
+id: F-yy4zaa
+key: library/cwng-placeholders
+title: cwngsync placeholders read as not downloaded and download from the sheet
+status: specced
+blocked: false
+source: design/2026-10-16-kopanda-library-direction.md
+change_type: modify
+depends_on:
+    - F-l0kw8m
+order:
+    - T-3cuakg
+    - T-xtol0q
+    - T-lk235s

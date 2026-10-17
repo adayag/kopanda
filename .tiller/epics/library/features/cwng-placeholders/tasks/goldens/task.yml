@@ -1,0 +1,10 @@
+id: T-lk235s
+key: library/cwng-placeholders/goldens
+title: A placeholder's library golden on the Colorsoft and the owner's device check
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-3cuakg
+    - T-xtol0q
