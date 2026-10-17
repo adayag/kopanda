@@ -1,0 +1,15 @@
+id: EV-tfhiwt
+type: start.task
+at: 2026-10-17T22:37:37.764282Z
+contributor: allen
+command: start task T-xtol0q
+targets:
+    - T-xtol0q
+before:
+    status: ready
+after:
+    branch: tiller/library/cwng-placeholders/download-row
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/download-row/task.yml
