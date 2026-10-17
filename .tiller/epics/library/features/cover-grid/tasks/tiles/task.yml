@@ -9,11 +9,11 @@ proposed_by: allen
 accepted_against:
     spec:
         kind: git_blob
-        value: git:e383071c8aa22a12c2f40526c40912c184fe851b
+        value: git:847478cac3face82714d5ec8462a16b822f84948
         path: .tiller/epics/library/features/cover-grid/tasks/tiles/task.md
-        observed_at: 2026-10-17T02:22:50.193171Z
+        observed_at: 2026-10-17T03:10:22.004774Z
     commit:
         kind: git_commit
-        value: git:943d0fa
-        observed_at: 2026-10-17T02:22:50.214946Z
+        value: git:aebbd10
+        observed_at: 2026-10-17T03:10:22.029107Z
 branch: tiller/library/cover-grid/tiles
