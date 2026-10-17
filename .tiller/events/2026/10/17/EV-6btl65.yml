@@ -1,0 +1,15 @@
+id: EV-6btl65
+type: start.task
+at: 2026-10-17T07:52:44.567628Z
+contributor: allen
+command: start task T-qrlexd
+targets:
+    - T-qrlexd
+before:
+    status: ready
+after:
+    branch: tiller/library/series-and-authors/rows
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/rows/task.yml
