@@ -1,0 +1,14 @@
+id: EV-2bx8oz
+type: sync.task
+at: 2026-10-17T03:35:57.058338Z
+contributor: allen
+command: sync task T-d53f8e
+targets:
+    - T-d53f8e
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/tiles/task.yml
