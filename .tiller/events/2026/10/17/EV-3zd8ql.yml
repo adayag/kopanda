@@ -1,0 +1,13 @@
+id: EV-3zd8ql
+type: check.feature
+at: 2026-10-17T00:23:25.463879Z
+contributor: allen
+command: check feature F-alfeze
+targets:
+    - F-alfeze
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/library/features/book-model/feature.yml
