@@ -1,0 +1,13 @@
+id: EV-65mldu
+type: check.bug
+at: 2026-10-17T16:29:52.949035Z
+contributor: allen
+command: check bug B-e2tfz0
+targets:
+    - B-e2tfz0
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/bugs/chapter-write-retry/bug.yml

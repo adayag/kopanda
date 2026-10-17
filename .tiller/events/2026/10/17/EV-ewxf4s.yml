@@ -1,0 +1,11 @@
+id: EV-ewxf4s
+type: claim.bug
+at: 2026-10-17T16:09:44.991765Z
+contributor: allen
+command: claim bug bugs/chapter-write-retry
+targets:
+    - B-e2tfz0
+after:
+    owner: allen
+files:
+    - path: .tiller/bugs/chapter-write-retry/bug.yml
