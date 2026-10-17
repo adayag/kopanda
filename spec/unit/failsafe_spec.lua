@@ -1283,6 +1283,19 @@ describe("KoPanda failing safe", function()
             assert.is_true(logged_error("kopanda-test: series build failed"))
         end)
 
+        -- series-and-authors C9: the series target's show (KoPanda:showSeries) with a build that raises.
+        it("leaves the file browser up, the home closed, when it fails to build on its target", function()
+            harness.show_fm()
+            harness.tick(2)
+            assert.is_not_nil(Home.shown)
+            package.loaded["shelf_rows"].series = function()
+                error("kopanda-test: series target build failed")
+            end
+            package.loaded["launcher_entries"].run({ kind = "kopanda", target = "series" }, {})
+            closed_onto_file_browser()
+            assert.is_true(logged_error("kopanda-test: series target build failed"))
+        end)
+
         it("closes onto the file browser from the next tick when its paint throws", function()
             harness.show_fm()
             harness.tick(2)
@@ -1458,6 +1471,19 @@ describe("KoPanda failing safe", function()
             assert.is_nil(AuthorsScreen.show{})
             closed_onto_file_browser()
             assert.is_true(logged_error("kopanda-test: authors build failed"))
+        end)
+
+        -- series-and-authors C9: the authors target's show (KoPanda:showAuthors) with a build that raises.
+        it("leaves the file browser up, the home closed, when it fails to build on its target", function()
+            harness.show_fm()
+            harness.tick(2)
+            assert.is_not_nil(Home.shown)
+            package.loaded["shelf_rows"].group = function()
+                error("kopanda-test: authors target build failed")
+            end
+            package.loaded["launcher_entries"].run({ kind = "kopanda", target = "authors" }, {})
+            closed_onto_file_browser()
+            assert.is_true(logged_error("kopanda-test: authors target build failed"))
         end)
 
         it("closes onto the file browser from the next tick when its paint throws", function()

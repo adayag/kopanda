@@ -59,8 +59,9 @@ Upgrading KOReader walks this list.
 - `frontend/ui/uimanager.lua:300` (`UIManager:close` sends it);
   `frontend/apps/filemanager/filemanager.lua:819-826` (`onClose`, on quit), `:842-849`
   (`onShowingReader`, when a book opens).
-- Reaches the plugin instance as an array child; the instance closes the home and the library,
-  either of which would otherwise keep KOReader from quitting.
+- Reaches the plugin instance as an array child; the instance closes the home and the chrome
+  window (the library, Series or Authors), either of which would otherwise keep KOReader from
+  quitting.
 
 ### `CloseDocument`, the pre-build on book close
 
@@ -70,10 +71,12 @@ Upgrading KOReader walks this list.
   reader menu's file-browser tab `frontend/apps/reader/modules/readermenu.lua:65-74`.
 - A reader instance's `onCloseDocument` first records the book's chapter for the featured book
   (the featured book entry below), then builds the home into `Home.pending` (not shown), or the
-  library into the chrome's pending window (`LibraryChrome.pending`, `library_chrome.lua`) when a
-  return to the library is recorded (the library's return entry below), and returns nothing, so
-  the event reaches later modules. The next file-manager `Show` puts the pending home or library
-  up synchronously, before the UI loop's next `_repaint` (`frontend/ui/uimanager.lua:1537-1564`:
+  window a return names into the chrome's pending window (`LibraryChrome.pending`,
+  `library_chrome.lua`): the library at its `Library.return_to` (the library's return entry
+  below), or the Series or Authors window at the view and page of `LibraryChrome.return_to`,
+  recorded from the same `caller_pre_callback`; and returns nothing, so the event reaches later
+  modules. The next file-manager `Show` puts the pending home or window up synchronously, before
+  the UI loop's next `_repaint` (`frontend/ui/uimanager.lua:1537-1564`:
   `_checkTasks` at `:1543`, `_repaint` at `:1563`). A
   deferred show would lose when the close runs inside a scheduled task (KOReader's end-of-book
   file-browser action, `frontend/apps/reader/modules/readerstatus.lua:144-148`): `nextTick`
@@ -85,9 +88,9 @@ Upgrading KOReader walks this list.
 - `frontend/apps/reader/readerui.lua:959` (`reloadDocument`), `:979` (`switchDocument`);
   `frontend/apps/reader/modules/readermenu.lua:386-393` (`exitOrRestart`).
 - The pre-build happens there too and is wasted. A reader instance's `init` (the new reader of a
-  reload or switch, `readerui.lua:464-478`) drops and frees the pending home and library; exit
-  drops them with the process. A switch keeps the library's return, so the next close builds the
-  library again.
+  reload or switch, `readerui.lua:464-478`) drops and frees the pending home and window; exit
+  drops them with the process. A switch keeps the return, so the next close builds the window
+  again.
 
 ### `setRotationMode` in `showFiles`
 
@@ -1677,6 +1680,9 @@ guard (`sheet.lua`).
   closed (the Home tab, say), so a book then opened from the home closes to the home. Accepted
   residual: with such a stale return and the library still up, a book opened from History over it
   still closes to the library.
+- The Series and Authors windows' return (`LibraryChrome.return_to`) follows the same paths: a
+  failed open shows the window afresh at the return, and the file manager's `CloseWidget` drops a
+  return whose window has already closed.
 - The return lives in module state only, so a restart shows the home.
 - `FileChooser:changeToPath(path)` (`frontend/ui/widget/filechooser.lua:341-371`; the launcher's
   entries above): a library that fails to build when shown leaves the file browser at the folder it

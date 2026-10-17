@@ -7,11 +7,14 @@
 --   build(view, page), a LibraryChrome.build of view at page; view(), the view it shows;
 --   action_at(pos), the action a tap on its own parts runs, or nil; back(), the back control's tap;
 --   request_covers(), after a page's first paint; book_closed(file), when it is taken pending after
---   that book closed; closing(), its part of the close. A window listing the whole library asks for
---   its covers through LibraryChrome.request_records.
+--   that book closed (default: the view rebuilt); closing(), its part of the close. A window listing
+--   the whole library asks for its covers through LibraryChrome.request_records.
 -- Module state: LibraryChrome.shown, the window on screen or nil; LibraryChrome.pending, one built
 -- on a book's close and not yet shown, or nil. A window's class mirrors each in a slot of the same
 -- name (Library.shown, Library.pending) while the window held is one of its own.
+-- LibraryChrome.return_to, { screen = "series" | "authors", view, page } a book was opened from the
+-- Series or Authors window (series-and-authors D7), which the next file manager's show returns to,
+-- or nil, in memory only; the library records its own (Library.return_to).
 local BD = require("ui/bidi")
 local BookCovers = require("book_covers")
 local Books = require("books")
@@ -39,6 +42,7 @@ local LibraryChrome = {}
 
 LibraryChrome.shown = nil
 LibraryChrome.pending = nil
+LibraryChrome.return_to = nil
 
 -- Whether pos lies in rect, its right and bottom edges outside, as the nav bar tests its columns.
 function LibraryChrome.inside(rect, pos)
@@ -636,7 +640,10 @@ end
 
 function Window:request_covers() end
 
-function Window:book_closed(_file) end
+-- The view rebuilt, so what shows the closed book reads its progress again.
+function Window:book_closed(_file)
+    self:go(self:view(), self.page)
+end
 
 function Window:closing() end
 
