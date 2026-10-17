@@ -12,7 +12,8 @@ local Icons = {}
 
 Icons.entries = {
     { id = "home", label = "Home", used_in = { "nav" }, file = "icons/home.svg" },
-    { id = "library", label = "Library", used_in = { "launcher", "nav", "launcher management" },
+    { id = "library", label = "Library",
+      used_in = { "launcher", "nav", "launcher management", "library folder sheet" },
       file = "icons/library.svg" },
     { id = "series", label = "Series", used_in = { "launcher", "launcher management" },
       file = "icons/series.svg" },
@@ -76,6 +77,15 @@ Icons.entries = {
       file = "icons/download.svg" },
     -- Lucide's `sliders-horizontal` icon (ISC; see icons/LICENSE-lucide.txt).
     { id = "quick_settings", label = "Quick settings", used_in = { "launcher" }, file = "icons/quick_settings.svg" },
+    { id = "home_plus", label = "Add to the home", used_in = { "book sheet" }, file = "icons/home_plus.svg" },
+    { id = "trash", label = "Delete", used_in = { "book sheet" }, file = "icons/trash.svg" },
+    { id = "folder_open", label = "Open folder", used_in = { "library folder sheet" },
+      file = "icons/folder_open.svg" },
+    { id = "eye_off", label = "Hide, hidden folders", used_in = { "library folder sheet", "library sheet" },
+      file = "icons/eye_off.svg" },
+    { id = "sort", label = "Sort", used_in = { "library sheet" }, file = "icons/sort.svg" },
+    { id = "filter", label = "Show (filter)", used_in = { "library sheet" }, file = "icons/filter.svg" },
+    { id = "refresh", label = "Refresh covers", used_in = { "library sheet" }, file = "icons/refresh.svg" },
 }
 
 -- The path of the icon file for id, in the form Fonts.path gives a plugin file, or nil for an

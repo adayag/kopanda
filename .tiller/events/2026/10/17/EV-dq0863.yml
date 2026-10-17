@@ -1,0 +1,15 @@
+id: EV-dq0863
+type: start.task
+at: 2026-10-17T17:30:34.063823Z
+contributor: allen
+command: start task T-lnzmw0
+targets:
+    - T-lnzmw0
+before:
+    status: ready
+after:
+    branch: tiller/library/context-menu/book-actions
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/book-actions/task.yml

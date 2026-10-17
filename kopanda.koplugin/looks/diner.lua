@@ -151,6 +151,22 @@ return {
         selected_fill_color = "teal", -- the current choice's row (SortC.dc.html:45)
         aside_above_gap = 2, -- "for this folder" over "Sort" (SortC.dc.html:39)
         sublabel_gap = 2, -- a row's label over its second line (SortC.dc.html:46)
+        -- The library's folder sheet (context-menu D11): its band, and the box its folder icon sits in
+        -- as the header's cover, the icon tinted (TintedIcon) so night's paper doesn't hide it.
+        library_folder_band_color = "pink", -- HoldFolderC.dc.html:35
+        folder_box = {
+            size = 60, -- HoldFolderC.dc.html:36
+            outline_width = 2, -- HoldFolderC.dc.html:36
+            outline_color = "outline", -- HoldFolderC.dc.html:36
+            fill_color = "paper", -- HoldFolderC.dc.html:36
+            icon_size = 34, -- HoldFolderC.dc.html:37
+            icon_color = "ink", -- HoldFolderC.dc.html:37
+        },
+        -- The library's empty-space sheet (context-menu D10) and its hidden-folders sub-sheet (D17):
+        -- the band, and the sort and show chips (a chip on paper sets its text in sheet_chip_plain).
+        library_empty_band_color = "mustard", -- HoldEmptyC.dc.html:35
+        sort_chip_color = "paper", -- HoldEmptyC.dc.html:47
+        show_chip_color = "pink", -- HoldEmptyC.dc.html:54
     },
 
     -- The quick-settings sheet's body. No board draws Diner's: its own sheet's rows and rules, its
@@ -351,6 +367,11 @@ return {
         -- A row's detail in its chip, the read status (HoldBookC.dc.html:52).
         sheet_chip = {
             face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
+        },
+        -- sheet_chip in ink, since on_accent is the night paper by night: a row's detail in its chip
+        -- on paper, the sort's (HoldEmptyC.dc.html:47).
+        sheet_chip_plain = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
         },
         -- The header's label at its right, "Library" (SortC.dc.html:43).
         sheet_label = {

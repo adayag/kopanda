@@ -1,9 +1,10 @@
 id: T-m9850d
 key: library/context-menu/icons
 title: Seven board icons in the registry, the swatch's fourth icon row and the regenerated catalog
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,37 @@ accepted_against:
         kind: git_commit
         value: git:febf828
         observed_at: 2026-10-17T16:43:29.330514Z
+branch: tiller/library/context-menu/icons
+review_ref:
+    branch: tiller/library/context-menu/icons
+    head:
+        kind: git_commit
+        value: git:4f80755
+        observed_at: 2026-10-17T17:22:15.750716Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T17:17:21.350229Z
+        against:
+            kind: git_commit
+            value: git:c92f0c6
+            observed_at: 2026-10-17T17:17:21.350216Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-c92f0c6-out-9640641a0a9e52575dc8ecc98086c1d89c78fb941ba8594b5df9cd7952d6f607.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T17:17:21.350229Z
+        against:
+            kind: git_commit
+            value: git:c92f0c6
+            observed_at: 2026-10-17T17:17:21.350216Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-c92f0c6-out-7693f570accf3c2a43ffed571ec67533fc4d9ca9c4bf7474fecd8a0afbf4fa74.txt

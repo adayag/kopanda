@@ -66,6 +66,19 @@ end
 
 local FULL = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = 1 }
 
+-- context-menu C7: the calls LibrarySheets.hold, the hold's dispatch, gets.
+local function dispatched()
+    return spy(package.loaded["library_sheets"], "hold")
+end
+
+-- A hold on the Home column of screen's nav bar.
+local function hold_bar(screen)
+    local bar = screen.nav
+    local column = bar.columns[1]
+    send(harness.gesture("hold", bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2),
+        bar.dimen.y + math.floor(bar.dimen.h / 2)))
+end
+
 -- Undoes the spies and the touch lock, and empties the UI.
 local function reset()
     for i = #restores, 1, -1 do
@@ -266,19 +279,53 @@ describe("gestures on the Series window", function()
         assert.equals(1, screen.page)
     end)
 
-    it("runs nothing on a hold, reaches no zone on the file manager, and consumes it", function()
+    -- The fixture's books are no files, so a held book's sheet re-lists instead.
+    it("runs no open on a hold, and consumes it", function()
         install()
-        local screen, fm = fixture.show()
-        local got = bind(fm, "kopanda_spec_hold", "hold", FULL)
+        local screen = fixture.show()
         send(harness.gesture("hold", centre(screen.rows[1].rect)))
         assert.same(LIST, screen.showing)
         screen:go({ kind = "series", name = "Series 01" }, 1)
         local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile")
         send(harness.gesture("hold", centre(screen.rows[1].rect)))
         send(harness.gesture("hold", centre(screen.header.back_rect)))
-        assert.same({}, got)
         assert.same({}, opened)
         assert.same({ kind = "series", name = "Series 01" }, screen.showing)
+        assert.equals(screen, harness.top())
+    end)
+
+    it("hands the window and what lies under a hold to the dispatch", function()
+        install()
+        local screen = fixture.show()
+        local held = dispatched()
+        send(harness.gesture("hold", centre(screen.rows[1].rect)))
+        screen:go({ kind = "series", name = "Series 01" }, 1)
+        send(harness.gesture("hold", centre(screen.rows[1].rect)))
+        assert.equals(2, #held)
+        assert.equals(screen, held[1][1])
+        assert.same({ "series", "Series 01" }, { held[1][2].kind, held[1][2].entry.name })
+        assert.equals(screen, held[2][1])
+        assert.same({ kind = "book", record = screen.rows[1].record }, held[2][2])
+        assert.equals(screen.rows[1].record, held[2][2].record)
+    end)
+
+    it("runs no dispatch on a hold in the nav bar's band", function()
+        install()
+        local screen = fixture.show()
+        local held = dispatched()
+        hold_bar(screen)
+        assert.same({}, held)
+        assert.equals(screen, harness.top())
+    end)
+
+    it("lets a hold zone on the file manager that consumes the hold win over the dispatch", function()
+        install()
+        local screen, fm = fixture.show({ kind = "series", name = "Series 01" })
+        local got = bind(fm, "kopanda_spec_hold", "hold", FULL)
+        local held = dispatched()
+        send(harness.gesture("hold", centre(screen.rows[1].rect)))
+        assert.equals(1, #got)
+        assert.same({}, held)
         assert.equals(screen, harness.top())
     end)
 
@@ -485,19 +532,54 @@ describe("gestures on the Authors window", function()
         assert.equals(1, screen.page)
     end)
 
-    it("runs nothing on a hold, reaches no zone on the file manager, and consumes it", function()
+    -- The fixture's books are no files, so a held book's sheet re-lists instead.
+    it("runs no open on a hold, and consumes it", function()
         install()
-        local screen, fm = fixture.show_authors()
-        local got = bind(fm, "kopanda_spec_hold", "hold", FULL)
+        local screen = fixture.show_authors()
         send(harness.gesture("hold", centre(screen.rows[1].rect)))
         assert.same(LIST, screen.showing)
         screen:go(GRID, 1)
         local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile")
         send(harness.gesture("hold", centre(tile_of(screen, "Grid 1").rect)))
         send(harness.gesture("hold", centre(screen.header.back_rect)))
-        assert.same({}, got)
         assert.same({}, opened)
         assert.same(GRID, screen.showing)
+        assert.equals(screen, harness.top())
+    end)
+
+    it("hands the window and what lies under a hold to the dispatch", function()
+        install()
+        local screen = fixture.show_authors()
+        local held = dispatched()
+        send(harness.gesture("hold", centre(screen.rows[1].rect)))
+        screen:go(GRID, 1)
+        local tile = tile_of(screen, "Grid 2")
+        send(harness.gesture("hold", centre(tile.rect)))
+        assert.equals(2, #held)
+        assert.equals(screen, held[1][1])
+        assert.equals("author", held[1][2].kind)
+        assert.equals(screen, held[2][1])
+        assert.same({ kind = "book", record = tile.record }, held[2][2])
+        assert.equals(tile.record, held[2][2].record)
+    end)
+
+    it("runs no dispatch on a hold in the nav bar's band", function()
+        install()
+        local screen = fixture.show_authors()
+        local held = dispatched()
+        hold_bar(screen)
+        assert.same({}, held)
+        assert.equals(screen, harness.top())
+    end)
+
+    it("lets a hold zone on the file manager that consumes the hold win over the dispatch", function()
+        install()
+        local screen, fm = fixture.show_authors(GRID)
+        local got = bind(fm, "kopanda_spec_hold", "hold", FULL)
+        local held = dispatched()
+        send(harness.gesture("hold", centre(tile_of(screen, "Grid 2").rect)))
+        assert.equals(1, #got)
+        assert.same({}, held)
         assert.equals(screen, harness.top())
     end)
 

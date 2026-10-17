@@ -1,9 +1,10 @@
 id: T-lnzmw0
 key: library/context-menu/book-actions
 title: Add to the home and Delete on the library's book sheet
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-1rl35j
@@ -18,3 +19,37 @@ accepted_against:
         kind: git_commit
         value: git:febf828
         observed_at: 2026-10-17T16:43:29.379214Z
+branch: tiller/library/context-menu/book-actions
+review_ref:
+    branch: tiller/library/context-menu/book-actions
+    head:
+        kind: git_commit
+        value: git:9e36f28
+        observed_at: 2026-10-17T17:56:59.080949Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T17:52:03.786621Z
+        against:
+            kind: git_commit
+            value: git:c5599da
+            observed_at: 2026-10-17T17:52:03.786619Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-c5599da-out-f0cb009f8d30349709999e4e734c8a67c98e7691ba2cee17d5511b25bd325b30.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T17:52:03.786621Z
+        against:
+            kind: git_commit
+            value: git:c5599da
+            observed_at: 2026-10-17T17:52:03.786619Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-c5599da-out-02213a812741e68b78027acd6d18e489ddb5864c71a03b4b5f2136085fd46b88.txt

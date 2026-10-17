@@ -34,8 +34,11 @@ local ROW_GAP = 2 -- between chip rows, tighter than GAP so every role and face 
 local PADDING = 6
 local CHIP = 12
 local CHIP_BORDER = 1
-local ICON = 16
-local ICON_GAP = 1 -- between icon cells, tighter than GAP so every registered icon fits three rows
+local ICON = 15
+local ICON_GAP = 1 -- between icon cells, tighter than GAP so every registered icon fits with every panel
+-- Between icon rows and between an icon and its label, tighter than GAP so every registered icon
+-- fits with every panel.
+local ICON_ROW_GAP = 1
 local TITLE_SIZE = 11
 local NOTE_SIZE = 9
 local HEADER_SIZE = 10
@@ -258,7 +261,7 @@ end
 -- Every registered icon in ink with its id beneath, in rows as wide as width, wrapping as the
 -- widest id needs.
 local function icon_rows(width)
-    local gap = scaled(GAP)
+    local gap = scaled(ICON_ROW_GAP)
     local size = scaled(ICON)
     local face = Font:getFace("cfont", ICON_LABEL_SIZE)
     local labels = {}

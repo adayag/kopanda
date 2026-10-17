@@ -148,6 +148,22 @@ return {
         selected_fill_color = false,
         aside_above_gap = 2,
         sublabel_gap = 2,
+        -- The library's folder sheet (context-menu D17): no board draws Editorial's, so no band, and
+        -- its folder icon's box is Editorial's folder tile's (GridA.dc.html:32-33) at Diner's sizes.
+        library_folder_band_color = false, -- lead: by analogy with book_band_color, no band
+        folder_box = {
+            size = 60, -- lead: by analogy with HoldFolderC.dc.html:36
+            outline_width = 1, -- lead: by analogy with the folder tile, GridA.dc.html:32
+            outline_color = "hairline", -- lead: by analogy with the folder tile, GridA.dc.html:32
+            fill_color = "paper", -- lead: by analogy with the folder tile, GridA.dc.html:32
+            icon_size = 34, -- lead: by analogy with HoldFolderC.dc.html:37
+            icon_color = "ink", -- lead: by analogy with the folder tile, GridA.dc.html:33
+        },
+        -- The library's empty-space sheet (context-menu D17): no board draws Editorial's, so no band
+        -- and plain details, as its status chip.
+        library_empty_band_color = false, -- lead: by analogy with book_band_color, no band
+        sort_chip_color = false, -- lead: by analogy with status_chip_color, HoldBook.dc.html:56
+        show_chip_color = false, -- lead: by analogy with status_chip_color, HoldBook.dc.html:56
     },
 
     -- The quick-settings sheet's body: two ruled sections of a label row over a minus button, a
@@ -328,6 +344,10 @@ return {
         },
         -- Not drawn: Editorial has no chips. Its plain detail's style.
         sheet_chip = { face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
+        -- lead: by analogy with HoldEmptyC.dc.html:47, its sheet_chip; Editorial draws no chips.
+        sheet_chip_plain = {
+            face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted",
+        },
         -- The header's label at its right, "Library": no board draws it here; the aside's style.
         sheet_label = { face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
         -- A row's second line: no board draws it here; the detail's face in sentence case.

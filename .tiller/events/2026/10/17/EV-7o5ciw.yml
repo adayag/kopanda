@@ -1,0 +1,13 @@
+id: EV-7o5ciw
+type: claim.task
+at: 2026-10-17T16:44:58.954205Z
+contributor: allen
+command: claim task T-m9850d
+targets:
+    - T-m9850d
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/icons/task.yml

@@ -261,11 +261,13 @@ Upgrading KOReader walks this list.
   `saveSetting(key, nil)` sets it to nil (`frontend/luasettings.lua:102-105`), so `flush` leaves
   it out, and `State.set`'s read-back takes the absent key as the nil it was given.
 - The library's memory (`library_order.lua`) is one key, `library`, a table:
-  `{ folders = { [realpath] = { sort, status } }, at = { dir, page } }`. `saveSetting` keeps the
-  table as given and `flush` serialises it whole (`frontend/luasettings.lua:102`, `:270-275`), so
-  the `dofile` read-back gives a new table: `State.set` compares it key by key, recursively, as
-  `settings.lua` compares its own read-back. A malformed part reads as the defaults, logged; a
-  failed write leaves the choice in `library_order.lua`'s module state for the session.
+  `{ folders = { [realpath] = { sort, status } }, at = { dir, page }, hidden = { [realpath] = true } }`,
+  `hidden` the folders the folder sheet's Hide left out of their parent's grid (context-menu D1), an
+  empty set written as no key. `saveSetting` keeps the table as given and `flush` serialises it
+  whole (`frontend/luasettings.lua:102`, `:270-275`), so the `dofile` read-back gives a new table:
+  `State.set` compares it key by key, recursively, as `settings.lua` compares its own read-back. A
+  malformed part reads as the defaults, logged; a failed write leaves the choice in
+  `library_order.lua`'s module state for the session.
 
 ### The settings file, `settings/kopanda/settings.lua`
 
@@ -1131,7 +1133,9 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   per file per process unless a later request replaced the one that asked for it (its
   extraction terminated, `:695`) or the check gave up on it at its cap (below), with every wanted
   file of the batch in one call; the featured cover asks through `FeaturedCover.after_show`, the
-  library for its page (`library_covers.lua`), and the Series and Authors windows, once per show,
+  library for its page (`library_covers.lua`), the library's Refresh covers for every book with a
+  file directly in its folder, in place of the page's request (`Library:refresh_covers`, the
+  empty-space sheet's entry below), and the Series and Authors windows, once per show,
   for every book of the library at the library grid's cover box (`LibraryChrome.request_records`,
   `library_chrome.lua`), each from the next tick after a paint, never from `build` or `paintTo`.
 - `isExtractingInBackground()` (`:685-687`), the only completion signal, counts CoverBrowser's own
@@ -1520,7 +1524,8 @@ guard (`sheet.lua`).
   `DocSettings:open` when given a path, so it is created when there is none, sets
   `summary.modified` to today's `%Y-%m-%d`, saves `summary` and flushes), then
   `BookList.setBookInfoCacheProperty(file, "status", s)`, then the caller's callback, KoPanda's
-  home refresh. The sub-sheet passes the `DocSettings` when `DocSettings:hasSidecarFile(file)`
+  home refresh, or the re-list of the library or the shelf screen the book was held on. The
+  sub-sheet passes the `DocSettings` when `DocSettings:hasSidecarFile(file)`
   (`frontend/docsettings.lua:151-153`: true when `findSidecarFile`, `:159-175`, finds a sidecar
   file in any location, or the legacy history file when that location is enabled), so a
   sidecar's other summary fields survive the write. The file dialog chooses by the cached
@@ -1528,8 +1533,9 @@ guard (`sheet.lua`).
   reached from `onFileHold`, `:171-177`), which a stale cache entry `{ been_opened = false }`
   answers false while a sidecar exists; a bare path's write then starts from an empty `summary`
   and wipes the note and rating.
-- `ui/widget/booklist`, required by `book_sheet.lua`: `BookList.hasBookBeenOpened` (whether a
-  sidecar exists, cached, `frontend/ui/widget/booklist.lua:348-356`), `getDocSettings`
+- `ui/widget/booklist`, required by `book_sheet.lua` and by `book_covers.lua` (Refresh covers'
+  `resetBookInfoCache`, the empty-space sheet's entry below): `BookList.hasBookBeenOpened` (whether
+  a sidecar exists, cached, `frontend/ui/widget/booklist.lua:348-356`), `getDocSettings`
   (`DocSettings:open`, caching the book's info, `:358-364`), `getBookStatus` (`"new"` for a book
   never opened, `:366-369`, through `getBookInfo`, `:337-346`), `getBookStatusString(status, false,
   true)` (`:386-389`: Reading, On hold, Finished for the single-book strings, `:380-384`, and New
@@ -1545,21 +1551,51 @@ guard (`sheet.lua`).
 - `FileManager.instance.bookinfo:show(file)` (the module registered at
   `frontend/apps/filemanager/filemanager.lua:406`; `frontend/apps/filemanager/filemanagerbookinfo.lua:71-87`
   takes a path and opens the sidecar itself when the book has one) shows KOReader's book details
-  page over the home. Its `close_callback` broadcasts `InvalidateMetadataCache` and
+  page over the home, or over the library or the shelf screen the book was held on
+  (`BookSheet.open_record`, reached from `library_sheets.lua`), which re-list on the broadcasts
+  below. Its `close_callback` broadcasts `InvalidateMetadataCache` and
   `BookMetadataChanged` when a property was edited, and `BookMetadataChanged` when the summary was
   (`filemanagerbookinfo.lua:267-285`); the home handles neither, so an edit shows on the next
-  rebuild. Read through `package.loaded` at tap time, as the featured widget's tap reads the file
-  manager.
+  rebuild; the library's windows re-list on both (the library's gestures entry below). Read
+  through `package.loaded` at tap time, as the featured widget's tap reads the file manager.
 - `ReadHistory.hist[i].time` (`frontend/readhistory.lua:25-35`, the entry's `time` beside its
   realpath `file`, `:26`): set by `addItem` when a book opens (`:313-339`;
   `frontend/apps/reader/readerui.lua:510`) and by `updateLastBookTime` when it closes
   (`readhistory.lua:342-350`; `readerui.lua:882`). The book sheet's "opened" counts local calendar
   days from it, comparing the book by `ffi/util`'s `realpath`; `readhistory` is required at call
   time.
-- The small cover is `FeaturedCover.build` at the sheet's `cover_w` by `cover_h`, which reads
-  CoverBrowser's cache and never asks for an extraction; a cached cover too small for the box is
+- The small cover is `FeaturedCover.build` at the sheet's `cover_w` by `cover_h` (a library record's,
+  `FeaturedCover.framed` in the same frame, `FeaturedCover.frame`), which reads CoverBrowser's cache
+  and never asks for an extraction; a cached cover too small for the box is
   left out by `BookInfoManager.isCachedCoverInvalid`
   (`plugins/coverbrowser.koplugin/bookinfomanager.lua:1013-1030`; the featured cover's entry above).
+- `FileManager.instance:showDeleteFileDialog(filepath, post_delete_callback, pre_delete_callback)`
+  (`frontend/apps/filemanager/filemanager.lua:1121-1153`), a library record's Delete…, called on
+  the instance read through `package.loaded` at tap time, as the file browser's own Delete calls it
+  (`:228-233`); `book_sheet.lua` passes the record's path and the window's re-list as
+  `post_delete_callback`, and no `pre_delete_callback`. It realpaths the path and shows "File not
+  found" with no callback when that fails (`:1122-1129`); else a `ConfirmBox` "Delete file
+  permanently?" with the realpath and "Delete" (`:1130-1136`), whose OK runs `deleteFile(file,
+  is_file)` and the callback only when that returned true (`:1137-1144`). The confirm's buttons run
+  their callback, then close the box (`frontend/ui/widget/confirmbox.lua:107-122`), and the close
+  marks the window under it dirty (`frontend/ui/uimanager.lua:290-360`). For a file whose cached
+  `BookList.hasBookBeenOpened` is true and whose sidecar has `doc_props` and
+  `partial_md5_checksum`, it adds the metadata archive check (`filemanager.lua:1146-1151`,
+  `:1155-1167`). KoPanda adds no confirm and no notice of its own.
+- `FileManager:deleteFile(file, is_file)`, its file branch (`filemanager.lua:1169-1192`):
+  `os.remove`, then `BookList.resetBookInfoCache(file)` (`frontend/ui/widget/booklist.lua:328-330`),
+  `DocSettings.updateLocation(file)` with no new path, which deletes the sidecar folder, archiving
+  its metadata when that is on (`frontend/docsettings.lua:433`), `ReadHistory:fileDeleted(file)`
+  (`frontend/readhistory.lua:214-234`: the entry removed under
+  `autoremove_deleted_items_from_history`, else dimmed with `select_enabled = false`, which the
+  featured book's walk skips) and `ReadCollection:removeItem(file)`
+  (`frontend/readcollection.lua:188`), returning true; a failed `os.remove` shows "Failed to
+  delete" and returns nothing (`filemanager.lua:1188-1191`). It leaves CoverBrowser's row, which
+  `BookInfoManager:removeNonExistantEntries` prunes later
+  (`plugins/coverbrowser.koplugin/bookinfomanager.lua:602-625`; the library lists the disk, so the
+  row never shows), and a `featured.pinned` naming the file, which the featured book then reads as
+  gone and features the last one opened. KOReader sends no event for a delete, so the window
+  re-lists through the callback.
 
 ### The library's order: `ReadHistory.hist` and its times
 
@@ -1692,6 +1728,10 @@ guard (`sheet.lua`).
   (`frontend/ui/widget/menu.lua:1518-1539`), through `BD.flipDirectionIfMirroredUILayout`
   (`ui/bidi`, `frontend/ui/bidi.lua:162`), outside the top and bottom edge bands (the `G_defaults`
   entry above); a swipe in a band goes to the home's forward step (the gestures entry above).
+- A hold outside the nav bar's band goes to the home's forward step before the chrome's hold step
+  (`library_sheets.lua`), as on the home, so the Gestures plugin's hold corners win when bound
+  (`plugins/gestures.koplugin/main.lua:1124-1139`) and carry on to the hold step when unbound
+  (`:1317-1320`, returning nothing; the home's hold entry above).
 - `BookMetadataChanged` and `InvalidateMetadataCache` are broadcast when book details or a custom
   cover change (`frontend/apps/filemanager/filemanagerbookinfo.lua:276-277`, `:556-557`), to every
   window, a handler's true return stopping none (`frontend/ui/uimanager.lua:1042-1061`). One change
@@ -1753,6 +1793,53 @@ guard (`sheet.lua`).
 - `FileChooser:changeToPath(path)` (`frontend/ui/widget/filechooser.lua:341-371`; the launcher's
   entries above): a library that fails to build when shown leaves the file browser at the folder it
   was to show, the nearest existing ancestor when the folder has gone (`:342-346`).
+
+### The folder sheet: `FileManager:setHome`, `home_dir`, `ConfirmBox` order, `UIManager:close`
+
+- Set as library root (`library_sheets.lua`) calls `FileManager.instance:setHome(path)`
+  (`frontend/apps/filemanager/filemanager.lua:873-887`), the instance read through `package.loaded`
+  at tap time. It shows a `ConfirmBox` with "Set '%1' as HOME folder?" and `ok_text` "Set as HOME"
+  (`:875-877`) and returns. Its `ok_callback` (`:878-885`) updates the folder shortcut `home_dir`
+  (`:879`), saves `home_dir` in `G_reader_settings` (`:880`), updates the title bar's path (`:881`)
+  and, under `lock_home_folder` when no shortcut was refreshed, refreshes the chooser (`:882-884`).
+  A Cancel runs none of it. KoPanda never writes `home_dir`; the library's root stays
+  `filemanagerutil.getHomeFolder()` (`frontend/apps/filemanager/filemanagerutil.lua:25-27`; the book
+  records' entry above).
+- `ui/widget/confirmbox`: OK runs `ok_callback` and then closes the box
+  (`frontend/ui/widget/confirmbox.lua:115-121`, unless `keep_dialog_open`, `:119`); Cancel runs
+  `cancel_callback` and then closes it (`:108-114`). So `home_dir` is saved before the close.
+- `UIManager:close` (`frontend/ui/uimanager.lua:290-360`) then marks dirty every widget on the stack
+  from the topmost one that covers the full screen up (`:349-353`), the library (`covers_fullscreen`)
+  among them, so the library repaints once the box is gone. Its paint (`library.lua`'s
+  `Library:paintTo`, before the chrome's) compares `getHomeFolder()` by realpath with the root the
+  library was built under and, when they differ, shows the new root at page 1 and stores it as where
+  the library was left (`LibraryOrder.leave`); a check that raises is logged and the paint goes on.
+- Hide stores the folder's realpath under the state file's `library.hidden` (the runtime state
+  file's entry above) and touches nothing in KOReader: `Books.folder` and `Books.all` still list the
+  folder (the book records' entry above); only the library's grid leaves it out.
+
+### The empty-space sheet: `BookInfoManager:deleteBookInfo`, `BookList.resetBookInfoCache`
+
+- Refresh covers (`library_sheets.lua`, through `BookCovers.forget` in `book_covers.lua`) does what
+  CoverBrowser's own "Refresh cached book information" does, for one file
+  (`plugins/coverbrowser.koplugin/main.lua:596-606`) and for the files selected
+  (`:533-546`): `BookInfoManager:deleteBookInfo(file)` then the cache reset, per file.
+- `deleteBookInfo(filepath)` (`plugins/coverbrowser.koplugin/bookinfomanager.lua:592-600`): splits
+  the path into directory and file name and deletes the row keyed by them (`:68`), committed at
+  once. The whole row goes, its `ignore_cover` and `ignore_meta` flags with it (the columns at
+  `:46-47`), which CoverBrowser's file dialog sets (`main.lua:567-592`): a cover or metadata the
+  owner ignored there shows again after a refresh, as after KOReader's own. A book marked
+  `unsupported` loses that mark too and is asked once more; its extraction marks it again
+  (`bookinfomanager.lua:422-570`). Reached by `pcall(require, "bookinfomanager")` (the featured
+  cover's entry above), so with CoverBrowser disabled the row is greyed and nothing is deleted; a
+  delete that raises is logged and its file left as it was.
+- `BookList.resetBookInfoCache(file)` (`frontend/ui/widget/booklist.lua:328-330`) clears the file's
+  entry in `BookList.book_info_cache`, a table on the class every file chooser shares (`:15`), as
+  CoverBrowser calls it through its menu (`main.lua:541`, `:605`) and `deleteFile` does
+  (`frontend/apps/filemanager/filemanager.lua:1173`).
+- Then the library re-lists its folder at its page, and from the tick after that paint makes the one
+  extraction request for the folder's books (the featured cover's entry above). Until a book's row
+  is written again its tile shows the sidecar's title or the file name on the typographic cover.
 
 ### Widget and support modules
 

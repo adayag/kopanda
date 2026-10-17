@@ -1,0 +1,13 @@
+id: EV-i5axss
+type: claim.task
+at: 2026-10-17T17:30:36.71414Z
+contributor: allen
+command: claim task T-id5xlc
+targets:
+    - T-id5xlc
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/folder-sheet/task.yml

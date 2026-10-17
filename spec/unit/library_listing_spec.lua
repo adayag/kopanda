@@ -294,4 +294,104 @@ describe("the library's kept listing", function()
         library:turn(1)
         assert.equals(50, calls)
     end)
+
+    -- The kept listing beside the context menu's sheets (library/context-menu).
+    describe("with the context menu", function()
+        local BookCovers
+
+        before_each(function()
+            BookCovers = package.loaded["book_covers"]
+        end)
+
+        -- CoverBrowser's row for path, by any name of it (Books.get reads by its realpath), gives
+        -- title in place of its own from here on.
+        local function retitle(path, title)
+            local bim = package.loaded["bookinfomanager"]
+            local get = bim.getBookInfo
+            local real = ffiutil.realpath(path)
+            bim.getBookInfo = function(self, file, get_cover)
+                local row = get(self, file, get_cover)
+                if ffiutil.realpath(file) == real then
+                    row.title = title
+                end
+                return row
+            end
+        end
+
+        it("lists the folder again on Refresh covers after page turns that did not", function()
+            local library = show()
+            library:turn(1)
+            library:turn(-1)
+            assert.same({ listed = 0, rows_read = 0 }, counts())
+            retitle(lib .. "/book-01.epub", "Book 01 Revised")
+            library:refresh_covers({})
+            assert.same({ lib, 1 }, { library.dir, library.page })
+            assert.equals(1, #listed)
+            assert.equals("Book 01 Revised", library.tiles[1].record.title)
+        end)
+
+        it("keeps the record of a cover that arrived off the page, so the page turned to shows its title", function()
+            local library = show()
+            local requested
+            BookCovers.request = function(records, _, on_arrival)
+                requested = { records = records, on_arrival = on_arrival }
+            end
+            local records = Books.folder(lib).books
+            library:refresh_covers(records)
+            harness.tick(2)
+            assert.equals(13, #requested.records)
+            local seventh = lib .. "/book-07.epub"
+            retitle(seventh, "Book 07 Revised")
+            local arrived
+            for _, record in ipairs(records) do
+                if record.path == seventh then
+                    arrived = record
+                end
+            end
+            requested.on_arrival({ arrived })
+            assert.equals(1, library.page)
+            for _, tile in ipairs(library.tiles) do
+                assert.is_not.equals(arrived.id, tile.record.id)
+            end
+            listed = {}
+            library:turn(1)
+            assert.equals(0, #listed)
+            assert.equals(arrived.id, library.tiles[1].record.id)
+            assert.equals(seventh, library.tiles[1].record.path)
+            assert.equals("Book 07 Revised", library.tiles[1].record.title)
+        end)
+
+        it("drops a book from the Finished grid once its sheet sets it to Reading, the sidecar read again", function()
+            local DocSettings = require("docsettings")
+            local LibrarySheets = package.loaded["library_sheets"]
+            local PaintClock = package.loaded["paint_clock"]
+            local path = lib .. "/book-01.epub"
+            local sdr = DocSettings:getSidecarDir(path, "doc")
+            lfs.mkdir(sdr)
+            local f = assert(io.open(sdr .. "/" .. DocSettings.getSidecarFilename(path), "wb"))
+            f:write('return { summary = { status = "complete" } }')
+            f:close()
+            finally(function()
+                for _, location in ipairs({ "doc", "dir", "hash" }) do
+                    local dir = DocSettings:getSidecarDir(path, location)
+                    if dir and lfs.attributes(dir, "mode") == "directory" then
+                        ffiutil.purgeDir(dir)
+                    end
+                end
+            end)
+            assert.is_true(LibraryOrder.choose(lib, "recent", "finished"))
+            local library = show()
+            assert.equals(1, #library.tiles)
+            assert.equals("Book 01", library.tiles[1].record.title)
+            local hit = Library.hit(fixture.centre(library.tiles[1].rect))
+            LibrarySheets.hold(library, hit, PaintClock.now())
+            tap_on(row_of("Read status").rect)
+            tap_on(row_of("Reading").rect)
+            assert.is_nil(Sheet.shown)
+            assert.equals("reading", Books.progress({ path = path }).status)
+            assert.equals(1, #listed)
+            assert.equals(0, #library.tiles)
+            assert.is_not_nil(library.note)
+        end)
+    end)
 end)

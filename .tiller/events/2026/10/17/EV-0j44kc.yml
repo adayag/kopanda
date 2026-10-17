@@ -1,0 +1,15 @@
+id: EV-0j44kc
+type: start.task
+at: 2026-10-17T18:45:51.770486Z
+contributor: allen
+command: start task T-512xrc
+targets:
+    - T-512xrc
+before:
+    status: ready
+after:
+    branch: tiller/library/context-menu/goldens
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/goldens/task.yml

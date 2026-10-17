@@ -77,9 +77,39 @@ local function painted(library, tiles)
     return region:intersect(library.dimen)
 end
 
+-- Puts each arrived record the page shows no tile of in the library's kept listing, read again
+-- (LibraryView.renew), so a page turned to shows the title that came with its extraction: Refresh
+-- covers (context-menu D9) asks for the whole folder's covers at once. One that can't be read again
+-- is left as kept; a failure is logged and leaves the rest as kept.
+local function renew_off_page(library, arrived)
+    if not library.kept then
+        return
+    end
+    local ok, err = pcall(function()
+        local on_page = {}
+        for _, tile in ipairs(library.tiles) do
+            if tile.record then
+                on_page[tile.record.id] = true
+            end
+        end
+        for _, record in ipairs(arrived) do
+            if not on_page[record.id] then
+                local fresh = record.path and Books.with_progress(record.path) or Books.get(record.id)
+                if fresh then
+                    LibraryView.renew(library.kept, fresh)
+                end
+            end
+        end
+    end)
+    if not ok then
+        logger.err("KoPanda: the library could not keep the covers that arrived off its page:", err)
+    end
+end
+
 -- Rebuilds the arrived records' tiles the page shows and repaints, while the library is alive,
 -- refreshing "ui" over just those tiles with the dither hint, as CoverBrowser refreshes an item
--- whose cover came (plugins/coverbrowser.koplugin/covermenu.lua:144-157).
+-- whose cover came (plugins/coverbrowser.koplugin/covermenu.lua:144-157); the others' records are
+-- kept for a page turned to (renew_off_page).
 local function on_arrival(library, arrived, alive)
     if not alive() then
         return
@@ -88,6 +118,7 @@ local function on_arrival(library, arrived, alive)
     for _, record in ipairs(arrived) do
         ids[record.id] = true
     end
+    renew_off_page(library, arrived)
     local count, rebuilt = LibraryCovers.rebuild_tiles(library, ids, "the library's cover arrival")
     if count > 0 then
         local region = painted(library, rebuilt)
@@ -97,18 +128,22 @@ local function on_arrival(library, arrived, alive)
     end
 end
 
--- Asks for the library's page's covers at the cover box's size (BookCovers.request), each arrival
--- rebuilding its tiles while alive() says the library is the one shown. A failure is logged; the
+-- Asks for the covers of records (default: the library's page's books) at the cover box's size
+-- (BookCovers.request), each arrival rebuilding the tiles the page shows of them while alive() says
+-- the library is the one shown; an arrival off the page rebuilds none and stays in CoverBrowser's
+-- cache for a later page, its record read again into the kept listing. A failure is logged; the
 -- tiles keep their placeholders.
-function LibraryCovers.request(library, alive)
+function LibraryCovers.request(library, alive, records)
     if not alive() then
         return
     end
     local ok, err = pcall(function()
-        local records = {}
-        for _, tile in ipairs(library.tiles) do
-            if tile.record then
-                records[#records + 1] = tile.record
+        if not records then
+            records = {}
+            for _, tile in ipairs(library.tiles) do
+                if tile.record then
+                    records[#records + 1] = tile.record
+                end
             end
         end
         if #records == 0 then

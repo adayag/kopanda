@@ -84,24 +84,28 @@ end
 -- on the header's band, the count over the title in its left column, the back mark before the
 -- folder's name inside a sub-folder, and the status and sort pickers in its right-hand slot.
 -- Returns the header and its parts: the frame's (title_rect where a tap goes up, nil at the root),
--- count, and sort and status ({ rect, hit, label, mark }).
+-- count, sort and status ({ rect, hit, label, mark }), and text, the words it draws ({ count, title,
+-- sort, status }), which the empty-space sheet's header and chips repeat (context-menu D10).
 local function header(built, w, books, choice)
     local ctx = built.ctx
     local scale = tools(ctx)
     local look = ctx.look
     local tokens = look.library.header
-    local status_chip, status = picker(look.type.library_picker_status, STATUS_LABELS[choice.status],
-        tokens.status_fill_color, ctx)
-    local sort_chip, sort = picker(look.type.library_picker, SORT_LABELS[choice.sort], tokens.sort_fill_color, ctx)
     local sub = not LibraryView.same_dir(built.dir, LibraryView.root())
+    local text = { count = count_text(books, look.title_bar.count_on_shelf),
+        title = sub and name_of(built.dir) or "Library", sort = SORT_LABELS[choice.sort],
+        status = STATUS_LABELS[choice.status] }
+    local status_chip, status = picker(look.type.library_picker_status, text.status, tokens.status_fill_color, ctx)
+    local sort_chip, sort = picker(look.type.library_picker, text.sort, tokens.sort_fill_color, ctx)
     local box, parts = LibraryChrome.header(ctx, w, {
         height = LibraryTiles.header_height(ctx),
         band = tokens.fill_color,
         right = { status_chip, sort_chip },
-        aside = { part = look.type.library_count, text = count_text(books, look.title_bar.count_on_shelf) },
-        title = { part = look.type.library_title, text = sub and name_of(built.dir) or "Library" },
+        aside = { part = look.type.library_count, text = text.count },
+        title = { part = look.type.library_title, text = text.title },
         back = sub,
     })
+    parts.text = text
     status.rect, sort.rect = parts.right[1], parts.right[2]
     -- Where a tap opens each picker: its chip, reaching down through the padding to the edge, as
     -- far up, and halfway across the gap at each side, so Editorial's unpadded label line
@@ -115,26 +119,31 @@ local function header(built, w, books, choice)
     return box, parts
 end
 
--- The counts a folder's tile shows: the books directly in it and how many are reading, from the
--- folder's scan and each book's progress, with no record read.
+-- The counts a folder's tile shows, and its sheet's meta (context-menu D12): the books directly
+-- in it and how many are reading and finished, from the folder's scan and each book's progress,
+-- with no record read.
 local function folder_counts(folder)
     local books = Books.files(folder.path)
-    local reading = 0
+    local reading, finished = 0, 0
     for _, book in ipairs(books) do
-        if Books.progress(book).status == "reading" then
+        local status = Books.progress(book).status
+        if status == "reading" then
             reading = reading + 1
+        elseif status == "complete" then
+            finished = finished + 1
         end
     end
-    return { books = #books, reading = reading }
+    return { books = #books, reading = reading, finished = finished }
 end
 
--- The folder's listing as built keeps it for the builds after: { dir, listing (Books.folder(dir)),
--- history (LibraryOrder.history_times() then), sort, status, items (LibraryOrder.view of the
--- listing under that sort and status, or nil when it must be made again) }. kept, the one an
--- earlier build gave, is used when it is of dir; otherwise the folder is listed now. Its items are
--- made again when nil or of another sort or status than choice, with each book's progress as
--- Books.progress reads it then (its memo opens only a changed sidecar). Returns a new table, so
--- kept's own fields are left as they were (its listing is shared).
+-- The folder's listing as built keeps it for the builds after: { dir, listing (Books.folder(dir),
+-- its hidden sub-folders left out: LibraryOrder.visible, context-menu D1), history
+-- (LibraryOrder.history_times() then), sort, status, items (LibraryOrder.view of the listing under
+-- that sort and status, or nil when it must be made again) }. kept, the one an earlier build gave,
+-- is used when it is of dir; otherwise the folder is listed now. Its items are made again when nil
+-- or of another sort or status than choice, with each book's progress as Books.progress reads it
+-- then (its memo opens only a changed sidecar). Returns a new table, so kept's own fields are left
+-- as they were (its listing is shared).
 local function keep(kept, dir, choice)
     local now = {}
     if kept and kept.dir == dir then
@@ -142,7 +151,9 @@ local function keep(kept, dir, choice)
             now[k] = v
         end
     else
-        now.dir, now.listing, now.history = dir, Books.folder(dir), LibraryOrder.history_times()
+        local listing = Books.folder(dir)
+        listing = { books = listing.books, folders = LibraryOrder.visible(listing.folders) }
+        now.dir, now.listing, now.history = dir, listing, LibraryOrder.history_times()
     end
     if now.items == nil or now.sort ~= choice.sort or now.status ~= choice.status then
         now.items = LibraryOrder.view(now.listing, choice.sort, choice.status, Books.progress, now.history)
@@ -184,11 +195,13 @@ function LibraryView.forget(kept, id)
     end
 end
 
--- Fills built (dir, page, ctx) from the folder's listing under the folder's sort and status, the
--- listing kept (built.kept on entry, as keep takes it) or listed now: the frame (the header, the
--- page's tiles at the geometry's boxes or the empty note, and the chrome's foot), and what gestures
--- and covers read: page and pages, header, tiles ({ rect, kind, record or folder, widget, index in
--- the frame }), box (LibraryTiles.geometry), note; and kept, the listing for the next build.
+-- Fills built (dir, page, ctx) from the folder's listing, its hidden sub-folders left out, under the
+-- folder's sort and status, the listing kept (built.kept on entry, as keep takes it) or listed now:
+-- the frame (the header, the page's tiles at the geometry's boxes or the empty note, and the
+-- chrome's foot), and what gestures and covers read: page and pages, header, tiles ({ rect, kind,
+-- record or folder and its counts, widget, index in the frame }), box (LibraryTiles.geometry), note;
+-- and kept, the listing for the next build. A hide or unhide shows once the listing is made again
+-- (Library:refresh drops it).
 local function fill(built, frame, w)
     local ctx = built.ctx
     local scale = tools(ctx)
@@ -215,8 +228,8 @@ local function fill(built, frame, w)
             tile.kind, tile.record = "book", item
             tile.widget = LibraryTiles.book(item, Books.progress(item), box, ctx)
         else
-            tile.kind, tile.folder = "folder", item
-            tile.widget = LibraryTiles.folder(item, folder_counts(item), box, ctx)
+            tile.kind, tile.folder, tile.counts = "folder", item, folder_counts(item)
+            tile.widget = LibraryTiles.folder(item, tile.counts, box, ctx)
         end
         tile.index = add(frame, tile.widget, x, y)
         built.tiles[i] = tile

@@ -1,9 +1,10 @@
 id: T-id5xlc
 key: library/context-menu/folder-sheet
 title: 'The folder sheet: Open, Set as library root and Hide, with hidden folders kept in the state file'
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-1rl35j
@@ -18,3 +19,37 @@ accepted_against:
         kind: git_commit
         value: git:febf828
         observed_at: 2026-10-17T16:43:29.404869Z
+branch: tiller/library/context-menu/folder-sheet
+review_ref:
+    branch: tiller/library/context-menu/folder-sheet
+    head:
+        kind: git_commit
+        value: git:3891fa6
+        observed_at: 2026-10-17T18:06:31.108564Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T18:01:40.710055Z
+        against:
+            kind: git_commit
+            value: git:6c561aa
+            observed_at: 2026-10-17T18:01:40.710052Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-6c561aa-out-b53a39eafcbf0c9467ce2f92c700db254884a9d7256a9dfc08b24b50326732ca.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T18:01:40.710055Z
+        against:
+            kind: git_commit
+            value: git:6c561aa
+            observed_at: 2026-10-17T18:01:40.710052Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-6c561aa-out-7447a6289d2a50e35fd52559486591a33d42a7ef31a6e906aa8f695226948064.txt

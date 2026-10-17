@@ -454,6 +454,47 @@ describe("the sheet", function()
         end
     end)
 
+    -- context-menu "Tokens": a chip filled in paper sets its text in sheet_chip_plain, since
+    -- sheet_chip's on_accent is the night paper itself by night; a chip on a colour keeps sheet_chip,
+    -- and a look without the chip its plain detail.
+    describe("a chip on paper", function()
+        -- The part each detail's text was set in, by its text, for the empty-space sheet's chips and
+        -- the book sheet's status chip shown in look id.
+        local function detail_parts(id)
+            local Typeset = package.loaded["typeset"]
+            local line = Typeset.line
+            local parts = {}
+            Typeset.line = function(part, text, ...)
+                parts[text] = part
+                return line(part, text, ...)
+            end
+            local ok, err = pcall(Sheet.show, { name = "library_empty", band = "library_empty", rows = {
+                { icon = "sort", label = "Sort", detail = "Recent ›", chip = "sort" },
+                { icon = "filter", label = "Show", detail = "All ›", chip = "show" },
+                { icon = "bookmark", label = "Read status", detail = "Reading", chip = "status" },
+            } }, ctx_for(id, colorsoft))
+            Typeset.line = line
+            assert(ok, err)
+            assert.is_not_nil(Sheet.shown)
+            return parts, Looks.get(id).type
+        end
+
+        it("sets the sort chip's text in sheet_chip_plain and the show and status chips' in sheet_chip in diner",
+            function()
+            local parts, type = detail_parts("diner")
+            assert.equals(type.sheet_chip_plain, parts["Recent ›"])
+            assert.equals(type.sheet_chip, parts["All ›"])
+            assert.equals(type.sheet_chip, parts["Reading"])
+        end)
+
+        it("sets every detail in sheet_detail in editorial, which has no chips", function()
+            local parts, type = detail_parts("editorial")
+            for _, text in ipairs({ "Recent ›", "All ›", "Reading" }) do
+                assert.equals(type.sheet_detail, parts[text], text)
+            end
+        end)
+    end)
+
     -- A sheet's failure closes the screen it was shown over (opts.beneath), the home without one.
     describe("a failure with opts.beneath", function()
         local closed, beneath

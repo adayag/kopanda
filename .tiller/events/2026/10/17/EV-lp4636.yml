@@ -1,0 +1,16 @@
+id: EV-lp4636
+type: submit.task
+at: 2026-10-17T17:30:12.107433Z
+contributor: allen
+command: submit task T-1rl35j
+targets:
+    - T-1rl35j
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/context-menu/book-sheet
+        head: git:e04aa0e
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/book-sheet/task.yml
