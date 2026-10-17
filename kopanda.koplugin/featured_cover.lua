@@ -23,10 +23,12 @@ local TITLE_LINES = 4
 local MIN_TITLE_SIZE = 8
 
 -- The cover box, box_w by box_h, with its shadow below and right of it: the shadow, the fill,
--- each child at its place (self.places[i], from the box's top left), then the outline.
+-- each child at its place (self.places[i], from the box's top left), then the outline (Paint.backing
+-- and Paint.outline read the fields). FeaturedCover.Box, so the library's tiles draw their boxes so.
 local CoverBox = WidgetContainer:extend{
     name = "kopanda_featured_cover",
 }
+FeaturedCover.Box = CoverBox
 
 function CoverBox:paintTo(bb, x, y)
     local w, h = self.box_w, self.box_h
@@ -93,22 +95,24 @@ local function split_shown(box)
     return false
 end
 
--- The placeholder's title and authors in a box inner_w wide and inner_h high: the title at the
--- top in at most four lines, the authors on one line at the foot. Returns the widgets and their
--- places from the inner box's top left.
-local function placeholder_text(book, inner_w, inner_h, ctx, background)
+-- The placeholder's title and authors in a box inner_w wide and inner_h high: the title in
+-- frame.title at the top in at most four lines, the authors, joined, in frame.authors on one line
+-- at the foot, or none without that part. Returns the widgets and their places from the inner
+-- box's top left.
+local function placeholder_text(record, inner_w, inner_h, ctx, background, frame)
     local look = ctx.look
     local palette = Looks.palette(look, ctx.variant)
     local widgets, places = {}, {}
     local authors_h = 0
-    if book.authors and book.authors ~= "" then
-        local line = Typeset.line(look.type.cover_authors, book.authors, inner_w, ctx)
+    local authors = record.authors and table.concat(record.authors, ", ") or ""
+    if frame.authors and authors ~= "" then
+        local line = Typeset.line(frame.authors, authors, inner_w, ctx)
         authors_h = line:getSize().h
         widgets[#widgets + 1] = line
         places[#places + 1] = { x = 0, y = inner_h - authors_h }
     end
-    local part = look.type.cover_title
-    local title = book.title or ""
+    local part = frame.title
+    local title = record.title or ""
     if part.uppercase then
         title = title:upper()
     end
@@ -149,43 +153,27 @@ local function placeholder_text(book, inner_w, inner_h, ctx, background)
     return widgets, places
 end
 
--- The framed cover box for book ({ file, title, authors }, or nil for the first run) in a w by
--- h box under ctx. The widget is the box plus the cover shadow's offset, so the shadow is never
--- cut. Reads CoverBrowser's cache; never asks for an extraction.
-function FeaturedCover.build(book, w, h, ctx)
-    local look = ctx.look
-    local palette = Looks.palette(look, ctx.variant)
+-- The framed cover box for record ({ path, title, authors list }) in a w by h box under ctx, in
+-- frame's tokens (board pixels and palette roles): { outline_color, outline_width, radius,
+-- shadow = { x, y, color }, padding = { x, y }, title, authors }, title and authors type parts,
+-- authors nil for none. The outline is drawn only where the variant has outline_color. The widget
+-- is the box plus the shadow's offset, so the shadow is never cut. Reads the cover cache through
+-- BookCovers.read, the bitmap freed with the widget; never asks for an extraction.
+function FeaturedCover.framed(record, w, h, ctx, frame)
+    local palette = Looks.palette(ctx.look, ctx.variant)
     local function color(role)
         return role and palette[role] and Looks.color(palette[role]) or nil
     end
     local function scale(px)
         return ctx.screen:scaleBySize(px)
     end
-    local shadow = look.shadow.cover
+    local shadow = frame.shadow
     local shadow_x, shadow_y = scale(shadow.x), scale(shadow.y)
-    local dimen = Geom:new{ w = w + shadow_x, h = h + shadow_y }
-
-    if not book then
-        local inset = scale(look.featured.cover_padding.x)
-        local stroke = math.max(1, scale(look.stroke.outline))
-        local text = Typeset.line(look.type.cover_empty, "No book yet", w - 2 * inset, ctx)
-        local size = text:getSize()
-        return DashedBox:new{
-            dimen = Geom:new{ w = w, h = h },
-            stroke = stroke,
-            dash = scale(look.featured.dash),
-            dash_gap = scale(look.featured.dash_gap),
-            color = color("muted"),
-            places = { { x = math.floor((w - size.w) / 2), y = math.floor((h - size.h) / 2) } },
-            text,
-        }
-    end
-
-    local outline_color = color("outline")
-    local outline = outline_color and scale(look.stroke.outline) or 0
-    local radius = scale(look.radius.cover)
+    local outline_color = color(frame.outline_color)
+    local outline = outline_color and scale(frame.outline_width) or 0
+    local radius = scale(frame.radius)
     local box = CoverBox:new{
-        dimen = dimen,
+        dimen = Geom:new{ w = w + shadow_x, h = h + shadow_y },
         box_w = w,
         box_h = h,
         shadow_color = color(shadow.color),
@@ -198,7 +186,7 @@ function FeaturedCover.build(book, w, h, ctx)
     }
     local inner_w, inner_h = w - 2 * outline, h - 2 * outline
 
-    local cover_bb = BookCovers.read({ path = book.file }, w, h)
+    local cover_bb = BookCovers.read(record, w, h)
     if cover_bb then
         -- Square: FrameContainer rounds its background and border, not its content
         -- (frontend/ui/widget/container/framecontainer.lua:124-139), and neither does this box.
@@ -214,14 +202,52 @@ function FeaturedCover.build(book, w, h, ctx)
 
     box.fill_color = color("cover")
     box.fill_radius = radius
-    local padding = look.featured.cover_padding
-    local pad_x, pad_y = outline + scale(padding.x), outline + scale(padding.y)
-    local widgets, places = placeholder_text(book, w - 2 * pad_x, h - 2 * pad_y, ctx, box.fill_color)
+    local pad_x, pad_y = outline + scale(frame.padding.x), outline + scale(frame.padding.y)
+    local widgets, places = placeholder_text(record, w - 2 * pad_x, h - 2 * pad_y, ctx, box.fill_color, frame)
     for i, widget in ipairs(widgets) do
         box[i] = widget
         box.places[i] = { x = pad_x + places[i].x, y = pad_y + places[i].y }
     end
     return box
+end
+
+-- The framed cover box for book ({ file, title, authors }, or nil for the first run) in a w by
+-- h box under ctx: FeaturedCover.framed in the look's cover stroke, radius and shadow and the
+-- featured placeholder's padding and parts, or the first run's dashed frame.
+function FeaturedCover.build(book, w, h, ctx)
+    local look = ctx.look
+    if not book then
+        local palette = Looks.palette(look, ctx.variant)
+        local function scale(px)
+            return ctx.screen:scaleBySize(px)
+        end
+        local inset = scale(look.featured.cover_padding.x)
+        local stroke = math.max(1, scale(look.stroke.outline))
+        local text = Typeset.line(look.type.cover_empty, "No book yet", w - 2 * inset, ctx)
+        local size = text:getSize()
+        return DashedBox:new{
+            dimen = Geom:new{ w = w, h = h },
+            stroke = stroke,
+            dash = scale(look.featured.dash),
+            dash_gap = scale(look.featured.dash_gap),
+            color = Looks.color(palette.muted),
+            places = { { x = math.floor((w - size.w) / 2), y = math.floor((h - size.h) / 2) } },
+            text,
+        }
+    end
+    local authors = {}
+    if book.authors and book.authors ~= "" then
+        authors[1] = book.authors
+    end
+    return FeaturedCover.framed({ path = book.file, title = book.title, authors = authors }, w, h, ctx, {
+        outline_color = "outline",
+        outline_width = look.stroke.outline,
+        radius = look.radius.cover,
+        shadow = look.shadow.cover,
+        padding = look.featured.cover_padding,
+        title = look.type.cover_title,
+        authors = look.type.cover_authors,
+    })
 end
 
 -- Whether to ask CoverBrowser to extract a cover for info, its getBookInfo row or nil, in a box

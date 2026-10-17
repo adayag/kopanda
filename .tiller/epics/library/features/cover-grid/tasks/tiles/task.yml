@@ -1,17 +1,47 @@
 id: T-d53f8e
 key: library/cover-grid/tiles
 title: Library tokens, three icons and the tile widgets fitted to two rows
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
         kind: git_blob
-        value: git:e383071c8aa22a12c2f40526c40912c184fe851b
+        value: git:847478cac3face82714d5ec8462a16b822f84948
         path: .tiller/epics/library/features/cover-grid/tasks/tiles/task.md
-        observed_at: 2026-10-17T02:22:50.193171Z
+        observed_at: 2026-10-17T03:10:22.004774Z
     commit:
         kind: git_commit
-        value: git:943d0fa
-        observed_at: 2026-10-17T02:22:50.214946Z
+        value: git:aebbd10
+        observed_at: 2026-10-17T03:10:22.029107Z
+branch: tiller/library/cover-grid/tiles
+pr: 29
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T03:30:37.514026Z
+        against:
+            kind: git_commit
+            value: git:c14a32f
+            observed_at: 2026-10-17T03:30:37.514022Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-c14a32f-out-486d51a396c0d34eb3897e27597adb44777933de16a6a1f9fb899c7168b800c0.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T03:30:37.514026Z
+        against:
+            kind: git_commit
+            value: git:c14a32f
+            observed_at: 2026-10-17T03:30:37.514022Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-c14a32f-out-f058d79a013b530f6a9ebe7e06b7315036a31938ebc1706a0cea5e73490e3060.txt

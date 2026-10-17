@@ -35,6 +35,7 @@ local PADDING = 6
 local CHIP = 12
 local CHIP_BORDER = 1
 local ICON = 16
+local ICON_GAP = 1 -- between icon cells, tighter than GAP so every registered icon fits three rows
 local TITLE_SIZE = 11
 local NOTE_SIZE = 9
 local HEADER_SIZE = 10
@@ -266,7 +267,7 @@ local function icon_rows(width)
         labels[i] = TextWidget:new{ text = entry.id, face = face }
         widest = math.max(widest, labels[i]:getSize().w)
     end
-    local per_row = math.max(1, math.floor(width / (widest + gap)))
+    local per_row = math.max(1, math.floor(width / (widest + scaled(ICON_GAP))))
     local cell_w = math.floor(width / per_row)
     local rows = VerticalGroup:new{ align = "left" }
     local row

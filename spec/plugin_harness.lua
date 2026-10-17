@@ -144,20 +144,19 @@ function M.gesture(ges, x, y)
     return { ges = ges, pos = Geom:new{ x = x, y = y, w = 0, h = 0 }, time = time.now() }
 end
 
--- Runs fn with the device screen answering as the emulator's Colorsoft profile does: 1264×1680
--- with no DPI override, so scaleBySize is ceil(px × 1264 / 600) (ffi/framebuffer.lua:414-426)
+-- Runs fn with the device screen answering as an emulator profile w by h with no DPI override
+-- does, so scaleBySize is ceil(px × w / 600), the shorter side over 600 (ffi/framebuffer.lua:414-426),
 -- and Font:getFace scales by it (frontend/ui/font.lua:276). TextWidget's vertical padding is
 -- Size.padding.small, scaled once when the class loads (frontend/ui/widget/textwidget.lua:34,
--- frontend/ui/size.lua:52), so it is set to its Colorsoft value too. The unit screen's own
--- values come back afterwards, even when fn raises, so nothing built under fn should be painted
--- into the unit screen's 600×800 buffer before the caller is done with it.
-function M.at_colorsoft(fn)
+-- frontend/ui/size.lua:52), so it is set to that screen's value too. The unit screen's own values
+-- come back afterwards, even when fn raises, so nothing built under fn should be painted into the
+-- unit screen's 600×800 buffer before the caller is done with it.
+function M.at_screen(W, H, fn)
     local Geom = require("ui/geometry")
     local Screen = require("device").screen
     local TextWidget = require("ui/widget/textwidget")
-    local W, H = 1264, 1680
     local function scale(px)
-        return math.ceil(px * W / 600)
+        return math.ceil(px * math.min(W, H) / 600)
     end
     local stubs = {
         { Screen, "getWidth", function() return W end },
@@ -178,6 +177,16 @@ function M.at_colorsoft(fn)
     if not ok then
         error(err, 0)
     end
+end
+
+-- Runs fn at the emulator's Colorsoft profile, 1264×1680 (spec/emulator/profiles.lua).
+function M.at_colorsoft(fn)
+    M.at_screen(1264, 1680, fn)
+end
+
+-- Runs fn at the emulator's Paperwhite profile, 1236×1648 (spec/emulator/profiles.lua).
+function M.at_paperwhite(fn)
+    M.at_screen(1236, 1648, fn)
 end
 
 -- Closes any reader and file manager, then everything left on the stack, and drops every

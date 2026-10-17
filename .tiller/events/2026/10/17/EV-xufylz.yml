@@ -1,0 +1,17 @@
+id: EV-xufylz
+type: start.task
+at: 2026-10-17T02:23:22.566961Z
+contributor: allen
+command: start task T-d53f8e
+targets:
+    - T-d53f8e
+before:
+    status: ready
+after:
+    aggregate_branch: ""
+    branch: tiller/library/cover-grid/tiles
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/tiles/task.yml
+    - path: .tiller/epics/library/features/cover-grid/feature.yml

@@ -1,0 +1,13 @@
+id: EV-krv396
+type: check.task
+at: 2026-10-17T03:33:40.107257Z
+contributor: allen
+command: check task T-d53f8e
+targets:
+    - T-d53f8e
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/tiles/task.yml

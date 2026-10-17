@@ -205,8 +205,13 @@ describe("looks", function()
                     end
                     if tostring(key):match("color$") then
                         assert.is_not_nil(look.palettes.day[value], where .. " names no palette role: " .. value)
-                        assert.is_not_false(look.palettes.day[value],
-                            where .. " names a role this look lacks: " .. value)
+                        -- A role false by day but drawn at night or in grey, as Editorial's outline, is
+                        -- one the look has.
+                        local drawn = false
+                        for _, palette in pairs(look.palettes) do
+                            drawn = drawn or palette[value] ~= false
+                        end
+                        assert.is_true(drawn, where .. " names a role this look lacks: " .. value)
                     elseif key == "face" then
                         assert.is_table(look.faces[value], where .. " names no face: " .. value)
                     elseif key == "fill_grey" then
@@ -493,6 +498,153 @@ describe("looks", function()
             assert.same({ "display", 40, false, -0.01, -0.05, "on_accent" }, part_values(look.type.title_bar_title))
             assert.same({ "display", 11, true, 0.08, 0, "ink" }, part_values(look.type.title_bar_sort))
             assert.same({ "display", 11, true, 0.08, 0, "on_accent" }, part_values(look.type.title_bar_status))
+        end)
+
+        -- The library grid's block and parts as the boards give them (Main.dc.html for Diner, GridA.dc.html
+        -- for Editorial, under .tiller/design/2026-10-16-kopanda-library-screens/; the cover-grid feature's
+        -- "Tokens"). The colours the table leaves out are the roles the boards draw in.
+        local LIBRARY_BOARD = {
+            diner = {
+                header = {
+                    fill_color = "mustard", padding = { top = 28, side = 40, bottom = 18 }, edge_width = 4,
+                    edge_color = "ink", line_gap = 2, picker_gap = 10, picker_padding = { x = 10, y = 4 },
+                    picker_outline_width = 2, picker_outline_color = "outline", sort_fill_color = "paper",
+                    status_fill_color = "pink",
+                },
+                grid = { padding_top = 22, side = 40, row_gap = 22, column_gap = 22, cover_h = 200, strip_gap = 12,
+                    title_gap = 8 },
+                cover = { outline_width = 3, outline_color = "outline", radius = 0,
+                    shadow = { x = 5, y = 5, color = "shadow" }, padding = { x = 10, y = 14 } },
+                strip = { height = 14, outline_width = 2 },
+                folder = { fill_color = "pink", outline_width = 3, outline_color = "outline", icon_size = 44,
+                    icon_color = "on_accent", padding = { x = 12, y = 14 }, count_gap = 4 },
+                badge = { size = 38, outline_width = 3, outline_color = "outline", fill_color = "paper",
+                    icon_size = 20, icon_color = "ink", inset = -12, align = "top" },
+                not_downloaded = { fill_color = "pink", outline_width = 2, outline_color = "outline",
+                    padding = { x = 6, y = 1 } },
+                pager = { button_w = 44, button_h = 32, gap = 18, bottom = 16, outline_width = 2,
+                    outline_color = "outline", prev_fill_color = "paper", next_fill_color = "mustard",
+                    dead_color = false },
+            },
+            editorial = {
+                header = {
+                    fill_color = false, padding = { top = 40, side = 40, bottom = 16 }, edge_width = 2,
+                    edge_color = "ink", line_gap = 2, picker_gap = 20, picker_padding = { x = 0, y = 0 },
+                    picker_outline_width = 0, picker_outline_color = false, sort_fill_color = false,
+                    status_fill_color = false,
+                },
+                grid = { padding_top = 22, side = 40, row_gap = 22, column_gap = 20, cover_h = 218, strip_gap = 10,
+                    title_gap = 8 },
+                -- The owner's hairline, not GridA.dc.html:43's none: the outline role is false by day, so
+                -- the day cover still has no border.
+                cover = { outline_width = 1, outline_color = "outline", radius = 3,
+                    shadow = { x = 2, y = 3, color = "shadow" }, padding = { x = 12, y = 16 } },
+                strip = { height = 4, outline_width = 0 },
+                folder = { fill_color = "paper", outline_width = 1, outline_color = "hairline", icon_size = 36,
+                    icon_color = "ink", padding = { x = 14, y = 16 }, count_gap = 4 },
+                badge = { size = 30, outline_width = 1, outline_color = "ink", fill_color = "paper",
+                    icon_size = 16, icon_color = "ink", inset = 8, align = "bottom" },
+                not_downloaded = { fill_color = "paper", outline_width = 0, outline_color = false,
+                    padding = { x = 6, y = 2 } },
+                pager = { button_w = 44, button_h = 32, gap = 22, bottom = 16, outline_width = 0,
+                    outline_color = false, prev_fill_color = false, next_fill_color = false,
+                    dead_color = "hairline" },
+            },
+        }
+
+        local LIBRARY_PARTS = {
+            diner = {
+                library_count = { "accent", 24, false, 0, 0, "on_accent" },
+                library_title = { "display", 40, false, -0.01, -0.05, "on_accent" },
+                library_picker = { "display", 11, true, 0.08, 0, "ink" },
+                tile_title = { "display", 12, true, 0.04, 0.2, "ink" },
+                tile_cover_title = { "display", 17, false, 0, 0.1, "on_cover" },
+                folder_count = { "accent", 26, false, 0, 0, "on_accent" },
+                folder_reading = { "display", 11, true, 0.08, 0, "on_accent" },
+                not_downloaded = { "display", 10, true, 0.08, 0, "on_accent" },
+                pager_label = { "display", 12, true, 0.08, 0, "ink" },
+            },
+            editorial = {
+                library_count = { "text", 11, true, 0.14, 0, "muted" },
+                library_title = { "display", 34, false, 0, 0, "ink" },
+                library_picker = { "strong", 11, true, 0.12, 0, "text" },
+                tile_title = { "strong", 12, false, 0, 0.25, "ink" },
+                tile_cover_title = { "display", 18, false, 0, 0.1, "on_cover" },
+                folder_count = { "display", 22, false, 0, 0.05, "ink" },
+                folder_reading = { "text", 11, true, 0.14, 0, "muted" },
+                not_downloaded = { "text", 10, true, 0.14, 0, "muted" },
+                pager_label = { "text", 11, true, 0.14, 0, "muted" },
+            },
+        }
+
+        -- The vertical lengths D2 may take below the board's, in the order it tightens them.
+        local TIGHTENABLE = { ["grid.cover_h"] = true, ["header.padding.top"] = true, ["grid.padding_top"] = true,
+            ["pager.bottom"] = true, ["pager.button_h"] = true }
+
+        -- The value at a dotted path in t.
+        local function at(t, path)
+            for key in path:gmatch("[^.]+") do
+                t = t[key]
+            end
+            return t
+        end
+
+        -- The look file's lines from its library block's opening to the end of the file.
+        local function library_lines(id)
+            local lines, inside = {}, false
+            for line in io.lines(harness.plugin_dir .. "/looks/" .. id .. ".lua") do
+                inside = inside or line:match("^    library = {") ~= nil
+                if inside then
+                    lines[#lines + 1] = line
+                end
+            end
+            return lines
+        end
+
+        it("give both looks every library path and part", function()
+            for _, id in ipairs(ids) do
+                local wanted = {}
+                for _, path in ipairs(paths(LIBRARY_BOARD[id])) do
+                    wanted[#wanted + 1] = "library." .. path
+                end
+                local got = {}
+                for _, path in ipairs(paths(looks[id])) do
+                    if path:match("^library%.") then
+                        got[#got + 1] = path
+                    end
+                end
+                assert.same(wanted, got, id)
+                for part in pairs(LIBRARY_PARTS[id]) do
+                    assert.is_table(looks[id].type[part], id .. " has no type." .. part)
+                end
+            end
+        end)
+
+        it("give the library block and parts the boards' values, D2's cuts commented with the board's", function()
+            for _, id in ipairs(ids) do
+                local lines = library_lines(id)
+                assert.truthy(#lines > 0, id .. " has no library block")
+                for _, path in ipairs(paths(LIBRARY_BOARD[id])) do
+                    local board, value = at(LIBRARY_BOARD[id], path), at(looks[id].library, path)
+                    if value ~= board then
+                        local where = id .. " library." .. path .. " = " .. tostring(value)
+                        assert.is_true(TIGHTENABLE[path], where .. " is not the board's " .. tostring(board))
+                        assert.is_true(value < board, where .. " is not below the board's " .. board)
+                        local key = path:match("([^.]+)$")
+                        local commented = false
+                        for _, line in ipairs(lines) do
+                            if line:find("%f[%w_]" .. key .. " = " .. value .. "%f[^%d]")
+                                    and line:find("D2: board " .. board, 1, true) then
+                                commented = true
+                            end
+                        end
+                        assert.is_true(commented, where .. " has no \"D2: board " .. board .. "\" on its line")
+                    end
+                end
+                for part, values in pairs(LIBRARY_PARTS[id]) do
+                    assert.same(values, part_values(looks[id].type[part]), id .. " type." .. part)
+                end
+            end
         end)
 
         -- D7: the bar always shows on the home, and NavBarC:70 draws no stripe above it; NavBar:19,
