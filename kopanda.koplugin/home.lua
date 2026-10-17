@@ -46,10 +46,11 @@ local function close_home(home)
     end
 end
 
--- Builds the home's rows afresh and frees the old ones.
+-- Builds the home's rows afresh and frees the old ones, settling a deferred refresh.
 local function rebuild(home)
     local old = home[1]
     home:build()
+    home.refresh_deferred = nil
     if old then
         old:free()
     end
@@ -69,6 +70,20 @@ function Home:refresh()
     if not ok then
         logger.err("KoPanda: could not rebuild the home:", err)
         close_home(self)
+    end
+end
+
+-- Marks the home out of date without rebuilding it, for a change made under a full-screen
+-- window that hides it (the editor, editor.lua): KOReader paints nothing beneath such a window
+-- (frontend/ui/uimanager.lua:1305-1316), so the rebuild waits for run_deferred_refresh.
+function Home:defer_refresh()
+    self.refresh_deferred = true
+end
+
+-- Refreshes the home once if a refresh was deferred and nothing has rebuilt it since.
+function Home:run_deferred_refresh()
+    if self.refresh_deferred then
+        self:refresh()
     end
 end
 

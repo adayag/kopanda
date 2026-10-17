@@ -113,7 +113,9 @@ Upgrading KOReader walks this list.
 
 - `frontend/ui/uimanager.lua:1305-1316`.
 - `_repaint` skips `paintTo` on every widget beneath the topmost `covers_fullscreen` one, so
-  nothing of the file browser is painted under the home.
+  nothing of the file browser is painted under the home, and nothing of the home under the
+  editor: an editor's change defers the home's rebuild (`Home:defer_refresh`) to the editor's
+  close.
 
 ### `UIManager:nextTick` and `tickAfterNext`
 
@@ -137,6 +139,10 @@ Upgrading KOReader walks this list.
 - The editor frame (`editor.lua`) is shown and closed the same way, with `"full"`, and is
   `covers_fullscreen` as the home is, so nothing beneath it is painted while it is up; an editor
   that reached the stack before failing is taken off it.
+- The editor's `onCloseWidget` runs a home refresh its changes deferred, once: `close` sends
+  `CloseWidget` (`:300`) before it takes the editor off the stack (`:312`) and queues its
+  `"full"` refresh (`:354`), and the home's `"ui"` refresh, queued by its `setDirty` (`:740`),
+  merges into that one (`_refresh`, `:1266-1281`).
 
 ### `UIManager.event_hook`, the settled signal
 
