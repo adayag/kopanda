@@ -221,15 +221,18 @@ describe("ShelfOrder", function()
                 book("7", "Seven", { authors = { "Roger Zelazny" } }),
                 book("8", "Eight", { authors = { "ann leckie" } }),
                 book("9", "Nine", { authors = { "Ursula K. Le Guin" } }),
+                book("10", "Ten", { authors = { "Anne Leckie" } }),
+                book("11", "Eleven", { authors = { "ann Leckie" } }),
             })
-            assert.same({ "Ursula K. Le Guin", "Ann Leckie", "ann leckie", "Mary Shelley", "Percy Bysshe Shelley",
-                "Roger Zelazny", "Agent 47", "Karel \196\140apek" }, names(entries))
+            assert.same({ "Ursula K. Le Guin", "Ann Leckie", "ann Leckie", "ann leckie", "Anne Leckie",
+                "Mary Shelley", "Percy Bysshe Shelley", "Roger Zelazny", "Agent 47", "Karel \196\140apek" },
+                names(entries))
             local letters, counts = {}, {}
             for i, entry in ipairs(entries) do
                 letters[i], counts[i] = entry.letter, entry.count
             end
-            assert.same({ "L", "L", "L", "S", "S", "Z", "#", "#" }, letters)
-            assert.same({ 2, 1, 1, 1, 1, 1, 1, 1 }, counts)
+            assert.same({ "L", "L", "L", "L", "L", "S", "S", "Z", "#", "#" }, letters)
+            assert.same({ 2, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, counts)
             assert.same({ "9", "3" }, { entries[1].books[1].id, entries[1].books[2].id })
         end)
 
@@ -287,6 +290,18 @@ describe("ShelfOrder", function()
             local _, up_next = ShelfOrder.author_books(le_guin(records), series, progress(statuses))
             assert.same({ tombs = true }, up_next)
         end)
+
+        it("marks none of the author's books when the series' next is another author's", function()
+            local records = library()
+            records[#records + 1] = book("pair1", "Pair One", { authors = { "Other Hand" }, series = "Pairs",
+                series_index = 1 })
+            records[#records + 1] = book("pair2", "Pair Two", { authors = { LE_GUIN }, series = "Pairs",
+                series_index = 2 })
+            local statuses = { wizard = "complete", duo1 = "complete", gifts = "complete" }
+            local series = ShelfOrder.series(records, progress(statuses))
+            local _, up_next = ShelfOrder.author_books(le_guin(records), series, progress(statuses))
+            assert.same({ tombs = true }, up_next)
+        end)
     end)
 
     describe("pages", function()
@@ -311,6 +326,11 @@ describe("ShelfOrder", function()
         it("moves the row one over to the next page", function()
             local rows = { row(100), row(100), row(100) }
             assert.same({ { 1, 2, false }, { 3, 3, false } }, spans(ShelfOrder.pages(rows, 319, 10)))
+        end)
+
+        it("counts no gap before a page's first row", function()
+            local rows = { row(100), row(100), row(100), row(100) }
+            assert.same({ { 1, 2, false }, { 3, 4, false } }, spans(ShelfOrder.pages(rows, 210, 10)))
         end)
 
         it("gives a row taller than the space a page of its own", function()
@@ -339,6 +359,14 @@ describe("ShelfOrder", function()
             local rows = { row(50, "A", 30), row(50, "A", 30), row(50, "A", 30) }
             assert.same({ { 1, 3, false } }, spans(ShelfOrder.pages(rows, 180, 0)))
             assert.same({ { 1, 2, false }, { 3, 3, true } }, spans(ShelfOrder.pages(rows, 179, 0)))
+        end)
+
+        it("counts a continued group's cost again on the page it carries over to", function()
+            local rows = {
+                row(50, "A", 30), row(50, "A", 30), row(50, "A", 30), row(50, "A", 30), row(50, "A", 30),
+                row(60, "A", 30),
+            }
+            assert.same({ { 1, 3, false }, { 4, 5, true }, { 6, 6, true } }, spans(ShelfOrder.pages(rows, 180, 0)))
         end)
 
         it("counts each group's cost on a page holding two", function()
