@@ -1,9 +1,10 @@
 id: TW-6fwvl6
 key: tweaks/quick-settings-one-redraw
 title: Quick settings lays out twice on Night and up to three times on Wi-Fi
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: F-rce9ko
 source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L93-L105
@@ -17,3 +18,32 @@ accepted_against:
         kind: git_commit
         value: git:525b5a5
         observed_at: 2026-10-17T16:06:08.725675Z
+branch: tiller/tweaks/quick-settings-one-redraw
+pr: 42
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:41:02.018264Z
+        against:
+            kind: git_commit
+            value: git:a406bcb
+            observed_at: 2026-10-17T16:41:02.018263Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-a406bcb-out-82ff43bb73753fd1c26f5507278c72cae058b69098bba083a10fa563d03ce853.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:41:02.018264Z
+        against:
+            kind: git_commit
+            value: git:a406bcb
+            observed_at: 2026-10-17T16:41:02.018263Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-a406bcb-out-60b6ab23ec5e0805856a31008db5792065652be2b168b97b1a3b9ac819bc7707.txt

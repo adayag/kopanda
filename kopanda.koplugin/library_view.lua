@@ -115,36 +115,88 @@ local function header(built, w, books, choice)
     return box, parts
 end
 
--- The counts a folder's tile shows: the books directly in it and how many are reading.
-local function folder_counts(folder, progress)
-    local books = Books.folder(folder.path).books
+-- The counts a folder's tile shows: the books directly in it and how many are reading, from the
+-- folder's scan and each book's progress, with no record read.
+local function folder_counts(folder)
+    local books = Books.files(folder.path)
     local reading = 0
     for _, book in ipairs(books) do
-        if progress(book).status == "reading" then
+        if Books.progress(book).status == "reading" then
             reading = reading + 1
         end
     end
     return { books = #books, reading = reading }
 end
 
--- Fills built (dir, page, ctx) from Books.folder(dir) under the folder's sort and status: the
--- frame (the header, the page's tiles at the geometry's boxes or the empty note, and the chrome's
--- foot), and what gestures and covers read: page and pages, header, tiles ({ rect, kind, record
--- or folder, widget, index in the frame }), box (LibraryTiles.geometry), note.
+-- The folder's listing as built keeps it for the builds after: { dir, listing (Books.folder(dir)),
+-- history (LibraryOrder.history_times() then), sort, status, items (LibraryOrder.view of the
+-- listing under that sort and status, or nil when it must be made again) }. kept, the one an
+-- earlier build gave, is used when it is of dir; otherwise the folder is listed now. Its items are
+-- made again when nil or of another sort or status than choice, with each book's progress as
+-- Books.progress reads it then (its memo opens only a changed sidecar). Returns a new table, so
+-- kept's own fields are left as they were (its listing is shared).
+local function keep(kept, dir, choice)
+    local now = {}
+    if kept and kept.dir == dir then
+        for k, v in pairs(kept) do
+            now[k] = v
+        end
+    else
+        now.dir, now.listing, now.history = dir, Books.folder(dir), LibraryOrder.history_times()
+    end
+    if now.items == nil or now.sort ~= choice.sort or now.status ~= choice.status then
+        now.items = LibraryOrder.view(now.listing, choice.sort, choice.status, Books.progress, now.history)
+        now.sort, now.status = choice.sort, choice.status
+    end
+    return now
+end
+
+-- The place in kept's listing (as keep gives it) of the book whose id is id, or nil.
+local function listed_at(kept, id)
+    if not kept then
+        return nil
+    end
+    for i, record in ipairs(kept.listing.books) do
+        if record.id == id then
+            return i
+        end
+    end
+    return nil
+end
+
+-- Puts record, read again, in kept's listing in place of the record of its id, and leaves kept's
+-- items to be made again, so the next build filters and sorts the listing as it now stands. A kept
+-- of nil, or without that id, is left as it was.
+function LibraryView.renew(kept, record)
+    local i = listed_at(kept, record.id)
+    if i then
+        kept.listing.books[i] = record
+        kept.items = nil
+    end
+end
+
+-- Leaves kept's items to be made again when it lists the book whose id is id, whose progress has
+-- changed, so the next build filters and sorts with the progress read then. A kept of nil, or
+-- without that id, is left as it was.
+function LibraryView.forget(kept, id)
+    if listed_at(kept, id) then
+        kept.items = nil
+    end
+end
+
+-- Fills built (dir, page, ctx) from the folder's listing under the folder's sort and status, the
+-- listing kept (built.kept on entry, as keep takes it) or listed now: the frame (the header, the
+-- page's tiles at the geometry's boxes or the empty note, and the chrome's foot), and what gestures
+-- and covers read: page and pages, header, tiles ({ rect, kind, record or folder, widget, index in
+-- the frame }), box (LibraryTiles.geometry), note; and kept, the listing for the next build.
 local function fill(built, frame, w)
     local ctx = built.ctx
     local scale = tools(ctx)
     local look = ctx.look
-    local seen = {}
-    local function progress(record)
-        if seen[record] == nil then
-            seen[record] = Books.progress(record)
-        end
-        return seen[record]
-    end
-    local listing = Books.folder(built.dir)
     local choice = LibraryOrder.choice(built.dir)
-    local items = LibraryOrder.view(listing, choice.sort, choice.status, progress, LibraryOrder.history_times())
+    local kept = keep(built.kept, built.dir, choice)
+    built.kept = kept
+    local listing, items = kept.listing, kept.items
     local slice
     slice, built.pages, built.page = LibraryOrder.page(items, built.page)
     local header_box
@@ -161,10 +213,10 @@ local function fill(built, frame, w)
         local tile = { rect = Geom:new{ x = x, y = y, w = box.cover_w, h = box.height } }
         if item.id then
             tile.kind, tile.record = "book", item
-            tile.widget = LibraryTiles.book(item, progress(item), box, ctx)
+            tile.widget = LibraryTiles.book(item, Books.progress(item), box, ctx)
         else
             tile.kind, tile.folder = "folder", item
-            tile.widget = LibraryTiles.folder(item, folder_counts(item, progress), box, ctx)
+            tile.widget = LibraryTiles.folder(item, folder_counts(item), box, ctx)
         end
         tile.index = add(frame, tile.widget, x, y)
         built.tiles[i] = tile
@@ -181,10 +233,13 @@ local function fill(built, frame, w)
 end
 
 -- What the library shows at dir and page now, at the screen's size in the active look and
--- variant: { frame, dir, page (clamped), pages, dimen, ctx, header, tiles, box, pager, note, nav },
--- as fill and the chrome (LibraryChrome.build) give them. A failure frees what was built and raises.
-function LibraryView.build(dir, page)
-    return LibraryChrome.build({ dir = dir, page = page }, fill)
+-- variant: { frame, dir, page (clamped), pages, dimen, ctx, header, tiles, box, pager, note, nav,
+-- kept }, as fill and the chrome (LibraryChrome.build) give them. kept is the kept listing an
+-- earlier build gave (built.kept): one of dir is sliced, or filtered and sorted again under a
+-- changed choice, without listing the folder; nil or one of another folder lists it now. A failure
+-- frees what was built and raises.
+function LibraryView.build(dir, page, kept)
+    return LibraryChrome.build({ dir = dir, page = page, kept = kept }, fill)
 end
 
 return LibraryView

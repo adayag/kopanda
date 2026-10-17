@@ -137,19 +137,20 @@ describe("launcher management", function()
         return editor
     end
 
-    -- Counts, from now until the case ends: writes through Settings.set, the shown home's
-    -- refreshes and the editor's repaints asked through setDirty.
+    -- Counts, from now until the case ends: writes through Settings.set, home builds
+    -- (HomeRows.build), none while the editor is up, and the editor's repaints asked through
+    -- setDirty.
     local function counters(editor)
-        local counts = { writes = 0, refreshes = 0, repaints = 0 }
-        local set, refresh, dirty = Settings.set, Home.shown.refresh, UIManager.setDirty
+        local counts = { writes = 0, builds = 0, repaints = 0 }
+        local HomeRows = require("home_rows")
+        local set, build, dirty = Settings.set, HomeRows.build, UIManager.setDirty
         Settings.set = function(...)
             counts.writes = counts.writes + 1
             return set(...)
         end
-        local home = Home.shown
-        home.refresh = function(...)
-            counts.refreshes = counts.refreshes + 1
-            return refresh(...)
+        HomeRows.build = function(...)
+            counts.builds = counts.builds + 1
+            return build(...)
         end
         UIManager.setDirty = function(self, widget, ...)
             if widget == editor then
@@ -159,7 +160,7 @@ describe("launcher management", function()
         end
         cleanup(function()
             Settings.set = set
-            home.refresh = nil
+            HomeRows.build = build
             UIManager.setDirty = dirty
         end)
         return counts
@@ -346,11 +347,11 @@ describe("launcher management", function()
     end)
 
     describe("moving and removing", function()
-        it("moves an entry up with one write, one home refresh and one repaint", function()
+        it("moves an entry up with one write and one repaint, the home not built", function()
             local editor = open(board())
             local counts = counters(editor)
             tap("up", 2)
-            assert.same({ writes = 1, refreshes = 1, repaints = 1 }, counts)
+            assert.same({ writes = 1, builds = 0, repaints = 1 }, counts)
             assert.same({ SERIES, LIBRARY, AUTHORS, HISTORY, tools(), SETTINGS }, stored())
             assert.same({ "Series", "Library", "Authors", "History", "Tools", "Settings" }, labels())
             assert.equals(editor, Editor.shown)
@@ -360,7 +361,7 @@ describe("launcher management", function()
             local editor = open(board())
             local counts = counters(editor)
             tap("down", 5)
-            assert.same({ writes = 1, refreshes = 1, repaints = 1 }, counts)
+            assert.same({ writes = 1, builds = 0, repaints = 1 }, counts)
             assert.same({ LIBRARY, SERIES, AUTHORS, HISTORY, SETTINGS, tools() }, stored())
         end)
 
@@ -370,15 +371,15 @@ describe("launcher management", function()
             local counts = counters(editor)
             tap("up", 1)
             tap("down", 6)
-            assert.same({ writes = 0, refreshes = 0, repaints = 0 }, counts)
+            assert.same({ writes = 0, builds = 0, repaints = 0 }, counts)
             assert.equals(before, settings_bytes())
         end)
 
-        it("removes an entry with one write, one home refresh and one repaint, and no question", function()
+        it("removes an entry with one write and one repaint, the home not built, and no question", function()
             local editor = open(board())
             local counts = counters(editor)
             tap("remove", 3)
-            assert.same({ writes = 1, refreshes = 1, repaints = 1 }, counts)
+            assert.same({ writes = 1, builds = 0, repaints = 1 }, counts)
             assert.is_nil(shown(ConfirmBox))
             assert.same({ LIBRARY, SERIES, HISTORY, tools(), SETTINGS }, stored())
             assert.equals("5 of 6 on the home screen", Editor.shown.spec.aside)
@@ -410,7 +411,7 @@ describe("launcher management", function()
             -- As its Remove button does (frontend/ui/widget/confirmbox.lua:116-121); the box's
             -- own close then marks the editor under it dirty, as any dialog's does.
             box.ok_callback()
-            assert.same({ writes = 1, refreshes = 1, repaints = 1 }, counts)
+            assert.same({ writes = 1, builds = 0, repaints = 1 }, counts)
             UIManager:close(box)
             assert.same({ LIBRARY, SERIES, AUTHORS, HISTORY, SETTINGS }, stored())
             assert.same({ "Library", "Series", "Authors", "History", "Settings" }, labels())
@@ -435,7 +436,7 @@ describe("launcher management", function()
             local counts = counters(editor)
             tap("entry", 1)
             assert.equals("Launcher", editor.spec.title)
-            assert.same({ writes = 0, refreshes = 0, repaints = 0 }, counts)
+            assert.same({ writes = 0, builds = 0, repaints = 0 }, counts)
         end)
 
         it("returns to the top level on Done", function()
@@ -470,7 +471,7 @@ describe("launcher management", function()
             assert.equals("Folder · 1", editor.spec.aside)
             assert.same({ "Screenshot" }, labels())
             tap("remove", 1)
-            assert.same({ writes = 3, refreshes = 3, repaints = 3 }, counts)
+            assert.same({ writes = 3, builds = 0, repaints = 3 }, counts)
             assert.is_nil(shown(ConfirmBox))
             assert.same({ LIBRARY, SERIES, AUTHORS, HISTORY, SETTINGS }, stored())
             assert.equals("Launcher", editor.spec.title)
@@ -509,7 +510,7 @@ describe("launcher management", function()
             assert.equals(1, #calls)
             assert.equals("action", calls[1].kind)
             assert.equals(ctx, calls[1].ctx)
-            assert.same({ writes = 1, refreshes = 1, repaints = 1 }, counts)
+            assert.same({ writes = 1, builds = 0, repaints = 1 }, counts)
             local folder = stored()[5]
             assert.equals(4, #folder.entries)
             assert.same(PICKED, folder.entries[4])
@@ -616,6 +617,59 @@ describe("launcher management", function()
             assert.same({}, calls)
             assert.equals("There's no room for another entry here.", harness.top().text)
             assert.equals(before, settings_bytes())
+        end)
+    end)
+
+    describe("the home under it", function()
+        -- The shown home's launcher slot.
+        local function launcher_slot()
+            for _, s in ipairs(Home.shown.slots) do
+                if s.widget == "launcher" then
+                    return s
+                end
+            end
+        end
+
+        it("isn't built for three moves, and is built once, on the new entries, after Done", function()
+            local editor = open(board())
+            local counts = counters(editor)
+            tap("up", 2)
+            tap("down", 5)
+            tap("up", 4)
+            assert.same({ writes = 3, builds = 0, repaints = 3 }, counts)
+            tap_done()
+            harness.tick(2)
+            assert.equals(1, counts.builds)
+            assert.equals(Home.shown, harness.top())
+            local wanted = { SERIES, LIBRARY, HISTORY, AUTHORS, SETTINGS, tools() }
+            assert.same(wanted, stored())
+            assert.same(wanted, launcher_slot().built.entries)
+        end)
+
+        it("is built once on Back after an accepted change, and not when a folder's list goes back", function()
+            local editor = open(board())
+            local counts = counters(editor)
+            tap("entry", 5)
+            tap("down", 1)
+            tap_done()
+            assert.equals(editor, Editor.shown)
+            assert.equals(0, counts.builds)
+            UIManager:sendEvent(Event:new("Back"))
+            harness.tick(2)
+            assert.is_nil(Editor.shown)
+            assert.equals(1, counts.builds)
+        end)
+
+        it("isn't built on Done when nothing was stored", function()
+            local editor = open(board())
+            local counts = counters(editor)
+            tap("up", 1)
+            tap("entry", 5)
+            tap_done()
+            tap_done()
+            harness.tick(2)
+            assert.is_nil(Editor.shown)
+            assert.equals(0, counts.builds)
         end)
     end)
 

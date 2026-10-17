@@ -514,6 +514,102 @@ describe("Books", function()
             assert.equals("complete", now.status)
         end)
 
+        describe("memo", function()
+            local light, opened, props
+
+            before_each(function()
+                light, opened = DocSettings.openSettingsFile, 0
+                -- The doc_props of the last sidecar opened, held weakly: collected unless something
+                -- else keeps them.
+                props = setmetatable({}, { __mode = "v" })
+                DocSettings.openSettingsFile = function(...)
+                    opened = opened + 1
+                    local doc = light(...)
+                    props[1] = doc.data.doc_props
+                    return doc
+                end
+            end)
+
+            after_each(function()
+                DocSettings.openSettingsFile = light
+            end)
+
+            it("keeps no doc_props and gives each caller its own copy", function()
+                sidecar(a, '{ percent_finished = 0.5, summary = { status = "reading" },'
+                    .. ' doc_props = { description = "A long description" } }')
+                local record = Books.for_path(a)
+                opened = 0
+                local first = Books.progress(record)
+                assert.equals(1, opened)
+                first.status, first.percent, first.pages = "complete", 0.9, 12
+                collectgarbage()
+                collectgarbage()
+                assert.is_nil(props[1])
+                assert.same({ status = "reading", percent = 0.5 }, Books.progress(record))
+                assert.equals(1, opened)
+            end)
+
+            it("gives Books.progress the sidecar Books.with_progress opened, without opening it", function()
+                sidecar(a, '{ percent_finished = 0.5, doc_props = { title = "Frankenstein" } }')
+                local record, given = Books.with_progress(a)
+                assert.equals(1, opened)
+                assert.equals("Frankenstein", record.title)
+                given.percent = 0.1
+                assert.same({ status = "reading", percent = 0.5 }, Books.progress(record))
+                assert.equals(1, opened)
+            end)
+
+            it("opens a sidecar Books.progress kept for Books.with_progress, for its doc_props", function()
+                sidecar(a, '{ percent_finished = 0.5, doc_props = { title = "Frankenstein" } }')
+                local b = book("b.epub")
+                sidecar(b, '{ percent_finished = 0.9, doc_props = { title = "Dracula" } }')
+                Books.with_progress(a)
+                Books.progress({ path = b })
+                opened = 0
+                local record, given = Books.with_progress(b)
+                assert.equals(1, opened)
+                assert.equals("Dracula", record.title)
+                assert.equals(0.9, given.percent)
+                opened = 0
+                assert.equals("Dracula", Books.with_progress(b).title)
+                assert.equals(0, opened)
+            end)
+
+            it("opens the sidecar of the location now preferred, though its mtime and size match", function()
+                local in_dir = sidecar(a, "{ percent_finished = 0.2 }")
+                local sdr = DocSettings:getSidecarDir(a, "doc")
+                util.makePath(sdr)
+                local in_doc = sdr .. "/" .. DocSettings.getSidecarFilename(a)
+                write(in_doc, "return { percent_finished = 0.7 }")
+                assert.is_true(lfs.touch(in_dir, 1000000000, 1000000000))
+                assert.is_true(lfs.touch(in_doc, 1000000000, 1000000000))
+                assert.equals(lfs.attributes(in_dir, "size"), lfs.attributes(in_doc, "size"))
+                local record = Books.for_path(a)
+                assert.equals(0.2, Books.progress(record).percent)
+                G_reader_settings:saveSetting("document_metadata_folder", "doc")
+                assert.equals(0.7, Books.progress(record).percent)
+            end)
+
+            it("opens again a sidecar whose last open raised", function()
+                sidecar(a, "{ percent_finished = 0.5 }")
+                local record = Books.for_path(a)
+                DocSettings.openSettingsFile = function()
+                    DocSettings.openSettingsFile = light
+                    error("could not open")
+                end
+                assert.same({ status = "reading" }, Books.progress(record))
+                assert.same({ status = "reading", percent = 0.5 }, Books.progress(record))
+            end)
+
+            it("reads a book whose sidecar was removed as new", function()
+                local side = sidecar(a, "{ percent_finished = 0.5 }")
+                local record = Books.for_path(a)
+                assert.equals(0.5, Books.progress(record).percent)
+                assert.is_true(os.remove(side))
+                assert.same({ status = "new" }, Books.progress(record))
+            end)
+        end)
+
         it("never calls DocSettings:open and leaves the sidecar as it was", function()
             local side = sidecar(a, "{ percent_finished = 0.5 }")
             local bytes, mtime = read(side), lfs.attributes(side, "modification")

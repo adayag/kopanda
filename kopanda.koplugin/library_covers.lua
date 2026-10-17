@@ -4,24 +4,41 @@
 -- library shown, so it needs no module state of its own.
 local BookCovers = require("book_covers")
 local Books = require("books")
+local Geom = require("ui/geometry")
 local LibraryTiles = require("library_tiles")
+local LibraryView = require("library_view")
 local UIManager = require("ui/uimanager")
 local logger = require("logger")
 
 local LibraryCovers = {}
 
+-- The record of a tile's book read again and its progress read now: a file book's from one open
+-- of its sidecar (Books.with_progress), another's by its id; the tile's own record when it can't
+-- be read again.
+local function read_again(shown)
+    local record, progress
+    if shown.path then
+        record, progress = Books.with_progress(shown.path)
+    else
+        record = Books.get(shown.id)
+    end
+    record = record or shown
+    return record, progress or Books.progress(record)
+end
+
 -- Rebuilds in place the tiles of the books whose ids are keys of ids, from their records read again
 -- (a title that came with an extraction replaces the file name) and their progress read now,
--- keeping the page's order. A failure is logged with what and leaves every tile as it was. Returns
--- how many tiles it rebuilt.
+-- keeping the page's order; the library's kept listing takes each record (LibraryView.renew), so
+-- the next build filters and sorts with it. A failure is logged with what and leaves every tile
+-- as it was. Returns how many tiles it rebuilt, and those tiles.
 function LibraryCovers.rebuild_tiles(library, ids, what)
     local fresh = {}
     local ok, err = pcall(function()
         for _, tile in ipairs(library.tiles) do
             if tile.record and ids[tile.record.id] then
-                local record = Books.get(tile.record.id) or tile.record
+                local record, progress = read_again(tile.record)
                 fresh[#fresh + 1] = { tile = tile, record = record,
-                    widget = LibraryTiles.book(record, Books.progress(record), library.box, library.ctx) }
+                    widget = LibraryTiles.book(record, progress, library.box, library.ctx) }
             end
         end
     end)
@@ -30,19 +47,39 @@ function LibraryCovers.rebuild_tiles(library, ids, what)
             entry.widget:free()
         end
         logger.err("KoPanda: " .. what .. " failed:", err)
-        return 0
+        return 0, {}
     end
+    local rebuilt = {}
     for _, entry in ipairs(fresh) do
         local tile = entry.tile
         local old = library[1][tile.index]
         library[1][tile.index] = entry.widget
         tile.widget, tile.record = entry.widget, entry.record
+        LibraryView.renew(library.kept, entry.record)
         old:free()
+        rebuilt[#rebuilt + 1] = tile
     end
-    return #fresh
+    return #fresh, rebuilt
 end
 
--- Rebuilds the arrived records' tiles and repaints, while the library is alive.
+-- The screen region tiles paint: the bounding box of their rects, each widened by what a tile
+-- paints past its box (LibraryTiles.overhang), inside the library's. A rebuilt tile keeps its rect
+-- (its box is fixed, its title one line), so this covers what it painted before too.
+local function painted(library, tiles)
+    local over = LibraryTiles.overhang(library.box, library.ctx)
+    local region
+    for _, tile in ipairs(tiles) do
+        local rect = tile.rect
+        local widened = Geom:new{ x = rect.x, y = rect.y - over.top, w = rect.w + over.right,
+            h = rect.h + over.top + over.bottom }
+        region = region and region:combine(widened) or widened
+    end
+    return region:intersect(library.dimen)
+end
+
+-- Rebuilds the arrived records' tiles the page shows and repaints, while the library is alive,
+-- refreshing "ui" over just those tiles with the dither hint, as CoverBrowser refreshes an item
+-- whose cover came (plugins/coverbrowser.koplugin/covermenu.lua:144-157).
 local function on_arrival(library, arrived, alive)
     if not alive() then
         return
@@ -51,8 +88,12 @@ local function on_arrival(library, arrived, alive)
     for _, record in ipairs(arrived) do
         ids[record.id] = true
     end
-    if LibraryCovers.rebuild_tiles(library, ids, "the library's cover arrival") > 0 then
-        UIManager:setDirty(library, "ui")
+    local count, rebuilt = LibraryCovers.rebuild_tiles(library, ids, "the library's cover arrival")
+    if count > 0 then
+        local region = painted(library, rebuilt)
+        UIManager:setDirty(library, function()
+            return "ui", region, true
+        end)
     end
 end
 

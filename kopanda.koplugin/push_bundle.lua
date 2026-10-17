@@ -141,9 +141,14 @@ local function big_endian(n, width)
     return table.concat(bytes)
 end
 
+-- A file's frame in the bundle hash: the path's length (u32 big-endian), the file's size (u64
+-- big-endian), then the path; the file's bytes follow it.
+local function frame(path, size)
+    return big_endian(#path, 4) .. big_endian(size, 8) .. path
+end
+
 -- The bundle hash of files ({ path } entries) under dir: sha256 over the files in byte order of
--- their paths, each framed as the path's length (u32 big-endian), the file's size (u64
--- big-endian), the path, then the bytes. nil when a file can't be read.
+-- their paths, each framed, then its bytes. nil when a file can't be read.
 function PushBundle.bundle_hash(dir, files)
     local sorted = {}
     for i, file in ipairs(files) do
@@ -157,7 +162,7 @@ function PushBundle.bundle_hash(dir, files)
         if not size then
             return nil
         end
-        update(big_endian(#path, 4) .. big_endian(size, 8) .. path)
+        update(frame(path, size))
         if not feed(update, source) then
             return nil
         end
@@ -166,9 +171,16 @@ function PushBundle.bundle_hash(dir, files)
 end
 
 -- true when every file of the manifest under dir is a regular file with one link, of its size
--- and sha256, and the files recompute the manifest's hash; nil and why otherwise.
+-- and sha256, and the files recompute the manifest's hash; nil and why otherwise. Reads each file
+-- once, feeding its blocks to its own sha256 and to the bundle hash, so the manifest's files must
+-- be in the byte order check_manifest requires, the order the bundle hash takes them in.
 function PushBundle.verify_files(dir, manifest)
+    local bundle, previous = sha2.sha256(), nil
     for _, file in ipairs(manifest.files) do
+        if previous and previous >= file.path then
+            return nil, "the manifest's paths are out of byte order at " .. file.path
+        end
+        previous = file.path
         local path = dir .. "/" .. file.path
         local attributes = lfs.symlinkattributes(path)
         if not attributes or attributes.mode ~= "file" or attributes.nlink ~= 1 then
@@ -177,11 +189,17 @@ function PushBundle.verify_files(dir, manifest)
         if attributes.size ~= file.size then
             return nil, file.path .. " is " .. tostring(attributes.size) .. " bytes, not " .. file.size
         end
-        if PushBundle.sha256_file(path) ~= file.sha256 then
+        local own = sha2.sha256()
+        bundle(frame(file.path, attributes.size))
+        local read = feed(function(bytes)
+            own(bytes)
+            bundle(bytes)
+        end, path)
+        if not read or own() ~= file.sha256 then
             return nil, file.path .. " doesn't match its sha256"
         end
     end
-    if PushBundle.bundle_hash(dir, manifest.files) ~= manifest.hash then
+    if bundle() ~= manifest.hash then
         return nil, "the files don't recompute the bundle hash"
     end
     return true

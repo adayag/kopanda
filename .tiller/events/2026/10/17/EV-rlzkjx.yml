@@ -1,0 +1,13 @@
+id: EV-rlzkjx
+type: check.tweak
+at: 2026-10-17T16:30:50.946014Z
+contributor: allen
+command: check tweak TW-x4pkgz
+targets:
+    - TW-x4pkgz
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/pull-one-hash-pass/tweak.yml

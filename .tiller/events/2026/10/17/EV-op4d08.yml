@@ -1,0 +1,11 @@
+id: EV-op4d08
+type: claim.chore
+at: 2026-10-17T17:31:43.298408Z
+contributor: allen
+command: claim chore chores/stale-efficiency-docs
+targets:
+    - CH-au9w25
+after:
+    owner: allen
+files:
+    - path: .tiller/chores/stale-efficiency-docs/chore.yml

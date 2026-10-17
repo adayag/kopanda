@@ -1,0 +1,11 @@
+id: EV-jdx13p
+type: claim.tweak
+at: 2026-10-17T16:09:47.652274Z
+contributor: allen
+command: claim tweak tweaks/pull-one-hash-pass
+targets:
+    - TW-x4pkgz
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/pull-one-hash-pass/tweak.yml

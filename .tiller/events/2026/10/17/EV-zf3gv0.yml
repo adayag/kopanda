@@ -1,0 +1,13 @@
+id: EV-zf3gv0
+type: start.tweak
+at: 2026-10-17T16:09:43.661438Z
+contributor: allen
+command: start tweak TW-bl79zr
+targets:
+    - TW-bl79zr
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/quote-memo/tweak.yml

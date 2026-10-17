@@ -1,0 +1,11 @@
+id: EV-hrfnjd
+type: claim.tweak
+at: 2026-10-17T16:37:37.613659Z
+contributor: allen
+command: claim tweak tweaks/cover-arrival-regional-refresh
+targets:
+    - TW-bpvicu
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/cover-arrival-regional-refresh/tweak.yml

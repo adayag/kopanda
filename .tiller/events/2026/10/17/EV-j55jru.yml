@@ -1,0 +1,13 @@
+id: EV-j55jru
+type: check.tweak
+at: 2026-10-17T17:26:49.682833Z
+contributor: allen
+command: check tweak TW-3tfybs
+targets:
+    - TW-3tfybs
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/sidecar-progress-memo/tweak.yml

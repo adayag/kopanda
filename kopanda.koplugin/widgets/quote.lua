@@ -1,6 +1,8 @@
 -- The quote of the day: one entry of the quote source a day, changing at local midnight, drawn
 -- in curly quotes with no attribution in at most four lines, a longer text ending in an
 -- ellipsis. Editorial draws it between hairline rules (Main.dc.html:56), Diner in its tile.
+-- Module state: the memo of the text box last composed, which every build of the day draws.
+local Device = require("device")
 local Font = require("ui/font")
 local Fonts = require("fonts")
 local Geom = require("ui/geometry")
@@ -48,11 +50,67 @@ function Quote.index(t)
     return local_days(t) % count + 1
 end
 
--- The text box (self[1], self.text_box) at self.text_x, self.text_y inside its chrome: rules
--- across the top and bottom, or a tile with a hard shadow.
+-- The text box last composed, as { key, box, holders }. key is what the box is drawn from, all
+-- fixed for a day: the text; the face's hash, which holds its file and scaled size
+-- (frontend/ui/font.lua:286-288); the text width; the look and variant, which fix the colours and
+-- line height; and whether the screen renders colour, which picks the box's buffer type
+-- (frontend/ui/widget/textboxwidget.lua:853-860). holders counts the quotes built on the box that
+-- haven't let it go. A box the memo has moved on from is freed when its last holder lets go, so
+-- the memo holds one box and a quote still shown never paints a freed one.
+local memo
+
+local function same(a, b)
+    for name, value in pairs(a) do
+        if b[name] ~= value then
+            return false
+        end
+    end
+    return true
+end
+
+-- The memo's entry for key, its box made by make when the memo holds another, taken by one more
+-- holder.
+local function hold(key, make)
+    if not (memo and same(memo.key, key)) then
+        local old = memo
+        memo = { key = key, box = make(), holders = 0 }
+        if old and old.holders == 0 then
+            old.box:free()
+        end
+    end
+    memo.holders = memo.holders + 1
+    return memo
+end
+
+local function release(entry)
+    entry.holders = entry.holders - 1
+    if entry.holders == 0 and entry ~= memo then
+        entry.box:free()
+    end
+end
+
+-- The text box (self.text_box, the memo's) at self.text_x, self.text_y inside its chrome: rules
+-- across the top and bottom, or a tile with a hard shadow. The box is shared by every quote drawn
+-- from the memo's entry, so it is held outside the container's list, which WidgetContainer's free
+-- and event propagation walk (frontend/ui/widget/container/widgetcontainer.lua:110-117, :80-89):
+-- a TextBoxWidget frees itself on the CloseWidget that UIManager:close sends
+-- (frontend/ui/widget/textboxwidget.lua:1280-1283, frontend/ui/uimanager.lua:300).
 local QuoteBox = WidgetContainer:extend{
     name = "kopanda_quote",
 }
+
+-- Lets go of the memo's box, once, on free or on close.
+function QuoteBox:free()
+    local held = self.held
+    if held then
+        self.held = nil
+        release(held)
+    end
+end
+
+function QuoteBox:onCloseWidget()
+    self:free()
+end
 
 function QuoteBox:paintTo(bb, x, y)
     local w, h = self.dimen.w, self.dimen.h
@@ -115,24 +173,35 @@ local function compose(width, ctx)
 
     -- TextBoxWidget's line is (1 + line_height) em, rounded (frontend/ui/widget/textboxwidget.lua:151).
     local line_px = Math.round((1 + style.line_height) * face.size)
-    local text_box = TextBoxWidget:new{
-        text = "“" .. list[index].text .. "”",
-        face = face,
+    local text = "“" .. list[index].text .. "”"
+    local key = {
+        text = text,
+        face = face.hash,
         width = text_w,
-        line_height = style.line_height,
-        fgcolor = color(style.color),
-        bgcolor = chrome.fill_color or color("paper"),
-        height = LINES * line_px,
-        height_adjust = true,
-        height_overflow_show_ellipsis = true,
+        look = look,
+        variant = ctx.variant,
+        color = Device.screen:isColorEnabled(),
     }
+    local held = hold(key, function()
+        return TextBoxWidget:new{
+            text = text,
+            face = face,
+            width = text_w,
+            line_height = style.line_height,
+            fgcolor = color(style.color),
+            bgcolor = chrome.fill_color or color("paper"),
+            height = LINES * line_px,
+            height_adjust = true,
+            height_overflow_show_ellipsis = true,
+        }
+    end)
     return QuoteBox:new{
-        dimen = Geom:new{ w = width, h = text_box:getSize().h + extra_h },
+        dimen = Geom:new{ w = width, h = held.box:getSize().h + extra_h },
         chrome = chrome,
-        text_box = text_box,
+        text_box = held.box,
+        held = held,
         text_x = text_x,
         text_y = text_y,
-        text_box,
     }
 end
 

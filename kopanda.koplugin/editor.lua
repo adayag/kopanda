@@ -349,6 +349,18 @@ function Editor:refresh()
     end
 end
 
+-- The home under the editor is never painted (covers_fullscreen), so an editor's change defers
+-- the home's refresh (Home:defer_refresh) and the close runs it, once. CloseWidget comes before
+-- UIManager:close takes the editor off the stack and queues its "full" refresh
+-- (frontend/ui/uimanager.lua:300, :308-354), which the home's "ui" one, queued by its setDirty
+-- (:740), merges into (:1266-1281). home is required here: its gestures reach the menus that open the editor.
+local function run_deferred_home_refresh()
+    local Home = require("home")
+    if Home.shown then
+        Home.shown:run_deferred_refresh()
+    end
+end
+
 function Editor:onCloseWidget()
     if Editor.shown == self then
         Editor.shown = nil
@@ -357,6 +369,10 @@ function Editor:onCloseWidget()
     self.frame = nil
     if frame then
         frame:free()
+    end
+    local ok, err = pcall(run_deferred_home_refresh)
+    if not ok then
+        logger.err("KoPanda: the home could not catch up after the editor:", err)
     end
 end
 
