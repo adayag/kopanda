@@ -116,7 +116,8 @@ end
 
 -- The home's gestures, in order, each step stopping at the first that consumes: its own swipe
 -- up; a tap or a hold in the nav bar's band, which the bar takes (it runs the tapped tab; a hold
--- runs nothing), before anything beneath can, Gestures' bottom corners included; the file
+-- on Settings opens the quick-settings sheet, any other hold runs nothing), before anything
+-- beneath can, Gestures' bottom corners included; the file
 -- manager's menu zones (top-zone tap and swipe down, by KOReader's own rules,
 -- filemanagermenu.lua:71-124, :1102-1114); a page swipe, consumed since there is nothing to
 -- page; the zones registered on the file manager itself, the Gestures plugin's among them

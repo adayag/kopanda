@@ -1,0 +1,13 @@
+id: EV-mlaei0
+type: check.task
+at: 2026-10-17T06:50:03.71148Z
+contributor: allen
+command: check task T-czph2w
+targets:
+    - T-czph2w
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/settings-hold/task.yml

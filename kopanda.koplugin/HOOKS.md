@@ -1418,10 +1418,12 @@ guard (`sheet.lua`).
   (`DTAP_ZONE_TOP_RIGHT`, `defaults.lua:67`: x from 1106 and y under 210 on the Colorsoft) covers
   the right end of both looks' clock, so a hold there refreshes the hidden file chooser and opens
   no sheet.
-- A hold in the nav bar's band is the bar's and runs nothing, before the zones on the file
-  manager (gestures under the home, above): Gestures' bottom hold corners
-  (`hold_bottom_left_corner`, `hold_bottom_right_corner`, `plugins/gestures.koplugin/main.lua:1124-1139`)
-  don't fire there, and neither a slot's hold nor the home sheet runs.
+- A hold in the nav bar's band is the bar's, before the zones on the file manager (gestures
+  under the home, above): Gestures' bottom hold corners (`hold_bottom_left_corner`,
+  `hold_bottom_right_corner`, `plugins/gestures.koplugin/main.lua:1124-1139`) don't fire there,
+  and neither a slot's hold nor the home sheet runs. A hold on the Settings tab opens the
+  quick-settings sheet over the home, and over the bare file browser through the bar's own
+  `ges_events`; a hold anywhere else on the bar runs nothing.
 - The home sheet's Sleep row is the dispatcher's `suspend` (`frontend/dispatcher.lua:94`, listed
   only with `Device:canSuspend()`), run through `LauncherEntries.run` and the dispatch bridge as
   the launcher's action entries are: its `RequestSuspend` reaches the file manager's
