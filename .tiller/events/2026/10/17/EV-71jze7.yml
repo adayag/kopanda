@@ -1,0 +1,14 @@
+id: EV-71jze7
+type: add.task
+at: 2026-10-17T03:59:41.854556Z
+contributor: allen
+command: add task library/context-menu/goldens
+targets:
+    - T-512xrc
+after:
+    feature: F-l0kw8m
+    key: library/context-menu/goldens
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/goldens/task.md
+    - path: .tiller/epics/library/features/context-menu/tasks/goldens/task.yml

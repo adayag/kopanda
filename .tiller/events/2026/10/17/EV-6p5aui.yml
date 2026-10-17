@@ -1,0 +1,14 @@
+id: EV-6p5aui
+type: sync.bug
+at: 2026-10-17T05:22:53.433955Z
+contributor: allen
+command: sync bug B-mobbtn
+targets:
+    - B-mobbtn
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/bugs/edit-layout-quote-day/bug.yml

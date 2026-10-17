@@ -1,0 +1,16 @@
+id: EV-wfumlg
+type: submit.task
+at: 2026-10-17T05:34:59.849109Z
+contributor: allen
+command: submit task T-n6wve0
+targets:
+    - T-n6wve0
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/bars/quick-settings/controls
+        head: git:a692731
+    status: in_review
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/controls/task.yml

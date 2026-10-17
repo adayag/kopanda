@@ -1,0 +1,14 @@
+id: EV-pavx3z
+type: add.task
+at: 2026-10-17T03:59:41.754543Z
+contributor: allen
+command: add task library/context-menu/space-sheet
+targets:
+    - T-ivn2lk
+after:
+    feature: F-l0kw8m
+    key: library/context-menu/space-sheet
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/space-sheet/task.md
+    - path: .tiller/epics/library/features/context-menu/tasks/space-sheet/task.yml

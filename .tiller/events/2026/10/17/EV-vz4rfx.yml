@@ -1,0 +1,14 @@
+id: EV-vz4rfx
+type: add.task
+at: 2026-10-17T03:59:41.42096Z
+contributor: allen
+command: add task library/context-menu/book-sheet
+targets:
+    - T-1rl35j
+after:
+    feature: F-l0kw8m
+    key: library/context-menu/book-sheet
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/book-sheet/task.md
+    - path: .tiller/epics/library/features/context-menu/tasks/book-sheet/task.yml
