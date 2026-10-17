@@ -176,6 +176,33 @@ describe("the library's kept listing", function()
         assert.same(tile_ids(direct), tile_ids(library))
     end)
 
+    it("opens a rebuilt file book's sidecar once for its record and its progress", function()
+        local DocSettings = require("docsettings")
+        local library = show()
+        local record = library.tiles[1].record
+        local sdr = DocSettings:getSidecarDir(record.path, "doc")
+        local side = sdr .. "/" .. DocSettings.getSidecarFilename(record.path)
+        lfs.mkdir(sdr)
+        local f = assert(io.open(side, "wb"))
+        f:write('return { doc_props = { title = "Sidecar" }, percent_finished = 0.4 }')
+        f:close()
+        local open, opened = DocSettings.openSettingsFile, 0
+        DocSettings.openSettingsFile = function(...)
+            opened = opened + 1
+            return open(...)
+        end
+        finally(function()
+            DocSettings.openSettingsFile = open
+            os.remove(side)
+            os.remove(sdr)
+        end)
+        Books.reset()
+        assert.equals(1, LibraryCovers.rebuild_tiles(library, { [record.id] = true }, "the spec's rebuild"))
+        assert.equals(1, opened)
+        assert.equals("Book 01", library.tiles[1].record.title)
+        assert.equals(0.4, library.kept.seen[library.tiles[1].record].percent)
+    end)
+
     it("sorts with a tile's record read again on the next build, without listing", function()
         local library = show()
         local first = library.tiles[1].record
@@ -185,8 +212,10 @@ describe("the library's kept listing", function()
             fresh[k] = v
         end
         fresh.title = "Zebra Stripes"
-        Books.get = function(id)
-            return id == fresh.id and fresh or nil
+        Books.with_progress = function(path)
+            if path == fresh.path then
+                return fresh, { status = "new" }
+            end
         end
         assert.equals(1, LibraryCovers.rebuild_tiles(library, { [fresh.id] = true }, "the spec's rebuild"))
         assert.equals("Zebra Stripes", library.tiles[1].record.title)
@@ -241,7 +270,7 @@ describe("the library's kept listing", function()
             end
             return read(book)
         end
-        Books.get = function()
+        Books.with_progress = function()
             return nil
         end
         assert.equals(1, LibraryCovers.rebuild_tiles(library, { [record.id] = true }, "the spec's rebuild"))
