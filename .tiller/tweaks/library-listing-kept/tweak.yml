@@ -1,7 +1,7 @@
 id: TW-cypagc
 key: tweaks/library-listing-kept
 title: A library page turn re-lists the folder
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,7 @@ accepted_against:
         observed_at: 2026-10-17T16:06:07.196066Z
 branch: tiller/tweaks/library-listing-kept
 pr: 42
+done_basis: ancestry
 gates:
     build:
         required: true

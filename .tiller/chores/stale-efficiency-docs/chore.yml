@@ -1,7 +1,7 @@
 id: CH-au9w25
 key: chores/stale-efficiency-docs
 title: Comments and test names left stale by the efficiency tweaks
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         observed_at: 2026-10-17T16:06:09.962911Z
 branch: tiller/chores/stale-efficiency-docs
 pr: 42
+done_basis: ancestry
 gates:
     build:
         required: true

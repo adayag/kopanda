@@ -1,7 +1,7 @@
 id: TW-skxh9m
 key: tweaks/library-leave-unchanged
 title: Every library close rewrites the state file even when unchanged
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,7 @@ accepted_against:
         observed_at: 2026-10-17T16:06:07.978781Z
 branch: tiller/tweaks/library-leave-unchanged
 pr: 42
+done_basis: ancestry
 gates:
     build:
         required: true

@@ -1,7 +1,7 @@
 id: B-e2tfz0
 key: bugs/chapter-write-retry
 title: A failed chapter write is not retried on the next close
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,7 @@ accepted_against:
         observed_at: 2026-10-17T16:06:09.46438Z
 branch: tiller/bugs/chapter-write-retry
 pr: 42
+done_basis: ancestry
 gates:
     build:
         required: true

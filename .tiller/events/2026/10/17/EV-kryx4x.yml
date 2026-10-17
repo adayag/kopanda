@@ -1,0 +1,14 @@
+id: EV-kryx4x
+type: sync.bug
+at: 2026-10-17T17:53:55.053743Z
+contributor: allen
+command: sync bug B-0vcqvc
+targets:
+    - B-0vcqvc
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/bugs/entry-picker-plugins-unreachable/bug.yml

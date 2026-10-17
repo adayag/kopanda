@@ -1,0 +1,14 @@
+id: EV-zf5128
+type: sync.chore
+at: 2026-10-17T17:53:55.252033Z
+contributor: allen
+command: sync chore CH-au9w25
+targets:
+    - CH-au9w25
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/chores/stale-efficiency-docs/chore.yml

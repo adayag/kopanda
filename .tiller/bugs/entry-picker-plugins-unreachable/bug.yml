@@ -1,7 +1,7 @@
 id: B-0vcqvc
 key: bugs/entry-picker-plugins-unreachable
 title: The entry picker's Plugin sheet shows 13 of 28 plugins and the rest can't be picked
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,7 @@ accepted_against:
         observed_at: 2026-10-17T16:06:09.704905Z
 branch: tiller/bugs/entry-picker-plugins-unreachable
 pr: 42
+done_basis: ancestry
 gates:
     build:
         required: true
