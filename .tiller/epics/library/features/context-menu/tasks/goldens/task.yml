@@ -1,0 +1,10 @@
+id: T-512xrc
+key: library/context-menu/goldens
+title: Hold-sheet goldens on the Colorsoft, the paint budget and the device check
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-lnzmw0
+    - T-ivn2lk

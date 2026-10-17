@@ -381,16 +381,16 @@ function Swatch:close()
     close_swatch(self)
 end
 
--- The dev loop's settled signal after the first paint, unless that paint failed.
+-- The dev loop's settled signal after the first paint, unless that paint failed. paint_ms runs
+-- from the show to the end of that paint.
 local function settle(swatch)
     if swatch.paint_failed then
         return
     end
     local ok, err = pcall(function()
-        local now = time.monotonic()
         UIManager.event_hook:execute("KoPandaSettled", {
             screen = "swatch",
-            paint_ms = time.to_ms((swatch.painted_at or now) - swatch.started),
+            paint_ms = time.to_ms(swatch.painted_at - swatch.started),
         })
     end)
     if not ok then
@@ -403,12 +403,12 @@ end
 function Swatch.show()
     local swatch
     local ok, err = pcall(function()
-        swatch = Swatch:new{ started = time.monotonic() }
+        swatch = Swatch:new{ started = time.monotonic(), settle_pending = true }
         UIManager:show(swatch, "full")
-        -- Lands past the next repaint, so the signal follows the paint.
-        UIManager:tickAfterNext(function()
-            settle(swatch)
-        end)
+        -- The swatch settles from its first paint; nothing is scheduled until then. A
+        -- tickAfterNext here would land before the paint whenever the clock hasn't moved since
+        -- the UI loop's pass began, since UIManager runs its inner nextTick in that same pass
+        -- (frontend/ui/uimanager.lua:447-456, 1081-1104, 1537-1564).
     end)
     if not ok then
         logger.err("KoPanda: could not show the swatch screen:", err)
@@ -419,7 +419,7 @@ function Swatch.show()
 end
 
 -- A widget can't be closed from inside the repaint, so a failed paint closes the swatch from
--- the next tick.
+-- the next tick. The first paint settles from the next tick, which runs after this repaint.
 function Swatch:paintTo(bb, x, y)
     local ok, err = pcall(InputContainer.paintTo, self, bb, x, y)
     if ok and not self.painted_at then
@@ -430,6 +430,12 @@ function Swatch:paintTo(bb, x, y)
         logger.err("KoPanda: the swatch screen failed to paint:", err)
         UIManager:nextTick(function()
             close_swatch(self)
+        end)
+    end
+    if self.settle_pending then
+        self.settle_pending = nil
+        UIManager:nextTick(function()
+            settle(self)
         end)
     end
 end
