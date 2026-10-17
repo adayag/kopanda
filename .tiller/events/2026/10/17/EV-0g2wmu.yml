@@ -1,0 +1,13 @@
+id: EV-0g2wmu
+type: check.task
+at: 2026-10-17T05:34:52.43153Z
+contributor: allen
+command: check task T-2x7tk6
+targets:
+    - T-2x7tk6
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/launcher-target/task.yml

@@ -1,7 +1,7 @@
 id: T-2x7tk6
 key: bars/quick-settings/launcher-target
 title: Quick settings as a KoPanda launcher target with its registry icon, schema and studio catalog
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -25,24 +25,24 @@ gates:
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-17T05:26:41.257499Z
+        run_at: 2026-10-17T05:31:31.644356Z
         against:
             kind: git_commit
-            value: git:33d8f37
-            observed_at: 2026-10-17T05:26:41.25749Z
+            value: git:4e298c9
+            observed_at: 2026-10-17T05:31:31.644352Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/build-33d8f37-out-9818d803527a59a1de001c324c1c19f33af08832cafa3300536b6da73a8180c2.txt
+              ref: artifacts/tiller/gates/build-4e298c9-out-3e071030128e578e0481055754b1f3c2a9dfef10f34167e7ce85ed348cade95b.txt
     tests:
         required: true
         kind: command
-        status: fail
+        status: pass
         run_by: allen
-        run_at: 2026-10-17T05:26:41.257499Z
+        run_at: 2026-10-17T05:31:31.644356Z
         against:
             kind: git_commit
-            value: git:33d8f37
-            observed_at: 2026-10-17T05:26:41.25749Z
+            value: git:4e298c9
+            observed_at: 2026-10-17T05:31:31.644352Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/tests-33d8f37-out-633f94a6c12cf7fcb6d337f17ab22ef17b8c427436194d8af36509498ae2fc15.txt
+              ref: artifacts/tiller/gates/tests-4e298c9-out-61d0933f448c94d9d71ef17a17ec94b4c2e63465831e2a112b30cfd215be6ba4.txt
