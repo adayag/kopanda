@@ -421,6 +421,8 @@ local function dispatch(bar, ges)
         end
         return true
     elseif ges.ges == "hold" then
+        -- A new hold forgets one whose release went elsewhere, as IconButton does (iconbutton.lua:146-150).
+        bar.hold_taken = false
         if area ~= "title" then
             return false
         end

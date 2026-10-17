@@ -415,37 +415,79 @@ describe("the title bar", function()
             harness.at_colorsoft(function()
                 local logged = spy(logger, "err")
                 local fm = harness.show_fm(lib)
-                for i, id in ipairs(Looks.ids()) do
-                    local bar = bar_for(id, fm)
-                    bar.state = function()
-                        error("boom in state")
-                    end
-                    local bb = paint(bar)
-                    bar:paintTo(bb, 0, 0)
-                    assert.equals(i, logged_with(logged, "boom in state"), id)
-                    local look = Looks.get(id)
-                    local palette = Looks.palette(look, Looks.variant())
-                    local fill = Looks.color(palette[look.title_bar.fill_color]):getColorRGB32()
-                    local edge_color = Looks.color(palette[look.title_bar.edge_color]):getColorRGB32()
-                    local size = bar:getSize()
-                    local edge = scale(look.title_bar.edge_width)
-                    local strays = 0
-                    for y = 0, size.h - edge - 1, 3 do
-                        for x = 0, size.w - 1, 3 do
-                            local c = bb:getPixel(x, y):getColorRGB32()
-                            if c:getR() ~= fill:getR() or c:getG() ~= fill:getG() or c:getB() ~= fill:getB() then
-                                strays = strays + 1
+                local current = Looks.variant
+                spy(Looks, "variant")
+                -- The variant as set, night, and a variant read that raises, which paints by day.
+                local modes = {
+                    { "as set", current, current() },
+                    { "night", function() return "night" end, "night" },
+                    { "raising", function() error("boom in variant") end, "day" },
+                }
+                local n = 0
+                for _, mode in ipairs(modes) do
+                    Looks.variant = mode[2]
+                    for _, look_id in ipairs(Looks.ids()) do
+                        n = n + 1
+                        local id = look_id .. " " .. mode[1]
+                        local bar = bar_for(look_id, fm)
+                        bar.state = function()
+                            error("boom in state")
+                        end
+                        local bb = paint(bar)
+                        bar:paintTo(bb, 0, 0)
+                        assert.equals(n, logged_with(logged, "boom in state"), id)
+                        local look = Looks.get(look_id)
+                        local palette = Looks.palette(look, mode[3])
+                        local fill = Looks.color(palette[look.title_bar.fill_color]):getColorRGB32()
+                        local edge_color = Looks.color(palette[look.title_bar.edge_color]):getColorRGB32()
+                        local size = bar:getSize()
+                        local edge = scale(look.title_bar.edge_width)
+                        local strays = 0
+                        for y = 0, size.h - edge - 1, 3 do
+                            for x = 0, size.w - 1, 3 do
+                                local c = bb:getPixel(x, y):getColorRGB32()
+                                if c:getR() ~= fill:getR() or c:getG() ~= fill:getG() or c:getB() ~= fill:getB() then
+                                    strays = strays + 1
+                                end
                             end
                         end
+                        assert.equals(0, strays, id .. ": pixels above the edge that aren't the fill")
+                        local c = bb:getPixel(math.floor(size.w / 2), size.h - 1):getColorRGB32()
+                        assert.same({ edge_color:getR(), edge_color:getG(), edge_color:getB() },
+                            { c:getR(), c:getG(), c:getB() }, id .. " edge")
+                        bar:free()
+                        bb:free()
                     end
-                    assert.equals(0, strays, id .. ": pixels above the edge that aren't the fill")
-                    local c = bb:getPixel(math.floor(size.w / 2), size.h - 1):getColorRGB32()
-                    assert.same({ edge_color:getR(), edge_color:getG(), edge_color:getB() },
-                        { c:getR(), c:getG(), c:getB() }, id .. " edge")
-                    bar:free()
-                    bb:free()
                 end
             end)
+        end)
+
+        it("rebuilds when the variant changes", function()
+            local fm = harness.show_fm(lib)
+            local variant = "day"
+            spy(Looks, "variant")
+            Looks.variant = function()
+                return variant
+            end
+            local bar = bar_for("diner", fm)
+            local builds = 0
+            local build = bar.build
+            bar.build = function(...)
+                builds = builds + 1
+                return build(...)
+            end
+            local bb = paint(bar)
+            assert.equals(1, builds)
+            variant = "night"
+            bar:paintTo(bb, 0, 0)
+            assert.equals(2, builds)
+            assert.equals("night", bar.built.state.variant)
+            local look = Looks.get("diner")
+            local fill = Looks.color(Looks.palette(look, "night")[look.title_bar.fill_color]):getColorRGB32()
+            local c = bb:getPixel(0, bar:getSize().h - scale(look.title_bar.edge_width) - 1):getColorRGB32()
+            assert.same({ fill:getR(), fill:getG(), fill:getB() }, { c:getR(), c:getG(), c:getB() })
+            bar:free()
+            bb:free()
         end)
 
         it("logs a raising paint once and raises nothing", function()
@@ -488,7 +530,23 @@ describe("the title bar", function()
                     assert.is_true(near, ("%s %s %s: %s at %d,%d is %d,%d,%d"):format(
                         id, variant, what, role, x, y, got[1], got[2], got[3]))
                 end
-                fn(bar, holds)
+                -- How many pixels of the box at (x, y), w by h, hold role's colour as KOReader blits
+                -- text in it: its grey (base/ffi/blitbuffer.lua:1405-1407).
+                local function count(role, x, y, w, h)
+                    local grey = Looks.color(palette[role]):getColor8().a
+                    local want, n = { grey, grey, grey }, 0
+                    for py = y, y + h - 1 do
+                        for px = x, x + w - 1 do
+                            local c = bb:getPixel(px, py):getColorRGB32()
+                            if math.abs(c:getR() - want[1]) <= 2 and math.abs(c:getG() - want[2]) <= 2
+                                and math.abs(c:getB() - want[3]) <= 2 then
+                                n = n + 1
+                            end
+                        end
+                    end
+                    return n
+                end
+                fn(bar, holds, count)
                 bar:free()
                 bb:free()
             end)
@@ -523,8 +581,8 @@ describe("the title bar", function()
 
         it("draws Diner's mustard band over a 4 px ink edge and the chips on paper and pink, outlined", function()
             for _, variant in ipairs({ "day", "night", "grey" }) do
-                painted("diner", variant, function(bar, holds)
-                    local size, edge, outline = bar:getSize(), scale(4), scale(2)
+                painted("diner", variant, function(bar, holds, count)
+                    local size, edge, outline, pad_x, pad_y = bar:getSize(), scale(4), scale(2), scale(10), scale(4)
                     for _, x in ipairs({ 0, math.floor(size.w / 2), size.w - 1 }) do
                         holds("ink", x, size.h - 1, "edge bottom")
                         holds("ink", x, size.h - edge, "edge top")
@@ -542,9 +600,45 @@ describe("the title bar", function()
                         end
                         holds(fill, box.x + outline, box.y + outline, name .. " fill, top left")
                         holds(fill, right - outline, bottom - outline, name .. " fill, bottom right")
+                        -- The label, over the fill inside the outline and the padding, in its part's colour.
+                        local role = Looks.get("diner").type["title_bar_" .. name].color
+                        local inked = count(role, box.x + outline + pad_x, box.y + outline + pad_y,
+                            box.w - 2 * (outline + pad_x), box.h - 2 * (outline + pad_y))
+                        assert.is_true(inked >= 20, ("diner %s %s label: %d pixels of %s"):format(
+                            variant, name, inked, role))
                     end
                 end)
             end
+        end)
+    end)
+
+    describe("geometry", function()
+        it("sets the column and the right group on the content's bottom, the group at the side padding", function()
+            harness.at_colorsoft(function()
+                local fm = harness.show_fm(lib)
+                for _, id in ipairs(Looks.ids()) do
+                    local t = Looks.get(id).title_bar
+                    local bar = bar_for(id, fm)
+                    local bb = paint(bar)
+                    local b, size = bar.boxes, bar:getSize()
+                    local side, gap = scale(t.padding.side), scale(t.picker_gap)
+                    local bottom = size.h - scale(t.edge_width) - scale(t.padding.bottom)
+                    assert.equals(bottom, b.title.y + b.title.h, id .. " title bottom")
+                    assert.equals(b.title.y, b.count.y + b.count.h + scale(t.line_gap), id .. " count over title")
+                    assert.is_true(b.count.y >= scale(t.padding.top), id .. " count under the top padding")
+                    assert.same({ side, side }, { b.count.x, b.title.x }, id .. " column at the side padding")
+                    assert.same({ bottom, bottom }, { b.sort.y + b.sort.h, b.status.y + b.status.h },
+                        id .. " pickers' bottom")
+                    assert.equals(b.sort.x + b.sort.w + gap, b.status.x, id .. " sort to status")
+                    assert.equals(b.status.x + b.status.w + gap, b.icon.x, id .. " status to icon")
+                    assert.same({ scale(t.icon_size), scale(t.icon_size) }, { b.icon.w, b.icon.h }, id .. " icon size")
+                    assert.is_true(math.abs((2 * b.icon.y + b.icon.h) - (2 * b.sort.y + b.sort.h)) <= 1,
+                        id .. " icon centred on the picker row")
+                    assert.equals(size.w - side, b.icon.x + b.icon.w, id .. " icon at the side padding")
+                    bar:free()
+                    bb:free()
+                end
+            end)
         end)
     end)
 
@@ -586,6 +680,39 @@ describe("the title bar", function()
                 bar:free()
                 bb:free()
             end
+        end)
+
+        it("meets the next area half a picker gap left of each picker and the plus", function()
+            harness.at_colorsoft(function()
+                local fm = harness.show_fm(lib)
+                for _, id in ipairs(Looks.ids()) do
+                    local bar, calls = bar_for(id, fm)
+                    local bb = paint(bar)
+                    local b = bar.boxes
+                    local half = math.floor(scale(Looks.get(id).title_bar.picker_gap) / 2)
+                    local y = bar.dimen.y + math.floor(bar.dimen.h / 2)
+                    assert.is_true(half > 0, id)
+                    local function tap(x)
+                        return bar:handle(harness.gesture("tap", bar.dimen.x + x, y))
+                    end
+                    assert.is_false(tap(b.sort.x - half - 1), id .. " left of the sort's area")
+                    assert.same({ sort = 0, status = 0, plus = 0, hold = 0 }, calls, id)
+                    for _, case in ipairs({
+                        { b.sort.x - half, "sort" },
+                        { b.status.x - half - 1, "sort" },
+                        { b.status.x - half, "status" },
+                        { b.icon.x - half - 1, "status" },
+                        { b.icon.x - half, "plus" },
+                    }) do
+                        local before = calls[case[2]]
+                        assert.is_true(tap(case[1]), id .. " " .. case[2] .. " at " .. case[1])
+                        assert.equals(before + 1, calls[case[2]], id .. " " .. case[2] .. " at " .. case[1])
+                    end
+                    assert.same({ sort = 2, status = 2, plus = 1, hold = 0 }, calls, id)
+                    bar:free()
+                    bb:free()
+                end
+            end)
         end)
 
         it("reaches handle through the listener, at the bar's painted place", function()
@@ -647,6 +774,21 @@ describe("the title bar", function()
                     assert.is_false(bar:handle(harness.gesture("hold_release", x, y)), area)
                 end
                 assert.same({ sort = 0, status = 0, plus = 0, hold = 0 }, calls)
+                bar:free()
+                bb:free()
+            end)
+
+            it("forgets a taken hold whose release went elsewhere, so a later hold's release passes on", function()
+                -- On the device the folder menu the hold opens is on top and takes its release
+                -- (frontend/ui/uimanager.lua:988), so the bar never sees it.
+                local fm = harness.show_fm(lib)
+                local bar, calls = bar_for("diner", fm)
+                local bb = paint(bar)
+                assert.is_true(bar:handle(harness.gesture("hold", box_centre(bar, "title"))))
+                local x, y = box_centre(bar, "sort")
+                assert.is_false(bar:handle(harness.gesture("hold", x, y)))
+                assert.is_false(bar:handle(harness.gesture("hold_release", x, y)))
+                assert.same({ sort = 0, status = 0, plus = 0, hold = 1 }, calls)
                 bar:free()
                 bb:free()
             end)
