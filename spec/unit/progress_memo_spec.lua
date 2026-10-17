@@ -134,4 +134,23 @@ describe("the progress memo", function()
         build()
         assert.equals(0, #opened)
     end)
+
+    it("keeps a sidecar's title for the next read but not its description", function()
+        local MB = 4
+        local path = books(lib, 1, ('{ doc_props = { title = "Kept", description = "%s" } }')
+            :format(("x"):rep(MB * 1024 * 1024)))[1]
+        package.loaded["bookinfomanager"] = { getBookInfo = function() end }
+        -- LuaJIT halves its temporary string buffer, grown by the rep above, on every full
+        -- collection (lj_gc.c:651): several first, so the measure below is the memo's alone.
+        for _ = 1, 6 do
+            collectgarbage()
+        end
+        local before = collectgarbage("count")
+        assert.equals("Kept", Books.with_progress(path).title)
+        collectgarbage()
+        collectgarbage()
+        assert.is_true(collectgarbage("count") - before < MB * 1024 / 4)
+        assert.equals("Kept", Books.with_progress(path).title)
+        assert.equals(1, #opened)
+    end)
 end)
