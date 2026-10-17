@@ -350,32 +350,99 @@ describe("the Series window", function()
             assert.same({ kind = "series", name = "Series 01" }, screen.showing)
         end)
 
-        -- Diner's five series rows nearly fill the room above the pager at the Colorsoft (feature "The
-        -- fit"); the last row's hard shadow reaches past its box, and the pager, added after the rows,
-        -- paints over it, so the shadow never covers the pager's buttons.
-        it("paints the pager over the last row's shadow at the Colorsoft", function()
-            fixture.install(shelf(6, 0))
-            assert.is_true(Settings.set("look", "diner"))
+        -- Each list's page ends shelf.list.pager_gap above the pager at the Colorsoft, its last row's
+        -- shadow inside the gap (feature "The fit"): five series rows, and three of one series' books with
+        -- the marked one, its deeper shadow, last.
+        it("keeps the pager gap below the last row and its shadow at the Colorsoft, in both looks", function()
+            local records, progress = shelf(6, 0)
+            local long = fixture.series("Long", 6)
+            progress[long[1].id] = { status = "complete", percent = 1 }
+            progress[long[2].id] = { status = "complete", percent = 1 }
+            for _, record in ipairs(long) do
+                records[#records + 1] = record
+            end
+            fixture.install(records, progress)
             harness.at_colorsoft(function()
-                local screen = SeriesScreen.show{}
-                assert.equals(5, #screen.rows)
-                local frame = screen[1]
-                local last, prev_index = screen.rows[5], nil
-                local last_index
-                for i, child in ipairs(frame) do
-                    local place = frame.places[i]
-                    if child == last.widget then
-                        last_index = i
-                    elseif place.x == screen.pager.prev.rect.x and place.y == screen.pager.prev.rect.y then
-                        prev_index = i
+                each_look(function(id)
+                    local screen = SeriesScreen.show{}
+                    local gap = Screen:scaleBySize(screen.ctx.look.shelf.list.pager_gap)
+                    for _, case in ipairs({ { LIST, 5 }, { { kind = "series", name = "Long" }, 3 } }) do
+                        screen:go(case[1], 1)
+                        local where = id .. " " .. case[1].kind
+                        assert.equals(case[2], #screen.rows, where)
+                        local last = screen.rows[#screen.rows]
+                        local foot = last.rect.y + last.rect.h + last.widget.shadow_y
+                        assert.is_true(foot + gap <= screen.pager.prev.rect.y,
+                            ("%s: the last row's foot %d, %d px above the pager at %d"):format(where, foot,
+                                screen.pager.prev.rect.y - foot, screen.pager.prev.rect.y))
                     end
+                    assert.is_true(screen.rows[3].widget.marked, id .. ": the marked book is the page's last")
+                    SeriesScreen.close()
+                end)
+            end)
+        end)
+
+        -- Whatever room a page leaves, each list keeps the gap: on screens from 1500 to 1800 px high, a
+        -- full first page's last row and its shadow end shelf.list.pager_gap above the pager.
+        it("keeps the pager gap on a full page at every screen height, in both looks", function()
+            local records, progress = shelf(12, 0)
+            local long = fixture.series("Long", 12)
+            progress[long[1].id] = { status = "complete", percent = 1 }
+            for _, record in ipairs(long) do
+                records[#records + 1] = record
+            end
+            fixture.install(records, progress)
+            each_look(function(id)
+                for h = 1500, 1800, 5 do
+                    harness.at_screen(1264, h, function()
+                        local screen = SeriesScreen.show{}
+                        local gap = Screen:scaleBySize(screen.ctx.look.shelf.list.pager_gap)
+                        for _, view in ipairs({ LIST, { kind = "series", name = "Long" } }) do
+                            screen:go(view, 1)
+                            assert.is_true(screen.pages >= 2, id)
+                            local last = screen.rows[#screen.rows]
+                            local foot = last.rect.y + last.rect.h + last.widget.shadow_y
+                            assert.is_true(foot + gap <= screen.pager.prev.rect.y,
+                                ("%s %s at %d px: %d px above the pager"):format(id, view.kind, h,
+                                    screen.pager.prev.rect.y - foot))
+                        end
+                        SeriesScreen.close()
+                    end)
                 end
-                assert.is_not_nil(prev_index)
-                assert.is_true(last_index < prev_index, "the pager is painted after the rows")
-                local outline = Screen:scaleBySize(screen.ctx.look.library.pager.outline_width)
-                assert.is_true(last.rect.y + last.rect.h + last.widget.shadow_y <= screen.pager.prev.rect.y + outline,
-                    "the shadow ends within the buttons' top outline")
-                SeriesScreen.close()
+            end)
+        end)
+
+        -- The marked book's shadow, deeper than a row's, stays inside the gap when it ends the page: on
+        -- screens from 1500 to 1800 px high, the books before page 1's last complete, so the last is the
+        -- marked one.
+        it("keeps the pager gap when the marked book ends a full page at every screen height, in both looks",
+            function()
+            local long = fixture.series("Long", 12)
+            local view = { kind = "series", name = "Long" }
+            each_look(function(id)
+                for h = 1500, 1800 do
+                    harness.at_screen(1264, h, function()
+                        fixture.install(long)
+                        local screen = SeriesScreen.show{ view = view }
+                        local n = #screen.rows
+                        SeriesScreen.close()
+                        local progress = {}
+                        for i = 1, n - 1 do
+                            progress[long[i].id] = { status = "complete", percent = 1 }
+                        end
+                        fixture.install(long, progress)
+                        screen = SeriesScreen.show{ view = view }
+                        local where = ("%s at %d px"):format(id, h)
+                        assert.equals(n, #screen.rows, where)
+                        local last = screen.rows[n]
+                        assert.is_true(last.widget.marked, where .. ": the marked book is the page's last")
+                        local gap = Screen:scaleBySize(screen.ctx.look.shelf.list.pager_gap)
+                        local foot = last.rect.y + last.rect.h + last.widget.shadow_y
+                        assert.is_true(foot + gap <= screen.pager.prev.rect.y,
+                            ("%s: %d px above the pager"):format(where, screen.pager.prev.rect.y - foot))
+                        SeriesScreen.close()
+                    end)
+                end
             end)
         end)
     end)

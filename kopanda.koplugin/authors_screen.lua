@@ -86,7 +86,7 @@ end
 
 -- The list's part of the plan: a row per author, each a letter group's member with that group's
 -- cost (ShelfRows.group_cost, the gap between groups in it), paged by whole rows between the header
--- and the pager (D14).
+-- and ShelfRows.pager_reserve above the pager (D14).
 local function plan_list(p, page, w, h, ctx)
     local shelf = ctx.look.shelf
     p.width = w - 2 * scale(shelf.list.side)
@@ -99,6 +99,7 @@ local function plan_list(p, page, w, h, ctx)
         rows[i] = { h = row_h, group = entry.letter, group_cost = cost, entry = entry }
     end
     local available = h - NavBar.height(ctx.look, Screen) - LibraryTiles.pager_height(ctx) - p.top
+        - ShelfRows.pager_reserve("author", ctx)
     p.paging = ShelfOrder.pages(rows, available, 0)
     p.pages = #p.paging
     p.page = math.max(1, math.min(page or 1, p.pages))

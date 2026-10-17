@@ -716,6 +716,7 @@ return {
             padding_top = 22, -- lead: by analogy with SeriesC.dc.html:27
             side = 40, -- lead: by analogy with SeriesC.dc.html:27
             row_gap = 0, -- lead: by analogy with SeriesC.dc.html:27, rows ruled not boxed
+            pager_gap = 14, -- lead: by analogy with Diner's
         },
         row = {
             padding = { x = 0, y = 14 }, -- lead: by analogy with GridA.dc.html's hairline rows

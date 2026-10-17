@@ -593,4 +593,19 @@ function ShelfRows.group_cost(width, ctx)
     return 2 * g.outline - g.author_rule + g.group_rule + scaler(ctx)(ctx.look.shelf.groups.gap)
 end
 
+-- What a list keeps clear between its page's last row of kind ("series", "book" or "author") and the
+-- pager, in device pixels: shelf.list.pager_gap, and below it the deepest shadow a row of that kind
+-- paints past its box (a book row's the marked one's where deeper, an author's its group's).
+function ShelfRows.pager_reserve(kind, ctx)
+    local shelf = ctx.look.shelf
+    local shadow = shelf.row.shadow.y
+    if kind == "book" then
+        shadow = math.max(shadow, shelf.next.shadow.y)
+    elseif kind == "author" then
+        shadow = shelf.group.shadow.y
+    end
+    local scale = scaler(ctx)
+    return scale(shelf.list.pager_gap) + scale(shadow)
+end
+
 return ShelfRows
