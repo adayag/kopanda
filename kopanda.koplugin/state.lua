@@ -54,12 +54,12 @@ local function same(a, b)
     return true
 end
 
--- Stores value under key and writes the file at once, so the value survives a crash.
+-- Stores each { key, value } of list and writes the file once, so the values survive a crash.
 -- Returns true when written, false otherwise. LuaSettings:flush neither creates the directory
 -- nor reports a failed write (frontend/luasettings.lua:270-275, frontend/util.lua:1131-1133),
 -- so the directory is made and checked first, and the file is read back after, a table value
 -- compared key by key.
-function State.set(key, value)
+local function write(list)
     local ok, err = pcall(function()
         if lfs.attributes(dir(), "mode") ~= "directory" then
             lfs.mkdir(dir())
@@ -67,10 +67,16 @@ function State.set(key, value)
         if lfs.attributes(dir(), "mode") ~= "directory" then
             error(dir() .. " is not a directory")
         end
-        open():saveSetting(key, value):flush()
+        local file = open()
+        for _, pair in ipairs(list) do
+            file:saveSetting(pair[1], pair[2])
+        end
+        file:flush()
         local read_ok, data = pcall(dofile, dir() .. "/state.lua")
-        if not (read_ok and type(data) == "table" and same(data[key], value)) then
-            error("the file did not take " .. key)
+        for _, pair in ipairs(list) do
+            if not (read_ok and type(data) == "table" and same(data[pair[1]], pair[2])) then
+                error("the file did not take " .. tostring(pair[1]))
+            end
         end
     end)
     if not ok then
@@ -78,6 +84,25 @@ function State.set(key, value)
         return false
     end
     return true
+end
+
+-- Stores value under key and writes the file at once; a nil value clears the key.
+function State.set(key, value)
+    return write({ { key, value } })
+end
+
+-- Stores every key of values and writes the file once, for keys that change together. A nil
+-- value can't be given here; clear a key with State.set.
+function State.set_many(values)
+    if type(values) ~= "table" then
+        logger.err("KoPanda: could not write the state file: no table of keys:", values)
+        return false
+    end
+    local list = {}
+    for key, value in pairs(values) do
+        list[#list + 1] = { key, value }
+    end
+    return write(list)
 end
 
 return State
