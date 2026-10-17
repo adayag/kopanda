@@ -10,6 +10,7 @@ describe("the quick-settings sheet", function()
     local Blitbuffer = require("ffi/blitbuffer")
     local Device = require("device")
     local Dispatcher = require("dispatcher")
+    local Event = require("ui/event")
     local NetworkMgr = require("ui/network/manager")
     local PluginLoader = require("pluginloader")
     local UIManager = require("ui/uimanager")
@@ -333,12 +334,18 @@ describe("the quick-settings sheet", function()
             end
         end)
 
-        it("reads the battery again when the sheet redraws", function()
+        it("reads the battery again when the sheet redraws after a stay-open tap", function()
+            setting("lock_rotation", false)
             set(powerd, "getCapacity", function() return 84 end)
             QuickSettings.open{}
             assert.equals("battery 84%", sheet_parts(Sheet.shown)[2]:lower())
             set(powerd, "getCapacity", function() return 50 end)
-            Sheet.redraw()
+            -- Rotation lock, the third of the six cells that end the areas.
+            local areas = Sheet.shown.areas
+            local r = areas[#areas - 3].rect
+            UIManager:sendEvent(Event:new("Gesture",
+                harness.gesture("tap", r.x + math.floor(r.w / 2), r.y + math.floor(r.h / 2))))
+            assert.is_true(G_reader_settings:isTrue("lock_rotation"))
             local header = sheet_parts(Sheet.shown)
             assert.equals("battery 50%", header[2]:lower())
         end)

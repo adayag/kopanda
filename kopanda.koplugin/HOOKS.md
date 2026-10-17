@@ -1302,18 +1302,22 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `onTapSheet` and `onHoldSheet` read the gesture's `pos` from their second argument:
   `InputContainer:onGesture` sends `Event:new(eventname, gsseq.args, ev)`
   (`frontend/ui/widget/container/inputcontainer.lua:273-280`).
-- The body's in-place redraw, after a stay-open area's `tap` or `hold`, on a `refresh_on` event or
-  on `Sheet.redraw()`: only while `UIManager:isWidgetShown(sheet)` (`frontend/ui/uimanager.lua:881-888`),
+- The body's in-place redraw, after a stay-open area's `tap` or `hold` or on a `refresh_on` event:
+  only while `UIManager:isWidgetShown(sheet)` (`frontend/ui/uimanager.lua:881-888`),
   it re-lays the panel out and calls `UIManager:setDirty(sheet, "ui", old:combine(new))`
   (`:659`), the `"ui"` refresh `FrontLightWidget:update` asks for its frame
   (`frontend/ui/widget/frontlightwidget.lua:430-437`). `Geom:combine` is `Geom.boundingBox` of
   the two rectangles (`frontend/ui/geometry.lua:151-153`), so a panel that changed height leaves
   nothing stale. Under a KOReader dialog the dirty mark only queues the sheet; `_repaint` paints
-  the dialog over it again (the first entry above).
+  the dialog over it again (the first entry above). When the variant changed since the build,
+  night mode toggled, the redraw only calls `setDirty(sheet, "ui", rect)`: `onToggleNightMode`
+  has marked every window dirty `"full"` (`frontend/device/devicelistener.lua:14-27`), and the
+  sheet's paint lays it out in the new variant, so a Night tap lays the sheet out once.
 - `refresh_on`: each name `N` becomes the sheet's `onN`, the handler an `Event` named `N` calls
   (`frontend/ui/event.lua:32`, `frontend/ui/widget/eventlistener.lua:34-39`). It returns nothing;
   `UIManager:broadcastEvent` offers the event to every window whatever a handler returns
-  (`frontend/ui/uimanager.lua:1042-1061`), so the windows beneath the sheet hear it too.
+  (`frontend/ui/uimanager.lua:1042-1061`), so the windows beneath the sheet hear it too. With
+  the spec's `stale`, the handler redraws only when `stale()` returns true.
 - The settled signal goes from a `nextTick` (`frontend/ui/uimanager.lua:431-433`) that the
   sheet's first good `paintTo` schedules: it runs from the next `_checkTasks`, past that
   `_repaint` (`handleInput` `:1542-1564`). Nothing is scheduled before the paint, so a sheet
@@ -1405,14 +1409,23 @@ guard (`sheet.lua`).
   `queryNetworkState()` caches `is_wifi_on` and `is_connected` (`:651-654`); fully connected,
   `toggleWifiOff(cb, true)` (`:447-457`), whose `disableWifi` broadcasts `NetworkDisconnecting`
   (`:413`), then `NetworkDisconnected` and `cb` once the radio is down (`:405-411`); on but not
-  connected, `promptWifi(cb, false, true)` (`:490`); else `toggleWifiOn(cb, false, true)`
-  (`:433-445`), which broadcasts `NetworkConnecting` (`:74`) and, once the connectivity check
-  passes, `NetworkConnected` before `cb` (`:96-116`). A failed connection broadcasts nothing
-  (`:44-63`, comment `:56`). `cb` is `Sheet.redraw`; the sheet also redraws on `NetworkConnected`
-  and `NetworkDisconnected` (`refresh_on`), returning nothing, so the home hears them too. The
-  emulator's fake flips `emulator_fake_wifi_connected` at once and broadcasts after `scheduleIn(2)`
-  (`frontend/device/sdl/device.lua:478-500`); on the Kindle `turnOnWifi` may show the network list
-  over the sheet (`frontend/device/kindle/device.lua:424-447`).
+  connected, `promptWifi(cb, false, true)` (`:490`), whose choices hand `cb` to `toggleWifiOff` or
+  `toggleWifiOn` (`:506-513`); else `toggleWifiOn(cb, false, true)` (`:433-445`), which broadcasts
+  `NetworkConnecting` (`:74`) and, once the connectivity check passes, `NetworkConnected` before
+  `cb` (`:96-116`). A failed connection broadcasts nothing (`:44-63`, comment `:56`): `enableWifi`'s
+  abort (`:375-378`) or the check giving up (`:84-93`). So `cb` runs only in the same pass as, and
+  just after, a `NetworkConnected` (`:109`, `:116`) or `NetworkDisconnected` (`:408`, `:410`), and
+  the sheet passes `nil`: it redraws on those two events (`refresh_on`) when `stale` finds the
+  radio reading otherwise than at its last layout, returning nothing, so the home hears them too.
+  The tap's own redraw reads the radio just after the toggle, so a toggle that broadcasts nothing,
+  a dismissed prompt or `enableWifi`'s abort, still shows the radio as the tap's redraw reads it;
+  on a seamless-toggle device `enableWifi`'s abort turns the radio off (`:57-60`) with no event,
+  so the sheet may keep showing it on, as before. The emulator's fake flips
+  `emulator_fake_wifi_connected` at once and broadcasts after `scheduleIn(2)`, then runs the
+  callback it was handed, which broadcasts again (`frontend/device/sdl/device.lua:478-500`); on
+  the Kindle `turnOnWifi` may show the network list over the sheet
+  (`frontend/device/kindle/device.lua:424-447`; `manager.lua:1243-1251`), and `turnOffWifi` runs the
+  callback after `scheduleIn(2)` (`kindle/device.lua:441-447`).
 - Close-first actions: the sheet's close takes it off the window stack at once and marks what is
   beneath dirty (`frontend/ui/uimanager.lua:290-313`); then `LauncherEntries.run` checks the entry
   again and runs it (the launcher's entries above), reaching the file manager over the bare file

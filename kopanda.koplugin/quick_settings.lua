@@ -72,6 +72,23 @@ local function battery()
     end))
 end
 
+-- The radio: on or off, then true when the read raised.
+local function radio()
+    return read("the radio", function()
+        return NetworkMgr:isWifiOn() and true or false
+    end)
+end
+
+-- The radio as the sheet's last layout read it: true, false or "failed", for stale.
+local shown_radio
+
+-- Whether the radio reads otherwise than at the sheet's last layout, so a NetworkConnected or
+-- NetworkDisconnected that changes nothing the sheet shows doesn't lay it out again.
+local function stale()
+    local on, failed = radio()
+    return (failed and "failed" or on) ~= shown_radio
+end
+
 -- A bar's reading: nil when hidden, { greyed = true } when f raises, else f's { value, min, max }.
 local function reading(what, f)
     local value, failed = read(what, f)
@@ -99,9 +116,7 @@ function QuickSettings.state()
                 max = powerd.fl_warmth_max }
         end
     end)
-    local wifi, wifi_failed = read("the radio", function()
-        return NetworkMgr:isWifiOn() and true or false
-    end)
+    local wifi, wifi_failed = radio()
     local night, night_failed = read("night mode", function()
         return G_reader_settings:isTrue("night_mode")
     end)
@@ -175,24 +190,19 @@ local BUTTONS = {
     },
 }
 
--- Redraws the sheet, if still shown, for NetworkMgr's callback after the tap that toggled.
-local function redraw_later()
-    local ok, err = pcall(Sheet.redraw)
-    if not ok then
-        logger.err("KoPanda: quick settings could not redraw after Wi-Fi:", err)
-    end
-end
-
 -- KOReader's Wi-Fi menu item's toggle, interactive (frontend/ui/network/manager.lua:899-915):
--- off when fully connected, its prompt when on and not connected, else on.
+-- off when fully connected, its prompt when on and not connected, else on. It passes no callback:
+-- NetworkMgr runs one only just after broadcasting NetworkConnected (:109, :116) or
+-- NetworkDisconnected (:408-410), on which the sheet redraws if the radio changed (stale). The
+-- tap's own redraw shows a toggle that broadcasts nothing: a dismissed prompt, a failed connection.
 local function toggle_wifi()
     NetworkMgr:queryNetworkState()
     if NetworkMgr.is_wifi_on and NetworkMgr.is_connected then
-        NetworkMgr:toggleWifiOff(redraw_later, true)
+        NetworkMgr:toggleWifiOff(nil, true)
     elseif NetworkMgr.is_wifi_on then
-        NetworkMgr:promptWifi(redraw_later, false, true)
+        NetworkMgr:promptWifi(nil, false, true)
     else
-        NetworkMgr:toggleWifiOn(redraw_later, false, true)
+        NetworkMgr:toggleWifiOn(nil, false, true)
     end
 end
 
@@ -286,6 +296,8 @@ function QuickSettings.body(bctx, content_w)
         return bctx.screen:scaleBySize(px)
     end
     local state = QuickSettings.state()
+    local wifi = state.cells[1]
+    shown_radio = wifi.failed and "failed" or wifi.on
     local body = Body:new{ fills = {}, places = {} }
     local fills, areas = body.fills, {}
     local function add(widget, x, y)
@@ -442,6 +454,7 @@ function QuickSettings.open(opts)
         header = header(),
         body = QuickSettings.body,
         refresh_on = { "NetworkConnected", "NetworkDisconnected" },
+        stale = stale,
     }, ctx, opts)
 end
 
