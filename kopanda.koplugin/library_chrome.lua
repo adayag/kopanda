@@ -9,8 +9,10 @@
 --   hit(x, y), what lies at a point on the window of its class shown, which a hold's sheet is for;
 --   open(record), a tap's open of a book; refresh(), its re-list;
 --   request_covers(), after a page's first paint; book_closed(file), when it is taken pending after
---   that book closed (default: the view rebuilt); closing(), its part of the close. A window listing
---   the whole library asks for its covers through LibraryChrome.request_records.
+--   that book closed (default: the view rebuilt); downloaded(record), once cwngsync downloaded that
+--   book over its placeholder (default: the re-list, every record's cover asked for again);
+--   closing(), its part of the close. A window listing the whole library asks for its covers
+--   through LibraryChrome.request_records.
 -- Module state: LibraryChrome.shown, the window on screen or nil; LibraryChrome.pending, one built
 -- on a book's close and not yet shown, or nil. A window's class mirrors each in a slot of the same
 -- name (Library.shown, Library.pending) while the window held is one of its own.
@@ -657,6 +659,20 @@ function Window:refresh()
     if LibraryChrome.shown == self then
         rebuild(self, self:view(), self.page)
     end
+end
+
+-- After cwngsync downloaded _record's book over its placeholder (cwng-placeholders D17): the view
+-- re-listed (window:refresh()), then every one of window.records' covers asked for again after the
+-- paint (LibraryChrome.request_records), the once-per-window mark dropped. BookCovers asks only for
+-- a file not asked in this process whose row wants a cover, so on a page of cached covers that is
+-- the downloaded book alone, its cover just forgotten. Nothing while the window isn't the one shown.
+function Window:downloaded(_record)
+    if LibraryChrome.shown ~= self then
+        return
+    end
+    self:refresh()
+    self.records_asked = nil
+    self.covers_due = true
 end
 
 -- Broadcast to every window when a book's metadata or status changes and when its cached

@@ -531,13 +531,16 @@ describe("cwngsync's placeholders", function()
                 return got
             end
 
-            it("reads Not downloaded over a placeholder and greys Delete alone", function()
+            -- This stub has no openLibraryPlaceholder, so Download is greyed too
+            -- (cloud_download_spec.lua has the row with it).
+            it("reads Not downloaded over a placeholder and greys Delete and Download alone", function()
                 cwngsync({ ["1"] = placeholder(a) })
                 local record = Books.for_path(a)
                 open(record)
                 assert.equals("Not downloaded", Sheet.shown.spec.header.meta)
                 assert.same({
                     { "Open", false, true },
+                    { "Download", true, false },
                     { "Book details", false, true },
                     { "Read status", false, true },
                     { "More by this author", false, true },

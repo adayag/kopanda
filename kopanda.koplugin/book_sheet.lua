@@ -3,10 +3,12 @@
 -- hold on it (widgets/featured.lua), adds Feature a different book and This widget's settings; a
 -- library record's (BookSheet.open_record), opened by a hold on a book in the library or on a shelf
 -- screen (library_sheets.lua), runs the window's own open and re-list (context-menu D13) and adds
--- Add to the home and Delete. Read status opens a sub-sheet of KOReader's own three status
--- buttons, which write the sidecar themselves; Feature a different book opens the picker and Add
--- to the home pins the book, both writing featured.pinned; Delete is KOReader's own delete
--- confirm. Nothing else here writes.
+-- Add to the home and Delete, and Download under Open for cwngsync's placeholder, which asks
+-- cwngsync to fetch the book without opening it (cwng-placeholders D2). Read status opens a
+-- sub-sheet of KOReader's own three status buttons, which write the sidecar themselves; Feature a
+-- different book opens the picker and Add to the home pins the book, both writing featured.pinned;
+-- Delete is KOReader's own delete confirm. Nothing else here writes.
+local BookCovers = require("book_covers")
 local BookList = require("ui/widget/booklist")
 local Books = require("books")
 local DocSettings = require("docsettings")
@@ -333,6 +335,58 @@ local function delete_row(file, placeholder, window)
     return row
 end
 
+-- cwngsync's plugin instance on the file manager (cwng-placeholders D13), or nil.
+local function cwngsync()
+    local fm = file_manager()
+    return fm and fm.cwngsync
+end
+
+local function can_download(plugin)
+    return plugin ~= nil and type(plugin.openLibraryPlaceholder) == "function"
+end
+
+-- cwngsync's call once the book has arrived at file, in place of its open (cwng-placeholders D17):
+-- the book's cover forgotten, so it is asked for afresh, then window's re-list with that request
+-- (window:downloaded), which does nothing once another window is shown. Never opens the book. A
+-- failure is logged.
+local function arrived(file, record, window)
+    local ok, err = pcall(function()
+        BookCovers.forget({ file })
+        window:downloaded(record)
+    end)
+    if not ok then
+        logger.err("KoPanda: the downloaded book's re-list failed:", err)
+    end
+end
+
+-- Download (cwng-placeholders D16, D17, D18), for cwngsync's placeholder: hands cwngsync record's
+-- path and arrived in place of the open (cwng_library_runtime.lua:999-1030), which waits for
+-- Wi-Fi, downloads and calls arrived; a false return (the file was replaced, or its record went)
+-- re-lists window. Greyed with no run when cwngsync has no openLibraryPlaceholder. cwngsync is read
+-- again on the tap, since it can go between the build and the tap: then the tap is logged and
+-- does nothing.
+local function download_row(record, window)
+    local row = { icon = "download", label = "Download" }
+    if not can_download(cwngsync()) then
+        row.muted = true
+        return row
+    end
+    row.run = guarded("the download", function()
+        local plugin = cwngsync()
+        if not can_download(plugin) then
+            logger.warn("KoPanda: cwngsync went before the download; nothing to download the book with")
+            return
+        end
+        local taken = plugin:openLibraryPlaceholder(record.path, function(file)
+            arrived(file, record, window)
+        end)
+        if not taken then
+            window:refresh()
+        end
+    end)
+    return row
+end
+
 -- The sheet's cover size under ctx, the tokens' cover_w by cover_h.
 local function cover_size(ctx)
     local tokens = ctx.look.sheet
@@ -388,9 +442,10 @@ end
 -- screen) under ctx, the window's, with opts passed on to Sheet.show (its beneath the window).
 -- Open runs window:open(record), the open its tap on the book runs; a status write re-lists the
 -- window (window:refresh()); More by this author shows the record's first author; then Add to the
--- home and Delete. A record whose file has gone since the window was built re-lists the window
--- instead and shows no sheet. The cover is the featured cover's frame round the record's cached
--- cover (FeaturedCover.framed), never asking for an extraction.
+-- home and Delete; for cwngsync's placeholder, Download under Open. A record whose file has gone
+-- since the window was built re-lists the window instead and shows no sheet. The cover is the
+-- featured cover's frame round the record's cached cover (FeaturedCover.framed), never asking for
+-- an extraction.
 function BookSheet.open_record(record, window, ctx, opts)
     local file = record.path
     if file and lfs.attributes(file, "mode") ~= "file" then
@@ -408,6 +463,9 @@ function BookSheet.open_record(record, window, ctx, opts)
             return record.authors[1]
         end,
     }, ctx, opts and opts.beneath)
+    if record.placeholder == true then
+        table.insert(rows, 2, download_row(record, window))
+    end
     rows[#rows + 1] = home_row(file)
     rows[#rows + 1] = delete_row(file, record.placeholder == true, window)
     local header = {
