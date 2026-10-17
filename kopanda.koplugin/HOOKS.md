@@ -1497,7 +1497,7 @@ guard (`sheet.lua`).
   `DocSettings:open` when given a path, so it is created when there is none, sets
   `summary.modified` to today's `%Y-%m-%d`, saves `summary` and flushes), then
   `BookList.setBookInfoCacheProperty(file, "status", s)`, then the caller's callback, KoPanda's
-  home refresh. The sub-sheet passes the `DocSettings` when `DocSettings:hasSidecarFile(file)`
+  home refresh, or the re-list of the library or the shelf screen the book was held on. The sub-sheet passes the `DocSettings` when `DocSettings:hasSidecarFile(file)`
   (`frontend/docsettings.lua:151-153`: true when `findSidecarFile`, `:159-175`, finds a sidecar
   file in any location, or the legacy history file when that location is enabled), so a
   sidecar's other summary fields survive the write. The file dialog chooses by the cached
@@ -1522,10 +1522,11 @@ guard (`sheet.lua`).
 - `FileManager.instance.bookinfo:show(file)` (the module registered at
   `frontend/apps/filemanager/filemanager.lua:406`; `frontend/apps/filemanager/filemanagerbookinfo.lua:71-87`
   takes a path and opens the sidecar itself when the book has one) shows KOReader's book details
-  page over the home. Its `close_callback` broadcasts `InvalidateMetadataCache` and
+  page over the home, or over the library or the shelf screen the book was held on
+  (`BookSheet.open_record`, reached from `library_sheets.lua`), which re-list on the broadcasts below. Its `close_callback` broadcasts `InvalidateMetadataCache` and
   `BookMetadataChanged` when a property was edited, and `BookMetadataChanged` when the summary was
   (`filemanagerbookinfo.lua:267-285`); the home handles neither, so an edit shows on the next
-  rebuild. Read through `package.loaded` at tap time, as the featured widget's tap reads the file
+  rebuild; the library's windows re-list on both (the library's gestures entry below). Read through `package.loaded` at tap time, as the featured widget's tap reads the file
   manager.
 - `ReadHistory.hist[i].time` (`frontend/readhistory.lua:25-35`, the entry's `time` beside its
   realpath `file`, `:26`): set by `addItem` when a book opens (`:313-339`;
@@ -1533,8 +1534,9 @@ guard (`sheet.lua`).
   (`readhistory.lua:342-350`; `readerui.lua:882`). The book sheet's "opened" counts local calendar
   days from it, comparing the book by `ffi/util`'s `realpath`; `readhistory` is required at call
   time.
-- The small cover is `FeaturedCover.build` at the sheet's `cover_w` by `cover_h`, which reads
-  CoverBrowser's cache and never asks for an extraction; a cached cover too small for the box is
+- The small cover is `FeaturedCover.build` at the sheet's `cover_w` by `cover_h` (a library record's,
+  `FeaturedCover.framed` in the same frame, `FeaturedCover.frame`), which reads CoverBrowser's cache
+  and never asks for an extraction; a cached cover too small for the box is
   left out by `BookInfoManager.isCachedCoverInvalid`
   (`plugins/coverbrowser.koplugin/bookinfomanager.lua:1013-1030`; the featured cover's entry above).
 
@@ -1668,6 +1670,9 @@ guard (`sheet.lua`).
   (`frontend/ui/widget/menu.lua:1518-1539`), through `BD.flipDirectionIfMirroredUILayout`
   (`ui/bidi`, `frontend/ui/bidi.lua:162`), outside the top and bottom edge bands (the `G_defaults`
   entry above); a swipe in a band goes to the home's forward step (the gestures entry above).
+- A hold outside the nav bar's band goes to the home's forward step before the chrome's hold step
+  (`library_sheets.lua`), as on the home, so the Gestures plugin's hold corners win when bound
+  and carry on to the hold step when unbound (the home's hold entry above).
 - `BookMetadataChanged` and `InvalidateMetadataCache` are broadcast when book details or a custom
   cover change (`frontend/apps/filemanager/filemanagerbookinfo.lua:276-277`, `:556-557`), to every
   window, a handler's true return stopping none (`frontend/ui/uimanager.lua:1042-1061`). The

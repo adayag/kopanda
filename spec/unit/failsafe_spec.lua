@@ -1213,6 +1213,82 @@ describe("KoPanda failing safe", function()
             assert.is_true(logged_error("the library's cover arrival failed"))
             as_it_was(library, tiles)
         end)
+
+        -- context-menu C8 ("Failure behaviour"): the hold and the sheets it opens.
+        -- Holds rect's centre on library, as the UI loop hands the top window a gesture; returns
+        -- whether the library consumed it.
+        local function hold_on(library, rect)
+            local ok, consumed = pcall(library.handleEvent, library,
+                Event:new("Gesture", harness.gesture("hold", fixture.centre(rect))))
+            assert.is_true(ok)
+            return consumed
+        end
+
+        it("logs a hit that throws, consumes the hold and leaves the library as it was", function()
+            local library = fixture.show()
+            local tiles = widgets(library)
+            Library.hit = function()
+                error("kopanda-test: hit failed")
+            end
+            assert.is_true(hold_on(library, library.tiles[1].rect))
+            assert.is_true(logged_error("kopanda-test: hit failed"))
+            assert.is_nil(package.loaded["sheet"].shown)
+            as_it_was(library, tiles)
+        end)
+
+        it("logs a hold's dispatch that throws, consumes the hold and leaves the library as it was", function()
+            local library = fixture.show()
+            local tiles = widgets(library)
+            package.loaded["library_sheets"].hold = function()
+                error("kopanda-test: dispatch failed")
+            end
+            assert.is_true(hold_on(library, library.tiles[1].rect))
+            assert.is_true(logged_error("kopanda-test: dispatch failed"))
+            as_it_was(library, tiles)
+        end)
+
+        it("logs a book sheet that throws before it shows and leaves the library as it was", function()
+            local library = fixture.show()
+            local tiles = widgets(library)
+            package.loaded["book_sheet"].open_record = function()
+                error("kopanda-test: book sheet failed")
+            end
+            assert.is_true(hold_on(library, library.tiles[1].rect))
+            assert.is_true(logged_error("kopanda-test: book sheet failed"))
+            assert.is_nil(package.loaded["sheet"].shown)
+            as_it_was(library, tiles)
+        end)
+
+        it("closes the library onto the file browser, not the home, when a held book's sheet fails to show", function()
+            local path = os.getenv("KO_HOME") .. "/failsafe-held-book.epub"
+            local f = assert(io.open(path, "wb"))
+            f:write("not really a book")
+            f:close()
+            finally(function()
+                os.remove(path)
+            end)
+            fixture.install({ [fixture.ROOT] = { books = {
+                { id = "file:" .. path, path = path, title = "Held", authors = {} },
+            } } })
+            local library = fixture.show()
+            local home_closes = 0
+            local close = Home.close
+            Home.close = function(...)
+                home_closes = home_closes + 1
+                return close(...)
+            end
+            finally(function()
+                Home.close = close
+            end)
+            package.loaded["featured_cover"].framed = function()
+                return setmetatable({}, { __index = function() error("kopanda-test: held sheet failed") end })
+            end
+            hold_on(library, library.tiles[1].rect)
+            assert.is_true(logged_error("kopanda-test: held sheet failed"))
+            assert.equals(0, home_closes)
+            assert.is_nil(package.loaded["sheet"].shown)
+            closed_onto_file_browser()
+        end)
     end)
 
     -- series-and-authors C9, C11 ("Failure behaviour"): as the library's, through the chrome.

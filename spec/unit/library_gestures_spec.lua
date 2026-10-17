@@ -352,19 +352,80 @@ describe("gestures on the library", function()
     end)
 
     describe("a hold", function()
-        it("runs nothing, reaches no zone on the file manager and is consumed", function()
+        -- context-menu C7: a hold the nav bar's band and the file manager's zones leave goes to
+        -- LibrarySheets.hold. The fixture's books are no files, so their sheet re-lists instead.
+        it("runs no open and no picker, and is consumed", function()
             install()
-            local library, fm = fixture.show()
-            local got = bind(fm, "kopanda_spec_hold", "hold", FULL)
+            local library = fixture.show()
             local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile")
             local picked = spy(Library, "on_picker")
             send(harness.gesture("hold", fixture.centre(library.tiles[2].rect)))
             send(harness.gesture("hold", fixture.centre(library.header.sort.rect)))
-            assert.same({}, got)
             assert.same({}, opened)
             assert.same({}, picked)
             assert.same({ ROOT, 1 }, { library.dir, library.page })
             assert.equals(library, harness.top())
+        end)
+
+        it("hands the library and what lies under it to the dispatch, with the stamp of the hold", function()
+            install()
+            local library = fixture.show()
+            local held = spy(package.loaded["library_sheets"], "hold")
+            local before = require("paint_clock").now()
+            send(harness.gesture("hold", fixture.centre(library.tiles[2].rect)))
+            send(harness.gesture("hold", fixture.centre(library.tiles[1].rect)))
+            send(harness.gesture("hold", fixture.centre(library.header.sort.rect)))
+            assert.equals(3, #held)
+            assert.same({ kind = "book", record = library.tiles[2].record }, held[1][2])
+            assert.equals(library.tiles[2].record, held[1][2].record)
+            assert.same({ kind = "folder", folder = SUB }, held[2][2])
+            assert.same({ kind = "empty" }, held[3][2])
+            for _, call in ipairs(held) do
+                assert.equals(library, call[1])
+                assert.truthy(call[3].wall >= before.wall)
+            end
+        end)
+
+        it("runs no dispatch in the nav bar's band", function()
+            install()
+            local library = fixture.show()
+            local held = spy(package.loaded["library_sheets"], "hold")
+            local bar = library.nav
+            local column = bar.columns[1]
+            send(harness.gesture("hold", bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2),
+                bar.dimen.y + math.floor(bar.dimen.h / 2)))
+            assert.same({}, held)
+            assert.equals(library, harness.top())
+        end)
+
+        it("lets a hold zone on the file manager that consumes the hold win over the dispatch", function()
+            install()
+            local library, fm = fixture.show()
+            local got = bind(fm, "kopanda_spec_hold", "hold", FULL)
+            local held = spy(package.loaded["library_sheets"], "hold")
+            send(harness.gesture("hold", fixture.centre(library.tiles[2].rect)))
+            assert.equals(1, #got)
+            assert.same({}, held)
+            assert.equals(library, harness.top())
+        end)
+
+        it("passes a hold to the dispatch when the file manager's zone takes nothing", function()
+            install()
+            local library, fm = fixture.show()
+            local got = 0
+            fm:registerTouchZones{ {
+                id = "kopanda_spec_hold_untaken",
+                ges = "hold",
+                screen_zone = FULL,
+                handler = function()
+                    got = got + 1
+                end,
+            } }
+            local held = spy(package.loaded["library_sheets"], "hold")
+            send(harness.gesture("hold", fixture.centre(library.tiles[2].rect)))
+            assert.equals(1, got)
+            assert.equals(1, #held)
+            assert.equals(library.tiles[2].record, held[1][2].record)
         end)
     end)
 
