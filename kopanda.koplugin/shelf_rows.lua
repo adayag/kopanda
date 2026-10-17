@@ -377,11 +377,17 @@ local function badge(ctx)
     return box
 end
 
--- D20's chip for a book: Finished, else Not downloaded for a path-less book (D19), else Up next.
+-- Whether record is drawn as not on the Kindle: no path, or cwngsync's placeholder
+-- (cwng-placeholders D1).
+local function not_downloaded(record)
+    return not record.path or record.placeholder == true
+end
+
+-- D20's chip for a book: Finished, else Not downloaded for a book not downloaded (D19), else Up next.
 local function book_chip(record, progress, marked)
     if progress.status == "complete" then
         return "finished", "Finished"
-    elseif not record.path then
+    elseif not_downloaded(record) then
         return "not_downloaded", "Not downloaded"
     elseif marked then
         return "up_next", "Up next"
@@ -392,9 +398,9 @@ end
 -- The one-series list's row for record at progress (Books.progress's { status, percent }), marked
 -- when mark says it is the series' next unread, width wide (SeriesBooksC.dc.html:33-63, D20): the
 -- index column (blank for a book with no series_index), the cover with the download badge on a
--- path-less book's, the title in one line, then the bar (full for complete, at its percent for
+-- not downloaded book's, the title in one line, then the bar (full for complete, at its percent for
 -- reading or abandoned), "read this one next" for the marked book, "Not on the Kindle yet" for a
--- path-less one, or nothing, and the chip. The marked row takes shelf.next's fill, shadow and text
+-- not downloaded one, or nothing, and the chip. The marked row takes shelf.next's fill, shadow and text
 -- colour. The row keeps index, cover, badge, title, bar, note, chip (nil where not drawn) and marked.
 function ShelfRows.book(record, progress, mark, width, ctx)
     ctx = fixed(ctx)
@@ -461,7 +467,7 @@ function ShelfRows.book(record, progress, mark, width, ctx)
     elseif marked then
         row.note = Typeset.line(part("book_next_note"), "read this one next", text_w, ctx)
         second = row.note
-    elseif not record.path then
+    elseif not_downloaded(record) then
         row.note = Typeset.line(part("book_row_note"), "Not on the Kindle yet", text_w, ctx)
         second = row.note
     end
@@ -474,7 +480,7 @@ function ShelfRows.book(record, progress, mark, width, ctx)
         add(row, second, text_x, text_y + title_h + line_gap)
     end
 
-    if not record.path then
+    if not_downloaded(record) then
         local inset = scale_signed(scale, shelf.book.badge_inset)
         local size = scale(shelf.book.badge_size)
         local badge_y = look.library.badge.align == "bottom" and cover_y + cover_h - edge - inset - size

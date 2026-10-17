@@ -90,9 +90,10 @@ end
 -- A record's meta line (HoldBookC.dc.html:40): the percent when Books.progress has one or the
 -- book is finished, as the tiles read it (library_tiles.lua), then when it was last opened; each
 -- left out when unknown, nil when both are, so the header has no meta line. No chapter: a record
--- has none. "Not downloaded" for a record with no path (D2).
+-- has none. "Not downloaded" for a book not downloaded: a record with no path (D2), or cwngsync's
+-- placeholder (cwng-placeholders D6).
 local function record_meta(record, now)
-    if not record.path then
+    if not record.path or record.placeholder == true then
         return "Not downloaded"
     end
     local parts = {}
@@ -311,10 +312,11 @@ end
 -- file manager's instance as the file browser's Delete calls it
 -- (frontend/apps/filemanager/filemanager.lua:228-233, :1121-1153), with its wording, its archive
 -- check and its notices. Its post-delete callback, run only once the delete succeeded (:1141-1142),
--- re-lists window. Without a file manager, logged and nothing shown. Greyed with no file (D2).
-local function delete_row(file, window)
+-- re-lists window. Without a file manager, logged and nothing shown. Greyed with no file (D2), and
+-- for cwngsync's placeholder, which its next sync would put back (cwng-placeholders D5).
+local function delete_row(file, placeholder, window)
     local row = { icon = "trash", label = "Delete…" }
-    if not file then
+    if not file or placeholder then
         row.muted = true
         return row
     end
@@ -407,7 +409,7 @@ function BookSheet.open_record(record, window, ctx, opts)
         end,
     }, ctx, opts and opts.beneath)
     rows[#rows + 1] = home_row(file)
-    rows[#rows + 1] = delete_row(file, window)
+    rows[#rows + 1] = delete_row(file, record.placeholder == true, window)
     local header = {
         title = record.title,
         author = #record.authors > 0 and table.concat(record.authors, ", ") or nil,

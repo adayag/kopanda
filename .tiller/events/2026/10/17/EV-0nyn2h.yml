@@ -1,0 +1,13 @@
+id: EV-0nyn2h
+type: claim.task
+at: 2026-10-17T21:42:01.377198Z
+contributor: allen
+command: claim task T-3cuakg
+targets:
+    - T-3cuakg
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/placeholders/task.yml

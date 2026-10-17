@@ -239,7 +239,7 @@ local function badge_place(box, ctx)
     }
 end
 
--- Adds the chip on the cover's foot and, for a path-less record (badged), the badge at its place
+-- Adds the chip on the cover's foot and, for a book not downloaded (badged), the badge at its place
 -- (badge_place). The chip sits left of the badge's place: beside it where both are on the foot, at
 -- the placeholder's padding where the badge is on top. The chip is "Not downloaded", or the
 -- caller's label, "Up next", which takes its place (series-and-authors D19).
@@ -287,11 +287,12 @@ end
 
 -- A book's tile for record ({ path, title, authors }) at progress (Books.progress's { status,
 -- percent }) in box, a LibraryTiles.geometry: its cover or placeholder, the strip when the book
--- has a file and a percent and is neither new nor complete, its title in one line, and for a
--- record with no path the download badge and the Not downloaded chip on the cover. chip, optional,
--- is { label }, a chip drawn on the cover's foot in Not downloaded's place, which it replaces on a
--- path-less record while the badge stays (the one-author grid's "Up next", series-and-authors D5,
--- D19). The tile keeps cover, strip, title, badge and chip, the last three nil where not drawn.
+-- has a file and a percent and is neither new nor complete, its title in one line, and for a book
+-- not downloaded (a record with no path, or cwngsync's placeholder, cwng-placeholders D1) the
+-- download badge and the Not downloaded chip on the cover. chip, optional, is { label }, a chip
+-- drawn on the cover's foot in Not downloaded's place, which it replaces on a book not downloaded
+-- while the badge stays (the one-author grid's "Up next", series-and-authors D5, D19). The tile
+-- keeps cover, strip, title, badge and chip, the last three nil where not drawn.
 function LibraryTiles.book(record, progress, box, ctx, chip_spec)
     ctx = fixed(ctx)
     local look = ctx.look
@@ -304,8 +305,9 @@ function LibraryTiles.book(record, progress, box, ctx, chip_spec)
             outline_width, ctx), 0, box.strip_y)
     end
     tile.title = add(tile, Typeset.line(look.type.tile_title, record.title or "", box.cover_w, ctx), 0, box.title_y)
-    if chip_spec or not record.path then
-        foot(tile, box, ctx, not record.path, chip_spec and chip_spec.label)
+    local not_downloaded = not record.path or record.placeholder == true
+    if chip_spec or not_downloaded then
+        foot(tile, box, ctx, not_downloaded, chip_spec and chip_spec.label)
     end
     return tile
 end
