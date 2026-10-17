@@ -1,22 +1,18 @@
 -- The library: a window on the chrome (library_chrome.lua) showing one folder a page at a time
--- (cover-grid "The window"). The chrome holds its show and close, its paint and settled signal,
--- its pager, nav bar and gesture route, the events that keep it current and the pre-build on a
--- book's close; what it draws is library_view.lua's, what a folder shows and the memory
--- library_order.lua's, and its covers library_covers.lua's. Here are what a tap on each of its
--- own parts does, where it was left, the return a book's open records and the root check its
--- paint runs (context-menu D6).
--- Module state: Library.shown, the library on screen or nil, and Library.pending, one built on
--- book close and not yet shown, or nil, both the chrome's slots; Library.return_to, { dir, page }
--- a book was opened from, which the next file manager's show returns to (D4), or nil, in memory
--- only; Library.on_picker(kind), run on a tap on the "sort" or "status" picker, a hook
+-- (cover-grid "The window"). The chrome holds its show and close, its paint and settled signal, its
+-- pager, nav bar and gesture route and the events that keep it current; what it draws is
+-- library_view.lua's, what a folder shows and the memory library_order.lua's, and its covers
+-- library_covers.lua's. Here are what a tap on each of its own parts does, where it was left, the
+-- return a book's open records and the root check its paint runs (context-menu D6).
+-- Module state: Library.shown, the library on screen or nil, the chrome's slot; Library.return_to,
+-- { dir, page } a book was opened from, which the next file manager's show returns to (D4), or nil,
+-- in memory only; Library.on_picker(kind), run on a tap on the "sort" or "status" picker, a hook
 -- library_pickers.lua fills (here a no-op).
 local LibraryChrome = require("library_chrome")
 local LibraryCovers = require("library_covers")
 local LibraryOrder = require("library_order")
 local LibraryView = require("library_view")
 local logger = require("logger")
-local UIManager = require("ui/uimanager")
-local ffiutil = require("ffi/util")
 
 local Library = LibraryChrome.Window:extend{
     name = "kopanda_library",
@@ -57,21 +53,6 @@ function Library:build(dir, page)
     local built = LibraryView.build(dir, page, self.kept)
     built.root = root
     return built
-end
-
--- Opens record's file as the file browser's own tap does (D15; filemanager.lua:160-169), which
--- asks first when the owner set "ask before opening", running Library.on_open with the folder and
--- page once the open goes ahead (filemanagerutil.lua:498-502).
-function Library:open(record)
-    local FileManager = package.loaded["apps/filemanager/filemanager"]
-    local fm = FileManager and FileManager.instance
-    if not fm then
-        return
-    end
-    local dir, page = self.dir, self.page
-    require("apps/filemanager/filemanagerutil").openFile(fm, record.path, function()
-        Library.on_open(dir, page)
-    end)
 end
 
 -- Shows folder ({ name, path }) at its page: a tap on its tile, and its sheet's Open.
@@ -131,8 +112,8 @@ function Library.hit(x, y)
     return { kind = "empty" }
 end
 
--- opts: widget (a pre-built library to show; default: a fresh build at dir and page), dir (default:
--- the library's root), page, started (LibraryChrome.show's). Returns the library shown, or nil.
+-- opts: dir (default: the library's root), page, started (LibraryChrome.show's). Returns the
+-- library shown, or nil.
 function Library.show(opts)
     opts = opts or {}
     return LibraryChrome.show(Library, opts, { dir = opts.dir, page = opts.page })
@@ -144,16 +125,6 @@ function Library.close()
     end
 end
 
--- The closed book's tile is rebuilt; a failure leaves the tile as built. The kept listing is
--- filtered and sorted again at the next build, so a page turned to does so with the book's new
--- progress wherever the book is.
-function Library:book_closed(file)
-    -- A file's record id, as books.lua's record() makes it.
-    local id = "file:" .. (ffiutil.realpath(file) or file)
-    LibraryView.forget(self.kept, id)
-    LibraryCovers.rebuild_tiles(self, { [id] = true }, "the closed book's tile")
-end
-
 -- The re-list of the metadata events and of the sheets (a Hide, a hidden folder shown again, a
 -- status written, a delete): the kept listing dropped, then the folder listed again and the page
 -- shown rebuilt (LibraryChrome.Window.refresh).
@@ -163,38 +134,6 @@ function Library:refresh()
     end
     self.kept = nil
     LibraryChrome.Window.refresh(self)
-end
-
--- Marks the library stale and refreshes it once from the next tick, however many events marked it
--- before: one change broadcasts InvalidateMetadataCache and BookMetadataChanged, and a second
--- BookMetadataChanged when the summary changed too (filemanagerbookinfo.lua:276-280, :556-557). The
--- book-info page broadcasts from its close callback after UIManager:close
--- (frontend/ui/widget/keyvaluepage.lua:841-846), inside the input dispatch at the end of
--- handleInput (frontend/ui/uimanager.lua:1607-1620), so the tick runs at the next pass's
--- _checkTasks, before that pass's _repaint paints the close (:431-433, :1537-1564, :1663). A
--- library closed by then is not refreshed (refresh's Library.shown check).
-local function refresh_soon(library)
-    if library.stale then
-        return
-    end
-    library.stale = true
-    UIManager:nextTick(function()
-        if library.stale then
-            library.stale = nil
-            library:refresh()
-        end
-    end)
-end
-
--- Over the chrome's handlers (library_chrome.lua), which refresh on each event: broadcast to every
--- window when a book's metadata or status changes and when its cached metadata is dropped
--- (frontend/apps/filemanager/filemanagerbookinfo.lua:276-277, :556-557; frontend/ui/uimanager.lua:1042-1061).
-function Library:onBookMetadataChanged()
-    refresh_soon(self)
-end
-
-function Library:onInvalidateMetadataCache()
-    refresh_soon(self)
 end
 
 -- The page's covers, while this is the library shown. The check in flight goes on: a request that

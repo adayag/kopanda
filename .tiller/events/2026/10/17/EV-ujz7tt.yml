@@ -1,0 +1,11 @@
+id: EV-ujz7tt
+type: claim.tweak
+at: 2026-10-17T21:12:01.490855Z
+contributor: allen
+command: claim tweak tweaks/shelf-screens-keep-rows
+targets:
+    - TW-43jvrb
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/shelf-screens-keep-rows/tweak.yml

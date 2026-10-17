@@ -1,0 +1,11 @@
+id: EV-vey7dz
+type: claim.tweak
+at: 2026-10-17T20:46:28.793271Z
+contributor: allen
+command: claim tweak tweaks/doc-props-anchor-per-path
+targets:
+    - TW-y0pzxw
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/doc-props-anchor-per-path/tweak.yml

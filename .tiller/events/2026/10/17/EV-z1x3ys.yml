@@ -1,0 +1,13 @@
+id: EV-z1x3ys
+type: check.chore
+at: 2026-10-17T20:57:54.875944Z
+contributor: allen
+command: check chore CH-58w77v
+targets:
+    - CH-58w77v
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/chores/fewer-goldens-per-feature/chore.yml

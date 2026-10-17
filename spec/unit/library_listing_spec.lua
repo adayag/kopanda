@@ -205,6 +205,51 @@ describe("the library's kept listing", function()
         assert.equals(1, opened)
     end)
 
+    it("leaves the featured book's sidecar unopened by a cover arrival for another book", function()
+        local DocSettings = require("docsettings")
+        local BookCovers = package.loaded["book_covers"]
+        local FeaturedBook = package.loaded["featured_book"]
+        local library = show()
+        local arrived = library.tiles[1].record
+        local featured = files[2]
+        local made = {}
+        for _, path in ipairs({ arrived.path, featured }) do
+            local sdr = DocSettings:getSidecarDir(path, "doc")
+            local side = sdr .. "/" .. DocSettings.getSidecarFilename(path)
+            lfs.mkdir(sdr)
+            local f = assert(io.open(side, "wb"))
+            f:write('return { doc_props = { title = "Sidecar" }, percent_finished = 0.4 }')
+            f:close()
+            made[#made + 1] = { side = side, sdr = sdr }
+        end
+        local open, opened = DocSettings.openSettingsFile, 0
+        DocSettings.openSettingsFile = function(...)
+            opened = opened + 1
+            return open(...)
+        end
+        finally(function()
+            DocSettings.openSettingsFile = open
+            for _, file in ipairs(made) do
+                os.remove(file.side)
+                os.remove(file.sdr)
+            end
+        end)
+        Books.reset()
+        ReadHistory.hist = { { file = featured } }
+        assert.equals(featured, FeaturedBook.current().file)
+        assert.equals(1, opened)
+        local on_done
+        BookCovers.request = function(_, _, done)
+            on_done = done
+        end
+        library:request_covers()
+        on_done({ arrived })
+        assert.equals(2, opened)
+        opened = 0
+        assert.equals(0.4, FeaturedBook.current().percent)
+        assert.equals(0, opened)
+    end)
+
     it("sorts with a tile's record read again on the next build, without listing", function()
         local library = show()
         local first = library.tiles[1].record
@@ -230,29 +275,6 @@ describe("the library's kept listing", function()
         library:turn(1)
         assert.same({ "Zebra Stripes" }, { library.tiles[1].record.title })
         assert.same({ listed = 0, rows_read = 0 }, counts())
-    end)
-
-    it("reads the closed book's progress again when a library pre-built at another page turns to it", function()
-        -- The fixture's listing in place of the scratch one: 13 books all reading, under the reading
-        -- status in title order; Book 01 closes finished after the library was pre-built at page 2.
-        local books = fixture.books(13)
-        local progress = {}
-        for _, book in ipairs(books) do
-            progress[book.id] = { status = "reading", percent = 0.5 }
-        end
-        fixture.install({ [fixture.ROOT] = { books = books } }, progress)
-        assert.is_true(LibraryOrder.choose(fixture.ROOT, "title", "reading"))
-        harness.show_fm()
-        harness.tick(2)
-        require("home").close()
-        local LibraryChrome = package.loaded["library_chrome"]
-        LibraryChrome.prebuild(Library, { dir = fixture.ROOT, page = 2 }, books[1].path)
-        progress[books[1].id] = { status = "complete" }
-        local library = Library.show{ widget = LibraryChrome.take_pending() }
-        harness.tick(2)
-        assert.equals(2, library.page)
-        library:turn(-1)
-        assert.equals("Book 02", library.tiles[1].record.title)
     end)
 
     it("repaints in the other variant from the kept listing, without listing", function()

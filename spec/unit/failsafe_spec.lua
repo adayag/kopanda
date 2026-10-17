@@ -1718,12 +1718,19 @@ describe("KoPanda failing safe", function()
             as_it_was(screen, { kind = "list" }, 1, rows)
         end)
 
-        it("logs a progress read that throws on a page turn and leaves the page as it was", function()
+        -- A page turn reads no progress (the sort is kept), so the re-list's sort meets the throw, and
+        -- the page turn after it sorts again and meets it too.
+        it("logs a progress read that throws on a re-list and on the page turn after, the page as it was", function()
             local screen = fixture.show()
             local rows = widgets(screen)
             package.loaded["books"].progress = function()
                 error("kopanda-test: progress failed")
             end
+            UIManager:broadcastEvent(Event:new("BookMetadataChanged"))
+            harness.tick()
+            assert.is_true(logged_error("kopanda-test: progress failed"))
+            as_it_was(screen, { kind = "list" }, 1, rows)
+            logged:clear()
             tap(screen.pager.next.rect)
             assert.is_true(logged_error("kopanda-test: progress failed"))
             as_it_was(screen, { kind = "list" }, 1, rows)

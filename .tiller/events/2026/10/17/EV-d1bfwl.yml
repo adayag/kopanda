@@ -1,0 +1,13 @@
+id: EV-d1bfwl
+type: check.tweak
+at: 2026-10-17T21:45:43.091731Z
+contributor: allen
+command: check tweak TW-5vfush
+targets:
+    - TW-5vfush
+before:
+    status: check
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/layout-fit-timeout-race/tweak.yml

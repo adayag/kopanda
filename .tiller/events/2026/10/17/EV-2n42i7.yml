@@ -1,0 +1,11 @@
+id: EV-2n42i7
+type: claim.tweak
+at: 2026-10-17T20:46:29.951091Z
+contributor: allen
+command: claim tweak tweaks/layout-fit-timeout-race
+targets:
+    - TW-5vfush
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/layout-fit-timeout-race/tweak.yml

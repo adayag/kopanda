@@ -1,9 +1,10 @@
 id: B-fip6q6
 key: bugs/library-prebuild-stale-and-wasted
 title: The library prebuilt on close shows a stale count and filter and builds on reload, switch and exit
-status: ready
+status: check
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: T-t5ho4x
 source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L187-L233
@@ -17,3 +18,31 @@ accepted_against:
         kind: git_commit
         value: git:d5aeb78
         observed_at: 2026-10-17T20:44:22.824891Z
+branch: tiller/bugs/library-prebuild-stale-and-wasted
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:45:43.523791Z
+        against:
+            kind: git_commit
+            value: git:497780e
+            observed_at: 2026-10-17T21:45:43.52379Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-497780e-out-693660e24fe6c6e0636ccefa2ee858e8d90146e4169e90ec0015dcfd0d9120e9.txt
+    unit_tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:45:43.523791Z
+        against:
+            kind: git_commit
+            value: git:497780e
+            observed_at: 2026-10-17T21:45:43.52379Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/unit_tests-497780e-out-c0ba468fd0975ca64d85a89f2355382e790142de97fadd202c80a2e096522596.txt

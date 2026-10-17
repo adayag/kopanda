@@ -1,9 +1,10 @@
 id: TW-43jvrb
 key: tweaks/shelf-screens-keep-rows
 title: The series and authors screens re-sort every page turn and refresh on every metadata event
-status: ready
+status: check
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: F-yaihx9
 source: .tiller/reviews/2026-10-17-efficiency-pass2-followups.md#L35-L48
@@ -17,3 +18,31 @@ accepted_against:
         kind: git_commit
         value: git:d5aeb78
         observed_at: 2026-10-17T20:44:24.32878Z
+branch: tiller/tweaks/shelf-screens-keep-rows
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:43:59.295724Z
+        against:
+            kind: git_commit
+            value: git:6919275
+            observed_at: 2026-10-17T21:43:59.295723Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-6919275-out-683137cf715a13043a6ba4c72b348c3846236c60d1828c98e1648aa2362dcda6.txt
+    unit_tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:43:59.295724Z
+        against:
+            kind: git_commit
+            value: git:6919275
+            observed_at: 2026-10-17T21:43:59.295723Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/unit_tests-6919275-out-27f1b653918a5213987e11e0809c4e215122bed7e1ba4c91c1b7d734a3744507.txt

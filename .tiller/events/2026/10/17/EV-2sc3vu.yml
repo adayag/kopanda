@@ -1,0 +1,13 @@
+id: EV-2sc3vu
+type: check.bug
+at: 2026-10-17T21:16:42.301325Z
+contributor: allen
+command: check bug B-fip6q6
+targets:
+    - B-fip6q6
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/bugs/library-prebuild-stale-and-wasted/bug.yml

@@ -1,0 +1,11 @@
+id: EV-qxrnqy
+type: claim.bug
+at: 2026-10-17T20:46:26.48187Z
+contributor: allen
+command: claim bug bugs/chapter-stale-after-other-write
+targets:
+    - B-25sffy
+after:
+    owner: allen
+files:
+    - path: .tiller/bugs/chapter-stale-after-other-write/bug.yml
