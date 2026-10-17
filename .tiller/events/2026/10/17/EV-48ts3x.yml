@@ -1,0 +1,11 @@
+id: EV-48ts3x
+type: claim.tweak
+at: 2026-10-17T16:37:36.542238Z
+contributor: allen
+command: claim tweak tweaks/sidecar-progress-memo
+targets:
+    - TW-3tfybs
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/sidecar-progress-memo/tweak.yml

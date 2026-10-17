@@ -1,0 +1,14 @@
+id: EV-tmn6bg
+type: add.bug
+at: 2026-10-17T18:15:39.889166Z
+contributor: allen
+command: add bug chapter-stale-after-other-write
+targets:
+    - B-25sffy
+after:
+    attached_to: T-o0ptat
+    key: bugs/chapter-stale-after-other-write
+    status: proposed
+files:
+    - path: .tiller/bugs/chapter-stale-after-other-write/bug.md
+    - path: .tiller/bugs/chapter-stale-after-other-write/bug.yml

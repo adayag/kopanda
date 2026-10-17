@@ -1,0 +1,11 @@
+id: EV-bslirf
+type: claim.tweak
+at: 2026-10-17T16:09:46.464562Z
+contributor: allen
+command: claim tweak tweaks/quick-settings-one-redraw
+targets:
+    - TW-6fwvl6
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/quick-settings-one-redraw/tweak.yml

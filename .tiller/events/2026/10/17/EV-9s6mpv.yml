@@ -1,0 +1,14 @@
+id: EV-9s6mpv
+type: sync.bug
+at: 2026-10-17T17:53:55.159595Z
+contributor: allen
+command: sync bug B-e2tfz0
+targets:
+    - B-e2tfz0
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/bugs/chapter-write-retry/bug.yml

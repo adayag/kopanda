@@ -1,0 +1,13 @@
+id: EV-xbvkd1
+type: start.tweak
+at: 2026-10-17T16:37:36.628664Z
+contributor: allen
+command: start tweak TW-3tfybs
+targets:
+    - TW-3tfybs
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/sidecar-progress-memo/tweak.yml

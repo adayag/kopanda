@@ -466,7 +466,7 @@ describe("library tiles", function()
 
         -- The cover's bitmap goes with the ImageWidget holding it, so a tile frees it and its
         -- icons through its children; the icons' masks stay in TintedIcon's cache.
-        it("frees its cover's bitmap and its icons' masks", function()
+        it("frees its cover's bitmap and lets go of its icons", function()
             local Books = package.loaded["books"]
             local ImageWidget = require("ui/widget/imagewidget")
             local TintedIcon = package.loaded["tinted_icon"]
@@ -737,6 +737,51 @@ describe("library tiles", function()
                             assert.is_true(ok, ("%s %s at %s, %s: %s"):format(id, variant, where, name, tostring(bb)))
                             bb:free()
                             built:free()
+                        end
+                    end
+                end
+            end)
+        end)
+
+        -- The region a cover arrival refreshes (library_covers.lua) is a tile's box widened by
+        -- LibraryTiles.overhang: every pixel a book's tile paints lies inside it, and by day, when
+        -- the shadow is drawn, a path-less tile's ink reaches its top and right edges.
+        it("paints a book's tile only inside its box widened by its overhang, reaching the top and right", function()
+            covers()
+            each_profile(function(where)
+                for _, variant in ipairs({ "day", "night", "grey" }) do
+                    for _, id in ipairs({ "diner", "editorial" }) do
+                        local ctx = ctx_for(id, variant)
+                        local box = LibraryTiles.geometry(Screen:getWidth(), ctx)
+                        local over = LibraryTiles.overhang(box, ctx)
+                        local label = ("%s %s at %s"):format(id, variant, where)
+                        local tiles = {
+                            remote = LibraryTiles.book(remote(), { status = "new" }, box, ctx),
+                            file = LibraryTiles.book(record(), READING, box, ctx),
+                        }
+                        for kind, built in pairs(tiles) do
+                            local bb = paint(built)
+                            local min_x, min_y, max_x, max_y = math.huge, math.huge, -math.huge, -math.huge
+                            for y = 0, bb:getHeight() - 1 do
+                                for x = 0, bb:getWidth() - 1 do
+                                    local c = bb:getPixel(x, y):getColorRGB32()
+                                    if c:getR() ~= 0 or c:getG() ~= 255 or c:getB() ~= 0 then
+                                        min_x, max_x = math.min(min_x, x), math.max(max_x, x)
+                                        min_y, max_y = math.min(min_y, y), math.max(max_y, y)
+                                    end
+                                end
+                            end
+                            bb:free()
+                            built:free()
+                            local what = label .. ", " .. kind
+                            assert.is_true(min_x >= MARGIN, what .. " left")
+                            assert.is_true(min_y >= MARGIN - over.top, what .. " top")
+                            assert.is_true(max_x <= MARGIN + box.cover_w + over.right - 1, what .. " right")
+                            assert.is_true(max_y <= MARGIN + box.height + over.bottom - 1, what .. " bottom")
+                            if kind == "remote" and variant == "day" then
+                                assert.equals(MARGIN - over.top, min_y, what .. " top reached")
+                                assert.equals(MARGIN + box.cover_w + over.right - 1, max_x, what .. " right reached")
+                            end
                         end
                     end
                 end

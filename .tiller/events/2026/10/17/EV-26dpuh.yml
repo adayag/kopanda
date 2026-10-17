@@ -1,0 +1,11 @@
+id: EV-26dpuh
+type: claim.tweak
+at: 2026-10-17T16:37:38.983515Z
+contributor: allen
+command: claim tweak tweaks/metadata-events-coalesced
+targets:
+    - TW-zih0x2
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/metadata-events-coalesced/tweak.yml

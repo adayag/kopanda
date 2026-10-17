@@ -15,12 +15,13 @@ local LibraryCovers = require("library_covers")
 local LibraryOrder = require("library_order")
 local LibraryView = require("library_view")
 local logger = require("logger")
+local UIManager = require("ui/uimanager")
 local ffiutil = require("ffi/util")
 
 local Library = LibraryChrome.Window:extend{
     name = "kopanda_library",
     screen = "library",
-    fields = { "dir", "root", "tiles", "box", "note" },
+    fields = { "dir", "root", "tiles", "box", "note", "kept" },
     dir = nil,
 }
 
@@ -47,10 +48,13 @@ function Library:view()
     return self.dir or LibraryView.root()
 end
 
--- The build keeps root, KOReader's home folder it was built under, for the root check.
+-- dir at page, from the library's kept listing (LibraryView.build's): the folder shown is not listed
+-- again on a page turn, a picker choice or a repaint in another variant or size; its kept listing
+-- is sliced, or filtered and sorted again under a choice made since; another folder is listed. The
+-- build keeps root, KOReader's home folder it was built under, for the root check.
 function Library:build(dir, page)
     local root = LibraryView.root()
-    local built = LibraryView.build(dir, page)
+    local built = LibraryView.build(dir, page, self.kept)
     built.root = root
     return built
 end
@@ -140,11 +144,57 @@ function Library.close()
     end
 end
 
--- The closed book's tile is rebuilt; a failure leaves the tile as built.
+-- The closed book's tile is rebuilt; a failure leaves the tile as built. The kept listing is
+-- filtered and sorted again at the next build, so a page turned to does so with the book's new
+-- progress wherever the book is.
 function Library:book_closed(file)
     -- A file's record id, as books.lua's record() makes it.
     local id = "file:" .. (ffiutil.realpath(file) or file)
+    LibraryView.forget(self.kept, id)
     LibraryCovers.rebuild_tiles(self, { [id] = true }, "the closed book's tile")
+end
+
+-- The re-list of the metadata events and of the sheets (a Hide, a hidden folder shown again, a
+-- status written, a delete): the kept listing dropped, then the folder listed again and the page
+-- shown rebuilt (LibraryChrome.Window.refresh).
+function Library:refresh()
+    if Library.shown ~= self then
+        return
+    end
+    self.kept = nil
+    LibraryChrome.Window.refresh(self)
+end
+
+-- Marks the library stale and refreshes it once from the next tick, however many events marked it
+-- before: one change broadcasts InvalidateMetadataCache and BookMetadataChanged, and a second
+-- BookMetadataChanged when the summary changed too (filemanagerbookinfo.lua:276-280, :556-557). The
+-- book-info page broadcasts from its close callback after UIManager:close
+-- (frontend/ui/widget/keyvaluepage.lua:841-846), inside the input dispatch at the end of
+-- handleInput (frontend/ui/uimanager.lua:1607-1620), so the tick runs at the next pass's
+-- _checkTasks, before that pass's _repaint paints the close (:431-433, :1537-1564, :1663). A
+-- library closed by then is not refreshed (refresh's Library.shown check).
+local function refresh_soon(library)
+    if library.stale then
+        return
+    end
+    library.stale = true
+    UIManager:nextTick(function()
+        if library.stale then
+            library.stale = nil
+            library:refresh()
+        end
+    end)
+end
+
+-- Over the chrome's handlers (library_chrome.lua), which refresh on each event: broadcast to every
+-- window when a book's metadata or status changes and when its cached metadata is dropped
+-- (frontend/apps/filemanager/filemanagerbookinfo.lua:276-277, :556-557; frontend/ui/uimanager.lua:1042-1061).
+function Library:onBookMetadataChanged()
+    refresh_soon(self)
+end
+
+function Library:onInvalidateMetadataCache()
+    refresh_soon(self)
 end
 
 -- The page's covers, while this is the library shown. The check in flight goes on: a request that
@@ -159,11 +209,13 @@ function Library:request_covers()
     end, records)
 end
 
--- Refresh covers (context-menu D9): re-lists the folder at its page and, from the tick after that
--- paint, asks for the covers of records (the folder's books with a file, their covers forgotten)
--- in one request in place of the page's. A build that fails leaves the page and asks nothing.
+-- Refresh covers (context-menu D9): re-lists the folder at its page, the kept listing dropped, and,
+-- from the tick after that paint, asks for the covers of records (the folder's books with a file,
+-- their covers forgotten) in one request in place of the page's. A build that fails leaves the page
+-- and asks nothing.
 function Library:refresh_covers(records)
     self.covers_records = records
+    self.kept = nil
     self:go(self:view(), self.page)
     if not self.covers_due then
         self.covers_records = nil

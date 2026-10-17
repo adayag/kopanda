@@ -435,6 +435,38 @@ describe("LibrarySheets.hold", function()
             end
             assert.equals(library, harness.top())
         end)
+
+        -- With the kept listing (TW-cypagc): the Hide lists the folder once, and the listing it keeps
+        -- leaves the folder out on every page turned to after, without listing again.
+        it("hides a folder after page turns that did not list, and no turn after brings it back", function()
+            local folders = {}
+            for i, name in ipairs({ "Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf" }) do
+                folders[i] = library_fixture.folder(name)
+            end
+            local calls = library_fixture.install({ [ROOT] = { folders = folders, books = library_fixture.books(3) } })
+            local library = library_fixture.show(ROOT, 1)
+            library:turn(1)
+            library:turn(-1)
+            local listed = #calls
+            assert.equals("Alpha", library.tiles[1].folder.name)
+            hold_folder(library, 1)
+            tap("Hide")
+            assert.equals(listed + 1, #calls)
+            local names = {}
+            for page = 1, 2 do
+                if page == 2 then
+                    library:turn(1)
+                end
+                for _, tile in ipairs(library.tiles) do
+                    names[#names + 1] = tile.folder and tile.folder.name or tile.record.title
+                end
+            end
+            library:turn(-1)
+            assert.equals("Bravo", library.tiles[1].folder.name)
+            assert.same({ "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Book 01", "Book 02", "Book 03" },
+                names)
+            assert.equals(listed + 1, #calls)
+        end)
     end)
     describe("the empty-space sheet on the library", function()
         local ROOT = library_fixture.ROOT

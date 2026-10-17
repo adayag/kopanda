@@ -335,6 +335,46 @@ describe("closing a book shows the home at the file manager's Show", function()
             assert.is_true(Home.just_closed)
         end)
 
+        -- B-e2tfz0: a failed write leaves the state's in-memory copy ahead of the disk (write
+        -- saves each key before its flush), so the retry can't compare against that copy. The
+        -- failure here is a write that can't open the file: util.writeToFile, which
+        -- LuaSettings:flush calls (frontend/luasettings.lua:270-275), writes nothing, and State's
+        -- read-back catches it. (A full disk would truncate the file instead; see B-e2tfz0.)
+        -- The failed close's clearing write leaves "" in that copy, so a retry at a page with no
+        -- TOC title is the one the old skip missed; a titled chapter is the other case.
+        for _, failed in ipairs({ "", "Letter V" }) do
+            local at = failed == "" and "a page with no TOC title" or failed
+            it("writes again on the next close at " .. at .. " after a failed write there", function()
+                local util = require("util")
+                local write = util.writeToFile
+                reader_kopanda("Letter IV"):onCloseDocument()
+                order = {}
+                local errored = spy.on(logger, "err")
+                util.writeToFile = function()
+                    return nil, "no space left on device"
+                end
+                finally(function()
+                    util.writeToFile = write
+                    logger.err:revert()
+                end)
+                reader_kopanda(failed):onCloseDocument()
+                util.writeToFile = write
+                assert.same({ "set featured_chapter featured_chapter_file", "set featured_chapter" }, order)
+                -- Both writes failed, the clearing one too, so the file still holds the chapter
+                -- of the last successful write.
+                assert.equals("Letter IV", dofile(harness.state_file).featured_chapter)
+                assert.spy(errored).was_called()
+                order = {}
+                reader_kopanda(failed):onCloseDocument()
+                assert.same({ "set featured_chapter featured_chapter_file" }, order)
+                assert.equals(file, dofile(harness.state_file).featured_chapter_file)
+                assert.equals(failed, dofile(harness.state_file).featured_chapter)
+                order = {}
+                reader_kopanda(failed):onCloseDocument()
+                assert.same({}, order)
+            end)
+        end
+
         it("writes nothing with no document, and still marks the close", function()
             local kopanda = reader_kopanda("Letter IV")
             kopanda.ui.document = nil

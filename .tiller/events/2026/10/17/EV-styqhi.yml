@@ -1,0 +1,13 @@
+id: EV-styqhi
+type: check.tweak
+at: 2026-10-17T16:42:37.063946Z
+contributor: allen
+command: check tweak TW-4cf9th
+targets:
+    - TW-4cf9th
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/editors-defer-home-refresh/tweak.yml

@@ -1,0 +1,14 @@
+id: EV-yrq34j
+type: sync.tweak
+at: 2026-10-17T17:53:55.347365Z
+contributor: allen
+command: sync tweak TW-3tfybs
+targets:
+    - TW-3tfybs
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/sidecar-progress-memo/tweak.yml

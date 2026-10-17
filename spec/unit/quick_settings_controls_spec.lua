@@ -21,7 +21,7 @@ describe("the quick-settings controls", function()
     local logger = require("logger")
     local Screen = Device.screen
     local powerd = Device:getPowerDevice()
-    local Home, LauncherEntries, Looks, QuickSettings, Settings, Sheet, Weather
+    local Home, LauncherEntries, Looks, QuickSettings, Settings, Sheet, SheetLayout, Weather
 
     -- Undo steps for the running test, run last first after it.
     local undo = {}
@@ -194,6 +194,7 @@ describe("the quick-settings controls", function()
         QuickSettings = require("quick_settings")
         Settings = require("settings")
         Sheet = require("sheet")
+        SheetLayout = require("sheet_layout")
         Weather = require("weather")
         -- No weather fetch goes out when a toggle connects the fake Wi-Fi.
         set(Weather, "get", function()
@@ -336,6 +337,19 @@ describe("the quick-settings controls", function()
                 assert.spy(heard).was_called(2)
             end)
 
+            it("lays the sheet out once for a Night tap and its paint", function()
+                setting("color_rendering", true)
+                setting("night_mode", false)
+                set(Screen, "night_mode", false)
+                open()
+                local built = watch(SheetLayout, "build")
+                tap("night")
+                harness.tick(2)
+                assert.equals("night", Sheet.shown.variant)
+                assert.is_true(shows("night on"))
+                assert.spy(built).was_called(1)
+            end)
+
             it("flips lock_rotation both ways, the cell's fill following", function()
                 setting("lock_rotation", false)
                 setting("emulator_fake_wifi_connected", true)
@@ -366,23 +380,10 @@ describe("the quick-settings controls", function()
                 assert.is_false(NetworkMgr:isWifiOn())
                 assert.is_true(shows("wi-fi off"))
                 still_shown()
-                local before = layouts
                 harness.tick(3)
-                assert.truthy(layouts > before, "no redraw on NetworkDisconnected")
                 assert.is_true(shows("wi-fi off"))
                 if over == "the home" then
                     assert.truthy(#off_heard.calls >= 1, "the home missed NetworkDisconnected")
-                end
-                -- The toggle's callback redraws the sheet, and so does each event, which still
-                -- reaches the home.
-                before = layouts
-                toggled_off.calls[1].vals[2]()
-                assert.equals(before + 1, layouts)
-                local heard_before = #off_heard.calls
-                UIManager:broadcastEvent(Event:new("NetworkDisconnected"))
-                assert.equals(before + 2, layouts)
-                if over == "the home" then
-                    assert.equals(heard_before + 1, #off_heard.calls)
                 end
                 tap("wifi")
                 assert.spy(toggled_on).was_called(1)
@@ -390,23 +391,26 @@ describe("the quick-settings controls", function()
                 assert.equals(true, toggled_on.calls[1].vals[4])
                 assert.is_true(NetworkMgr:isWifiOn())
                 assert.is_true(shows("wi-fi on"))
-                before = layouts
                 harness.tick(4)
-                assert.truthy(layouts > before, "no redraw on NetworkConnected")
                 assert.is_true(shows("wi-fi on"))
                 still_shown()
                 if over == "the home" then
                     assert.truthy(#on_heard.calls >= 1, "the home missed NetworkConnected")
                 end
-                before = layouts
-                toggled_on.calls[1].vals[2]()
+                -- A radio changed elsewhere redraws the sheet on its event, which still reaches
+                -- the home; an event that changes nothing the sheet shows doesn't redraw it.
+                local before = layouts
+                G_reader_settings:saveSetting("emulator_fake_wifi_connected", false)
+                local heard_before = #off_heard.calls
+                UIManager:broadcastEvent(Event:new("NetworkDisconnected"))
                 assert.equals(before + 1, layouts)
-                heard_before = #on_heard.calls
-                UIManager:broadcastEvent(Event:new("NetworkConnected"))
-                assert.equals(before + 2, layouts)
+                assert.is_true(shows("wi-fi off"))
                 if over == "the home" then
-                    assert.equals(heard_before + 1, #on_heard.calls)
+                    assert.equals(heard_before + 1, #off_heard.calls)
                 end
+                UIManager:broadcastEvent(Event:new("NetworkDisconnected"))
+                UIManager:broadcastEvent(Event:new("NetworkConnected"))
+                assert.equals(before + 1, layouts)
             end)
 
             it("prompts through NetworkMgr's promptWifi with Wi-Fi on and not connected", function()
@@ -424,11 +428,88 @@ describe("the quick-settings controls", function()
                 tap("wifi")
                 assert.equals(1, #prompted)
                 assert.equals(NetworkMgr, prompted[1][1])
-                assert.is_function(prompted[1][2])
+                assert.is_nil(prompted[1][2])
                 assert.equals(false, prompted[1][3])
                 assert.equals(true, prompted[1][4])
                 assert.spy(toggled_off).was_not_called()
                 assert.spy(toggled_on).was_not_called()
+                still_shown()
+            end)
+
+            -- The emulator's fake broadcasts each event twice for one toggle: once from its own
+            -- connectionChangedEvent (frontend/device/sdl/device.lua:479-487), then from the
+            -- callback NetworkMgr hands it, the connectivity check's NetworkConnected
+            -- (frontend/ui/network/manager.lua:109) or disableWifi's NetworkDisconnected (:408).
+            it("lays the sheet out once for a Wi-Fi-on tap, its NetworkConnected broadcasts and the check", function()
+                setting("emulator_fake_wifi_connected", false)
+                local checked = watch(NetworkMgr, "connectivityCheck")
+                open()
+                local built = watch(SheetLayout, "build")
+                local heard = watch(Sheet.shown, "onNetworkConnected")
+                tap("wifi")
+                harness.tick(4)
+                assert.spy(checked).was_called(1)
+                assert.equals(2, #heard.calls)
+                assert.is_false(NetworkMgr.pending_connection)
+                assert.is_true(shows("wi-fi on"))
+                still_shown()
+                assert.spy(built).was_called(1)
+            end)
+
+            it("lays the sheet out once for a Wi-Fi-off tap and its NetworkDisconnected broadcasts", function()
+                setting("emulator_fake_wifi_connected", true)
+                open()
+                local built = watch(SheetLayout, "build")
+                local heard = watch(Sheet.shown, "onNetworkDisconnected")
+                tap("wifi")
+                harness.tick(4)
+                assert.equals(2, #heard.calls)
+                assert.is_true(shows("wi-fi off"))
+                still_shown()
+                assert.spy(built).was_called(1)
+            end)
+
+            it("lays the sheet out once for a Wi-Fi-on tap whose connection fails, the radio shown off", function()
+                setting("emulator_fake_wifi_connected", false)
+                set(NetworkMgr, "turnOnWifi", function()
+                    return false
+                end)
+                open()
+                local built = watch(SheetLayout, "build")
+                tap("wifi")
+                harness.tick(4)
+                assert.is_false(NetworkMgr.pending_connection)
+                assert.is_true(shows("wi-fi off"))
+                still_shown()
+                assert.spy(built).was_called(1)
+            end)
+
+            it("lays the sheet out once for a Wi-Fi tap whose prompt is dismissed", function()
+                setting("emulator_fake_wifi_connected", true)
+                set(NetworkMgr, "isConnected", function()
+                    return false
+                end)
+                open()
+                local built = watch(SheetLayout, "build")
+                tap("wifi")
+                local prompt = harness.top()
+                assert.are_not.equal(Sheet.shown, prompt)
+                UIManager:close(prompt)
+                harness.tick(2)
+                assert.is_true(shows("wi-fi on"))
+                still_shown()
+                assert.spy(built).was_called(1)
+            end)
+
+            it("lays the sheet out no more on Wi-Fi events while the radio's read raises", function()
+                set(NetworkMgr, "isWifiOn", function()
+                    error("kopanda-test: the radio read failed")
+                end)
+                open()
+                local before = layouts
+                UIManager:broadcastEvent(Event:new("NetworkDisconnected"))
+                UIManager:broadcastEvent(Event:new("NetworkConnected"))
+                assert.equals(before, layouts)
                 still_shown()
             end)
 

@@ -1,0 +1,11 @@
+id: EV-q2l94o
+type: claim.tweak
+at: 2026-10-17T16:09:43.570048Z
+contributor: allen
+command: claim tweak tweaks/quote-memo
+targets:
+    - TW-bl79zr
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/quote-memo/tweak.yml

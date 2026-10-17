@@ -4,7 +4,7 @@
 -- sources added here. Read status and progress are read on request, from the sidecar or the
 -- source. Only reads: no extraction is asked, and no sidecar, settings file or CoverBrowser row
 -- is written. Every read is caught; a failure is logged and that source reads as absent.
--- Module state: the sources, and the last sidecar read Books.with_progress keeps.
+-- Module state: the sources, and the progress memo of the sidecars read.
 local DocSettings = require("docsettings")
 local ffiutil = require("ffi/util")
 local lfs = require("libs/libkoreader-lfs")
@@ -17,9 +17,18 @@ local STATUSES = { reading = true, abandoned = true, complete = true }
 
 local sources = {}
 
--- { file, modification, size, props, progress }: the sidecar file Books.with_progress last opened,
--- its mtime and size then, and the doc_props and progress read from it; nil before any.
-local last_read
+-- The progress memo: a book's path to { file, modification, size, progress }, the sidecar file
+-- findSidecarFile gave for it, that file's mtime and size, and the progress one open of it read,
+-- { status, percent, pages, md5 } only. An entry serves while its file's path, mtime and size
+-- hold; one whose book has no sidecar now is dropped when asked. One entry per book path read
+-- with a sidecar in the session, a few hundred bytes each, so it isn't pruned: a book moved or
+-- removed leaves one entry no path reaches for the rest of the session (Books.reset is for specs).
+local reads = {}
+
+-- { read, props }: the doc_props of the open Books.with_progress last made, and the entry of
+-- reads that open made, which they serve with while it is still the book's entry; nil before any.
+-- One book's, so the memo's entries hold no doc_props (their description is unbounded).
+local last_props
 
 -- f(...) caught: its result, or nil with the failure logged as what.
 local function try(what, f, ...)
@@ -270,6 +279,24 @@ function Books.folder(dir)
     return { books = books, folders = kept }
 end
 
+-- The books directly in dir as Books.folder lists them, without their records, for counting: each
+-- file a { path }, which Books.progress takes, in byte order of name; the library root's source
+-- records after its own. No CoverBrowser row, sidecar or realpath is read for a file.
+function Books.files(dir)
+    dir = trimmed(dir)
+    local _, files = scan(dir)
+    local books = {}
+    for _, file in ipairs(files) do
+        books[#books + 1] = { path = file.path }
+    end
+    if same_dir(dir, trimmed(home_folder())) then
+        for _, book in ipairs(all_source_books()) do
+            books[#books + 1] = book
+        end
+    end
+    return books
+end
+
 -- Every book under the library root: each folder's books, then its sub-folders in turn, then the
 -- sources' books. Each folder is visited once by its realpath and each id listed once.
 function Books.all()
@@ -366,44 +393,60 @@ local function sidecar_progress(doc, exists)
     }
 end
 
-local function file_progress(path)
-    return sidecar_progress(sidecar(path))
+local function copy(progress)
+    local out = {}
+    for k, v in pairs(progress) do
+        out[k] = v
+    end
+    return out
 end
 
--- path's sidecar read for Books.with_progress: { file, modification, size, props, progress }, the
--- sidecar file findSidecarFile gives, its mtime and size then, and the doc_props and progress from
--- one open of it, or the last read while that file's path, mtime and size are the last read's. A
--- read whose open raised is not kept, so the next call retries it.
-local function sidecar_read(path)
+-- path's entry of reads, its sidecar opened only when the entry is missing or its file's path,
+-- mtime or size changed, or when with_props asks for the doc_props and last_props aren't the
+-- entry's; and with with_props, those doc_props. A book with no sidecar gives { progress = new }
+-- and drops its entry. A read whose open raised, or whose file has no mtime, is not kept, so the
+-- next call retries it.
+local function sidecar_read(path, with_props)
     local file = try("the sidecar of " .. path, DocSettings.findSidecarFile, DocSettings, path)
     if not file then
+        reads[path] = nil
         return { progress = sidecar_progress(nil, false) }
     end
     local attributes = lfs.attributes(file) or {}
-    if last_read and last_read.file == file and last_read.modification == attributes.modification
-            and last_read.size == attributes.size then
-        return last_read
+    local read = reads[path]
+    if read and read.file == file and read.modification == attributes.modification
+            and read.size == attributes.size then
+        if not with_props then
+            return read
+        end
+        if last_props and last_props.read == read then
+            return read, last_props.props
+        end
     end
     local doc = try("the sidecar of " .. path, DocSettings.openSettingsFile, file)
-    local read = {
+    read = {
         file = file,
         modification = attributes.modification,
         size = attributes.size,
-        props = doc and doc:readSetting("doc_props"),
         progress = try("the progress of " .. path, sidecar_progress, doc, true) or { status = "reading" },
     }
-    if doc and attributes.modification then
-        last_read = read
+    reads[path] = doc and attributes.modification and read or nil
+    if not with_props then
+        return read
     end
-    return read
+    local props = doc and doc:readSetting("doc_props")
+    last_props = { read = read, props = props }
+    return read, props
 end
 
--- { status, percent, pages, md5 }, read now. status is new, reading, abandoned or complete;
--- percent 0 to 1 or nil; pages and md5 may be nil. For a book with a file, from its sidecar; for
--- a source's book, its source's progress, or new.
+-- { status, percent, pages, md5 }. status is new, reading, abandoned or complete; percent 0 to 1
+-- or nil; pages and md5 may be nil. For a book with a file, from its sidecar, through the progress
+-- memo: opened again only once the sidecar file's path, mtime or size changed, a copy each call so
+-- the caller may change it; for a source's book, its source's progress, or new.
 function Books.progress(book)
     if book.path then
-        return try("the progress of " .. book.path, file_progress, book.path) or { status = "reading" }
+        local read = try("the progress of " .. book.path, sidecar_read, book.path)
+        return read and copy(read.progress) or { status = "reading" }
     end
     for _, source in ipairs(sources) do
         if source.name == book.source and source.progress then
@@ -418,16 +461,17 @@ end
 
 -- The record of the file at path and its progress, as Books.for_path and Books.progress give them,
 -- with its sidecar opened once; nil when path is not a file. A sidecar file whose path, mtime and
--- size are the last open's isn't opened again: its doc_props and progress are that open's.
+-- size are the last open's isn't opened again: its doc_props and progress are that open's, the
+-- progress through the memo Books.progress reads.
 function Books.with_progress(path)
     if type(path) ~= "string" or lfs.attributes(path, "mode") ~= "file" then
         return nil
     end
-    local read = sidecar_read(path)
+    local read, props = sidecar_read(path, true)
     local book = record(path, true, function()
-        return read.props
+        return props
     end)
-    return book, read.progress
+    return book, copy(read.progress)
 end
 
 -- A path-less book's cover for a w by h box, a bitmap the caller owns, from its source's cover, or
@@ -446,10 +490,11 @@ function Books.add_source(source)
     sources[#sources + 1] = source
 end
 
--- For specs: forget every source and the last sidecar read.
+-- For specs: forget every source and the progress memo.
 function Books.reset()
     sources = {}
-    last_read = nil
+    reads = {}
+    last_props = nil
 end
 
 return Books

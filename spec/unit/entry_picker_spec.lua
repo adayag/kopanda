@@ -425,6 +425,52 @@ describe("the entry picker", function()
             assert.same({ "Beta", "alpha", "zeta" }, labels)
         end)
 
+        it("pages through every plugin with a More row, then adds the one last by label", function()
+            harness.at_colorsoft(function()
+                fm_with_home()
+                local enabled, loaded, labels = {}, {}, {}
+                for i = 1, 28 do
+                    local name = string.format("kopanda_spec_p%02d", i)
+                    enabled[i] = { name = name, fullname = string.format("Plugin %02d", i) }
+                    loaded[name] = true
+                    labels[i] = enabled[i].fullname
+                end
+                plugins(enabled, {}, loaded)
+                EntryPicker.pick("plugin", Home.shown.ctx, on_entry)
+                local seen, pages = {}, 0
+                local sheet = Sheet.shown
+                while true do
+                    pages = pages + 1
+                    assert.truthy(pages <= 28, "the More row never ends")
+                    assert.equals("Plugin", sheet.spec.header.heading)
+                    assert.equals("picker", sheet.spec.name)
+                    local n = #sheet.rows
+                    local last = sheet.rows[n].row
+                    for i = 1, n - 1 do
+                        seen[#seen + 1] = sheet.rows[i].row.label
+                    end
+                    if last.label ~= "More…" then
+                        seen[#seen + 1] = last.label
+                        break
+                    end
+                    tap_row(sheet, n)
+                    assert.is_not_nil(Sheet.shown)
+                    assert.are_not.equals(sheet, Sheet.shown)
+                    sheet = Sheet.shown
+                end
+                assert.truthy(pages > 1, "28 plugins fit one sheet; the More row isn't exercised")
+                assert.same(labels, seen)
+                tap_row(sheet, #sheet.rows)
+                assert.is_nil(Sheet.shown)
+                local menu = action_menu()
+                tick(menu, "General", { "History" })
+                menu:onClose()
+                press(shown(InputDialog), "Add")
+                assert.same({ kind = "plugin", plugin = "kopanda_spec_p28", action = "history", label = "History",
+                    icon = "action" }, the_entry())
+            end)
+        end)
+
         it("says so when no plugin is loaded", function()
             fm_with_home()
             plugins({ { name = "kopanda", fullname = "KoPanda" } }, {}, { kopanda = true })

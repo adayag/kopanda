@@ -1,0 +1,13 @@
+id: EV-zp96fw
+type: start.tweak
+at: 2026-10-17T16:09:47.741126Z
+contributor: allen
+command: start tweak TW-x4pkgz
+targets:
+    - TW-x4pkgz
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/pull-one-hash-pass/tweak.yml

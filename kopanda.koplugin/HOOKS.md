@@ -117,7 +117,9 @@ Upgrading KOReader walks this list.
 
 - `frontend/ui/uimanager.lua:1305-1316`.
 - `_repaint` skips `paintTo` on every widget beneath the topmost `covers_fullscreen` one, so
-  nothing of the file browser is painted under the home.
+  nothing of the file browser is painted under the home, and nothing of the home under the
+  editor: an editor's change defers the home's rebuild (`Home:defer_refresh`) to the editor's
+  close.
 
 ### `UIManager:nextTick` and `tickAfterNext`
 
@@ -141,6 +143,10 @@ Upgrading KOReader walks this list.
 - The editor frame (`editor.lua`) is shown and closed the same way, with `"full"`, and is
   `covers_fullscreen` as the home is, so nothing beneath it is painted while it is up; an editor
   that reached the stack before failing is taken off it.
+- The editor's `onCloseWidget` runs a home refresh its changes deferred, once: `close` sends
+  `CloseWidget` (`:300`) before it takes the editor off the stack (`:312`) and queues its
+  `"full"` refresh (`:354`), and the home's `"ui"` refresh, queued by its `setDirty` (`:740`),
+  merges into that one (`_refresh`, `:1266-1281`).
 
 ### `UIManager.event_hook`, the settled signal
 
@@ -951,9 +957,11 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   file or an empty table; it cannot flush). `DocSettings:open` is never called: it removes
   candidates it finds invalid (`:282-284`). Read through `isTrue` and `readSetting`
   (`frontend/luasettings.lua:124-126`, `:89-99`, no default passed). `Books.with_progress` opens
-  the sidecar once for the record and the progress both, and keeps what it read while the path
-  `findSidecarFile` gives and that file's `lfs.attributes` `modification` and `size` are unchanged;
-  the emulator's `libkoreader-lfs` gives `modification` in whole seconds.
+  the sidecar once for the record and the progress both. `Books.progress` and `Books.with_progress`
+  keep each book's progress (not its `doc_props`) in one library-wide memo while the path
+  `findSidecarFile` gives and that file's `lfs.attributes` `modification` and `size` are unchanged,
+  and the last `doc_props` `Books.with_progress` read with it; the emulator's `libkoreader-lfs`
+  gives `modification` in whole seconds.
 - The sidecar keys read, in `books.lua`'s `Books.with_progress` (as `Books.for_path` and `Books.progress` read them):
   - `percent_finished`, 0 to 1 (`frontend/apps/reader/modules/readerrolling.lua:338`,
     `readerpaging.lua:163`), clamped to 0 to 1, absent as 0;
@@ -978,7 +986,9 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   entry covers the page (`:446-453`), filling an unfilled TOC itself (`:383-384`). Called on
   `CloseDocument`, which is sent before the document closes (`readerui.lua:887`, `:891`), with
   `self.ui.document.file`; both go into the runtime state file as `featured_chapter_file` and
-  `featured_chapter` in one `State.set_many` write, skipped when they hold those values already.
+  `featured_chapter` in one `State.set_many` write, skipped when the last successful write left
+  those values (not when `State`'s in-memory copy holds them, which a failed write leaves ahead
+  of the file).
   A raising lookup is logged and records the chapter as `""`, and a failed
   write clears `featured_chapter`, so no earlier chapter survives either.
 
@@ -1315,18 +1325,22 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `onTapSheet` and `onHoldSheet` read the gesture's `pos` from their second argument:
   `InputContainer:onGesture` sends `Event:new(eventname, gsseq.args, ev)`
   (`frontend/ui/widget/container/inputcontainer.lua:273-280`).
-- The body's in-place redraw, after a stay-open area's `tap` or `hold`, on a `refresh_on` event or
-  on `Sheet.redraw()`: only while `UIManager:isWidgetShown(sheet)` (`frontend/ui/uimanager.lua:881-888`),
+- The body's in-place redraw, after a stay-open area's `tap` or `hold` or on a `refresh_on` event:
+  only while `UIManager:isWidgetShown(sheet)` (`frontend/ui/uimanager.lua:881-888`),
   it re-lays the panel out and calls `UIManager:setDirty(sheet, "ui", old:combine(new))`
   (`:659`), the `"ui"` refresh `FrontLightWidget:update` asks for its frame
   (`frontend/ui/widget/frontlightwidget.lua:430-437`). `Geom:combine` is `Geom.boundingBox` of
   the two rectangles (`frontend/ui/geometry.lua:151-153`), so a panel that changed height leaves
   nothing stale. Under a KOReader dialog the dirty mark only queues the sheet; `_repaint` paints
-  the dialog over it again (the first entry above).
+  the dialog over it again (the first entry above). When the variant changed since the build,
+  night mode toggled, the redraw only calls `setDirty(sheet, "ui", rect)`: `onToggleNightMode`
+  has marked every window dirty `"full"` (`frontend/device/devicelistener.lua:14-27`), and the
+  sheet's paint lays it out in the new variant, so a Night tap lays the sheet out once.
 - `refresh_on`: each name `N` becomes the sheet's `onN`, the handler an `Event` named `N` calls
   (`frontend/ui/event.lua:32`, `frontend/ui/widget/eventlistener.lua:34-39`). It returns nothing;
   `UIManager:broadcastEvent` offers the event to every window whatever a handler returns
-  (`frontend/ui/uimanager.lua:1042-1061`), so the windows beneath the sheet hear it too.
+  (`frontend/ui/uimanager.lua:1042-1061`), so the windows beneath the sheet hear it too. With
+  the spec's `stale`, the handler redraws only when `stale()` returns true.
 - The settled signal goes from a `nextTick` (`frontend/ui/uimanager.lua:431-433`) that the
   sheet's first good `paintTo` schedules: it runs from the next `_checkTasks`, past that
   `_repaint` (`handleInput` `:1542-1564`). Nothing is scheduled before the paint, so a sheet
@@ -1418,14 +1432,23 @@ guard (`sheet.lua`).
   `queryNetworkState()` caches `is_wifi_on` and `is_connected` (`:651-654`); fully connected,
   `toggleWifiOff(cb, true)` (`:447-457`), whose `disableWifi` broadcasts `NetworkDisconnecting`
   (`:413`), then `NetworkDisconnected` and `cb` once the radio is down (`:405-411`); on but not
-  connected, `promptWifi(cb, false, true)` (`:490`); else `toggleWifiOn(cb, false, true)`
-  (`:433-445`), which broadcasts `NetworkConnecting` (`:74`) and, once the connectivity check
-  passes, `NetworkConnected` before `cb` (`:96-116`). A failed connection broadcasts nothing
-  (`:44-63`, comment `:56`). `cb` is `Sheet.redraw`; the sheet also redraws on `NetworkConnected`
-  and `NetworkDisconnected` (`refresh_on`), returning nothing, so the home hears them too. The
-  emulator's fake flips `emulator_fake_wifi_connected` at once and broadcasts after `scheduleIn(2)`
-  (`frontend/device/sdl/device.lua:478-500`); on the Kindle `turnOnWifi` may show the network list
-  over the sheet (`frontend/device/kindle/device.lua:424-447`).
+  connected, `promptWifi(cb, false, true)` (`:490`), whose choices hand `cb` to `toggleWifiOff` or
+  `toggleWifiOn` (`:506-513`); else `toggleWifiOn(cb, false, true)` (`:433-445`), which broadcasts
+  `NetworkConnecting` (`:74`) and, once the connectivity check passes, `NetworkConnected` before
+  `cb` (`:96-116`). A failed connection broadcasts nothing (`:44-63`, comment `:56`): `enableWifi`'s
+  abort (`:375-378`) or the check giving up (`:84-93`). So `cb` runs only in the same pass as, and
+  just after, a `NetworkConnected` (`:109`, `:116`) or `NetworkDisconnected` (`:408`, `:410`), and
+  the sheet passes `nil`: it redraws on those two events (`refresh_on`) when `stale` finds the
+  radio reading otherwise than at its last layout, returning nothing, so the home hears them too.
+  The tap's own redraw reads the radio just after the toggle, so a toggle that broadcasts nothing,
+  a dismissed prompt or `enableWifi`'s abort, still shows the radio as the tap's redraw reads it;
+  on a seamless-toggle device `enableWifi`'s abort turns the radio off (`:57-60`) with no event,
+  so the sheet may keep showing it on, as before. The emulator's fake flips
+  `emulator_fake_wifi_connected` at once and broadcasts after `scheduleIn(2)`, then runs the
+  callback it was handed, which broadcasts again (`frontend/device/sdl/device.lua:478-500`); on
+  the Kindle `turnOnWifi` may show the network list over the sheet
+  (`frontend/device/kindle/device.lua:424-447`; `manager.lua:1243-1251`), and `turnOffWifi` runs the
+  callback after `scheduleIn(2)` (`kindle/device.lua:441-447`).
 - Close-first actions: the sheet's close takes it off the window stack at once and marks what is
   beneath dirty (`frontend/ui/uimanager.lua:290-313`); then `LauncherEntries.run` checks the entry
   again and runs it (the launcher's entries above), reaching the file manager over the bare file
@@ -1673,9 +1696,10 @@ guard (`sheet.lua`).
 - The download badge is a circle: `paintRoundedRect` and `paintBorder` with a radius of half the
   badge's size (`base/ffi/blitbuffer.lua:2169-2197`, `:2096-2135`), which they cap at half the side
   (`:2105-2106`, `:2175-2176`), through `Paint`.
-- Freeing a tile frees its cover's bitmap and its icons' masks: `WidgetContainer:free` frees each
-  child (`frontend/ui/widget/container/widgetcontainer.lua:110-117`), `ImageWidget` its
-  `image_disposable` image (the featured cover's entry above) and `TintedIcon` its mask.
+- Freeing a tile frees its cover's bitmap and lets go of its icons: `WidgetContainer:free` frees
+  each child (`frontend/ui/widget/container/widgetcontainer.lua:110-117`), `ImageWidget` its
+  `image_disposable` image (the featured cover's entry above), and `TintedIcon` only drops its
+  reference to the mask, which stays in its cache by file and size (`tinted_icon.lua:65-68`).
 
 ### The library window: `filemanagerutil.openFile`, the page keys, `Menu:onSwipe`'s directions and the metadata events
 
@@ -1710,11 +1734,31 @@ guard (`sheet.lua`).
   (`:1317-1320`, returning nothing; the home's hold entry above).
 - `BookMetadataChanged` and `InvalidateMetadataCache` are broadcast when book details or a custom
   cover change (`frontend/apps/filemanager/filemanagerbookinfo.lua:276-277`, `:556-557`), to every
-  window, a handler's true return stopping none (`frontend/ui/uimanager.lua:1042-1061`). The
-  library re-lists its folder on each and returns nothing.
+  window, a handler's true return stopping none (`frontend/ui/uimanager.lua:1042-1061`). One change
+  sends two or three (`filemanagerbookinfo.lua:276-280`), so the library, over the chrome's handlers that refresh on each
+  (`library_chrome.lua`), marks itself stale on each, returns nothing, and re-lists its folder once from one `nextTick` (`frontend/ui/uimanager.lua:431-433`)
+  if it is still shown. The book-info page broadcasts from its close callback after
+  `UIManager:close` (`frontend/ui/widget/keyvaluepage.lua:841-846`), inside the input dispatch at
+  the end of `handleInput` (`uimanager.lua:1607-1620`, run again from `:1663`), so that tick runs at
+  the next pass's `_checkTasks`, before the `_repaint` that paints the close (`:1537-1564`).
 - The library's touch zones, its `onGesture` and its paint, the chrome's, follow the home's (the
   `InputContainer`, touch lock, `covers_fullscreen` and `nextTick` entries above), and its covers
   the featured cover's bounded check (`book_covers.lua`, the featured cover's entry above).
+- A cover arrival repaints the library with `UIManager:setDirty(library, refreshfunc)`
+  (`frontend/ui/uimanager.lua:659`): a function in place of the refresh type is queued and called
+  after the paint (`:728-731`; the doc at `:536-537`), and its `"ui", region, true` is refreshed as
+  given (`:1356-1362`), the third value a dither hint (documented at `:598-599`) that the Colorsoft
+  ignores: it is an MTK Kindle with a colour screen and hardware dither
+  (`frontend/device/kindle/device.lua:1208-1220`), whose `"ui"` refresh is a non-flashing
+  `WAVEFORM_MODE_AUTO` update (`base/ffi/framebuffer_mxcfb.lua:920-922`, `:1024-1029`), and an MTK
+  colour panel drops the dither flag of a non-flashing, non-REAGL update (`:632-635`). A device
+  without hardware dither has the flag dropped by UIManager (`frontend/ui/uimanager.lua:1379-1381`).
+  The region is the rebuilt tiles' rects widened by the shadow and badge overhang
+  (`LibraryTiles.overhang`), not the library's whole-screen `dimen`, as CoverBrowser refreshes only
+  each updated item's dimen, dithered when it has a cover image
+  (`plugins/coverbrowser.koplugin/covermenu.lua:144-157`). The tiles' rects are joined with
+  `Geom:combine` (`frontend/ui/geometry.lua:151-153`, `Geom.boundingBox` at `:458-481`) and the
+  region clipped to the library's `dimen` with `Geom:intersect` (`:162-184`).
 
 ### The library's return: `caller_pre_callback`, `onShowingReader`, the failed-open paths and `changeToPath`
 

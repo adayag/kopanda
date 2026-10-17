@@ -1,0 +1,14 @@
+id: EV-v65bwi
+type: sync.tweak
+at: 2026-10-17T17:53:55.446126Z
+contributor: allen
+command: sync tweak TW-4cf9th
+targets:
+    - TW-4cf9th
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/editors-defer-home-refresh/tweak.yml

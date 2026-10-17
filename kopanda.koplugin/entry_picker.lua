@@ -86,11 +86,17 @@ local function ask_label(pick, default, done)
 end
 
 -- A sheet headed heading, a row for each spec in rows ({ label, icon, run }), each run guarded.
+-- Rows that don't fit go on as many more sheets of the same heading as they take, each reached
+-- from its More row.
 local function sheet(pick, ctx, heading, rows)
     for _, row in ipairs(rows) do
         row.run = guard(pick, "failed on a row:", row.run)
     end
-    Sheet.show({ name = "picker", band = "home", header = { heading = heading }, rows = rows }, ctx)
+    local function page(page_rows)
+        Sheet.show({ name = "picker", band = "home", header = { heading = heading }, rows = page_rows,
+            more = { run = guard(pick, "failed on More:", page) } }, ctx)
+    end
+    page(rows)
 end
 
 local function screen_sheet(pick, ctx, kind, heading, by_target)
