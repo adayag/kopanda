@@ -1,0 +1,14 @@
+id: EV-5rl8r9
+type: sync.task
+at: 2026-10-17T03:21:22.531085Z
+contributor: allen
+command: sync task T-le8x0f
+targets:
+    - T-le8x0f
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/file-browser/task.yml
