@@ -1,0 +1,13 @@
+id: EV-6x8xjo
+type: check.task
+at: 2026-10-17T04:02:49.137944Z
+contributor: allen
+command: check task T-s3rp5n
+targets:
+    - T-s3rp5n
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/sheet-body/task.yml
