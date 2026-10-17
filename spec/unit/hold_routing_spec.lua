@@ -307,8 +307,8 @@ describe("gestures on the KoPanda home", function()
             assert.equals(fm, harness.top())
         end)
 
-        -- Records the opts.started each Sheet.show gets and the time.monotonic() on entry to
-        -- each HomeSheet.open, for the rest of the test.
+        -- Records the opts.started stamp each Sheet.show gets and the time.monotonic() on entry
+        -- to each HomeSheet.open, for the rest of the test.
         local function timings()
             local seen = { started = {}, entered = {} }
             local HomeSheet = require("home_sheet")
@@ -333,8 +333,9 @@ describe("gestures on the KoPanda home", function()
             local seen = timings()
             hold(empty_point())
             assert.equals(1, #seen.started)
-            assert.is_number(seen.started[1])
-            assert.truthy(seen.started[1] <= seen.entered[1])
+            assert.is_number(seen.started[1].wall)
+            assert.is_number(seen.started[1].cpu)
+            assert.truthy(seen.started[1].wall <= seen.entered[1])
         end)
 
         it("starts the paint_ms at the hold when the held slot's hold returns false", function()
@@ -353,10 +354,11 @@ describe("gestures on the KoPanda home", function()
             local seen = timings()
             hold(centre_of("quote"))
             assert.equals(1, #seen.started)
-            assert.is_number(seen.started[1])
+            assert.is_number(seen.started[1].wall)
+            assert.is_number(seen.started[1].cpu)
             assert.is_number(hold_entered)
-            assert.truthy(seen.started[1] <= hold_entered)
-            assert.truthy(seen.started[1] <= seen.entered[1])
+            assert.truthy(seen.started[1].wall <= hold_entered)
+            assert.truthy(seen.started[1].wall <= seen.entered[1])
         end)
     end)
 end)

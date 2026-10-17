@@ -508,7 +508,7 @@ describe("the book sheet", function()
                 seen = {}
                 local show = Sheet.show
                 replace(Sheet, "show", function(spec, ctx, opts)
-                    seen[spec.name] = opts and opts.started
+                    seen[spec.name] = opts and opts.started and opts.started.wall
                     return show(spec, ctx, opts)
                 end)
             end)

@@ -419,9 +419,10 @@ describe("the folder sheet", function()
         LauncherEntries.run(folder, Home.shown.ctx)
         assert.equals(1, #shows)
         local opts = shows[1][3]
-        assert.is_number(opts.started)
+        assert.is_number(opts.started.wall)
+        assert.is_number(opts.started.cpu)
         assert.is_number(resolved_at)
-        assert.truthy(opts.started <= resolved_at)
+        assert.truthy(opts.started.wall <= resolved_at)
         assert.equals(Home.shown.ctx, shows[1][2])
     end)
 
