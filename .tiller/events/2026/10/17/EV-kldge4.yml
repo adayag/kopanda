@@ -1,0 +1,13 @@
+id: EV-kldge4
+type: check.task
+at: 2026-10-17T05:31:11.058898Z
+contributor: allen
+command: check task T-2x7tk6
+targets:
+    - T-2x7tk6
+before:
+    status: in_progress
+after:
+    status: in_progress
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/launcher-target/task.yml
