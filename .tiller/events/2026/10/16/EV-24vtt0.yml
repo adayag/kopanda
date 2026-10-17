@@ -1,0 +1,15 @@
+id: EV-24vtt0
+type: start.task
+at: 2026-10-16T23:27:53.864659Z
+contributor: allen
+command: start task T-1ms8w2
+targets:
+    - T-1ms8w2
+before:
+    status: ready
+after:
+    branch: tiller/library/book-model/covers
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/covers/task.yml

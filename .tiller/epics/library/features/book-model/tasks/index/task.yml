@@ -1,9 +1,10 @@
 id: T-tvonaw
 key: library/book-model/index
 title: Author and series index over the records
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-n450u3
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:f3fd5f9
         observed_at: 2026-10-16T22:58:33.568019Z
+branch: tiller/library/book-model/index
+review_ref:
+    branch: tiller/library/book-model/index
+    head:
+        kind: git_commit
+        value: git:6c9360a
+        observed_at: 2026-10-16T23:44:52.084427Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T23:42:08.078821Z
+        against:
+            kind: git_commit
+            value: git:98d5a84
+            observed_at: 2026-10-16T23:42:08.078817Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-98d5a84-out-a6f2984bc11e0feb3ee5c95deb336d4c039d7d84bf798d9dea0a7485b2a0dfe6.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T23:42:08.078821Z
+        against:
+            kind: git_commit
+            value: git:98d5a84
+            observed_at: 2026-10-16T23:42:08.078817Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-98d5a84-out-41491c1b1d05a970442031f0809674a44305dafe776cf99496dc2b84f0ab51ea.txt

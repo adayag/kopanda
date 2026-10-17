@@ -1,0 +1,13 @@
+id: EV-7qsdhq
+type: check.task
+at: 2026-10-16T23:44:41.582032Z
+contributor: allen
+command: check task T-tvonaw
+targets:
+    - T-tvonaw
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/index/task.yml

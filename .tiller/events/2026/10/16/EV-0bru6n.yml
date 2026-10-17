@@ -1,0 +1,15 @@
+id: EV-0bru6n
+type: start.task
+at: 2026-10-16T23:27:54.639072Z
+contributor: allen
+command: start task T-tvonaw
+targets:
+    - T-tvonaw
+before:
+    status: ready
+after:
+    branch: tiller/library/book-model/index
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/index/task.yml

@@ -1,0 +1,16 @@
+id: EV-xl4yjn
+type: submit.task
+at: 2026-10-16T23:27:38.199093Z
+contributor: allen
+command: submit task T-n450u3
+targets:
+    - T-n450u3
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/book-model/records
+        head: git:cfc1a9f
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/records/task.yml

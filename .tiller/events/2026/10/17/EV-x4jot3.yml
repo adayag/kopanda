@@ -1,0 +1,13 @@
+id: EV-x4jot3
+type: attest.feature
+at: 2026-10-17T01:29:47.484724Z
+contributor: allen
+command: attest feature F-alfeze
+targets:
+    - F-alfeze
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/library/features/book-model/feature.yml
