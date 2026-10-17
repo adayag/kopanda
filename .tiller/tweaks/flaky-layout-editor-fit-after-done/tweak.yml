@@ -1,7 +1,7 @@
 id: TW-f9nvsm
 key: tweaks/flaky-layout-editor-fit-after-done
 title: The layout editor's fit-after-Done test fails intermittently in a full bin/check
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -25,24 +25,24 @@ gates:
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-17T05:03:24.026486Z
+        run_at: 2026-10-17T05:23:36.484351Z
         against:
             kind: git_commit
-            value: git:c0e1e13
-            observed_at: 2026-10-17T05:03:24.026485Z
+            value: git:c1ee1ab
+            observed_at: 2026-10-17T05:23:36.48435Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/build-c0e1e13-out-8171c1245a406b301b217e48e19a51cacf0b03f568f004e84b19d869c6ea1fc5.txt
+              ref: artifacts/tiller/gates/build-c1ee1ab-out-7be53b113ecbfc7efcdf1ea8252e40da19c224bb3c55978dd76c24dd69af5e47.txt
     tests:
         required: true
         kind: command
-        status: fail
+        status: pass
         run_by: allen
-        run_at: 2026-10-17T05:03:24.026486Z
+        run_at: 2026-10-17T05:23:36.484351Z
         against:
             kind: git_commit
-            value: git:c0e1e13
-            observed_at: 2026-10-17T05:03:24.026485Z
+            value: git:c1ee1ab
+            observed_at: 2026-10-17T05:23:36.48435Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/tests-c0e1e13-out-25378f0ea53753319e4bba9fcab5b38d33e494b1ee431bdc451048de6c94f1a7.txt
+              ref: artifacts/tiller/gates/tests-c1ee1ab-out-97ba2c83c939162a6f2c7ab276ee3dffb83afc15b6c9aa31099c3001a39ff0d5.txt
