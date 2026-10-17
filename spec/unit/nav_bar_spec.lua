@@ -488,6 +488,29 @@ describe("the nav bar", function()
         end)
     end)
 
+    -- series-and-authors C5: the Authors window carries the bar with Authors lit.
+    describe("on the Authors window", function()
+        it("lights Authors", function()
+            for _, id in ipairs(Looks.ids()) do
+                local bar = bar_for(id, "authors")
+                assert.equals("authors", NavBar.TABS[bar.active].id, id)
+                bar:free()
+            end
+        end)
+
+        it("runs Home by closing the window and showing the home", function()
+            local fixture = require("shelf_fixture")
+            fixture.install({ fixture.book("Earthsea", { authors = { "Ursula K. Le Guin" } }) })
+            local Home, AuthorsScreen = package.loaded["home"], package.loaded["authors_screen"]
+            local screen = fixture.show_authors()
+            NavBar.run("home", "authors")
+            assert.is_nil(AuthorsScreen.shown)
+            assert.is_false(require("ui/uimanager"):isWidgetShown(screen))
+            assert.is_not_nil(Home.shown)
+            assert.equals(Home.shown, harness.top())
+        end)
+    end)
+
     describe("a hold and other gestures", function()
         local time = require("ui/time")
 

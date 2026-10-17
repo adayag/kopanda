@@ -1,9 +1,10 @@
 id: T-m5pho3
 key: library/series-and-authors/authors
 title: 'The Authors window: the letter-grouped list and one author''s grid'
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-y7g8mr
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:56440d9
         observed_at: 2026-10-17T07:51:40.856734Z
+branch: tiller/library/series-and-authors/authors
+review_ref:
+    branch: tiller/library/series-and-authors/authors
+    head:
+        kind: git_commit
+        value: git:570b2f8
+        observed_at: 2026-10-17T14:10:22.952227Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T14:06:18.925743Z
+        against:
+            kind: git_commit
+            value: git:4e17006
+            observed_at: 2026-10-17T14:06:18.925739Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-4e17006-out-b7bfe951176ffc32f1d72773cdc344fd399234d2b1e46f156f1a3534c2c77fa3.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T14:06:18.925743Z
+        against:
+            kind: git_commit
+            value: git:4e17006
+            observed_at: 2026-10-17T14:06:18.925739Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-4e17006-out-97566857e7efd92338250ef33f34a6c80f4f11cfc1a26bcc276f91ca2834c201.txt
