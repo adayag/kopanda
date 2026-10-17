@@ -1,8 +1,8 @@
 -- The library goldens and its paint budget (cover-grid C14): the library window over a capture
 -- library this spec builds in its scratch space, in each look, its root on both profiles and, on
 -- the Colorsoft, its sub-folder and the sort sheet over its root; and, beside them, a book opened
--- from the library closing back to the pre-built library. The capture library holds copies of the
--- three fixture books at its root and a sub-folder holding one more copy, so
+-- from the library closing back to the pre-built library. The capture library (capture_library.lua)
+-- holds copies of the three fixture books at its root and a sub-folder holding one more copy, so
 -- spec/fixtures/library/ (counted by fixtures_spec.lua, listed by the file-browser goldens) is not
 -- changed. The home fixture patch (at empty, which sets up no featured book) freezes the clock and
 -- stores the look; the library scenario patch stores the capture library as the home folder,
@@ -11,7 +11,7 @@
 -- Diner) so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
 describe("the library goldens", function()
     require("commonrequire")
-    local lfs = require("libs/libkoreader-lfs")
+    local capture_library = require("emulator.capture_library")
     local driver = require("emulator.driver")
     local golden = require("emulator.golden")
     local root = os.getenv("KOPANDA_ROOT")
@@ -24,8 +24,6 @@ describe("the library goldens", function()
     local PAINT_BUDGET_MS = 250
     -- About 42 px at 1264×1680, as the file-browser goldens allow (nav_golden_spec.lua).
     local MAX_FRACTION = 0.00002
-    local BOOKS = { "a-christmas-carol.epub", "frankenstein.epub", "the-time-machine.epub" }
-    local FOLDER, FOLDER_BOOK = "Gothic", "frankenstein.epub"
 
     local scenarios = {
         { name = "library-diner", profile = "colorsoft", step = "root" },
@@ -38,35 +36,8 @@ describe("the library goldens", function()
         { name = "library-sort-editorial", look = "editorial", profile = "colorsoft", step = "sort", screen = "sheet" },
     }
 
-    local function quote(s)
-        return "'" .. tostring(s):gsub("'", "'\\''") .. "'"
-    end
-
-    local function copy(from, to)
-        assert.equals(0, os.execute("cp " .. quote(from) .. " " .. quote(to)))
-    end
-
-    -- A fresh capture library under KO_HOME: the fixture books at its root and FOLDER holding a
-    -- copy of FOLDER_BOOK. A copy has its own path, so its CoverBrowser row and sidecar are its own.
-    local made = 0
-    local function capture_library()
-        made = made + 1
-        local dir = string.format("%s/library-capture-%d", os.getenv("KO_HOME"), made)
-        if lfs.attributes(dir, "mode") then
-            assert.equals(0, os.execute("rm -rf " .. quote(dir)))
-        end
-        assert(lfs.mkdir(dir))
-        assert(lfs.mkdir(dir .. "/" .. FOLDER))
-        local fixtures = root .. "/spec/fixtures/library/"
-        for _, book in ipairs(BOOKS) do
-            copy(fixtures .. book, dir .. "/" .. book)
-        end
-        copy(fixtures .. FOLDER_BOOK, dir .. "/" .. FOLDER .. "/" .. FOLDER_BOOK)
-        return dir
-    end
-
     local function capture(opts)
-        local library = capture_library()
+        local library = capture_library.make()
         return driver.capture{
             profile = opts.profile,
             plugin_dir = plugin,
