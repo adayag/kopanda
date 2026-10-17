@@ -121,11 +121,11 @@ describe("reading stats", function()
     end
 
     -- A Statistics database at db_path holding books { id, md5, pages, last_open } and page
-    -- rows { id_book, page, start_time, duration, total_pages }.
-    local function make_books_db(books, rows)
+    -- rows { id_book, page, start_time, duration, total_pages }, in WAL mode or journal when given.
+    local function make_books_db(books, rows, journal)
         remove_db()
         local conn = SQ3.open(db_path)
-        conn:exec("PRAGMA journal_mode=WAL;")
+        conn:exec("PRAGMA journal_mode=" .. (journal or "WAL") .. ";")
         for _, sql in ipairs(DDL) do
             conn:exec(sql)
         end
@@ -571,6 +571,17 @@ describe("reading stats", function()
 
     describe("the memo", function()
         local real_open, opened
+        local real_time = os.time
+
+        -- Stops os.time() at t; os.time with a date table still converts it.
+        local function freeze(t)
+            os.time = function(date) -- luacheck: ignore 122
+                if date == nil then
+                    return t
+                end
+                return real_time(date)
+            end
+        end
 
         -- Dates the file at path seconds_ago in the past.
         local function date_back(path, seconds_ago)
@@ -609,6 +620,7 @@ describe("reading stats", function()
 
         after_each(function()
             SQ3.open = real_open
+            os.time = real_time -- luacheck: ignore 122
         end)
 
         it("reads the numbers again only when the database or its WAL file changes, or the date", function()
@@ -648,6 +660,33 @@ describe("reading stats", function()
             ReadingStats.read(NOW)
             ReadingStats.read(NOW)
             assert.equals(2, opened)
+        end)
+
+        -- FAT dates files in two-second steps, rounded down, so in an odd second T a write dated
+        -- T-1 can follow another dated T-1 that left the size as it was.
+        it("reads again a database dated within the last two seconds", function()
+            local now = real_time()
+            now = now - now % 2 + 1
+            freeze(now)
+            make_db({ on_day(0) })
+            for _, dated in ipairs{ now - 1, now } do
+                assert(lfs.touch(db_path, dated, dated))
+                opened = 0
+                ReadingStats.read(NOW)
+                ReadingStats.read(NOW)
+                assert.equals(2, opened)
+            end
+        end)
+
+        it("keeps the read of a database dated two seconds back", function()
+            local now = real_time()
+            now = now - now % 2 + 1
+            freeze(now)
+            make_db({ on_day(0) })
+            assert(lfs.touch(db_path, now - 2, now - 2))
+            ReadingStats.read(NOW)
+            ReadingStats.read(NOW)
+            assert.equals(1, opened)
         end)
 
         it("reads a busy database as the last numbers read, untouched or touched", function()
@@ -711,6 +750,32 @@ describe("reading stats", function()
             assert.equals(4, opened)
             assert.equals(13, ReadingStats.read(NOW).minutes_today)
             assert.equals(4, opened)
+        end)
+
+        it("keeps today's numbers as a busy database's when a book's rate reads them again", function()
+            local t = os.date("*t", NOW)
+            local yesterday = at(t.year, t.month, t.day - 1, 20, 42)
+            local start = on_day(0)[2]
+            make_books_db({ { 1, "abc", 100, 100 } }, { { 1, 1, on_day(-1)[2], 600, 100 } }, "DELETE")
+            settle()
+            assert.equals(10, ReadingStats.read(yesterday).minutes_today)
+            -- Today's read lands while Statistics' last write is dated too recently to keep.
+            insert({ 1, 2, start, 1200, 100 })
+            date_back(db_path, -5)
+            assert.equals(20, ReadingStats.read(NOW).minutes_today)
+
+            insert({ 1, 3, start + 60, 60, 100 })
+            date_back(db_path, 30)
+            assert.equals((120 + 120 + 60) / 3, (ReadingStats.seconds_per_page("abc")))
+
+            local locker = real_open(db_path)
+            locker:exec("BEGIN EXCLUSIVE;")
+            date_back(db_path, 20)
+            local busy = ReadingStats.read(NOW)
+            locker:exec("ROLLBACK;")
+            locker:close()
+            assert.equals(21, busy.minutes_today)
+            assert.equals(2, busy.streak)
         end)
     end)
 

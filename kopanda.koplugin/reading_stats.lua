@@ -28,21 +28,24 @@ local MONTHS = {
 local last
 
 -- The last reads, each valid while the files' stamp is key: numbers, the result of read for the
--- local date of now; rate, seconds_per_page's for md5 under the cap (nil when none is found).
+-- local date of now, kept with no key when the stamp is nil so that a refresh reads the latest
+-- date read; rate, seconds_per_page's for md5 under the cap (nil when none is found).
 local memo = {}
 
 -- The size and modification time of the database and of its WAL file, the two files Statistics
--- writes, as one string; nil when either is dated this second or later, since mtimes are whole
--- seconds and a write later in the same second could leave both unchanged. An empty file reads
--- as none, whatever its date: it holds nothing, and a read-only open of a WAL database leaves an
--- empty WAL file behind, which a reader can't delete.
+-- writes, as one string; nil when either is dated within the last two seconds, since a later
+-- write could leave both unchanged: lfs's mtimes are whole seconds, and the Kindle's userstore is
+-- vfat under a fuse overlay (platform/kindle/koreader.sh:13, :151-152), which dates files in
+-- two-second steps, rounded down (an assumption until mount on the device confirms the vfat). An
+-- empty file reads as none, whatever its date: it holds nothing, and a read-only open of a WAL
+-- database leaves an empty WAL file behind, which a reader can't delete.
 local function stamp(path)
     local now = os.time()
     local parts = {}
     for i, file in ipairs{ path, path .. "-wal" } do
         local attributes = lfs.attributes(file)
         if attributes and attributes.size > 0 then
-            if attributes.modification >= now then
+            if attributes.modification >= now - 1 then
                 return nil
             end
             parts[i] = attributes.size .. "@" .. attributes.modification
@@ -161,8 +164,9 @@ local function finish(numbers, now)
 end
 
 -- The numbers again, on a connection opened for a book's rate, when the memo holds them for an
--- older stamp: a home build after a Statistics write then opens the database once. A failure
--- leaves them stale, for read to open again.
+-- older stamp or none: a home build after a Statistics write then opens the database once. They
+-- are read for the latest date read, so the last numbers a busy database reads as stay that
+-- date's. A failure leaves them stale, for read to open again.
 local function refresh_numbers(conn, key)
     local held = memo.numbers
     if key and held and held.key ~= key then
@@ -255,9 +259,7 @@ function ReadingStats.read(now)
             end
             return empty(now)
         end
-        if key then
-            memo.numbers = { key = key, date = date, now = now, value = numbers }
-        end
+        memo.numbers = { key = key, date = date, now = now, value = numbers }
         return numbers
     end)
     if not ok then
