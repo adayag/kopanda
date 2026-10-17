@@ -35,10 +35,30 @@ function State.get(key)
     return value
 end
 
+-- Whether a and b hold the same values: equal, or tables with the same keys whose values are
+-- the same, all the way down.
+local function same(a, b)
+    if type(a) ~= "table" or type(b) ~= "table" then
+        return a == b
+    end
+    for k, v in pairs(a) do
+        if not same(v, b[k]) then
+            return false
+        end
+    end
+    for k in pairs(b) do
+        if a[k] == nil then
+            return false
+        end
+    end
+    return true
+end
+
 -- Stores value under key and writes the file at once, so the value survives a crash.
 -- Returns true when written, false otherwise. LuaSettings:flush neither creates the directory
 -- nor reports a failed write (frontend/luasettings.lua:270-275, frontend/util.lua:1131-1133),
--- so the directory is made and checked first, and the file is read back after.
+-- so the directory is made and checked first, and the file is read back after, a table value
+-- compared key by key.
 function State.set(key, value)
     local ok, err = pcall(function()
         if lfs.attributes(dir(), "mode") ~= "directory" then
@@ -49,7 +69,7 @@ function State.set(key, value)
         end
         open():saveSetting(key, value):flush()
         local read_ok, data = pcall(dofile, dir() .. "/state.lua")
-        if not (read_ok and type(data) == "table" and data[key] == value) then
+        if not (read_ok and type(data) == "table" and same(data[key], value)) then
             error("the file did not take " .. key)
         end
     end)

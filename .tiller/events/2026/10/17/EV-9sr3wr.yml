@@ -1,0 +1,17 @@
+id: EV-9sr3wr
+type: start.task
+at: 2026-10-17T02:23:21.604371Z
+contributor: allen
+command: start task T-anr3s4
+targets:
+    - T-anr3s4
+before:
+    status: ready
+after:
+    aggregate_branch: ""
+    branch: tiller/library/cover-grid/order
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/order/task.yml
+    - path: .tiller/epics/library/features/cover-grid/feature.yml

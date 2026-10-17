@@ -1,0 +1,13 @@
+id: EV-9u1ixh
+type: claim.task
+at: 2026-10-17T02:23:21.46352Z
+contributor: allen
+command: claim task T-anr3s4
+targets:
+    - T-anr3s4
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/order/task.yml
