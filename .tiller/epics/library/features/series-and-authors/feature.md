@@ -201,7 +201,8 @@ in both looks:
   header, in board px) and steps down by board pixels until the case passes, each changed value commented
   "D14: board N", as cover-grid's D2 tightening.
 - **The lists** hold at the Colorsoft at least the boards' counts per page: five series rows (SeriesC), three
-  book rows (SeriesBooksC), seven author rows in five groups (AuthorsC). A failing count is reported to the
+  book rows (SeriesBooksC), seven author rows in five groups (AuthorsC), each list's page ending
+  `shelf.list.pager_gap` above the pager, a boxed row's shadow included. A failing count is reported to the
   lead with the measured heights before any token changes.
 
 ### Tokens
@@ -219,7 +220,8 @@ on `paper`, `ink` (cover-grid feature.md:244-246).
 | `shelf.detail.padding` top, side, bottom; `back_gap` | 26, 40, 16; 14 (AuthorBooksA:19) | 22, 40, 18; 10 (SeriesBooksC:19) |
 | `shelf.back.fill_color`, `outline_width`, `padding` l, r, y, `icon_size`, `gap` | false, 0, 0, 0, 0, 14, 6 (AuthorBooksA:20-21) | `paper`, 2, 6, 10, 4, 14, 6 (SeriesBooksC:20-21) |
 | `shelf.list.padding_top`, `side`, `row_gap` | 22, 40, 0 (lead: by analogy, rows ruled not boxed) | 22, 40, 14 (SeriesC:27) |
-| `shelf.row.padding` x, y; `gap`; `outline_width`; `shadow` x, y; `rule_width`, `rule_color` | 0, 14; 18; 0; 0, 0; 1, `hairline` (lead: by analogy with GridA's hairlines) | 16, 11; 18; 3; 4, 4; 0, `ink` (SeriesC:28; y 11 not the board's 12: the owner's fit, 2026-10-17, five rows a page at the Colorsoft) |
+| `shelf.list.pager_gap` | 14 (lead: by analogy with Diner's) | 14 (the owner, 2026-10-17: the row gap, kept clear above the pager, its last row's shadow inside it) |
+| `shelf.row.padding` x, y; `gap`; `outline_width`; `shadow` x, y; `rule_width`, `rule_color` | 0, 14; 18; 0; 0, 0; 1, `hairline` (lead: by analogy with GridA's hairlines) | 16, 9; 18; 3; 4, 4; 0, `ink` (SeriesC:28; y 9 not the board's 12: the owner's fit, 2026-10-17, five rows a page at the Colorsoft with `shelf.list.pager_gap` above the pager) |
 | `shelf.row.line_gap` | 3 (lead: by analogy with SeriesC:34) | 3 (SeriesC:34) |
 | `shelf.stack.cover_w`, `cover_h`, `offset_x`, `offset_y`, `outline_width`, `outline_color` | 38, 56, 10, 2, 1, `paper` (lead: an edge to part the overlapped covers) | 38, 56, 10, 2, 2, `outline` (SeriesC:29-33; `cover_w` and `cover_h` the outer box, the outline inside it, so the stack keeps the board's 60-high room and the five-row fit) |
 | `shelf.chip.padding` x, y; `outline_width`; `under_way_fill_color`, `finished_fill_color`, `not_started_fill_color`, `up_next_fill_color`, `not_downloaded_fill_color` | 0, 0; 0; false × 5 (lead: small caps, as GridA:73) | 7, 1; 2; `mustard`, `teal`, `paper`, `paper`, `pink` (SeriesC:39, :76, :88; SeriesBooksC:49, :62) |
