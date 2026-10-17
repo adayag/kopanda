@@ -1,0 +1,13 @@
+id: EV-388ly7
+type: start.chore
+at: 2026-10-17T20:46:32.393616Z
+contributor: allen
+command: start chore CH-58w77v
+targets:
+    - CH-58w77v
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/chores/fewer-goldens-per-feature/chore.yml
