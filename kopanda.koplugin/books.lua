@@ -370,9 +370,10 @@ local function file_progress(path)
     return sidecar_progress(sidecar(path))
 end
 
--- path's sidecar read for Books.with_progress: { props, progress }, its doc_props and its progress,
--- from one open of the file findSidecarFile gives, or the last read while that file's path, mtime
--- and size are the last read's. A read whose open raised is not kept, so the next call retries it.
+-- path's sidecar read for Books.with_progress: { file, modification, size, props, progress }, the
+-- sidecar file findSidecarFile gives, its mtime and size then, and the doc_props and progress from
+-- one open of it, or the last read while that file's path, mtime and size are the last read's. A
+-- read whose open raised is not kept, so the next call retries it.
 local function sidecar_read(path)
     local file = try("the sidecar of " .. path, DocSettings.findSidecarFile, DocSettings, path)
     if not file then

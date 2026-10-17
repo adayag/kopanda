@@ -376,6 +376,21 @@ describe("FeaturedBook", function()
             assert.equals("Indexed title", FeaturedBook.current().title)
             assert.equals(0, opened)
         end)
+
+        it("opens another book's sidecar of the same mtime and size", function()
+            local b = book("b.epub")
+            local other = sidecar(b, '{ percent_finished = 0.9, doc_props = { title = "DrJekyllHyde" } }')
+            assert.is_true(lfs.touch(other, mtime, mtime))
+            assert.equals(lfs.attributes(path, "size"), lfs.attributes(other, "size"))
+            assert.equals(0.5, FeaturedBook.current().percent)
+
+            assert.is_true(Settings.set("featured.pinned", b))
+            opened = 0
+            local current = FeaturedBook.current()
+            assert.equals(0.9, current.percent)
+            assert.equals("DrJekyllHyde", current.title)
+            assert.equals(1, opened)
+        end)
     end)
 
     describe("seconds left", function()
