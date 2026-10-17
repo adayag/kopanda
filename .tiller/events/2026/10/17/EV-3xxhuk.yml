@@ -1,0 +1,14 @@
+id: EV-3xxhuk
+type: sync.task
+at: 2026-10-17T03:26:01.152852Z
+contributor: allen
+command: sync task T-m6bm2e
+targets:
+    - T-m6bm2e
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/goldens/task.yml
