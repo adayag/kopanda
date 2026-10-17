@@ -1,7 +1,7 @@
 id: T-ivn2lk
 key: library/context-menu/space-sheet
 title: 'The empty-space sheet: Sort, Show, Refresh covers and Hidden folders'
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,12 @@ accepted_against:
         value: git:febf828
         observed_at: 2026-10-17T16:43:29.429979Z
 branch: tiller/library/context-menu/space-sheet
+review_ref:
+    branch: tiller/library/context-menu/space-sheet
+    head:
+        kind: git_commit
+        value: git:5a816dd
+        observed_at: 2026-10-17T18:45:36.077047Z
 gates:
     build:
         required: true
