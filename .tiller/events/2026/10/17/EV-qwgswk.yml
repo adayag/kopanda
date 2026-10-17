@@ -1,0 +1,14 @@
+id: EV-qwgswk
+type: add.task
+at: 2026-10-17T20:53:28.317142Z
+contributor: allen
+command: add task library/cwng-placeholders/download-row
+targets:
+    - T-xtol0q
+after:
+    feature: F-yy4zaa
+    key: library/cwng-placeholders/download-row
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/download-row/task.md
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/download-row/task.yml

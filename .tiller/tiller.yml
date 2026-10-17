@@ -28,14 +28,18 @@ inputs:
 
 # Required gates are command-backed and define clean completion. The evals gate
 # is active by default: it runs each feature's acceptance contract (the *.eval.md
-# criteria) through "tiller eval". The contract gates the feature; tasks gate on
-# build and tests, so mid-feature task PRs flow one reviewable diff at a time.
-# Fill in build and tests with the commands your project runs.
+# criteria) through "tiller eval". The contract gates the feature; tasks, bugs,
+# chores and tweaks gate on build and unit_tests, so mid-feature task PRs flow
+# one reviewable diff at a time.
 gates:
   required:
     evals: { kind: command, run: "tiller eval ${node.noun} ${node.id}", on: [feature] }
     build: { kind: command, run: "bin/check --lint", on: [feature, task] }
-    tests: { kind: command, run: "bin/check", on: [feature, task] }
+    # A task, bug, chore or tweak (Tiller matches all four as task) runs lint, studio and unit specs;
+    # the feature runs the emulator layer too. Keep `tests` the full run: eval test bindings append
+    # their spec paths to its command.
+    unit_tests: { kind: command, run: "bin/check --unit", on: [task] }
+    tests: { kind: command, run: "bin/check", on: [feature] }
   optional:
     code_review:          { kind: attestation, on: pr }
     security_review:      { kind: attestation, on: pr }
