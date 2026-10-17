@@ -1,0 +1,14 @@
+id: EV-yaimka
+type: add.bug
+at: 2026-10-17T18:47:04.192421Z
+contributor: allen
+command: add bug library-prebuild-stale-and-wasted
+targets:
+    - B-fip6q6
+after:
+    attached_to: T-t5ho4x
+    key: bugs/library-prebuild-stale-and-wasted
+    status: proposed
+files:
+    - path: .tiller/bugs/library-prebuild-stale-and-wasted/bug.md
+    - path: .tiller/bugs/library-prebuild-stale-and-wasted/bug.yml
