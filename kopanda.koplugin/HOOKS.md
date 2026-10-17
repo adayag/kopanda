@@ -163,6 +163,10 @@ Upgrading KOReader walks this list.
   a full-screen tap zone through `registerTouchZones`
   (`frontend/ui/widget/container/inputcontainer.lua:144`), `onGesture` (`:266`) and `paintTo`
   (`:73`) each in a `pcall`, and the settled signal with `screen = "swatch"` and `paint_ms`.
+  The signal runs from a `nextTick` (`frontend/ui/uimanager.lua:431-433`) that the swatch's
+  first `paintTo` schedules, past that `_repaint`, and is not sent when that paint failed;
+  nothing is scheduled before the paint, as for the home (the `nextTick` and `tickAfterNext`
+  entry above).
 
 ### `G_defaults` keys `DTAP_ZONE_MENU`, `DTAP_ZONE_MENU_EXT` and the `DSWIPE_ZONE_*` edges
 
@@ -1570,7 +1574,9 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `time.now()` through each pass so a capture spec reproduces the race on every run. The
   home's own settle did the same until it too moved to its first `paintTo`: about one run in
   ten of `spec/unit/push_notice_spec.lua` gave the show's `finished` `false` after a good
-  paint, and that spec now holds `time.now()` to reproduce it on every run.
+  paint, and that spec now holds `time.now()` to reproduce it on every run. The swatch's
+  settle moved the same way; `spec/unit/swatch_spec.lua` holds `time.now()` and saw the signal
+  before the first paint, and for a paint that then failed, on every run of the old code.
 
 ### The `Show` event reaching plugin instances
 

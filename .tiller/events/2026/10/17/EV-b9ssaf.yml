@@ -1,0 +1,14 @@
+id: EV-b9ssaf
+type: submit.bug
+at: 2026-10-17T05:21:17.612956Z
+contributor: allen
+command: submit bug B-mobbtn
+targets:
+    - B-mobbtn
+before:
+    status: check
+after:
+    pr: 31
+    status: in_review
+files:
+    - path: .tiller/bugs/edit-layout-quote-day/bug.yml
