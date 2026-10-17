@@ -237,18 +237,19 @@ local function button(width, ctx)
     }
 end
 
--- The progress bar width wide for a book at percent shown, from the look's progress tokens: a
--- track of height inside an outline of outline_width when outline_color is set, filled to
--- floor(inner width × shown / 100). Where fill_grey is hatch_135 in the grey variant, the fill
--- is a FrameContainer striped ink over paper, whose hatchRect draws along x + y = constant, the
--- board's 135° (frontend/ui/widget/container/framecontainer.lua:48-50, :128-132;
+-- A progress bar width wide at percent shown, its track inner_h high (device pixels) inside an
+-- outline of outline_width (board pixels) where the look's progress.outline_color is set, filled
+-- to floor(inner width × shown / 100) in the look's progress colours: the featured book's bar and
+-- the library tiles' strip. Where fill_grey is hatch_135 in the grey variant, the fill is a
+-- FrameContainer striped ink over paper, whose hatchRect draws along x + y = constant, the board's
+-- 135° (frontend/ui/widget/container/framecontainer.lua:48-50, :128-132;
 -- base/ffi/blitbuffer.lua:2209-2235).
-local function bar(shown, width, ctx)
+function Featured.bar(shown, width, inner_h, outline_width, ctx)
     local tokens = ctx.look.progress
     local scale, color = scaler(ctx), colorer(ctx)
     local outline_color = color(tokens.outline_color)
-    local outline = outline_color and scale(tokens.outline_width) or 0
-    local inner_w, inner_h = width - 2 * outline, scale(tokens.height)
+    local outline = outline_color and scale(outline_width) or 0
+    local inner_w = width - 2 * outline
     local fill_w = math.floor(inner_w * shown / 100)
     local filled
     if tokens.fill_grey == "hatch_135" and ctx.variant == "grey" then
@@ -349,8 +350,9 @@ local function book_column(book, w, h, ctx)
             top[#top + 1] = { Typeset.line(look.type.featured_chapter, book.chapter, w, ctx), scale(CHAPTER_GAP) }
         end
     end
+    local progress = look.progress
     local bottom = {
-        { bar(Featured.shown_percent(book), w, ctx), 0 },
+        { Featured.bar(Featured.shown_percent(book), w, scale(progress.height), progress.outline_width, ctx), 0 },
         { caption(book, w, ctx), scale(BAR_GAP) },
     }
     local room = h - 2 * pad - stacked_height(bottom)

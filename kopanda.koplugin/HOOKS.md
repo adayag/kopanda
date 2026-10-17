@@ -1337,6 +1337,23 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
 - The editor's Done runs the spec's `done` when it has one, a folder's list opened from the top
   level going back to it; the frame's show and close are the editor entries above.
 
+### The library tiles: line heights, the ellipsis, the badge's circle and what they free
+
+- A tile's height never reads its text: `TextWidget`'s height is its face's height and padding
+  (`frontend/ui/widget/textwidget.lua:112-113`) or a forced height (`:292-299`), so
+  `library_tiles.lua` measures each part's line once on a sample. A tracked line's glyphs share
+  that height (the `Typeset.line` entries above).
+- The title is one line at the tile's width: `Typeset.line` passes `max_width`, and `TextWidget`
+  cuts past it with an ellipsis (`truncate_with_ellipsis`, `:37`; without xtext `:153-177`, with
+  it `:201-238`).
+  `spec/unit/library_tiles_spec.lua` reads `isTruncated` (`:307-310`).
+- The download badge is a circle: `paintRoundedRect` and `paintBorder` with a radius of half the
+  badge's size (`base/ffi/blitbuffer.lua:2169-2197`, `:2096-2135`), which they cap at half the side
+  (`:2105-2106`, `:2175-2176`), through `Paint`.
+- Freeing a tile frees its cover's bitmap and its icons' masks: `WidgetContainer:free` frees each
+  child (`frontend/ui/widget/container/widgetcontainer.lua:110-117`), `ImageWidget` its
+  `image_disposable` image (the featured cover's entry above) and `TintedIcon` its mask.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`

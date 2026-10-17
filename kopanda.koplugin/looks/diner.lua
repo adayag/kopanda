@@ -374,6 +374,45 @@ return {
         title_bar_status = {
             face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
         },
+        -- The library's parts (Main.dc.html under .tiller/design/2026-10-16-kopanda-library-screens/).
+        -- The count over the title, in Caveat, CSS line height 1, in the band's dark text (Main.dc.html:21).
+        library_count = {
+            face = "accent", size = 24, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
+        },
+        -- The title (Main.dc.html:22, weight 800); CSS line height 0.95, as the clock's -0.1 for 0.9.
+        library_title = {
+            face = "display", size = 40, uppercase = false, tracking = -0.01, line_height = -0.05,
+            color = "on_accent",
+        },
+        -- A picker's label, ink on the paper chip (Main.dc.html:25, weight 800).
+        library_picker = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
+        },
+        -- A tile's title, one line, CSS line height 1.2 (Main.dc.html:47, weight 800).
+        tile_title = {
+            face = "display", size = 12, uppercase = true, tracking = 0.04, line_height = 0.2, color = "ink",
+        },
+        -- The placeholder's title at the grid's size, CSS line height 1.1 (Main.dc.html:51). The board's
+        -- Georgia is not a Diner face, so the display face stands in, as in cover_title.
+        tile_cover_title = {
+            face = "display", size = 17, uppercase = false, tracking = 0, line_height = 0.1, color = "on_cover",
+        },
+        -- A folder's book count on its pink box, in Caveat, CSS line height 1 (Main.dc.html:35).
+        folder_count = {
+            face = "accent", size = 26, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
+        },
+        -- Its reading count (Main.dc.html:36, weight 800).
+        folder_reading = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
+        },
+        -- "Not downloaded" on its pink chip (Main.dc.html:73, weight 800).
+        not_downloaded = {
+            face = "display", size = 10, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
+        },
+        -- "Page 1 of 24" between the pager's boxes (Main.dc.html:87, weight 800).
+        pager_label = {
+            face = "display", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
+        },
     },
 
     -- The launcher: a grid of outlined tiles with the tile shadow, the first three on accents.
@@ -483,5 +522,80 @@ return {
         icon_size = 16, -- no board draws the plus: the pickers' size
         icon_color = "on_accent", -- no board draws the plus: the band's dark text
         count_on_shelf = true, -- "142 books on the shelf" (LibraryC.dc.html:21)
+    },
+    -- The library: a mustard header over a 4 px ink edge, three columns of outlined covers with hard
+    -- shadows and a hatched-chip strip under each, and a pager of outlined boxes above the nav bar
+    -- (Main.dc.html:19-88 under .tiller/design/2026-10-16-kopanda-library-screens/). The colours the
+    -- board draws in ink are the outline role, cream by night, as the doc's strokes are.
+    library = {
+        header = {
+            fill_color = "mustard", -- Main.dc.html:19
+            padding = { top = 28, side = 40, bottom = 18 }, -- Main.dc.html:19
+            edge_width = 4, -- Main.dc.html:19
+            edge_color = "ink", -- Main.dc.html:19
+            line_gap = 2, -- the count to the title (Main.dc.html:20)
+            picker_gap = 10, -- Main.dc.html:24
+            picker_padding = { x = 10, y = 4 }, -- Main.dc.html:25
+            picker_outline_width = 2, -- Main.dc.html:25-26
+            picker_outline_color = "outline", -- Main.dc.html:25-26
+            sort_fill_color = "paper", -- Main.dc.html:25
+            status_fill_color = "pink", -- Main.dc.html:26
+        },
+        grid = {
+            padding_top = 22, -- Main.dc.html:30
+            side = 40, -- Main.dc.html:30
+            row_gap = 22, -- Main.dc.html:30
+            column_gap = 22, -- Main.dc.html:30
+            cover_h = 195, -- D2: board 200, so two rows fit (Main.dc.html:32, :43)
+            strip_gap = 12, -- the tile's 8 px gap and the strip's 4 px margin (Main.dc.html:42, :46)
+            title_gap = 8, -- the tile's gap (Main.dc.html:42)
+        },
+        cover = {
+            outline_width = 3, -- Main.dc.html:43
+            outline_color = "outline", -- Main.dc.html:43
+            radius = 0, -- Main.dc.html:43
+            shadow = { x = 5, y = 5, color = "shadow" }, -- Main.dc.html:43
+            padding = { x = 10, y = 14 }, -- the placeholder's (Main.dc.html:43)
+        },
+        strip = {
+            height = 14, -- its outline included (Main.dc.html:46, box-sizing: border-box)
+            outline_width = 2, -- Main.dc.html:46
+        },
+        folder = {
+            fill_color = "pink", -- Main.dc.html:32
+            outline_width = 3, -- Main.dc.html:32
+            outline_color = "outline", -- Main.dc.html:32
+            icon_size = 44, -- Main.dc.html:33
+            icon_color = "on_accent", -- the board's ink on pink (Main.dc.html:33), dark by night too
+            padding = { x = 12, y = 14 }, -- Main.dc.html:32
+            count_gap = 4, -- Main.dc.html:34
+        },
+        badge = {
+            size = 38, -- Main.dc.html:66
+            outline_width = 3, -- Main.dc.html:66
+            outline_color = "outline", -- Main.dc.html:66
+            fill_color = "paper", -- Main.dc.html:66
+            icon_size = 20, -- Main.dc.html:67
+            icon_color = "ink", -- Main.dc.html:67
+            inset = -12, -- overhanging the corner (Main.dc.html:66, right: -12px; top: -12px)
+            align = "top", -- Main.dc.html:66
+        },
+        not_downloaded = {
+            fill_color = "pink", -- Main.dc.html:73
+            outline_width = 2, -- Main.dc.html:73
+            outline_color = "outline", -- Main.dc.html:73
+            padding = { x = 6, y = 1 }, -- Main.dc.html:73
+        },
+        pager = {
+            button_w = 44, -- Main.dc.html:86, :88
+            button_h = 32, -- Main.dc.html:86, :88
+            gap = 18, -- Main.dc.html:85
+            bottom = 16, -- Main.dc.html:85
+            outline_width = 2, -- Main.dc.html:86, :88
+            outline_color = "outline", -- Main.dc.html:86, :88
+            prev_fill_color = "paper", -- Main.dc.html:86
+            next_fill_color = "mustard", -- Main.dc.html:88
+            dead_color = false, -- Main draws no dead arrow: it is left out (cover-grid D16)
+        },
     },
 }

@@ -351,6 +351,39 @@ return {
         title_bar_status = {
             face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "text",
         },
+        -- The library's parts (GridA.dc.html under .tiller/design/2026-10-16-kopanda-library-screens/).
+        -- The count over the title (GridA.dc.html:21); the board's 400 is the text face.
+        library_count = {
+            face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted",
+        },
+        -- The title (GridA.dc.html:22, weight 500); CSS line height 1.
+        library_title = {
+            face = "display", size = 34, uppercase = false, tracking = 0, line_height = 0, color = "ink",
+        },
+        -- A picker's label (GridA.dc.html:25-26); the board's weight 600 is the strong face's 500.
+        library_picker = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "text",
+        },
+        -- A tile's title, one line, CSS line height 1.25 (GridA.dc.html:47); weight 500, the strong face.
+        tile_title = { face = "strong", size = 12, uppercase = false, tracking = 0, line_height = 0.25, color = "ink" },
+        -- The placeholder's title at the grid's size, CSS line height 1.1 (GridA.dc.html:51).
+        tile_cover_title = {
+            face = "display", size = 18, uppercase = false, tracking = 0, line_height = 0.1, color = "on_cover",
+        },
+        -- A folder's book count, CSS line height 1.05 (GridA.dc.html:35, weight 500).
+        folder_count = {
+            face = "display", size = 22, uppercase = false, tracking = 0, line_height = 0.05, color = "ink",
+        },
+        -- Its reading count (GridA.dc.html:36).
+        folder_reading = {
+            face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted",
+        },
+        -- "Not downloaded" (GridA.dc.html:73), now on its paper chip on the cover (cover-grid D13).
+        not_downloaded = {
+            face = "text", size = 10, uppercase = true, tracking = 0.14, line_height = 0, color = "muted",
+        },
+        -- "1 / 24" between the pager's arrows (GridA.dc.html:85, :87).
+        pager_label = { face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted" },
     },
 
     -- The launcher: a grid of text rows, each under a hairline in tile.rule_color.
@@ -458,5 +491,82 @@ return {
         icon_size = 16, -- no board draws the plus: the pickers' size
         icon_color = "text", -- no board draws the plus: the pickers' colour (Library.dc.html:24)
         count_on_shelf = false, -- "142 books" (Library.dc.html:21)
+    },
+    -- The library: a count over a serif title and plain small-caps pickers above a 2 px ink rule,
+    -- three columns of covers with soft shadows and a hairline strip under each, and borderless
+    -- arrows round the page label above the nav bar (GridA.dc.html:19-88 under
+    -- .tiller/design/2026-10-16-kopanda-library-screens/).
+    library = {
+        header = {
+            fill_color = false, -- the page under the header (GridA.dc.html:19)
+            padding = { top = 40, side = 40, bottom = 16 }, -- GridA.dc.html:19
+            edge_width = 2, -- GridA.dc.html:19
+            edge_color = "ink", -- GridA.dc.html:19
+            line_gap = 2, -- the count to the title (GridA.dc.html:20)
+            picker_gap = 20, -- GridA.dc.html:24
+            picker_padding = { x = 0, y = 0 }, -- no box (GridA.dc.html:25-26)
+            picker_outline_width = 0, -- no box (GridA.dc.html:25-26)
+            picker_outline_color = false,
+            sort_fill_color = false, -- the pickers are plain text (GridA.dc.html:25-26)
+            status_fill_color = false,
+        },
+        grid = {
+            padding_top = 22, -- GridA.dc.html:30
+            side = 40, -- GridA.dc.html:30
+            row_gap = 22, -- GridA.dc.html:30
+            column_gap = 20, -- GridA.dc.html:30
+            cover_h = 208, -- D2: board 218, so two rows fit (GridA.dc.html:32, :43)
+            strip_gap = 10, -- the tile's 8 px gap and the strip's 2 px margin (GridA.dc.html:42, :46)
+            title_gap = 8, -- the tile's gap (GridA.dc.html:42)
+        },
+        cover = {
+            outline_width = 0, -- no border (GridA.dc.html:43)
+            outline_color = false,
+            radius = 3, -- GridA.dc.html:43
+            shadow = { x = 2, y = 3, color = "shadow" }, -- GridA.dc.html:43
+            padding = { x = 12, y = 16 }, -- the placeholder's (GridA.dc.html:43)
+        },
+        strip = {
+            height = 4, -- GridA.dc.html:46
+            outline_width = 0, -- GridA.dc.html:46
+        },
+        folder = {
+            fill_color = "paper", -- GridA.dc.html:32
+            outline_width = 1, -- GridA.dc.html:32
+            outline_color = "hairline", -- GridA.dc.html:32
+            icon_size = 36, -- GridA.dc.html:33
+            icon_color = "ink", -- GridA.dc.html:33
+            padding = { x = 14, y = 16 }, -- GridA.dc.html:32
+            count_gap = 4, -- GridA.dc.html:34
+        },
+        badge = {
+            size = 30, -- GridA.dc.html:66
+            outline_width = 1, -- GridA.dc.html:66
+            outline_color = "ink", -- GridA.dc.html:66
+            fill_color = "paper", -- GridA.dc.html:66
+            icon_size = 16, -- GridA.dc.html:67
+            icon_color = "ink", -- GridA.dc.html:67
+            inset = 8, -- inside the corner (GridA.dc.html:66, right: 8px; bottom: 8px)
+            align = "bottom", -- GridA.dc.html:66
+        },
+        not_downloaded = {
+            -- No board: the board's plain text (GridA.dc.html:73) would sit on the artwork, so a paper
+            -- chip on the cover (cover-grid D13).
+            fill_color = "paper",
+            outline_width = 0,
+            outline_color = false,
+            padding = { x = 6, y = 2 }, -- no board: as above
+        },
+        pager = {
+            button_w = 44, -- GridA.dc.html:86, :88
+            button_h = 32, -- GridA.dc.html:86, :88
+            gap = 22, -- GridA.dc.html:85
+            bottom = 16, -- GridA.dc.html:85
+            outline_width = 0, -- borderless (GridA.dc.html:86, :88)
+            outline_color = false,
+            prev_fill_color = false, -- transparent (GridA.dc.html:86)
+            next_fill_color = false, -- transparent (GridA.dc.html:88)
+            dead_color = "hairline", -- the first page's previous arrow (GridA.dc.html:86)
+        },
     },
 }

@@ -42,9 +42,9 @@ describe("icons", function()
         table.sort(ids)
         assert.same({
             "action", "authors", "back", "bookmark", "check", "chevron_down", "chevron_up", "close",
-            "folder", "history", "home", "info", "layout", "library", "list", "moon", "open_book",
-            "plugin_missing", "plus", "power", "rotation_lock", "screenshot", "series", "settings", "sun", "sync",
-            "terminal", "wifi", "wifi_off",
+            "download", "folder", "forward", "history", "home", "info", "layout", "library", "list", "moon",
+            "open_book", "plugin_missing", "plus", "power", "rotation_lock", "screenshot", "series", "settings",
+            "sun", "sync", "terminal", "wifi", "wifi_off",
         }, ids)
     end)
 
@@ -59,6 +59,32 @@ describe("icons", function()
         end
         assert.is_true(places.plus["title bar"])
         assert.is_true(places.check["title bar"])
+    end)
+
+    -- The library draws forward and back as the pager's arrows and back as the folder's back mark,
+    -- chevron_down after each picker and download on a book not downloaded (cover-grid feature, D14).
+    it("uses forward, back, chevron_down and download in the library", function()
+        local places = {}
+        for _, entry in ipairs(Icons.entries) do
+            places[entry.id] = {}
+            for _, place in ipairs(entry.used_in) do
+                places[entry.id][place] = true
+            end
+        end
+        for _, id in ipairs({ "forward", "back", "chevron_down", "download" }) do
+            assert.is_true(places[id] and places[id].library, id)
+        end
+    end)
+
+    -- forward is back mirrored, so the pager's two arrows match (back.svg's M15 5l-7 7 7 7); download
+    -- is the boards' arrow to a line (Main.dc.html:67, GridA.dc.html:67).
+    it("draws forward as back's mirror and download as the boards' arrow to a line", function()
+        local function path_of(id)
+            return read(Icons.path(id)):match('<path d="([^"]+)"')
+        end
+        assert.equals("M15 5l-7 7 7 7", path_of("back"))
+        assert.equals("M9 5l7 7-7 7", path_of("forward"))
+        assert.equals("M12 4v12M6 11l6 6 6-6M5 20h14", path_of("download"))
     end)
 
     it("has one entry per svg file under icons/ and a file for every entry", function()
