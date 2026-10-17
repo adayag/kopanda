@@ -1411,7 +1411,7 @@ describe("KoPanda failing safe", function()
         end)
 
         -- The empty-space sheet's rows (context-menu C8, "Failure behaviour"): Refresh covers whose
-        -- delete or request raises, and a Hidden folders tap whose unhide raises.
+        -- delete, request or re-list raises, and a Hidden folders tap whose unhide raises.
         describe("with the empty-space sheet", function()
             local Sheet, sub
 
@@ -1490,6 +1490,44 @@ describe("KoPanda failing safe", function()
                 harness.tick(3)
                 assert.is_true(logged_error("kopanda-test: request failed"))
                 relisted(library)
+            end)
+
+            it("logs a Refresh covers whose re-list throws, leaves the page and asks for no covers", function()
+                -- Sci-fi and Book 01 to 05 on page 1, Book 06 to 08 on page 2.
+                local books = fixture.books(8)
+                fixture.install({ [fixture.ROOT] = { folders = { sub }, books = books } })
+                coverbrowser(function() end)
+                local extracted = {}
+                package.loaded.bookinfomanager.extractInBackground = function(_, files)
+                    extracted[#extracted + 1] = files
+                    return true
+                end
+                local library = fixture.show()
+                local tiles = widgets(library)
+                extracted = {}
+                local LibraryView = package.loaded["library_view"]
+                local build = LibraryView.build
+                LibraryView.build = function()
+                    error("kopanda-test: re-list failed")
+                end
+                tap_row(library, "Refresh covers")
+                assert.is_true(logged_error("kopanda-test: re-list failed"))
+                assert.is_nil(Sheet.shown)
+                as_it_was(library, tiles)
+                harness.tick(3)
+                as_it_was(library, tiles)
+                assert.same({}, extracted)
+                -- The next page's covers are that page's alone, not the folder's the refresh asked.
+                LibraryView.build = build
+                library:go(fixture.ROOT, 2)
+                harness.tick(3)
+                assert.equals(2, library.page)
+                assert.equals(1, #extracted)
+                local files = {}
+                for i, file in ipairs(extracted[1]) do
+                    files[i] = file.filepath
+                end
+                assert.same({ books[6].path, books[7].path, books[8].path }, files)
             end)
 
             it("logs a Hidden folders tap whose unhide throws and leaves the library as it was", function()

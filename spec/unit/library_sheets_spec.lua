@@ -685,15 +685,17 @@ describe("LibrarySheets.hold", function()
 
         describe("Hidden folders", function()
             -- Seven folders, so the seventh is on page 2 (six tiles a page), with three books after
-            -- them; the root's listing.
+            -- them; the root's listing. The listing holds them in reverse (The Golf first), so only the
+            -- grid's own order puts them in title order.
             local NAMES = { "Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "The Golf" }
 
             local function seven_folders()
-                local folders = {}
+                local folders, listed = {}, {}
                 for i, name in ipairs(NAMES) do
                     folders[i] = library_fixture.folder(name)
+                    listed[#NAMES + 1 - i] = folders[i]
                 end
-                library_fixture.install({ [ROOT] = { folders = folders, books = library_fixture.books(3) } })
+                library_fixture.install({ [ROOT] = { folders = listed, books = library_fixture.books(3) } })
                 return folders
             end
 

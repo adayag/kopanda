@@ -1510,8 +1510,9 @@ guard (`sheet.lua`).
   reached from `onFileHold`, `:171-177`), which a stale cache entry `{ been_opened = false }`
   answers false while a sidecar exists; a bare path's write then starts from an empty `summary`
   and wipes the note and rating.
-- `ui/widget/booklist`, required by `book_sheet.lua`: `BookList.hasBookBeenOpened` (whether a
-  sidecar exists, cached, `frontend/ui/widget/booklist.lua:348-356`), `getDocSettings`
+- `ui/widget/booklist`, required by `book_sheet.lua` and by `book_covers.lua` (Refresh covers'
+  `resetBookInfoCache`, the empty-space sheet's entry below): `BookList.hasBookBeenOpened` (whether
+  a sidecar exists, cached, `frontend/ui/widget/booklist.lua:348-356`), `getDocSettings`
   (`DocSettings:open`, caching the book's info, `:358-364`), `getBookStatus` (`"new"` for a book
   never opened, `:366-369`, through `getBookInfo`, `:337-346`), `getBookStatusString(status, false,
   true)` (`:386-389`: Reading, On hold, Finished for the single-book strings, `:380-384`, and New
