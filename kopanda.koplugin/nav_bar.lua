@@ -7,7 +7,7 @@
 -- launcher_entries, quick_settings and library are required at call time: launcher_entries requires
 -- home (launcher_entries.lua:6), which reaches this module through home_rows, so a load-time require
 -- would loop, quick_settings requires launcher_entries, and library reaches this module through
--- library_view.
+-- library_chrome.
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local Icons = require("icons")

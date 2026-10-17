@@ -70,10 +70,11 @@ Upgrading KOReader walks this list.
   reader menu's file-browser tab `frontend/apps/reader/modules/readermenu.lua:65-74`.
 - A reader instance's `onCloseDocument` first records the book's chapter for the featured book
   (the featured book entry below), then builds the home into `Home.pending` (not shown), or the
-  library into `Library.pending` when a return to the library is recorded (the library's return
-  entry below), and returns nothing, so the event reaches later modules. The next file-manager
-  `Show` puts the pending home or library up synchronously, before the UI loop's next `_repaint`
-  (`frontend/ui/uimanager.lua:1537-1564`: `_checkTasks` at `:1543`, `_repaint` at `:1563`). A
+  library into the chrome's pending window (`LibraryChrome.pending`, `library_chrome.lua`) when a
+  return to the library is recorded (the library's return entry below), and returns nothing, so
+  the event reaches later modules. The next file-manager `Show` puts the pending home or library
+  up synchronously, before the UI loop's next `_repaint` (`frontend/ui/uimanager.lua:1537-1564`:
+  `_checkTasks` at `:1543`, `_repaint` at `:1563`). A
   deferred show would lose when the close runs inside a scheduled task (KOReader's end-of-book
   file-browser action, `frontend/apps/reader/modules/readerstatus.lua:144-148`): `nextTick`
   schedules at a fresh `time.now()` (`uimanager.lua:416`), later than the `_now` that
@@ -1621,6 +1622,8 @@ guard (`sheet.lua`).
   manager it then calls `ui:openFile` (`:519`). `library.lua`'s `Library:open` passes the file manager
   as `ui` and a callback running `Library.on_open(dir, page)`. The module is required at call time,
   as `books.lua` requires it.
+- The page keys, the swipes and the metadata events below are the chrome's
+  (`library_chrome.lua`'s `LibraryChrome.Window`, which the library extends).
 - The page keys, as `Menu:registerKeyEvents` sets them (`frontend/ui/widget/menu.lua:984-992`):
   only when `Device:hasKeys()` (`:985`), `NextPage` on `Input.group.PgFwd` and `PrevPage` on
   `Input.group.PgBack` (`:991-992`; the groups at `frontend/device/input.lua:119-120`), read from
@@ -1639,9 +1642,9 @@ guard (`sheet.lua`).
   cover change (`frontend/apps/filemanager/filemanagerbookinfo.lua:276-277`, `:556-557`), to every
   window, a handler's true return stopping none (`frontend/ui/uimanager.lua:1042-1061`). The
   library re-lists its folder on each and returns nothing.
-- The library's touch zones, its `onGesture` and its paint follow the home's (the `InputContainer`,
-  touch lock, `covers_fullscreen` and `nextTick` entries above), and its covers the featured cover's
-  bounded check (`book_covers.lua`, the featured cover's entry above).
+- The library's touch zones, its `onGesture` and its paint, the chrome's, follow the home's (the
+  `InputContainer`, touch lock, `covers_fullscreen` and `nextTick` entries above), and its covers
+  the featured cover's bounded check (`book_covers.lua`, the featured cover's entry above).
 
 ### The library's return: `caller_pre_callback`, `onShowingReader`, the failed-open paths and `changeToPath`
 
