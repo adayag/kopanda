@@ -19,3 +19,30 @@ accepted_against:
         value: git:a955bb4
         observed_at: 2026-10-17T03:37:34.485201Z
 branch: tiller/bars/quick-settings/panel
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T04:37:09.537002Z
+        against:
+            kind: git_commit
+            value: git:2547f79
+            observed_at: 2026-10-17T04:37:09.536997Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-2547f79-out-025d0b98e577e67829cded0b13ceb0020f4ca26f5979da0189b64d47566b4ff1.txt
+    tests:
+        required: true
+        kind: command
+        status: fail
+        run_by: allen
+        run_at: 2026-10-17T04:37:09.537002Z
+        against:
+            kind: git_commit
+            value: git:2547f79
+            observed_at: 2026-10-17T04:37:09.536997Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-2547f79-out-e5d06215644ccf929bf382f797a746cb8ea300321e5055af12606c66a2daf602.txt
