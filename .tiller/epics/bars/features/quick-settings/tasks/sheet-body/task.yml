@@ -1,7 +1,17 @@
 id: T-s3rp5n
 key: bars/quick-settings/sheet-body
 title: 'The sheet''s body hook: areas that act without closing, in-place redraw and refresh events'
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:bd221c6c840c4f159cc50b3498bcc82b22a6abb9
+        path: .tiller/epics/bars/features/quick-settings/tasks/sheet-body/task.md
+        observed_at: 2026-10-17T03:37:34.441083Z
+    commit:
+        kind: git_commit
+        value: git:a955bb4
+        observed_at: 2026-10-17T03:37:34.462853Z

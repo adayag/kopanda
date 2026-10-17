@@ -1,0 +1,14 @@
+id: EV-9e9fk3
+type: add.task
+at: 2026-10-17T03:59:41.318584Z
+contributor: allen
+command: add task library/context-menu/icons
+targets:
+    - T-m9850d
+after:
+    feature: F-l0kw8m
+    key: library/context-menu/icons
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/icons/task.md
+    - path: .tiller/epics/library/features/context-menu/tasks/icons/task.yml

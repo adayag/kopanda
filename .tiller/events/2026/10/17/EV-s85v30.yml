@@ -1,0 +1,13 @@
+id: EV-s85v30
+type: approve.tweak
+at: 2026-10-17T04:34:24.557339Z
+contributor: allen
+command: approve tweak TW-f9nvsm
+targets:
+    - TW-f9nvsm
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/tweaks/flaky-layout-editor-fit-after-done/tweak.yml

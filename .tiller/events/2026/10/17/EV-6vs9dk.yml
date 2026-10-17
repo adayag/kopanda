@@ -1,0 +1,14 @@
+id: EV-6vs9dk
+type: add.task
+at: 2026-10-17T03:26:24.607686Z
+contributor: allen
+command: add task library/series-and-authors/goldens
+targets:
+    - T-m36ahd
+after:
+    feature: F-yaihx9
+    key: library/series-and-authors/goldens
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/goldens/task.md
+    - path: .tiller/epics/library/features/series-and-authors/tasks/goldens/task.yml

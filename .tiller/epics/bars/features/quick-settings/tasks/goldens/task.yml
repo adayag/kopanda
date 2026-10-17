@@ -1,9 +1,19 @@
 id: T-phfsk7
 key: bars/quick-settings/goldens
 title: Quick-settings goldens in both looks on the Colorsoft and their paint budget
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-n6wve0
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:daaa33231b2ec3fd079c9713a3948d34ceb38c05
+        path: .tiller/epics/bars/features/quick-settings/tasks/goldens/task.md
+        observed_at: 2026-10-17T03:37:34.529383Z
+    commit:
+        kind: git_commit
+        value: git:a955bb4
+        observed_at: 2026-10-17T03:37:34.552234Z

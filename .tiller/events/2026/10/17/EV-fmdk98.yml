@@ -1,0 +1,13 @@
+id: EV-fmdk98
+type: configure.feature
+at: 2026-10-17T03:37:34.276995Z
+contributor: allen
+command: configure feature bars/quick-settings --review-grain feature
+targets:
+    - F-rce9ko
+before:
+    review_grain: ""
+after:
+    review_grain: feature
+files:
+    - path: .tiller/epics/bars/features/quick-settings/feature.yml

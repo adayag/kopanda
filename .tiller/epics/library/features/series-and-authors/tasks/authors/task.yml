@@ -1,0 +1,9 @@
+id: T-m5pho3
+key: library/series-and-authors/authors
+title: 'The Authors window: the letter-grouped list and one author''s grid'
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-y7g8mr

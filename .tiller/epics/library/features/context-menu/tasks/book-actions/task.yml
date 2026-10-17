@@ -1,0 +1,10 @@
+id: T-lnzmw0
+key: library/context-menu/book-actions
+title: Add to the home and Delete on the library's book sheet
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-1rl35j
+    - T-m9850d

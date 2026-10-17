@@ -1,0 +1,9 @@
+id: T-8j0bc0
+key: library/series-and-authors/routing
+title: Entry points, the Authors tab, More by this author and the return after a book closes
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-m5pho3

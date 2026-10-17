@@ -1,0 +1,14 @@
+id: EV-ckok90
+type: add.task
+at: 2026-10-17T03:26:24.509502Z
+contributor: allen
+command: add task library/series-and-authors/routing
+targets:
+    - T-8j0bc0
+after:
+    feature: F-yaihx9
+    key: library/series-and-authors/routing
+    status: proposed
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/routing/task.md
+    - path: .tiller/epics/library/features/series-and-authors/tasks/routing/task.yml
