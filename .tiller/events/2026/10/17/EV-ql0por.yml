@@ -1,0 +1,13 @@
+id: EV-ql0por
+type: start.bug
+at: 2026-10-17T16:09:49.07188Z
+contributor: allen
+command: start bug B-0vcqvc
+targets:
+    - B-0vcqvc
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/bugs/entry-picker-plugins-unreachable/bug.yml

@@ -987,6 +987,124 @@ describe("the sheet", function()
         end
     end)
 
+    describe("with more", function()
+        -- 40 rows, with the icon when icon is set, and more when more is set.
+        local function long(icon, more)
+            local spec = three_rows()
+            spec.rows = {}
+            for i = 1, 40 do
+                spec.rows[i] = { icon = icon, label = "Entry " .. i, run = function() end }
+            end
+            spec.more = more
+            return spec
+        end
+
+        it("keeps the last fitting slot for a More row whose tap hands on the rest in order", function()
+            for _, id in ipairs({ "editorial", "diner" }) do
+                Sheet.show(long("list"), ctx_for(id, colorsoft))
+                local fit = #Sheet.shown.rows
+                assert.truthy(fit > 1 and fit < 40, id .. ": " .. fit)
+                assert.equals("Entry " .. fit, Sheet.shown.rows[fit].row.label, id)
+                Sheet.close()
+
+                local handed, shown_then = {}, false
+                local spec = long("list", { run = function(rest)
+                    handed[#handed + 1] = rest
+                    shown_then = Sheet.shown ~= nil
+                end })
+                local warned = spy.on(logger, "warn")
+                Sheet.show(spec, ctx_for(id, colorsoft))
+                warned:revert()
+                local sheet = Sheet.shown
+                assert.equals(0, warnings(warned, "leaves out"), id)
+                assert.equals(fit, #sheet.rows, id)
+                for i = 1, fit - 1 do
+                    assert.equals(spec.rows[i], sheet.rows[i].row, id .. " row " .. i)
+                end
+                local more = sheet.rows[fit].row
+                assert.equals("More…", more.label, id)
+                assert.equals("list", more.icon, id)
+                send(harness.gesture("tap", centre(sheet.rows[fit].rect)))
+                assert.equals(1, #handed, id)
+                assert.is_false(shown_then, id .. ": the sheet was still up when more.run ran")
+                local rest = handed[1]
+                assert.equals(40 - fit + 1, #rest, id)
+                for i, row in ipairs(rest) do
+                    assert.equals(spec.rows[fit - 1 + i], row, id .. " rest " .. i)
+                end
+            end
+        end)
+
+        it("takes its label from more.label and has no icon when the rows have none", function()
+            Sheet.show(long(nil, { label = "Next", run = function() end }), ctx_for("diner", colorsoft))
+            local rows = Sheet.shown.rows
+            assert.equals("Next", rows[#rows].row.label)
+            assert.is_nil(rows[#rows].row.icon)
+        end)
+
+        it("adds no More row when every row fits", function()
+            local spec = three_rows()
+            spec.more = { run = function() end }
+            Sheet.show(spec, ctx_for("diner", colorsoft))
+            assert.equals(3, #Sheet.shown.rows)
+            for i = 1, 3 do
+                assert.equals(spec.rows[i], Sheet.shown.rows[i].row)
+            end
+        end)
+
+        -- The Colorsoft's width and scale at height h.
+        local function short(h)
+            return setmetatable({
+                getWidth = function() return 1264 end,
+                getHeight = function() return h end,
+                getSize = function() return Geom:new{ x = 0, y = 0, w = 1264, h = h } end,
+                -- KOReader scales by the screen's smaller side (base/ffi/framebuffer.lua:413-416), so
+                -- the Colorsoft's scale keeps a row its height on this short screen.
+                scaleBySize = function(_, px) return colorsoft:scaleBySize(px) end,
+            }, { __index = Screen })
+        end
+
+        it("keeps no row and logs as without it when not even one row fits", function()
+            local warned = spy.on(logger, "warn")
+            Sheet.show(long("list", { run = function() end }), ctx_for("diner", short(160)))
+            warned:revert()
+            assert.equals(0, #Sheet.shown.rows)
+            assert.equals(1, warnings(warned, "leaves out"))
+        end)
+
+        it("keeps the one row that fits, with no More row beside it, and frees the More row", function()
+            Sheet.show(long("list"), ctx_for("diner", short(280)))
+            assert.equals(1, #Sheet.shown.rows, "one row fits at 280 px without more")
+            Sheet.close()
+
+            local Typeset = require("typeset")
+            local line, freed = Typeset.line, {}
+            Typeset.line = function(...)
+                local widget, text = line(...), select(2, ...)
+                local free = widget.free
+                widget.free = function(...)
+                    freed[text] = (freed[text] or 0) + 1
+                    return free(...)
+                end
+                return widget
+            end
+            local ran = 0
+            local warned = spy.on(logger, "warn")
+            local ok, err = pcall(Sheet.show, long("list", { run = function() ran = ran + 1 end }),
+                ctx_for("diner", short(280)))
+            warned:revert()
+            Typeset.line = line
+            assert.is_true(ok, tostring(err))
+            local rows = Sheet.shown.rows
+            assert.equals(1, #rows)
+            assert.equals("Entry 1", rows[1].row.label)
+            assert.equals(1, warnings(warned, "leaves out"))
+            assert.equals(1, freed["More…"])
+            send(harness.gesture("tap", centre(rows[1].rect)))
+            assert.equals(0, ran)
+        end)
+    end)
+
     it("leaves a missing icon's place blank and logs it once per build", function()
         local spec = three_rows()
         spec.rows[1].icon = "kopanda-test-none"
