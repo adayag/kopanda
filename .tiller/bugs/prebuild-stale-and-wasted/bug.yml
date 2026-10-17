@@ -1,7 +1,7 @@
 id: B-2o8ya3
 key: bugs/prebuild-stale-and-wasted
 title: The prebuilt home shows stale progress and builds on reload, switch and exit
-status: in_review
+status: in_progress
 blocked: false
 started: true
 owner: allen
@@ -24,7 +24,7 @@ gates:
     build:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-17T07:44:02.782943Z
         against:
@@ -37,7 +37,7 @@ gates:
     tests:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-17T07:44:02.782943Z
         against:
