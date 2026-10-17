@@ -1,10 +1,20 @@
 id: T-lk235s
 key: library/cwng-placeholders/goldens
 title: A placeholder's library golden on the Colorsoft and the owner's device check
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-3cuakg
     - T-xtol0q
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:bd029356678e9b8da920f0d992edace939d6c76c
+        path: .tiller/epics/library/features/cwng-placeholders/tasks/goldens/task.md
+        observed_at: 2026-10-17T21:40:49.887096Z
+    commit:
+        kind: git_commit
+        value: git:30d3a29
+        observed_at: 2026-10-17T21:40:49.909981Z
