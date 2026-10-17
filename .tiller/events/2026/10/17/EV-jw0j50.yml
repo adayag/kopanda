@@ -1,0 +1,13 @@
+id: EV-jw0j50
+type: check.tweak
+at: 2026-10-17T21:48:34.766972Z
+contributor: allen
+command: check tweak TW-wny5j4
+targets:
+    - TW-wny5j4
+before:
+    status: check
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/shared-book-open/tweak.yml
