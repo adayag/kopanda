@@ -1,7 +1,7 @@
 id: T-m5pho3
 key: library/series-and-authors/authors
 title: 'The Authors window: the letter-grouped list and one author''s grid'
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,12 @@ accepted_against:
         value: git:56440d9
         observed_at: 2026-10-17T07:51:40.856734Z
 branch: tiller/library/series-and-authors/authors
+review_ref:
+    branch: tiller/library/series-and-authors/authors
+    head:
+        kind: git_commit
+        value: git:570b2f8
+        observed_at: 2026-10-17T14:10:22.952227Z
 gates:
     build:
         required: true

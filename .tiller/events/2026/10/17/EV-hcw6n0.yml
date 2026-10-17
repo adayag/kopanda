@@ -1,0 +1,16 @@
+id: EV-hcw6n0
+type: submit.task
+at: 2026-10-17T14:10:22.952854Z
+contributor: allen
+command: submit task T-m5pho3
+targets:
+    - T-m5pho3
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/series-and-authors/authors
+        head: git:570b2f8
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/authors/task.yml
