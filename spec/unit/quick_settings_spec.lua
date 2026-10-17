@@ -108,6 +108,20 @@ describe("the quick-settings sheet", function()
         return best
     end
 
+    -- The brightest pixel of rect in bb: a light line's full-coverage ink on a dark fill.
+    local function brightest(bb, rect)
+        local best
+        for y = rect.y, rect.y + rect.h - 1 do
+            for x = rect.x, rect.x + rect.w - 1 do
+                local p = pixel(bb, x, y)
+                if not best or p[1] + p[2] + p[3] > best[1] + best[2] + best[3] then
+                    best = p
+                end
+            end
+        end
+        return best
+    end
+
     -- The first x from x0 toward x1 (by step) on row y whose pixel is near colour, or nil.
     local function scan(bb, x0, x1, y, colour)
         local step = x1 >= x0 and 1 or -1
@@ -319,6 +333,16 @@ describe("the quick-settings sheet", function()
             end
         end)
 
+        it("reads the battery again when the sheet redraws", function()
+            set(powerd, "getCapacity", function() return 84 end)
+            QuickSettings.open{}
+            assert.equals("battery 84%", sheet_parts(Sheet.shown)[2]:lower())
+            set(powerd, "getCapacity", function() return 50 end)
+            Sheet.redraw()
+            local header = sheet_parts(Sheet.shown)
+            assert.equals("battery 50%", header[2]:lower())
+        end)
+
         it("has no aside without a battery", function()
             set(Device, "hasBattery", function() return false end)
             QuickSettings.open{}
@@ -451,6 +475,9 @@ describe("the quick-settings sheet", function()
                 assert.equals("WI-FI ON", label_in(parts, by_id.wifi).text)
                 assert.equals(Icons.path("wifi"), icon_in(parts, by_id.wifi).icon)
                 assert.truthy(near(rgb(day.ink), cell_inside(bb, by_id.wifi, look)))
+                -- The on cell's label and icon in paper on the ink fill.
+                assert.truthy(near(grey(day.paper), brightest(bb, label_in(parts, by_id.wifi)), 12))
+                assert.truthy(near(grey(day.paper), brightest(bb, icon_in(parts, by_id.wifi)), 12))
             end)
             G_reader_settings:saveSetting("emulator_fake_wifi_connected", false)
             build("editorial", "day", function(_, bb, by_id, parts)
@@ -689,6 +716,18 @@ describe("the quick-settings sheet", function()
                 end
             end
             assert.equals(0, warnings(warned, "taller than the screen"))
+        end)
+
+        it("sets the bars' labels and the cells' labels larger at a larger text size", function()
+            local heights = {}
+            for _, size in ipairs({ "small", "large" }) do
+                Settings.set("text_size", size)
+                build("editorial", "day", function(_, _, by_id, parts)
+                    heights[size] = { bar = find(parts, "BRIGHTNESS").h, cell = label_in(parts, by_id.screenshot).h }
+                end)
+            end
+            assert.truthy(heights.large.bar > heights.small.bar, heights.small.bar .. " to " .. heights.large.bar)
+            assert.truthy(heights.large.cell > heights.small.cell, heights.small.cell .. " to " .. heights.large.cell)
         end)
     end)
 
