@@ -1,9 +1,10 @@
 id: TW-cypagc
 key: tweaks/library-listing-kept
 title: A library page turn re-lists the folder
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: T-cb345p
 source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L9-L24
@@ -17,3 +18,4 @@ accepted_against:
         kind: git_commit
         value: git:525b5a5
         observed_at: 2026-10-17T16:06:07.196066Z
+branch: tiller/tweaks/library-listing-kept

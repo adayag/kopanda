@@ -1,0 +1,11 @@
+id: EV-9zgqm8
+type: claim.tweak
+at: 2026-10-17T16:09:41.34688Z
+contributor: allen
+command: claim tweak tweaks/library-listing-kept
+targets:
+    - TW-cypagc
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/library-listing-kept/tweak.yml
