@@ -1,7 +1,7 @@
 id: TW-hmdt1d
 key: tweaks/reading-stats-memo
 title: The Statistics database is opened twice per home build, uncached
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:5aa14a6
         observed_at: 2026-10-17T07:16:23.362176Z
 branch: tiller/tweaks/reading-stats-memo
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T07:52:37.501601Z
+        against:
+            kind: git_commit
+            value: git:d4e7464
+            observed_at: 2026-10-17T07:52:37.5016Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-d4e7464-out-c25f1d0ff875f492607323108c67e52de7b59cdc6e4b9ba4021e934f92aef0cf.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T07:52:37.501601Z
+        against:
+            kind: git_commit
+            value: git:d4e7464
+            observed_at: 2026-10-17T07:52:37.5016Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-d4e7464-out-88407bd2a03d2112fed35e5f38d3498831d823bbf26fc2459e2dbaef96682c32.txt
