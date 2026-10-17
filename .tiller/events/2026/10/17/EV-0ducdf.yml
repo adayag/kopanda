@@ -1,0 +1,13 @@
+id: EV-0ducdf
+type: check.task
+at: 2026-10-17T04:48:27.604839Z
+contributor: allen
+command: check task T-7g6ybl
+targets:
+    - T-7g6ybl
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/panel/task.yml
