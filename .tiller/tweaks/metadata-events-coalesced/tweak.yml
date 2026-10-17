@@ -1,7 +1,7 @@
 id: TW-zih0x2
 key: tweaks/metadata-events-coalesced
 title: One metadata change rebuilds the library two or three times
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:525b5a5
         observed_at: 2026-10-17T16:06:08.967331Z
 branch: tiller/tweaks/metadata-events-coalesced
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:51:39.107855Z
+        against:
+            kind: git_commit
+            value: git:360156a
+            observed_at: 2026-10-17T16:51:39.107853Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-360156a-out-b2815313d1222f8e0a7d9f427e2b18029ada3197c8b6f9224a41a9a70ac8bee7.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:51:39.107855Z
+        against:
+            kind: git_commit
+            value: git:360156a
+            observed_at: 2026-10-17T16:51:39.107853Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-360156a-out-749b40d527512111481278955494dfdf4425cb4d5f07464cb00168cb8b4f9af2.txt

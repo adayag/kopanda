@@ -1,0 +1,13 @@
+id: EV-6ywhpz
+type: check.tweak
+at: 2026-10-17T16:55:37.27925Z
+contributor: allen
+command: check tweak TW-zih0x2
+targets:
+    - TW-zih0x2
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/metadata-events-coalesced/tweak.yml
