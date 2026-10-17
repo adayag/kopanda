@@ -19,6 +19,7 @@ order:
     - T-m36ahd
 review_grain: feature
 branch: tiller/reviews/features/library/series-and-authors
+pr: 41
 accepted_against:
     spec:
         kind: git_blob
