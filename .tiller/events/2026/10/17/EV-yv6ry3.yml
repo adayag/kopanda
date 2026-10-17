@@ -1,0 +1,14 @@
+id: EV-yv6ry3
+type: sync.tweak
+at: 2026-10-17T21:41:25.653878Z
+contributor: allen
+command: sync tweak TW-s7jikb
+targets:
+    - TW-s7jikb
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/task-gate-skips-emulator/tweak.yml
