@@ -1,9 +1,21 @@
 id: E-ze7s9x
 key: bars
 title: Title bar and quick settings
-status: ready
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 order:
     - F-iwl43d
     - F-rce9ko
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:a360a2591f09f5cf5f40a7af6ea85eafb091d9b3
+        path: .tiller/epics/bars/epic.md
+        observed_at: 2026-10-17T07:14:49.17034Z
+    commit:
+        kind: git_commit
+        value: git:bb8ff91
+        observed_at: 2026-10-17T07:14:48.473398Z
+    surfaces: []
+done_basis: rollup

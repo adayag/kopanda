@@ -1,7 +1,7 @@
 id: F-rce9ko
 key: bars/quick-settings
 title: Quick settings sheet
-status: active
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -33,6 +33,23 @@ accepted_against:
         kind: git_commit
         value: git:a955bb4
         observed_at: 2026-10-17T03:37:34.4404Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:8f1e55754ffa67f263caf4c81fd4416790e86c44
+        path: .tiller/epics/bars/features/quick-settings/feature.md
+        observed_at: 2026-10-17T07:14:49.066213Z
+    eval:
+        kind: git_blob
+        value: git:2e73e06faca30fcb719e4d4f5c742c5bc1028c0a
+        path: .tiller/epics/bars/features/quick-settings/feature.eval.md
+        observed_at: 2026-10-17T07:14:49.066213Z
+    commit:
+        kind: git_commit
+        value: git:bb8ff91
+        observed_at: 2026-10-17T07:14:48.473398Z
+    surfaces: []
+done_basis: rollup
 gates:
     build:
         required: true

@@ -1,7 +1,7 @@
 id: T-n6wve0
 key: bars/quick-settings/controls
 title: 'The panel''s controls: light and warmth steps, toggles, close-first actions and their routing'
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:a692731
         observed_at: 2026-10-17T05:34:59.84891Z
+done_basis: ancestry
 gates:
     build:
         required: true

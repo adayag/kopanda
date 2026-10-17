@@ -1,0 +1,14 @@
+id: EV-zv4p5n
+type: sync.task
+at: 2026-10-17T07:14:48.674119Z
+contributor: allen
+command: sync task T-7g6ybl
+targets:
+    - T-7g6ybl
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/panel/task.yml

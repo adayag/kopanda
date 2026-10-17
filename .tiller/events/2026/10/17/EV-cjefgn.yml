@@ -1,0 +1,14 @@
+id: EV-cjefgn
+type: sync.epic
+at: 2026-10-17T07:14:49.193363Z
+contributor: allen
+command: sync epic E-ze7s9x
+targets:
+    - E-ze7s9x
+before:
+    status: ready
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/bars/epic.yml

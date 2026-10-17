@@ -1,7 +1,7 @@
 id: T-2x7tk6
 key: bars/quick-settings/launcher-target
 title: Quick settings as a KoPanda launcher target with its registry icon, schema and studio catalog
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:338f3a2
         observed_at: 2026-10-17T05:35:00.20606Z
+done_basis: ancestry
 gates:
     build:
         required: true

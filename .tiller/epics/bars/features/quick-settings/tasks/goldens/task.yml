@@ -1,7 +1,7 @@
 id: T-phfsk7
 key: bars/quick-settings/goldens
 title: Quick-settings goldens in both looks on the Colorsoft and their paint budget
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:c03aed0
         observed_at: 2026-10-17T06:59:30.969295Z
+done_basis: ancestry
 gates:
     build:
         required: true

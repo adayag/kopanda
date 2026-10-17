@@ -1,7 +1,7 @@
 id: T-s3rp5n
 key: bars/quick-settings/sheet-body
 title: 'The sheet''s body hook: areas that act without closing, in-place redraw and refresh events'
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:8dd1b32
         observed_at: 2026-10-17T04:02:56.878171Z
+done_basis: ancestry
 gates:
     build:
         required: true

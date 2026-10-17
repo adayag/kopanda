@@ -1,7 +1,7 @@
 id: T-7g6ybl
 key: bars/quick-settings/panel
 title: 'The quick-settings panel: its tokens in both looks, its state and its paint'
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:5cd2e3b
         observed_at: 2026-10-17T04:48:34.975563Z
+done_basis: ancestry
 gates:
     build:
         required: true

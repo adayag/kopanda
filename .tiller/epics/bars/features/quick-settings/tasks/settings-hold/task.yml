@@ -1,7 +1,7 @@
 id: T-czph2w
 key: bars/quick-settings/settings-hold
 title: A hold on the nav bar's Settings tab opens the sheet, on the home and over the file browser
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:018a885
         observed_at: 2026-10-17T06:50:21.579172Z
+done_basis: ancestry
 gates:
     build:
         required: true
