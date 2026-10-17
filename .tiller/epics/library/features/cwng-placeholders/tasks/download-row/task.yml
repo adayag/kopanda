@@ -1,7 +1,7 @@
 id: T-xtol0q
 key: library/cwng-placeholders/download-row
 title: Download on a placeholder's book sheet, through cwngsync, without opening the book
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:30d3a29
         observed_at: 2026-10-17T21:40:49.886659Z
 branch: tiller/library/cwng-placeholders/download-row
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T23:03:35.888109Z
+        against:
+            kind: git_commit
+            value: git:6b0388e
+            observed_at: 2026-10-17T23:03:35.888096Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-6b0388e-out-c74fb28d743b3e2ed37d7d5d7ba2c9880c72e82d5dddaa059fe57ed1ab28bc33.txt
+    unit_tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T23:03:35.888109Z
+        against:
+            kind: git_commit
+            value: git:6b0388e
+            observed_at: 2026-10-17T23:03:35.888096Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/unit_tests-6b0388e-out-090435b2b56d18723bb4e4a8db3bdf458a4bc236155c79fc3ce91b4be544aa19.txt
