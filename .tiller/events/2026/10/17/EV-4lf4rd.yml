@@ -1,0 +1,13 @@
+id: EV-4lf4rd
+type: check.task
+at: 2026-10-17T23:25:38.607241Z
+contributor: allen
+command: check task T-lk235s
+targets:
+    - T-lk235s
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/goldens/task.yml

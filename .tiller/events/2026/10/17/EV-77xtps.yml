@@ -1,0 +1,13 @@
+id: EV-77xtps
+type: claim.task
+at: 2026-10-17T23:06:31.996694Z
+contributor: allen
+command: claim task T-lk235s
+targets:
+    - T-lk235s
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/goldens/task.yml

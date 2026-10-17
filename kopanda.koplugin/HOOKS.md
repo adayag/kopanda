@@ -2295,6 +2295,22 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
 - Any failure logs `KOPANDA_SCENARIO: home fixture failed` and exits with status 4, which the
   driver reports with the log tail.
 
+### The cwngsync stub scenario (`spec/emulator/scenarios/2-scenario-cwngsync.lua`)
+
+- `FileManager.init`: `frontend/apps/filemanager/filemanager.lua:396-448`. The scenario wraps it
+  at patch time, before `showFiles` makes the first file manager (userpatches run at
+  `reader.lua:190`, `showFiles` at `:250`), and registers its stub after the original returns:
+  by then the plugins are instantiated (`:418-429`) and `FileManager.instance` is set (`:447`), so
+  the stub is on the instance the library and `cloud_books.lua` read, before the home or the
+  library lists a book.
+- `FileManager:registerModule(name, module)`: `filemanager.lua:379-384` stores it as
+  `self[name]` and inserts it as an array child, so the stub is an `EventListener`
+  (`frontend/ui/widget/eventlistener.lua:10`) to take the file manager's propagated events
+  (`frontend/ui/widget/container/widgetcontainer.lua:80-107`).
+- The stub stands for cwngsync's instance methods `isConfigured`, `getLibraryState` and
+  `openLibraryPlaceholder` (the "cwngsync's placeholders" entry above); its state names
+  `a-christmas-carol.epub` at the capture library's realpath'd root, at its size at patch time.
+
 ### Multi-start runs (`run_starts`), exit 85 and no relaunch on macOS
 
 - `frontend/ui/uimanager.lua:1765-1769` (`restartKOReader` quits with 85); `reader.lua:312-313`

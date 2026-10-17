@@ -1,0 +1,16 @@
+id: EV-nej90j
+type: submit.task
+at: 2026-10-17T23:25:45.108062Z
+contributor: allen
+command: submit task T-lk235s
+targets:
+    - T-lk235s
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/cwng-placeholders/goldens
+        head: git:218b565
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/goldens/task.yml
