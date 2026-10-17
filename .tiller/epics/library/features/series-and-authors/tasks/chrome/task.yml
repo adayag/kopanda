@@ -1,0 +1,7 @@
+id: T-hxf2vf
+key: library/series-and-authors/chrome
+title: Factor the library's window chrome into a shared module, the library unchanged
+status: proposed
+blocked: false
+started: false
+proposed_by: allen

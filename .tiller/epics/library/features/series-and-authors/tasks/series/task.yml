@@ -1,0 +1,11 @@
+id: T-y7g8mr
+key: library/series-and-authors/series
+title: 'The Series window: the list and one series, on the shared chrome'
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-hxf2vf
+    - T-05lpro
+    - T-qrlexd
