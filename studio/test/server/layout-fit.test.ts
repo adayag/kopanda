@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { setTimeout as pause } from "node:timers/promises";
 import request from "supertest";
 import { createApp } from "../../src/server/app.js";
 import { loadConfig } from "../../src/server/config.js";
@@ -12,6 +13,7 @@ const fixtures = path.resolve(import.meta.dirname, "../fixtures/layout-fit");
 
 const tmpDirs: string[] = [];
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllEnvs();
   for (const dir of tmpDirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
 });
@@ -73,15 +75,38 @@ describe("checkFit", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "kopanda-fit-"));
     tmpDirs.push(dir);
     vi.stubEnv("KOPANDA_FAKE_FIT_DIR", dir);
-    const started = Date.now();
+    // The timeout is held until the fake has started its sleeper, so a loaded host can't stop the
+    // script before the child exists. The wait polls on the named node:timers/promises import,
+    // which Vitest's toFake list leaves real (vi.waitFor would advance the fake clock and fire the
+    // timeout itself).
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      let settled = false;
+      const pending = check("slow.sh", 200).then((result) => {
+        settled = true;
+        return result;
+      });
+      const pidFile = path.join(dir, "sleep-pid");
+      const deadline = Date.now() + 10000;
+      while (!/^\d+\n$/.test(fs.existsSync(pidFile) ? fs.readFileSync(pidFile, "utf8") : "")) {
+        if (Date.now() > deadline) throw new Error("slow.sh never started its sleeper");
+        await pause(20);
+      }
+      const sleeper = Number(fs.readFileSync(pidFile, "utf8"));
 
-    const result = await check("slow.sh", 200);
+      // The timeout waits its whole 200 ms: one short of it the fit is still pending.
+      vi.advanceTimersByTime(199);
+      await Promise.resolve();
+      expect(settled).toBe(false);
+      vi.advanceTimersByTime(1);
+      const result = await pending;
 
-    expect(result).toEqual({ checked: false, reason: "bin/layout-fit gave no answer within 200 ms" });
-    expect(Date.now() - started).toBeLessThan(3000);
-    const sleeper = Number(fs.readFileSync(path.join(dir, "sleep-pid"), "utf8"));
-    await vi.waitFor(() => expect(() => process.kill(sleeper, 0)).toThrow(), { timeout: 2000 });
-  });
+      expect(result).toEqual({ checked: false, reason: "bin/layout-fit gave no answer within 200 ms" });
+      await vi.waitFor(() => expect(() => process.kill(sleeper, 0)).toThrow(), { timeout: 2000 });
+    } finally {
+      vi.useRealTimers();
+    }
+  }, 15000);
 
   it("answers unchecked when the command can't be started", async () => {
     const result = await check("absent.sh");

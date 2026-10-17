@@ -1,0 +1,13 @@
+id: EV-i3rvsg
+type: check.bug
+at: 2026-10-17T21:45:44.437063Z
+contributor: allen
+command: check bug B-25sffy
+targets:
+    - B-25sffy
+before:
+    status: check
+after:
+    status: check
+files:
+    - path: .tiller/bugs/chapter-stale-after-other-write/bug.yml

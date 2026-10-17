@@ -1,0 +1,11 @@
+id: EV-t15n78
+type: claim.tweak
+at: 2026-10-17T21:12:00.247867Z
+contributor: allen
+command: claim tweak tweaks/shared-book-open
+targets:
+    - TW-wny5j4
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/shared-book-open/tweak.yml

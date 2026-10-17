@@ -7,7 +7,7 @@
 -- next unread carrying the Up next chip (D5, D19). The nav bar lights Authors. Who the authors are,
 -- in what order, and which books are up next is shelf_order.lua's; the groups are shelf_rows.lua's
 -- and the tiles library_tiles.lua's.
--- Module state: AuthorsScreen.shown and AuthorsScreen.pending, the chrome's slots.
+-- Module state: AuthorsScreen.shown, the chrome's slot.
 -- AuthorsScreen.on_open(view, page), run when a tap's book open goes ahead, records the return in
 -- the chrome's LibraryChrome.return_to.
 local Books = require("books")
@@ -51,7 +51,7 @@ local function scale(px)
     return Screen:scaleBySize(px)
 end
 
--- Books.progress, each record read once per build: the up-next marks, the finished count and the
+-- Books.progress, each record read once per sort: the up-next marks, the finished count and the
 -- tiles share it.
 local function progress_once()
     local seen = {}
@@ -63,14 +63,29 @@ local function progress_once()
     end
 end
 
+-- The window's authors in D13's order, kept on the window as { records, entries (ShelfOrder.authors
+-- of records), progress, series (ShelfOrder.series of records, sorted at the first one-author view,
+-- the list reading no progress) }: a page turn, a view change or a repaint in another variant or
+-- size sorts nothing; a show (a new window), refresh() and a cover arrival's re-read records
+-- (window.records replaced) sort again.
+local function sorted(self)
+    local kept = self.kept
+    if not kept or kept.records ~= self.records then
+        kept = { records = self.records, entries = ShelfOrder.authors(self.records), progress = progress_once() }
+        self.kept = kept
+    end
+    return kept
+end
+
 -- One author's part of the plan: the author's books in D16's order and the up-next set, from the
 -- whole library's series (D16); the finished count; the grid at the one-author cover height; and
 -- view's page of six (LibraryOrder.page, the library's slicing).
 local function plan_author(self, p, page, w, ctx)
-    local progress = progress_once()
-    local series = ShelfOrder.series(self.records, progress)
+    local kept = sorted(self)
+    local progress = kept.progress
+    kept.series = kept.series or ShelfOrder.series(kept.records, progress)
     p.progress = progress
-    p.books, p.up_next = ShelfOrder.author_books(p.entry, series, progress)
+    p.books, p.up_next = ShelfOrder.author_books(p.entry, kept.series, progress)
     p.finished = 0
     for _, record in ipairs(p.books) do
         local status = progress(record)
@@ -108,11 +123,11 @@ end
 
 -- What view at page shows from the window's records on a screen w by h under ctx, before any widget
 -- is built: { view, the list instead for an author no entry has any more (D23); entry, the author
--- shown or nil; entries, ShelfOrder.authors; header_h; top, the page's first y; pages and page,
+-- shown or nil; entries, the kept sort's; header_h; top, the page's first y; pages and page,
 -- clamped }, and the list's paging and run (its page of rows) or one author's books, up_next,
 -- finished, progress, box and slice.
 local function plan(self, view, page, w, h, ctx)
-    local entries = ShelfOrder.authors(self.records)
+    local entries = sorted(self).entries
     local entry
     if view.kind == "author" then
         for _, candidate in ipairs(entries) do
@@ -281,21 +296,6 @@ function AuthorsScreen:build(view, page)
     end)
 end
 
--- Opens record's file as the file browser's own tap does (cover-grid D15; filemanager.lua:160-169),
--- as the library does (library.lua), running AuthorsScreen.on_open with the view and page once the
--- open goes ahead (filemanagerutil.lua:498-502).
-function AuthorsScreen:open(record)
-    local FileManager = package.loaded["apps/filemanager/filemanager"]
-    local fm = FileManager and FileManager.instance
-    if not fm then
-        return
-    end
-    local view, page = self.showing, self.page
-    require("apps/filemanager/filemanagerutil").openFile(fm, record.path, function()
-        AuthorsScreen.on_open(view, page)
-    end)
-end
-
 -- The back control, on one author: the list at the page holding that author (D17).
 function AuthorsScreen:back()
     local name = self.showing.name
@@ -353,12 +353,13 @@ function AuthorsScreen:request_covers()
     LibraryChrome.request_records(self)
 end
 
--- The metadata events re-list: the books read again, then the view rebuilt. A failed read is logged
--- and the view rebuilt from the books as they were.
+-- The metadata events and the sheets re-list: the kept sort dropped, the books read again, then the
+-- view rebuilt. A failed read is logged and the view rebuilt from the books as they were.
 function AuthorsScreen:refresh()
     if AuthorsScreen.shown ~= self then
         return
     end
+    self.kept = nil
     local ok, records = pcall(Books.all)
     if ok then
         self.records = records
@@ -368,8 +369,8 @@ function AuthorsScreen:refresh()
     LibraryChrome.Window.refresh(self)
 end
 
--- opts: view ({ kind = "list" }, the default, or { kind = "author", name }), page, widget and
--- started (LibraryChrome.show's). Returns the window shown, or nil.
+-- opts: view ({ kind = "list" }, the default, or { kind = "author", name }), page and started
+-- (LibraryChrome.show's). Returns the window shown, or nil.
 function AuthorsScreen.show(opts)
     opts = opts or {}
     return LibraryChrome.show(AuthorsScreen, opts, { showing = opts.view, page = opts.page })

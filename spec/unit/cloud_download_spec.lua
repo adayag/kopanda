@@ -510,12 +510,18 @@ describe("Download on a placeholder's sheet", function()
         end
 
         for _, kind in ipairs({ "library", "one series" }) do
-            it("paints the " .. kind .. " once, with one refresh, for cwngsync's re-lists and the callback's",
-                function()
+            it("paints the " .. kind .. " once, with one refresh and one build, for cwngsync's re-lists and the "
+                .. "callback's", function()
                 local stub = cwngsync()
                 stub.openLibraryPlaceholder = cwngsync_download
                 local window = show_held(kind)
                 hold(window, kind)
+                local builds = 0
+                local build = window.build
+                window.build = function(...)
+                    builds = builds + 1
+                    return build(...)
+                end
                 local Screen = require("device").screen
                 local paints = {}
                 local after_paint = Screen.afterPaint
@@ -535,6 +541,8 @@ describe("Download on a placeholder's sheet", function()
                 assert.equals(1, #paints)
                 assert.equals(1, #paints[1])
                 assert.is_true(paints[1][1]:contains(window.dimen))
+                -- The callback's re-list stands for the broadcasts' deferred one.
+                assert.equals(1, builds)
                 assert.equals(window, harness.top())
                 assert.same({ { held } }, bim.extracted)
                 -- Once its cover has arrived, the book is drawn without its badge.

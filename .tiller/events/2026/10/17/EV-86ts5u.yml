@@ -1,0 +1,13 @@
+id: EV-86ts5u
+type: start.tweak
+at: 2026-10-17T20:46:30.038858Z
+contributor: allen
+command: start tweak TW-5vfush
+targets:
+    - TW-5vfush
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/layout-fit-timeout-race/tweak.yml

@@ -1,0 +1,14 @@
+id: EV-io5fq4
+type: add.bug
+at: 2026-10-17T23:03:20.904485Z
+contributor: allen
+command: add bug downloaded-book-leaves-shelf-screen
+targets:
+    - B-w36ehz
+after:
+    attached_to: T-xtol0q
+    key: bugs/downloaded-book-leaves-shelf-screen
+    status: proposed
+files:
+    - path: .tiller/bugs/downloaded-book-leaves-shelf-screen/bug.md
+    - path: .tiller/bugs/downloaded-book-leaves-shelf-screen/bug.yml

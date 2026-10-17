@@ -1,0 +1,13 @@
+id: EV-k3un96
+type: start.tweak
+at: 2026-10-17T21:12:00.33972Z
+contributor: allen
+command: start tweak TW-wny5j4
+targets:
+    - TW-wny5j4
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/shared-book-open/tweak.yml

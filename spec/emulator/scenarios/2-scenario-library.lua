@@ -29,8 +29,8 @@
 --   - book: on the sub-folder's settled signal, from the next tick, a tap at the centre of its
 --     first downloaded book's tile, which opens it; once the reader has it, from a scheduled task,
 --     the reader goes home, as book_close's scenario closes its book; on the next library's
---     settled signal it reports, as a "scenario" signal, whether that library was pre-built, its
---     paint_ms, how often the file manager painted between the close and that signal, and whether
+--     settled signal it reports, as a "scenario" signal, its paint_ms (the library's build
+--     included), how often the file manager painted between the close and that signal, and whether
 --     it shows the folder and page the book was opened from. The book opens from the sub-folder,
 --     not the root, so a library that came back at the root fails same_dir; the capture library
 --     holds one page per folder, so the page is 1 either way.
@@ -269,7 +269,6 @@ local ok, err = pcall(function()
                 local shown = require("library").shown
                 report{
                     screen = "scenario",
-                    prebuilt = args.prebuilt,
                     paint_ms = args.paint_ms,
                     fm_paints = fm_paints,
                     same_dir = shown ~= nil and require("library_view").same_dir(shown.dir, opened_at.dir),

@@ -1,0 +1,14 @@
+id: EV-vmynuk
+type: sync.bug
+at: 2026-10-17T21:51:16.266264Z
+contributor: allen
+command: sync bug B-fip6q6
+targets:
+    - B-fip6q6
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/bugs/library-prebuild-stale-and-wasted/bug.yml

@@ -1,0 +1,13 @@
+id: EV-usjz0h
+type: start.bug
+at: 2026-10-17T20:46:26.570514Z
+contributor: allen
+command: start bug B-25sffy
+targets:
+    - B-25sffy
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/bugs/chapter-stale-after-other-write/bug.yml

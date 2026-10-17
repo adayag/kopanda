@@ -1,0 +1,13 @@
+id: EV-dq2o3u
+type: start.tweak
+at: 2026-10-17T20:46:28.879747Z
+contributor: allen
+command: start tweak TW-y0pzxw
+targets:
+    - TW-y0pzxw
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/doc-props-anchor-per-path/tweak.yml

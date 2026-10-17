@@ -1,0 +1,14 @@
+id: EV-xivz2g
+type: submit.bug
+at: 2026-10-17T21:50:29.728668Z
+contributor: allen
+command: submit bug B-25sffy
+targets:
+    - B-25sffy
+before:
+    status: check
+after:
+    pr: 45
+    status: in_review
+files:
+    - path: .tiller/bugs/chapter-stale-after-other-write/bug.yml

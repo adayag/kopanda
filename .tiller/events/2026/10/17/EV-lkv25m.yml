@@ -1,0 +1,14 @@
+id: EV-lkv25m
+type: submit.bug
+at: 2026-10-17T21:50:31.42792Z
+contributor: allen
+command: submit bug B-61alhe
+targets:
+    - B-61alhe
+before:
+    status: check
+after:
+    pr: 45
+    status: in_review
+files:
+    - path: .tiller/bugs/launcher-target-under-home/bug.yml

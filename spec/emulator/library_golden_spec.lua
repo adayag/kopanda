@@ -1,14 +1,15 @@
 -- The library goldens and its paint budget (cover-grid C14): the library window over a capture
 -- library this spec builds in its scratch space, in each look, its root on both profiles and, on
 -- the Colorsoft, its sub-folder and the sort sheet over its root; and, beside them, a book opened
--- from the library closing back to the pre-built library. The capture library (capture_library.lua)
--- holds copies of the three fixture books at its root and a sub-folder holding one more copy, so
--- spec/fixtures/library/ (counted by fixtures_spec.lua, listed by the file-browser goldens) is not
--- changed. The home fixture patch (at empty, which sets up no featured book) freezes the clock and
--- stores the look; the library scenario patch stores the capture library as the home folder,
--- writes one book's reading position, adds one path-less book, extracts every cover before the
--- library shows, and opens the library once the home settles. The look is always passed (empty for
--- Diner) so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
+-- from the library closing back to the library, built at the file manager's Show. The capture
+-- library (capture_library.lua) holds copies of the three fixture books at its root and a
+-- sub-folder holding one more copy, so spec/fixtures/library/ (counted by fixtures_spec.lua, listed
+-- by the file-browser goldens) is not changed. The home fixture patch (at empty, which sets up no
+-- featured book) freezes the clock and stores the look; the library scenario patch stores the
+-- capture library as the home folder, writes one book's reading position, adds one path-less book,
+-- extracts every cover before the library shows, and opens the library once the home settles. The
+-- look is always passed (empty for Diner) so a KOPANDA_HOME_LOOK in the caller's environment cannot
+-- leak in.
 describe("the library goldens", function()
     require("commonrequire")
     local capture_library = require("emulator.capture_library")
@@ -89,9 +90,7 @@ describe("the library goldens", function()
             local sidecar = result.sidecar
             assert.is_nil(sidecar.error, sidecar.error)
             assert.equals(screen, sidecar.screen)
-            if screen == "library" then
-                assert.is_false(sidecar.prebuilt)
-            else
+            if screen ~= "library" then
                 assert.equals("sort", sidecar.name)
             end
             within_budget(sidecar.paint_ms)
@@ -113,13 +112,12 @@ describe("the library goldens", function()
     -- The book opens from the sub-folder, so same_dir fails on a library that came back at the
     -- root. The capture library holds one page per folder, so same_page is trivially true here;
     -- the page kept across a close is the unit specs' to prove.
-    it("close a book opened from a sub-folder onto the pre-built library at that folder, "
-            .. "the file browser never painted", function()
+    it("close a book opened from a sub-folder onto the library built at the file manager's Show at "
+            .. "that folder, the file browser never painted", function()
         local result = capture{ profile = "colorsoft", step = "book", screen = "scenario" }
         local sidecar = result.sidecar
         assert.is_nil(sidecar.error, sidecar.error)
         assert.equals("scenario", sidecar.screen)
-        assert.is_true(sidecar.prebuilt)
         assert.equals(0, sidecar.fm_paints)
         assert.is_true(sidecar.same_dir)
         assert.is_true(sidecar.same_page)

@@ -1,0 +1,13 @@
+id: EV-kao3u9
+type: check.tweak
+at: 2026-10-17T21:18:32.153684Z
+contributor: allen
+command: check tweak TW-y0pzxw
+targets:
+    - TW-y0pzxw
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/doc-props-anchor-per-path/tweak.yml

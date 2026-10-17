@@ -1,9 +1,10 @@
 id: CH-58w77v
 key: chores/fewer-goldens-per-feature
 title: Specs plan goldens only where a look's structure differs or a board draws the state
-status: ready
+status: done
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: F-l0kw8m
 accepted_against:
@@ -16,3 +17,33 @@ accepted_against:
         kind: git_commit
         value: git:d5aeb78
         observed_at: 2026-10-17T20:44:23.085517Z
+branch: tiller/chores/fewer-goldens-per-feature
+pr: 45
+done_basis: ancestry
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:42:26.248214Z
+        against:
+            kind: git_commit
+            value: git:c6156d7
+            observed_at: 2026-10-17T21:42:26.248214Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-c6156d7-out-8919a5ff22e5310afd61296ab2c885cc0cecc010ea44d0279f68f215b959c746.txt
+    unit_tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:42:26.248214Z
+        against:
+            kind: git_commit
+            value: git:c6156d7
+            observed_at: 2026-10-17T21:42:26.248214Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/unit_tests-c6156d7-out-11ade9f410e3b09a4f805680cf227c389cd3562825d86986c332fafc001a6d9e.txt
