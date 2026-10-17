@@ -108,7 +108,7 @@ describe("TintedIcon", function()
         assert.is_nil(icon.mask)
     end)
 
-    it("renders a file at a size once, the mask outliving a freed icon, and another size again", function()
+    it("renders a file at a size once, the mask outliving a freed icon, and another file or size again", function()
         local RenderImage = require("ui/renderimage")
         local rendered = spy.on(RenderImage, "renderSVGImageFile")
         finally(function()
@@ -118,7 +118,15 @@ describe("TintedIcon", function()
         local first = TintedIcon:new{ file = file, size = SIZE, color = Blitbuffer.Color8(0x80) }
         local second = TintedIcon:new{ file = file, size = SIZE, color = Blitbuffer.Color8(0x40) }
         assert.spy(rendered).was.called(1)
+        local home_path = Icons.path("home")
+        local home = TintedIcon:new{ file = home_path, size = SIZE, color = Blitbuffer.Color8(0x80) }
+        assert.spy(rendered).was.called(2)
+        assert.spy(rendered).was.called_with(RenderImage, home_path, SIZE, SIZE)
+        assert.is_false(rawequal(home.mask, second.mask), "the home icon took the wifi icon's mask")
         first:free()
+        -- BB:free frees the data and keeps the pointer (base/ffi/blitbuffer.lua:1472-1478), so a
+        -- paint can't tell a freed mask; its allocated flag can (:696-698).
+        assert.equals(1, second.mask:getAllocated())
         local bb = white(Blitbuffer.TYPE_BB8)
         second:paintTo(bb, 0, 0)
         local inked = 0
@@ -131,9 +139,10 @@ describe("TintedIcon", function()
         end
         assert.is_true(inked > 0, "the second icon paints nothing once the first is freed")
         local smaller = TintedIcon:new{ file = file, size = SIZE / 2, color = Blitbuffer.Color8(0x80) }
-        assert.spy(rendered).was.called(2)
+        assert.spy(rendered).was.called(3)
         assert.spy(rendered).was.called_with(RenderImage, file, SIZE / 2, SIZE / 2)
         second:free()
+        home:free()
         smaller:free()
         bb:free()
     end)
@@ -208,5 +217,12 @@ describe("TintedIcon", function()
         assert.is_true(logged, "no log line names the file")
         icon:free()
         bb:free()
+    end)
+
+    it("gives a blank widget of its size for a nil file", function()
+        local icon = TintedIcon:new{ file = nil, size = SIZE, color = Blitbuffer.Color8(0x80) }
+        assert.same({ SIZE, SIZE }, { icon:getSize().w, icon:getSize().h })
+        assert.is_nil(icon.mask)
+        icon:free()
     end)
 end)

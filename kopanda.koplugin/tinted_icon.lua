@@ -30,7 +30,7 @@ local masks = {}
 function TintedIcon:init()
     local size = self.size
     self.dimen = Geom:new{ w = size, h = size }
-    local key = self.file .. "\0" .. size
+    local key = tostring(self.file) .. "\0" .. size
     local mask = masks[key]
     if not mask then
         local ok, rendered = pcall(RenderImage.renderSVGImageFile, RenderImage, self.file, size, size)
