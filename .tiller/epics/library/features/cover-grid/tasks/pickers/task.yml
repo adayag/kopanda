@@ -1,7 +1,7 @@
 id: T-eia0v5
 key: library/cover-grid/pickers
 title: Sort and status sheets over the library, and sheets closing the screen beneath
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -26,6 +26,7 @@ review_ref:
         kind: git_commit
         value: git:102c7fa
         observed_at: 2026-10-17T06:00:07.670975Z
+done_basis: ancestry
 gates:
     build:
         required: true

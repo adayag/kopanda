@@ -1,7 +1,7 @@
 id: T-cb345p
 key: library/cover-grid/screen
 title: 'The library window: header, page, pager, nav bar, gestures and covers'
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -26,6 +26,7 @@ review_ref:
         kind: git_commit
         value: git:612cc0c
         observed_at: 2026-10-17T04:19:50.879935Z
+done_basis: ancestry
 gates:
     build:
         required: true

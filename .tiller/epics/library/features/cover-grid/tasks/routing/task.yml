@@ -1,7 +1,7 @@
 id: T-t5ho4x
 key: library/cover-grid/routing
 title: Entry points into the library and the return after a book closes
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:7609461
         observed_at: 2026-10-17T05:26:56.488182Z
+done_basis: ancestry
 gates:
     build:
         required: true

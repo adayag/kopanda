@@ -1,7 +1,7 @@
 id: F-2nt0fx
 key: library/cover-grid
 title: Cover grid with header pickers in both looks
-status: active
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -33,6 +33,23 @@ accepted_against:
         kind: git_commit
         value: git:4ea24ec
         observed_at: 2026-10-17T07:42:08.089528Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:e711e20659e170806b9cdaaec36030ab77a8bd6d
+        path: .tiller/epics/library/features/cover-grid/feature.md
+        observed_at: 2026-10-17T07:49:27.071708Z
+    eval:
+        kind: git_blob
+        value: git:4c9c4eed3249236eb5f26ec05153d08ca6391645
+        path: .tiller/epics/library/features/cover-grid/feature.eval.md
+        observed_at: 2026-10-17T07:49:27.071708Z
+    commit:
+        kind: git_commit
+        value: git:c48cef8
+        observed_at: 2026-10-17T07:49:26.658466Z
+    surfaces: []
+done_basis: rollup
 gates:
     build:
         required: true

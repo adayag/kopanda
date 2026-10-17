@@ -1,0 +1,14 @@
+id: EV-j5zy5p
+type: sync.task
+at: 2026-10-17T07:49:26.748472Z
+contributor: allen
+command: sync task T-cb345p
+targets:
+    - T-cb345p
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/screen/task.yml
