@@ -1,0 +1,13 @@
+id: EV-gsk0fa
+type: claim.task
+at: 2026-10-17T01:36:01.453793Z
+contributor: allen
+command: claim task T-nzshf0
+targets:
+    - T-nzshf0
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/bar/task.yml
