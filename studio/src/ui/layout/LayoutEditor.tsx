@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
 import {
   addColumn,
   addRow,
@@ -96,11 +96,12 @@ export function LayoutEditor({ profileId, settings, pending, error, onWrite }: L
   const [checking, setChecking] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [unchecked, setUnchecked] = useState<string | null>(null);
-  // Aborted when the editor closes, so a fit answer arriving after Done writes nothing.
+  // Aborted when the editor closes, so a fit answer arriving after Done writes nothing. Set in a layout
+  // effect, which runs at commit, so a click that lands before the passive effects still has its signal.
   const closed = useRef<AbortController | null>(null);
   const titleId = useId();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const controller = new AbortController();
     closed.current = controller;
     return () => controller.abort();
