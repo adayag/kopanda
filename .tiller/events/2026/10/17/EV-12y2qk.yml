@@ -1,0 +1,14 @@
+id: EV-12y2qk
+type: submit.tweak
+at: 2026-10-17T08:00:51.192008Z
+contributor: allen
+command: submit tweak TW-hmdt1d
+targets:
+    - TW-hmdt1d
+before:
+    status: check
+after:
+    pr: 40
+    status: in_review
+files:
+    - path: .tiller/tweaks/reading-stats-memo/tweak.yml
