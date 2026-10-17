@@ -1,0 +1,16 @@
+id: EV-3bhn2r
+type: submit.task
+at: 2026-10-17T14:42:56.797545Z
+contributor: allen
+command: submit task T-8j0bc0
+targets:
+    - T-8j0bc0
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/series-and-authors/routing
+        head: git:6a96981
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/routing/task.yml
