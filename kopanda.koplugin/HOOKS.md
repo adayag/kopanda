@@ -814,6 +814,14 @@ Upgrading KOReader walks this list.
   checks it with `util.fileExists` (`util`: `frontend/util.lua:830`, as
   `frontend/ui/data/onetime_migration.lua:620` does) and opens it only when it exists, since a
   creating open would leave an empty file the plugin then fails to open (`main.lua:292-317`).
+- When the plugin writes it: `insertDB` (`main.lua:912`, on its own connection opened `:929` and
+  closed `:981`) on `CloseDocument`, `SaveSettings` and `Suspend` (`main.lua:2672-2695`).
+  `reading_stats.lua` keeps its last numbers and its last book's rate while the size and mtime of
+  `statistics.sqlite3` and of its WAL file `statistics.sqlite3-wal` stay unchanged (the WAL file's
+  name is SQLite's, not the plugin's), and keeps no read while either is dated within the last two
+  seconds: lfs's `modification` is whole seconds, and `/mnt/us` on the Kindle is a fuse overlay over
+  vfat (`platform/kindle/koreader.sh:13`, `:151-152`), whose mtimes go in two-second steps (an
+  assumption until `mount` on the device confirms the vfat).
 - `lua-ljsqlite3/init` (`main.lua:13`): `base/thirdparty/lua-ljsqlite3/init.lua:325-329` (open modes),
   `:331-350` (`open(path, "ro")`, read-only), `:370-379` (`prepare`), `:611-613` (`step`), `:668`
   (`bind`), `:568` (statement `close`), `:352` (connection `close`); integers come back as int64

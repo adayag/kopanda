@@ -1,0 +1,13 @@
+id: EV-zidg4d
+type: check.tweak
+at: 2026-10-17T08:00:26.182508Z
+contributor: allen
+command: check tweak TW-hmdt1d
+targets:
+    - TW-hmdt1d
+before:
+    status: check
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/reading-stats-memo/tweak.yml

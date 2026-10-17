@@ -1,0 +1,13 @@
+id: EV-8tavrb
+type: check.tweak
+at: 2026-10-17T07:56:15.980036Z
+contributor: allen
+command: check tweak TW-hmdt1d
+targets:
+    - TW-hmdt1d
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/reading-stats-memo/tweak.yml
