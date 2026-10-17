@@ -108,7 +108,7 @@ describe("the Authors window", function()
             assert.equals(screen, harness.top())
         end)
 
-        it("reads the books once per show, no progress for the list, each book's once per author build", function()
+        it("reads the books once per show, no progress for the list, each book's once per show", function()
             local records = shelf(3)
             records[#records + 1] = fixture.book("Saga 1",
                 { series = "Saga", series_index = 1, authors = { "Ann A01" } })
@@ -131,6 +131,10 @@ describe("the Authors window", function()
             assert.is_true(seen[records[4].id])
             assert.is_true(seen[records[5].id])
             assert.is_nil(seen[records[6].id], "a book of no author's series and not this author's is not read")
+            calls.progress = {}
+            screen:go({ kind = "author", name = "Bo B02" }, 1)
+            screen:go({ kind = "author", name = "Ann A01" }, 1)
+            assert.same({}, calls.progress)
         end)
     end)
 
@@ -531,11 +535,186 @@ describe("the Authors window", function()
             assert.same({ "Ann A01" }, names())
             records[#records + 1] = fixture.book("New", { authors = { "Bo B02" } })
             UIManager:broadcastEvent(Event:new("BookMetadataChanged"))
+            harness.tick()
             assert.same({ "Ann A01", "Bo B02" }, names())
             records[#records + 1] = fixture.book("Newer", { authors = { "Cy C03" } })
             UIManager:broadcastEvent(Event:new("InvalidateMetadataCache", records[#records].path))
+            harness.tick()
             assert.same({ "Ann A01", "Bo B02", "Cy C03" }, names())
             assert.equals(screen, harness.top())
+        end)
+
+        -- AuthorsScreen.build counted from after the show; a metadata change's events, as the book-info
+        -- editor broadcasts them (filemanagerbookinfo.lua:276-280, :556-557), sent to the shown
+        -- window, then between() if given, then the UI loop run twice.
+        local function builds_after(events, between)
+            fixture.install(shelf(2))
+            fixture.show_authors()
+            local build = AuthorsScreen.build
+            local builds = 0
+            AuthorsScreen.build = function(...)
+                builds = builds + 1
+                return build(...)
+            end
+            local ok, err = pcall(function()
+                for _, event in ipairs(events) do
+                    UIManager:broadcastEvent(Event:new(event))
+                end
+                if between then
+                    between()
+                end
+                harness.tick(2)
+            end)
+            AuthorsScreen.build = build
+            assert.is_true(ok, tostring(err))
+            return builds
+        end
+
+        it("rebuilds once for one change's InvalidateMetadataCache and BookMetadataChanged", function()
+            assert.equals(1, builds_after({ "InvalidateMetadataCache", "BookMetadataChanged" }))
+        end)
+
+        it("rebuilds once when the summary changed too", function()
+            assert.equals(1, builds_after({ "InvalidateMetadataCache", "BookMetadataChanged", "BookMetadataChanged" }))
+        end)
+
+        it("does not rebuild a window closed between the events and the tick", function()
+            assert.equals(0, builds_after({ "InvalidateMetadataCache", "BookMetadataChanged" }, function()
+                AuthorsScreen.close()
+            end))
+            assert.is_nil(AuthorsScreen.shown)
+        end)
+    end)
+
+    describe("kept sorted", function()
+        local ANN = { kind = "author", name = "Ann A01" }
+
+        -- Sixty authors with a book each, and Ann A01's "Saga", thirteen books, the first five
+        -- finished: each view runs to more than one page. Returns the calls (fixture.install's) and the
+        -- counts of ShelfOrder.authors's and ShelfOrder.series's from here.
+        local function install()
+            local records, progress = shelf(60), {}
+            for i, record in ipairs(fixture.series("Saga", 13, "Ann A01")) do
+                records[#records + 1] = record
+                if i <= 5 then
+                    progress[record.id] = { status = "complete", percent = 1 }
+                end
+            end
+            local calls = fixture.install(records, progress)
+            local ShelfOrder = package.loaded["shelf_order"]
+            local sorts = { authors = 0, series = 0 }
+            for _, name in ipairs({ "authors", "series" }) do
+                local sort = ShelfOrder[name]
+                ShelfOrder[name] = function(...)
+                    sorts[name] = sorts[name] + 1
+                    return sort(...)
+                end
+            end
+            return calls, sorts
+        end
+
+        -- Each view and the sorts one of its builds runs: the list the authors alone, one author the
+        -- authors and the whole library's series (D16).
+        local CASES = {
+            { "the list", LIST, { authors = 1, series = 0 } },
+            { "one author", ANN, { authors = 1, series = 1 } },
+        }
+
+        local function times(sorts, n)
+            return { authors = sorts.authors * n, series = sorts.series * n }
+        end
+
+        for _, case in ipairs(CASES) do
+            local where, view, once = case[1], case[2], case[3]
+
+            it("sorts once at a show and not at a page turn, nor reads progress, in " .. where, function()
+                local calls, sorts = install()
+                local screen = fixture.show_authors(view)
+                assert.same(once, sorts)
+                assert.is_true(screen.pages > 1)
+                calls.progress = {}
+                screen:turn(1)
+                assert.equals(2, screen.page)
+                screen:onNextPage()
+                screen:onPrevPage()
+                screen:turn(-1)
+                assert.equals(1, screen.page)
+                assert.same(once, sorts)
+                assert.same({}, calls.progress)
+            end)
+
+            it("sorts again once at refresh() and at a metadata change, in " .. where, function()
+                local _, sorts = install()
+                local screen = fixture.show_authors(view)
+                screen:turn(1)
+                screen:refresh()
+                assert.same(times(once, 2), sorts)
+                assert.equals(2, screen.page)
+                UIManager:broadcastEvent(Event:new("InvalidateMetadataCache"))
+                UIManager:broadcastEvent(Event:new("BookMetadataChanged"))
+                harness.tick(2)
+                assert.same(times(once, 3), sorts)
+                screen:turn(1)
+                assert.same(times(once, 3), sorts)
+            end)
+        end
+
+        it("reads one author's progress again at refresh() and at a metadata change", function()
+            local calls = install()
+            local screen = fixture.show_authors(ANN)
+            calls.progress = {}
+            screen:refresh()
+            assert.is_true(#calls.progress > 0)
+            calls.progress = {}
+            UIManager:broadcastEvent(Event:new("BookMetadataChanged"))
+            harness.tick(2)
+            assert.is_true(#calls.progress > 0)
+        end)
+
+        it("sorts no more going from the list to an author and back", function()
+            local calls, sorts = install()
+            local screen = fixture.show_authors(LIST, 2)
+            screen:go(ANN, 2)
+            assert.same({ authors = 1, series = 1 }, sorts)
+            screen:back()
+            screen:go(ANN, 1)
+            assert.same({ authors = 1, series = 1 }, sorts)
+            assert.equals(1, calls.all)
+        end)
+
+        -- A status written through a sheet shows even when the re-list fails: the sort is dropped
+        -- before the read, not only when the read replaces the records.
+        it("sorts and reads progress again at a refresh() whose re-list fails", function()
+            local calls, sorts = install()
+            local screen = fixture.show_authors(ANN)
+            local Books = package.loaded["books"]
+            local all = Books.all
+            Books.all = function()
+                error("kopanda-test: disk gone")
+            end
+            calls.progress = {}
+            screen:refresh()
+            Books.all = all
+            assert.same({ authors = 2, series = 2 }, sorts)
+            assert.is_true(#calls.progress > 0)
+            assert.equals(screen, AuthorsScreen.shown)
+        end)
+
+        it("shows a turned-to page as a show at that page does", function()
+            install()
+            local screen = fixture.show_authors(ANN)
+            screen:turn(1)
+            local turned = {}
+            for i, tile in ipairs(screen.tiles) do
+                turned[i] = tile.record.id
+            end
+            AuthorsScreen.close()
+            local direct = fixture.show_authors(ANN, 2)
+            local shown = {}
+            for i, tile in ipairs(direct.tiles) do
+                shown[i] = tile.record.id
+            end
+            assert.same(shown, turned)
         end)
     end)
 
