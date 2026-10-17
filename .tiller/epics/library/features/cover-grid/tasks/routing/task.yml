@@ -1,7 +1,7 @@
 id: T-t5ho4x
 key: library/cover-grid/routing
 title: Entry points into the library and the return after a book closes
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:943d0fa
         observed_at: 2026-10-17T02:22:50.258767Z
 branch: tiller/library/cover-grid/routing
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T05:23:26.024539Z
+        against:
+            kind: git_commit
+            value: git:eee63d8
+            observed_at: 2026-10-17T05:23:26.024532Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-eee63d8-out-4aca5bca56a99e4aede83cfbef9a860b330488d48c800bef1ddb0c7e8125c6e6.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T05:23:26.024539Z
+        against:
+            kind: git_commit
+            value: git:eee63d8
+            observed_at: 2026-10-17T05:23:26.024532Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-eee63d8-out-60555ab37a2ab73e8e6ed7359818e4116ce84f401d3d9dc034b48a0b8a231822.txt
