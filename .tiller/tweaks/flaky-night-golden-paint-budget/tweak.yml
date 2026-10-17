@@ -1,7 +1,7 @@
 id: TW-8wduca
 key: tweaks/flaky-night-golden-paint-budget
 title: The night golden's paint budget fails intermittently in a full bin/check under load
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,7 @@ accepted_against:
         observed_at: 2026-10-17T05:02:05.035653Z
 branch: tiller/tweaks/flaky-night-golden-paint-budget
 pr: 33
+done_basis: ancestry
 gates:
     build:
         required: true
