@@ -1869,6 +1869,25 @@ guard (`sheet.lua`).
   `hold_release` follows. The capture is taken on the sheet's own signal
   (`shot_screen = "sheet"`); a failure is sent as a `"sheet"` signal with `error`.
 
+### The quick-settings scenario (`spec/emulator/scenarios/2-scenario-quick-settings.lua`)
+
+- Run after the home fixture by `quick_settings_golden_spec.lua`. It writes nothing. On the first
+  home's settled signal, from `nextTick`, it sets `getCapacity` on the instance
+  `Device:getPowerDevice()` returns to one returning 84, shadowing `BasePowerD:getCapacity`
+  (`frontend/device/generic/powerd.lua:254`), so the header never reads the Mac's battery
+  (`frontend/device/sdl/powerd.lua:28-33`); it sets `NetworkMgr.isWifiOn` to one returning true;
+  then it opens the sheet through
+  `package.loaded["quick_settings"]` (a userpatch can't `require` it by name once the plugin's
+  path is gone, "`package.path` during plugin load" above) with `started = time.monotonic()`.
+  The capture is taken on the sheet's own signal (`shot_screen = "sheet"`); a failure is sent as
+  a `"sheet"` signal with `error`. The Wi-Fi cell reads on: the sheet reads
+  `NetworkMgr:isWifiOn()` (`quick_settings.lua:103`), which the stub shadows, while the
+  emulator's `isConnected` keeps the original `isWifiOn` function
+  (`frontend/device/sdl/device.lua:497-500`) and so the driver's
+  `emulator_fake_wifi_connected` false (`emulator_fake_wifi_connected` above); the patch errors
+  if `isConnected` reads true, so no weather fetch runs. The home isn't rebuilt, so its launcher
+  keeps the Wi-Fi entry it resolved off (`launcher_entries.lua:92-94`).
+
 ### The home fixture (`spec/emulator/scenarios/2-scenario-home-fixture.lua`)
 
 - Read by `home_golden_spec.lua`, `home_capture_spec.lua`, `night_golden_spec.lua`,

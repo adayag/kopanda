@@ -1,0 +1,13 @@
+id: EV-p8tti9
+type: claim.task
+at: 2026-10-17T05:35:10.566884Z
+contributor: allen
+command: claim task T-phfsk7
+targets:
+    - T-phfsk7
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/goldens/task.yml
