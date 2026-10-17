@@ -1,0 +1,11 @@
+id: EV-hwpgtk
+type: claim.tweak
+at: 2026-10-17T16:09:50.451293Z
+contributor: allen
+command: claim tweak tweaks/editors-defer-home-refresh
+targets:
+    - TW-4cf9th
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/editors-defer-home-refresh/tweak.yml

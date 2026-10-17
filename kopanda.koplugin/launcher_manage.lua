@@ -4,8 +4,8 @@
 -- row per entry: its icon, label and kind line, then up, down and remove; a tap on a folder's row
 -- opens its list. The foot adds an entry by kind through the entry picker, pinned to the bottom
 -- so it stays in reach when a long folder's rows don't all fit. Every change writes
--- launcher.entries once through Settings.set, refreshes a shown home once and repaints the
--- screen once; a refused write shows a note and changes nothing.
+-- launcher.entries once through Settings.set and repaints the screen once, and a shown home
+-- refreshes once when the editor closes; a refused write shows a note and changes nothing.
 local ConfirmBox = require("ui/widget/confirmbox")
 local Editor = require("editor")
 local EntriesEdit = require("entries_edit")
@@ -114,10 +114,10 @@ local function show_folder(screen, f)
 end
 
 -- Stores new (an operation's result; nil, a refused one, does nothing): on a refused write a
--- note and no change; otherwise the screen takes it, a shown home refreshes once, a removed
--- folder's list gives way to the top level, and the screen repaints once. home and
--- launcher_entries are required at call time: launcher_entries requires home, whose gestures
--- reach the settings menu, which may open this screen.
+-- note and no change; otherwise the screen takes it, a shown home's refresh is deferred to the
+-- editor's close, a removed folder's list gives way to the top level, and the screen repaints
+-- once. home and launcher_entries are required at call time: launcher_entries requires home,
+-- whose gestures reach the settings menu, which may open this screen.
 local function apply(screen, new, folder_removed)
     if new == nil then
         return
@@ -131,7 +131,7 @@ local function apply(screen, new, folder_removed)
     screen.entries = new
     local Home = require("home")
     if Home.shown then
-        Home.shown:refresh()
+        Home.shown:defer_refresh()
     end
     if folder_removed then
         screen.folder, screen.from_top = nil, false

@@ -1,7 +1,8 @@
 -- Edit layout (device menus' C7), over a shown home with a real settings file: a card per row
 -- with its caption, boxes and arrows; a tap selects a row and shows its buttons; each change
--- writes layout.rows once, refreshes the home once and repaints the screen once; refusals show
--- their note and leave the file's bytes alone; the widget pickers list only unused widgets.
+-- writes layout.rows once and repaints the screen once, and the home is built once when the
+-- editor closes; refusals show their note and leave the file's bytes alone; the widget pickers
+-- list only unused widgets.
 -- Every control is tapped where the editor placed it.
 describe("edit layout", function()
     local harness = require("plugin_harness")
@@ -329,14 +330,17 @@ describe("edit layout", function()
 
     describe("each change", function()
         -- Opens rows (four_rows when nil), runs steps, then checks the file holds wanted, the
-        -- home refreshed once and the editor asked for one ui repaint, counted from the change's
-        -- last step.
+        -- home wasn't built under the editor and the editor asked for one ui repaint, counted
+        -- from the change's last step.
         local function change(select, act, wanted, rows)
             local editor = open(rows or four_rows())
             if select then
                 select()
             end
-            local refreshed = spy.on(Home.shown, "refresh")
+            local builds = spy.on(require("home_rows"), "build")
+            cleanup(function()
+                builds:revert()
+            end)
             local repaints = 0
             local set_dirty = UIManager.setDirty
             replace(UIManager, "setDirty", function(self, widget, mode, ...)
@@ -347,7 +351,7 @@ describe("edit layout", function()
             end)
             act()
             assert.same(wanted, stored())
-            assert.spy(refreshed).was.called(1)
+            assert.spy(builds).was_not.called()
             assert.equals(1, repaints)
             assert.equals(editor, Editor.shown)
             assert.is_nil(message())
@@ -532,6 +536,180 @@ describe("edit layout", function()
             pick("Featured book")
             assert.is_nil(Sheet.shown)
             assert.same(four_rows(), stored())
+        end)
+    end)
+
+    describe("the home under it", function()
+        local Screen = require("device").screen
+
+        -- Spies on HomeRows.build from now until the case ends.
+        local function count_builds()
+            local builds = spy.on(require("home_rows"), "build")
+            cleanup(function()
+                builds:revert()
+            end)
+            return builds
+        end
+
+        local function move_up(i)
+            tap(one({ kind = "arrow", row = i, direction = "up" }).rect)
+        end
+
+        -- The shown home's slot widgets, in order.
+        local function home_widgets()
+            local widgets = {}
+            for _, s in ipairs(Home.shown.slots) do
+                widgets[#widgets + 1] = s.widget
+            end
+            return widgets
+        end
+
+        it("isn't built for three moves, and is built once, on the new rows, after Done", function()
+            local editor = open(four_rows())
+            local builds = count_builds()
+            move_up(2)
+            move_up(2)
+            move_up(3)
+            assert.spy(builds).was.called(0)
+            tap(editor.done)
+            harness.tick(2)
+            assert.spy(builds).was.called(1)
+            assert.equals(Home.shown, harness.top())
+            assert.same({ { slot("date"), slot("clock") }, { slot("quote") }, { slot("featured") },
+                { slot("launcher") } }, stored())
+            assert.same({ "date", "clock", "quote", "featured", "launcher" }, home_widgets())
+        end)
+
+        it("is built once on Back after an accepted edit", function()
+            open(four_rows())
+            local builds = count_builds()
+            move_up(2)
+            UIManager:sendEvent(Event:new("Back"))
+            harness.tick(2)
+            assert.is_nil(Editor.shown)
+            assert.spy(builds).was.called(1)
+            assert.same({ "featured", "date", "clock", "quote", "launcher" }, home_widgets())
+        end)
+
+        it("isn't built on Done when no edit was accepted", function()
+            local editor = open(four_rows())
+            local builds = count_builds()
+            tap_card(2)
+            tap_card(3)
+            tap(editor.done)
+            harness.tick(2)
+            assert.spy(builds).was_not.called()
+        end)
+
+        it("isn't built again on Done when something rebuilt it under the editor", function()
+            local editor = open(four_rows())
+            local builds = count_builds()
+            move_up(2)
+            -- As a wake does (Home:onResume).
+            Home.shown:onResume()
+            assert.spy(builds).was.called(1)
+            tap(editor.done)
+            harness.tick(2)
+            assert.spy(builds).was.called(1)
+        end)
+
+        it("is built once after Done when night mode turned on under the editor", function()
+            local had_color = G_reader_settings:has("color_rendering")
+            local color_rendering = G_reader_settings:readSetting("color_rendering")
+            local night_mode = rawget(Screen, "night_mode")
+            G_reader_settings:saveSetting("color_rendering", true)
+            Screen.night_mode = false
+            cleanup(function()
+                Screen.night_mode = night_mode
+                if had_color then
+                    G_reader_settings:saveSetting("color_rendering", color_rendering)
+                else
+                    G_reader_settings:delSetting("color_rendering")
+                end
+            end)
+            local editor = open(four_rows())
+            local builds = count_builds()
+            move_up(2)
+            Screen.night_mode = true
+            UIManager:setDirty("all", "full")
+            harness.tick(2)
+            tap(editor.done)
+            harness.tick(2)
+            assert.spy(builds).was.called(1)
+            assert.equals("night", Home.shown.ctx.variant)
+        end)
+
+        it("measures only the new rows on each accepted edit after the first", function()
+            open(four_rows())
+            local overflow = spy.on(Layout, "overflow")
+            cleanup(function()
+                overflow:revert()
+            end)
+            move_up(2)
+            assert.spy(overflow).was.called(2)
+            move_up(2)
+            assert.spy(overflow).was.called(3)
+            move_up(3)
+            assert.spy(overflow).was.called(4)
+        end)
+
+        it("compares an edit against the rows last accepted", function()
+            replace(Layout, "overflow", function(rows)
+                return #rows
+            end)
+            open(four_rows())
+            tap_card(2)
+            tap_button("Remove row")
+            assert.equals(3, #stored())
+            tap_button("Add row")
+            pick("Weather")
+            assert.equals("That won't fit on the home.", message().text)
+            assert.equals(3, #stored())
+        end)
+
+        it("takes an edit when a row grew under the editor by as much as the edit's rows", function()
+            -- As a weather reading arriving, or the quote of the day turning over, does.
+            local extra = 0
+            replace(Layout, "overflow", function(rows)
+                return #rows + extra
+            end)
+            open(four_rows())
+            move_up(2)
+            assert.same({ { slot("featured") }, { slot("date"), slot("clock") }, { slot("quote") },
+                { slot("launcher") } }, stored())
+            extra = 1
+            move_up(2)
+            assert.is_nil(message())
+            assert.same(four_rows(), stored())
+        end)
+
+        it("measures the accepted rows again on a screen of another size", function()
+            open(four_rows())
+            local overflow = spy.on(Layout, "overflow")
+            cleanup(function()
+                overflow:revert()
+            end)
+            move_up(2)
+            harness.at_screen(800, 600, function()
+                move_up(2)
+            end)
+            assert.spy(overflow).was.called(4)
+        end)
+
+        it("compares an edit against the accepted rows measured on this screen, not another", function()
+            -- Every list leaves out one row more on the 800-wide screen than on this one.
+            replace(Layout, "overflow", function(rows)
+                return #rows + (Layout.screen:getWidth() == 800 and 1 or 0)
+            end)
+            open(four_rows())
+            harness.at_screen(800, 600, function()
+                move_up(2)
+            end)
+            tap_card(2)
+            tap_button("Add row")
+            pick("Weather")
+            assert.equals("That won't fit on the home.", message().text)
+            assert.equals(4, #stored())
         end)
     end)
 
