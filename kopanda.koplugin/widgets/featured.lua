@@ -8,9 +8,9 @@ local FeaturedCover = require("featured_cover")
 local Fonts = require("fonts")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
-local Home = require("home")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")
+local LauncherEntries = require("launcher_entries")
 local Layout = require("layout")
 local Looks = require("looks")
 local Math = require("optmath")
@@ -448,9 +448,9 @@ end
 -- A tap in the slot (ges the gesture, built what build returned): opens the book through
 -- KOReader's own path to the reader (frontend/apps/filemanager/filemanager.lua:1616-1639),
 -- which closes the file manager and the home with it; refreshes the home when the book's file
--- has gone, so the next book is featured. On the first run a tap on the button closes the home
--- and opens the file browser at the home folder (filemanager.lua:865-870); a tap elsewhere
--- returns false, so the home's own tap rule applies.
+-- has gone, so the next book is featured. On the first run a tap on the button runs the
+-- launcher's library entry, which closes the home and shows the library; a tap elsewhere returns
+-- false, so the home's own tap rule applies.
 function Featured.tap(ctx, ges, built)
     local FileManager = package.loaded["apps/filemanager/filemanager"]
     local fm = FileManager and FileManager.instance
@@ -467,10 +467,7 @@ function Featured.tap(ctx, ges, built)
     end
     local rect = built and built.button and built.button.screen_rect
     if rect and ges and rect:contains(ges.pos) then
-        Home.close()
-        if fm then
-            fm:onHome()
-        end
+        LauncherEntries.run{ kind = "kopanda", target = "library" }
         return true
     end
     return false

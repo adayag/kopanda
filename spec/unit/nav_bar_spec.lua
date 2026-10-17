@@ -425,6 +425,46 @@ describe("the nav bar", function()
         end)
     end)
 
+    -- cover-grid C6: the library window carries the bar with Library lit.
+    describe("on the library", function()
+        it("lights Library, as in the file browser", function()
+            for _, id in ipairs(Looks.ids()) do
+                local bar = bar_for(id, "library")
+                assert.equals("library", NavBar.TABS[bar.active].id, id)
+                bar:free()
+            end
+        end)
+
+        it("runs Home by closing the library and showing the home", function()
+            local fixture = require("library_fixture")
+            fixture.install({ [fixture.ROOT] = { books = fixture.books(2) } })
+            finally(fixture.restore)
+            local Home, Library = package.loaded["home"], package.loaded["library"]
+            local library = fixture.show()
+            NavBar.run("home", "library")
+            assert.is_nil(Library.shown)
+            assert.is_false(require("ui/uimanager"):isWidgetShown(library))
+            assert.is_not_nil(Home.shown)
+            assert.equals(Home.shown, harness.top())
+        end)
+
+        -- cover-grid C8, D6.
+        it("runs Library by going to the root's first page in place", function()
+            local fixture = require("library_fixture")
+            local sub = fixture.folder("Sci-fi")
+            fixture.install({ [fixture.ROOT] = { folders = { sub } },
+                [sub.path] = { books = fixture.books(8, sub.path) } })
+            finally(fixture.restore)
+            local Library = package.loaded["library"]
+            local library = fixture.show(sub.path, 2)
+            assert.same({ sub.path, 2 }, { library.dir, library.page })
+            NavBar.run("library", "library")
+            assert.equals(library, Library.shown)
+            assert.equals(library, harness.top())
+            assert.same({ fixture.ROOT, 1 }, { library.dir, library.page })
+        end)
+    end)
+
     describe("a hold and other gestures", function()
         local time = require("ui/time")
 

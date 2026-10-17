@@ -1,0 +1,13 @@
+id: EV-1y5ed0
+type: claim.task
+at: 2026-10-17T05:27:07.407934Z
+contributor: allen
+command: claim task T-eia0v5
+targets:
+    - T-eia0v5
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/pickers/task.yml

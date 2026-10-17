@@ -1,0 +1,11 @@
+id: EV-2a6cxq
+type: claim.tweak
+at: 2026-10-17T07:17:44.027624Z
+contributor: allen
+command: claim tweak tweaks/tinted-icon-mask-cache
+targets:
+    - TW-9atgka
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/tinted-icon-mask-cache/tweak.yml

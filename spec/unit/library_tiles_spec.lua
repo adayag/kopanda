@@ -444,8 +444,8 @@ describe("library tiles", function()
             end)
         end)
 
-        -- The cover's bitmap goes with the ImageWidget holding it and a TintedIcon's mask with
-        -- the icon, so a tile frees them through its children.
+        -- The cover's bitmap goes with the ImageWidget holding it, so a tile frees it and its
+        -- icons through its children; the icons' masks stay in TintedIcon's cache.
         it("frees its cover's bitmap and its icons' masks", function()
             local Books = package.loaded["books"]
             local ImageWidget = require("ui/widget/imagewidget")
@@ -570,6 +570,28 @@ describe("library tiles", function()
                         at(chip.x + scale(ctx.look.library.not_downloaded.outline_width) + 1,
                             chip.y + math.floor(chip_size.h / 2))), id .. " the chip's fill")
                     bb:free()
+                    built:free()
+                end
+            end)
+        end)
+
+        -- A tracked line too wide for its room falls back to one TextWidget, untracked and cut with
+        -- KOReader's ellipsis (typeset.lua), which keeps its full text but draws "NOT DOWNLOAD…"; so
+        -- the chip's line must be as wide as the label set in its type with room to spare.
+        it("sets Not downloaded in full, tracked as its type says, on both profiles in both looks", function()
+            covers()
+            local Typeset = require("typeset")
+            each_profile(function(where)
+                for _, id in ipairs({ "diner", "editorial" }) do
+                    local ctx = ctx_for(id)
+                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx)
+                    local built = LibraryTiles.book(remote(), { status = "new" }, box, ctx)
+                    local label = id .. " at " .. where
+                    assert.is_true(has_text(built.chip, "NOT DOWNLOADED"), label)
+                    local free = Typeset.line(ctx.look.type.not_downloaded, "Not downloaded",
+                        10 * Screen:getWidth(), ctx)
+                    assert.equals(free:getSize().w, built.chip[1]:getSize().w, label .. ": the label is cut")
+                    free:free()
                     built:free()
                 end
             end)

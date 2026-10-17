@@ -1,0 +1,13 @@
+id: EV-p0hsk8
+type: claim.task
+at: 2026-10-17T06:00:17.402443Z
+contributor: allen
+command: claim task T-lmmmgv
+targets:
+    - T-lmmmgv
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/goldens/task.yml

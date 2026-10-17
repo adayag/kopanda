@@ -1,12 +1,13 @@
 -- The nav bar: five tabs across a screen's bottom, Home, Library, Authors, History and Settings,
--- drawn from the look's nav tokens. The home and the file browser each build one with their own
--- tab active and set its dimen's x and y where they place it. A tap in a tab's column runs the
--- tab, a hold on Settings opens the quick-settings sheet, any other hold on the bar is consumed
+-- drawn from the look's nav tokens. The home, the file browser and the library each build one with
+-- their own tab active and set its dimen's x and y where they place it. A tap in a tab's column runs
+-- the tab, a hold on Settings opens the quick-settings sheet, any other hold on the bar is consumed
 -- and runs nothing, and every other gesture passes through.
 --
--- launcher_entries and quick_settings are required at call time: launcher_entries requires home
--- (launcher_entries.lua:6), which reaches this module through home_rows, so a load-time require
--- would loop, and quick_settings requires launcher_entries.
+-- launcher_entries, quick_settings and library are required at call time: launcher_entries requires
+-- home (launcher_entries.lua:6), which reaches this module through home_rows, so a load-time require
+-- would loop, quick_settings requires launcher_entries, and library reaches this module through
+-- library_view.
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local Icons = require("icons")
@@ -32,7 +33,7 @@ NavBar.TABS = {
 }
 
 -- The active tab's id, by where the bar is: no screen of Authors, History or Settings carries it.
-local ACTIVE = { home = "home", file_browser = "library" }
+local ACTIVE = { home = "home", file_browser = "library", library = "library" }
 
 -- The y of a tab's content from the bar's top: below the edge, or below the active rule where
 -- the rule is the longer, so every tab's content starts at one top; then the tab's padding.
@@ -62,14 +63,19 @@ function NavBar.height(look, screen)
         + label_height(look, screen) + screen:scaleBySize(nav.padding_bottom)
 end
 
--- Runs the tab id from where, "home" or "file_browser". An error is logged with the tab's name
--- and goes no further, so the screen under the bar stays as it was.
+-- Runs the tab id from where, "home", "file_browser" or "library". An error is logged with the
+-- tab's name and goes no further, so the screen under the bar stays as it was.
 function NavBar.run(id, where)
     local ok, err = pcall(function()
         if id == "home" then
             -- On the home, Home is the screen already. From the file browser, KoPanda's instance,
-            -- registered under its name (frontend/apps/filemanager/filemanager.lua:379-389, :424).
-            if where == "file_browser" then
+            -- registered under its name (frontend/apps/filemanager/filemanager.lua:379-389, :424);
+            -- from the library, the same once the library has closed onto the file browser. The
+            -- library is required now: it requires this module.
+            if where == "library" then
+                require("library").close()
+            end
+            if where == "file_browser" or where == "library" then
                 package.loaded["apps/filemanager/filemanager"].instance.kopanda:goHome()
             end
         elseif id == "history" then
@@ -197,11 +203,13 @@ function Bar:column_at(pos)
     return nil
 end
 
--- Opens the quick-settings sheet, its paint_ms from now. An error is logged with the tab's name
--- and goes no further, so the screen under the bar stays as it was.
-local function open_quick_settings()
+-- Opens the quick-settings sheet from the bar on where, its paint_ms from now. Over the library
+-- the sheet's failure closes the library (beneath); elsewhere, the home if shown. An error is
+-- logged with the tab's name and goes no further, so the screen under the bar stays as it was.
+local function open_quick_settings(where)
     local ok, err = pcall(function()
-        require("quick_settings").open{ started = PaintClock.now() }
+        local beneath = where == "library" and require("library") or nil
+        require("quick_settings").open{ started = PaintClock.now(), beneath = beneath }
     end)
     if not ok then
         logger.err("KoPanda: the nav bar's Settings hold failed:", err)
@@ -219,7 +227,7 @@ function Bar:handle(ges)
     if ges.ges == "hold" then
         local tab = self:column_at(ges.pos)
         if tab and tab.id == "settings" then
-            open_quick_settings()
+            open_quick_settings(self.where)
         end
         return true
     end
@@ -246,7 +254,7 @@ function Bar:free()
 end
 
 -- A bar { look, variant, width, where, listen } width × NavBar.height(look, Screen), where "home"
--- (Home active) or "file_browser" (Library active). With listen it takes taps and holds on its
+-- (Home active), "file_browser" or "library" (Library active). With listen it takes taps and holds on its
 -- dimen itself; without, it takes none, and its screen hands them to handle.
 function NavBar.new(args)
     return Bar:new{

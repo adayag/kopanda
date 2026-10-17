@@ -1,0 +1,14 @@
+id: EV-cf1g42
+type: sync.task
+at: 2026-10-17T07:49:27.021653Z
+contributor: allen
+command: sync task T-lmmmgv
+targets:
+    - T-lmmmgv
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/goldens/task.yml

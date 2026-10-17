@@ -197,7 +197,7 @@ describe("closing a book shows the home at the file manager's Show", function()
 
     describe("recording the chapter", function()
         local logger = require("logger")
-        local State, order, real_set
+        local State, order, real_set, real_set_many
         local file = "/mnt/us/books/frankenstein.epub"
 
         -- A reader's KoPanda over a stub ui reading book (default: file) whose TOC answers with
@@ -222,21 +222,51 @@ describe("closing a book shows the home at the file manager's Show", function()
         before_each(function()
             State = package.loaded["state"]
             order = {}
-            real_set = State.set
+            real_set, real_set_many = State.set, State.set_many
             State.set = function(key, value)
                 order[#order + 1] = "set " .. key
                 return real_set(key, value)
             end
+            State.set_many = function(values)
+                local keys = {}
+                for key in pairs(values) do
+                    keys[#keys + 1] = key
+                end
+                table.sort(keys)
+                order[#order + 1] = "set " .. table.concat(keys, " ")
+                return real_set_many(values)
+            end
         end)
 
         after_each(function()
-            State.set = real_set
+            State.set, State.set_many = real_set, real_set_many
         end)
 
-        it("writes the file and the TOC title to the state and marks the close", function()
+        -- One flush for both keys, and none when the book closes again on the same chapter:
+        -- each flush is an fsync on the way from the book to the home.
+        it("writes the file and the TOC title in one write and marks the close, and writes none again unchanged",
+        function()
+            local util = require("util")
+            local write = util.writeToFile
+            local writes = 0
+            util.writeToFile = function(...)
+                writes = writes + 1
+                return write(...)
+            end
+            finally(function()
+                util.writeToFile = write
+            end)
             reader_kopanda("Letter IV"):onCloseDocument()
-            assert.same({ "set featured_chapter_file", "set featured_chapter" }, order)
+            assert.equals(1, writes)
+            assert.same({ "set featured_chapter featured_chapter_file" }, order)
             assert.equals(file, State.get("featured_chapter_file"))
+            assert.equals("Letter IV", State.get("featured_chapter"))
+            assert.is_true(Home.just_closed)
+            writes, order = 0, {}
+            Home.just_closed = false
+            reader_kopanda("Letter IV"):onCloseDocument()
+            assert.equals(0, writes)
+            assert.same({}, order)
             assert.equals("Letter IV", State.get("featured_chapter"))
             assert.is_true(Home.just_closed)
         end)
@@ -245,7 +275,7 @@ describe("closing a book shows the home at the file manager's Show", function()
             local kopanda = reader_kopanda("Letter IV")
             kopanda.ui.tearing_down = true
             kopanda:onCloseDocument()
-            assert.same({ "set featured_chapter_file", "set featured_chapter" }, order)
+            assert.same({ "set featured_chapter featured_chapter_file" }, order)
             assert.equals("Letter IV", State.get("featured_chapter"))
             assert.is_false(Home.just_closed)
         end)
@@ -260,7 +290,7 @@ describe("closing a book shows the home at the file manager's Show", function()
             local kopanda = reader_kopanda("Letter IV")
             Home.just_closed = true
             kopanda:onCloseDocument()
-            assert.same({ "set featured_chapter_file", "set featured_chapter" }, order)
+            assert.same({ "set featured_chapter featured_chapter_file" }, order)
             assert.is_true(Home.just_closed)
         end)
 
@@ -288,20 +318,17 @@ describe("closing a book shows the home at the file manager's Show", function()
             assert.is_true(Home.just_closed)
         end)
 
-        it("clears the chapter when the file's write fails, logs it and marks the close", function()
+        it("clears the chapter when the write fails, logs it and marks the close", function()
             reader_kopanda("Letter IV"):onCloseDocument()
             order = {}
             local errored = spy.on(logger, "err")
-            local logged_set = State.set
-            State.set = function(key, value)
-                if key == "featured_chapter_file" then
-                    order[#order + 1] = "set " .. key
-                    return false
-                end
-                return logged_set(key, value)
+            local logged_set_many = State.set_many
+            State.set_many = function()
+                order[#order + 1] = "set_many"
+                return false
             end
             reader_kopanda("Letter V"):onCloseDocument()
-            State.set = logged_set
+            State.set_many = logged_set_many
             logger.err:revert()
             assert.equals("", State.get("featured_chapter"))
             assert.spy(errored).was_called()

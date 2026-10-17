@@ -1,0 +1,13 @@
+id: EV-cfb2ls
+type: approve.feature
+at: 2026-10-17T07:07:50.281102Z
+contributor: allen
+command: approve feature F-2nt0fx
+targets:
+    - F-2nt0fx
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/library/features/cover-grid/feature.yml

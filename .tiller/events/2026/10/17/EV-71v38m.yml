@@ -1,0 +1,17 @@
+id: EV-71v38m
+type: start.task
+at: 2026-10-17T03:36:24.114149Z
+contributor: allen
+command: start task T-cb345p
+targets:
+    - T-cb345p
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/library/cover-grid
+    branch: tiller/library/cover-grid/screen
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/screen/task.yml
+    - path: .tiller/epics/library/features/cover-grid/feature.yml
