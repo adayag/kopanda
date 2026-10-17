@@ -20,6 +20,7 @@ LauncherEntries.KOPANDA = {
     series = { label = "Series", icon = "series" },
     authors = { label = "Authors", icon = "authors" },
     settings = { label = "Settings", icon = "settings" },
+    quick_settings = { label = "Quick settings", icon = "quick_settings" },
 }
 
 -- KOReader's screens, by target, each run by one dispatcher id (frontend/dispatcher.lua:68,
@@ -135,6 +136,12 @@ local KOPANDA_RUN = {
     end,
     settings = function()
         SettingsMenu.open()
+    end,
+    quick_settings = function()
+        -- The tap's start, which the sheet's paint_ms runs from. quick_settings requires this
+        -- module, so it is required here, at call time.
+        local started = time.monotonic()
+        require("quick_settings").open{ started = started }
     end,
 }
 

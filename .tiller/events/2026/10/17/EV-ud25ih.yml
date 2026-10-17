@@ -1,0 +1,15 @@
+id: EV-ud25ih
+type: start.task
+at: 2026-10-17T04:49:25.808524Z
+contributor: allen
+command: start task T-2x7tk6
+targets:
+    - T-2x7tk6
+before:
+    status: ready
+after:
+    branch: tiller/bars/quick-settings/launcher-target
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/launcher-target/task.yml

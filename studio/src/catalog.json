@@ -544,6 +544,11 @@
             "id": "download",
             "label": "Not downloaded",
             "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 4v12M6 11l6 6 6-6M5 20h14\"/></svg>\n"
+        },
+        {
+            "id": "quick_settings",
+            "label": "Quick settings",
+            "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#000000\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 5H3M12 19H3M14 3v4M16 17v4M21 12h-9M21 19h-5M21 5h-7M8 10v4M8 12H3\"/></svg>\n"
         }
     ],
     "plugins": [
@@ -669,6 +674,10 @@
             "library": {
                 "icon": "library",
                 "label": "Library"
+            },
+            "quick_settings": {
+                "icon": "quick_settings",
+                "label": "Quick settings"
             },
             "series": {
                 "icon": "series",

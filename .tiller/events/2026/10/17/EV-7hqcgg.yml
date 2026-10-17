@@ -1,0 +1,16 @@
+id: EV-7hqcgg
+type: submit.task
+at: 2026-10-17T05:35:00.206261Z
+contributor: allen
+command: submit task T-2x7tk6
+targets:
+    - T-2x7tk6
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/bars/quick-settings/launcher-target
+        head: git:338f3a2
+    status: in_review
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/launcher-target/task.yml
