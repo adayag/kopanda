@@ -1,0 +1,13 @@
+id: EV-2hzs31
+type: approve.tweak
+at: 2026-10-17T16:06:08.22496Z
+contributor: allen
+command: approve tweak TW-bl79zr
+targets:
+    - TW-bl79zr
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/tweaks/quote-memo/tweak.yml

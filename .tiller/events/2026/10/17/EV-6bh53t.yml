@@ -1,0 +1,13 @@
+id: EV-6bh53t
+type: approve.bug
+at: 2026-10-17T16:06:09.705038Z
+contributor: allen
+command: approve bug B-0vcqvc
+targets:
+    - B-0vcqvc
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/bugs/entry-picker-plugins-unreachable/bug.yml

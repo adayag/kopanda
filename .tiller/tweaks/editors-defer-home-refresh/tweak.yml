@@ -1,9 +1,19 @@
 id: TW-4cf9th
 key: tweaks/editors-defer-home-refresh
 title: Each edit in Edit layout or Launcher management rebuilds the hidden home
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 attached_to: F-wkj9iy
 source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L132-L140
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:16754c9a7fad1958a3d4074d88df9ae48289430c
+        path: .tiller/tweaks/editors-defer-home-refresh/tweak.md
+        observed_at: 2026-10-17T16:06:08.458429Z
+    commit:
+        kind: git_commit
+        value: git:525b5a5
+        observed_at: 2026-10-17T16:06:08.481987Z

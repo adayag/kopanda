@@ -1,9 +1,19 @@
 id: TW-x4pkgz
 key: tweaks/pull-one-hash-pass
 title: A pull reads and hashes every file twice
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 attached_to: F-9okxa7
 source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L150-L158
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:15717a05dbee6b5788d9978b38ec1a48c40b81cf
+        path: .tiller/tweaks/pull-one-hash-pass/tweak.md
+        observed_at: 2026-10-17T16:06:09.192801Z
+    commit:
+        kind: git_commit
+        value: git:525b5a5
+        observed_at: 2026-10-17T16:06:09.216363Z

@@ -1,0 +1,13 @@
+id: EV-bwjt88
+type: approve.chore
+at: 2026-10-17T16:06:09.963027Z
+contributor: allen
+command: approve chore CH-au9w25
+targets:
+    - CH-au9w25
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/chores/stale-efficiency-docs/chore.yml

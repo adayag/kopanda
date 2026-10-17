@@ -1,9 +1,19 @@
 id: TW-skxh9m
 key: tweaks/library-leave-unchanged
 title: Every library close rewrites the state file even when unchanged
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 attached_to: T-anr3s4
 source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L117-L130
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:b6e13595887c2d58aee4cae7d725f276a2dd09c9
+        path: .tiller/tweaks/library-leave-unchanged/tweak.md
+        observed_at: 2026-10-17T16:06:07.955448Z
+    commit:
+        kind: git_commit
+        value: git:525b5a5
+        observed_at: 2026-10-17T16:06:07.978781Z
