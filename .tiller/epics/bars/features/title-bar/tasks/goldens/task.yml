@@ -1,7 +1,7 @@
 id: T-m6bm2e
 key: bars/title-bar/goldens
 title: File-browser goldens with the title bar in both looks on both profiles
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         value: git:c18ec4f
         observed_at: 2026-10-17T01:34:14.148364Z
 branch: tiller/bars/title-bar/goldens
+pr: 28
 gates:
     build:
         required: true

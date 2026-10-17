@@ -1,0 +1,14 @@
+id: EV-3l6ym9
+type: submit.task
+at: 2026-10-17T03:25:35.299869Z
+contributor: allen
+command: submit task T-m6bm2e
+targets:
+    - T-m6bm2e
+before:
+    status: check
+after:
+    pr: 28
+    status: in_review
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/goldens/task.yml
