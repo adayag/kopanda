@@ -289,8 +289,9 @@ end
 -- current variant; one of another size (showFiles resets the rotation) or variant is dropped.
 -- Returns the library or nil. The closed book's tile is rebuilt, since the reader saves its
 -- sidecar after CloseDocument, when the library was built (frontend/apps/reader/readerui.lua:887,
--- then :874-877 on its close at :893); a failure leaves the tile as built. Its progress the build
--- kept is forgotten, so a page turned to reads it again wherever the book is.
+-- then :874-877 on its close at :893); a failure leaves the tile as built. The kept listing is
+-- filtered and sorted again at the next build, so a page turned to does so with the book's new
+-- progress wherever the book is.
 function Library.take_pending()
     local pending = Library.pending
     if not pending then

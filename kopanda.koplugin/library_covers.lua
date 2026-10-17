@@ -13,9 +13,9 @@ local LibraryCovers = {}
 
 -- Rebuilds in place the tiles of the books whose ids are keys of ids, from their records read again
 -- (a title that came with an extraction replaces the file name) and their progress read now,
--- keeping the page's order; the library's kept listing takes each record and progress
--- (LibraryView.renew), so the next build filters and sorts with them. A failure is logged with what
--- and leaves every tile as it was. Returns how many tiles it rebuilt.
+-- keeping the page's order; the library's kept listing takes each record (LibraryView.renew), so
+-- the next build filters and sorts with it. A failure is logged with what and leaves every tile
+-- as it was. Returns how many tiles it rebuilt.
 function LibraryCovers.rebuild_tiles(library, ids, what)
     local fresh = {}
     local ok, err = pcall(function()
@@ -23,7 +23,7 @@ function LibraryCovers.rebuild_tiles(library, ids, what)
             if tile.record and ids[tile.record.id] then
                 local record = Books.get(tile.record.id) or tile.record
                 local progress = Books.progress(record)
-                fresh[#fresh + 1] = { tile = tile, record = record, progress = progress,
+                fresh[#fresh + 1] = { tile = tile, record = record,
                     widget = LibraryTiles.book(record, progress, library.box, library.ctx) }
             end
         end
@@ -40,7 +40,7 @@ function LibraryCovers.rebuild_tiles(library, ids, what)
         local old = library[1][tile.index]
         library[1][tile.index] = entry.widget
         tile.widget, tile.record = entry.widget, entry.record
-        LibraryView.renew(library.kept, entry.record, entry.progress)
+        LibraryView.renew(library.kept, entry.record)
         old:free()
     end
     return #fresh

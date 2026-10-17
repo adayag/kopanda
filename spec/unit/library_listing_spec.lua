@@ -1,5 +1,5 @@
--- The library's kept listing (TW-cypagc): the folder's listing, its history times and its progress
--- memo are kept from the build that listed the folder, so a page turn only slices them and a picker
+-- The library's kept listing (TW-cypagc): the folder's listing and its history times are kept
+-- from the build that listed the folder, so a page turn only slices them and a picker
 -- choice only filters and sorts them again, while a show, a folder change and refresh() list the
 -- folder again. Run on a scratch library under the data directory, the real Books.folder over it,
 -- CoverBrowser stubbed with a row per file that counts the reads without a cover, and the cover
@@ -221,33 +221,6 @@ describe("the library's kept listing", function()
         assert.equals(2, library.page)
         library:turn(-1)
         assert.equals("Book 02", library.tiles[1].record.title)
-    end)
-
-    it("keeps the progress a rebuilt tile read when its record can't be read again", function()
-        local books = fixture.books(13)
-        local progress = {}
-        for _, book in ipairs(books) do
-            progress[book.id] = { status = "reading", percent = 0.5 }
-        end
-        fixture.install({ [fixture.ROOT] = { books = books } }, progress)
-        assert.is_true(LibraryOrder.choose(fixture.ROOT, "title", "reading"))
-        local library = show(fixture.ROOT)
-        local record = library.tiles[1].record
-        local read, reads = Books.progress, 0
-        Books.progress = function(book)
-            if book == record then
-                reads = reads + 1
-            end
-            return read(book)
-        end
-        Books.get = function()
-            return nil
-        end
-        assert.equals(1, LibraryCovers.rebuild_tiles(library, { [record.id] = true }, "the spec's rebuild"))
-        reads = 0
-        library:turn(1)
-        assert.equals(2, library.page)
-        assert.equals(0, reads)
     end)
 
     it("repaints in the other variant from the kept listing, without listing", function()
