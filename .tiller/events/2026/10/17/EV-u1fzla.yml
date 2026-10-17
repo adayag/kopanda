@@ -1,0 +1,14 @@
+id: EV-u1fzla
+type: add.tweak
+at: 2026-10-17T15:30:17.339319Z
+contributor: allen
+command: add tweak cover-arrival-regional-refresh
+targets:
+    - TW-bpvicu
+after:
+    attached_to: T-cb345p
+    key: tweaks/cover-arrival-regional-refresh
+    status: proposed
+files:
+    - path: .tiller/tweaks/cover-arrival-regional-refresh/tweak.md
+    - path: .tiller/tweaks/cover-arrival-regional-refresh/tweak.yml

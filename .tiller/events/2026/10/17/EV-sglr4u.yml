@@ -1,0 +1,14 @@
+id: EV-sglr4u
+type: add.bug
+at: 2026-10-17T15:30:17.642063Z
+contributor: allen
+command: add bug chapter-write-retry
+targets:
+    - B-e2tfz0
+after:
+    attached_to: T-o0ptat
+    key: bugs/chapter-write-retry
+    status: proposed
+files:
+    - path: .tiller/bugs/chapter-write-retry/bug.md
+    - path: .tiller/bugs/chapter-write-retry/bug.yml

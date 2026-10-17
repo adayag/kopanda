@@ -1,0 +1,14 @@
+id: EV-z52s3h
+type: add.tweak
+at: 2026-10-17T15:30:17.237367Z
+contributor: allen
+command: add tweak sidecar-progress-memo
+targets:
+    - TW-3tfybs
+after:
+    attached_to: T-anr3s4
+    key: tweaks/sidecar-progress-memo
+    status: proposed
+files:
+    - path: .tiller/tweaks/sidecar-progress-memo/tweak.md
+    - path: .tiller/tweaks/sidecar-progress-memo/tweak.yml

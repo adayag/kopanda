@@ -1,0 +1,9 @@
+id: TW-cypagc
+key: tweaks/library-listing-kept
+title: A library page turn re-lists the folder
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: T-cb345p
+source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L9-L24

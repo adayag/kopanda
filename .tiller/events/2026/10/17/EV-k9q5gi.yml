@@ -1,0 +1,14 @@
+id: EV-k9q5gi
+type: add.tweak
+at: 2026-10-17T15:30:17.133528Z
+contributor: allen
+command: add tweak library-listing-kept
+targets:
+    - TW-cypagc
+after:
+    attached_to: T-cb345p
+    key: tweaks/library-listing-kept
+    status: proposed
+files:
+    - path: .tiller/tweaks/library-listing-kept/tweak.md
+    - path: .tiller/tweaks/library-listing-kept/tweak.yml
