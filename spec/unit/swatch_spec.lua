@@ -257,6 +257,30 @@ describe("the swatch screen", function()
             assert.is_truthy(harness.top().painted_at)
         end)
 
+        -- The swatch's paint moves the CPU clock on by 300 ms once the paint is done, so a cpu_ms
+        -- that ran on to the signal would show it.
+        it("counts cpu_ms on the CPU clock from the show to the first paint", function()
+            local events = {}
+            settled_listener = function(args)
+                if args.screen == "swatch" then
+                    events[#events + 1] = args
+                end
+            end
+            UIManager.event_hook:register("KoPandaSettled", settled_listener)
+            fm_without_home()
+            harness.with_cpu_clock(3, function(cpu)
+                Swatch.show()
+                cpu.now = 3.04
+                harness.top().paintTo = function(self, ...)
+                    Swatch.paintTo(self, ...)
+                    cpu.now = cpu.now + 0.3
+                end
+                harness.tick(3)
+            end)
+            assert.equals(1, #events)
+            assert.equals(40, events[1].cpu_ms)
+        end)
+
         -- UIManager runs a task scheduled during a task in the same pass, before the repaint,
         -- when time.now() hasn't moved past the pass's start (frontend/ui/uimanager.lua:1081-1104,
         -- 447-456, 1537-1564): so a tickAfterNext from the show can land before the first paint.
@@ -300,7 +324,7 @@ describe("the swatch screen", function()
                 local events = settle_held()
                 assert.equals(1, #events)
                 assert.is_not_nil(events[1].painted_at)
-                assert.equals(time.to_ms(events[1].painted_at - events[1].started), events[1].args.paint_ms)
+                assert.equals(time.to_ms(events[1].painted_at.wall - events[1].started.wall), events[1].args.paint_ms)
                 assert.is_false(events[1].in_repaint)
                 UIManager:setDirty(harness.top(), "full")
                 harness.tick(2)

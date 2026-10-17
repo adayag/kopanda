@@ -11,6 +11,7 @@ local FeaturedCover = require("featured_cover")
 local Home = require("home")
 local LauncherEntries = require("launcher_entries")
 local Math = require("optmath")
+local PaintClock = require("paint_clock")
 local Settings = require("settings")
 local SettingsMenu = require("settings_menu")
 local Sheet = require("sheet")
@@ -18,7 +19,6 @@ local ffiutil = require("ffi/util")
 local filemanagerutil = require("apps/filemanager/filemanagerutil")
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
-local time = require("ui/time")
 
 local BookSheet = {}
 
@@ -226,7 +226,7 @@ function BookSheet.open(ctx, built, opts)
             detail = BookList.getBookStatusString(BookList.getBookStatus(book.file), false, true) .. " ›",
             chip = "status",
             run = function()
-                open_status(ctx, book, { started = time.monotonic() })
+                open_status(ctx, book, { started = PaintClock.now() })
             end,
         },
         {
@@ -241,7 +241,7 @@ function BookSheet.open(ctx, built, opts)
             icon = "list",
             label = "Feature a different book",
             run = function()
-                open_picker(ctx, { started = time.monotonic() })
+                open_picker(ctx, { started = PaintClock.now() })
             end,
         },
         {

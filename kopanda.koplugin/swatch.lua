@@ -16,6 +16,7 @@ local IconWidget = require("ui/widget/iconwidget")
 local Icons = require("icons")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local Looks = require("looks")
+local PaintClock = require("paint_clock")
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local TextWidget = require("ui/widget/textwidget")
 local UIManager = require("ui/uimanager")
@@ -23,7 +24,6 @@ local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
-local time = require("ui/time")
 local Screen = require("device").screen
 
 -- Lengths in board pixels, scaled by Screen:scaleBySize; font sizes unscaled, since
@@ -382,15 +382,17 @@ function Swatch:close()
 end
 
 -- The dev loop's settled signal after the first paint, unless that paint failed. paint_ms runs
--- from the show to the end of that paint.
+-- from the show to the end of that paint, and cpu_ms on the CPU clock.
 local function settle(swatch)
     if swatch.paint_failed then
         return
     end
     local ok, err = pcall(function()
+        local paint_ms, cpu_ms = PaintClock.ms(PaintClock.since(swatch.started, swatch.painted_at))
         UIManager.event_hook:execute("KoPandaSettled", {
             screen = "swatch",
-            paint_ms = time.to_ms(swatch.painted_at - swatch.started),
+            paint_ms = paint_ms,
+            cpu_ms = cpu_ms,
         })
     end)
     if not ok then
@@ -403,7 +405,7 @@ end
 function Swatch.show()
     local swatch
     local ok, err = pcall(function()
-        swatch = Swatch:new{ started = time.monotonic(), settle_pending = true }
+        swatch = Swatch:new{ started = PaintClock.now(), settle_pending = true }
         UIManager:show(swatch, "full")
         -- The swatch settles from its first paint; nothing is scheduled until then. A
         -- tickAfterNext here would land before the paint whenever the clock hasn't moved since
@@ -423,7 +425,7 @@ end
 function Swatch:paintTo(bb, x, y)
     local ok, err = pcall(InputContainer.paintTo, self, bb, x, y)
     if ok and not self.painted_at then
-        self.painted_at = time.monotonic()
+        self.painted_at = PaintClock.now()
     end
     if not ok and not self.paint_failed then
         self.paint_failed = true

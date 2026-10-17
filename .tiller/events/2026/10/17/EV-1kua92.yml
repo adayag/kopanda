@@ -1,0 +1,13 @@
+id: EV-1kua92
+type: start.tweak
+at: 2026-10-17T05:02:16.458642Z
+contributor: allen
+command: start tweak TW-8wduca
+targets:
+    - TW-8wduca
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/flaky-night-golden-paint-budget/tweak.yml

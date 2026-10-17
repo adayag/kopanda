@@ -13,13 +13,13 @@ local KoTitleBar = require("title_bar")
 local Looks = require("looks")
 local NavBar = require("nav_bar")
 local Paint = require("paint")
+local PaintClock = require("paint_clock")
 local Screen = require("device").screen
 local TitleBar = require("ui/widget/titlebar")
 local TouchMenu = require("ui/widget/touchmenu")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
-local time = require("ui/time")
 
 local FmNav = {}
 
@@ -27,8 +27,8 @@ local installed = false
 
 -- The frame in a file manager's self[1]: the bar first among its children, so a gesture reaches
 -- the bar before the chooser and the file manager's own zones (widgetcontainer.lua:80-107), and
--- fm_ui second. It keeps the look, variant and band it was built with, and layout_time, the
--- wrapped setupLayout's duration.
+-- fm_ui second. It keeps the look, variant and band it was built with, and layout_span, the
+-- wrapped setupLayout's duration on both clocks (paint_clock.lua).
 FmNav.Frame = WidgetContainer:extend{
     name = "kopanda_fm_nav",
     fm = nil,
@@ -75,23 +75,26 @@ end
 
 -- Sends KoPandaSettled once per frame, from the first paint after which the file manager is the
 -- topmost window and this frame still its layout. paint_ms is the wrapped setupLayout's
--- duration plus that paint's, without the time the file browser sat under the home.
-local function settle(frame, paint_time)
+-- duration plus that paint's, without the time the file browser sat under the home, and cpu_ms
+-- the same spans on the CPU clock.
+local function settle(frame, paint_span)
     local fm = frame.fm
     if frame.settled or UIManager:getNthTopWidget(1) ~= fm or fm[1] ~= frame then
         return
     end
     frame.settled = true
+    local paint_ms, cpu_ms = PaintClock.ms(PaintClock.plus(frame.layout_span, paint_span))
     UIManager.event_hook:execute("KoPandaSettled", {
         screen = "file_browser",
-        paint_ms = time.to_ms(frame.layout_time + paint_time),
+        paint_ms = paint_ms,
+        cpu_ms = cpu_ms,
     })
 end
 
 -- fm_ui at the origin, then the bar. A bar that fails to paint is logged once per frame and its
 -- band painted as the chooser's paper, so the file browser above it still shows.
 function FmNav.Frame:paintTo(bb, x, y)
-    local started = time.monotonic()
+    local started = PaintClock.now()
     self.fm_ui:paintTo(bb, x, y)
     local ok, err = pcall(paint_bar, self, bb, x, y)
     if not ok then
@@ -102,9 +105,9 @@ function FmNav.Frame:paintTo(bb, x, y)
         end
     end
     if not self.settled then
-        local paint_time = time.monotonic() - started
+        local paint_span = PaintClock.since(started)
         UIManager:tickAfterNext(function()
-            local settle_ok, settle_err = pcall(settle, self, paint_time)
+            local settle_ok, settle_err = pcall(settle, self, paint_span)
             if not settle_ok then
                 logger.err("KoPanda: the file browser's settled signal failed:", settle_err)
             end
@@ -122,7 +125,7 @@ local function wrap(fm, previous, look, band, started)
         band = band,
     }
     fm[1] = frame
-    frame.layout_time = time.monotonic() - started
+    frame.layout_span = PaintClock.since(started)
     if getmetatable(previous) == FmNav.Frame then
         previous.bar:free()
     end
@@ -211,7 +214,7 @@ function FmNav.install()
         if not kopanda or kopanda.refused then
             return original(fm, ...)
         end
-        local started = time.monotonic()
+        local started = PaintClock.now()
         local ok, look, band = pcall(function()
             local active = Looks.active()
             return active, NavBar.height(active, Screen)

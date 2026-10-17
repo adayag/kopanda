@@ -10,12 +10,12 @@ local Icons = require("icons")
 local LauncherEntries = require("launcher_entries")
 local Layout = require("layout")
 local Looks = require("looks")
+local PaintClock = require("paint_clock")
 local Settings = require("settings")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
-local time = require("ui/time")
 
 local Launcher = {
     id = "launcher",
@@ -284,7 +284,7 @@ end
 -- returns nothing, so the home takes the hold as done. launcher_manage is required here, not at
 -- load, so loading the widget doesn't load the editor and picker chain.
 function Launcher.hold()
-    require("launcher_manage").open{ started = time.monotonic() }
+    require("launcher_manage").open{ started = PaintClock.now() }
 end
 
 -- True when the grid drew a Wi-Fi entry whose on or off no longer matches NetworkMgr:isWifiOn()

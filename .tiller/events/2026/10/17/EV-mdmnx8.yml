@@ -1,0 +1,14 @@
+id: EV-mdmnx8
+type: submit.tweak
+at: 2026-10-17T05:46:16.171815Z
+contributor: allen
+command: submit tweak TW-8wduca
+targets:
+    - TW-8wduca
+before:
+    status: check
+after:
+    pr: 33
+    status: in_review
+files:
+    - path: .tiller/tweaks/flaky-night-golden-paint-budget/tweak.yml

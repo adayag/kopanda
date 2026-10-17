@@ -422,7 +422,7 @@ end
 
 -- Opens launcher management on a copy of the stored launcher: opts.folder, a top-level index,
 -- opens that folder's list, whose Done then closes; an index past the list or not a folder opens
--- the top level. opts.started is the time.monotonic() the opener took, which paint_ms runs from.
+-- the top level. opts.started is the PaintClock stamp the opener took, which paint_ms runs from.
 -- A failure is logged and leaves no screen.
 function LauncherManage.open(opts)
     opts = opts or {}
