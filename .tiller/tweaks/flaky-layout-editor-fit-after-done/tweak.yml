@@ -19,3 +19,30 @@ accepted_against:
         value: git:d5f972d
         observed_at: 2026-10-17T04:34:24.557108Z
 branch: tiller/tweaks/flaky-layout-editor-fit-after-done
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T05:03:24.026486Z
+        against:
+            kind: git_commit
+            value: git:c0e1e13
+            observed_at: 2026-10-17T05:03:24.026485Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-c0e1e13-out-8171c1245a406b301b217e48e19a51cacf0b03f568f004e84b19d869c6ea1fc5.txt
+    tests:
+        required: true
+        kind: command
+        status: fail
+        run_by: allen
+        run_at: 2026-10-17T05:03:24.026486Z
+        against:
+            kind: git_commit
+            value: git:c0e1e13
+            observed_at: 2026-10-17T05:03:24.026485Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-c0e1e13-out-25378f0ea53753319e4bba9fcab5b38d33e494b1ee431bdc451048de6c94f1a7.txt
