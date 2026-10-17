@@ -1,7 +1,7 @@
 id: B-2o8ya3
 key: bugs/prebuild-stale-and-wasted
 title: The prebuilt home shows stale progress and builds on reload, switch and exit
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         value: git:2b0b31d
         observed_at: 2026-10-17T07:16:50.293855Z
 branch: tiller/bugs/prebuild-stale-and-wasted
+pr: 39
 gates:
     build:
         required: true
