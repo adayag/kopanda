@@ -47,7 +47,7 @@ gates:
         kind: command
         status: pending
         run_by: allen
-        run_at: 2026-10-17T23:42:57.173063Z
+        run_at: 2026-10-17T23:43:06.983241Z
         against:
             kind: git_commit
             value: git:1cfdff0
@@ -101,7 +101,7 @@ gates:
             C10:
                 status: pass
             C11:
-                status: needs_attestation
+                status: pass
             C12:
                 status: needs_attestation
     tests:
@@ -125,3 +125,10 @@ attestations:
       status: pass
       by: allen
       at: 2026-10-17T23:42:57.173063Z
+    - id: AT-2mx1dj
+      target:
+        kind: criterion
+        id: C11
+      status: pass
+      by: allen
+      at: 2026-10-17T23:43:06.983241Z
