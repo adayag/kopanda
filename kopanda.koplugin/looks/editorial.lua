@@ -364,6 +364,10 @@ return {
         library_picker = {
             face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "text",
         },
+        -- The status picker's label, as the sort's (GridA.dc.html:26).
+        library_picker_status = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "text",
+        },
         -- A tile's title, one line, CSS line height 1.25 (GridA.dc.html:47); weight 500, the strong face.
         tile_title = { face = "strong", size = 12, uppercase = false, tracking = 0, line_height = 0.25, color = "ink" },
         -- The placeholder's title at the grid's size, CSS line height 1.1 (GridA.dc.html:51).
@@ -570,6 +574,9 @@ return {
             prev_fill_color = false, -- transparent (GridA.dc.html:86)
             next_fill_color = false, -- transparent (GridA.dc.html:88)
             dead_color = "hairline", -- the first page's previous arrow (GridA.dc.html:86)
+            prev_icon_color = "ink", -- a live arrow, as the next one (GridA.dc.html:88)
+            next_icon_color = "ink", -- GridA.dc.html:88
+            label_in_words = false, -- "1 / 24" (GridA.dc.html:87)
         },
     },
 }

@@ -524,7 +524,8 @@ describe("looks", function()
                     padding = { x = 6, y = 1 } },
                 pager = { button_w = 44, button_h = 32, gap = 18, bottom = 16, outline_width = 2,
                     outline_color = "outline", prev_fill_color = "paper", next_fill_color = "mustard",
-                    dead_color = false },
+                    dead_color = false, prev_icon_color = "ink", next_icon_color = "on_accent",
+                    label_in_words = true },
             },
             editorial = {
                 header = {
@@ -548,7 +549,8 @@ describe("looks", function()
                     padding = { x = 6, y = 2 } },
                 pager = { button_w = 44, button_h = 32, gap = 22, bottom = 16, outline_width = 0,
                     outline_color = false, prev_fill_color = false, next_fill_color = false,
-                    dead_color = "hairline" },
+                    dead_color = "hairline", prev_icon_color = "ink", next_icon_color = "ink",
+                    label_in_words = false },
             },
         }
 
@@ -557,6 +559,7 @@ describe("looks", function()
                 library_count = { "accent", 24, false, 0, 0, "on_accent" },
                 library_title = { "display", 40, false, -0.01, -0.05, "on_accent" },
                 library_picker = { "display", 11, true, 0.08, 0, "ink" },
+                library_picker_status = { "display", 11, true, 0.08, 0, "on_accent" },
                 tile_title = { "display", 12, true, 0.04, 0.2, "ink" },
                 tile_cover_title = { "display", 17, false, 0, 0.1, "on_cover" },
                 folder_count = { "accent", 26, false, 0, 0, "on_accent" },
@@ -568,6 +571,7 @@ describe("looks", function()
                 library_count = { "text", 11, true, 0.14, 0, "muted" },
                 library_title = { "display", 34, false, 0, 0, "ink" },
                 library_picker = { "strong", 11, true, 0.12, 0, "text" },
+                library_picker_status = { "strong", 11, true, 0.12, 0, "text" },
                 tile_title = { "strong", 12, false, 0, 0.25, "ink" },
                 tile_cover_title = { "display", 18, false, 0, 0.1, "on_cover" },
                 folder_count = { "display", 22, false, 0, 0.05, "ink" },
@@ -644,6 +648,16 @@ describe("looks", function()
                 for part, values in pairs(LIBRARY_PARTS[id]) do
                     assert.same(values, part_values(looks[id].type[part]), id .. " type." .. part)
                 end
+            end
+        end)
+
+        -- The two pickers' lines differ in colour alone, so the header's height measures either
+        -- (LibraryTiles.header_height measures library_picker).
+        it("set the status picker's label as the sort picker's in its own colour", function()
+            for _, id in ipairs(ids) do
+                local sort, status = looks[id].type.library_picker, looks[id].type.library_picker_status
+                assert.same({ sort.face, sort.size, sort.uppercase, sort.tracking, sort.line_height },
+                    { status.face, status.size, status.uppercase, status.tracking, status.line_height }, id)
             end
         end)
 
