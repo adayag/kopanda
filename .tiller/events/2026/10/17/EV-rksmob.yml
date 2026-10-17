@@ -1,0 +1,13 @@
+id: EV-rksmob
+type: check.task
+at: 2026-10-17T15:44:35.689215Z
+contributor: allen
+command: check task T-m36ahd
+targets:
+    - T-m36ahd
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/goldens/task.yml
