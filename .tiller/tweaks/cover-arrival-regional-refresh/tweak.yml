@@ -1,7 +1,7 @@
 id: TW-bpvicu
 key: tweaks/cover-arrival-regional-refresh
 title: A cover arrival refreshes the whole library and parses the tile's sidecar twice
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:525b5a5
         observed_at: 2026-10-17T16:06:07.738178Z
 branch: tiller/tweaks/cover-arrival-regional-refresh
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T17:17:27.422107Z
+        against:
+            kind: git_commit
+            value: git:466120b
+            observed_at: 2026-10-17T17:17:27.422106Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-466120b-out-6b4e7a5b6274a96b488c8b703876f56677eb90de9cace65f174db487c1f66360.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T17:17:27.422107Z
+        against:
+            kind: git_commit
+            value: git:466120b
+            observed_at: 2026-10-17T17:17:27.422106Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-466120b-out-338f289c8516222ad3e21034c7a703ab2e6cda575be1cb8ef38eec9fcedbc13d.txt

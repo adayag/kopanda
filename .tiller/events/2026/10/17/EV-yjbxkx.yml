@@ -1,0 +1,13 @@
+id: EV-yjbxkx
+type: check.tweak
+at: 2026-10-17T17:21:26.837938Z
+contributor: allen
+command: check tweak TW-bpvicu
+targets:
+    - TW-bpvicu
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/cover-arrival-regional-refresh/tweak.yml
