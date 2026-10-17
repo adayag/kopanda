@@ -50,9 +50,9 @@ gates:
     evals:
         required: true
         kind: command
-        status: pending
+        status: pass
         run_by: allen
-        run_at: 2026-10-17T20:28:34.33985Z
+        run_at: 2026-10-17T20:29:02.666563Z
         against:
             kind: git_commit
             value: git:babfbe3
@@ -136,7 +136,7 @@ gates:
             C16:
                 status: pass
             C17:
-                status: needs_attestation
+                status: pass
     tests:
         required: true
         kind: command
@@ -158,3 +158,10 @@ attestations:
       status: pass
       by: allen
       at: 2026-10-17T20:28:34.33985Z
+    - id: AT-tvk4vq
+      target:
+        kind: criterion
+        id: C17
+      status: pass
+      by: allen
+      at: 2026-10-17T20:29:02.666563Z
