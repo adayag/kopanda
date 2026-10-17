@@ -1,0 +1,13 @@
+id: EV-5rghzr
+type: approve.feature
+at: 2026-10-17T03:37:34.440589Z
+contributor: allen
+command: approve feature F-rce9ko
+targets:
+    - F-rce9ko
+before:
+    status: specced
+after:
+    status: ready
+files:
+    - path: .tiller/epics/bars/features/quick-settings/feature.yml

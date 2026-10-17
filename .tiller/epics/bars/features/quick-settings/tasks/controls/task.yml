@@ -1,9 +1,19 @@
 id: T-n6wve0
 key: bars/quick-settings/controls
 title: 'The panel''s controls: light and warmth steps, toggles, close-first actions and their routing'
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-7g6ybl
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:4b194f86c6ce05cf0e055b990dab9529d7e20bf7
+        path: .tiller/epics/bars/features/quick-settings/tasks/controls/task.md
+        observed_at: 2026-10-17T03:37:34.485588Z
+    commit:
+        kind: git_commit
+        value: git:a955bb4
+        observed_at: 2026-10-17T03:37:34.506287Z

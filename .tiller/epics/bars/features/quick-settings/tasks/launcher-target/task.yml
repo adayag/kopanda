@@ -1,9 +1,19 @@
 id: T-2x7tk6
 key: bars/quick-settings/launcher-target
 title: Quick settings as a KoPanda launcher target with its registry icon, schema and studio catalog
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-7g6ybl
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:c6d52adbc4140ae92f6d23d8edfa16c184c798c0
+        path: .tiller/epics/bars/features/quick-settings/tasks/launcher-target/task.md
+        observed_at: 2026-10-17T03:37:34.506619Z
+    commit:
+        kind: git_commit
+        value: git:a955bb4
+        observed_at: 2026-10-17T03:37:34.529034Z
