@@ -1258,8 +1258,23 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   the home's zones are (the touch-lock entry above).
 - Holds: a hold's lift sends `hold_release` to the top widget, by then the sheet
   (`frontend/device/gesturedetector.lua:1346-1356`); the sheet registers nothing for `hold`
-  (unless its spec has a `hold`, the launcher management entry below), `hold_release`,
-  `hold_pan` or swipes, so they reach only the active widgets below.
+  (unless its spec has a `hold`, the launcher management entry below, or a `body`),
+  `hold_release`, `hold_pan` or swipes, so they reach only the active widgets below. Its
+  `onTapSheet` and `onHoldSheet` read the gesture's `pos` from their second argument:
+  `InputContainer:onGesture` sends `Event:new(eventname, gsseq.args, ev)`
+  (`frontend/ui/widget/container/inputcontainer.lua:273-280`).
+- The body's in-place redraw, after a stay-open area's `tap` or `hold`, on a `refresh_on` event or
+  on `Sheet.redraw()`: only while `UIManager:isWidgetShown(sheet)` (`frontend/ui/uimanager.lua:881-888`),
+  it re-lays the panel out and calls `UIManager:setDirty(sheet, "ui", old:combine(new))`
+  (`:659`), the `"ui"` refresh `FrontLightWidget:update` asks for its frame
+  (`frontend/ui/widget/frontlightwidget.lua:430-437`). `Geom:combine` is `Geom.boundingBox` of
+  the two rectangles (`frontend/ui/geometry.lua:151-153`), so a panel that changed height leaves
+  nothing stale. Under a KOReader dialog the dirty mark only queues the sheet; `_repaint` paints
+  the dialog over it again (the first entry above).
+- `refresh_on`: each name `N` becomes the sheet's `onN`, the handler an `Event` named `N` calls
+  (`frontend/ui/event.lua:32`, `frontend/ui/widget/eventlistener.lua:34-39`). It returns nothing;
+  `UIManager:broadcastEvent` offers the event to every window whatever a handler returns
+  (`frontend/ui/uimanager.lua:1042-1061`), so the windows beneath the sheet hear it too.
 - The settled signal goes from a `nextTick` (`frontend/ui/uimanager.lua:431-433`) that the
   sheet's first good `paintTo` schedules: it runs from the next `_checkTasks`, past that
   `_repaint` (`handleInput` `:1542-1564`). Nothing is scheduled before the paint, so a sheet

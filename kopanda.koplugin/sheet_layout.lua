@@ -68,8 +68,9 @@ end
 
 -- Lays out the sheet's spec under ctx in variant into a Panel, and returns it with the panel's
 -- rectangle, the rectangle with its shadow, the header's rectangle (or nil), the hint's (or nil)
--- and the rows' places ({ row, rect, label, detail }), all in screen coordinates, and how many
--- rows it left out. A missing icon is logged once per build.
+-- and the rows' places ({ row, rect, label, detail }) or the body's areas ({ rect, tap, hold,
+-- close_first }), all in screen coordinates, how many rows it left out and whether its body is
+-- too tall for the screen. A missing icon is logged once per build.
 function SheetLayout.build(spec, ctx, variant)
     local look = ctx.look
     local tokens = look.sheet
@@ -202,6 +203,21 @@ function SheetLayout.build(spec, ctx, variant)
         local header_rule = scale(tokens.header_rule_width)
         add_fill(content_x, y, content_w, header_rule, tokens.header_rule_color)
         y = y + header_rule
+    end
+
+    -- A body in place of rows, for a spec with no rows: its widget under the header at the
+    -- content's left, its areas moved from the body's top-left.
+    local areas = {}
+    local body = not spec.rows and spec.body
+    if body then
+        local made = body(bctx, content_w)
+        add(made.widget, content_x, y)
+        for i, area in ipairs(made.areas or {}) do
+            local rect = area.rect
+            areas[i] = { rect = { x = content_x + rect.x, y = y + rect.y, w = rect.w, h = rect.h },
+                tap = area.tap, hold = area.hold, close_first = area.close_first }
+        end
+        y = y + made.widget:getSize().h
     end
 
     -- The rows, each built in full before any is placed.
@@ -343,6 +359,11 @@ function SheetLayout.build(spec, ctx, variant)
     -- To the screen: the box on the bottom edge less the inset.
     local box_x = scale(tokens.inset.side)
     local box_y = size.h - scale(tokens.inset.bottom) - box_h
+    -- A body can't be cut as rows are: one too tall sits at the screen's top.
+    local too_tall = false
+    if body and box_y < 0 then
+        box_y, too_tall = 0, true
+    end
     local function moved(rect)
         return rect and Geom:new{ x = box_x + rect.x, y = box_y + rect.y, w = rect.w, h = rect.h }
     end
@@ -358,6 +379,9 @@ function SheetLayout.build(spec, ctx, variant)
     for _, row in ipairs(rows) do
         row.rect, row.label, row.detail = moved(row.rect), moved(row.label), moved(row.detail)
     end
+    for _, area in ipairs(areas) do
+        area.rect = moved(area.rect)
+    end
     panel.dimen = Geom:new{ x = box_x, y = box_y, w = box_w, h = box_h }
     return {
         widget = panel,
@@ -366,7 +390,9 @@ function SheetLayout.build(spec, ctx, variant)
         header = moved(header_rect),
         hint = moved(hint_rect),
         rows = rows,
+        areas = areas,
         left_out = left_out,
+        too_tall = too_tall,
     }
 end
 

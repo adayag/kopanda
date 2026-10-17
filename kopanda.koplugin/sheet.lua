@@ -1,13 +1,18 @@
 -- The sheet: a panel of rows drawn in the look over the home, opened by a hold or a tap and
 -- closed by a tap outside it, a tap on a row, KOReader's Back or the Back key. It knows nothing
 -- about books or the home: its opener hands it a spec,
---   { name, band, header, rows, hold }
+--   { name, band, header, rows, body, refresh_on, hold }
 -- name: what the settled signal reports; band: which <band>_band_color token Diner's header
 -- takes; header: { heading, aside, aside_beside, hint } or a book's { cover, title, author, meta }
 -- (cover a built widget, the sheet's to free), or nil; rows: { icon, label, detail, chip,
 -- muted, tick, run } each, run called with no arguments; hold, optional, called with no
 -- arguments on a hold inside the panel, after the sheet has closed. A sheet without hold
--- ignores holds.
+-- ignores holds, but for its body's. body, in place of rows (a spec with both keeps its rows),
+-- is called at every layout as body(bctx, content_w) and returns { widget, areas }: widget
+-- (getSize, paintTo, free) is drawn under the header and freed with the panel; areas are
+-- { rect, tap, hold, close_first }, rect from the widget's top-left. A tap or hold in an area
+-- runs its tap or hold with the sheet left open, then redraws it, or closes it first with
+-- close_first. refresh_on, optional, lists events on each of which the sheet redraws.
 -- Module state: Sheet.shown, the sheet on screen or nil. One sheet at a time: showing one
 -- closes the one shown.
 local Device = require("device")
@@ -26,14 +31,18 @@ local Sheet = InputContainer:extend{
 
 Sheet.shown = nil
 
--- Builds the panel in variant into the sheet: panel_widget, panel, rect, header_rect, rows and
--- variant, freeing the panel it replaces.
+-- Builds the panel in variant into the sheet: panel_widget, panel, rect, header_rect, rows,
+-- areas and variant, freeing the panel it replaces.
 local function lay_out(sheet, variant)
     local old = sheet.panel_widget
     local laid = SheetLayout.build(sheet.spec, sheet.ctx, variant)
-    -- Logged on the first build only: a rebuild for night mode leaves out the same rows.
+    -- Logged on the first build only: a rebuild for night mode leaves out the same rows, and a
+    -- redraw is the same sheet.
     if not old and laid.left_out > 0 then
         logger.warn("KoPanda: sheet", sheet.spec.name, "leaves out", laid.left_out, "rows that don't fit")
+    end
+    if not old and laid.too_tall then
+        logger.warn("KoPanda: sheet", sheet.spec.name, "is taller than the screen; its panel sits at the top")
     end
     sheet.panel_widget = laid.widget
     sheet.panel = laid.panel
@@ -41,22 +50,29 @@ local function lay_out(sheet, variant)
     sheet.header_rect = laid.header
     sheet.hint_rect = laid.hint
     sheet.rows = laid.rows
+    sheet.areas = laid.areas
     sheet.variant = variant
     if old then
         old:free()
     end
 end
 
+-- Redraws a shown sheet in place; defined with the failures it reaches, below.
+local redraw
+
 function Sheet:init()
+    if self.spec.rows and self.spec.body then
+        logger.warn("KoPanda: the sheet", self.spec.name, "has both rows and a body; it shows its rows")
+    end
     local size = self.ctx.screen:getSize()
     -- The whole screen, so every tap reaches the sheet; it paints only its panel.
     self.dimen = Geom:new{ x = 0, y = 0, w = size.w, h = size.h }
     self.ges_events.TapSheet = {
         GestureRange:new{ ges = "tap", range = Geom:new{ x = 0, y = 0, w = size.w, h = size.h } },
     }
-    -- A hold inside the panel, only for a spec with one; the range is a function, so a rebuild's
-    -- panel is the one matched (frontend/ui/gesturerange.lua:25-37).
-    if self.spec.hold then
+    -- A hold inside the panel, only for a spec with one or a body; the range is a function, so a
+    -- rebuild's panel is the one matched (frontend/ui/gesturerange.lua:25-37).
+    if self.spec.hold or self.spec.body then
         self.ges_events.HoldSheet = {
             GestureRange:new{ ges = "hold", range = function() return self.panel end },
         }
@@ -64,6 +80,13 @@ function Sheet:init()
     -- As ButtonDialog binds it (frontend/ui/widget/buttondialog.lua:98-108).
     if Device:hasKeys() then
         self.key_events.Close = { { Device.input.group.Back } }
+    end
+    -- Each returns nothing, though a broadcast reaches every window whatever its handlers
+    -- return (frontend/ui/uimanager.lua:1042-1061), so the windows beneath hear it too.
+    for _, event in ipairs(self.spec.refresh_on or {}) do
+        self["on" .. event] = function()
+            redraw(self)
+        end
     end
     lay_out(self, self.ctx.variant)
 end
@@ -119,6 +142,23 @@ local function fail(sheet, what, err)
     close_all(sheet)
 end
 
+-- Re-lays a shown sheet out in its variant and asks for one ui refresh of its old and new
+-- rectangles together, so a panel that changed height leaves nothing stale; a sheet no longer
+-- shown is left alone. A failure is the sheet's.
+redraw = function(sheet)
+    if not UIManager:isWidgetShown(sheet) then
+        return
+    end
+    local ok, err = pcall(function()
+        local old = sheet.rect
+        lay_out(sheet, sheet.variant)
+        UIManager:setDirty(sheet, "ui", old:combine(sheet.rect))
+    end)
+    if not ok then
+        fail(sheet, "could not redraw:", err)
+    end
+end
+
 -- The settled signal, once, from the tick after the first paint, which schedules it; a sheet
 -- never painted, or whose paint failed, sends none.
 local function settle(sheet)
@@ -166,6 +206,13 @@ function Sheet.close()
     end
 end
 
+-- Redraws the sheet shown, if any, for a callback that comes after the tap that started it.
+function Sheet.redraw()
+    if Sheet.shown then
+        redraw(Sheet.shown)
+    end
+end
+
 function Sheet:onCloseWidget()
     if Sheet.shown == self then
         Sheet.shown = nil
@@ -209,10 +256,42 @@ function Sheet:paintTo(bb, x, y)
     end
 end
 
--- A tap on a row closes the sheet, then runs the row unless it is ticked; elsewhere on the
--- panel it is consumed; outside the panel it closes the sheet, as ButtonDialog:onTapClose
--- does (frontend/ui/widget/buttondialog.lua:347-352).
+-- The body's area at pos, or nil.
+local function area_at(sheet, pos)
+    for _, area in ipairs(sheet.areas) do
+        if area.rect:contains(pos) then
+            return area
+        end
+    end
+end
+
+-- Runs an area's tap or hold (what) with the sheet open, then redraws it; with close_first,
+-- closes it first. One that raises is logged and leaves the sheet as it was otherwise.
+local function act(sheet, area, what)
+    if area.close_first then
+        close_sheet(sheet)
+    end
+    local ok, err = pcall(area[what])
+    if not ok then
+        logger.err("KoPanda: the sheet", sheet.spec.name, "failed on its body's " .. what .. ":", err)
+    end
+    if not area.close_first then
+        redraw(sheet)
+    end
+end
+
+-- A tap in a body's area runs its tap, and one with none is consumed; a tap on a row closes
+-- the sheet, then runs the row unless it is ticked; elsewhere on the panel it is consumed;
+-- outside the panel it closes the sheet, as ButtonDialog:onTapClose does
+-- (frontend/ui/widget/buttondialog.lua:347-352).
 local function tap(sheet, ges)
+    local area = area_at(sheet, ges.pos)
+    if area then
+        if area.tap then
+            act(sheet, area, "tap")
+        end
+        return
+    end
     for _, place in ipairs(sheet.rows) do
         if place.rect:contains(ges.pos) then
             close_sheet(sheet)
@@ -235,11 +314,17 @@ function Sheet:onTapSheet(_, ges)
     return true
 end
 
--- A hold inside the panel of a sheet whose spec has hold closes the sheet, then runs it.
-function Sheet:onHoldSheet()
+-- A hold inside the panel: in a body's area with hold, runs it as a tap runs an area's tap;
+-- elsewhere, for a spec with hold, closes the sheet, then runs it; otherwise consumed.
+function Sheet:onHoldSheet(_, ges)
     local ok, err = pcall(function()
-        close_sheet(self)
-        self.spec.hold()
+        local area = area_at(self, ges.pos)
+        if area and area.hold then
+            act(self, area, "hold")
+        elseif self.spec.hold then
+            close_sheet(self)
+            self.spec.hold()
+        end
     end)
     if not ok then
         fail(self, "failed on a hold:", err)
