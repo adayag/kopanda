@@ -420,12 +420,60 @@ describe("the library window", function()
             assert.equals(2, #library.tiles)
             listing.books[3] = fixture.book("Book 03")
             UIManager:broadcastEvent(Event:new("BookMetadataChanged"))
+            harness.tick()
             assert.equals(3, #library.tiles)
             assert.equals("Book 03", library.tiles[3].record.title)
             listing.books[4] = fixture.book("Book 04")
             UIManager:broadcastEvent(Event:new("InvalidateMetadataCache", listing.books[4].path))
+            harness.tick()
             assert.equals(4, #library.tiles)
             assert.equals(library, harness.top())
+        end)
+
+        -- LibraryView.build counted from after the show; a metadata change's events, as the book-info
+        -- editor broadcasts them (filemanagerbookinfo.lua:276-280, :556-557), sent to the shown
+        -- library, then between(library) if given, then the UI loop run twice.
+        local function builds_after(events, between)
+            fixture.install({ [ROOT] = { books = fixture.books(2) } })
+            local library = fixture.show()
+            local LibraryView = package.loaded["library_view"]
+            local build = LibraryView.build
+            local builds = 0
+            LibraryView.build = function(...)
+                builds = builds + 1
+                return build(...)
+            end
+            local ok, err = pcall(function()
+                for _, event in ipairs(events) do
+                    UIManager:broadcastEvent(Event:new(event))
+                end
+                if between then
+                    between(library)
+                end
+                harness.tick(2)
+            end)
+            LibraryView.build = build
+            assert.is_true(ok, tostring(err))
+            return builds
+        end
+
+        it("rebuilds once for one change's InvalidateMetadataCache and BookMetadataChanged", function()
+            assert.equals(1, builds_after({ "InvalidateMetadataCache", "BookMetadataChanged" }))
+        end)
+
+        it("rebuilds once when the summary changed too", function()
+            assert.equals(1, builds_after({ "InvalidateMetadataCache", "BookMetadataChanged", "BookMetadataChanged" }))
+        end)
+
+        it("rebuilds once for a lone BookMetadataChanged", function()
+            assert.equals(1, builds_after({ "BookMetadataChanged" }))
+        end)
+
+        it("does not rebuild a library closed between the events and the tick", function()
+            assert.equals(0, builds_after({ "InvalidateMetadataCache", "BookMetadataChanged" }, function()
+                Library.close()
+            end))
+            assert.is_nil(Library.shown)
         end)
     end)
 

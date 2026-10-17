@@ -362,15 +362,36 @@ function Library:refresh()
     end
 end
 
+-- Marks the library stale and refreshes it once from the next tick, however many events marked it
+-- before: one change broadcasts InvalidateMetadataCache and BookMetadataChanged, and a second
+-- BookMetadataChanged when the summary changed too (filemanagerbookinfo.lua:276-280, :556-557). The
+-- book-info page broadcasts from its close callback after UIManager:close
+-- (frontend/ui/widget/keyvaluepage.lua:841-846), inside the input dispatch at the end of
+-- handleInput (frontend/ui/uimanager.lua:1607-1620), so the tick runs at the next pass's
+-- _checkTasks, before that pass's _repaint paints the close (:431-433, :1537-1564, :1663). A
+-- library closed by then is not refreshed (refresh's Library.shown check).
+local function refresh_soon(library)
+    if library.stale then
+        return
+    end
+    library.stale = true
+    UIManager:nextTick(function()
+        if library.stale then
+            library.stale = nil
+            library:refresh()
+        end
+    end)
+end
+
 -- Broadcast to every window when a book's metadata or status changes and when its cached
 -- metadata is dropped (frontend/apps/filemanager/filemanagerbookinfo.lua:276-277, :556-557;
 -- frontend/ui/uimanager.lua:1042-1061). Return nothing, so the event reaches the other windows.
 function Library:onBookMetadataChanged()
-    self:refresh()
+    refresh_soon(self)
 end
 
 function Library:onInvalidateMetadataCache()
-    self:refresh()
+    refresh_soon(self)
 end
 
 -- The page keys registered at init.
