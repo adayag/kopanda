@@ -1,10 +1,20 @@
 id: T-ivn2lk
 key: library/context-menu/space-sheet
 title: 'The empty-space sheet: Sort, Show, Refresh covers and Hidden folders'
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-id5xlc
     - T-m9850d
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:7e6e3f344d9cbf9590bb68f4cb2f687ed747c573
+        path: .tiller/epics/library/features/context-menu/tasks/space-sheet/task.md
+        observed_at: 2026-10-17T16:43:29.405383Z
+    commit:
+        kind: git_commit
+        value: git:febf828
+        observed_at: 2026-10-17T16:43:29.429979Z

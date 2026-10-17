@@ -1,0 +1,13 @@
+id: EV-gnuems
+type: approve.task
+at: 2026-10-17T16:43:29.379342Z
+contributor: allen
+command: approve task T-lnzmw0
+targets:
+    - T-lnzmw0
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/book-actions/task.yml

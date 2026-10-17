@@ -1,10 +1,20 @@
 id: T-id5xlc
 key: library/context-menu/folder-sheet
 title: 'The folder sheet: Open, Set as library root and Hide, with hidden folders kept in the state file'
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-1rl35j
     - T-m9850d
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:766ff458b91176a06a9c0c547cfae2d9fbb3a110
+        path: .tiller/epics/library/features/context-menu/tasks/folder-sheet/task.md
+        observed_at: 2026-10-17T16:43:29.379737Z
+    commit:
+        kind: git_commit
+        value: git:febf828
+        observed_at: 2026-10-17T16:43:29.404869Z
