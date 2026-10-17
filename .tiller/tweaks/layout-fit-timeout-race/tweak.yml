@@ -1,7 +1,7 @@
 id: TW-5vfush
 key: tweaks/layout-fit-timeout-race
 title: The layout-fit timeout test reads sleep-pid before a loaded host has written it
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -18,3 +18,30 @@ accepted_against:
         value: git:d5aeb78
         observed_at: 2026-10-17T20:44:23.81998Z
 branch: tiller/tweaks/layout-fit-timeout-race
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:08:07.764177Z
+        against:
+            kind: git_commit
+            value: git:d17ba81
+            observed_at: 2026-10-17T21:08:07.764176Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-d17ba81-out-d1233e0d9726035fae554e6f99f9352b53dd89ba0fab8dd897aa061349574d15.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:08:07.764177Z
+        against:
+            kind: git_commit
+            value: git:d17ba81
+            observed_at: 2026-10-17T21:08:07.764176Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-d17ba81-out-0f574c751f64afdaf969620a09e7653cbfdef2da30f568d9bf169260bb31958f.txt
