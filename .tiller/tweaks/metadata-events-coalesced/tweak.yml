@@ -1,0 +1,9 @@
+id: TW-zih0x2
+key: tweaks/metadata-events-coalesced
+title: One metadata change rebuilds the library two or three times
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: T-cb345p
+source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L142-L148

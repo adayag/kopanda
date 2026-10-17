@@ -1,0 +1,8 @@
+id: CH-au9w25
+key: chores/stale-efficiency-docs
+title: Comments and test names left stale by the efficiency tweaks
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L168-L185

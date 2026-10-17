@@ -1,0 +1,9 @@
+id: TW-6fwvl6
+key: tweaks/quick-settings-one-redraw
+title: Quick settings lays out twice on Night and up to three times on Wi-Fi
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: F-rce9ko
+source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L93-L105

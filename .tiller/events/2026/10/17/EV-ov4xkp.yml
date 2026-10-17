@@ -1,0 +1,13 @@
+id: EV-ov4xkp
+type: add.chore
+at: 2026-10-17T15:35:24.852079Z
+contributor: allen
+command: add chore stale-efficiency-docs
+targets:
+    - CH-au9w25
+after:
+    key: chores/stale-efficiency-docs
+    status: proposed
+files:
+    - path: .tiller/chores/stale-efficiency-docs/chore.md
+    - path: .tiller/chores/stale-efficiency-docs/chore.yml

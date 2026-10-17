@@ -1,0 +1,14 @@
+id: EV-brj4de
+type: add.tweak
+at: 2026-10-17T15:35:24.560212Z
+contributor: allen
+command: add tweak metadata-events-coalesced
+targets:
+    - TW-zih0x2
+after:
+    attached_to: T-cb345p
+    key: tweaks/metadata-events-coalesced
+    status: proposed
+files:
+    - path: .tiller/tweaks/metadata-events-coalesced/tweak.md
+    - path: .tiller/tweaks/metadata-events-coalesced/tweak.yml

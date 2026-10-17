@@ -12,3 +12,9 @@ questions:
         value: git:45fd7e9
         observed_at: 2026-10-16T19:40:34.490738Z
       source: design/2026-10-13-kopanda-ui-direction.md
+    - id: Q-14rjkm
+      title: Remove the library prebuild on close?
+      statement: Remove the library's prebuild on book close, as B-2o8ya3 did for the home? It saves no wall time on KOReader's synchronous close-then-show stack and costs a tile rebuild per return, a full build per reload, switch and exit, and a stale count and filter on return. Removing it amends cover-grid D4 and C8 (feature.md:57-58, :139-141, :313-318; feature.eval.md:40) and library_golden_spec.lua:151, and the same amendment should carry B-2o8ya3's outstanding home-side rewrites (design :85-86, launcher C10, sheets :63, home-layout :65, night-mode C4).
+      owner: allen
+      status: open
+      source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L187-L233

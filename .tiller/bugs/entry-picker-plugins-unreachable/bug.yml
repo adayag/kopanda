@@ -1,0 +1,9 @@
+id: B-0vcqvc
+key: bugs/entry-picker-plugins-unreachable
+title: The entry picker's Plugin sheet shows 13 of 28 plugins and the rest can't be picked
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: F-sn4px5
+source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L242

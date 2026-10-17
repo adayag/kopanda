@@ -1,0 +1,14 @@
+id: EV-7gtsl6
+type: add.bug
+at: 2026-10-17T15:35:24.756957Z
+contributor: allen
+command: add bug entry-picker-plugins-unreachable
+targets:
+    - B-0vcqvc
+after:
+    attached_to: F-sn4px5
+    key: bugs/entry-picker-plugins-unreachable
+    status: proposed
+files:
+    - path: .tiller/bugs/entry-picker-plugins-unreachable/bug.md
+    - path: .tiller/bugs/entry-picker-plugins-unreachable/bug.yml

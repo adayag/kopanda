@@ -1,0 +1,14 @@
+id: EV-ldiha8
+type: add.tweak
+at: 2026-10-17T15:35:24.457299Z
+contributor: allen
+command: add tweak quick-settings-one-redraw
+targets:
+    - TW-6fwvl6
+after:
+    attached_to: F-rce9ko
+    key: tweaks/quick-settings-one-redraw
+    status: proposed
+files:
+    - path: .tiller/tweaks/quick-settings-one-redraw/tweak.md
+    - path: .tiller/tweaks/quick-settings-one-redraw/tweak.yml

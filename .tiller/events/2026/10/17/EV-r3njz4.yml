@@ -1,0 +1,14 @@
+id: EV-r3njz4
+type: add.tweak
+at: 2026-10-17T15:35:24.345798Z
+contributor: allen
+command: add tweak editors-defer-home-refresh
+targets:
+    - TW-4cf9th
+after:
+    attached_to: F-wkj9iy
+    key: tweaks/editors-defer-home-refresh
+    status: proposed
+files:
+    - path: .tiller/tweaks/editors-defer-home-refresh/tweak.md
+    - path: .tiller/tweaks/editors-defer-home-refresh/tweak.yml

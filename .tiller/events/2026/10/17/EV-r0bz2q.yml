@@ -1,0 +1,14 @@
+id: EV-r0bz2q
+type: add.tweak
+at: 2026-10-17T15:35:24.658974Z
+contributor: allen
+command: add tweak pull-one-hash-pass
+targets:
+    - TW-x4pkgz
+after:
+    attached_to: F-9okxa7
+    key: tweaks/pull-one-hash-pass
+    status: proposed
+files:
+    - path: .tiller/tweaks/pull-one-hash-pass/tweak.md
+    - path: .tiller/tweaks/pull-one-hash-pass/tweak.yml
