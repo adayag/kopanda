@@ -1,0 +1,14 @@
+id: EV-prfjlp
+type: sync.task
+at: 2026-10-17T01:35:17.101571Z
+contributor: allen
+command: sync task T-9h0fhs
+targets:
+    - T-9h0fhs
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/file-browser/task.yml

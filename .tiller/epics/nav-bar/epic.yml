@@ -1,6 +1,18 @@
 id: E-yyznit
 key: nav-bar
 title: Bottom navigation bar across the file manager
-status: ready
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-design.md
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:c3242a7a6a1dab9bd18951bc289ad30d3bbd05af
+        path: .tiller/epics/nav-bar/epic.md
+        observed_at: 2026-10-17T01:35:17.342227Z
+    commit:
+        kind: git_commit
+        value: git:926335a
+        observed_at: 2026-10-17T01:35:16.840615Z
+    surfaces: []
+done_basis: rollup

@@ -1,7 +1,7 @@
 id: T-1r8qb2
 key: nav-bar/nav-bar/goldens
 title: File-browser goldens in both looks on both profiles and their paint budget
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:1ef940c
         observed_at: 2026-10-16T22:15:36.493944Z
+done_basis: ancestry
 gates:
     build:
         required: true

@@ -1,7 +1,7 @@
 id: T-rl8eso
 key: nav-bar/nav-bar/home-band
 title: The home reserves the bar's band, draws it, routes its taps first, and its goldens are regenerated
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:f63531c
         observed_at: 2026-10-16T22:01:15.57644Z
+done_basis: ancestry
 gates:
     build:
         required: true

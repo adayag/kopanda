@@ -1,0 +1,14 @@
+id: EV-cbr1c5
+type: sync.epic
+at: 2026-10-17T01:35:17.368725Z
+contributor: allen
+command: sync epic E-yyznit
+targets:
+    - E-yyznit
+before:
+    status: ready
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/nav-bar/epic.yml

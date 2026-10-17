@@ -1,0 +1,14 @@
+id: EV-38ph3k
+type: sync.feature
+at: 2026-10-17T01:35:17.288734Z
+contributor: allen
+command: sync feature F-78e5ij
+targets:
+    - F-78e5ij
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/feature.yml

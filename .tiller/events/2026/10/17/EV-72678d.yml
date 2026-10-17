@@ -1,0 +1,14 @@
+id: EV-72678d
+type: sync.task
+at: 2026-10-17T01:35:17.191038Z
+contributor: allen
+command: sync task T-1r8qb2
+targets:
+    - T-1r8qb2
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/goldens/task.yml

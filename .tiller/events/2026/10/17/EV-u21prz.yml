@@ -1,0 +1,14 @@
+id: EV-u21prz
+type: sync.task
+at: 2026-10-17T01:35:17.018024Z
+contributor: allen
+command: sync task T-rl8eso
+targets:
+    - T-rl8eso
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/home-band/task.yml
