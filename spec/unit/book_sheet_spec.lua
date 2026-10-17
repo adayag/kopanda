@@ -438,12 +438,16 @@ describe("the book sheet", function()
                 end)
             end)
 
-            -- Taps More by this author on a's sheet; returns the Authors window shown, checking it
-            -- went up over the file manager with the sheet and the home closed, and that the
-            -- book's record was read on the tap alone.
-            local function more_by()
+            -- Taps More by this author on a's sheet, running before_tap (if given) between the hold
+            -- and the tap; returns the Authors window shown, checking it went up over the file
+            -- manager with the sheet and the home closed, and that the book's record was read on
+            -- the tap alone.
+            local function more_by(before_tap)
                 local fm = fm_with_home()
                 hold_book()
+                if before_tap then
+                    before_tap()
+                end
                 local reads = spy.on(Books, "for_path")
                 cleanup(function()
                     Books.for_path:revert()
@@ -478,6 +482,17 @@ describe("the book sheet", function()
                 sidecar(b, '{ doc_props = { title = "Zastrozzi", authors = "Percy Shelley" } }')
                 history({ { a } })
                 local screen = more_by()
+                assert.same({ { kind = "list" }, 1 }, { screen:view(), screen.page })
+            end)
+
+            it("shows the Authors list when the book's file went between the hold and the tap", function()
+                sidecar(a, '{ doc_props = { title = "Frankenstein", authors = "Mary Shelley" } }')
+                local b = book("b.epub")
+                sidecar(b, '{ doc_props = { title = "Zastrozzi", authors = "Percy Shelley" } }')
+                history({ { a } })
+                local screen = more_by(function()
+                    assert(os.remove(a))
+                end)
                 assert.same({ { kind = "list" }, 1 }, { screen:view(), screen.page })
             end)
         end)
