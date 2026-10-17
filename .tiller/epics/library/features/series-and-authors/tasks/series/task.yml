@@ -1,7 +1,7 @@
 id: T-y7g8mr
 key: library/series-and-authors/series
 title: 'The Series window: the list and one series, on the shared chrome'
-status: in_review
+status: in_progress
 blocked: false
 started: true
 owner: allen
@@ -31,7 +31,7 @@ gates:
     build:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-17T13:39:06.78348Z
         against:
@@ -44,7 +44,7 @@ gates:
     tests:
         required: true
         kind: command
-        status: pass
+        status: stale
         run_by: allen
         run_at: 2026-10-17T13:39:06.78348Z
         against:
