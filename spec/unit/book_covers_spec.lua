@@ -531,6 +531,23 @@ describe("BookCovers", function()
             assert.same({ files(A, B), files(C), files(A) }, bim.extracted)
         end)
 
+        -- The other half of the cap: an extraction that ended before the 30th check had its chance
+        -- at every file, so the last check keeps a file that did not arrive asked.
+        it("never asks again for a file that did not arrive when the extraction ended before the cap", function()
+            local bim = manager{ info = function() return nil end, extracting = { true, false } }
+            local queue = stub(bim)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            local checks = 0
+            while #queue > 0 do
+                run_next(queue)
+                checks = checks + 1
+            end
+            assert.equals(2, checks)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            assert.same({ files(A) }, bim.extracted)
+            assert.equals(0, #queue)
+        end)
+
         it("schedules nothing for a fork that fails, logged, and never asks for its files again", function()
             local bim = manager{ info = function() return nil end }
             bim.extractInBackground = function(_, list)
