@@ -169,6 +169,15 @@ describe("LibraryOrder", function()
             assert.same({ "2", "5", "4", "3", "1" }, ids(items))
         end)
 
+        it("puts books in no series last by title, an index they carry ignored", function()
+            local items = LibraryOrder.view({ books = {
+                book("z", "Zeta"),
+                book("a", "Alpha", { series_index = 3 }),
+                book("b", "Beta", { series_index = 1 }),
+            }, folders = {} }, "series", "all", progress({}), {})
+            assert.same({ "a", "b", "z" }, ids(items))
+        end)
+
         it("sorts Recent by the history's time, newest first, never-opened books after by title", function()
             local times = { ["t"] = 300, ["a"] = 200, ["d"] = 100 }
             assert.same(after_folders({ "t", "a", "d", "n", "b", "l", "o", "e", "w" }),
@@ -326,6 +335,13 @@ describe("LibraryOrder", function()
             assert.equals(3, count)
             assert.equals(1, n)
         end)
+
+        it("reads a NaN page as the first", function()
+            local items, count, n = LibraryOrder.page(numbers(13), 0 / 0)
+            assert.same({ 1, 2, 3, 4, 5, 6 }, items)
+            assert.equals(3, count)
+            assert.equals(1, n)
+        end)
     end)
 
     describe("memory", function()
@@ -384,6 +400,20 @@ describe("LibraryOrder", function()
             assert.is_false(LibraryOrder.choose(one, "sideways", "all"))
             assert.is_false(LibraryOrder.choose(one, "title", "unread"))
             assert.same({ sort = "recent", status = "all" }, LibraryOrder.choice(one))
+            assert.is_nil(stored())
+            assert.spy(logged).was_called()
+        end)
+
+        it("refuses a page left not a whole number from 1, or a folder not a string, storing nothing", function()
+            local logged = spy.on(logger, "warn")
+            finally(function()
+                logged:revert()
+            end)
+            assert.is_false(LibraryOrder.leave(two, 0 / 0))
+            assert.is_false(LibraryOrder.leave(two, 0))
+            assert.is_false(LibraryOrder.leave(two, 1.5))
+            assert.is_false(LibraryOrder.leave(nil, 1))
+            assert.is_nil(LibraryOrder.left())
             assert.is_nil(stored())
             assert.spy(logged).was_called()
         end)

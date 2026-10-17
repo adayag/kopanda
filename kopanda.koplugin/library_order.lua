@@ -133,7 +133,7 @@ function LibraryOrder.view(listing, sort, status, progress_of, history_times)
                 author = author_of(record),
                 series = series,
                 series_key = series and title_key(series),
-                index = index_of(record),
+                index = series and index_of(record) or nil,
             }
         end
     end
@@ -163,10 +163,15 @@ function LibraryOrder.history_times()
     return times
 end
 
--- Page n of items, six to a page; the page count, at least 1; and n clamped into 1 to the count.
+-- Page n of items, six to a page; the page count, at least 1; and n clamped into 1 to the count,
+-- a missing or NaN n read as 1.
 function LibraryOrder.page(items, n)
     local count = math.max(1, math.ceil(#items / PER_PAGE))
-    n = math.max(1, math.min(count, math.floor(tonumber(n) or 1)))
+    n = tonumber(n)
+    if n == nil or n ~= n then
+        n = 1
+    end
+    n = math.max(1, math.min(count, math.floor(n)))
     local slice = {}
     for i = PER_PAGE * (n - 1) + 1, math.min(#items, PER_PAGE * n) do
         slice[#slice + 1] = items[i]
@@ -262,9 +267,14 @@ function LibraryOrder.left()
     return at and { dir = at.dir, page = at.page }
 end
 
--- Stores dir and page as where the library was left. Returns whether the state file took it;
--- either way it holds for the session.
+-- Stores dir and page as where the library was left. A dir that is not a string or a page that
+-- is not a whole number from 1 is refused, logged, and nothing is stored. Returns whether the
+-- state file took it; either way a well-formed one holds for the session.
 function LibraryOrder.leave(dir, page)
+    if type(dir) ~= "string" or not is_page(page) then
+        logger.warn("KoPanda: no library folder", dir, "or page", page, "to leave at")
+        return false
+    end
     session.at = { dir = dir, page = page }
     return write()
 end

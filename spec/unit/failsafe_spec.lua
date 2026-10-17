@@ -766,6 +766,20 @@ describe("KoPanda failing safe", function()
         assert.is_nil(State.get("library"))
     end)
 
+    it("reads this session's library choice and folder left over the stored ones after a failed write", function()
+        local State = require("state")
+        local LibraryOrder = require("library_order")
+        assert.is_true(LibraryOrder.choose(harness.library, "title", "all"))
+        assert.is_true(LibraryOrder.leave(harness.library, 1))
+        State.set = function()
+            return false
+        end
+        assert.is_false(LibraryOrder.choose(harness.library, "author", "finished"))
+        assert.is_false(LibraryOrder.leave(harness.library, 2))
+        assert.same({ sort = "author", status = "finished" }, LibraryOrder.choice(harness.library))
+        assert.same({ dir = harness.library, page = 2 }, LibraryOrder.left())
+    end)
+
     describe("the menu entries", function()
         local PluginLoader = require("pluginloader")
 

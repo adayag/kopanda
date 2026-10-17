@@ -379,6 +379,23 @@ describe("KoPanda's guards", function()
             assert.same(value, State.get("kopanda_test_table"))
         end)
 
+        it("reports false when the file holds a table with a key more or a key fewer", function()
+            local State = require("state")
+            local util = require("util")
+            local write = util.writeToFile
+            finally(function()
+                util.writeToFile = write
+            end)
+            local short = { at = { dir = "/a", page = 1 } }
+            local long = { at = { dir = "/a", page = 1 }, folders = { x = { sort = "title" } } }
+            assert.is_true(State.set("kopanda_test_more", long))
+            assert.is_true(State.set("kopanda_test_fewer", short))
+            -- The write is dropped, so each read-back finds the table stored before.
+            util.writeToFile = function() end
+            assert.is_false(State.set("kopanda_test_more", short))
+            assert.is_false(State.set("kopanda_test_fewer", long))
+        end)
+
         it("still reports false for a table value when the state folder is a file", function()
             local f = assert(io.open(harness.state_dir, "w"))
             f:close()
