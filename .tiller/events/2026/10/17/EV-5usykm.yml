@@ -1,0 +1,13 @@
+id: EV-5usykm
+type: start.tweak
+at: 2026-10-17T16:09:50.541513Z
+contributor: allen
+command: start tweak TW-4cf9th
+targets:
+    - TW-4cf9th
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/editors-defer-home-refresh/tweak.yml
