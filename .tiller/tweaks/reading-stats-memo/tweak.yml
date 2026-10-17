@@ -1,0 +1,9 @@
+id: TW-hmdt1d
+key: tweaks/reading-stats-memo
+title: The Statistics database is opened twice per home build, uncached
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: T-wgis3w
+source: .tiller/reviews/2026-10-17-efficiency-review.md#L27-L38

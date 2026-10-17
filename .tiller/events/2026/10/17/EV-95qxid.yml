@@ -1,0 +1,14 @@
+id: EV-95qxid
+type: add.tweak
+at: 2026-10-17T07:10:26.517682Z
+contributor: allen
+command: add tweak sidecar-once-per-build
+targets:
+    - TW-wghsy7
+after:
+    attached_to: T-gj4d8q
+    key: tweaks/sidecar-once-per-build
+    status: proposed
+files:
+    - path: .tiller/tweaks/sidecar-once-per-build/tweak.md
+    - path: .tiller/tweaks/sidecar-once-per-build/tweak.yml

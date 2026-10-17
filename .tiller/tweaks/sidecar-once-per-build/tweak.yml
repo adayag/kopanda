@@ -1,0 +1,9 @@
+id: TW-wghsy7
+key: tweaks/sidecar-once-per-build
+title: The featured book's sidecar is parsed twice per home build
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: T-gj4d8q
+source: .tiller/reviews/2026-10-17-efficiency-review.md#L63-L70

@@ -1,0 +1,14 @@
+id: EV-l2hioa
+type: add.tweak
+at: 2026-10-17T07:10:26.414982Z
+contributor: allen
+command: add tweak reading-stats-memo
+targets:
+    - TW-hmdt1d
+after:
+    attached_to: T-wgis3w
+    key: tweaks/reading-stats-memo
+    status: proposed
+files:
+    - path: .tiller/tweaks/reading-stats-memo/tweak.md
+    - path: .tiller/tweaks/reading-stats-memo/tweak.yml

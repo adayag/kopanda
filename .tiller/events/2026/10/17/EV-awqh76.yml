@@ -1,0 +1,14 @@
+id: EV-awqh76
+type: add.bug
+at: 2026-10-17T07:10:26.706274Z
+contributor: allen
+command: add bug prebuild-stale-and-wasted
+targets:
+    - B-2o8ya3
+after:
+    attached_to: T-o0ptat
+    key: bugs/prebuild-stale-and-wasted
+    status: proposed
+files:
+    - path: .tiller/bugs/prebuild-stale-and-wasted/bug.md
+    - path: .tiller/bugs/prebuild-stale-and-wasted/bug.yml

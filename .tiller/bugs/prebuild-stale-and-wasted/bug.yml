@@ -1,0 +1,9 @@
+id: B-2o8ya3
+key: bugs/prebuild-stale-and-wasted
+title: The prebuilt home shows stale progress and builds on reload, switch and exit
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: T-o0ptat
+source: .tiller/reviews/2026-10-17-efficiency-review.md#L40-L61
