@@ -1,0 +1,14 @@
+id: EV-j45jeo
+type: submit.task
+at: 2026-10-17T03:34:23.158686Z
+contributor: allen
+command: submit task T-d53f8e
+targets:
+    - T-d53f8e
+before:
+    status: check
+after:
+    pr: 29
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/tiles/task.yml
