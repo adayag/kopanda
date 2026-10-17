@@ -1,0 +1,13 @@
+id: EV-b54nw8
+type: approve.tweak
+at: 2026-10-17T07:16:23.36232Z
+contributor: allen
+command: approve tweak TW-hmdt1d
+targets:
+    - TW-hmdt1d
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/tweaks/reading-stats-memo/tweak.yml

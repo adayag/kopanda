@@ -1,0 +1,13 @@
+id: EV-iz8hrq
+type: approve.tweak
+at: 2026-10-17T07:16:23.43466Z
+contributor: allen
+command: approve tweak TW-wghsy7
+targets:
+    - TW-wghsy7
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/tweaks/sidecar-once-per-build/tweak.yml
