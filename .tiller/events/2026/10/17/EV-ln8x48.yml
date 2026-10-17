@@ -1,0 +1,13 @@
+id: EV-ln8x48
+type: approve.feature
+at: 2026-10-17T15:55:38.542774Z
+contributor: allen
+command: approve feature F-yaihx9
+targets:
+    - F-yaihx9
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/library/features/series-and-authors/feature.yml

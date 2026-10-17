@@ -1,0 +1,13 @@
+id: EV-5n0v40
+type: check.task
+at: 2026-10-17T14:10:15.203575Z
+contributor: allen
+command: check task T-m5pho3
+targets:
+    - T-m5pho3
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/authors/task.yml

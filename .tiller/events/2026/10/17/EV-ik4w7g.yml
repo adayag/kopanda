@@ -1,0 +1,13 @@
+id: EV-ik4w7g
+type: claim.task
+at: 2026-10-17T13:05:26.375032Z
+contributor: allen
+command: claim task T-y7g8mr
+targets:
+    - T-y7g8mr
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/series/task.yml

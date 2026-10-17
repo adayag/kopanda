@@ -1,0 +1,13 @@
+id: EV-64l7sv
+type: claim.task
+at: 2026-10-17T07:52:26.508105Z
+contributor: allen
+command: claim task T-hxf2vf
+targets:
+    - T-hxf2vf
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/chrome/task.yml

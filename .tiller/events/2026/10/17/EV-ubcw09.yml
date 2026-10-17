@@ -1,0 +1,13 @@
+id: EV-ubcw09
+type: check.task
+at: 2026-10-17T12:18:30.710714Z
+contributor: allen
+command: check task T-05lpro
+targets:
+    - T-05lpro
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/index/task.yml

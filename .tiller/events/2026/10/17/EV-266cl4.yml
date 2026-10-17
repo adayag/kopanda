@@ -1,0 +1,16 @@
+id: EV-266cl4
+type: submit.task
+at: 2026-10-17T12:18:36.563226Z
+contributor: allen
+command: submit task T-05lpro
+targets:
+    - T-05lpro
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/series-and-authors/index
+        head: git:c7a33b3
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/index/task.yml

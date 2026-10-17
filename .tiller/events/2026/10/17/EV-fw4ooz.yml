@@ -1,0 +1,14 @@
+id: EV-fw4ooz
+type: resume.task
+at: 2026-10-17T14:04:33.099851Z
+contributor: allen
+command: resume task T-y7g8mr
+targets:
+    - T-y7g8mr
+before:
+    status: in_review
+after:
+    reason: the series page keys leave out the header counts, so an arrival that changes only the header leaves it stale (found in the authors review)
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/series/task.yml

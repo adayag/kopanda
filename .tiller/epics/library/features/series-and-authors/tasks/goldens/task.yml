@@ -1,9 +1,10 @@
 id: T-m36ahd
 key: library/series-and-authors/goldens
 title: Series and authors goldens on the Colorsoft, the paint budget and the device check
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-8j0bc0
@@ -17,3 +18,37 @@ accepted_against:
         kind: git_commit
         value: git:56440d9
         observed_at: 2026-10-17T07:51:40.902887Z
+branch: tiller/library/series-and-authors/goldens
+review_ref:
+    branch: tiller/library/series-and-authors/goldens
+    head:
+        kind: git_commit
+        value: git:64bec0f
+        observed_at: 2026-10-17T16:15:05.979318Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:10:23.733086Z
+        against:
+            kind: git_commit
+            value: git:662d049
+            observed_at: 2026-10-17T16:10:23.733081Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-662d049-out-f16276b784db981fd9969a83c9e3f7912ef1da7a0d8be02fb01086dd258cd851.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:10:23.733086Z
+        against:
+            kind: git_commit
+            value: git:662d049
+            observed_at: 2026-10-17T16:10:23.733081Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-662d049-out-4b1039773da93ee45d23cdf932705d980fd52fe1cfe45d076ff28ac612e689fa.txt

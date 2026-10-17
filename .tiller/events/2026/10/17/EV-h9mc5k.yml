@@ -1,0 +1,13 @@
+id: EV-h9mc5k
+type: check.task
+at: 2026-10-17T16:15:00.823758Z
+contributor: allen
+command: check task T-m36ahd
+targets:
+    - T-m36ahd
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/goldens/task.yml

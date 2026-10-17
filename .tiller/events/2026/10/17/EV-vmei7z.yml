@@ -1,0 +1,15 @@
+id: EV-vmei7z
+type: start.task
+at: 2026-10-17T13:43:10.607309Z
+contributor: allen
+command: start task T-m5pho3
+targets:
+    - T-m5pho3
+before:
+    status: ready
+after:
+    branch: tiller/library/series-and-authors/authors
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/authors/task.yml

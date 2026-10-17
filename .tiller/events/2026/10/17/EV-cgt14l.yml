@@ -1,0 +1,13 @@
+id: EV-cgt14l
+type: claim.task
+at: 2026-10-17T13:43:10.43196Z
+contributor: allen
+command: claim task T-m5pho3
+targets:
+    - T-m5pho3
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/authors/task.yml

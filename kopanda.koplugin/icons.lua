@@ -49,7 +49,8 @@ Icons.entries = {
     { id = "rotation_lock", label = "Rotation lock", used_in = { "quick settings" },
       file = "icons/rotation_lock.svg" },
     { id = "power", label = "Sleep (power)", used_in = { "quick settings" }, file = "icons/power.svg" },
-    { id = "back", label = "Back", used_in = { "settings menu", "library" }, file = "icons/back.svg" },
+    { id = "back", label = "Back", used_in = { "settings menu", "library", "series", "authors" },
+      file = "icons/back.svg" },
     { id = "close", label = "Close", used_in = { "settings menu", "edit layout", "launcher management" },
       file = "icons/close.svg" },
     { id = "check", label = "Checked", used_in = { "settings menu", "sheets", "title bar" },
@@ -67,10 +68,12 @@ Icons.entries = {
     { id = "plus", label = "Plus", used_in = { "title bar" }, file = "icons/plus.svg" },
     -- Lucide's `chevron-right` drawn as back's mirror, so the pager's arrows match (ISC; see
     -- icons/LICENSE-lucide.txt).
-    { id = "forward", label = "Forward", used_in = { "library" }, file = "icons/forward.svg" },
+    { id = "forward", label = "Forward", used_in = { "library", "series", "authors" },
+      file = "icons/forward.svg" },
     -- Lucide's `arrow-down-to-line` as the library boards draw it (Main.dc.html:67), not Lucide's
     -- `download`, which has a tray (ISC; see icons/LICENSE-lucide.txt).
-    { id = "download", label = "Not downloaded", used_in = { "library" }, file = "icons/download.svg" },
+    { id = "download", label = "Not downloaded", used_in = { "library", "series", "authors" },
+      file = "icons/download.svg" },
     -- Lucide's `sliders-horizontal` icon (ISC; see icons/LICENSE-lucide.txt).
     { id = "quick_settings", label = "Quick settings", used_in = { "launcher" }, file = "icons/quick_settings.svg" },
 }

@@ -1,0 +1,13 @@
+id: EV-w6q0jj
+type: approve.feature
+at: 2026-10-17T13:05:16.351399Z
+contributor: allen
+command: approve feature F-yaihx9
+targets:
+    - F-yaihx9
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/library/features/series-and-authors/feature.yml

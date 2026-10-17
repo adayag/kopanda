@@ -139,11 +139,28 @@ local KOPANDA_RUN = {
             fm.kopanda:showLibrary(left and { dir = left.dir, page = left.page } or {})
         end
     end,
+    -- The Series window's list at its first page (series-and-authors D17), the home closed.
     series = function()
-        note("Series are coming with the library.")
+        Home.close()
+        local fm = file_manager()
+        if fm then
+            fm.kopanda:showSeries{}
+        end
     end,
+    -- The Authors window's list at its first page (D17): on the Authors window, in place; from
+    -- anywhere else, the home closed and the window shown. authors_screen is required now, as
+    -- library is.
     authors = function()
-        note("Authors are coming with the library.")
+        local AuthorsScreen = require("authors_screen")
+        if AuthorsScreen.shown then
+            AuthorsScreen.shown:go({ kind = "list" }, 1)
+            return
+        end
+        Home.close()
+        local fm = file_manager()
+        if fm then
+            fm.kopanda:showAuthors{}
+        end
     end,
     settings = function()
         SettingsMenu.open()

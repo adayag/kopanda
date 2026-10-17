@@ -115,7 +115,7 @@ local function hold(home, ges)
     return true
 end
 
--- The forward step, shared by the home and the library (library_gestures.lua): the file manager's
+-- The forward step, shared by the home and the library (library_chrome.lua): the file manager's
 -- menu zones (top-zone tap and swipe down, by KOReader's own rules, filemanagermenu.lua:71-124,
 -- :1102-1114); a page swipe, consumed since nothing beneath should page; then the zones registered
 -- on the file manager itself, the Gestures plugin's among them (gestures main.lua:1287-1288). With

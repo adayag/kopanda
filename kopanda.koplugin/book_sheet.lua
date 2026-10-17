@@ -4,12 +4,12 @@
 -- KOReader's own three status buttons, which write the sidecar themselves; Feature a different
 -- book opens the picker, which writes featured.pinned. Nothing else here writes.
 local BookList = require("ui/widget/booklist")
+local Books = require("books")
 local DocSettings = require("docsettings")
 local Featured = require("widgets/featured")
 local FeaturedBook = require("featured_book")
 local FeaturedCover = require("featured_cover")
 local Home = require("home")
-local LauncherEntries = require("launcher_entries")
 local Math = require("optmath")
 local PaintClock = require("paint_clock")
 local Settings = require("settings")
@@ -233,8 +233,15 @@ function BookSheet.open(ctx, built, opts)
             icon = "authors",
             label = "More by this author",
             detail = "›",
+            -- The first-listed author's own books (series-and-authors D6), from the book's record
+            -- read on the tap; the Authors list for a book with no author. The show closes the home.
             run = function()
-                LauncherEntries.run({ kind = "kopanda", target = "authors" }, ctx)
+                local record = Books.for_path(book.file)
+                local name = record and record.authors[1]
+                local fm = file_manager()
+                if fm then
+                    fm.kopanda:showAuthors{ view = name and { kind = "author", name = name } or nil }
+                end
             end,
         },
         {
