@@ -1,7 +1,7 @@
 id: T-anr3s4
 key: library/cover-grid/order
 title: Sort, status filter, paging and per-folder memory in the state file
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -18,6 +18,7 @@ accepted_against:
         observed_at: 2026-10-17T02:22:50.192755Z
 branch: tiller/library/cover-grid/order
 pr: 26
+done_basis: ancestry
 gates:
     build:
         required: true
