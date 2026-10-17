@@ -1,0 +1,14 @@
+id: EV-tzlz63
+type: sync.tweak
+at: 2026-10-17T21:51:16.572969Z
+contributor: allen
+command: sync tweak TW-5vfush
+targets:
+    - TW-5vfush
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/layout-fit-timeout-race/tweak.yml

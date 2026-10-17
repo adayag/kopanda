@@ -1,0 +1,14 @@
+id: EV-0zcd1t
+type: sync.bug
+at: 2026-10-17T21:51:16.055918Z
+contributor: allen
+command: sync bug B-25sffy
+targets:
+    - B-25sffy
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/bugs/chapter-stale-after-other-write/bug.yml

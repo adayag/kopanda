@@ -1,7 +1,7 @@
 id: CH-58w77v
 key: chores/fewer-goldens-per-feature
 title: Specs plan goldens only where a look's structure differs or a board draws the state
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         observed_at: 2026-10-17T20:44:23.085517Z
 branch: tiller/chores/fewer-goldens-per-feature
 pr: 45
+done_basis: ancestry
 gates:
     build:
         required: true

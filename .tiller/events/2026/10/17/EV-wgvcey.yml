@@ -1,0 +1,14 @@
+id: EV-wgvcey
+type: sync.chore
+at: 2026-10-17T21:51:16.370616Z
+contributor: allen
+command: sync chore CH-58w77v
+targets:
+    - CH-58w77v
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/chores/fewer-goldens-per-feature/chore.yml

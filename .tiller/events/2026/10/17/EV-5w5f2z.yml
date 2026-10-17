@@ -1,0 +1,14 @@
+id: EV-5w5f2z
+type: sync.bug
+at: 2026-10-17T21:51:16.163204Z
+contributor: allen
+command: sync bug B-61alhe
+targets:
+    - B-61alhe
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/bugs/launcher-target-under-home/bug.yml

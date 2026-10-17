@@ -1,0 +1,14 @@
+id: EV-fusfjb
+type: sync.tweak
+at: 2026-10-17T21:51:16.770566Z
+contributor: allen
+command: sync tweak TW-y0pzxw
+targets:
+    - TW-y0pzxw
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/doc-props-anchor-per-path/tweak.yml

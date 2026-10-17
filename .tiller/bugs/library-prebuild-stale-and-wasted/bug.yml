@@ -1,7 +1,7 @@
 id: B-fip6q6
 key: bugs/library-prebuild-stale-and-wasted
 title: The library prebuilt on close shows a stale count and filter and builds on reload, switch and exit
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,7 @@ accepted_against:
         observed_at: 2026-10-17T20:44:22.824891Z
 branch: tiller/bugs/library-prebuild-stale-and-wasted
 pr: 45
+done_basis: ancestry
 gates:
     build:
         required: true

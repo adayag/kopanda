@@ -1,0 +1,14 @@
+id: EV-qcgk4e
+type: sync.tweak
+at: 2026-10-17T21:51:16.673278Z
+contributor: allen
+command: sync tweak TW-wny5j4
+targets:
+    - TW-wny5j4
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/shared-book-open/tweak.yml

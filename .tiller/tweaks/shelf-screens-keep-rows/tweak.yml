@@ -1,7 +1,7 @@
 id: TW-43jvrb
 key: tweaks/shelf-screens-keep-rows
 title: The series and authors screens re-sort every page turn and refresh on every metadata event
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,7 @@ accepted_against:
         observed_at: 2026-10-17T20:44:24.32878Z
 branch: tiller/tweaks/shelf-screens-keep-rows
 pr: 45
+done_basis: ancestry
 gates:
     build:
         required: true
