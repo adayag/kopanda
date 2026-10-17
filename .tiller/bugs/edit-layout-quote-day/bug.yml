@@ -1,9 +1,10 @@
 id: B-mobbtn
 key: bugs/edit-layout-quote-day
 title: Edit-layout add-column spec fails on days with a long quote
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 source: spec/unit/edit_layout_spec.lua#L359-L369
 accepted_against:
@@ -16,3 +17,4 @@ accepted_against:
         kind: git_commit
         value: git:cbec41a
         observed_at: 2026-10-17T05:05:38.586325Z
+branch: tiller/bugs/edit-layout-quote-day
