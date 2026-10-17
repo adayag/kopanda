@@ -1,7 +1,7 @@
 id: TW-soxspy
 key: tweaks/state-set-many
 title: Recording the chapter fsyncs state.lua twice per book close
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,7 @@ accepted_against:
         observed_at: 2026-10-17T07:16:23.5088Z
 branch: tiller/tweaks/state-set-many
 pr: 36
+done_basis: ancestry
 gates:
     build:
         required: true
