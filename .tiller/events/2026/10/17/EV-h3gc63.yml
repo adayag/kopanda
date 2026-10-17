@@ -1,0 +1,13 @@
+id: EV-h3gc63
+type: approve.task
+at: 2026-10-17T21:40:49.886763Z
+contributor: allen
+command: approve task T-xtol0q
+targets:
+    - T-xtol0q
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/download-row/task.yml

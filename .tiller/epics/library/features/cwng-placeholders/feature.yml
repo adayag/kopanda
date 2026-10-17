@@ -1,0 +1,29 @@
+id: F-yy4zaa
+key: library/cwng-placeholders
+title: cwngsync placeholders read as not downloaded and download from the sheet
+status: ready
+blocked: false
+source: design/2026-10-16-kopanda-library-direction.md
+change_type: modify
+depends_on:
+    - F-l0kw8m
+order:
+    - T-3cuakg
+    - T-xtol0q
+    - T-lk235s
+review_grain: feature
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:4acb06fad740693cabac161a230d10bece1a9c76
+        path: .tiller/epics/library/features/cwng-placeholders/feature.md
+        observed_at: 2026-10-17T21:40:49.797977Z
+    eval:
+        kind: git_blob
+        value: git:dfe2f0a748652b9d120ef71188897e41d4925b0e
+        path: .tiller/epics/library/features/cwng-placeholders/feature.eval.md
+        observed_at: 2026-10-17T21:40:49.797977Z
+    commit:
+        kind: git_commit
+        value: git:30d3a29
+        observed_at: 2026-10-17T21:40:49.837105Z
