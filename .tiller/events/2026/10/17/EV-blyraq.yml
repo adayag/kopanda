@@ -1,0 +1,13 @@
+id: EV-blyraq
+type: check.task
+at: 2026-10-17T18:06:24.596472Z
+contributor: allen
+command: check task T-id5xlc
+targets:
+    - T-id5xlc
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/folder-sheet/task.yml
