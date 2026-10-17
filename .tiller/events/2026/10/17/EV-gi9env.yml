@@ -1,0 +1,14 @@
+id: EV-gi9env
+type: sync.feature
+at: 2026-10-17T03:33:32.178517Z
+contributor: allen
+command: sync feature F-iwl43d
+targets:
+    - F-iwl43d
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/bars/features/title-bar/feature.yml
