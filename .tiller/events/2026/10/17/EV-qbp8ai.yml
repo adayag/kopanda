@@ -1,0 +1,13 @@
+id: EV-qbp8ai
+type: approve.task
+at: 2026-10-17T21:40:49.910058Z
+contributor: allen
+command: approve task T-lk235s
+targets:
+    - T-lk235s
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/goldens/task.yml
