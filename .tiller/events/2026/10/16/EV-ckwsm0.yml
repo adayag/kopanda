@@ -1,0 +1,13 @@
+id: EV-ckwsm0
+type: check.task
+at: 2026-10-16T22:05:48.656189Z
+contributor: allen
+command: check task T-0s2a1j
+targets:
+    - T-0s2a1j
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/capture-inputs/task.yml

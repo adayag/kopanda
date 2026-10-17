@@ -1,0 +1,13 @@
+id: EV-gy8oju
+type: check.feature
+at: 2026-10-16T23:04:41.479631Z
+contributor: allen
+command: check feature F-29oj9m
+targets:
+    - F-29oj9m
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/studio/features/preview/feature.yml

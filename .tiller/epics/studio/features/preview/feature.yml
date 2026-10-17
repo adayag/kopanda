@@ -1,7 +1,7 @@
 id: F-29oj9m
 key: studio/preview
 title: Emulator preview per profile and look
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -11,6 +11,8 @@ depends_on:
     - F-wkj9iy
     - F-k4yn5f
 review_grain: feature
+branch: tiller/reviews/features/studio/preview
+pr: 23
 accepted_against:
     spec:
         kind: git_blob
@@ -26,3 +28,91 @@ accepted_against:
         kind: git_commit
         value: git:2bbb0b4
         observed_at: 2026-10-16T21:49:07.243498Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T22:59:42.074282Z
+        against:
+            kind: git_commit
+            value: git:1671c24
+            observed_at: 2026-10-16T22:59:42.073486Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-1671c24-out-05c5158206d30f8642d5d3280b65dab218f421e73fbde34f3ba601963d15f129.txt
+    evals:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T01:28:53.498807Z
+        against:
+            kind: git_commit
+            value: git:1671c24
+            observed_at: 2026-10-16T22:59:42.073486Z
+        criteria:
+            C1:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C1-1671c24-out-b52bb016d7f880bae318ae173f65f4006da42121947dc1d876485d7c5ea253b8.txt
+            C2:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C2-1671c24-out-2a59809ba139e2f1ace936c4688a5fecaf6847eaa0dea08459acb674ebc3702b.txt
+            C3:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C3-1671c24-out-ad0504da7d4457051fce6be9ae952cb6bac2804be6733432d3becbc1eb1d5ec5.txt
+            C4:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C4-1671c24-out-75f271cea825ba0c003746902d30d427395a0c197fa3e03eac39376f6d2b109d.txt
+            C5:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C5-1671c24-out-1eb8ee595062fa904d4168fa8a7dbceba6601b495225969531f3d4c9bce00630.txt
+            C6:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C6-1671c24-out-35401b221acc2e2d0db17ec56afb0bd8bf01b2abccaabae27023d949b7645ec0.txt
+            C7:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C7-1671c24-out-ad41b0dfbad80c37ec00738e0fd54ed82b3caf3f94cf7df64b81f55945d75a39.txt
+            C8:
+                status: pass
+            C9:
+                status: pass
+                evidence:
+                    - kind: command_output
+                      ref: artifacts/tiller/gates/eval-C9-1671c24-out-8b1b4a56beb2ae1968e11fc98933b15af725d0f9b0435b76fec1ce52f2ebf463.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T22:59:42.074282Z
+        against:
+            kind: git_commit
+            value: git:1671c24
+            observed_at: 2026-10-16T22:59:42.073486Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-1671c24-out-31dcc1a2e1b06f95d17c0a4e69c7b1572fab9f3245ed05f24b6a14eab804203c.txt
+attestations:
+    - id: AT-rlagel
+      target:
+        kind: criterion
+        id: C8
+      status: pass
+      by: allen
+      at: 2026-10-17T01:28:53.498807Z

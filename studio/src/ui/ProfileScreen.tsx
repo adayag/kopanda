@@ -4,6 +4,7 @@ import type { ProfileWithPath } from "../server/profiles.js";
 import { ApiError, fetchProfile, fetchSettings, putSetting, type Settings } from "./api";
 import { LayoutEditor } from "./layout/LayoutEditor";
 import { LauncherEditor } from "./launcher/LauncherEditor";
+import { PreviewPane } from "./preview/PreviewPane";
 import { screenFacts } from "./ProfileList";
 import { PushStatus } from "./PushStatus";
 import { SettingsForm } from "./settings/SettingsForm";
@@ -40,6 +41,8 @@ export function ProfileScreen({ id, view = "form" }: { id: string; view?: Profil
   const [state, setState] = useState<State>({ status: "loading" });
   const [pending, setPending] = useState<ReadonlySet<string>>(() => new Set());
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
+  /** How many writes have landed: the preview's signal that the file changed. */
+  const [revision, setRevision] = useState(0);
   const writes = useRef<Promise<unknown>>(Promise.resolve());
 
   useEffect(() => {
@@ -57,7 +60,8 @@ export function ProfileScreen({ id, view = "form" }: { id: string; view?: Profil
   /**
    * One PUT, sent once every earlier write and its refetch has settled, so answers land in order; its
    * answer becomes the settings shown. A failure puts its line beside the key and reads the file again.
-   * The key stays in flight until then; resolves true once written, false when refused.
+   * The key stays in flight until then; resolves true once written, false when refused. Each write that
+   * lands bumps the revision.
    */
   function write(entry: Key, value: unknown): Promise<boolean> {
     setPending((keys) => new Set(keys).add(entry.id));
@@ -65,6 +69,7 @@ export function ProfileScreen({ id, view = "form" }: { id: string; view?: Profil
     const written = writes.current.then(async () => {
       try {
         showSettings(await putSetting(id, entry.id, value));
+        setRevision((count) => count + 1);
         return true;
       } catch (err) {
         const reason = err instanceof Error ? err.message : String(err);
@@ -102,33 +107,36 @@ export function ProfileScreen({ id, view = "form" }: { id: string; view?: Profil
       {state.status === "loaded" && (
         <>
           <Profile profile={state.profile} settings={state.settings} />
-          <section className="settings" aria-label="Settings">
-            {view === "form" ? (
-              <SettingsForm
-                profileId={id}
-                settings={state.settings}
-                pending={pending}
-                errors={errors}
-                onWrite={write}
-              />
-            ) : view === "layout" ? (
-              <LayoutEditor
-                profileId={id}
-                settings={state.settings}
-                pending={pending.has("layout.rows")}
-                error={errors["layout.rows"]}
-                onWrite={write}
-              />
-            ) : (
-              <LauncherEditor
-                profileId={id}
-                settings={state.settings}
-                pending={pending}
-                errors={errors}
-                onWrite={write}
-              />
-            )}
-          </section>
+          <div className="profile-body">
+            <section className="settings" aria-label="Settings">
+              {view === "form" ? (
+                <SettingsForm
+                  profileId={id}
+                  settings={state.settings}
+                  pending={pending}
+                  errors={errors}
+                  onWrite={write}
+                />
+              ) : view === "layout" ? (
+                <LayoutEditor
+                  profileId={id}
+                  settings={state.settings}
+                  pending={pending.has("layout.rows")}
+                  error={errors["layout.rows"]}
+                  onWrite={write}
+                />
+              ) : (
+                <LauncherEditor
+                  profileId={id}
+                  settings={state.settings}
+                  pending={pending}
+                  errors={errors}
+                  onWrite={write}
+                />
+              )}
+            </section>
+            <PreviewPane profile={state.profile} look={String(state.settings.values.look)} revision={revision} />
+          </div>
         </>
       )}
     </section>

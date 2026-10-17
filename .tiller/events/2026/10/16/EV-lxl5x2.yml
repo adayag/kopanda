@@ -1,0 +1,13 @@
+id: EV-lxl5x2
+type: claim.task
+at: 2026-10-16T21:49:34.362112Z
+contributor: allen
+command: claim task T-0s2a1j
+targets:
+    - T-0s2a1j
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/capture-inputs/task.yml

@@ -97,6 +97,55 @@ export async function checkFit(id: string, rows: unknown, signal?: AbortSignal):
   });
 }
 
+/** A render that gave no image: the HTTP status (0 when the server can't be reached), its error and log lines. */
+export class PreviewError extends Error {
+  readonly status: number;
+  readonly error: string;
+  readonly log: string[];
+
+  constructor(status: number, error: string, log: string[] = []) {
+    super(error);
+    this.name = "PreviewError";
+    this.status = status;
+    this.error = error;
+    this.log = log;
+  }
+}
+
+/** The profile's home rendered by the emulator in one look, day or night, as a PNG. */
+export async function fetchPreview(
+  id: string,
+  frame: { look: string; night: boolean },
+  signal?: AbortSignal,
+): Promise<Blob> {
+  const url = `${profileUrl(id)}/preview`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(frame),
+      signal,
+    });
+  } catch (err) {
+    throw new PreviewError(0, err instanceof Error ? err.message : String(err));
+  }
+  if (res.ok) return res.blob();
+  let error = `${url} answered ${res.status}`;
+  let log: string[] = [];
+  try {
+    const body: unknown = await res.json();
+    if (typeof body === "object" && body !== null) {
+      if ("error" in body && typeof body.error === "string") error = body.error;
+      if ("log" in body && Array.isArray(body.log))
+        log = body.log.filter((line): line is string => typeof line === "string");
+    }
+  } catch {
+    // A body that is not JSON keeps the status message.
+  }
+  throw new PreviewError(res.status, error, log);
+}
+
 /** The address and port the studio is bound to, and its LAN addresses when it serves the LAN. */
 export function fetchHealth(signal?: AbortSignal): Promise<Health> {
   return requestJson("/api/health", { signal });

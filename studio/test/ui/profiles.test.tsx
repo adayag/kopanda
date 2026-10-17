@@ -83,8 +83,9 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
+/** The URLs requested, but for the preview pane's renders. */
 function requestedUrls(): string[] {
-  return fetchMock.mock.calls.map(([input]) => String(input));
+  return fetchMock.mock.calls.map(([input]) => String(input)).filter((url) => !url.endsWith("/preview"));
 }
 
 beforeEach(() => {

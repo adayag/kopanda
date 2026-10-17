@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# Renders a profile's home in the emulator, as the dev loop's goldens do: the populated home
+# fixture frozen at 2026-10-13 08:42 in Chicago, the working tree's plugin, the profile's screen
+# and settings file, one look, day or night. The studio's preview pane asks it for each frame
+# (bin/preview.lua holds the capture).
+#
+#   bin/preview <width> <height> <dpi> <color|grey> <diner|editorial> <day|night> <out.png> [settings file]
+#
+# Exit 0 with one JSON line on stdout, { "png": <out.png as an absolute path>, "width": w,
+# "height": h, "paint_ms": n }; 1 when the render fails, its message (the driver's carries the
+# emulator log's last lines) alone on stderr; 2 when the script refuses to run.
+#
+# The scratch KO_HOME is removed on exit. On SIGTERM the trap removes it at once, leaving the
+# running LuaJIT to the caller's kill of the process group; a SIGKILL leaves it under TMPDIR.
+set -euo pipefail
+
+KOPANDA_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
+emulator_default="$HOME/Projects/kodev/koreader/koreader-emulator-arm64-apple-darwin23.5.0-debug"
+KOPANDA_EMULATOR="${KOPANDA_EMULATOR:-$emulator_default/koreader}"
+
+usage() {
+    printf '%s %s\n' "usage: bin/preview <width> <height> <dpi> <color|grey> <diner|editorial> <day|night>" \
+        "<out.png> [settings file]" >&2
+    exit 2
+}
+
+if [[ $# -lt 7 || $# -gt 8 ]]; then
+    usage
+fi
+for size in "$1" "$2" "$3"; do
+    [[ "$size" =~ ^[1-9][0-9]*$ ]] || usage
+done
+[[ "$4" == color || "$4" == grey ]] || usage
+[[ "$5" == diner || "$5" == editorial ]] || usage
+[[ "$6" == day || "$6" == night ]] || usage
+if [[ $# -eq 8 && ! -f "$8" ]]; then
+    usage
+fi
+
+if [[ ! -x "$KOPANDA_EMULATOR/luajit" ]]; then
+    printf '%s\n' "bin/preview: no luajit at $KOPANDA_EMULATOR/luajit" \
+        "    set KOPANDA_EMULATOR to the emulator's koreader directory" >&2
+    exit 2
+fi
+
+# The run happens inside the emulator's directory, so a relative <out.png> is made absolute here.
+args=("${@:1:6}")
+case "$7" in
+    /*) args+=("$7") ;;
+    *) args+=("$PWD/$7") ;;
+esac
+
+# The template names TMPDIR, which macOS's mktemp skips without one.
+KO_HOME="$(mktemp -d "${TMPDIR:-/tmp}/preview.XXXXXX")"
+trap 'rm -rf "$KO_HOME"' EXIT
+if [[ $# -eq 8 ]]; then
+    mkdir -p "$KO_HOME/settings/kopanda"
+    cp "$8" "$KO_HOME/settings/kopanda/settings.lua"
+    args+=("$KO_HOME/settings/kopanda/settings.lua")
+fi
+
+# bin/check's paths without Busted's rocks: KoPanda's spec/ for the capture driver, then the plugin
+# for its Settings.
+lua_path="?.lua;common/?.lua;frontend/?.lua;spec/front/unit/?.lua"
+lua_path="$lua_path;$KOPANDA_ROOT/spec/?.lua;$KOPANDA_ROOT/kopanda.koplugin/?.lua"
+
+# KOReader logs to stdout (ffi/loadlib.lua:22, frontend/logger.lua:89), so the process's stdout is
+# dropped and the answer comes back in $KO_HOME/result.json.
+cd "$KOPANDA_EMULATOR"
+status=0
+KOPANDA_ROOT="$KOPANDA_ROOT" KOPANDA_EMULATOR="$KOPANDA_EMULATOR" KO_HOME="$KO_HOME" TZ=America/Chicago \
+    LUA_PATH="$lua_path" LUA_CPATH="?.so;common/?.so" \
+    ./luajit "$KOPANDA_ROOT/bin/preview.lua" "${args[@]}" >/dev/null || status=$?
+if [[ $status -ne 0 ]]; then
+    exit 1
+fi
+cat "$KO_HOME/result.json"

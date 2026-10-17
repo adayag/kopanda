@@ -4,6 +4,7 @@ import type { Config } from "./config.js";
 import { isLoopback, lanGuard } from "./lan-guard.js";
 import { geocodeRouter, type GeocodeOptions } from "./routes/geocode.js";
 import type { LayoutFitOptions } from "./routes/layout-fit.js";
+import type { PreviewOptions } from "./routes/preview.js";
 import { profilesRouter } from "./routes/profiles.js";
 import { pushRouter } from "./routes/push.js";
 
@@ -14,6 +15,8 @@ export interface AppOptions {
   api?: express.Router;
   /** The fit check's command and timeout; the repo's bin/layout-fit and 30 s by default. */
   layoutFit?: LayoutFitOptions;
+  /** The preview's command, timeout and queue; the repo's bin/preview, 150 s and one queue for the app by default. */
+  preview?: PreviewOptions;
   /** How the place search reaches Open-Meteo; the global fetch and 10 s by default. */
   geocode?: GeocodeOptions;
   /** The plugin folder the push routes bundle; the repo's kopanda.koplugin/ by default. */
@@ -50,7 +53,7 @@ export function createApp(config: Config, options: AppOptions = {}): express.Exp
     res.json({ ok: true, host: config.host, port: config.port, addresses: lanAddresses(config.host) } satisfies Health);
   });
 
-  app.use("/api/profiles", profilesRouter(config.profilesDir, options.layoutFit));
+  app.use("/api/profiles", profilesRouter(config.profilesDir, options.layoutFit, options.preview));
   app.use("/api/push", pushRouter(config.profilesDir, options.pluginDir));
   app.use("/api/geocode", geocodeRouter(options.geocode));
 

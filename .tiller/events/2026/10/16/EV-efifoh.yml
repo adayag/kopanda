@@ -1,0 +1,15 @@
+id: EV-efifoh
+type: start.task
+at: 2026-10-16T22:06:01.313319Z
+contributor: allen
+command: start task T-f4ooin
+targets:
+    - T-f4ooin
+before:
+    status: ready
+after:
+    branch: tiller/studio/preview/preview-script
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-script/task.yml
