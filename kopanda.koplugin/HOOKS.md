@@ -1664,6 +1664,21 @@ guard (`sheet.lua`).
 - The library's touch zones, its `onGesture` and its paint follow the home's (the `InputContainer`,
   touch lock, `covers_fullscreen` and `nextTick` entries above), and its covers the featured cover's
   bounded check (`book_covers.lua`, the featured cover's entry above).
+- A cover arrival repaints the library with `UIManager:setDirty(library, refreshfunc)`
+  (`frontend/ui/uimanager.lua:659`): a function in place of the refresh type is queued and called
+  after the paint (`:728-731`; the doc at `:536-537`), and its `"ui", region, true` is refreshed as
+  given (`:1356-1362`), the third value a dither hint (documented at `:598-599`) that the Colorsoft
+  ignores: it is an MTK Kindle with a colour screen and hardware dither
+  (`frontend/device/kindle/device.lua:1208-1220`), whose `"ui"` refresh is a non-flashing
+  `WAVEFORM_MODE_AUTO` update (`base/ffi/framebuffer_mxcfb.lua:920-922`, `:1024-1029`), and an MTK
+  colour panel drops the dither flag of a non-flashing, non-REAGL update (`:632-635`). A device
+  without hardware dither has the flag dropped by UIManager (`frontend/ui/uimanager.lua:1379-1381`).
+  The region is the rebuilt tiles' rects widened by the shadow and badge overhang
+  (`LibraryTiles.overhang`), not the library's whole-screen `dimen`, as CoverBrowser refreshes only
+  each updated item's dimen, dithered when it has a cover image
+  (`plugins/coverbrowser.koplugin/covermenu.lua:144-157`). The tiles' rects are joined with
+  `Geom:combine` (`frontend/ui/geometry.lua:151-153`, `Geom.boundingBox` at `:458-481`) and the
+  region clipped to the library's `dimen` with `Geom:intersect` (`:162-184`).
 
 ### The library's return: `caller_pre_callback`, `onShowingReader`, the failed-open paths and `changeToPath`
 

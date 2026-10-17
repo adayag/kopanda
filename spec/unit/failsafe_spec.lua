@@ -1203,7 +1203,7 @@ describe("KoPanda failing safe", function()
             end
             local library = fixture.show()
             local tiles = widgets(library)
-            package.loaded["books"].get = function()
+            package.loaded["books"].with_progress = function()
                 error("kopanda-test: arrival failed")
             end
             assert.is_function(arrive)

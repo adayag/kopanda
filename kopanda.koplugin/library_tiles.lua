@@ -217,20 +217,35 @@ local function chip(max_w, ctx)
     }
 end
 
--- Adds the badge, at the corner badge.align names (the right one, top or bottom) inset from the
--- cover's outline (negative: overhanging), and the chip on the cover's foot left of it: beside the
--- badge where both are on the foot, at the placeholder's padding where the badge is on top.
-local function not_downloaded(tile, box, ctx)
+-- Where the badge sits in a tile in box under ctx: its x and y from the tile's top left at the
+-- corner badge.align names (the right one, top or bottom), inset from the cover's outline
+-- (negative: overhanging), its size, the outline's width and whether it is on the cover's foot.
+local function badge_place(box, ctx)
     local scale, color = scaler(ctx), colorer(ctx)
     local library = ctx.look.library
     local tokens = library.badge
     local edge = color(library.cover.outline_color) and scale(library.cover.outline_width) or 0
-    local the_badge = badge(ctx)
-    local size = the_badge:getSize().w
+    local size = scale(tokens.size)
     local inset = scale_signed(scale, tokens.inset)
-    local badge_x = box.cover_w - edge - inset - size
     local on_foot = tokens.align == "bottom"
-    local badge_y = on_foot and box.cover_h - edge - inset - size or edge + inset
+    return {
+        x = box.cover_w - edge - inset - size,
+        y = on_foot and box.cover_h - edge - inset - size or edge + inset,
+        size = size,
+        edge = edge,
+        on_foot = on_foot,
+    }
+end
+
+-- Adds the badge (badge_place) and the chip on the cover's foot left of it: beside the badge where
+-- both are on the foot, at the placeholder's padding where the badge is on top.
+local function not_downloaded(tile, box, ctx)
+    local scale = scaler(ctx)
+    local library = ctx.look.library
+    local the_badge = badge(ctx)
+    local place = badge_place(box, ctx)
+    local size, edge, on_foot = place.size, place.edge, place.on_foot
+    local badge_x, badge_y = place.x, place.y
     local pad = library.cover.padding
     local chip_x = edge + scale(pad.x)
     local room = on_foot and badge_x - scale(library.not_downloaded.padding.x) - chip_x or box.cover_w - 2 * chip_x
@@ -239,6 +254,21 @@ local function not_downloaded(tile, box, ctx)
     local chip_y = on_foot and badge_y + math.floor((size - chip_h) / 2) or box.cover_h - edge - scale(pad.y) - chip_h
     tile.chip = add(tile, the_chip, chip_x, chip_y)
     tile.badge = add(tile, the_badge, badge_x, badge_y)
+end
+
+-- How far past its box a book's tile in box paints under ctx, in device pixels: { top, right,
+-- bottom }, none on the left. The cover's shadow reaches right and below, the download badge
+-- past the corner it overhangs (badge_place). Counts both whether the tile draws them or not.
+function LibraryTiles.overhang(box, ctx)
+    ctx = fixed(ctx)
+    local shadow = ctx.look.library.cover.shadow
+    local scale = scaler(ctx)
+    local place = badge_place(box, ctx)
+    return {
+        top = math.max(0, -place.y),
+        right = math.max(0, scale(shadow.x), place.x + place.size - box.cover_w),
+        bottom = math.max(0, box.cover_h + scale(shadow.y) - box.height, place.y + place.size - box.height),
+    }
 end
 
 -- A book's tile for record ({ path, title, authors }) at progress (Books.progress's { status,
