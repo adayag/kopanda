@@ -3,8 +3,10 @@
 -- Brightness bar and a Warmth bar, each a label row over a minus button, a level bar and a plus
 -- button, in native steps; then a grid of six cells, Wi-Fi, Night, Rotation lock, Sync books,
 -- Screenshot and Sleep, the on ones filled, the ones that can't run greyed. Everything is read
--- from the device when the sheet lays out; nothing here writes a setting. The body's areas carry
--- an id each and no handler yet.
+-- from the device when the sheet lays out. Each area acts as KOReader's own menus act
+-- (bars/quick-settings, "Routing"): the buttons step the light through broadcast events and
+-- Night, Rotation lock and Wi-Fi toggle, all with the sheet left open; Sync books, Screenshot,
+-- Sleep and a greyed cell close it first and run their launcher entry.
 --
 -- The minus and plus are the text "−" (U+2212) and "+" in the quick_button part (open fact F1,
 -- outcome a): set by Typeset.line at the Colorsoft and painted, each differs in both looks from
@@ -12,6 +14,7 @@
 -- (Editorial's text face: a 23 by 60 cell, a bar of 51 inked pixels and a cross of 98; Diner's
 -- strong face: a 20 by 56 cell, 64 and 108; U+0378 an outlined box in both).
 local Device = require("device")
+local Event = require("ui/event")
 local Geom = require("ui/geometry")
 local Icons = require("icons")
 local LauncherEntries = require("launcher_entries")
@@ -23,6 +26,7 @@ local Settings = require("settings")
 local Sheet = require("sheet")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
+local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
 
@@ -38,6 +42,7 @@ local DASH = "\u{2013}"
 local WIFI = { kind = "koreader", target = "wifi" }
 local SYNC = { kind = "plugin", plugin = "cwngsync", action = "cwngsync_sync_now", label = "Sync books" }
 local SLEEP = { kind = "action", action = "suspend", label = "Sleep" }
+local SCREENSHOT = { kind = "action", action = "screenshot", label = "Screenshot" }
 
 -- f()'s value, or nil and true when it raises, which is logged as reading what.
 local function read(what, f)
@@ -121,6 +126,117 @@ function QuickSettings.state()
     }
 end
 
+-- The light at n native steps, clamped to [0, fl_max]; DeviceListener:onSetFlIntensity turns
+-- it off at 0 (frontend/device/devicelistener.lua:116-125). Broadcast, as KOReader's own menus
+-- reach the file manager's DeviceListener: under the sheet it is no active widget
+-- (frontend/ui/uimanager.lua:962-1035, :1042-1061).
+local function set_brightness(n)
+    local powerd = Device:getPowerDevice()
+    UIManager:broadcastEvent(Event:new("SetFlIntensity", math.max(0, math.min(n, powerd.fl_max))))
+end
+
+-- The warmth at n native steps, clamped to [fl_warmth_min, fl_warmth_max]: onSetFlWarmth
+-- clamps only to 0-100 before converting from native (devicelistener.lua:156-165).
+local function set_warmth(n)
+    local powerd = Device:getPowerDevice()
+    UIManager:broadcastEvent(Event:new("SetFlWarmth",
+        math.max(powerd.fl_warmth_min, math.min(n, powerd.fl_warmth_max))))
+end
+
+-- The native intensity, 0 with the light off, so a plus from off turns it on at 1.
+local function brightness()
+    return Device:getPowerDevice():frontlightIntensity()
+end
+
+local function warmth()
+    local powerd = Device:getPowerDevice()
+    return powerd:toNativeWarmth(powerd:frontlightWarmth())
+end
+
+-- The buttons' taps (one native step) and holds (the bounds), by area id; each reads the
+-- device when it runs.
+local BUTTONS = {
+    brightness_minus = {
+        tap = function() set_brightness(brightness() - 1) end,
+        hold = function() set_brightness(0) end,
+    },
+    brightness_plus = {
+        tap = function() set_brightness(brightness() + 1) end,
+        hold = function() set_brightness(Device:getPowerDevice().fl_max) end,
+    },
+    warmth_minus = {
+        tap = function() set_warmth(warmth() - 1) end,
+        hold = function() set_warmth(Device:getPowerDevice().fl_warmth_min) end,
+    },
+    warmth_plus = {
+        tap = function() set_warmth(warmth() + 1) end,
+        hold = function() set_warmth(Device:getPowerDevice().fl_warmth_max) end,
+    },
+}
+
+-- Redraws the sheet, if still shown, for NetworkMgr's callback after the tap that toggled.
+local function redraw_later()
+    local ok, err = pcall(Sheet.redraw)
+    if not ok then
+        logger.err("KoPanda: quick settings could not redraw after Wi-Fi:", err)
+    end
+end
+
+-- KOReader's Wi-Fi menu item's toggle, interactive (frontend/ui/network/manager.lua:899-915):
+-- off when fully connected, its prompt when on and not connected, else on.
+local function toggle_wifi()
+    NetworkMgr:queryNetworkState()
+    if NetworkMgr.is_wifi_on and NetworkMgr.is_connected then
+        NetworkMgr:toggleWifiOff(redraw_later, true)
+    elseif NetworkMgr.is_wifi_on then
+        NetworkMgr:promptWifi(redraw_later, false, true)
+    else
+        NetworkMgr:toggleWifiOn(redraw_later, false, true)
+    end
+end
+
+-- A close-first action running the launcher's entry, which checks availability again and
+-- shows the launcher's note when it can't run (launcher_entries.lua:158-190).
+local function run(entry)
+    return { close_first = true, tap = function() LauncherEntries.run(entry) end }
+end
+
+-- The cells' taps, by area id; no cell has a hold. Wi-Fi, Night and Rotation lock act with the
+-- sheet open; the rest close it first.
+local CELLS = {
+    wifi = { tap = toggle_wifi },
+    night = {
+        tap = function()
+            UIManager:broadcastEvent(Event:new("ToggleNightMode"))
+        end,
+    },
+    rotation_lock = {
+        tap = function()
+            G_reader_settings:flipNilOrFalse("lock_rotation")
+        end,
+    },
+    sync_books = run(SYNC),
+    -- The close only marks the screen beneath dirty, so it is painted before the shot, which
+    -- shoots the framebuffer as it is (frontend/ui/widget/screenshoter.lua:50-70).
+    screenshot = {
+        close_first = true,
+        tap = function()
+            UIManager:forceRePaint()
+            LauncherEntries.run(SCREENSHOT)
+        end,
+    },
+    sleep = run(SLEEP),
+}
+
+-- A greyed cell runs its launcher entry after the close, for the launcher's note.
+local GREYED = { wifi = run(WIFI), sync_books = run(SYNC), sleep = run(SLEEP) }
+
+-- The area for cell at rect: its id, rect and actions.
+local function cell_area(cell, rect)
+    local actions = cell.greyed and GREYED[cell.id] or CELLS[cell.id]
+    return { id = cell.id, rect = rect, tap = actions.tap, close_first = actions.close_first }
+end
+
 -- The body: its fills and outlines ({ x, y, w, h, color, border }), then its lines and icons, the
 -- array part, each at places[i], all from the body's top-left; free() reaches the array part.
 local Body = WidgetContainer:extend{
@@ -151,7 +267,8 @@ local function in_role(part, role)
 end
 
 -- The sheet's body under bctx (the sheet's build ctx) content_w wide: { widget, areas }, areas
--- { id, rect } from the widget's top-left, the bars' minus and plus then the cells, in order.
+-- { id, rect, tap, hold, close_first } with rect from the widget's top-left, the bars' minus and
+-- plus then the cells, in order.
 -- The layout is the quick-settings feature's ("The panel"), from look.quick_settings.
 function QuickSettings.body(bctx, content_w)
     local look = bctx.look
@@ -224,7 +341,9 @@ function QuickSettings.body(bctx, content_w)
             local glyph = Typeset.line(button_part, button[3], bw, bctx)
             local size = glyph:getSize()
             add(glyph, x + math.floor((bw - size.w) / 2), y + math.floor((bh - size.h) / 2))
-            areas[#areas + 1] = { id = bar.id .. button[1], rect = { x = x, y = y, w = bw, h = bh } }
+            local id = bar.id .. button[1]
+            areas[#areas + 1] = { id = id, rect = { x = x, y = y, w = bw, h = bh }, tap = BUTTONS[id].tap,
+                hold = BUTTONS[id].hold }
         end
         local level_outline = qs.level_outline_color and scale(qs.level_outline_width) or 0
         local level_h = scale(qs.level_h) + 2 * level_outline
@@ -276,7 +395,7 @@ function QuickSettings.body(bctx, content_w)
             end
             local size = b.label:getSize()
             add(b.label, x + math.floor((w - size.w) / 2), y + cell_top + icon_size + scale(qs.cell_gap))
-            areas[#areas + 1] = { id = b.cell.id, rect = { x = x, y = y, w = w, h = row_h } }
+            areas[#areas + 1] = cell_area(b.cell, { x = x, y = y, w = w, h = row_h })
         end
         y = y + row_h
     end
