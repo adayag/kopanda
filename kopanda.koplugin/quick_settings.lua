@@ -6,7 +6,8 @@
 -- from the device when the sheet lays out. Each area acts as KOReader's own menus act
 -- (bars/quick-settings, "Routing"): the buttons step the light through broadcast events and
 -- Night, Rotation lock and Wi-Fi toggle, all with the sheet left open; Sync books, Screenshot,
--- Sleep and a greyed cell close it first and run their launcher entry.
+-- Sleep and a cell greyed because its entry can't run close it first and run their launcher
+-- entry; a bar or cell greyed because its read raised is inert, its touch consumed.
 --
 -- The minus and plus are the text "−" (U+2212) and "+" in the quick_button part (open fact F1,
 -- outcome a): set by Typeset.line at the Colorsoft and painted, each differs in both looks from
@@ -83,8 +84,8 @@ end
 -- The device's state as the sheet shows it: { battery, brightness, warmth, cells }. battery is a
 -- percent or nil; brightness and warmth are nil when hidden (warmth needs the frontlight too),
 -- { greyed = true } when their read raised, else { value, min, max } in native steps; cells are
--- the six in the grid's order, each { id, label, icon, on, greyed }. Each read is guarded: one
--- that raises is logged and greys its control.
+-- the six in the grid's order, each { id, label, icon, on, greyed, failed }, failed when its read
+-- raised. Each read is guarded: one that raises is logged and greys its control.
 function QuickSettings.state()
     local powerd = Device:getPowerDevice()
     local brightness = reading("the frontlight", function()
@@ -113,11 +114,11 @@ function QuickSettings.state()
         warmth = warmth,
         cells = {
             { id = "wifi", label = wifi and "Wi-Fi on" or "Wi-Fi off", icon = wifi and "wifi" or "wifi_off",
-                on = wifi == true, greyed = wifi_failed or not can_run(WIFI, "Wi-Fi") },
+                on = wifi == true, greyed = wifi_failed or not can_run(WIFI, "Wi-Fi"), failed = wifi_failed },
             { id = "night", label = night and "Night on" or "Night off", icon = "moon", on = night == true,
-                greyed = night_failed },
+                greyed = night_failed, failed = night_failed },
             { id = "rotation_lock", label = "Rotation lock", icon = "rotation_lock", on = lock == true,
-                greyed = lock_failed },
+                greyed = lock_failed, failed = lock_failed },
             { id = "sync_books", label = "Sync books", icon = "sync", on = false,
                 greyed = not can_run(SYNC, "Sync books") },
             { id = "screenshot", label = "Screenshot", icon = "screenshot", on = false, greyed = false },
@@ -228,11 +229,15 @@ local CELLS = {
     sleep = run(SLEEP),
 }
 
--- A greyed cell runs its launcher entry after the close, for the launcher's note.
+-- A cell greyed because its entry can't run runs that entry after the close, for the
+-- launcher's note.
 local GREYED = { wifi = run(WIFI), sync_books = run(SYNC), sleep = run(SLEEP) }
 
--- The area for cell at rect: its id, rect and actions.
+-- The area for cell at rect: its id, rect and actions; a cell whose read raised has none.
 local function cell_area(cell, rect)
+    if cell.failed then
+        return { id = cell.id, rect = rect }
+    end
     local actions = cell.greyed and GREYED[cell.id] or CELLS[cell.id]
     return { id = cell.id, rect = rect, tap = actions.tap, close_first = actions.close_first }
 end
@@ -341,9 +346,11 @@ function QuickSettings.body(bctx, content_w)
             local glyph = Typeset.line(button_part, button[3], bw, bctx)
             local size = glyph:getSize()
             add(glyph, x + math.floor((bw - size.w) / 2), y + math.floor((bh - size.h) / 2))
+            -- A greyed bar's buttons are inert: their touch is consumed.
             local id = bar.id .. button[1]
-            areas[#areas + 1] = { id = id, rect = { x = x, y = y, w = bw, h = bh }, tap = BUTTONS[id].tap,
-                hold = BUTTONS[id].hold }
+            local actions = r.greyed and {} or BUTTONS[id]
+            areas[#areas + 1] = { id = id, rect = { x = x, y = y, w = bw, h = bh }, tap = actions.tap,
+                hold = actions.hold }
         end
         local level_outline = qs.level_outline_color and scale(qs.level_outline_width) or 0
         local level_h = scale(qs.level_h) + 2 * level_outline

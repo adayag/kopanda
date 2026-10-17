@@ -48,6 +48,17 @@ describe("the quick-settings controls", function()
         G_reader_settings:saveSetting(key, value)
     end
 
+    -- G_reader_settings:isTrue(key) raises for the rest of the test; other keys read as before.
+    local function unreadable(key)
+        local is_true = G_reader_settings.isTrue
+        set(G_reader_settings, "isTrue", function(self, k)
+            if k == key then
+                error("kopanda-test: " .. key .. " read failed")
+            end
+            return is_true(self, k)
+        end)
+    end
+
     -- A spy on t[key] for the rest of the test.
     local function watch(t, key)
         local s = spy.on(t, key)
@@ -351,6 +362,7 @@ describe("the quick-settings controls", function()
                 assert.is_true(shows("wi-fi on"))
                 tap("wifi")
                 assert.spy(toggled_off).was_called(1)
+                assert.equals(true, toggled_off.calls[1].vals[3])
                 assert.is_false(NetworkMgr:isWifiOn())
                 assert.is_true(shows("wi-fi off"))
                 still_shown()
@@ -374,6 +386,8 @@ describe("the quick-settings controls", function()
                 end
                 tap("wifi")
                 assert.spy(toggled_on).was_called(1)
+                assert.equals(false, toggled_on.calls[1].vals[3])
+                assert.equals(true, toggled_on.calls[1].vals[4])
                 assert.is_true(NetworkMgr:isWifiOn())
                 assert.is_true(shows("wi-fi on"))
                 before = layouts
@@ -394,6 +408,95 @@ describe("the quick-settings controls", function()
                     assert.equals(heard_before + 1, #on_heard.calls)
                 end
             end)
+
+            it("prompts through NetworkMgr's promptWifi with Wi-Fi on and not connected", function()
+                setting("emulator_fake_wifi_connected", true)
+                set(NetworkMgr, "isConnected", function()
+                    return false
+                end)
+                local toggled_off = watch(NetworkMgr, "toggleWifiOff")
+                local toggled_on = watch(NetworkMgr, "toggleWifiOn")
+                local prompted = {}
+                set(NetworkMgr, "promptWifi", function(...)
+                    prompted[#prompted + 1] = { ... }
+                end)
+                open()
+                tap("wifi")
+                assert.equals(1, #prompted)
+                assert.equals(NetworkMgr, prompted[1][1])
+                assert.is_function(prompted[1][2])
+                assert.equals(false, prompted[1][3])
+                assert.equals(true, prompted[1][4])
+                assert.spy(toggled_off).was_not_called()
+                assert.spy(toggled_on).was_not_called()
+                still_shown()
+            end)
+
+            for _, bar in ipairs({ { "brightness", "frontlightIntensity", "onSetFlIntensity" },
+                    { "warmth", "frontlightWarmth", "onSetFlWarmth" } }) do
+                local id, read, handler = bar[1], bar[2], bar[3]
+                it("leaves a greyed " .. id .. " bar's buttons inert to taps and holds", function()
+                    kindle_light(12, 4)
+                    set(powerd, read, function()
+                        error("kopanda-test: " .. id .. " read failed")
+                    end)
+                    local heard = watch(DeviceListener, handler)
+                    open()
+                    assert.equals("\u{2013}", value_of(id))
+                    for _, button in ipairs({ id .. "_minus", id .. "_plus" }) do
+                        tap(button)
+                        hold(button)
+                        still_shown()
+                    end
+                    assert.spy(heard).was_not_called()
+                    assert.equals(12, rawget(powerd, "fl_intensity"))
+                    assert.equals(powerd:fromNativeWarmth(4), rawget(powerd, "fl_warmth"))
+                    assert.is_true(rawget(powerd, "is_fl_on"))
+                end)
+            end
+
+            for _, cell in ipairs({
+                { "wifi", function()
+                    set(NetworkMgr, "isWifiOn", function()
+                        error("kopanda-test: radio read failed")
+                    end)
+                end },
+                { "night", function() unreadable("night_mode") end },
+                { "rotation_lock", function() unreadable("lock_rotation") end },
+            }) do
+                local id, fail = cell[1], cell[2]
+                it("leaves " .. id .. " inert when its read raised", function()
+                    setting("emulator_fake_wifi_connected", true)
+                    setting("night_mode", false)
+                    setting("lock_rotation", false)
+                    -- From the sheet's open on: the file manager reads lock_rotation as it shows
+                    -- (frontend/apps/filemanager/filemanager.lua:64).
+                    local opens = QuickSettings.open
+                    set(QuickSettings, "open", function(...)
+                        fail()
+                        return opens(...)
+                    end)
+                    local toggled_off = watch(NetworkMgr, "toggleWifiOff")
+                    local toggled_on = watch(NetworkMgr, "toggleWifiOn")
+                    local prompted = watch(NetworkMgr, "promptWifi")
+                    local ran = watch(LauncherEntries, "run")
+                    local night = watch(DeviceListener, "onToggleNightMode")
+                    open()
+                    local sheet = Sheet.shown
+                    local broadcast = watch(UIManager, "broadcastEvent")
+                    tap(id)
+                    assert.equals(sheet, Sheet.shown)
+                    still_shown()
+                    assert.spy(toggled_off).was_not_called()
+                    assert.spy(toggled_on).was_not_called()
+                    assert.spy(prompted).was_not_called()
+                    assert.spy(ran).was_not_called()
+                    assert.spy(night).was_not_called()
+                    assert.spy(broadcast).was_not_called()
+                    assert.equals(false, G_reader_settings:readSetting("night_mode"))
+                    assert.equals(false, G_reader_settings:readSetting("lock_rotation"))
+                end)
+            end
 
             it("closes the sheet, then sends Sync books to the cwngsync plugin", function()
                 set(PluginLoader.loaded_plugins, "cwngsync", {})
