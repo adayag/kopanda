@@ -1,0 +1,14 @@
+id: EV-d044o1
+type: add.tweak
+at: 2026-10-17T04:50:15.262824Z
+contributor: allen
+command: add tweak flaky-night-golden-paint-budget
+targets:
+    - TW-8wduca
+after:
+    attached_to: F-4jh8sz
+    key: tweaks/flaky-night-golden-paint-budget
+    status: proposed
+files:
+    - path: .tiller/tweaks/flaky-night-golden-paint-budget/tweak.md
+    - path: .tiller/tweaks/flaky-night-golden-paint-budget/tweak.yml
