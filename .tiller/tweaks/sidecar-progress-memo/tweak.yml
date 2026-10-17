@@ -1,7 +1,7 @@
 id: TW-3tfybs
 key: tweaks/sidecar-progress-memo
 title: Sidecars are parsed for every book on every library build under a filter or a folder tile
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         value: git:525b5a5
         observed_at: 2026-10-17T16:06:07.488962Z
 branch: tiller/tweaks/sidecar-progress-memo
+pr: 42
 gates:
     build:
         required: true
