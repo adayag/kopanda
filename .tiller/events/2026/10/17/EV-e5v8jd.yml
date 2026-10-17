@@ -1,0 +1,13 @@
+id: EV-e5v8jd
+type: check.tweak
+at: 2026-10-17T16:40:51.060089Z
+contributor: allen
+command: check tweak TW-cypagc
+targets:
+    - TW-cypagc
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/library-listing-kept/tweak.yml
