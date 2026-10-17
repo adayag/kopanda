@@ -1,0 +1,14 @@
+id: EV-6rqle3
+type: submit.bug
+at: 2026-10-17T07:57:08.218604Z
+contributor: allen
+command: submit bug B-2o8ya3
+targets:
+    - B-2o8ya3
+before:
+    status: check
+after:
+    pr: 39
+    status: in_review
+files:
+    - path: .tiller/bugs/prebuild-stale-and-wasted/bug.yml

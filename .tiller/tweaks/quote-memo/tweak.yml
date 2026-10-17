@@ -1,0 +1,9 @@
+id: TW-bl79zr
+key: tweaks/quote-memo
+title: The quote is shaped and rendered on every home build
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: T-x42jhm
+source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L83-L91

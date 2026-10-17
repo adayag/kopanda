@@ -1,0 +1,14 @@
+id: EV-zqq0iv
+type: add.tweak
+at: 2026-10-17T15:30:17.439699Z
+contributor: allen
+command: add tweak library-leave-unchanged
+targets:
+    - TW-skxh9m
+after:
+    attached_to: T-anr3s4
+    key: tweaks/library-leave-unchanged
+    status: proposed
+files:
+    - path: .tiller/tweaks/library-leave-unchanged/tweak.md
+    - path: .tiller/tweaks/library-leave-unchanged/tweak.yml

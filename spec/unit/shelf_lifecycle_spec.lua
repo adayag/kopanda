@@ -788,7 +788,7 @@ describe("the Series and Authors windows' routing", function()
                     local pending = cls.pending
                     assert.is_not_nil(pending)
                     assert.is_false(UIManager:isWidgetShown(pending))
-                    assert.is_nil(Home.pending)
+                    assert.is_false(Home.just_closed)
                     assert.is_false(w.progressed(w.item(pending)))
                     -- The reader writes its sidecar after CloseDocument.
                     progress[ID] = { status = "reading", percent = 0.4 }

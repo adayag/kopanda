@@ -1,0 +1,9 @@
+id: B-e2tfz0
+key: bugs/chapter-write-retry
+title: A failed chapter write is not retried on the next close
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: T-o0ptat
+source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L160-L166

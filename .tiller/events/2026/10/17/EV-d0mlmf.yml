@@ -1,0 +1,14 @@
+id: EV-d0mlmf
+type: add.tweak
+at: 2026-10-17T15:30:17.539036Z
+contributor: allen
+command: add tweak quote-memo
+targets:
+    - TW-bl79zr
+after:
+    attached_to: T-x42jhm
+    key: tweaks/quote-memo
+    status: proposed
+files:
+    - path: .tiller/tweaks/quote-memo/tweak.md
+    - path: .tiller/tweaks/quote-memo/tweak.yml

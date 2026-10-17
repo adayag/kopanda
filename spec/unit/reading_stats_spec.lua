@@ -1,6 +1,6 @@
 -- Reading stats from KOReader's Statistics database (C7): the three numbers read from fixture
 -- databases under a fixed TZ, the off and empty states, the wording per look, the fit to the
--- column, stats.show, and the pre-built home reading its numbers again when it is shown.
+-- column and stats.show.
 -- The lj-sqlite3 binding ffi.cdef()s on load (spec/emulator/driver.lua:87-88), so a Busted process
 -- loads it once: spec/unit/books_coverbrowser_spec.lua's expose block requires it and keeps it
 -- loaded, and runs before this file in bin/check's sorted files; the require here gets that one.
@@ -121,11 +121,11 @@ describe("reading stats", function()
     end
 
     -- A Statistics database at db_path holding books { id, md5, pages, last_open } and page
-    -- rows { id_book, page, start_time, duration, total_pages }.
-    local function make_books_db(books, rows)
+    -- rows { id_book, page, start_time, duration, total_pages }, in WAL mode or journal when given.
+    local function make_books_db(books, rows, journal)
         remove_db()
         local conn = SQ3.open(db_path)
-        conn:exec("PRAGMA journal_mode=WAL;")
+        conn:exec("PRAGMA journal_mode=" .. (journal or "WAL") .. ";")
         for _, sql in ipairs(DDL) do
             conn:exec(sql)
         end
@@ -337,7 +337,7 @@ describe("reading stats", function()
         end)
 
         -- About a year of heavy reading: 100 page turns a day for 400 days. The streak is read
-        -- twice per book close (pre-build and show), inside the home's share of the budget (C13).
+        -- once per book close, at the show, inside the home's share of the budget (C13).
         it("reads a year of page turns quickly", function()
             local t = os.date("*t", NOW)
             local rows = {}
@@ -569,6 +569,216 @@ describe("reading stats", function()
         end)
     end)
 
+    describe("the memo", function()
+        local real_open, opened
+        local real_time = os.time
+
+        -- Stops os.time() at t; os.time with a date table still converts it.
+        local function freeze(t)
+            os.time = function(date) -- luacheck: ignore 122
+                if date == nil then
+                    return t
+                end
+                return real_time(date)
+            end
+        end
+
+        -- Dates the file at path seconds_ago in the past.
+        local function date_back(path, seconds_ago)
+            local t = os.time() - seconds_ago
+            assert(lfs.touch(path, t, t))
+        end
+
+        -- Dates the database and its WAL file, when there is one, a minute back: files written
+        -- before the current second.
+        local function settle()
+            date_back(db_path, 60)
+            if lfs.attributes(db_path .. "-wal", "mode") then
+                date_back(db_path .. "-wal", 60)
+            end
+        end
+
+        -- A page_stat_data row { id_book, page, start_time, duration, total_pages } written as
+        -- Statistics writes, its connection closed after.
+        local function insert(row)
+            local conn = real_open(db_path)
+            conn:exec(string.format("INSERT INTO page_stat_data VALUES (%d, %d, %d, %d, %d);", unpack(row)))
+            conn:close()
+        end
+
+        -- Counts the read-only opens, which are ReadingStats's.
+        before_each(function()
+            real_open = SQ3.open
+            opened = 0
+            SQ3.open = function(path, mode)
+                if mode == "ro" then
+                    opened = opened + 1
+                end
+                return real_open(path, mode)
+            end
+        end)
+
+        after_each(function()
+            SQ3.open = real_open
+            os.time = real_time -- luacheck: ignore 122
+        end)
+
+        it("reads the numbers again only when the database or its WAL file changes, or the date", function()
+            make_db({ on_day(0), on_day(-1) })
+            -- A connection Statistics holds open, its last write still in the WAL file.
+            local writer = real_open(db_path)
+            local t = os.date("*t", NOW)
+            writer:exec(string.format("INSERT INTO page_stat_data VALUES (1, 99, %d, 780, 300);",
+                at(t.year, t.month, t.day, 9)))
+            assert.equals("file", lfs.attributes(db_path .. "-wal", "mode"))
+            settle()
+            local first = ReadingStats.read(NOW)
+            assert.equals(23, first.minutes_today)
+            assert.same(first, ReadingStats.read(NOW))
+            assert.equals(1, opened)
+
+            date_back(db_path .. "-wal", 30)
+            assert.same(first, ReadingStats.read(NOW))
+            assert.equals(2, opened)
+            date_back(db_path, 30)
+            ReadingStats.read(NOW)
+            assert.equals(3, opened)
+
+            local after_midnight = at(t.year, t.month, t.day + 1, 0, 5)
+            local next_day = ReadingStats.read(after_midnight)
+            assert.equals(4, opened)
+            assert.equals(0, next_day.minutes_today)
+            assert.equals(2, next_day.streak)
+            assert.same(next_day, ReadingStats.read(after_midnight))
+            assert.equals(4, opened)
+            writer:close()
+        end)
+
+        it("reads again a database dated this second or later", function()
+            make_db({ on_day(0) })
+            date_back(db_path, -5)
+            ReadingStats.read(NOW)
+            ReadingStats.read(NOW)
+            assert.equals(2, opened)
+        end)
+
+        -- FAT dates files in two-second steps, rounded down, so in an odd second T a write dated
+        -- T-1 can follow another dated T-1 that left the size as it was.
+        it("reads again a database dated within the last two seconds", function()
+            local now = real_time()
+            now = now - now % 2 + 1
+            freeze(now)
+            make_db({ on_day(0) })
+            for _, dated in ipairs{ now - 1, now } do
+                assert(lfs.touch(db_path, dated, dated))
+                opened = 0
+                ReadingStats.read(NOW)
+                ReadingStats.read(NOW)
+                assert.equals(2, opened)
+            end
+        end)
+
+        it("keeps the read of a database dated two seconds back", function()
+            local now = real_time()
+            now = now - now % 2 + 1
+            freeze(now)
+            make_db({ on_day(0) })
+            assert(lfs.touch(db_path, now - 2, now - 2))
+            ReadingStats.read(NOW)
+            ReadingStats.read(NOW)
+            assert.equals(1, opened)
+        end)
+
+        it("reads a busy database as the last numbers read, untouched or touched", function()
+            make_db({ on_day(0), on_day(-1) }, "DELETE")
+            settle()
+            local before = ReadingStats.read(NOW)
+            assert.equals("ok", before.state)
+            local locker = real_open(db_path)
+            locker:exec("BEGIN EXCLUSIVE;")
+            local untouched = ReadingStats.read(NOW)
+            local opened_untouched = opened
+            date_back(db_path, 30)
+            local touched = ReadingStats.read(NOW)
+            locker:exec("ROLLBACK;")
+            locker:close()
+            assert.equals(1, opened_untouched)
+            assert.same(before, untouched)
+            assert.equals(2, opened)
+            assert.same(before, touched)
+            assert.is_true(logged_error())
+        end)
+
+        it("reads a book's rate again only when the files, the md5 or max_sec change", function()
+            make_books_db({ { 1, "abc", 100, 100 }, { 2, "def", 100, 200 } },
+                { { 1, 1, 1000, 20, 100 }, { 2, 1, 1000, 40, 100 } })
+            settle()
+            assert.equals(20, (ReadingStats.seconds_per_page("abc")))
+            assert.equals(20, (ReadingStats.seconds_per_page("abc")))
+            assert.equals(1, opened)
+            assert.is_nil(ReadingStats.seconds_per_page("zzz"))
+            assert.is_nil(ReadingStats.seconds_per_page("zzz"))
+            assert.equals(2, opened)
+            assert.equals(40, (ReadingStats.seconds_per_page("def")))
+            assert.equals(3, opened)
+            G_reader_settings:saveSetting("statistics", { max_sec = 10 })
+            assert.equals(10, (ReadingStats.seconds_per_page("def")))
+            assert.equals(4, opened)
+            date_back(db_path, 30)
+            assert.equals(10, (ReadingStats.seconds_per_page("def")))
+            assert.equals(5, opened)
+        end)
+
+        it("opens the database once when the numbers and the rate both miss", function()
+            local start = on_day(0)[2]
+            make_books_db({ { 1, "abc", 100, 100 } }, { { 1, 1, start, 600, 100 } })
+            settle()
+            assert.equals(10, ReadingStats.read(NOW).minutes_today)
+            assert.equals(120, (ReadingStats.seconds_per_page("abc")))
+            assert.equals(2, opened)
+
+            insert({ 1, 2, start + 60, 60, 100 })
+            date_back(db_path, 30)
+            assert.equals(11, ReadingStats.read(NOW).minutes_today)
+            assert.equals(3, opened)
+            assert.equals((120 + 60) / 2, (ReadingStats.seconds_per_page("abc")))
+            assert.equals(3, opened)
+
+            insert({ 1, 3, start + 120, 120, 100 })
+            date_back(db_path, 20)
+            assert.equals((120 + 60 + 120) / 3, (ReadingStats.seconds_per_page("abc")))
+            assert.equals(4, opened)
+            assert.equals(13, ReadingStats.read(NOW).minutes_today)
+            assert.equals(4, opened)
+        end)
+
+        it("keeps today's numbers as a busy database's when a book's rate reads them again", function()
+            local t = os.date("*t", NOW)
+            local yesterday = at(t.year, t.month, t.day - 1, 20, 42)
+            local start = on_day(0)[2]
+            make_books_db({ { 1, "abc", 100, 100 } }, { { 1, 1, on_day(-1)[2], 600, 100 } }, "DELETE")
+            settle()
+            assert.equals(10, ReadingStats.read(yesterday).minutes_today)
+            -- Today's read lands while Statistics' last write is dated too recently to keep.
+            insert({ 1, 2, start, 1200, 100 })
+            date_back(db_path, -5)
+            assert.equals(20, ReadingStats.read(NOW).minutes_today)
+
+            insert({ 1, 3, start + 60, 60, 100 })
+            date_back(db_path, 30)
+            assert.equals((120 + 120 + 60) / 3, (ReadingStats.seconds_per_page("abc")))
+
+            local locker = real_open(db_path)
+            locker:exec("BEGIN EXCLUSIVE;")
+            date_back(db_path, 20)
+            local busy = ReadingStats.read(NOW)
+            locker:exec("ROLLBACK;")
+            locker:close()
+            assert.equals(21, busy.minutes_today)
+            assert.equals(2, busy.streak)
+        end)
+    end)
+
     describe("the widget", function()
         local WIDE = 4000
 
@@ -668,63 +878,6 @@ describe("reading stats", function()
             assert.equals(300, built:getSize().w)
             assert.equals(0, built:getSize().h)
             assert.same({}, texts(built))
-        end)
-    end)
-
-    describe("the pre-built home", function()
-        it("reads the numbers again when it is shown, after the book's session is flushed", function()
-            local Home = package.loaded["home"]
-            assert.is_true(Settings.set("layout.rows", { { { widget = "stats", share = 1 } } }))
-            local now = os.time()
-            make_db({ { 1, now, 600 } })
-            Home.prebuild()
-            local slot
-            for _, s in ipairs(Home.pending.slots) do
-                if s.widget == "stats" then
-                    slot = s
-                end
-            end
-            assert.same({ "1-DAY STREAK · 10 MIN TODAY · 1 BOOK IN " .. os.date("%B", now):upper() },
-                texts(slot.built))
-            -- What Statistics writes on the same CloseDocument, after KoPanda's pre-build.
-            local conn = SQ3.open(db_path)
-            conn:exec(string.format("INSERT INTO page_stat_data VALUES (1, 99, %d, 780, 300);", now))
-            conn:close()
-            local home = Home.take_pending()
-            assert.same({ "1-DAY STREAK · 23 MIN TODAY · 1 BOOK IN " .. os.date("%B", now):upper() },
-                texts(slot.built))
-            assert.equals(home.slots[1].built, slot.built)
-            home:free()
-        end)
-
-        it("is still handed over, its stats as built, when reading them again raises", function()
-            local Home = package.loaded["home"]
-            assert.is_true(Settings.set("layout.rows", { { { widget = "stats", share = 1 } } }))
-            local now = os.time()
-            make_db({ { 1, now, 600 } })
-            Home.prebuild()
-            local pending = Home.pending
-            local slot = pending.slots[1]
-            assert.equals("stats", slot.widget)
-            local built, line = slot.built, slot.built[1]
-            local before = texts(built)
-            local conn = SQ3.open(db_path)
-            conn:exec(string.format("INSERT INTO page_stat_data VALUES (1, 99, %d, 780, 300);", now))
-            conn:close()
-            local refresh = Stats.refresh
-            Stats.refresh = function()
-                error("refresh failed on purpose")
-            end
-            local ok, home = pcall(Home.take_pending)
-            Stats.refresh = refresh
-            assert.is_true(ok, tostring(home))
-            assert.equals(pending, home)
-            assert.is_nil(Home.pending)
-            assert.equals(built, home.slots[1].built)
-            assert.equals(line, built[1])
-            assert.same(before, texts(built))
-            assert.is_true(logged_error())
-            home:free()
         end)
     end)
 end)

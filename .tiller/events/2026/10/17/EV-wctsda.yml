@@ -1,0 +1,14 @@
+id: EV-wctsda
+type: add.bug
+at: 2026-10-17T15:31:32.378623Z
+contributor: allen
+command: add bug launcher-target-under-home
+targets:
+    - B-61alhe
+after:
+    attached_to: F-yaihx9
+    key: bugs/launcher-target-under-home
+    status: proposed
+files:
+    - path: .tiller/bugs/launcher-target-under-home/bug.md
+    - path: .tiller/bugs/launcher-target-under-home/bug.yml

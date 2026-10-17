@@ -1,12 +1,11 @@
--- Closing a book builds the home before the file browser comes back, and the file manager's
--- show puts that pre-built home up at once. Before it builds, the close records the book's
--- chapter for the featured book (C3).
-describe("the KoPanda home pre-built on book close", function()
+-- Closing a book builds no home: it records the book's chapter for the featured book (C3) and
+-- marks the close, and the file manager's Show that follows builds the home and puts it up at
+-- once, after the reader saved its sidecar and Statistics flushed its session. A close with the
+-- reader tearing down (reload, switch) marks nothing.
+describe("closing a book shows the home at the file manager's Show", function()
     local harness = require("plugin_harness")
     local Event = require("ui/event")
-    local Geom = require("ui/geometry")
     local UIManager = require("ui/uimanager")
-    local Screen = require("device").screen
     local Home, Plugin, new_spy
 
     -- The home's constructor: Home:new{} resolves Widget:new through Home's metatable, so the
@@ -29,49 +28,122 @@ describe("the KoPanda home pre-built on book close", function()
         harness.teardown()
     end)
 
-    it("builds a home on CloseDocument and keeps it pending, not shown", function()
+    it("builds no home on CloseDocument and marks the close", function()
         local reader = harness.open_reader()
         harness.tick(2)
+        local builds = spy_builds()
         reader:onClose()
-        assert.is_not_nil(Home.pending)
-        assert.equals("kopanda_home", Home.pending.name)
-        assert.is_false(UIManager:isWidgetShown(Home.pending))
+        assert.spy(builds).was_not_called()
+        assert.is_true(Home.just_closed)
         assert.is_nil(Home.shown)
     end)
 
-    it("puts the pending home on top synchronously from the file manager's show", function()
+    it("puts a home on top synchronously from the file manager's Show after the close", function()
         local reader = harness.open_reader()
         harness.tick(2)
         reader:onClose()
-        local pending = Home.pending
         local builds = spy_builds()
         local fm = harness.show_fm()
-        assert.equals(pending, harness.top())
+        local home = harness.top()
+        assert.equals("kopanda_home", home.name)
         assert.equals(fm, harness.top(2))
-        assert.equals(pending, Home.shown)
-        assert.is_nil(Home.pending)
+        assert.equals(home, Home.shown)
+        assert.spy(builds).was_called(1)
+        assert.is_false(Home.just_closed)
         harness.tick(2)
-        assert.equals(pending, harness.top())
-        assert.equals(pending, Home.shown)
+        assert.equals(home, harness.top())
+        assert.equals(home, Home.shown)
+        assert.spy(builds).was_called(1)
+    end)
+
+    it("reads the reading stats once across a close and the Show after it", function()
+        local Settings = package.loaded["settings"]
+        local ReadingStats = package.loaded["reading_stats"]
+        assert.is_true(Settings.set("layout.rows", { { { widget = "stats", share = 1 } } }))
+        local reader = harness.open_reader()
+        harness.tick(2)
+        local reads = spy.on(ReadingStats, "read")
+        local ok, err = pcall(function()
+            reader:onClose()
+            harness.show_fm()
+            harness.tick(2)
+        end)
+        reads:revert()
+        assert(ok, err)
+        assert.equals("kopanda_home", harness.top().name)
+        assert.spy(reads).was_called(1)
+    end)
+
+    -- reloadDocument and switchDocument set tearing_down before onClose
+    -- (frontend/apps/reader/readerui.lua:952, :973), as onShowingReader and onSetupShowReader do
+    -- (:600, :609), and close with onClose(false).
+    it("marks nothing on a close with the reader tearing down, so a later Show defers", function()
+        local reader = harness.open_reader()
+        harness.tick(2)
+        local builds = spy_builds()
+        reader.tearing_down = true
+        reader:onClose(false)
+        assert.is_false(Home.just_closed)
+        assert.spy(builds).was_not_called()
+        local fm = harness.show_fm()
+        assert.equals(fm, harness.top())
+        harness.tick(1)
+        assert.equals("kopanda_home", harness.top().name)
+    end)
+
+    it("clears the mark when a new reader starts (switch, reload)", function()
+        Home.just_closed = true
+        harness.open_reader()
+        assert.is_false(Home.just_closed)
+    end)
+
+    it("builds nothing on a second CloseDocument while the close is marked", function()
+        local reader = harness.open_reader()
+        harness.tick(2)
+        local builds = spy_builds()
+        -- KoPanda's handler returns nothing, so CloseDocument goes on to later modules.
+        local consumed = reader.kopanda:handleEvent(Event:new("CloseDocument"))
+        assert.is_falsy(consumed)
+        assert.is_true(Home.just_closed)
+        reader:onClose()
+        assert.is_true(Home.just_closed)
         assert.spy(builds).was_not_called()
     end)
 
-    it("signals a pre-built home's paint as prebuilt", function()
-        local signals = {}
-        local listener = function(args)
-            signals[#signals + 1] = args
-        end
-        UIManager.event_hook:register("KoPandaSettled", listener)
+    -- The reader's sidecar is saved after CloseDocument, by UIManager:close's FlushSettings
+    -- (frontend/apps/reader/readerui.lua:887, :893; frontend/ui/uimanager.lua:298), so a home
+    -- built at CloseDocument would show the percent of the last save before it.
+    it("shows the featured percent the reader saved on its close", function()
+        local Settings = package.loaded["settings"]
+        local FeaturedBook = package.loaded["featured_book"]
+        local DocSettings = require("docsettings")
+        local book = harness.library .. "/frankenstein.epub"
+        assert.is_true(Settings.set("layout.rows", { { { widget = "featured", share = 1 } } }))
+        assert.is_true(Settings.set("featured.pinned", book))
         local reader = harness.open_reader()
         harness.tick(2)
-        reader:onClose()
-        harness.show_fm()
-        harness.tick(4)
-        UIManager.event_hook:unregister("KoPandaSettled", listener)
-        assert.equals(1, #signals)
-        assert.equals("home", signals[1].screen)
-        assert.is_true(signals[1].prebuilt)
-        assert.is_number(signals[1].paint_ms)
+        local before = DocSettings:open(book):readSetting("percent_finished")
+        reader:handleEvent(Event:new("GotoPercent", 50))
+        local current = FeaturedBook.current
+        local shown = {}
+        FeaturedBook.current = function(...)
+            local featured = current(...)
+            shown[#shown + 1] = featured
+            return featured
+        end
+        local ok, err = pcall(function()
+            reader:onClose()
+            harness.show_fm()
+        end)
+        FeaturedBook.current = current
+        assert(ok, err)
+        local saved = DocSettings:open(book):readSetting("percent_finished")
+        assert.is_number(saved)
+        assert.is_not.equals(before, saved)
+        assert.equals("kopanda_home", harness.top().name)
+        assert.equals(1, #shown)
+        assert.equals(book, shown[1].file)
+        assert.equals(saved, shown[1].percent)
     end)
 
     -- The settled signal lands a tick after the paint, behind tasks already due then, such as
@@ -79,7 +151,8 @@ describe("the KoPanda home pre-built on book close", function()
     -- close run from a task, as the end-of-book action runs it (readerstatus.lua:144-148), that
     -- task runs after the paint and before the signal. paint_ms stops at the paint, and cpu_ms,
     -- on the CPU clock, with it.
-    it("times a pre-built home to its paint, not to the settled signal", function()
+    it("times the home shown after a close to its paint, not to the settled signal", function()
+        local InputContainer = require("ui/widget/container/inputcontainer")
         local time = require("ui/time")
         local monotonic = time.monotonic
         local clock = monotonic()
@@ -91,18 +164,19 @@ describe("the KoPanda home pre-built on book close", function()
             signals[#signals + 1] = args
         end
         UIManager.event_hook:register("KoPandaSettled", listener)
+        local inherited_paint = InputContainer.paintTo
         local ok, err = pcall(harness.with_cpu_clock, 20, function(cpu)
             local reader = harness.open_reader()
             harness.tick(2)
-            UIManager:nextTick(function()
-                reader:onClose()
-                local frame = Home.pending[1]
-                local frame_paint = frame.paintTo
-                frame.paintTo = function(...)
+            InputContainer.paintTo = function(self, ...)
+                if self.name == "kopanda_home" then
                     clock = clock + time.ms(5)
                     cpu.now = cpu.now + 0.003
-                    return frame_paint(...)
                 end
+                return inherited_paint(self, ...)
+            end
+            UIManager:nextTick(function()
+                reader:onClose()
                 UIManager:nextTick(function()
                     clock = clock + time.ms(300)
                     cpu.now = cpu.now + 0.3
@@ -111,6 +185,7 @@ describe("the KoPanda home pre-built on book close", function()
             end)
             harness.tick(4)
         end)
+        InputContainer.paintTo = inherited_paint
         UIManager.event_hook:unregister("KoPandaSettled", listener)
         time.monotonic = monotonic
         assert(ok, err)
@@ -120,58 +195,9 @@ describe("the KoPanda home pre-built on book close", function()
         assert.equals(305, signals[1].settle_ms)
     end)
 
-    it("times a pending home that the deferred show finds", function()
-        local signals = {}
-        local listener = function(args)
-            signals[#signals + 1] = args
-        end
-        UIManager.event_hook:register("KoPandaSettled", listener)
-        harness.show_fm()
-        Home.prebuild()
-        local pending = Home.pending
-        harness.tick(4)
-        UIManager.event_hook:unregister("KoPandaSettled", listener)
-        assert.equals(pending, harness.top())
-        assert.equals(1, #signals)
-        assert.is_true(signals[1].prebuilt)
-        assert.is_number(signals[1].paint_ms)
-    end)
-
-    it("drops a pending home of another size and shows a fresh one", function()
-        local reader = harness.open_reader()
-        harness.tick(2)
-        reader:onClose()
-        local pending = Home.pending
-        local size = Screen:getSize()
-        pending.dimen = Geom:new{ x = 0, y = 0, w = size.h, h = size.w }
-        local freed = spy.on(pending, "free")
-        harness.show_fm()
-        harness.tick(2)
-        local home = harness.top()
-        assert.equals("kopanda_home", home.name)
-        assert.is_not.equals(pending, home)
-        assert.equals(home, Home.shown)
-        assert.same(size, home.dimen)
-        assert.is_false(UIManager:isWidgetShown(pending))
-        assert.is_nil(Home.pending)
-        assert.spy(freed).was_called()
-    end)
-
-    it("drops the pending home when a new reader starts (switch, reload)", function()
-        local reader = harness.open_reader()
-        harness.tick(2)
-        reader:onClose()
-        local pending = Home.pending
-        assert.is_not_nil(pending)
-        local freed = spy.on(pending, "free")
-        harness.open_reader("the-time-machine.epub")
-        assert.is_nil(Home.pending)
-        assert.spy(freed).was_called()
-    end)
-
     describe("recording the chapter", function()
         local logger = require("logger")
-        local State, order, real_set, real_set_many, real_prebuild
+        local State, order, real_set, real_set_many
         local file = "/mnt/us/books/frankenstein.epub"
 
         -- A reader's KoPanda over a stub ui reading book (default: file) whose TOC answers with
@@ -196,7 +222,7 @@ describe("the KoPanda home pre-built on book close", function()
         before_each(function()
             State = package.loaded["state"]
             order = {}
-            real_set, real_set_many, real_prebuild = State.set, State.set_many, Home.prebuild
+            real_set, real_set_many = State.set, State.set_many
             State.set = function(key, value)
                 order[#order + 1] = "set " .. key
                 return real_set(key, value)
@@ -210,18 +236,16 @@ describe("the KoPanda home pre-built on book close", function()
                 order[#order + 1] = "set " .. table.concat(keys, " ")
                 return real_set_many(values)
             end
-            Home.prebuild = function()
-                order[#order + 1] = "prebuild"
-            end
         end)
 
         after_each(function()
-            State.set, State.set_many, Home.prebuild = real_set, real_set_many, real_prebuild
+            State.set, State.set_many = real_set, real_set_many
         end)
 
         -- One flush for both keys, and none when the book closes again on the same chapter:
         -- each flush is an fsync on the way from the book to the home.
-        it("writes the file and the TOC title in one write before it pre-builds, and none again unchanged", function()
+        it("writes the file and the TOC title in one write and marks the close, and writes none again unchanged",
+        function()
             local util = require("util")
             local write = util.writeToFile
             local writes = 0
@@ -234,14 +258,26 @@ describe("the KoPanda home pre-built on book close", function()
             end)
             reader_kopanda("Letter IV"):onCloseDocument()
             assert.equals(1, writes)
-            assert.same({ "set featured_chapter featured_chapter_file", "prebuild" }, order)
+            assert.same({ "set featured_chapter featured_chapter_file" }, order)
             assert.equals(file, State.get("featured_chapter_file"))
             assert.equals("Letter IV", State.get("featured_chapter"))
+            assert.is_true(Home.just_closed)
             writes, order = 0, {}
+            Home.just_closed = false
             reader_kopanda("Letter IV"):onCloseDocument()
             assert.equals(0, writes)
-            assert.same({ "prebuild" }, order)
+            assert.same({}, order)
             assert.equals("Letter IV", State.get("featured_chapter"))
+            assert.is_true(Home.just_closed)
+        end)
+
+        it("records the chapter but marks no close with the reader tearing down", function()
+            local kopanda = reader_kopanda("Letter IV")
+            kopanda.ui.tearing_down = true
+            kopanda:onCloseDocument()
+            assert.same({ "set featured_chapter featured_chapter_file" }, order)
+            assert.equals("Letter IV", State.get("featured_chapter"))
+            assert.is_false(Home.just_closed)
         end)
 
         it("records a TOC with no title for the page as an empty chapter", function()
@@ -250,16 +286,16 @@ describe("the KoPanda home pre-built on book close", function()
             assert.equals("", State.get("featured_chapter"))
         end)
 
-        it("still records with a home already pending, which it doesn't rebuild", function()
+        it("still records with the close already marked", function()
             local kopanda = reader_kopanda("Letter IV")
-            Home.pending = {}
+            Home.just_closed = true
             kopanda:onCloseDocument()
-            Home.pending = nil
             assert.same({ "set featured_chapter featured_chapter_file" }, order)
+            assert.is_true(Home.just_closed)
         end)
 
         -- C3: a raising lookup on a re-close leaves no chapter, not the one recorded before.
-        it("clears the chapter of a re-closed book whose TOC raises, logs it and pre-builds", function()
+        it("clears the chapter of a re-closed book whose TOC raises, logs it and marks the close", function()
             local FeaturedBook = package.loaded["featured_book"]
             local saved_history = package.loaded["readhistory"]
             local real = harness.library .. "/frankenstein.epub"
@@ -279,10 +315,10 @@ describe("the KoPanda home pre-built on book close", function()
             assert.equals(real, featured.file)
             assert.is_nil(featured.chapter)
             assert.spy(errored).was_called()
-            assert.equals("prebuild", order[#order])
+            assert.is_true(Home.just_closed)
         end)
 
-        it("clears the chapter when the write fails, logs it and pre-builds", function()
+        it("clears the chapter when the write fails, logs it and marks the close", function()
             reader_kopanda("Letter IV"):onCloseDocument()
             order = {}
             local errored = spy.on(logger, "err")
@@ -296,39 +332,25 @@ describe("the KoPanda home pre-built on book close", function()
             logger.err:revert()
             assert.equals("", State.get("featured_chapter"))
             assert.spy(errored).was_called()
-            assert.equals("prebuild", order[#order])
+            assert.is_true(Home.just_closed)
         end)
 
-        it("writes nothing with no document, and still pre-builds", function()
+        it("writes nothing with no document, and still marks the close", function()
             local kopanda = reader_kopanda("Letter IV")
             kopanda.ui.document = nil
             kopanda:onCloseDocument()
-            assert.same({ "prebuild" }, order)
+            assert.same({}, order)
             assert.is_nil(State.get("featured_chapter_file"))
+            assert.is_true(Home.just_closed)
         end)
 
         it("records a real reader's book on its close", function()
-            Home.prebuild = real_prebuild
             local reader = harness.open_reader()
             harness.tick(2)
             reader:onClose()
             assert.equals(harness.library .. "/frankenstein.epub", State.get("featured_chapter_file"))
             assert.is_string(State.get("featured_chapter"))
-            assert.is_not_nil(Home.pending)
+            assert.is_true(Home.just_closed)
         end)
-    end)
-
-    it("builds nothing more on a second CloseDocument while a home is pending", function()
-        local reader = harness.open_reader()
-        harness.tick(2)
-        local builds = spy_builds()
-        -- KoPanda's handler returns nothing, so CloseDocument goes on to later modules.
-        local consumed = reader.kopanda:handleEvent(Event:new("CloseDocument"))
-        assert.is_falsy(consumed)
-        local pending = Home.pending
-        assert.is_not_nil(pending)
-        reader:onClose()
-        assert.equals(pending, Home.pending)
-        assert.spy(builds).was_called(1)
     end)
 end)

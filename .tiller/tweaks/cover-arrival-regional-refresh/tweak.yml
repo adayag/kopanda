@@ -1,0 +1,9 @@
+id: TW-bpvicu
+key: tweaks/cover-arrival-regional-refresh
+title: A cover arrival refreshes the whole library and parses the tile's sidecar twice
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: T-cb345p
+source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L73-L81

@@ -63,41 +63,54 @@ Upgrading KOReader walks this list.
   window (the library, Series or Authors), either of which would otherwise keep KOReader from
   quitting.
 
-### `CloseDocument`, the pre-build on book close
+### `CloseDocument`, the mark on book close
 
 - `frontend/apps/reader/readerui.lua:870-900` (`onClose`), `:887` (sends `CloseDocument` to the
   reader's modules, the plugin instance among them), `:893` (closes the reader); the file
   browser follows from `ReaderUI:onHome` `:935-940`, `showFileManager` `:581-596` and the
   reader menu's file-browser tab `frontend/apps/reader/modules/readermenu.lua:65-74`.
 - A reader instance's `onCloseDocument` first records the book's chapter for the featured book
-  (the featured book entry below), then builds the home into `Home.pending` (not shown), or the
-  window a return names into the chrome's pending window (`LibraryChrome.pending`,
-  `library_chrome.lua`): the library at its `Library.return_to` (the library's return entry
-  below), or the Series or Authors window at the view and page of `LibraryChrome.return_to`,
-  recorded from the same `caller_pre_callback`; and returns nothing, so the event reaches later
-  modules. The next file-manager `Show` puts the pending home or window up synchronously, before
-  the UI loop's next `_repaint` (`frontend/ui/uimanager.lua:1537-1564`:
-  `_checkTasks` at `:1543`, `_repaint` at `:1563`). A
+  (the featured book entry below), then, when a return is recorded, builds the window it names
+  into the chrome's pending window (`LibraryChrome.pending`, `library_chrome.lua`, not shown):
+  the library at its `Library.return_to` (the library's return entry below), or the Series or
+  Authors window at the view and page of `LibraryChrome.return_to`, recorded from the same
+  `caller_pre_callback`; or else sets `Home.just_closed`; and returns nothing, so the event
+  reaches later modules. It builds no home: the close, `showFileManager`, `showFiles`,
+  `UIManager:show` and the file manager's `Show` run in one call stack with no `_repaint`
+  between them, so a build at the close would save no time, and it would read the sidecar
+  before the reader saves it (`:893`, through `UIManager:close`'s `FlushSettings`,
+  `frontend/ui/uimanager.lua:298`; `:876-878` skips the earlier save when the reader is its own
+  dialog, `:126-127`).
+- The next file-manager `Show` puts the pending window up, or clears the mark and builds and
+  shows the home, synchronously, before the UI loop's next `_repaint`
+  (`frontend/ui/uimanager.lua:1537-1564`: `_checkTasks` at `:1543`, `_repaint` at `:1563`). A
   deferred show would lose when the close runs inside a scheduled task (KOReader's end-of-book
   file-browser action, `frontend/apps/reader/modules/readerstatus.lua:144-148`): `nextTick`
   schedules at a fresh `time.now()` (`uimanager.lua:416`), later than the `_now` that
   `_checkTasks` compares against (`:1082`, `:1090`), so the file browser would be painted first.
 
-### `CloseDocument` with no file browser after: reload, switch, exit
+### `ReaderUI.tearing_down`, and `CloseDocument` with no file browser after: reload, switch, exit
 
 - `frontend/apps/reader/readerui.lua:959` (`reloadDocument`), `:979` (`switchDocument`);
   `frontend/apps/reader/modules/readermenu.lua:386-393` (`exitOrRestart`).
-- The pre-build happens there too and is wasted. A reader instance's `init` (the new reader of a
-  reload or switch, `readerui.lua:464-478`) drops and frees the pending home and window; exit
-  drops them with the process. A switch keeps the return, so the next close builds the window
-  again.
+- `tearing_down` is set on the closing reader before its `onClose` by `reloadDocument`
+  (`readerui.lua:952`), `switchDocument` (`:973`), and on a reader replaced by another one,
+  `onShowingReader` (`:600`, broadcast from `showReader` at `:640`) and `onSetupShowReader`
+  (`:609`). A reader instance's `onCloseDocument` sets no mark when it is set. Exit does not set
+  it and marks the close, but no `Show` follows. A reader instance's `init` (a new reader,
+  `readerui.lua:464-478`) clears the mark, since no file browser followed the last close.
+- The chrome window's pre-build happens there too and is wasted. That `init` drops and frees the
+  pending window; exit drops it with the process. A switch keeps the return, so the next close
+  builds the window again.
 
 ### `setRotationMode` in `showFiles`
 
 - `frontend/apps/filemanager/filemanager.lua:1322` (`showFiles` resets the rotation before
   building the file manager), `:63-69` (`setRotationMode`).
-- The screen can have another size at show than at close, so a pending home or library whose
-  `dimen` differs from `Screen:getSize()` is dropped (`free()`,
+- The home after a book close is built inside the file manager's `Show`, after `showFiles` reset
+  the rotation, so it is always built at the screen's size then. The screen can have another
+  size at show than at close, so a pending chrome window whose `dimen` differs from
+  `Screen:getSize()` is dropped (`free()`,
   `frontend/ui/widget/container/widgetcontainer.lua:110-117`) and a fresh one built.
 
 ### `covers_fullscreen` in `UIManager:_repaint`
@@ -109,11 +122,11 @@ Upgrading KOReader walks this list.
 ### `UIManager:nextTick` and `tickAfterNext`
 
 - `frontend/ui/uimanager.lua:431-433`, `:447-456`.
-- With no pending home the show runs from `nextTick`, landing over what `reader.lua:291-300`
-  shows synchronously after `showFiles` (a pending home is shown at once, see `CloseDocument`
-  above); the settled signal and the show's `finished` run from a `nextTick` that the home's
-  first `paintTo` schedules, past that `_repaint`, or at once from `onCloseWidget` for a home
-  closed before it painted. Nothing is scheduled before the paint, so a home under a
+- Except right after a book close, the show runs from `nextTick`, landing over what
+  `reader.lua:291-300` shows synchronously after `showFiles` (after a close the home is shown at
+  once, see `CloseDocument` above); the settled signal and the show's `finished` run from a
+  `nextTick` that the home's first `paintTo` schedules, past that `_repaint`, or at once from
+  `onCloseWidget` for a home closed before it painted. Nothing is scheduled before the paint, so a home under a
   `covers_fullscreen` window waits without a task. A `tickAfterNext` from the show could land
   before the paint and tell `finished` the home hadn't painted (the harness entry for
   `scheduleIn`, `nextTick` and `tickAfterNext` has the details). A failed paint closes the home
@@ -134,7 +147,7 @@ Upgrading KOReader walks this list.
 - `frontend/ui/uimanager.lua:53`; `frontend/ui/hook_container.lua:88-98` (`execute`, which
   runs nothing with no listener).
 - After the home's first paint the plugin executes `KoPandaSettled` with `{ screen, paint_ms,
-  cpu_ms, settle_ms, prebuilt }`, once per home; the capture harness entry below is the listener.
+  cpu_ms, settle_ms }`, once per home; the capture harness entry below is the listener.
   The sheet, editor, swatch and file-browser signals carry `paint_ms` and `cpu_ms` too.
   `cpu_ms` is `os.clock()` process CPU time over the same span as `paint_ms`, stamped through
   `paint_clock.lua`.
@@ -731,8 +744,7 @@ Upgrading KOReader walks this list.
   Either reaches the home before `DeviceListener` toggles the screen and calls
   `setDirty("all", "full")` (`:14-27`), so the home handles neither event: its `paintTo`
   compares the variant it was built with against `Looks.variant()` and rebuilds inside that
-  repaint, inside its paint `pcall`, with no `setDirty` of its own. `Home.take_pending` drops a
-  pre-built home of another variant.
+  repaint, inside its paint `pcall`, with no `setDirty` of its own.
 - Night mode at start: the device toggles it before any UI exists when `night_mode` is set in
   `G_reader_settings` (`frontend/device/generic/device.lua:344-347`), so the first home is built
   at night.
@@ -806,6 +818,14 @@ Upgrading KOReader walks this list.
   checks it with `util.fileExists` (`util`: `frontend/util.lua:830`, as
   `frontend/ui/data/onetime_migration.lua:620` does) and opens it only when it exists, since a
   creating open would leave an empty file the plugin then fails to open (`main.lua:292-317`).
+- When the plugin writes it: `insertDB` (`main.lua:912`, on its own connection opened `:929` and
+  closed `:981`) on `CloseDocument`, `SaveSettings` and `Suspend` (`main.lua:2672-2695`).
+  `reading_stats.lua` keeps its last numbers and its last book's rate while the size and mtime of
+  `statistics.sqlite3` and of its WAL file `statistics.sqlite3-wal` stay unchanged (the WAL file's
+  name is SQLite's, not the plugin's), and keeps no read while either is dated within the last two
+  seconds: lfs's `modification` is whole seconds, and `/mnt/us` on the Kindle is a fuse overlay over
+  vfat (`platform/kindle/koreader.sh:13`, `:151-152`), whose mtimes go in two-second steps (an
+  assumption until `mount` on the device confirms the vfat).
 - `lua-ljsqlite3/init` (`main.lua:13`): `base/thirdparty/lua-ljsqlite3/init.lua:325-329` (open modes),
   `:331-350` (`open(path, "ro")`, read-only), `:370-379` (`prepare`), `:611-613` (`step`), `:668`
   (`bind`), `:568` (statement `close`), `:352` (connection `close`); integers come back as int64
@@ -838,7 +858,9 @@ Upgrading KOReader walks this list.
   `PluginLoader:loadPlugins` order (`readerui.lua:464-474`), sorted by path
   (`frontend/pluginloader.lua:289`). `kopanda.koplugin` sorts before `statistics.koplugin`, and in
   the emulator KoPanda's handler ran first (module 37 against 64) with the closing session not yet
-  in `page_stat_data`, so `Home.take_pending` has the stats widget read its numbers again.
+  in `page_stat_data`. Statistics' handler closes the page and inserts the session
+  (`plugins/statistics.koplugin/main.lua:2672-2675`); the home is built at the file manager's
+  `Show`, after it ran, so the stats widget reads the closing session.
 - `datetime`: `frontend/datetime.lua:29-42` (`longMonthTranslation`, the month name).
 
 ### Book records: the home folder, the file browser's filters, CoverBrowser's rows and the sidecar
@@ -1749,7 +1771,7 @@ guard (`sheet.lua`).
 - `frontend/ui/uimanager.lua:53`; `frontend/ui/hook_container.lua:34-41` (`register`),
   `:88-98` (`execute`).
 - A `HookContainer`. The capture patch registers a `KoPandaSettled` listener and the plugin
-  under test executes it with `{ screen, paint_ms, cpu_ms, settle_ms, prebuilt }`. The patch shoots on the first
+  under test executes it with `{ screen, paint_ms, cpu_ms, settle_ms }`. The patch shoots on the first
   signal whose `screen` is `KOPANDA_SHOT_SCREEN` (default `home`) and copies the signal's
   string, number and boolean arguments into the sidecar. Listeners run in registration order
   (`hook_container.lua:94-96`), and a listener may execute the hook again from inside its own
