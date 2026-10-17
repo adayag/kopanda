@@ -124,15 +124,17 @@ local function row_box(w, h, fill_role, outline_width, shadow, ctx)
     })
 end
 
--- The row frame's lengths in device pixels: outline, padding, the column gap and the rule below.
-local function frame(ctx)
+-- The row frame's lengths in device pixels: outline, padding (padding, else shelf.row's), the column
+-- gap and the rule below.
+local function frame(ctx, padding)
     local scale = scaler(ctx)
     local look = ctx.look
     local row = look.shelf.row
+    padding = padding or row.padding
     return {
         outline = stroke(row.outline_width, look.tile.outline_color, ctx),
-        pad_x = scale(row.padding.x),
-        pad_y = scale(row.padding.y),
+        pad_x = scale(padding.x),
+        pad_y = scale(padding.y),
         gap = scale(row.gap),
         rule = stroke(row.rule_width, row.rule_color, ctx),
     }
@@ -147,11 +149,16 @@ end
 
 -- A small cover w by h for record (D21): its cached cover fitted inside the outline, or a plain
 -- cover-role fill with no lettering, outlined at outline_width in outline_role, the library's
--- cover radius. Reads the cover through BookCovers.read, the bitmap freed with the widget.
-local function small_cover(record, w, h, outline_width, outline_role, ctx)
+-- cover radius. outside draws the outline outside w by h, as the board's CSS draws a book row's
+-- cover (SeriesBooksC.dc.html:35); else inside it, as the stack keeps its room. Reads the cover
+-- through BookCovers.read, the bitmap freed with the widget.
+local function small_cover(record, w, h, outline_width, outline_role, outside, ctx)
     local scale, color = scaler(ctx), colorer(ctx)
     local radius = scale(ctx.look.library.cover.radius)
     local outline = stroke(outline_width, outline_role, ctx)
+    if outside then
+        w, h = w + 2 * outline, h + 2 * outline
+    end
     local box = new_box(w, h, { outline = outline, outline_color = color(outline_role), radius = radius })
     local cover_bb = BookCovers.read(record, w, h)
     if cover_bb then
@@ -230,7 +237,7 @@ local function stack(books, ctx)
     local box = new_box(stack_w, stack_h)
     local covers = {}
     for i = math.min(STACK, #books), 1, -1 do
-        covers[i] = small_cover(books[i], w, h, tokens.outline_width, tokens.outline_color, ctx)
+        covers[i] = small_cover(books[i], w, h, tokens.outline_width, tokens.outline_color, false, ctx)
         add(box, covers[i], (i - 1) * ox, (STACK - i) * oy)
     end
     return box, covers
@@ -309,6 +316,15 @@ function ShelfRows.series(entry, width, ctx)
     return row
 end
 
+-- A book row's cover in device pixels: cover_w by cover_h with its outline outside, and the outline.
+local function book_cover_size(ctx)
+    local scale = scaler(ctx)
+    local look = ctx.look
+    local book = look.shelf.book
+    local edge = stroke(book.cover_outline_width, look.library.cover.outline_color, ctx)
+    return scale(book.cover_w) + 2 * edge, scale(book.cover_h) + 2 * edge, edge
+end
+
 -- The one-series list's lengths in device pixels: the bar's height with its outline.
 local function bar_height(ctx)
     local look = ctx.look
@@ -324,7 +340,8 @@ local function book_content_h(ctx)
         line_height(types.book_row_note, ctx))
     local text = line_height(types.book_row_title, ctx) + math.max(scale(shelf.book.line_gap),
         scale(shelf.next.line_gap)) + second
-    return math.max(line_height(types.book_index, ctx), scale(shelf.book.cover_h), text, chip_height(ctx))
+    local _, cover_h = book_cover_size(ctx)
+    return math.max(line_height(types.book_index, ctx), cover_h, text, chip_height(ctx))
 end
 
 -- D20's index: a whole series_index without decimals, any other as Lua writes it.
@@ -385,7 +402,7 @@ function ShelfRows.book(record, progress, mark, width, ctx)
     local look = ctx.look
     local shelf = look.shelf
     local marked = mark and true or false
-    local f = frame(ctx)
+    local f = frame(ctx, shelf.book.padding)
     local content_h = book_content_h(ctx)
     local h = 2 * (f.outline + f.pad_y) + content_h + f.rule
     local fill = marked and shelf.next.fill_color or look.tile.fill_color
@@ -418,10 +435,10 @@ function ShelfRows.book(record, progress, mark, width, ctx)
         add(row, row.index, x0 + math.floor((index_w - size.w) / 2), middle(size.h))
     end
 
-    local cover_w, cover_h = scale(shelf.book.cover_w), scale(shelf.book.cover_h)
+    local cover_w, cover_h, edge = book_cover_size(ctx)
     local cover_x, cover_y = x0 + index_w + f.gap, middle(cover_h)
-    row.cover = add(row, small_cover(record, cover_w, cover_h, shelf.book.cover_outline_width,
-        look.library.cover.outline_color, ctx), cover_x, cover_y)
+    row.cover = add(row, small_cover(record, scale(shelf.book.cover_w), scale(shelf.book.cover_h),
+        shelf.book.cover_outline_width, look.library.cover.outline_color, true, ctx), cover_x, cover_y)
 
     local text_x = cover_x + cover_w + f.gap
     local text_right = right
@@ -458,7 +475,6 @@ function ShelfRows.book(record, progress, mark, width, ctx)
     end
 
     if not record.path then
-        local edge = stroke(shelf.book.cover_outline_width, look.library.cover.outline_color, ctx)
         local inset = scale_signed(scale, shelf.book.badge_inset)
         local size = scale(shelf.book.badge_size)
         local badge_y = look.library.badge.align == "bottom" and cover_y + cover_h - edge - inset - size
@@ -563,8 +579,9 @@ function ShelfRows.height(kind, width, ctx)
     if kind == "author" then
         return author_row_h(ctx)
     end
-    local f = frame(ctx)
-    local content_h = kind == "series" and series_content_h(ctx) or book_content_h(ctx)
+    local series = kind == "series"
+    local f = series and frame(ctx) or frame(ctx, ctx.look.shelf.book.padding)
+    local content_h = series and series_content_h(ctx) or book_content_h(ctx)
     return 2 * (f.outline + f.pad_y) + content_h + f.rule
 end
 

@@ -748,6 +748,7 @@ return {
             row_gap = 0, -- lead: by analogy with SeriesBooksC.dc.html:32, ruled rows
         },
         book = {
+            padding = { x = 0, y = 14 }, -- lead: by analogy with SeriesBooksC.dc.html:33
             index_w = 40, -- lead: by analogy with SeriesBooksC.dc.html:34
             cover_w = 64, -- lead: by analogy with SeriesBooksC.dc.html:35
             cover_h = 96, -- lead: by analogy with SeriesBooksC.dc.html:35

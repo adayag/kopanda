@@ -197,8 +197,13 @@ describe("shelf rows", function()
                 for _, id in ipairs(IDS) do
                     local ctx = ctx_for(id)
                     local width = row_width(ctx)
+                    -- D15: under way with no next unread, the book count (the owner, 2026-10-17).
+                    local no_next = entry()
+                    no_next.next = nil
                     local cases = {
                         { entry(), "1 OF 3", "N. K. Jemisin · next: The Obelisk Gate" },
+                        { entry{ next = false }, "1 OF 3", "N. K. Jemisin · 3 books" },
+                        { no_next, "1 OF 3", "N. K. Jemisin · 3 books" },
                         { entry{ name = "The Murderbot Diaries", state = "finished", complete = 3, next = false,
                             author = "Martha Wells" }, "FINISHED", "Martha Wells · 3 books" },
                         { entry{ name = "Wayfarers", state = "not_started", complete = 0, next = FIFTH,
@@ -370,6 +375,44 @@ describe("shelf rows", function()
                         bb:free()
                     end
                     built:free()
+                end
+            end)
+        end)
+
+        -- SeriesBooksC.dc.html:33-35: the row inside shelf.book.padding, the cover cover_w by cover_h with
+        -- its outline outside (the owner, 2026-10-17): Diner's 68 by 100, Editorial's 64 by 96. The cover is
+        -- the row's tallest item, so it fills the row inside the padding.
+        it("pads the row by shelf.book.padding and draws the cover's outline outside its size", function()
+            covers()
+            each_profile(function(where)
+                for _, id in ipairs(IDS) do
+                    local ctx = ctx_for(id)
+                    local look = ctx.look
+                    local tokens, row = look.shelf.book, look.shelf.row
+                    local label = id .. " at " .. where
+                    local outline = scale(row.outline_width)
+                    local rule, edge = scale(row.rule_width), scale(tokens.cover_outline_width)
+                    local board = id == "diner" and { 68, 100 } or { 64, 96 }
+                    assert.same(board, { tokens.cover_w + 2 * tokens.cover_outline_width,
+                        tokens.cover_h + 2 * tokens.cover_outline_width }, label)
+                    local cover_w, cover_h = scale(tokens.cover_w) + 2 * edge, scale(tokens.cover_h) + 2 * edge
+                    for _, record in ipairs({ FIFTH, remote("The Stone Sky", { series_index = 3 }) }) do
+                        local built = ShelfRows.book(record, { status = "new" }, false, row_width(ctx), ctx)
+                        local size, place = built.cover:getSize(), built:place(built.cover)
+                        assert.same({ cover_w, cover_h }, { size.w, size.h }, label .. " the cover's box")
+                        assert.equals(outline + scale(tokens.padding.x) + scale(tokens.index_w) + scale(row.gap),
+                            place.x, label .. " the cover's x")
+                        assert.equals(outline + scale(tokens.padding.y), place.y, label .. " the cover's y")
+                        assert.equals(2 * (outline + scale(tokens.padding.y)) + cover_h + rule, built:getSize().h,
+                            label .. " the row's height")
+                        built:free()
+                    end
+                    -- The stack's covers keep cover_w by cover_h as their box, the outline inside it.
+                    local series = ShelfRows.series(entry(), row_width(ctx), ctx)
+                    local stack = look.shelf.stack
+                    assert.same({ scale(stack.cover_w), scale(stack.cover_h) },
+                        { series.covers[1]:getSize().w, series.covers[1]:getSize().h }, label .. " a stack cover")
+                    series:free()
                 end
             end)
         end)
@@ -562,6 +605,31 @@ describe("shelf rows", function()
                             built:free()
                         end
                     end
+                end
+            end)
+        end)
+        -- Diner's chip text: ink on the paper chips, on_accent on the filled ones (SeriesC.dc.html:39, :76,
+        -- :88; SeriesBooksC.dc.html:49, :62); by night the two roles part.
+        it("sets Diner's chip text by kind at night, ink on paper and on_accent on a fill", function()
+            covers()
+            harness.at_colorsoft(function()
+                local ctx = ctx_for("diner", "night")
+                local width = row_width(ctx)
+                local ink, on_accent = role(ctx, "ink"), role(ctx, "on_accent")
+                assert.are_not.same(ink, on_accent)
+                local cases = {
+                    { ShelfRows.series(entry{ state = "not_started", complete = 0 }, width, ctx), "NOT STARTED", ink },
+                    { ShelfRows.book(OBELISK, { status = "new" }, true, width, ctx), "UP NEXT", ink },
+                    { ShelfRows.series(entry(), width, ctx), "1 OF 3", on_accent },
+                    { ShelfRows.series(entry{ state = "finished", complete = 3 }, width, ctx), "FINISHED", on_accent },
+                    { ShelfRows.book(remote("The Stone Sky"), { status = "new" }, false, width, ctx), "NOT DOWNLOADED",
+                        on_accent },
+                }
+                for _, case in ipairs(cases) do
+                    local built, text, want = case[1], case[2], case[3]
+                    assert.same({ text }, texts(built.chip), text)
+                    assert.same(want, line_color(built.chip[1]), text)
+                    built:free()
                 end
             end)
         end)

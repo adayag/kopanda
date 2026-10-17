@@ -776,9 +776,10 @@ return {
             row_gap = 18, -- SeriesBooksC.dc.html:32
         },
         book = {
+            padding = { x = 16, y = 14 }, -- SeriesBooksC.dc.html:33
             index_w = 40, -- SeriesBooksC.dc.html:34
-            cover_w = 64, -- SeriesBooksC.dc.html:35
-            cover_h = 96, -- SeriesBooksC.dc.html:35
+            cover_w = 64, -- the content, the outline outside it, as the board's CSS (SeriesBooksC.dc.html:35)
+            cover_h = 96, -- the content, the outline outside it, as the board's CSS (SeriesBooksC.dc.html:35)
             cover_outline_width = 2, -- SeriesBooksC.dc.html:35
             line_gap = 6, -- SeriesBooksC.dc.html:36
             bar_height = 10, -- the track inside the outline (SeriesBooksC.dc.html:38)
