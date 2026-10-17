@@ -1,0 +1,13 @@
+id: EV-rn93sa
+type: check.bug
+at: 2026-10-17T07:56:50.359206Z
+contributor: allen
+command: check bug B-2o8ya3
+targets:
+    - B-2o8ya3
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/bugs/prebuild-stale-and-wasted/bug.yml

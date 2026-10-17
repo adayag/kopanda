@@ -450,7 +450,7 @@ describe("the library's lifecycle", function()
                 local pending = Library.pending
                 assert.is_not_nil(pending)
                 assert.is_false(UIManager:isWidgetShown(pending))
-                assert.is_nil(Home.pending)
+                assert.is_false(Home.just_closed)
                 assert.is_nil(book_tile(pending).widget.strip)
                 -- The reader writes its sidecar after CloseDocument. The record read again is the
                 -- listing's, so the title stays the spec's.

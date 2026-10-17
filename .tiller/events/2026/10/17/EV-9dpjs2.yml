@@ -1,0 +1,14 @@
+id: EV-9dpjs2
+type: resume.bug
+at: 2026-10-17T07:52:51.430285Z
+contributor: allen
+command: resume bug B-2o8ya3
+targets:
+    - B-2o8ya3
+before:
+    status: in_review
+after:
+    reason: 'merge main: the cover-grid feature and three tweaks landed on the same files'
+    status: in_progress
+files:
+    - path: .tiller/bugs/prebuild-stale-and-wasted/bug.yml

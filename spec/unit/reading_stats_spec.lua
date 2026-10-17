@@ -1,6 +1,6 @@
 -- Reading stats from KOReader's Statistics database (C7): the three numbers read from fixture
 -- databases under a fixed TZ, the off and empty states, the wording per look, the fit to the
--- column, stats.show, and the pre-built home reading its numbers again when it is shown.
+-- column and stats.show.
 -- The lj-sqlite3 binding ffi.cdef()s on load (spec/emulator/driver.lua:87-88), so a Busted process
 -- loads it once: spec/unit/books_coverbrowser_spec.lua's expose block requires it and keeps it
 -- loaded, and runs before this file in bin/check's sorted files; the require here gets that one.
@@ -337,7 +337,7 @@ describe("reading stats", function()
         end)
 
         -- About a year of heavy reading: 100 page turns a day for 400 days. The streak is read
-        -- twice per book close (pre-build and show), inside the home's share of the budget (C13).
+        -- once per book close, at the show, inside the home's share of the budget (C13).
         it("reads a year of page turns quickly", function()
             local t = os.date("*t", NOW)
             local rows = {}
@@ -668,63 +668,6 @@ describe("reading stats", function()
             assert.equals(300, built:getSize().w)
             assert.equals(0, built:getSize().h)
             assert.same({}, texts(built))
-        end)
-    end)
-
-    describe("the pre-built home", function()
-        it("reads the numbers again when it is shown, after the book's session is flushed", function()
-            local Home = package.loaded["home"]
-            assert.is_true(Settings.set("layout.rows", { { { widget = "stats", share = 1 } } }))
-            local now = os.time()
-            make_db({ { 1, now, 600 } })
-            Home.prebuild()
-            local slot
-            for _, s in ipairs(Home.pending.slots) do
-                if s.widget == "stats" then
-                    slot = s
-                end
-            end
-            assert.same({ "1-DAY STREAK · 10 MIN TODAY · 1 BOOK IN " .. os.date("%B", now):upper() },
-                texts(slot.built))
-            -- What Statistics writes on the same CloseDocument, after KoPanda's pre-build.
-            local conn = SQ3.open(db_path)
-            conn:exec(string.format("INSERT INTO page_stat_data VALUES (1, 99, %d, 780, 300);", now))
-            conn:close()
-            local home = Home.take_pending()
-            assert.same({ "1-DAY STREAK · 23 MIN TODAY · 1 BOOK IN " .. os.date("%B", now):upper() },
-                texts(slot.built))
-            assert.equals(home.slots[1].built, slot.built)
-            home:free()
-        end)
-
-        it("is still handed over, its stats as built, when reading them again raises", function()
-            local Home = package.loaded["home"]
-            assert.is_true(Settings.set("layout.rows", { { { widget = "stats", share = 1 } } }))
-            local now = os.time()
-            make_db({ { 1, now, 600 } })
-            Home.prebuild()
-            local pending = Home.pending
-            local slot = pending.slots[1]
-            assert.equals("stats", slot.widget)
-            local built, line = slot.built, slot.built[1]
-            local before = texts(built)
-            local conn = SQ3.open(db_path)
-            conn:exec(string.format("INSERT INTO page_stat_data VALUES (1, 99, %d, 780, 300);", now))
-            conn:close()
-            local refresh = Stats.refresh
-            Stats.refresh = function()
-                error("refresh failed on purpose")
-            end
-            local ok, home = pcall(Home.take_pending)
-            Stats.refresh = refresh
-            assert.is_true(ok, tostring(home))
-            assert.equals(pending, home)
-            assert.is_nil(Home.pending)
-            assert.equals(built, home.slots[1].built)
-            assert.equals(line, built[1])
-            assert.same(before, texts(built))
-            assert.is_true(logged_error())
-            home:free()
         end)
     end)
 end)
