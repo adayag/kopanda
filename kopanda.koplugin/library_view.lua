@@ -141,7 +141,7 @@ end
 -- the count over the title at the left and the two pickers at the right, both resting on the
 -- padding's bottom, then the edge. Returns the header and its parts: rect, count, title, back
 -- (the back mark, nil at the root), back_place and title_place, title_rect (where a tap goes up,
--- nil at the root), sort and status ({ rect, label, mark }).
+-- nil at the root), sort and status ({ rect, hit, label, mark }).
 local function header(built, w, books, choice)
     local ctx = built.ctx
     local scale, color, line_height = tools(ctx)
@@ -161,6 +161,14 @@ local function header(built, w, books, choice)
         h = status_size.h }
     sort.rect = Geom:new{ x = status.rect.x - gap - sort_size.w, y = bottom - sort_size.h, w = sort_size.w,
         h = sort_size.h }
+    -- Where a tap opens each picker: its chip, reaching down through the padding to the edge, as
+    -- far up, and halfway across the gap at each side, so Editorial's unpadded label line
+    -- (GridA.dc.html:25) is not the whole target. The drawing is the chip's.
+    local reach = scale(tokens.padding.bottom)
+    for _, part in ipairs({ sort, status }) do
+        part.hit = Geom:new{ x = part.rect.x - math.floor(gap / 2), y = part.rect.y - reach,
+            w = part.rect.w + 2 * math.floor(gap / 2), h = part.rect.h + 2 * reach }
+    end
     add(box, sort_chip, sort.rect.x, sort.rect.y)
     add(box, status_chip, status.rect.x, status.rect.y)
     parts.sort, parts.status = sort, status

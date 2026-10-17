@@ -1,0 +1,16 @@
+id: EV-kjjji0
+type: submit.task
+at: 2026-10-17T06:00:07.671145Z
+contributor: allen
+command: submit task T-eia0v5
+targets:
+    - T-eia0v5
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/cover-grid/pickers
+        head: git:102c7fa
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/pickers/task.yml

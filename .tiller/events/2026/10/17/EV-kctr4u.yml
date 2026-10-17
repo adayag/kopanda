@@ -1,0 +1,13 @@
+id: EV-kctr4u
+type: check.task
+at: 2026-10-17T06:00:07.321579Z
+contributor: allen
+command: check task T-eia0v5
+targets:
+    - T-eia0v5
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/pickers/task.yml

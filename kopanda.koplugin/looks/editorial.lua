@@ -142,6 +142,11 @@ return {
         state_chip_color = false,
         chip_padding = { x = false, y = false },
         chip_outline_width = 0,
+        -- The sort and status sheets (cover-grid "The pickers"): no board draws Editorial's, so its
+        -- gaps are Diner's (SortC.dc.html:39, :46) and its current choice has no fill.
+        selected_fill_color = false,
+        aside_above_gap = 2,
+        sublabel_gap = 2,
     },
 
     -- Small caps, muted.
@@ -289,6 +294,12 @@ return {
         },
         -- Not drawn: Editorial has no chips. Its plain detail's style.
         sheet_chip = { face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
+        -- The header's label at its right, "Library": no board draws it here; the aside's style.
+        sheet_label = { face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
+        -- A row's second line: no board draws it here; the detail's face in sentence case.
+        sheet_sublabel = {
+            face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "muted",
+        },
         -- The editor screens' aside over the title, "Home" (EditLayout.dc.html:21), at the editor's line
         -- height of 0.3, which every editor part takes so the default layout's five rows fit above the
         -- foot (owner decision).

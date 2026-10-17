@@ -1,9 +1,10 @@
 id: T-eia0v5
 key: library/cover-grid/pickers
 title: Sort and status sheets over the library, and sheets closing the screen beneath
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-cb345p
@@ -18,3 +19,37 @@ accepted_against:
         kind: git_commit
         value: git:943d0fa
         observed_at: 2026-10-17T02:22:50.282911Z
+branch: tiller/library/cover-grid/pickers
+review_ref:
+    branch: tiller/library/cover-grid/pickers
+    head:
+        kind: git_commit
+        value: git:102c7fa
+        observed_at: 2026-10-17T06:00:07.670975Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T05:56:57.689937Z
+        against:
+            kind: git_commit
+            value: git:6762cfc
+            observed_at: 2026-10-17T05:56:57.689928Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-6762cfc-out-ea99627ca7ffdaf3e7c516f0b5577c94c4a747a2e18ae90e447cd466b972982d.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T05:56:57.689937Z
+        against:
+            kind: git_commit
+            value: git:6762cfc
+            observed_at: 2026-10-17T05:56:57.689928Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-6762cfc-out-7e01adb4f029e22a1c3c496c3a59993690a47626089cf78242f5b990339119c8.txt

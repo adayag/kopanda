@@ -144,6 +144,11 @@ return {
         state_chip_color = "teal", -- the Wi-Fi state (HoldHomeC.dc.html:55)
         chip_padding = { x = 8, y = 2 }, -- HoldBookC.dc.html:52
         chip_outline_width = 2, -- HoldBookC.dc.html:52
+        -- The sort and status sheets (cover-grid "The pickers"); SortC.dc.html's heading 28 and row
+        -- padding 16 are not taken, so the other sheets keep their sizes.
+        selected_fill_color = "teal", -- the current choice's row (SortC.dc.html:45)
+        aside_above_gap = 2, -- "for this folder" over "Sort" (SortC.dc.html:39)
+        sublabel_gap = 2, -- a row's label over its second line (SortC.dc.html:46)
     },
 
     -- An outlined box on an accent.
@@ -310,6 +315,12 @@ return {
         sheet_chip = {
             face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
         },
+        -- The header's label at its right, "Library" (SortC.dc.html:43).
+        sheet_label = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
+        },
+        -- A row's second line, "Last opened first", weight 500 in the board's ink (SortC.dc.html:48).
+        sheet_sublabel = { face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
         -- The editor screens have no Diner board: the direction doc's vocabulary ("The two looks"),
         -- the header's aside and title on the band as the home's date and clock are (HomeRetro.dc.html:22-24),
         -- the rest in the look's label style and Editorial's sizes.
