@@ -5,6 +5,8 @@
 #   bin/check              lint, studio, unit specs, emulator specs; stops at the first failing stage;
 #                          needs node on PATH and studio/node_modules (npm ci --prefix studio)
 #   bin/check --lint       luacheck alone
+#   bin/check --unit       lint, studio, unit specs; stops before spec/emulator/ (the task gate);
+#                          needs what the full run needs
 #   bin/check <spec>...    exactly those spec files, no luacheck
 #   --verbose              with any of the above: luacheck's per-file lines and Busted's full gtest
 #                          output, KOReader's library-loading chatter included
@@ -44,7 +46,16 @@ for arg in "$@"; do
 done
 set -- ${args[@]+"${args[@]}"}
 
+mode=specs
 if [[ $# -eq 0 ]]; then
+    mode=all
+elif [[ $# -eq 1 && "$1" == "--lint" ]]; then
+    mode=lint
+elif [[ $# -eq 1 && "$1" == "--unit" ]]; then
+    mode=unit
+fi
+
+if [[ "$mode" == all || "$mode" == unit ]]; then
     if ! command -v node >/dev/null 2>&1; then
         refuse "bin/check: node is not on PATH" "    brew install node" "    npm ci --prefix studio"
     fi
@@ -145,12 +156,14 @@ absolute() {
     esac
 }
 
-if [[ $# -eq 0 ]]; then
+if [[ "$mode" == all || "$mode" == unit ]]; then
     run_lint || exit 1
     run_studio || exit 1
     run_layer unit || exit 1
-    run_layer emulator || exit 1
-elif [[ $# -eq 1 && "$1" == "--lint" ]]; then
+    if [[ "$mode" == all ]]; then
+        run_layer emulator || exit 1
+    fi
+elif [[ "$mode" == lint ]]; then
     run_lint || exit 1
 else
     specs=()

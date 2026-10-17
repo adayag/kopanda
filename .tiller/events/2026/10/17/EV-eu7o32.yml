@@ -1,0 +1,13 @@
+id: EV-eu7o32
+type: approve.task
+at: 2026-10-17T21:40:49.86253Z
+contributor: allen
+command: approve task T-3cuakg
+targets:
+    - T-3cuakg
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/placeholders/task.yml

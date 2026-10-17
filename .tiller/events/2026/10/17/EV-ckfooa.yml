@@ -1,0 +1,14 @@
+id: EV-ckfooa
+type: submit.tweak
+at: 2026-10-17T21:38:54.088846Z
+contributor: allen
+command: submit tweak TW-s7jikb
+targets:
+    - TW-s7jikb
+before:
+    status: check
+after:
+    pr: 44
+    status: in_review
+files:
+    - path: .tiller/tweaks/task-gate-skips-emulator/tweak.yml

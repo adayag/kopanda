@@ -1,0 +1,13 @@
+id: EV-p56yhu
+type: approve.feature
+at: 2026-10-17T21:40:49.837302Z
+contributor: allen
+command: approve feature F-yy4zaa
+targets:
+    - F-yy4zaa
+before:
+    status: specced
+after:
+    status: ready
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/feature.yml
