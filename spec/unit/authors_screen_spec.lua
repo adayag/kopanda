@@ -226,6 +226,54 @@ describe("the Authors window", function()
             end)
         end)
 
+        -- The list's page ends shelf.list.pager_gap above the pager at the Colorsoft, its last group's
+        -- shadow inside the gap, with AuthorsC's seven rows in five groups on it (feature "The fit").
+        it("keeps the pager gap below the last group and its shadow at the Colorsoft, in both looks", function()
+            local records = {}
+            for _, run in ipairs({ { "C", 2 }, { "H", 1 }, { "J", 2 }, { "L", 1 }, { "M", 1 }, { "P", 3 },
+                    { "S", 2 }, { "T", 2 }, { "W", 3 } }) do
+                for i = 1, run[2] do
+                    records[#records + 1] = fixture.book(("Book %s%d"):format(run[1], i),
+                        { authors = { ("Ann %s%02d"):format(run[1], i) } })
+                end
+            end
+            fixture.install(records)
+            harness.at_colorsoft(function()
+                each_look(function(id)
+                    local screen = AuthorsScreen.show{}
+                    assert.is_true(screen.pages >= 2, id)
+                    assert.is_true(#screen.rows >= 7, id .. ": " .. #screen.rows .. " rows")
+                    local gap = Screen:scaleBySize(screen.ctx.look.shelf.list.pager_gap)
+                    local last = screen.groups[#screen.groups]
+                    local foot = last.rect.y + last.rect.h + last.widget.shadow_y
+                    assert.is_true(foot + gap <= screen.pager.prev.rect.y,
+                        ("%s: the last group's foot %d, %d px above the pager at %d"):format(id, foot,
+                            screen.pager.prev.rect.y - foot, screen.pager.prev.rect.y))
+                    AuthorsScreen.close()
+                end)
+            end)
+        end)
+
+        -- Whatever room a page leaves, the list keeps the gap: on screens from 1500 to 1800 px high, a
+        -- full first page's last group and its shadow end shelf.list.pager_gap above the pager.
+        it("keeps the pager gap on a full page at every screen height, in both looks", function()
+            fixture.install(shelf(38))
+            each_look(function(id)
+                for h = 1500, 1800, 5 do
+                    harness.at_screen(1264, h, function()
+                        local screen = AuthorsScreen.show{}
+                        assert.is_true(screen.pages >= 2, id)
+                        local gap = Screen:scaleBySize(screen.ctx.look.shelf.list.pager_gap)
+                        local last = screen.groups[#screen.groups]
+                        local foot = last.rect.y + last.rect.h + last.widget.shadow_y
+                        assert.is_true(foot + gap <= screen.pager.prev.rect.y,
+                            ("%s at %d px: %d px above the pager"):format(id, h, screen.pager.prev.rect.y - foot))
+                        AuthorsScreen.close()
+                    end)
+                end
+            end)
+        end)
+
         it("starts a page with a group's letter again when a page break splits it", function()
             fixture.install(shelf(30, "A"))
             local screen = fixture.show_authors()

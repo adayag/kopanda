@@ -736,16 +736,17 @@ describe("looks", function()
 
         -- The series and authors screens' block and parts (series-and-authors "Tokens", SeriesC,
         -- SeriesBooksC, AuthorsC and AuthorBooksA under .tiller/design/2026-10-16-kopanda-library-screens/;
-        -- the undrawn ones by analogy, D26). Diner's row.padding.y is the owner's fit, 11 not the board's 12,
-        -- for five series rows a page at the Colorsoft (2026-10-17).
+        -- the undrawn ones by analogy, D26). Diner's row.padding.y is the owner's fit, 9 not the board's 12,
+        -- for five series rows a page at the Colorsoft with list.pager_gap above the pager, the owner's
+        -- gap (2026-10-17).
         local SHELF_BOARD = {
             diner = {
                 series_fill_color = "pink", authors_fill_color = "teal",
                 detail = { padding = { top = 22, side = 40, bottom = 18 }, back_gap = 10 },
                 back = { fill_color = "paper", outline_width = 2, padding = { left = 6, right = 10, y = 4 },
                     icon_size = 14, gap = 6 },
-                list = { padding_top = 22, side = 40, row_gap = 14 },
-                row = { padding = { x = 16, y = 11 }, gap = 18, line_gap = 3, outline_width = 3,
+                list = { padding_top = 22, side = 40, row_gap = 14, pager_gap = 14 },
+                row = { padding = { x = 16, y = 9 }, gap = 18, line_gap = 3, outline_width = 3,
                     shadow = { x = 4, y = 4 }, rule_width = 0, rule_color = "ink" },
                 stack = { cover_w = 38, cover_h = 56, offset_x = 10, offset_y = 2, outline_width = 2,
                     outline_color = "outline" },
@@ -771,7 +772,7 @@ describe("looks", function()
                 detail = { padding = { top = 26, side = 40, bottom = 16 }, back_gap = 14 },
                 back = { fill_color = false, outline_width = 0, padding = { left = 0, right = 0, y = 0 },
                     icon_size = 14, gap = 6 },
-                list = { padding_top = 22, side = 40, row_gap = 0 },
+                list = { padding_top = 22, side = 40, row_gap = 0, pager_gap = 14 },
                 row = { padding = { x = 0, y = 14 }, gap = 18, line_gap = 3, outline_width = 0,
                     shadow = { x = 0, y = 0 }, rule_width = 1, rule_color = "hairline" },
                 stack = { cover_w = 38, cover_h = 56, offset_x = 10, offset_y = 2, outline_width = 1,

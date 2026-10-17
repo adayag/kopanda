@@ -743,10 +743,12 @@ return {
             padding_top = 22, -- SeriesC.dc.html:27
             side = 40, -- SeriesC.dc.html:27
             row_gap = 14, -- SeriesC.dc.html:27
+            -- the owner, 2026-10-17: the row gap, kept clear above the pager, its last row's shadow inside it
+            pager_gap = 14, -- the owner's, as row_gap (SeriesC.dc.html:27)
         },
         row = {
-            -- y: owner's fit 2026-10-17: board 12, five rows a page at the Colorsoft
-            padding = { x = 16, y = 11 }, -- SeriesC.dc.html:28
+            -- y: owner's fit 2026-10-17: board 12, five rows a page at the Colorsoft with pager_gap above the pager
+            padding = { x = 16, y = 9 }, -- SeriesC.dc.html:28
             gap = 18, -- SeriesC.dc.html:28
             line_gap = 3, -- SeriesC.dc.html:34, the name to its sub-line
             outline_width = 3, -- SeriesC.dc.html:28

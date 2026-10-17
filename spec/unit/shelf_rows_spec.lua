@@ -666,26 +666,32 @@ describe("shelf rows", function()
         end)
 
         -- The boards' counts per page at the Colorsoft: five series rows (SeriesC), three book rows
-        -- (SeriesBooksC), seven author rows in five groups (AuthorsC), each group's cost counted whole.
-        it("holds the boards' rows per page at the Colorsoft", function()
+        -- (SeriesBooksC), seven author rows in five groups (AuthorsC), each group's cost counted whole,
+        -- each list's page ending shelf.list.pager_gap above the pager, the last row's shadow inside it (the
+        -- marked book's the deeper where a book row's is).
+        it("holds the boards' rows per page at the Colorsoft, the pager gap and the last shadow kept", function()
             harness.at_colorsoft(function()
                 for _, id in ipairs(IDS) do
                     local ctx = ctx_for(id)
                     local shelf = ctx.look.shelf
                     local width = row_width(ctx)
                     local list_header = LibraryTiles.header_height(ctx)
+                    local function room(header_h, padding_top, shadow_y)
+                        return room_under(header_h, padding_top, ctx) - scale(shelf.list.pager_gap) - scale(shadow_y)
+                    end
 
                     local series = 5 * ShelfRows.height("series", width, ctx) + 4 * scale(shelf.list.row_gap)
-                    local room = room_under(list_header, shelf.list.padding_top, ctx)
-                    assert.is_true(series <= room, ("%s: five series rows %d px in %d"):format(id, series, room))
+                    local left = room(list_header, shelf.list.padding_top, shelf.row.shadow.y)
+                    assert.is_true(series <= left, ("%s: five series rows %d px in %d"):format(id, series, left))
 
                     local books = 3 * ShelfRows.height("book", width, ctx) + 2 * scale(shelf.books.row_gap)
-                    room = room_under(detail_header_height(ctx), shelf.books.padding_top, ctx)
-                    assert.is_true(books <= room, ("%s: three book rows %d px in %d"):format(id, books, room))
+                    left = room(detail_header_height(ctx), shelf.books.padding_top,
+                        math.max(shelf.row.shadow.y, shelf.next.shadow.y))
+                    assert.is_true(books <= left, ("%s: three book rows %d px in %d"):format(id, books, left))
 
                     local authors = 7 * ShelfRows.height("author", width, ctx) + 5 * ShelfRows.group_cost(width, ctx)
-                    room = room_under(list_header, shelf.groups.padding_top, ctx)
-                    assert.is_true(authors <= room, ("%s: seven author rows %d px in %d"):format(id, authors, room))
+                    left = room(list_header, shelf.groups.padding_top, shelf.group.shadow.y)
+                    assert.is_true(authors <= left, ("%s: seven author rows %d px in %d"):format(id, authors, left))
                 end
             end)
         end)

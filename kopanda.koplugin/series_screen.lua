@@ -62,8 +62,8 @@ end
 -- What view at page shows from the window's records on a screen w by h under ctx, before any widget
 -- is built: { view, the list instead for a series no entry has any more (D23); entry, the series
 -- shown or nil; entries, ShelfOrder.series; progress; header_h; top, the rows' first y; gap; width;
--- rows, each { h, entry or record }; pages, ShelfOrder.pages of them between the header and the
--- pager; page, clamped }.
+-- rows, each { h, entry or record }; pages, ShelfOrder.pages of them between the header and
+-- ShelfRows.pager_reserve above the pager; page, clamped }.
 local function plan(self, view, page, w, h, ctx)
     local progress = progress_once()
     local entries = ShelfOrder.series(self.records, progress)
@@ -81,6 +81,7 @@ local function plan(self, view, page, w, h, ctx)
     local shelf = ctx.look.shelf
     local p = { view = view, entry = entry, entries = entries, progress = progress, rows = {},
         width = w - 2 * scale(shelf.list.side) }
+    local kind = entry and "book" or "series"
     if entry then
         p.header_h = LibraryChrome.detail_header_height(ctx)
         p.top, p.gap = p.header_h + scale(shelf.books.padding_top), scale(shelf.books.row_gap)
@@ -97,6 +98,7 @@ local function plan(self, view, page, w, h, ctx)
         end
     end
     local available = h - NavBar.height(ctx.look, Screen) - LibraryTiles.pager_height(ctx) - p.top
+        - ShelfRows.pager_reserve(kind, ctx)
     p.pages = ShelfOrder.pages(p.rows, available, p.gap)
     p.page = math.max(1, math.min(page or 1, #p.pages))
     return p
