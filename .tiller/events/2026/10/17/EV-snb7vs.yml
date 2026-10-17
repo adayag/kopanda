@@ -1,0 +1,15 @@
+id: EV-snb7vs
+type: start.task
+at: 2026-10-17T03:21:33.430467Z
+contributor: allen
+command: start task T-m6bm2e
+targets:
+    - T-m6bm2e
+before:
+    status: ready
+after:
+    branch: tiller/bars/title-bar/goldens
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/goldens/task.yml

@@ -11,7 +11,9 @@
 --     so the subtitle showed the library's absolute path, cut on the left only where it ran out of
 --     width (".../<the checkout's last folders>/spec/fixtures/library"): a golden that depends on
 --     where the repo is checked out (open fact F3, candidate a). With the library as home, the
---     subtitle reads "Home" in every checkout, as it does on the device.
+--     subtitle read "Home" in every checkout, as it does on the device. Since bars/title-bar,
+--     KoPanda's title bar replaces KOReader's and draws no path: with the library as home its
+--     title reads "Library" (title-bar D1), and the stored home_dir is what makes it so.
 --   - On the first home's settled signal, from the next tick, it closes the home
 --     (kopanda.koplugin/home.lua, Home.close), which leaves KOReader's file browser on top on the
 --     library the driver started KOReader in; the file browser then sends its own settled signal.
