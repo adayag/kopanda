@@ -1,0 +1,13 @@
+id: EV-mw2crh
+type: approve.epic
+at: 2026-10-17T07:14:05.489703Z
+contributor: allen
+command: approve epic E-ze7s9x
+targets:
+    - E-ze7s9x
+before:
+    status: draft
+after:
+    status: ready
+files:
+    - path: .tiller/epics/bars/epic.yml
