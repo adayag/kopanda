@@ -1,0 +1,14 @@
+id: EV-1h835v
+type: sync.task
+at: 2026-10-17T16:42:13.689909Z
+contributor: allen
+command: sync task T-8j0bc0
+targets:
+    - T-8j0bc0
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/routing/task.yml

@@ -1,7 +1,7 @@
 id: F-yaihx9
 key: library/series-and-authors
 title: Series and Authors screens replace the placeholders
-status: active
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -35,6 +35,23 @@ accepted_against:
         kind: git_commit
         value: git:2745adb
         observed_at: 2026-10-17T15:55:38.542427Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:0fac9badd9ff5c6cfd21886346dcbc4ae6520972
+        path: .tiller/epics/library/features/series-and-authors/feature.md
+        observed_at: 2026-10-17T16:42:13.831186Z
+    eval:
+        kind: git_blob
+        value: git:1ffd21c760c4cc56e09df2db27034a0c5880b7df
+        path: .tiller/epics/library/features/series-and-authors/feature.eval.md
+        observed_at: 2026-10-17T16:42:13.831186Z
+    commit:
+        kind: git_commit
+        value: git:b852610
+        observed_at: 2026-10-17T16:42:13.062722Z
+    surfaces: []
+done_basis: rollup
 gates:
     build:
         required: true

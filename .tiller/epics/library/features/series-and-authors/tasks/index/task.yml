@@ -1,7 +1,7 @@
 id: T-05lpro
 key: library/series-and-authors/index
 title: Series state, author order, letter groups and the pagings as pure logic
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:c7a33b3
         observed_at: 2026-10-17T12:18:36.562993Z
+done_basis: ancestry
 gates:
     build:
         required: true

@@ -1,7 +1,7 @@
 id: T-qrlexd
 key: library/series-and-authors/rows
 title: Series and authors tokens, row widgets and the one-author tile, fitted
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:21728de
         observed_at: 2026-10-17T12:58:47.5118Z
+done_basis: ancestry
 gates:
     build:
         required: true

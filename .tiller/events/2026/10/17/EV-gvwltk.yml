@@ -1,0 +1,14 @@
+id: EV-gvwltk
+type: sync.task
+at: 2026-10-17T16:42:13.269408Z
+contributor: allen
+command: sync task T-05lpro
+targets:
+    - T-05lpro
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/index/task.yml

@@ -1,7 +1,7 @@
 id: T-8j0bc0
 key: library/series-and-authors/routing
 title: Entry points, the Authors tab, More by this author and the return after a book closes
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:6a96981
         observed_at: 2026-10-17T14:42:56.797363Z
+done_basis: ancestry
 gates:
     build:
         required: true
