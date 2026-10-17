@@ -1,0 +1,13 @@
+id: EV-3nj966
+type: check.task
+at: 2026-10-17T07:13:30.043527Z
+contributor: allen
+command: check task T-lmmmgv
+targets:
+    - T-lmmmgv
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/goldens/task.yml
