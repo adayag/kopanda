@@ -1,0 +1,10 @@
+id: T-ivn2lk
+key: library/context-menu/space-sheet
+title: 'The empty-space sheet: Sort, Show, Refresh covers and Hidden folders'
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-id5xlc
+    - T-m9850d

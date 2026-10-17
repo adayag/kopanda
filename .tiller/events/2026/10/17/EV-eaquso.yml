@@ -1,0 +1,11 @@
+id: EV-eaquso
+type: claim.bug
+at: 2026-10-17T05:05:47.32091Z
+contributor: allen
+command: claim bug bugs/edit-layout-quote-day
+targets:
+    - B-mobbtn
+after:
+    owner: allen
+files:
+    - path: .tiller/bugs/edit-layout-quote-day/bug.yml

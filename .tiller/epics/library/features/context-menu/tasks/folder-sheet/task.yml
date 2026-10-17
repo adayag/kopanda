@@ -1,0 +1,10 @@
+id: T-id5xlc
+key: library/context-menu/folder-sheet
+title: 'The folder sheet: Open, Set as library root and Hide, with hidden folders kept in the state file'
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+depends_on:
+    - T-1rl35j
+    - T-m9850d

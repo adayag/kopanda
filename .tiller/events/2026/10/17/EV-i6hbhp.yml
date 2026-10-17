@@ -1,0 +1,13 @@
+id: EV-i6hbhp
+type: approve.bug
+at: 2026-10-17T04:34:24.282325Z
+contributor: allen
+command: approve bug B-0wpe5u
+targets:
+    - B-0wpe5u
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/bugs/swatch-settle-before-paint/bug.yml

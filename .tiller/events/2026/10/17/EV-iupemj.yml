@@ -1,0 +1,11 @@
+id: EV-iupemj
+type: claim.bug
+at: 2026-10-17T04:35:19.030769Z
+contributor: allen
+command: claim bug bugs/swatch-settle-before-paint
+targets:
+    - B-0wpe5u
+after:
+    owner: allen
+files:
+    - path: .tiller/bugs/swatch-settle-before-paint/bug.yml

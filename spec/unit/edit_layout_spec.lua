@@ -148,7 +148,19 @@ describe("edit layout", function()
         return Editor.shown
     end
 
+    -- The home and the editor lay out the date, the clock and the quote of the day at os.time(),
+    -- so os.time() reads this instant: a day whose quote fits beside weather in row 3 (a longer
+    -- quote, 2026-10-17's, wraps to four lines and leaves the launcher out, so the add is refused).
+    local NOW = os.time{ year = 2026, month = 10, day = 16, hour = 8, min = 42, sec = 0 }
+
     before_each(function()
+        local real_time = os.time
+        replace(os, "time", function(...)
+            if select("#", ...) == 0 then
+                return NOW
+            end
+            return real_time(...)
+        end)
         harness.load()
         Editor = require("editor")
         EditLayout = require("edit_layout")
