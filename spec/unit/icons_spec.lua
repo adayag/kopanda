@@ -51,8 +51,8 @@ describe("icons", function()
 
     -- The library's three hold sheets draw seven new icons and library (context-menu feature, D4): the
     -- book sheet's Add to the home and Delete (HoldBookC:66, :70), the folder sheet's Open, Set as
-    -- library root and Hide (HoldFolderC:45, :49, :56), and the library sheet's Sort, Show, Refresh and
-    -- Show hidden (HoldEmptyC:44, :51, :57).
+    -- library root and Hide (HoldFolderC:45, :49, :56), and the library sheet's Sort, Show and Refresh
+    -- (HoldEmptyC:44, :51, :57) and Hidden folders (eye_off, feature.md:245).
     it("uses the context menu's icons in the book, library folder and library sheets", function()
         local places = {}
         for _, entry in ipairs(Icons.entries) do
