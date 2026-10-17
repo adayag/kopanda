@@ -411,6 +411,40 @@ describe("the Series window", function()
                 end
             end)
         end)
+
+        -- The marked book's shadow, deeper than a row's, stays inside the gap when it ends the page: on
+        -- screens from 1500 to 1800 px high, the books before page 1's last complete, so the last is the
+        -- marked one.
+        it("keeps the pager gap when the marked book ends a full page at every screen height, in both looks",
+            function()
+            local long = fixture.series("Long", 12)
+            local view = { kind = "series", name = "Long" }
+            each_look(function(id)
+                for h = 1500, 1800 do
+                    harness.at_screen(1264, h, function()
+                        fixture.install(long)
+                        local screen = SeriesScreen.show{ view = view }
+                        local n = #screen.rows
+                        SeriesScreen.close()
+                        local progress = {}
+                        for i = 1, n - 1 do
+                            progress[long[i].id] = { status = "complete", percent = 1 }
+                        end
+                        fixture.install(long, progress)
+                        screen = SeriesScreen.show{ view = view }
+                        local where = ("%s at %d px"):format(id, h)
+                        assert.equals(n, #screen.rows, where)
+                        local last = screen.rows[n]
+                        assert.is_true(last.widget.marked, where .. ": the marked book is the page's last")
+                        local gap = Screen:scaleBySize(screen.ctx.look.shelf.list.pager_gap)
+                        local foot = last.rect.y + last.rect.h + last.widget.shadow_y
+                        assert.is_true(foot + gap <= screen.pager.prev.rect.y,
+                            ("%s: %d px above the pager"):format(where, screen.pager.prev.rect.y - foot))
+                        SeriesScreen.close()
+                    end)
+                end
+            end)
+        end)
     end)
 
     describe("kept current", function()
