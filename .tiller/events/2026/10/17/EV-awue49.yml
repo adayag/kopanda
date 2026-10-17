@@ -1,0 +1,13 @@
+id: EV-awue49
+type: check.task
+at: 2026-10-17T19:31:08.271724Z
+contributor: allen
+command: check task T-512xrc
+targets:
+    - T-512xrc
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/goldens/task.yml
