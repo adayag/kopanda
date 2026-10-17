@@ -1,7 +1,7 @@
 id: T-y7g8mr
 key: library/series-and-authors/series
 title: 'The Series window: the list and one series, on the shared chrome'
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -25,8 +25,8 @@ review_ref:
     branch: tiller/library/series-and-authors/series
     head:
         kind: git_commit
-        value: git:2f2f233
-        observed_at: 2026-10-17T13:43:06.500478Z
+        value: git:faa4d4a
+        observed_at: 2026-10-17T14:14:40.6933Z
 gates:
     build:
         required: true

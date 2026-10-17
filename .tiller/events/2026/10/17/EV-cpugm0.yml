@@ -1,0 +1,16 @@
+id: EV-cpugm0
+type: submit.task
+at: 2026-10-17T14:14:40.693495Z
+contributor: allen
+command: submit task T-y7g8mr
+targets:
+    - T-y7g8mr
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/series-and-authors/series
+        head: git:faa4d4a
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/series/task.yml
