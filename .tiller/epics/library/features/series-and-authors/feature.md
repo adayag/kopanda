@@ -100,7 +100,8 @@ Lead decisions, each overturnable at approval:
 - **D15. A series' author** is the first author of the first book in series order that has one, followed by
   " and others" when any book of the series has a first author different from it; a series none of whose
   books has an author shows no author part. Sub-lines: under way "N. K. Jemisin · next: The Obelisk Gate"
-  (SeriesC:36); finished and not started "Martha Wells · 7 books" (SeriesC:74, :86).
+  (SeriesC:36); finished and not started "Martha Wells · 7 books" (SeriesC:74, :86). An under-way series with
+  no next unread (its books only `complete` and `abandoned`) shows the book-count line (the owner, 2026-10-17).
 - **D16. One author's books** are in cover-grid's Series order (D9, feature.md:76-77: the series name's title
   order, then `series_index`, books with no index after; books in no series last, by title). A book is
   marked up next when it is its series' next unread (D3), the series taken whole, not only this author's
@@ -218,7 +219,8 @@ on `paper`, `ink` (cover-grid feature.md:244-246).
 | `shelf.detail.padding` top, side, bottom; `back_gap` | 26, 40, 16; 14 (AuthorBooksA:19) | 22, 40, 18; 10 (SeriesBooksC:19) |
 | `shelf.back.fill_color`, `outline_width`, `padding` l, r, y, `icon_size`, `gap` | false, 0, 0, 0, 0, 14, 6 (AuthorBooksA:20-21) | `paper`, 2, 6, 10, 4, 14, 6 (SeriesBooksC:20-21) |
 | `shelf.list.padding_top`, `side`, `row_gap` | 22, 40, 0 (lead: by analogy, rows ruled not boxed) | 22, 40, 14 (SeriesC:27) |
-| `shelf.row.padding` x, y; `gap`; `outline_width`; `shadow` x, y; `rule_width`, `rule_color` | 0, 14; 18; 0; 0, 0; 1, `hairline` (lead: by analogy with GridA's hairlines) | 16, 12; 18; 3; 4, 4; 0, `ink` (SeriesC:28) |
+| `shelf.row.padding` x, y; `gap`; `outline_width`; `shadow` x, y; `rule_width`, `rule_color` | 0, 14; 18; 0; 0, 0; 1, `hairline` (lead: by analogy with GridA's hairlines) | 16, 11; 18; 3; 4, 4; 0, `ink` (SeriesC:28; y 11 not the board's 12: the owner's fit, 2026-10-17, five rows a page at the Colorsoft) |
+| `shelf.row.line_gap` | 3 (lead: by analogy with SeriesC:34) | 3 (SeriesC:34) |
 | `shelf.stack.cover_w`, `cover_h`, `offset_x`, `offset_y`, `outline_width`, `outline_color` | 38, 56, 10, 2, 1, `paper` (lead: an edge to part the overlapped covers) | 38, 56, 10, 2, 2, `outline` (SeriesC:29-33) |
 | `shelf.chip.padding` x, y; `outline_width`; `under_way_fill_color`, `finished_fill_color`, `not_started_fill_color`, `up_next_fill_color`, `not_downloaded_fill_color` | 0, 0; 0; false × 5 (lead: small caps, as GridA:73) | 7, 1; 2; `mustard`, `teal`, `paper`, `paper`, `pink` (SeriesC:39, :76, :88; SeriesBooksC:49, :62) |
 | `shelf.books.padding_top`, `row_gap` | 24, 0 (lead: ruled rows) | 24, 18 (SeriesBooksC:32) |
