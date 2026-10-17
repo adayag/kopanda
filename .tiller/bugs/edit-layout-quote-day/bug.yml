@@ -1,0 +1,8 @@
+id: B-mobbtn
+key: bugs/edit-layout-quote-day
+title: Edit-layout add-column spec fails on days with a long quote
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+source: spec/unit/edit_layout_spec.lua#L359-L369

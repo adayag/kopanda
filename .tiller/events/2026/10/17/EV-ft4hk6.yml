@@ -1,0 +1,13 @@
+id: EV-ft4hk6
+type: add.bug
+at: 2026-10-17T05:04:24.867554Z
+contributor: allen
+command: add bug edit-layout-quote-day
+targets:
+    - B-mobbtn
+after:
+    key: bugs/edit-layout-quote-day
+    status: proposed
+files:
+    - path: .tiller/bugs/edit-layout-quote-day/bug.md
+    - path: .tiller/bugs/edit-layout-quote-day/bug.yml
