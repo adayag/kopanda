@@ -1,7 +1,7 @@
 id: B-2o8ya3
 key: bugs/prebuild-stale-and-wasted
 title: The prebuilt home shows stale progress and builds on reload, switch and exit
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -24,26 +24,26 @@ gates:
     build:
         required: true
         kind: command
-        status: stale
+        status: pass
         run_by: allen
-        run_at: 2026-10-17T07:44:02.782943Z
+        run_at: 2026-10-17T07:52:51.874364Z
         against:
             kind: git_commit
-            value: git:51e054b
-            observed_at: 2026-10-17T07:44:02.782942Z
+            value: git:5db04e9
+            observed_at: 2026-10-17T07:52:51.874363Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/build-51e054b-out-e0415070271fe4fe326304bc2a124931d894a74d343c11dff5a7dce509664e6c.txt
+              ref: artifacts/tiller/gates/build-5db04e9-out-86618d2e8f79bd3a88e4ffbdb89fdf40161df81ac1bb47f155f4af01a1e28f4e.txt
     tests:
         required: true
         kind: command
-        status: stale
+        status: pass
         run_by: allen
-        run_at: 2026-10-17T07:44:02.782943Z
+        run_at: 2026-10-17T07:52:51.874364Z
         against:
             kind: git_commit
-            value: git:51e054b
-            observed_at: 2026-10-17T07:44:02.782942Z
+            value: git:5db04e9
+            observed_at: 2026-10-17T07:52:51.874363Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/tests-51e054b-out-35eeb7a15cd307d114e24bc1aa27c2136a84e4bda9d7667a8200b7d7be252484.txt
+              ref: artifacts/tiller/gates/tests-5db04e9-out-0f148cd979fde666ab8f0be5c4cf2bb4a252a6c5ed16de1e4cf9bb5d4c913003.txt
