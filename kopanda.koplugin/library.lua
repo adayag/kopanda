@@ -222,6 +222,16 @@ function Library:refresh_covers(records)
     end
 end
 
+-- After cwngsync downloaded record's book over its placeholder (cwng-placeholders D17): Refresh
+-- covers' re-list for that book alone, so the page is rebuilt where it is with the book read again
+-- and its cover asked for after the paint. Nothing while the library isn't the window shown.
+function Library:downloaded(record)
+    if Library.shown ~= self then
+        return
+    end
+    self:refresh_covers({ record })
+end
+
 -- The root check (context-menu D6): when KOReader's home folder is no longer the one the library
 -- was built under (Set as library root's OK, whose ConfirmBox's close marks the library dirty),
 -- the library shows the new root at page 1, recorded as where it was left. A build that fails

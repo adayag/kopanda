@@ -1847,7 +1847,7 @@ cwngsync is the owner's own sync plugin, not bundled with KOReader. Its citation
 `new-usemame/cwngsync.koplugin` at `df90d5e` (v4.1.46, its `main.lua:46`), relative to
 `cwngsync.koplugin/`, read from a read-only clone; KoPanda never vendors or requires its files. An
 update on the Kindle can rename what is cited here: every call is wrapped, so KOReader stays usable,
-but the badge would quietly go. Re-check this entry when cwngsync updates.
+but the badge or the Download row would quietly go. Re-check this entry when cwngsync updates.
 
 - The instance: `cloud_books.lua` reads `FileManager.instance.cwngsync` through `package.loaded`, as
   the `FileManager.instance` entry above reads `instance.kopanda`. `registerModule` stores a module
@@ -1893,6 +1893,41 @@ but the badge would quietly go. Re-check this entry when cwngsync updates.
 - Read status is unchanged: with auto sync on, cwngsync wraps `filemanagerutil.saveSummary` and
   queues a placeholder's status by its book id (`cwng_auto_sync.lua:186-229`), so a status written
   from the book sheet's Read status reaches its server.
+- Download: the book sheet's Download row (`book_sheet.lua`) calls
+  `openLibraryPlaceholder(file, open_real)` (`cwng_library_runtime.lua:999-1030`) with its own
+  callback for `open_real`, and only while the instance has that method; it is read again on the
+  tap. cwngsync first makes the placeholder test above and returns false when it fails
+  (`:1000-1008`), which KoPanda answers by re-listing the window. Otherwise it returns true and hands
+  the rest to `NetworkMgr:runWhenConnected` (`:1010`; `frontend/ui/network/manager.lua:713-719`):
+  connected, that runs at once, inside the tap's dispatch; else `beforeWifiAction` (`:717`) may ask,
+  turn Wi-Fi on or do nothing, by the owner's KOReader setting, so the callback may run much later
+  or never, and KoPanda keeps nothing pending. Inside, cwngsync shows "Downloading %1…" and repaints
+  (`cwng_library_runtime.lua:1011-1013`), downloads synchronously (`:1014`), closes its notice
+  (`:1015`) and, on success, calls the callback with the file where it would have opened it
+  (`:1017`); a failure shows its own "Could not download…" (`:1022-1026`) and the callback never
+  runs. With auto sync off a success schedules `reportInventory` 5 s later (`:1018-1020`): cwngsync's
+  timer, not KoPanda's.
+- `downloadLibraryBook` (`cwng_library_runtime.lua:940-977`): the download goes to
+  `<path>.cwngsync.part`, is checked for length and checksum and renamed over the placeholder
+  (`:957-961`); then `BookList.resetBookInfoCache` and `refreshLibraryViews({ path })` (`:963-964`),
+  and only then the book is recorded as `kind = "downloaded"` (`:973`; `cwng_library.lua:346-352`)
+  and the state saved. `refreshLibraryViews` (cwngsync `main.lua:1612-1630`) broadcasts
+  `InvalidateMetadataCache` with the path, then `BookMetadataChanged` (`:1628`, `:1630`).
+  `UIManager:broadcastEvent` hands each to every window, top first
+  (`frontend/ui/uimanager.lua:1042-1061`): KoPanda's window re-lists on them (the shelf screens at
+  once, the library from the next tick); the file manager's modules get them through
+  `WidgetContainer:propagateEvent` (`frontend/ui/widget/container/widgetcontainer.lua:80-107`),
+  where CoverBrowser's `onInvalidateMetadataCache` deletes the book's row and returns true
+  (`plugins/coverbrowser.koplugin/main.lua:800-803`), which stops the event there (`:802`). So when
+  the callback runs the book has no CoverBrowser row: its title and authors come from the sidecar
+  or the file name and it has no series until its cover is extracted again, and on one series or
+  one author it is left out of the list until then.
+- The callback (`book_sheet.lua`'s `arrived`) forgets the book's cover (`BookCovers.forget`, the
+  row's delete again, which is idempotent, and the per-process asked mark), then runs the held
+  window's `downloaded`: the library's Refresh covers re-list for that book, the shelf screens'
+  re-list with every record's cover asked for again (`library_chrome.lua`), each only while that
+  window is the one shown. It never opens the book. It runs in the same dispatch as cwngsync's
+  broadcasts, so their re-lists and its own paint the window once.
 
 ### Widget and support modules
 
