@@ -1,7 +1,7 @@
 id: T-3cuakg
 key: library/cwng-placeholders/placeholders
 title: cwngsync's placeholders read as not downloaded on every surface that draws a book
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -17,6 +17,12 @@ accepted_against:
         value: git:30d3a29
         observed_at: 2026-10-17T21:40:49.862416Z
 branch: tiller/library/cwng-placeholders/placeholders
+review_ref:
+    branch: tiller/library/cwng-placeholders/placeholders
+    head:
+        kind: git_commit
+        value: git:275fb8d
+        observed_at: 2026-10-17T22:37:25.863803Z
 gates:
     build:
         required: true
