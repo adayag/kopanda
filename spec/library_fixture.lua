@@ -29,10 +29,10 @@ function M.folder(name, dir)
     return { name = name, path = (dir or M.ROOT) .. "/" .. name }
 end
 
--- Books.folder gives listings[dir] (default: nothing) and Books.progress progress[id] (default:
--- new), each a copy so the library can't change the spec's tables; the root is KOReader's home
--- folder. Returns the calls Books.folder had, by dir. Undone by the next harness.load() and
--- M.restore().
+-- Books.folder gives listings[dir] (default: nothing), Books.files that listing's books, and
+-- Books.progress progress[id] (default: new), each a copy so the library can't change the spec's
+-- tables; the root is KOReader's home folder. Returns the calls Books.folder had, by dir. Undone by
+-- the next harness.load() and M.restore().
 function M.install(listings, progress)
     local Books = package.loaded["books"]
     local calls = {}
@@ -47,6 +47,13 @@ function M.install(listings, progress)
             folders[i] = folder
         end
         return { books = books, folders = folders }
+    end
+    Books.files = function(dir)
+        local books = {}
+        for i, book in ipairs((listings[dir] or {}).books or {}) do
+            books[i] = book
+        end
+        return books
     end
     Books.progress = function(book)
         return (progress or {})[book.id] or { status = "new" }

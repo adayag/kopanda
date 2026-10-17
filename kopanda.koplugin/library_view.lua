@@ -115,35 +115,26 @@ local function header(built, w, books, choice)
     return box, parts
 end
 
--- The counts a folder's tile shows: the books directly in it and how many are reading.
-local function folder_counts(folder, progress)
-    local books = Books.folder(folder.path).books
+-- The counts a folder's tile shows: the books directly in it and how many are reading, from the
+-- folder's scan and each book's progress, with no record read.
+local function folder_counts(folder)
+    local books = Books.files(folder.path)
     local reading = 0
     for _, book in ipairs(books) do
-        if progress(book).status == "reading" then
+        if Books.progress(book).status == "reading" then
             reading = reading + 1
         end
     end
     return { books = #books, reading = reading }
 end
 
--- Books.progress through seen, a table of each record's progress read once.
-local function memo(seen)
-    return function(record)
-        if seen[record] == nil then
-            seen[record] = Books.progress(record)
-        end
-        return seen[record]
-    end
-end
-
 -- The folder's listing as built keeps it for the builds after: { dir, listing (Books.folder(dir)),
--- history (LibraryOrder.history_times() then), seen (each listed record's Books.progress, read at
--- most once), sort, status, items (LibraryOrder.view of the listing under that sort and status, or
--- nil when it must be made again) }. kept, the one an earlier build gave, is used when it is of
--- dir; otherwise the folder is listed now. Its items are made again when nil or of another sort or
--- status than choice. Returns a new table, so kept's own fields are left as they were (its listing
--- and seen are shared).
+-- history (LibraryOrder.history_times() then), sort, status, items (LibraryOrder.view of the
+-- listing under that sort and status, or nil when it must be made again) }. kept, the one an
+-- earlier build gave, is used when it is of dir; otherwise the folder is listed now. Its items are
+-- made again when nil or of another sort or status than choice, with each book's progress as
+-- Books.progress reads it then (its memo opens only a changed sidecar). Returns a new table, so
+-- kept's own fields are left as they were (its listing is shared).
 local function keep(kept, dir, choice)
     local now = {}
     if kept and kept.dir == dir then
@@ -151,10 +142,10 @@ local function keep(kept, dir, choice)
             now[k] = v
         end
     else
-        now.dir, now.listing, now.history, now.seen = dir, Books.folder(dir), LibraryOrder.history_times(), {}
+        now.dir, now.listing, now.history = dir, Books.folder(dir), LibraryOrder.history_times()
     end
     if now.items == nil or now.sort ~= choice.sort or now.status ~= choice.status then
-        now.items = LibraryOrder.view(now.listing, choice.sort, choice.status, memo(now.seen), now.history)
+        now.items = LibraryOrder.view(now.listing, choice.sort, choice.status, Books.progress, now.history)
         now.sort, now.status = choice.sort, choice.status
     end
     return now
@@ -173,26 +164,22 @@ local function listed_at(kept, id)
     return nil
 end
 
--- Puts record, read again, in kept's listing in place of the record of its id, progress its
--- progress, and leaves kept's items to be made again, so the next build filters and sorts the
--- listing as it now stands. A kept of nil, or without that id, is left as it was.
-function LibraryView.renew(kept, record, progress)
+-- Puts record, read again, in kept's listing in place of the record of its id, and leaves kept's
+-- items to be made again, so the next build filters and sorts the listing as it now stands. A kept
+-- of nil, or without that id, is left as it was.
+function LibraryView.renew(kept, record)
     local i = listed_at(kept, record.id)
     if i then
-        local books = kept.listing.books
-        kept.seen[books[i]] = nil
-        kept.seen[record] = progress
-        books[i] = record
+        kept.listing.books[i] = record
         kept.items = nil
     end
 end
 
--- Forgets the progress kept holds for the book whose id is id, so the next build reads it again
--- and filters and sorts with it. A kept of nil, or without that id, is left as it was.
+-- Leaves kept's items to be made again when it lists the book whose id is id, whose progress has
+-- changed, so the next build filters and sorts with the progress read then. A kept of nil, or
+-- without that id, is left as it was.
 function LibraryView.forget(kept, id)
-    local i = listed_at(kept, id)
-    if i then
-        kept.seen[kept.listing.books[i]] = nil
+    if listed_at(kept, id) then
         kept.items = nil
     end
 end
@@ -209,7 +196,6 @@ local function fill(built, frame, w)
     local choice = LibraryOrder.choice(built.dir)
     local kept = keep(built.kept, built.dir, choice)
     built.kept = kept
-    local progress = memo(kept.seen)
     local listing, items = kept.listing, kept.items
     local slice
     slice, built.pages, built.page = LibraryOrder.page(items, built.page)
@@ -227,11 +213,10 @@ local function fill(built, frame, w)
         local tile = { rect = Geom:new{ x = x, y = y, w = box.cover_w, h = box.height } }
         if item.id then
             tile.kind, tile.record = "book", item
-            tile.widget = LibraryTiles.book(item, progress(item), box, ctx)
+            tile.widget = LibraryTiles.book(item, Books.progress(item), box, ctx)
         else
             tile.kind, tile.folder = "folder", item
-            -- Not through the kept memo: a sub-folder's records are new at each listing of it.
-            tile.widget = LibraryTiles.folder(item, folder_counts(item, Books.progress), box, ctx)
+            tile.widget = LibraryTiles.folder(item, folder_counts(item), box, ctx)
         end
         tile.index = add(frame, tile.widget, x, y)
         built.tiles[i] = tile

@@ -134,8 +134,9 @@ function Library.close()
     end
 end
 
--- The closed book's tile is rebuilt; a failure leaves the tile as built. Its progress the build
--- kept is forgotten, so a page turned to reads it again wherever the book is.
+-- The closed book's tile is rebuilt; a failure leaves the tile as built. The kept listing is
+-- filtered and sorted again at the next build, so a page turned to does so with the book's new
+-- progress wherever the book is.
 function Library:book_closed(file)
     -- A file's record id, as books.lua's record() makes it.
     local id = "file:" .. (ffiutil.realpath(file) or file)
