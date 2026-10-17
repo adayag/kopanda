@@ -423,6 +423,26 @@ describe("the nav bar", function()
             assert.equals(fm.kopanda, home_calls[1][1])
             assert.same({}, entry_calls)
         end)
+        -- series-and-authors C8, D17.
+        it("Authors from the home and from the file browser shows the Authors list at its first page", function()
+            local fixture = require("shelf_fixture")
+            fixture.install({ fixture.book("Earthsea", { authors = { "Ursula K. Le Guin" } }) })
+            local Home, AuthorsScreen = package.loaded["home"], package.loaded["authors_screen"]
+            local fm = harness.show_fm()
+            harness.tick(2)
+            assert.is_not_nil(Home.shown)
+            for _, where in ipairs({ "home", "file_browser" }) do
+                NavBar.run("authors", where)
+                local screen = AuthorsScreen.shown
+                assert.is_not_nil(screen, where)
+                assert.equals(screen, harness.top(), where)
+                assert.equals(fm, harness.top(2), where)
+                assert.is_nil(Home.shown, where)
+                assert.same({ { kind = "list" }, 1 }, { screen:view(), screen.page }, where)
+                AuthorsScreen.close()
+                assert.equals(fm, harness.top(), where)
+            end
+        end)
     end)
 
     -- cover-grid C6: the library window carries the bar with Library lit.

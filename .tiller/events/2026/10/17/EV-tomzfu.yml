@@ -1,0 +1,13 @@
+id: EV-tomzfu
+type: claim.task
+at: 2026-10-17T14:15:14.767995Z
+contributor: allen
+command: claim task T-8j0bc0
+targets:
+    - T-8j0bc0
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/routing/task.yml

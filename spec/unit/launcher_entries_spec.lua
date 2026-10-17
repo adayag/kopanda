@@ -406,12 +406,16 @@ describe("LauncherEntries", function()
             return shown
         end
 
-        it("say Series and Authors are coming with the library", function()
+        -- series-and-authors C8, D17: the screens in place of the notes.
+        it("give Series and Authors none: each shows its window", function()
+            require("shelf_fixture").install({})
             fm_with_home()
-            assert.same({ { text = "Series are coming with the library." } },
-                run_for_notes({ kind = "kopanda", target = "series" }))
-            assert.same({ { text = "Authors are coming with the library." } },
-                run_for_notes({ kind = "kopanda", target = "authors" }))
+            for _, case in ipairs({ { "series", "series_screen" }, { "authors", "authors_screen" } }) do
+                local shown = run_for_notes({ kind = "kopanda", target = case[1] })
+                assert.equals(1, #shown, case[1])
+                assert.is_nil(shown[1].text, case[1])
+                assert.equals(package.loaded[case[2]], getmetatable(shown[1].widget), case[1])
+            end
         end)
 
         it("give a folder none: it shows its sheet, headed with its label and count", function()

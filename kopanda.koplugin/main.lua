@@ -5,6 +5,7 @@
 -- Every KoPanda module is required here, at load time: KOReader prepends the plugin root to
 -- package.path only while it dofile()s this file (frontend/pluginloader.lua:242, :269-270),
 -- so a later require could resolve to another plugin's same-named file (:283-286).
+local AuthorsScreen = require("authors_screen")
 local DispatchBridge = require("dispatch_bridge")
 local Dispatcher = require("dispatcher")
 local FmNav = require("fm_nav")
@@ -18,6 +19,7 @@ local MenuEntries = require("menu_entries")
 local PaintClock = require("paint_clock")
 local PushNotice = require("push_notice")
 local SchemaMenu = require("menu")
+local SeriesScreen = require("series_screen")
 local State = require("state")
 local StudioMenu = require("studio_menu")
 local Swatch = require("swatch")
@@ -27,7 +29,6 @@ local logger = require("logger")
 local time = require("ui/time")
 -- Required here only so they load while the plugin root is on package.path; the modules that
 -- use them get them from the require cache.
-require("authors_screen")
 require("book_covers")
 require("book_index")
 require("book_sheet")
@@ -66,7 +67,6 @@ require("quotes")
 require("reading_stats")
 require("rows_edit")
 require("schema")
-require("series_screen")
 require("settings")
 require("settings_menu")
 require("sheet")
@@ -212,18 +212,62 @@ function KoPanda:showLibrary(opts)
     fm.file_chooser:changeToPath(opts.dir or require("library_view").root())
 end
 
--- The return after a book opened from the library (cover-grid D4), cleared as it is taken: the
--- library pre-built on its close when one fits the screen, else one built afresh at the return
--- (another size or variant, or a failed open that sent no CloseDocument).
-local function show_return(kopanda)
-    local back = Library.return_to
-    Library.return_to = nil
-    local started = time.monotonic()
-    local pending = LibraryChrome.take_pending()
-    kopanda:showLibrary{ widget = pending, dir = back.dir, page = back.page, started = started }
+-- The Series and Authors windows, by the screen a return names.
+local SHELVES = { series = SeriesScreen, authors = AuthorsScreen }
+
+-- Shows a window of cls (SeriesScreen or AuthorsScreen) with opts (its show's) unless the file
+-- manager has gone since the show was asked for; the window's show closes the home. As the
+-- library's, it takes no part in the boot guard; one that fails to build is logged by the chrome
+-- and the file browser left up.
+local function show_shelf(cls, opts)
+    local FileManager = package.loaded["apps/filemanager/filemanager"]
+    if FileManager and FileManager.instance then
+        cls.show(opts)
+    end
 end
 
--- The file manager's Show. With a return to the library recorded, the library goes up at once,
+-- The Series window with opts (SeriesScreen.show's), as show_shelf.
+function KoPanda:showSeries(opts)
+    show_shelf(SeriesScreen, opts)
+end
+
+-- The Authors window with opts (AuthorsScreen.show's), as show_shelf.
+function KoPanda:showAuthors(opts)
+    show_shelf(AuthorsScreen, opts)
+end
+
+-- The window a book's close returns to and the fields it is built with: the library at the folder
+-- and page a book was opened from (cover-grid D4), or the Series or Authors window at the view and
+-- page (series-and-authors D7); nil with no return recorded.
+local function return_window()
+    local back = Library.return_to
+    if back then
+        return Library, { dir = back.dir, page = back.page }
+    end
+    back = LibraryChrome.return_to
+    if back then
+        return SHELVES[back.screen], { showing = back.view, page = back.page }
+    end
+    return nil
+end
+
+-- The return after a book opened from a chrome window, cleared as it is taken: the window pre-built
+-- on its close when one fits the screen, else one built afresh at the return (another size or
+-- variant, or a failed open that sent no CloseDocument). A view gone by then shows the list
+-- (series-and-authors D23), which the window's build does itself.
+local function show_return(kopanda)
+    local cls, fields = return_window()
+    Library.return_to, LibraryChrome.return_to = nil, nil
+    local started = time.monotonic()
+    local pending = LibraryChrome.take_pending()
+    if cls == Library then
+        kopanda:showLibrary{ widget = pending, dir = fields.dir, page = fields.page, started = started }
+    else
+        show_shelf(cls, { widget = pending, view = fields.showing, page = fields.page, started = started })
+    end
+end
+
+-- The file manager's Show. With a return to a chrome window recorded, that window goes up at once,
 -- as a pending home does. With a home pending (a book just closed) it goes up at once, inside
 -- Show, so it is on the stack before the next repaint even when the close ran from a scheduled
 -- task, and nothing of start_with follows a book close. Otherwise the home goes up from the
@@ -237,10 +281,10 @@ function KoPanda:onShow()
     if not self.in_fm then
         return
     end
-    if Library.return_to then
+    if return_window() then
         local show_ok, show_err = pcall(show_return, self)
         if not show_ok then
-            logger.err("KoPanda: could not show the library:", show_err)
+            logger.err("KoPanda: could not show the window returned to:", show_err)
         end
         return
     end
@@ -296,8 +340,8 @@ local function record_chapter(ui)
 end
 
 -- A reader closing its book: record its chapter for the featured book, then build the screen
--- the file browser that usually follows shows, so it shows without a build: the library at the
--- return when the book was opened from the library, else the home. CloseDocument also fires on
+-- the file browser that usually follows shows, so it shows without a build: the chrome window at
+-- the return when the book was opened from one, else the home. CloseDocument also fires on
 -- reload, switch and exit, with no file browser after; that build is wasted, which is accepted,
 -- and the next reader's init drops it. Returns nothing, so the event reaches later modules.
 function KoPanda:onCloseDocument()
@@ -308,11 +352,10 @@ function KoPanda:onCloseDocument()
     if self.in_fm then
         return
     end
-    local back = Library.return_to
-    if back then
+    local cls, fields = return_window()
+    if cls then
         if not LibraryChrome.pending then
-            LibraryChrome.prebuild(Library, { dir = back.dir, page = back.page },
-                self.ui.document and self.ui.document.file)
+            LibraryChrome.prebuild(cls, fields, self.ui.document and self.ui.document.file)
         end
         return
     end
@@ -322,10 +365,10 @@ function KoPanda:onCloseDocument()
     Home.prebuild()
 end
 
--- The file manager closing (quit, or a book opening) takes the home and the library with it; a
--- window left on the stack would keep KOReader from quitting. A return recorded by an open that
--- never closed the file manager (a refused file) is dropped once the library has closed, so a
--- book opened from anywhere else closes to the home.
+-- The file manager closing (quit, or a book opening) takes the home and the chrome window with it;
+-- a window left on the stack would keep KOReader from quitting. A return recorded by an open that
+-- never closed the file manager (a refused file) is dropped once the window it names has closed,
+-- so a book opened from anywhere else closes to the home.
 function KoPanda:onCloseWidget()
     if self.refused then
         return
@@ -333,6 +376,10 @@ function KoPanda:onCloseWidget()
     if self.in_fm then
         if not Library.shown then
             Library.return_to = nil
+        end
+        local back = LibraryChrome.return_to
+        if back and not SHELVES[back.screen].shown then
+            LibraryChrome.return_to = nil
         end
         Home.close()
         LibraryChrome.close()

@@ -1,0 +1,15 @@
+id: EV-jdy6vn
+type: start.task
+at: 2026-10-17T14:15:14.947518Z
+contributor: allen
+command: start task T-8j0bc0
+targets:
+    - T-8j0bc0
+before:
+    status: ready
+after:
+    branch: tiller/library/series-and-authors/routing
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/routing/task.yml

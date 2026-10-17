@@ -7,9 +7,9 @@
 -- next unread carrying the Up next chip (D5, D19). The nav bar lights Authors. Who the authors are,
 -- in what order, and which books are up next is shelf_order.lua's; the groups are shelf_rows.lua's
 -- and the tiles library_tiles.lua's.
--- Module state: AuthorsScreen.shown and AuthorsScreen.pending, the chrome's slots;
--- AuthorsScreen.on_open(view, page), run when a tap's book open goes ahead, a hook routing fills
--- (here a no-op).
+-- Module state: AuthorsScreen.shown and AuthorsScreen.pending, the chrome's slots.
+-- AuthorsScreen.on_open(view, page), run when a tap's book open goes ahead, records the return in
+-- the chrome's LibraryChrome.return_to.
 local Books = require("books")
 local Geom = require("ui/geometry")
 local LibraryChrome = require("library_chrome")
@@ -31,7 +31,10 @@ local AuthorsScreen = LibraryChrome.Window:extend{
 
 local LIST = { kind = "list" }
 
-function AuthorsScreen.on_open(_view, _page) end
+-- Run when a tap's book open goes ahead: the book closes back to view at page (D7).
+function AuthorsScreen.on_open(view, page)
+    LibraryChrome.return_to = { screen = "authors", view = view, page = page }
+end
 
 -- The books are read once per show (D8), and again when the metadata events re-list.
 function AuthorsScreen:init()
