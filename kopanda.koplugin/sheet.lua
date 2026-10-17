@@ -1,7 +1,7 @@
 -- The sheet: a panel of rows drawn in the look over the home or the library, opened by a hold or
 -- a tap and closed by a tap outside it, a tap on a row, KOReader's Back or the Back key. It knows
 -- nothing about books or the home: its opener hands it a spec,
---   { name, band, header, rows, body, refresh_on, hold, flush }
+--   { name, band, header, rows, body, refresh_on, hold, flush, more }
 -- name: what the settled signal reports; band: which <band>_band_color token Diner's header
 -- takes; header: { heading, aside, aside_beside, aside_above, hint, label } or a book's { cover,
 -- title, author, meta } (cover a built widget, the sheet's to free), or nil; aside_above stacks
@@ -17,6 +17,10 @@
 -- panel; areas are { rect, tap, hold, close_first }, rect from the widget's top-left. A tap or
 -- hold in an area runs its tap or hold with the sheet left open, then redraws it, or closes it
 -- first with close_first. refresh_on, optional, lists events on each of which the sheet redraws.
+-- more, { label, run }, for a list that may not fit: when rows are left out, the last slot that
+-- fits beside a row is a More row (label, default "More…", with the list icon when any row has
+-- an icon), and a tap on it closes the sheet and calls run with the rows not shown, in order.
+-- A sheet without more leaves those rows out, logged once.
 -- Every field but name and rows or body is optional.
 -- Module state: Sheet.shown, the sheet on screen or nil. One sheet at a time: showing one
 -- closes the one shown.
