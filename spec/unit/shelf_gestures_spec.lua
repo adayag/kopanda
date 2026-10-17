@@ -111,7 +111,6 @@ describe("gestures on the Series window", function()
         end
     end
 
-    -- A zone on the file manager over rect's ratios, as the Gestures plugin registers its corner taps
     it("in the nav bar's band runs the tapped tab first, with where series", function()
         install()
         local screen, fm = fixture.show()

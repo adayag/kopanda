@@ -195,6 +195,7 @@ end)
 
 describe("the Authors window's lifecycle", function()
     local AuthorsScreen, Books, LibraryTiles
+    local text_of = require("library_fixture").text
 
     local LIST = { kind = "list" }
 
@@ -330,6 +331,78 @@ describe("the Authors window's lifecycle", function()
             requests[1].on_arrival({ on_page })
         end)
         assert.is_true(n > 0)
+    end)
+
+    -- A copy of record with fields over it, as Books.get re-reads it after an arrival.
+    local function reread(record, fields)
+        local fresh = {}
+        for k, v in pairs(record) do
+            fresh[k] = v
+        end
+        for k, v in pairs(fields) do
+            fresh[k] = v
+        end
+        Books.get = function(id)
+            return id == fresh.id and fresh or nil
+        end
+    end
+
+    local function names(rows)
+        local out = {}
+        for i, row in ipairs(rows) do
+            out[i] = row.entry.name
+        end
+        return out
+    end
+
+    local function titles(tiles)
+        local out = {}
+        for i, tile in ipairs(tiles) do
+            out[i] = tile.record.title
+        end
+        return out
+    end
+
+    it("repaints the list for an arrival that changes only the header's count", function()
+        local records = {}
+        for i = 1, 25 do
+            records[i] = fixture.book(("Book %02d"):format(i), { authors = { ("Ann B%02d"):format(i) } })
+        end
+        local anonymous = fixture.book("Anonymous")
+        records[#records + 1] = anonymous
+        fixture.install(records)
+        local screen = show()
+        local pages, shown = screen.pages, names(screen.rows)
+        assert.is_true(pages > 1)
+        reread(anonymous, { authors = { "Ann B99" } })
+        local n = dirties(screen, function()
+            requests[1].on_arrival({ anonymous })
+        end)
+        assert.equals(pages, screen.pages)
+        assert.same(shown, names(screen.rows))
+        assert.is_true(n > 0)
+        assert.matches("^26 authors", text_of(screen.header.aside):lower())
+    end)
+
+    it("repaints one author for an arrival that changes only the header's count", function()
+        local records = {}
+        for i = 1, 8 do
+            records[i] = fixture.book("Many " .. i, { authors = { "Bo Many" } })
+        end
+        local zed = fixture.book("Zed")
+        records[#records + 1] = zed
+        fixture.install(records)
+        local screen = show({ kind = "author", name = "Bo Many" })
+        local shown = titles(screen.tiles)
+        assert.equals(2, screen.pages)
+        reread(zed, { authors = { "Bo Many" } })
+        local n = dirties(screen, function()
+            requests[1].on_arrival({ zed })
+        end)
+        assert.equals(2, screen.pages)
+        assert.same(shown, titles(screen.tiles))
+        assert.is_true(n > 0)
+        assert.equals("9 books", text_of(screen.header.aside):lower())
     end)
 
     it("is no longer checked once the window closes", function()
