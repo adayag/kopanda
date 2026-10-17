@@ -1,0 +1,13 @@
+id: EV-ooe56k
+type: check.task
+at: 2026-10-17T12:58:40.763925Z
+contributor: allen
+command: check task T-qrlexd
+targets:
+    - T-qrlexd
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/rows/task.yml
