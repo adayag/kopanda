@@ -1,7 +1,7 @@
 id: F-alfeze
 key: library/book-model
 title: Book index keyed by id with cover and metadata cache
-status: active
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 change_type: create
@@ -29,6 +29,23 @@ accepted_against:
         kind: git_commit
         value: git:f3fd5f9
         observed_at: 2026-10-16T22:58:33.498251Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:6ed4a09d44d0e07356c33a41fa4e1e7a24dce018
+        path: .tiller/epics/library/features/book-model/feature.md
+        observed_at: 2026-10-17T01:32:09.863807Z
+    eval:
+        kind: git_blob
+        value: git:20de264cdf1ea849af3c43352af441e905c3ba5c
+        path: .tiller/epics/library/features/book-model/feature.eval.md
+        observed_at: 2026-10-17T01:32:09.863807Z
+    commit:
+        kind: git_commit
+        value: git:7f30e4d
+        observed_at: 2026-10-17T01:32:09.047257Z
+    surfaces: []
+done_basis: rollup
 gates:
     build:
         required: true

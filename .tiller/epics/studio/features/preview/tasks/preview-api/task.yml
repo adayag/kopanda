@@ -1,7 +1,7 @@
 id: T-ld7mvc
 key: studio/preview/preview-api
 title: The preview endpoint runs bin/preview one render at a time
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:30db749
         observed_at: 2026-10-16T22:59:35.537702Z
+done_basis: ancestry
 gates:
     build:
         required: true

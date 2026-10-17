@@ -1,7 +1,7 @@
 id: T-0s2a1j
 key: studio/preview/capture-inputs
 title: The capture driver takes a profile's screen and settings file, and the home fixture a weather reading for them
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:7f27bf5
         observed_at: 2026-10-16T22:05:53.553651Z
+done_basis: ancestry
 gates:
     build:
         required: true

@@ -1,0 +1,14 @@
+id: EV-6llby3
+type: sync.task
+at: 2026-10-17T01:32:09.334488Z
+contributor: allen
+command: sync task T-ld7mvc
+targets:
+    - T-ld7mvc
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-api/task.yml

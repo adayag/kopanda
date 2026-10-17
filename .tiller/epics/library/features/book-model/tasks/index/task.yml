@@ -1,7 +1,7 @@
 id: T-tvonaw
 key: library/book-model/index
 title: Author and series index over the records
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:6c9360a
         observed_at: 2026-10-16T23:44:52.084427Z
+done_basis: ancestry
 gates:
     build:
         required: true

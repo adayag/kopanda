@@ -1,0 +1,14 @@
+id: EV-ckoh6h
+type: sync.task
+at: 2026-10-17T01:32:09.6463Z
+contributor: allen
+command: sync task T-n450u3
+targets:
+    - T-n450u3
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/records/task.yml

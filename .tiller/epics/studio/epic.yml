@@ -1,7 +1,7 @@
 id: E-t7e8xj
 key: studio
 title: Edit, preview and push from the Mac
-status: ready
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 order:
@@ -9,3 +9,15 @@ order:
     - F-k4yn5f
     - F-29oj9m
     - F-9okxa7
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:08a0b71636d66b4a1665f85e9303c83945bf7ada
+        path: .tiller/epics/studio/epic.md
+        observed_at: 2026-10-17T01:32:09.961973Z
+    commit:
+        kind: git_commit
+        value: git:7f30e4d
+        observed_at: 2026-10-17T01:32:09.047257Z
+    surfaces: []
+done_basis: rollup

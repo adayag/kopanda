@@ -1,0 +1,14 @@
+id: EV-r8ru70
+type: sync.epic
+at: 2026-10-17T01:32:09.984533Z
+contributor: allen
+command: sync epic E-t7e8xj
+targets:
+    - E-t7e8xj
+before:
+    status: ready
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/studio/epic.yml

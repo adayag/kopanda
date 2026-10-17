@@ -1,0 +1,14 @@
+id: EV-nxa024
+type: sync.task
+at: 2026-10-17T01:32:09.815583Z
+contributor: allen
+command: sync task T-tvonaw
+targets:
+    - T-tvonaw
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/book-model/tasks/index/task.yml

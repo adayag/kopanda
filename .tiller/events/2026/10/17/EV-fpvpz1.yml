@@ -1,0 +1,14 @@
+id: EV-fpvpz1
+type: sync.task
+at: 2026-10-17T01:32:09.249406Z
+contributor: allen
+command: sync task T-f4ooin
+targets:
+    - T-f4ooin
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/studio/features/preview/tasks/preview-script/task.yml

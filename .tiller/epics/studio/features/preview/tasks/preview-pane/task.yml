@@ -1,7 +1,7 @@
 id: T-ruuuqy
 key: studio/preview/preview-pane
 title: The preview pane beside the form, with both looks, night and its states
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:26b8825
         observed_at: 2026-10-16T22:51:30.901054Z
+done_basis: ancestry
 gates:
     build:
         required: true

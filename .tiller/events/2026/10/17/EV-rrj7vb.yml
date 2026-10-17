@@ -1,0 +1,14 @@
+id: EV-rrj7vb
+type: sync.feature
+at: 2026-10-17T01:32:09.913934Z
+contributor: allen
+command: sync feature F-alfeze
+targets:
+    - F-alfeze
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/library/features/book-model/feature.yml

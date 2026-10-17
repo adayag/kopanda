@@ -1,7 +1,7 @@
 id: T-1ms8w2
 key: library/book-model/covers
 title: Cover reads and batched extraction with arrival, and the featured cover through them
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -25,6 +25,7 @@ review_ref:
         kind: git_commit
         value: git:eeaf5e8
         observed_at: 2026-10-17T00:19:43.248848Z
+done_basis: ancestry
 gates:
     build:
         required: true
