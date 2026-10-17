@@ -1,0 +1,11 @@
+id: EV-ex3vhd
+type: claim.chore
+at: 2026-10-17T20:46:32.300653Z
+contributor: allen
+command: claim chore chores/fewer-goldens-per-feature
+targets:
+    - CH-58w77v
+after:
+    owner: allen
+files:
+    - path: .tiller/chores/fewer-goldens-per-feature/chore.yml
