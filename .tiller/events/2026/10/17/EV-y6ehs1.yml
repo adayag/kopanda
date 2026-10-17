@@ -1,0 +1,13 @@
+id: EV-y6ehs1
+type: check.tweak
+at: 2026-10-17T16:31:45.483109Z
+contributor: allen
+command: check tweak TW-bl79zr
+targets:
+    - TW-bl79zr
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/quote-memo/tweak.yml

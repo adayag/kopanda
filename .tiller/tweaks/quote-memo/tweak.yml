@@ -1,9 +1,10 @@
 id: TW-bl79zr
 key: tweaks/quote-memo
 title: The quote is shaped and rendered on every home build
-status: ready
+status: check
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: T-x42jhm
 source: .tiller/reviews/2026-10-17-efficiency-review-pass2.md#L83-L91
@@ -17,3 +18,31 @@ accepted_against:
         kind: git_commit
         value: git:525b5a5
         observed_at: 2026-10-17T16:06:08.224804Z
+branch: tiller/tweaks/quote-memo
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:28:00.775073Z
+        against:
+            kind: git_commit
+            value: git:45c543a
+            observed_at: 2026-10-17T16:28:00.775072Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-45c543a-out-ee9a7f7ea32fd02f7b193c8069d051c0683ae819b3e24dafe2e466e2593b4bf7.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:28:00.775073Z
+        against:
+            kind: git_commit
+            value: git:45c543a
+            observed_at: 2026-10-17T16:28:00.775072Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-45c543a-out-17f3809b496b9695be206f856957d2a46658449b81ce46a6ae36e2e5071c14f1.txt
