@@ -51,9 +51,9 @@ gates:
     evals:
         required: true
         kind: command
-        status: pending
+        status: pass
         run_by: allen
-        run_at: 2026-10-17T16:15:13.453254Z
+        run_at: 2026-10-17T16:40:44.604654Z
         against:
             kind: git_commit
             value: git:d9270cb
@@ -135,7 +135,7 @@ gates:
                     - kind: command_output
                       ref: artifacts/tiller/gates/eval-C15-d9270cb-out-28cd76175267d4f312ae00c27526d8b489068133f5cbfc2945828e5f70a4d9ad.txt
             C16:
-                status: needs_attestation
+                status: pass
             C17:
                 status: pass
     tests:
@@ -159,3 +159,10 @@ attestations:
       status: pass
       by: allen
       at: 2026-10-17T16:08:24.066855Z
+    - id: AT-5tgaql
+      target:
+        kind: criterion
+        id: C16
+      status: pass
+      by: allen
+      at: 2026-10-17T16:40:44.604654Z

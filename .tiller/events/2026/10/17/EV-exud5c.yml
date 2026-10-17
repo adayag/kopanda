@@ -1,0 +1,13 @@
+id: EV-exud5c
+type: attest.feature
+at: 2026-10-17T16:40:44.605661Z
+contributor: allen
+command: attest feature F-yaihx9
+targets:
+    - F-yaihx9
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/library/features/series-and-authors/feature.yml
