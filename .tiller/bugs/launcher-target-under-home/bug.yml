@@ -1,7 +1,7 @@
 id: B-61alhe
 key: bugs/launcher-target-under-home
 title: Library and Authors targets act on a window hidden under the home
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -18,3 +18,30 @@ accepted_against:
         value: git:d5aeb78
         observed_at: 2026-10-17T20:44:22.570884Z
 branch: tiller/bugs/launcher-target-under-home
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:06:10.896789Z
+        against:
+            kind: git_commit
+            value: git:75c6d86
+            observed_at: 2026-10-17T21:06:10.896788Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-75c6d86-out-4ce07e5b9635f785a74881551534d0e31da90ef776c5ef84c9ea2eb894272d68.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:06:10.896789Z
+        against:
+            kind: git_commit
+            value: git:75c6d86
+            observed_at: 2026-10-17T21:06:10.896788Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-75c6d86-out-a1236e9c12085b128f1bdc2a0517ad3455c5ee152a4c2489cbbcb7bf27ec5647.txt

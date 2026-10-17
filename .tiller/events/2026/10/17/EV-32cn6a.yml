@@ -1,0 +1,13 @@
+id: EV-32cn6a
+type: check.bug
+at: 2026-10-17T21:11:16.254233Z
+contributor: allen
+command: check bug B-61alhe
+targets:
+    - B-61alhe
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/bugs/launcher-target-under-home/bug.yml
