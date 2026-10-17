@@ -1,0 +1,13 @@
+id: EV-riexuo
+type: add.chore
+at: 2026-10-17T18:15:40.177958Z
+contributor: allen
+command: add chore more-row-spec-sync
+targets:
+    - CH-7z6mm5
+after:
+    key: chores/more-row-spec-sync
+    status: proposed
+files:
+    - path: .tiller/chores/more-row-spec-sync/chore.md
+    - path: .tiller/chores/more-row-spec-sync/chore.yml

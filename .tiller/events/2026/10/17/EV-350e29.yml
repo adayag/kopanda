@@ -1,0 +1,14 @@
+id: EV-350e29
+type: add.tweak
+at: 2026-10-17T18:15:39.988968Z
+contributor: allen
+command: add tweak doc-props-anchor-per-path
+targets:
+    - TW-y0pzxw
+after:
+    attached_to: T-gj4d8q
+    key: tweaks/doc-props-anchor-per-path
+    status: proposed
+files:
+    - path: .tiller/tweaks/doc-props-anchor-per-path/tweak.md
+    - path: .tiller/tweaks/doc-props-anchor-per-path/tweak.yml

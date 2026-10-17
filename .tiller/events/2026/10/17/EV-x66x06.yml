@@ -1,0 +1,14 @@
+id: EV-x66x06
+type: add.tweak
+at: 2026-10-17T18:15:40.084668Z
+contributor: allen
+command: add tweak shelf-screens-keep-rows
+targets:
+    - TW-43jvrb
+after:
+    attached_to: F-yaihx9
+    key: tweaks/shelf-screens-keep-rows
+    status: proposed
+files:
+    - path: .tiller/tweaks/shelf-screens-keep-rows/tweak.md
+    - path: .tiller/tweaks/shelf-screens-keep-rows/tweak.yml
