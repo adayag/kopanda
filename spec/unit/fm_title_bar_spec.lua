@@ -214,6 +214,22 @@ describe("the file browser's title bar", function()
             assert.equals("function", type(bar.on_status))
             assert.equals(fm.show_parent, bar.show_parent)
         end)
+
+        it("puts back a TitleBar.new that was there before the layout and builds through it", function()
+            local Widget = require("ui/widget/widget")
+            local built = 0
+            local prior = function(class, ...)
+                if class == KoTitleBar then
+                    built = built + 1
+                end
+                return Widget.new(class, ...)
+            end
+            stub(TitleBar, "new", prior)
+            local fm = harness.show_fm(lib)
+            assert.equals(KoTitleBar, getmetatable(fm.title_bar))
+            assert.equals(1, built)
+            assert.equals(prior, rawget(TitleBar, "new"))
+        end)
     end)
 
     describe("what it shows", function()
@@ -252,6 +268,19 @@ describe("the file browser's title bar", function()
             assert.equals("access", G_reader_settings:readSetting("collate"))
             UIManager:close(container)
             assert.equals("Recent", shown(fm).sort)
+        end)
+
+        it("close whole on a tap outside the menu, back to the file manager", function()
+            local fm = fm_on_top()
+            send(harness.gesture("tap", area_centre(fm.title_bar, "sort")))
+            harness.tick()
+            local menu = harness.top()[1]
+            assert.equals(TouchMenu, getmetatable(menu))
+            local x, y = math.floor(Screen:getWidth() / 2), Screen:getHeight() - 5
+            assert.truthy(y > menu.dimen.y + menu.dimen.h, y .. " <= " .. menu.dimen.y + menu.dimen.h)
+            send(harness.gesture("tap", x, y))
+            harness.tick()
+            assert.equals(fm, harness.top())
         end)
 
         it("open KOReader's five status items from the status picker, and a pick filters and relabels", function()

@@ -888,6 +888,20 @@ describe("KoPanda failing safe", function()
             fm.menu.getSortingMenuTable = nil
             file_manager_usable()
         end)
+
+        it("logs a raising picker build and leaves nothing shown over the file manager", function()
+            local fm = file_manager()
+            local TouchMenu = require("ui/widget/touchmenu")
+            stub(TouchMenu, "new", function()
+                error("kopanda-test: picker build failed")
+            end)
+            UIManager:sendEvent(Event:new("Gesture", at_area(fm.title_bar, "tap", "sort")))
+            assert.equals(fm, harness.top())
+            assert.equals(1, logged_count("kopanda-test: picker build failed"))
+            -- KOReader's own menu is a TouchMenu too.
+            TouchMenu.new = nil
+            file_manager_usable()
+        end)
     end)
 
     it("shows the home and logs when the state file can't be written", function()
