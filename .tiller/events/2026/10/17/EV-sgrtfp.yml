@@ -1,0 +1,13 @@
+id: EV-sgrtfp
+type: claim.task
+at: 2026-10-17T03:36:23.974948Z
+contributor: allen
+command: claim task T-cb345p
+targets:
+    - T-cb345p
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/screen/task.yml
