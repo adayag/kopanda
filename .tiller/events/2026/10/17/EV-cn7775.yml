@@ -1,0 +1,13 @@
+id: EV-cn7775
+type: configure.feature
+at: 2026-10-17T03:36:09.092907Z
+contributor: allen
+command: configure feature library/cover-grid --review-grain feature
+targets:
+    - F-2nt0fx
+before:
+    review_grain: ""
+after:
+    review_grain: feature
+files:
+    - path: .tiller/epics/library/features/cover-grid/feature.yml
