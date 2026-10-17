@@ -1,9 +1,10 @@
 id: TW-s7jikb
 key: tweaks/task-gate-skips-emulator
 title: Task gates run the unit layers; the emulator layer runs at the feature check
-status: ready
+status: done
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: F-l0kw8m
 accepted_against:
@@ -16,3 +17,33 @@ accepted_against:
         kind: git_commit
         value: git:d5aeb78
         observed_at: 2026-10-17T20:44:24.583208Z
+branch: tiller/tweaks/task-gate-skips-emulator
+pr: 44
+done_basis: ancestry
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:10:08.227239Z
+        against:
+            kind: git_commit
+            value: git:1579b21
+            observed_at: 2026-10-17T21:10:08.227238Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-1579b21-out-6f232f59270d5264f29ad106c96e83f741156d435c36dad3df869d8a74804686.txt
+    unit_tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:10:08.227239Z
+        against:
+            kind: git_commit
+            value: git:1579b21
+            observed_at: 2026-10-17T21:10:08.227238Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/unit_tests-1579b21-out-c4e683834239b83794f7337adedde09ef0b85d204bae7020d9bf625c40b8971a.txt

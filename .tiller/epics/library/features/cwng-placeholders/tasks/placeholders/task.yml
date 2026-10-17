@@ -1,0 +1,17 @@
+id: T-3cuakg
+key: library/cwng-placeholders/placeholders
+title: cwngsync's placeholders read as not downloaded on every surface that draws a book
+status: ready
+blocked: false
+started: false
+proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:1c585bb0066989d2501474da341df64a8c51ee98
+        path: .tiller/epics/library/features/cwng-placeholders/tasks/placeholders/task.md
+        observed_at: 2026-10-17T21:40:49.838063Z
+    commit:
+        kind: git_commit
+        value: git:30d3a29
+        observed_at: 2026-10-17T21:40:49.862416Z
