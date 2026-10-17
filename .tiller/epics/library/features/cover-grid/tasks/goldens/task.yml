@@ -1,7 +1,7 @@
 id: T-lmmmgv
 key: library/cover-grid/goldens
 title: Library goldens on both profiles, the paint budget and the device check
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -26,24 +26,24 @@ gates:
         kind: command
         status: pass
         run_by: allen
-        run_at: 2026-10-17T07:09:21.217821Z
+        run_at: 2026-10-17T07:09:59.072501Z
         against:
             kind: git_commit
-            value: git:b04275d
-            observed_at: 2026-10-17T07:09:21.217811Z
+            value: git:f53dcb0
+            observed_at: 2026-10-17T07:09:59.072496Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/build-b04275d-out-78afc60db8e484e1fbf9a1d11c92bedbda48a96fe548d44b8a943735ef6e86fe.txt
+              ref: artifacts/tiller/gates/build-f53dcb0-out-a94e4a23723a63ba62e55b6a58b1308f52c6754500917c3f0fad04af8edf3e26.txt
     tests:
         required: true
         kind: command
-        status: fail
+        status: pass
         run_by: allen
-        run_at: 2026-10-17T07:09:21.217821Z
+        run_at: 2026-10-17T07:09:59.072501Z
         against:
             kind: git_commit
-            value: git:b04275d
-            observed_at: 2026-10-17T07:09:21.217811Z
+            value: git:f53dcb0
+            observed_at: 2026-10-17T07:09:59.072496Z
         evidence:
             - kind: command_output
-              ref: artifacts/tiller/gates/tests-b04275d-out-617cf713de7e1c6f2bb286c9d71ac0c86b6e183af23a33ccdf78d2b05112f806.txt
+              ref: artifacts/tiller/gates/tests-f53dcb0-out-7cb9aa24909cebcbf4c4ab78f061a70bbed6de57895413cc2fa666f0e8315e44.txt
