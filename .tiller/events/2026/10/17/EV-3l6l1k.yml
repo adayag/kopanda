@@ -1,0 +1,14 @@
+id: EV-3l6l1k
+type: add.tweak
+at: 2026-10-17T07:10:26.313085Z
+contributor: allen
+command: add tweak tinted-icon-mask-cache
+targets:
+    - TW-9atgka
+after:
+    attached_to: T-asihfm
+    key: tweaks/tinted-icon-mask-cache
+    status: proposed
+files:
+    - path: .tiller/tweaks/tinted-icon-mask-cache/tweak.md
+    - path: .tiller/tweaks/tinted-icon-mask-cache/tweak.yml

@@ -1,0 +1,9 @@
+id: TW-9atgka
+key: tweaks/tinted-icon-mask-cache
+title: TintedIcon re-renders its SVG on every construction
+status: proposed
+blocked: false
+started: false
+proposed_by: allen
+attached_to: T-asihfm
+source: .tiller/reviews/2026-10-17-efficiency-review.md#L18-L25
