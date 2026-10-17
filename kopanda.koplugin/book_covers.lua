@@ -115,23 +115,30 @@ function BookCovers.cancel()
     end
 end
 
--- The records of records CoverBrowser should extract a cover for in a box of specs: each with a
--- path not asked for in this process whose row wants says yes to. A failing test is logged and
--- its record left out.
+-- The records of records CoverBrowser should extract a cover for in a box of specs, or an empty
+-- list when none is new: each with a path not asked for in this process, or still pending, whose
+-- row wants says yes to. A pending file is asked again because a new batch ends its extraction;
+-- with no new file there is no new batch and it goes on. A failing test is logged and its record
+-- left out.
 local function wanted(bim, records, specs)
-    local list = {}
+    local in_flight = {}
+    for _, record in ipairs(pending) do
+        in_flight[record.path] = true
+    end
+    local list, new = {}, false
     for _, record in ipairs(records) do
         local path = record.path
-        if path and not asked[path] then
+        if path and (not asked[path] or in_flight[path]) then
             local ok, wants = pcall(BookCovers.wants, book_info(bim, path, false), specs)
             if not ok then
                 logger.err("KoPanda: the cover extraction test failed:", wants)
             elseif wants then
                 list[#list + 1] = record
+                new = new or not in_flight[path]
             end
         end
     end
-    return list
+    return new and list or {}
 end
 
 -- Asks CoverBrowser to extract, in one batch, the covers of the records that want one for a box
@@ -140,7 +147,7 @@ end
 -- (covermenu.lua:164-175). Each check calls on_arrival(records) once with the records whose cover
 -- arrived since the last, and stops at once when alive() is false. One request is in flight at a
 -- time: extractInBackground terminates the one before (bookinfomanager.lua:695), so a new request
--- drops its check and forgets its files that hadn't arrived.
+-- drops its check, forgets its files that hadn't arrived and asks again for those it repeats.
 function BookCovers.request(records, specs, on_arrival, alive)
     local bim = manager()
     if not bim then

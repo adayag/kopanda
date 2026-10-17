@@ -466,6 +466,42 @@ describe("BookCovers", function()
             assert.same({ files(A, B), files(C), files(B) }, bim.extracted)
         end)
 
+        it("asks again for a pending file a replacing request repeats, as the new batch ends its extraction", function()
+            local bim = manager{ info = function() return nil end, extracting = { true } }
+            local queue = stub(bim)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            assert.same({ files(A) }, bim.extracted)
+            assert.equals(1, #queue)
+            BookCovers.request({ { path = A }, { path = B } }, SPECS, function() end, always)
+            assert.same({ files(A), files(A, B) }, bim.extracted)
+            assert.equals(1, #queue)
+        end)
+
+        it("asks again later for a pending file a replacing request left out", function()
+            local bim = manager{ info = function() return nil end, extracting = { true } }
+            local queue = stub(bim)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            BookCovers.request({ { path = B } }, SPECS, function() end, always)
+            assert.same({ files(A), files(B) }, bim.extracted)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            assert.same({ files(A), files(B), files(A) }, bim.extracted)
+            assert.equals(1, #queue)
+        end)
+
+        it("reads a replaced request's arrived file from the cache rather than ask for it again", function()
+            local arrived = {}
+            local bim = manager{
+                info = function(file) return arrived[file] and usable(nil) or nil end,
+                extracting = { true },
+            }
+            stub(bim)
+            BookCovers.request({ { path = A }, { path = B } }, SPECS, function() end, always)
+            arrived[A] = true
+            BookCovers.request({ { path = A }, { path = B }, { path = C } }, SPECS, function() end, always)
+            assert.same({ files(A, B), files(B, C) }, bim.extracted)
+        end)
+
         it("keeps a file given up after the last check asked, through a later request", function()
             local arrived = {}
             local bim = manager{
