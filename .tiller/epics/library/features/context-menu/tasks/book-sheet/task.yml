@@ -1,9 +1,10 @@
 id: T-1rl35j
 key: library/context-menu/book-sheet
 title: The book sheet over a library record, opened by a hold on a book in the library and on the one-series and one-author screens
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,4 @@ accepted_against:
         kind: git_commit
         value: git:febf828
         observed_at: 2026-10-17T16:43:29.355147Z
+branch: tiller/library/context-menu/book-sheet

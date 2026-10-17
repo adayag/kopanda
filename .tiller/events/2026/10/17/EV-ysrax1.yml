@@ -1,0 +1,13 @@
+id: EV-ysrax1
+type: claim.task
+at: 2026-10-17T16:45:14.105534Z
+contributor: allen
+command: claim task T-1rl35j
+targets:
+    - T-1rl35j
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/book-sheet/task.yml
