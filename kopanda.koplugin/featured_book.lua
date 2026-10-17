@@ -89,10 +89,14 @@ local function joined(authors)
     return #authors > 0 and table.concat(authors, ", ") or nil
 end
 
--- The record of file from the model, or, for a file gone since it was chosen, one named by its
--- file name.
+-- The record of a file gone since it was chosen, named by its file name.
+local function named(file)
+    return { path = file, title = file_title(file), authors = {} }
+end
+
+-- The record of file from the model, or, for a file gone since it was chosen, its named record.
 local function record(file)
-    return Books.for_path(file) or { path = file, title = file_title(file), authors = {} }
+    return Books.for_path(file) or named(file)
 end
 
 -- The chapter recorded when file last closed under KoPanda: the recorded file compared through
@@ -119,8 +123,12 @@ function FeaturedBook.current()
         if not file then
             return nil
         end
-        local book = record(file)
-        local progress = Books.progress(book)
+        -- One sidecar open for the record and the progress both, none while it is unchanged.
+        local book, progress = Books.with_progress(file)
+        if not book then
+            book = named(file)
+            progress = Books.progress(book)
+        end
         local percent = progress.percent
         local has_percent = percent ~= nil
         percent = percent or 0

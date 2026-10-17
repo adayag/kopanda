@@ -1,0 +1,13 @@
+id: EV-t9zmst
+type: start.tweak
+at: 2026-10-17T07:17:46.108363Z
+contributor: allen
+command: start tweak TW-wghsy7
+targets:
+    - TW-wghsy7
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/sidecar-once-per-build/tweak.yml

@@ -920,8 +920,11 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `DocSettings.openSettingsFile` (`:301-315`: `dofile` in a `pcall`, empty data for nil, a corrupt
   file or an empty table; it cannot flush). `DocSettings:open` is never called: it removes
   candidates it finds invalid (`:282-284`). Read through `isTrue` and `readSetting`
-  (`frontend/luasettings.lua:124-126`, `:89-99`, no default passed).
-- The sidecar keys read, in `books.lua`'s `Books.for_path` and `Books.progress`:
+  (`frontend/luasettings.lua:124-126`, `:89-99`, no default passed). `Books.with_progress` opens
+  the sidecar once for the record and the progress both, and keeps what it read while the path
+  `findSidecarFile` gives and that file's `lfs.attributes` `modification` and `size` are unchanged;
+  the emulator's `libkoreader-lfs` gives `modification` in whole seconds.
+- The sidecar keys read, in `books.lua`'s `Books.with_progress` (as `Books.for_path` and `Books.progress` read them):
   - `percent_finished`, 0 to 1 (`frontend/apps/reader/modules/readerrolling.lua:338`,
     `readerpaging.lua:163`), clamped to 0 to 1, absent as 0;
   - `summary.status`, `reading`, `abandoned` or `complete`, anything else as `reading`
