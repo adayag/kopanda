@@ -1,7 +1,7 @@
 id: B-25sffy
 key: bugs/chapter-stale-after-other-write
 title: Another key's failed state write leaves the chapter stale with the retry flag clear
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:d5aeb78
         observed_at: 2026-10-17T20:44:22.302987Z
 branch: tiller/bugs/chapter-stale-after-other-write
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:03:02.51221Z
+        against:
+            kind: git_commit
+            value: git:8f308e1
+            observed_at: 2026-10-17T21:03:02.512209Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-8f308e1-out-7ca62238cf16957f88b8eb91a45b19910aaa1fb85ff13f4457e7e1985d299f14.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:03:02.51221Z
+        against:
+            kind: git_commit
+            value: git:8f308e1
+            observed_at: 2026-10-17T21:03:02.512209Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-8f308e1-out-22a0246163ea53b89163070a86ea8688438518ffa2f6ae29d1129aa1027d0cf1.txt

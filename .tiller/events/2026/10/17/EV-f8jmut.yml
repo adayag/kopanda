@@ -1,0 +1,13 @@
+id: EV-f8jmut
+type: check.bug
+at: 2026-10-17T21:08:01.704227Z
+contributor: allen
+command: check bug B-25sffy
+targets:
+    - B-25sffy
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/bugs/chapter-stale-after-other-write/bug.yml
