@@ -1,0 +1,11 @@
+id: EV-andap2
+type: claim.tweak
+at: 2026-10-17T07:17:47.019111Z
+contributor: allen
+command: claim tweak tweaks/state-set-many
+targets:
+    - TW-soxspy
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/state-set-many/tweak.yml

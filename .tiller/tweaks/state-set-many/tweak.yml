@@ -1,9 +1,10 @@
 id: TW-soxspy
 key: tweaks/state-set-many
 title: Recording the chapter fsyncs state.lua twice per book close
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: T-gj4d8q
 source: .tiller/reviews/2026-10-17-efficiency-review.md#L103-L110
@@ -17,3 +18,4 @@ accepted_against:
         kind: git_commit
         value: git:5aa14a6
         observed_at: 2026-10-17T07:16:23.5088Z
+branch: tiller/tweaks/state-set-many
