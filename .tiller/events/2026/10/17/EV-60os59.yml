@@ -1,0 +1,18 @@
+id: EV-60os59
+type: link.task
+at: 2026-10-17T20:53:35.478072Z
+contributor: allen
+command: link task T-lk235s
+targets:
+    - T-lk235s
+before:
+    depends_on:
+        - T-3cuakg
+after:
+    added:
+        - T-xtol0q
+    depends_on:
+        - T-3cuakg
+        - T-xtol0q
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/goldens/task.yml
