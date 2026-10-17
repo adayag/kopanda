@@ -1,0 +1,17 @@
+id: EV-kquwf8
+type: start.task
+at: 2026-10-17T16:44:59.120336Z
+contributor: allen
+command: start task T-m9850d
+targets:
+    - T-m9850d
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/library/context-menu
+    branch: tiller/library/context-menu/icons
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/icons/task.yml
+    - path: .tiller/epics/library/features/context-menu/feature.yml

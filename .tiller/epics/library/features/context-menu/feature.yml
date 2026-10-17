@@ -1,7 +1,7 @@
 id: F-l0kw8m
 key: library/context-menu
 title: Hold on a book, a folder or empty space
-status: ready
+status: active
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -17,6 +17,7 @@ order:
     - T-ivn2lk
     - T-512xrc
 review_grain: feature
+branch: tiller/reviews/features/library/context-menu
 accepted_against:
     spec:
         kind: git_blob
