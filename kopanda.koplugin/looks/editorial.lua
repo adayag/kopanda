@@ -394,8 +394,10 @@ return {
             face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted",
         },
         -- "Not downloaded" (GridA.dc.html:73), now on its paper chip on the cover (cover-grid D13).
+        -- Untracked: the owner's tightening so the label fits beside the badge on both profiles
+        -- (board tracking 0.14).
         not_downloaded = {
-            face = "text", size = 10, uppercase = true, tracking = 0.14, line_height = 0, color = "muted",
+            face = "text", size = 10, uppercase = true, tracking = 0, line_height = 0, color = "muted",
         },
         -- "1 / 24" between the pager's arrows (GridA.dc.html:85, :87).
         pager_label = { face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted" },
@@ -573,7 +575,9 @@ return {
             fill_color = "paper",
             outline_width = 0,
             outline_color = false,
-            padding = { x = 6, y = 2 }, -- no board: as above
+            -- No board: as above. x is the owner's tightening from 6 so "Not downloaded" fits beside the
+            -- badge on both profiles.
+            padding = { x = 4, y = 2 },
         },
         pager = {
             button_w = 44, -- GridA.dc.html:86, :88
