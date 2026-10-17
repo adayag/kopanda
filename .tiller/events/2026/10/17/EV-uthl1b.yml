@@ -1,0 +1,14 @@
+id: EV-uthl1b
+type: sync.tweak
+at: 2026-10-17T08:01:50.931109Z
+contributor: allen
+command: sync tweak TW-hmdt1d
+targets:
+    - TW-hmdt1d
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/reading-stats-memo/tweak.yml

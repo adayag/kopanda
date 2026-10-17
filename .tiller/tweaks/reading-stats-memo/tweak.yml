@@ -1,7 +1,7 @@
 id: TW-hmdt1d
 key: tweaks/reading-stats-memo
 title: The Statistics database is opened twice per home build, uncached
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,7 @@ accepted_against:
         observed_at: 2026-10-17T07:16:23.362176Z
 branch: tiller/tweaks/reading-stats-memo
 pr: 40
+done_basis: ancestry
 gates:
     build:
         required: true
