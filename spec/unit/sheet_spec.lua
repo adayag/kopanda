@@ -1444,21 +1444,67 @@ describe("the sheet", function()
             assert.equals(sheet, harness.top())
         end)
 
-        it("redraws the shown sheet on Sheet.redraw, and does nothing with none", function()
-            Sheet.redraw()
-            assert.equals(Home.shown, harness.top())
+        it("re-lays out on a refresh_on event only when the spec's stale says so, or raises, logged", function()
+            local errored = spy.on(logger, "err")
+            finally(function()
+                errored:revert()
+            end)
             local log = {}
-            Sheet.show(body_spec(log), ctx_for("editorial"))
+            local spec = body_spec(log)
+            spec.refresh_on = { "TestRefresh" }
+            local changed = false
+            spec.stale = function()
+                if changed == "raise" then
+                    error("kopanda-test: stale failed")
+                end
+                return changed
+            end
+            Sheet.show(spec, ctx_for("diner"))
             local sheet = Sheet.shown
-            local dirty, restore = record(UIManager, "setDirty")
-            Sheet.redraw()
-            restore()
+            UIManager:broadcastEvent(Event:new("TestRefresh"))
+            assert.equals(1, log.calls)
+            changed = true
+            UIManager:broadcastEvent(Event:new("TestRefresh"))
             assert.equals(2, log.calls)
+            changed = "raise"
+            UIManager:broadcastEvent(Event:new("TestRefresh"))
+            assert.equals(3, log.calls)
+            assert.equals(1, errors(errored, "kopanda-test: stale failed"))
+            assert.equals(sheet, harness.top())
+        end)
+
+        it("leaves a tap's re-layout to the paint when the variant changed, marking the sheet dirty", function()
+            local had_color = G_reader_settings:has("color_rendering")
+            local color_rendering = G_reader_settings:readSetting("color_rendering")
+            local night_mode = rawget(Screen, "night_mode")
+            local size = Screen:getSize()
+            local bb = buffer(size.w, size.h, false)
+            finally(function()
+                Screen.night_mode = night_mode
+                if had_color then
+                    G_reader_settings:saveSetting("color_rendering", color_rendering)
+                else
+                    G_reader_settings:delSetting("color_rendering")
+                end
+                bb:free()
+            end)
+            G_reader_settings:saveSetting("color_rendering", true)
+            Screen.night_mode = false
+            local log = {}
+            Sheet.show(body_spec(log), ctx_for("diner"))
+            local sheet = Sheet.shown
+            sheet:paintTo(bb, 0, 0)
+            Screen.night_mode = true
+            local dirty, restore = record(UIManager, "setDirty")
+            send(harness.gesture("tap", area(sheet, 1)))
+            restore()
+            assert.equals(1, #log.stay_tap)
+            assert.equals(1, log.calls)
             assert.equals(1, #dirty)
             assert.equals(sheet, dirty[1][2])
-            Sheet.close()
-            Sheet.redraw()
-            assert.equals(2, log.calls)
+            bb:setInverse(1)
+            sheet:paintTo(bb, 0, 0)
+            assert.same({ "day", "night" }, log.variants)
         end)
 
         it("asks body again in the night variant at the next paint after night mode turns on", function()
@@ -1502,7 +1548,8 @@ describe("the sheet", function()
             local sheet = Sheet.shown
             assert.equals(0, sheet.panel.y)
             assert.equals(1, warnings(warned, "taller than the screen"))
-            Sheet.redraw()
+            send(harness.gesture("tap", area(sheet, 1)))
+            assert.equals(1, #log.stay_tap)
             assert.equals(2, log.calls)
             assert.equals(0, sheet.panel.y)
             assert.equals(1, warnings(warned, "taller than the screen"))

@@ -1,0 +1,13 @@
+id: EV-wt9jgv
+type: start.tweak
+at: 2026-10-17T16:09:46.548254Z
+contributor: allen
+command: start tweak TW-6fwvl6
+targets:
+    - TW-6fwvl6
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/quick-settings-one-redraw/tweak.yml

@@ -1,7 +1,7 @@
 -- The sheet: a panel of rows drawn in the look over the home or the library, opened by a hold or
 -- a tap and closed by a tap outside it, a tap on a row, KOReader's Back or the Back key. It knows
 -- nothing about books or the home: its opener hands it a spec,
---   { name, band, header, rows, body, refresh_on, hold, flush, more }
+--   { name, band, header, rows, body, refresh_on, stale, hold, flush, more }
 -- name: what the settled signal reports; band: which <band>_band_color token Diner's header
 -- takes; header: { heading, aside, aside_beside, aside_above, hint, label } or a book's { cover,
 -- title, author, meta } (cover a built widget, the sheet's to free), or nil; aside_above stacks
@@ -16,7 +16,9 @@
 -- { widget, areas }: widget (getSize, paintTo, free) is drawn under the header and freed with the
 -- panel; areas are { rect, tap, hold, close_first }, rect from the widget's top-left. A tap or
 -- hold in an area runs its tap or hold with the sheet left open, then redraws it, or closes it
--- first with close_first. refresh_on, optional, lists events on each of which the sheet redraws.
+-- first with close_first. refresh_on, optional, lists events on each of which the sheet redraws;
+-- with stale, only when stale(), called with no arguments, says what the sheet shows has
+-- changed since its last layout (a stale that raises is logged and the sheet redraws).
 -- more, { label, run }, for a list that may not fit: when rows are left out, the last slot that
 -- fits beside a row is a More row (label, default "More…", with the list icon when any row has
 -- an icon), and a tap on it closes the sheet and calls run with the rows not shown, in order.
@@ -95,6 +97,15 @@ function Sheet:init()
     -- return (frontend/ui/uimanager.lua:1042-1061), so the windows beneath hear it too.
     for _, event in ipairs(self.spec.refresh_on or {}) do
         self["on" .. event] = function()
+            local stale = self.spec.stale
+            if stale then
+                local ok, changed = pcall(stale)
+                if not ok then
+                    logger.err("KoPanda: the sheet", self.spec.name, "could not tell whether it is stale:", changed)
+                elseif not changed then
+                    return
+                end
+            end
             redraw(self)
         end
     end
@@ -154,12 +165,18 @@ end
 
 -- Re-lays a shown sheet out in its variant and asks for one ui refresh of its old and new
 -- rectangles together, so a panel that changed height leaves nothing stale; a sheet no longer
--- shown is left alone. A failure is the sheet's.
+-- shown is left alone. When the variant changed since the build (night mode toggled), the paint
+-- lays it out again in the new one (paint, below), so this only marks it dirty. A failure is the
+-- sheet's.
 redraw = function(sheet)
     if not UIManager:isWidgetShown(sheet) then
         return
     end
     local ok, err = pcall(function()
+        if Looks.variant() ~= sheet.variant then
+            UIManager:setDirty(sheet, "ui", sheet.rect)
+            return
+        end
         local old = sheet.rect
         lay_out(sheet, sheet.variant)
         UIManager:setDirty(sheet, "ui", old:combine(sheet.rect))
@@ -218,13 +235,6 @@ end
 function Sheet.close()
     if Sheet.shown then
         close_sheet(Sheet.shown)
-    end
-end
-
--- Redraws the sheet shown, if any, for a callback that comes after the tap that started it.
-function Sheet.redraw()
-    if Sheet.shown then
-        redraw(Sheet.shown)
     end
 end
 
