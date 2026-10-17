@@ -1284,6 +1284,50 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `UIManager:close` sends `CloseWidget` before it walks the stack (`frontend/ui/uimanager.lua:298-300`),
   and the home's `onCloseWidget` calls `Sheet.close` in a `pcall`.
 
+### The quick-settings sheet: the power device, the radio, `night_mode` and `lock_rotation`
+
+`quick_settings.lua` reads these each time the sheet lays out, each read in its own `pcall`.
+
+- `Device:hasFrontlight()`, `Device:hasNaturalLight()` and `Device:hasBattery()`: `no`, `no` and `yes`
+  by default (`frontend/device/generic/device.lua:89`, `:109-110`), all `yes` in the emulator
+  (`frontend/device/sdl/device.lua:155-158`). Without the frontlight neither bar shows; without
+  natural light the warmth bar doesn't.
+- `Device:getPowerDevice()` is `Device.powerd` (`frontend/device/generic/device.lua:395-397`).
+- The power device's scales: `BasePowerD`'s `fl_min`, `fl_max`, `fl_warmth_min` and `fl_warmth_max`
+  default to 0, 10, 0 and 100 (`frontend/device/generic/powerd.lua:7-11`); `new` sets
+  `warmth_scale = 100 / fl_warmth_max` (`:36-39`). The Kindles' are 0-24 for both
+  (`frontend/device/kindle/powerd.lua:8-11`), the emulator's 0-100 with the light at 50 and the
+  warmth at 50 (`frontend/device/sdl/powerd.lua:4-12`).
+- `powerd:frontlightIntensity()` (`frontend/device/generic/powerd.lua:126-133`): the native
+  intensity, 0 without a frontlight or with the light off; the brightness bar's value, its fill
+  that over `fl_max`.
+- `powerd:frontlightWarmth()` (`:169-175`) is the warmth on KOReader's 0-100 scale;
+  `toNativeWarmth` (`:233-235`) rounds it over `warmth_scale` to the device's native step, and
+  `fromNativeWarmth` (`:237-239`) is its inverse. The warmth bar's value is the native warmth, its
+  fill (value - `fl_warmth_min`) over (`fl_warmth_max` - `fl_warmth_min`).
+- `powerd:getCapacity()` (`:254-270`): the battery's percent, read from the hardware at most once a
+  minute; the header's "Battery N%". The emulator's is the Mac's battery
+  (`frontend/device/sdl/powerd.lua:28-33`).
+- `NetworkMgr:isWifiOn()` (`frontend/ui/network/manager.lua:182-185`, replaced per device; the
+  emulator's reads `emulator_fake_wifi_connected`, `frontend/device/sdl/device.lua:478-500`): the
+  Wi-Fi cell's state.
+- `G_reader_settings` key `night_mode`, read with `isTrue` (`frontend/luasettings.lua:124`), which
+  `DeviceListener:onToggleNightMode` saves (`frontend/device/devicelistener.lua:14-27`): the Night
+  cell's state.
+- `G_reader_settings` key `lock_rotation`, KOReader's "Keep current rotation across views", read with
+  `isTrue` as its menu item reads it and flipped by that item's `flipNilOrFalse`
+  (`frontend/ui/elements/screen_rotation_menu_table.lua:64-77`); the file browser keeps its rotation
+  while it is set (`frontend/apps/filemanager/filemanager.lua:63-69`) and the reader neither
+  applies nor saves a book's (`frontend/apps/reader/modules/readerview.lua:971`, `:1223`). The
+  Rotation lock cell's state.
+- The cells greyed where the launcher couldn't run their entries go through
+  `LauncherEntries.available` (the launcher's entries above): Wi-Fi's `toggle_wifi`, whose
+  condition is `Device:hasWifiToggle()` (`frontend/dispatcher.lua:124`); Sleep's `suspend`, whose
+  condition is `Device:canSuspend()` (`:94`); Sync books' `cwngsync_sync_now`, registered by the
+  `cwngsync` plugin (`cwngsync.koplugin/main.lua:282-283` at `df90d5e`), which needs
+  `PluginLoader:isPluginLoaded("cwngsync")` (`frontend/pluginloader.lua:567-569`) and the action
+  listed by `Dispatcher.getDisplayList` (`frontend/dispatcher.lua:866-890`).
+
 ### The hold on the home: the `hold` gesture, Gestures' hold corners and the home sheet's rows
 
 - The `hold` gesture fires while the finger is still down, after `HOLD_INTERVAL_MS`, 500 ms

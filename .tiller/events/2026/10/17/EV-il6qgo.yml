@@ -1,0 +1,15 @@
+id: EV-il6qgo
+type: start.task
+at: 2026-10-17T04:03:03.824853Z
+contributor: allen
+command: start task T-7g6ybl
+targets:
+    - T-7g6ybl
+before:
+    status: ready
+after:
+    branch: tiller/bars/quick-settings/panel
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/panel/task.yml
