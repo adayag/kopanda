@@ -1,0 +1,13 @@
+id: EV-qk5lx6
+type: check.task
+at: 2026-10-17T17:22:05.605368Z
+contributor: allen
+command: check task T-m9850d
+targets:
+    - T-m9850d
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/icons/task.yml

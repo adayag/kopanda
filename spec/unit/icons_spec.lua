@@ -42,10 +42,35 @@ describe("icons", function()
         table.sort(ids)
         assert.same({
             "action", "authors", "back", "bookmark", "check", "chevron_down", "chevron_up", "close",
-            "download", "folder", "forward", "history", "home", "info", "layout", "library", "list", "moon",
-            "open_book", "plugin_missing", "plus", "power", "quick_settings", "rotation_lock", "screenshot",
-            "series", "settings", "sun", "sync", "terminal", "wifi", "wifi_off",
+            "download", "eye_off", "filter", "folder", "folder_open", "forward", "history", "home",
+            "home_plus", "info", "layout", "library", "list", "moon", "open_book", "plugin_missing", "plus",
+            "power", "quick_settings", "refresh", "rotation_lock", "screenshot", "series", "settings", "sort",
+            "sun", "sync", "terminal", "trash", "wifi", "wifi_off",
         }, ids)
+    end)
+
+    -- The library's three hold sheets draw seven new icons and library (context-menu feature, D4): the
+    -- book sheet's Add to the home and Delete (HoldBookC:66, :70), the folder sheet's Open, Set as
+    -- library root and Hide (HoldFolderC:45, :49, :56), and the library sheet's Sort, Show and Refresh
+    -- (HoldEmptyC:44, :51, :57) and Hidden folders (eye_off, feature.md:245).
+    it("uses the context menu's icons in the book, library folder and library sheets", function()
+        local places = {}
+        for _, entry in ipairs(Icons.entries) do
+            places[entry.id] = {}
+            for _, place in ipairs(entry.used_in) do
+                places[entry.id][place] = true
+            end
+        end
+        local expected = {
+            ["book sheet"] = { "home_plus", "trash" },
+            ["library folder sheet"] = { "folder_open", "eye_off", "library" },
+            ["library sheet"] = { "sort", "filter", "refresh", "eye_off" },
+        }
+        for place, ids in pairs(expected) do
+            for _, id in ipairs(ids) do
+                assert.is_true(places[id] and places[id][place], id .. " in " .. place)
+            end
+        end
     end)
 
     -- The title bar draws plus, or check in select mode (title-bar feature, D10).
