@@ -1,7 +1,7 @@
 id: T-lnzmw0
 key: library/context-menu/book-actions
 title: Add to the home and Delete on the library's book sheet
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,12 @@ accepted_against:
         value: git:febf828
         observed_at: 2026-10-17T16:43:29.379214Z
 branch: tiller/library/context-menu/book-actions
+review_ref:
+    branch: tiller/library/context-menu/book-actions
+    head:
+        kind: git_commit
+        value: git:9e36f28
+        observed_at: 2026-10-17T17:56:59.080949Z
 gates:
     build:
         required: true
