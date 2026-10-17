@@ -425,9 +425,9 @@ local function header()
     })
 end
 
--- Shows the sheet over whatever is on top, the home or the bare file browser: it needs no home.
--- opts.started, the PaintClock stamp the opener took, is passed to Sheet.show for paint_ms and
--- cpu_ms.
+-- Shows the sheet over whatever is on top, the home, the library or the bare file browser: it needs
+-- no home. opts.started, the PaintClock stamp the opener took, and opts.beneath, the screen it is
+-- shown over when that is not the home, are passed to Sheet.show.
 function QuickSettings.open(opts)
     local ctx = {
         look = Looks.active(),

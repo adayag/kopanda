@@ -1,18 +1,23 @@
--- The sheet: a panel of rows drawn in the look over the home, opened by a hold or a tap and
--- closed by a tap outside it, a tap on a row, KOReader's Back or the Back key. It knows nothing
--- about books or the home: its opener hands it a spec,
---   { name, band, header, rows, body, refresh_on, hold }
+-- The sheet: a panel of rows drawn in the look over the home or the library, opened by a hold or
+-- a tap and closed by a tap outside it, a tap on a row, KOReader's Back or the Back key. It knows
+-- nothing about books or the home: its opener hands it a spec,
+--   { name, band, header, rows, body, refresh_on, hold, flush }
 -- name: what the settled signal reports; band: which <band>_band_color token Diner's header
--- takes; header: { heading, aside, aside_beside, hint } or a book's { cover, title, author, meta }
--- (cover a built widget, the sheet's to free), or nil; rows: { icon, label, detail, chip,
--- muted, tick, run } each, run called with no arguments; hold, optional, called with no
--- arguments on a hold inside the panel, after the sheet has closed. A sheet without hold
--- ignores holds, but for its body's. body, in place of rows (a spec with both keeps its rows),
--- is called at every layout as body(bctx, content_w) and returns { widget, areas }: widget
--- (getSize, paintTo, free) is drawn under the header and freed with the panel; areas are
--- { rect, tap, hold, close_first }, rect from the widget's top-left. A tap or hold in an area
--- runs its tap or hold with the sheet left open, then redraws it, or closes it first with
--- close_first. refresh_on, optional, lists events on each of which the sheet redraws.
+-- takes; header: { heading, aside, aside_beside, aside_above, hint, label } or a book's { cover,
+-- title, author, meta } (cover a built widget, the sheet's to free), or nil; aside_above stacks
+-- the aside over the heading, label is set at the header's right (a label takes the header's
+-- right, so a sheet with one has no hint and its aside beside or above); rows: { icon, label,
+-- sublabel, detail, chip, muted, tick, selected, run } each, sublabel a second line under the
+-- label, selected filling the row and setting a check at its right, run called with no
+-- arguments; hold, optional, called with no arguments on a hold inside the panel, after the sheet
+-- has closed. A sheet without hold ignores holds, but for its body's; flush, for a sheet whose
+-- rows have no icons, sets their labels without the icon's indent. body, in place of rows (a spec
+-- with both keeps its rows), is called at every layout as body(bctx, content_w) and returns
+-- { widget, areas }: widget (getSize, paintTo, free) is drawn under the header and freed with the
+-- panel; areas are { rect, tap, hold, close_first }, rect from the widget's top-left. A tap or
+-- hold in an area runs its tap or hold with the sheet left open, then redraws it, or closes it
+-- first with close_first. refresh_on, optional, lists events on each of which the sheet redraws.
+-- Every field but name and rows or body is optional.
 -- Module state: Sheet.shown, the sheet on screen or nil. One sheet at a time: showing one
 -- closes the one shown.
 local Device = require("device")
@@ -49,6 +54,7 @@ local function lay_out(sheet, variant)
     sheet.rect = laid.rect
     sheet.header_rect = laid.header
     sheet.hint_rect = laid.hint
+    sheet.header_parts = laid.header_parts
     sheet.rows = laid.rows
     sheet.areas = laid.areas
     sheet.variant = variant
@@ -101,8 +107,8 @@ local function close_sheet(sheet)
     end
 end
 
--- Closes the sheet if still up and the home, leaving the file browser. home.lua reaches this
--- module, so home is required here.
+-- Closes the sheet if still up and the screen it was shown over (sheet.beneath, default the
+-- home), leaving the file browser. home.lua reaches this module, so home is required here.
 local function close_all(sheet)
     if UIManager:isWidgetShown(sheet) then
         close_sheet(sheet)
@@ -110,11 +116,11 @@ local function close_all(sheet)
     if Sheet.shown == sheet then
         Sheet.shown = nil
     end
-    local ok, home_err = pcall(function()
-        require("home").close()
+    local ok, beneath_err = pcall(function()
+        (sheet.beneath or require("home")).close()
     end)
     if not ok then
-        logger.err("KoPanda: could not close the home:", home_err)
+        logger.err("KoPanda: could not close the screen beneath the sheet:", beneath_err)
     end
 end
 
@@ -136,7 +142,7 @@ local function free_cover(sheet)
     end
 end
 
--- A failure anywhere in the sheet: logged, then the sheet and the home closed.
+-- A failure anywhere in the sheet: logged, then the sheet and the screen beneath closed.
 local function fail(sheet, what, err)
     logger.err("KoPanda: the sheet", sheet.spec and sheet.spec.name, what, err)
     close_all(sheet)
@@ -180,20 +186,23 @@ local function settle(sheet)
     end
 end
 
--- Shows the sheet of spec under ctx (the home's), closing the one shown. opts.started is the
--- PaintClock stamp its opener took on the hold or tap, which paint_ms and cpu_ms run from;
--- without it, the start of the show. A failure is logged, takes the sheet off the stack and closes the home.
+-- Shows the sheet of spec under ctx (the screen's beneath), closing the one shown. opts.started is
+-- the PaintClock stamp its opener took on the hold or tap, which paint_ms and cpu_ms run from;
+-- without it, the start of the show. opts.beneath is the screen the sheet is shown over, a table
+-- whose close() closes it; without it, the home. A failure is logged, takes the sheet off the
+-- stack and closes that screen.
 function Sheet.show(spec, ctx, opts)
     local started = opts and opts.started or PaintClock.now()
+    local beneath = opts and opts.beneath
     local sheet
     local ok, err = pcall(function()
         Sheet.close()
-        sheet = Sheet:new{ spec = spec, ctx = ctx, started = started }
+        sheet = Sheet:new{ spec = spec, ctx = ctx, started = started, beneath = beneath }
         Sheet.shown = sheet
         UIManager:show(sheet, "ui", sheet.rect)
     end)
     if not ok then
-        sheet = sheet or { spec = spec }
+        sheet = sheet or { spec = spec, beneath = beneath }
         fail(sheet, "could not be shown:", err)
         free_cover(sheet)
     end
@@ -239,7 +248,7 @@ local function paint(sheet, bb, x, y)
 end
 
 -- A widget can't be closed from inside the repaint, so a failed paint closes the sheet and the
--- home from the next tick. The first good paint schedules the settled signal for the next tick,
+-- screen beneath from the next tick. The first good paint schedules the settled signal for the next tick,
 -- which runs past this repaint.
 function Sheet:paintTo(bb, x, y)
     local ok, err = pcall(paint, self, bb, x, y)

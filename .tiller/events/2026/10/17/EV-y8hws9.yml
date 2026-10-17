@@ -1,0 +1,13 @@
+id: EV-y8hws9
+type: check.task
+at: 2026-10-17T04:19:50.528094Z
+contributor: allen
+command: check task T-cb345p
+targets:
+    - T-cb345p
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/screen/task.yml

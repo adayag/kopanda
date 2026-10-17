@@ -1,0 +1,11 @@
+id: EV-v7i9od
+type: submit.feature
+at: 2026-10-17T07:24:13.778278Z
+contributor: allen
+command: submit feature library/cover-grid
+targets:
+    - F-2nt0fx
+after:
+    pr: 35
+files:
+    - path: .tiller/epics/library/features/cover-grid/feature.yml

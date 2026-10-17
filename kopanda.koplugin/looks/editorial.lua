@@ -143,6 +143,11 @@ return {
         state_chip_color = false,
         chip_padding = { x = false, y = false },
         chip_outline_width = 0,
+        -- The sort and status sheets (cover-grid "The pickers"): no board draws Editorial's, so its
+        -- gaps are Diner's (SortC.dc.html:39, :46) and its current choice has no fill.
+        selected_fill_color = false,
+        aside_above_gap = 2,
+        sublabel_gap = 2,
     },
 
     -- The quick-settings sheet's body: two ruled sections of a label row over a minus button, a
@@ -323,6 +328,12 @@ return {
         },
         -- Not drawn: Editorial has no chips. Its plain detail's style.
         sheet_chip = { face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
+        -- The header's label at its right, "Library": no board draws it here; the aside's style.
+        sheet_label = { face = "text", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
+        -- A row's second line: no board draws it here; the detail's face in sentence case.
+        sheet_sublabel = {
+            face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "muted",
+        },
         -- A quick-settings bar's label and value, "Brightness" and "12" (QuickSettings.dc.html:41).
         quick_label = {
             face = "text", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "muted",
@@ -411,6 +422,10 @@ return {
         library_picker = {
             face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "text",
         },
+        -- The status picker's label, as the sort's (GridA.dc.html:26).
+        library_picker_status = {
+            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "text",
+        },
         -- A tile's title, one line, CSS line height 1.25 (GridA.dc.html:47); weight 500, the strong face.
         tile_title = { face = "strong", size = 12, uppercase = false, tracking = 0, line_height = 0.25, color = "ink" },
         -- The placeholder's title at the grid's size, CSS line height 1.1 (GridA.dc.html:51).
@@ -426,8 +441,10 @@ return {
             face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted",
         },
         -- "Not downloaded" (GridA.dc.html:73), now on its paper chip on the cover (cover-grid D13).
+        -- Untracked: the owner's tightening so the label fits beside the badge on both profiles
+        -- (board tracking 0.14).
         not_downloaded = {
-            face = "text", size = 10, uppercase = true, tracking = 0.14, line_height = 0, color = "muted",
+            face = "text", size = 10, uppercase = true, tracking = 0, line_height = 0, color = "muted",
         },
         -- "1 / 24" between the pager's arrows (GridA.dc.html:85, :87).
         pager_label = { face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted" },
@@ -605,7 +622,9 @@ return {
             fill_color = "paper",
             outline_width = 0,
             outline_color = false,
-            padding = { x = 6, y = 2 }, -- no board: as above
+            -- No board: as above. x is the owner's tightening from 6 so "Not downloaded" fits beside the
+            -- badge on both profiles.
+            padding = { x = 4, y = 2 },
         },
         pager = {
             button_w = 44, -- GridA.dc.html:86, :88
@@ -617,6 +636,9 @@ return {
             prev_fill_color = false, -- transparent (GridA.dc.html:86)
             next_fill_color = false, -- transparent (GridA.dc.html:88)
             dead_color = "hairline", -- the first page's previous arrow (GridA.dc.html:86)
+            prev_icon_color = "ink", -- a live arrow, as the next one (GridA.dc.html:88)
+            next_icon_color = "ink", -- GridA.dc.html:88
+            label_in_words = false, -- "1 / 24" (GridA.dc.html:87)
         },
     },
 }

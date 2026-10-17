@@ -575,6 +575,28 @@ describe("library tiles", function()
             end)
         end)
 
+        -- A tracked line too wide for its room falls back to one TextWidget, untracked and cut with
+        -- KOReader's ellipsis (typeset.lua), which keeps its full text but draws "NOT DOWNLOAD…"; so
+        -- the chip's line must be as wide as the label set in its type with room to spare.
+        it("sets Not downloaded in full, tracked as its type says, on both profiles in both looks", function()
+            covers()
+            local Typeset = require("typeset")
+            each_profile(function(where)
+                for _, id in ipairs({ "diner", "editorial" }) do
+                    local ctx = ctx_for(id)
+                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx)
+                    local built = LibraryTiles.book(remote(), { status = "new" }, box, ctx)
+                    local label = id .. " at " .. where
+                    assert.is_true(has_text(built.chip, "NOT DOWNLOADED"), label)
+                    local free = Typeset.line(ctx.look.type.not_downloaded, "Not downloaded",
+                        10 * Screen:getWidth(), ctx)
+                    assert.equals(free:getSize().w, built.chip[1]:getSize().w, label .. ": the label is cut")
+                    free:free()
+                    built:free()
+                end
+            end)
+        end)
+
         it("shows a folder's book count, its reading count when any, and its name", function()
             harness.at_colorsoft(function()
                 for _, id in ipairs({ "diner", "editorial" }) do

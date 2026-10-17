@@ -107,7 +107,9 @@ describe("looks", function()
                     "sheet.inset.side", "sheet.book_band_color", "sheet.header_padding.top",
                     "sheet.book_header_padding.bottom", "sheet.row_rule_color", "sheet.status_chip_color",
                     "sheet.chip_padding.x", "type.sheet_heading.face", "type.sheet_aside.color",
-                    "type.sheet_chip.size", "editor.padding.top", "editor.header_band_color",
+                    "type.sheet_chip.size", "sheet.selected_fill_color", "sheet.aside_above_gap",
+                    "sheet.sublabel_gap", "type.sheet_label.face", "type.sheet_sublabel.size",
+                    "editor.padding.top", "editor.header_band_color",
                     "editor.header_rule_width", "editor.body_gap", "editor.button_padding.y", "editor.card_padding.x",
                     "editor.selected_fill_color", "editor.arrow_size", "editor.disabled_color",
                     "editor.box_padding.y", "editor.row_rule_color", "editor.control_size",
@@ -593,7 +595,8 @@ describe("looks", function()
                     padding = { x = 6, y = 1 } },
                 pager = { button_w = 44, button_h = 32, gap = 18, bottom = 16, outline_width = 2,
                     outline_color = "outline", prev_fill_color = "paper", next_fill_color = "mustard",
-                    dead_color = false },
+                    dead_color = false, prev_icon_color = "ink", next_icon_color = "on_accent",
+                    label_in_words = true },
             },
             editorial = {
                 header = {
@@ -613,11 +616,13 @@ describe("looks", function()
                     icon_color = "ink", padding = { x = 14, y = 16 }, count_gap = 4 },
                 badge = { size = 30, outline_width = 1, outline_color = "ink", fill_color = "paper",
                     icon_size = 16, icon_color = "ink", inset = 8, align = "bottom" },
+                -- x 4, not 6: the owner's tightening so "Not downloaded" fits beside the badge.
                 not_downloaded = { fill_color = "paper", outline_width = 0, outline_color = false,
-                    padding = { x = 6, y = 2 } },
+                    padding = { x = 4, y = 2 } },
                 pager = { button_w = 44, button_h = 32, gap = 22, bottom = 16, outline_width = 0,
                     outline_color = false, prev_fill_color = false, next_fill_color = false,
-                    dead_color = "hairline" },
+                    dead_color = "hairline", prev_icon_color = "ink", next_icon_color = "ink",
+                    label_in_words = false },
             },
         }
 
@@ -626,6 +631,7 @@ describe("looks", function()
                 library_count = { "accent", 24, false, 0, 0, "on_accent" },
                 library_title = { "display", 40, false, -0.01, -0.05, "on_accent" },
                 library_picker = { "display", 11, true, 0.08, 0, "ink" },
+                library_picker_status = { "display", 11, true, 0.08, 0, "on_accent" },
                 tile_title = { "display", 12, true, 0.04, 0.2, "ink" },
                 tile_cover_title = { "display", 17, false, 0, 0.1, "on_cover" },
                 folder_count = { "accent", 26, false, 0, 0, "on_accent" },
@@ -637,11 +643,13 @@ describe("looks", function()
                 library_count = { "text", 11, true, 0.14, 0, "muted" },
                 library_title = { "display", 34, false, 0, 0, "ink" },
                 library_picker = { "strong", 11, true, 0.12, 0, "text" },
+                library_picker_status = { "strong", 11, true, 0.12, 0, "text" },
                 tile_title = { "strong", 12, false, 0, 0.25, "ink" },
                 tile_cover_title = { "display", 18, false, 0, 0.1, "on_cover" },
                 folder_count = { "display", 22, false, 0, 0.05, "ink" },
                 folder_reading = { "text", 11, true, 0.14, 0, "muted" },
-                not_downloaded = { "text", 10, true, 0.14, 0, "muted" },
+                -- Untracked, not 0.14: the owner's tightening, as the chip's padding above.
+                not_downloaded = { "text", 10, true, 0, 0, "muted" },
                 pager_label = { "text", 11, true, 0.14, 0, "muted" },
             },
         }
@@ -712,6 +720,44 @@ describe("looks", function()
                 end
                 for part, values in pairs(LIBRARY_PARTS[id]) do
                     assert.same(values, part_values(looks[id].type[part]), id .. " type." .. part)
+                end
+            end
+        end)
+
+        -- The two pickers' lines differ in colour alone, so the header's height measures either
+        -- (LibraryTiles.header_height measures library_picker).
+        it("set the status picker's label as the sort picker's in its own colour", function()
+            for _, id in ipairs(ids) do
+                local sort, status = looks[id].type.library_picker, looks[id].type.library_picker_status
+                assert.same({ sort.face, sort.size, sort.uppercase, sort.tracking, sort.line_height },
+                    { status.face, status.size, status.uppercase, status.tracking, status.line_height }, id)
+            end
+        end)
+
+        -- The sort and status sheets' additions to the sheet block and parts (cover-grid "The pickers"):
+        -- Diner's from SortC.dc.html; Editorial's sort sheet is not drawn, so its are its plain sheet's
+        -- style with no selected fill.
+        it("give the sheet's picker additions the boards' values", function()
+            local SHEET = {
+                diner = { selected_fill_color = "teal", aside_above_gap = 2, sublabel_gap = 2 },
+                editorial = { selected_fill_color = false, aside_above_gap = 2, sublabel_gap = 2 },
+            }
+            local PARTS = {
+                diner = {
+                    sheet_label = { "display", 11, true, 0.08, 0, "on_accent" },
+                    sheet_sublabel = { "text", 12, false, 0, 0, "ink" },
+                },
+                editorial = {
+                    sheet_label = { "text", 12, true, 0.1, 0, "muted" },
+                    sheet_sublabel = { "text", 12, false, 0, 0, "muted" },
+                },
+            }
+            for _, id in ipairs(ids) do
+                for key, value in pairs(SHEET[id]) do
+                    assert.equals(value, looks[id].sheet[key], id .. " sheet." .. key)
+                end
+                for part, values in pairs(PARTS[id]) do
+                    assert.same(values, part_values(looks[id].type[part] or {}), id .. " type." .. part)
                 end
             end
         end)
