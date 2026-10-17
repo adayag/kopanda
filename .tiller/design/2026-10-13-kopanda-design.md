@@ -83,7 +83,8 @@ Working defaults, adopted unless a stage spec overturns them:
 - **Dev loop:** check whether KOReader's SSH plugin runs on the Kindle; if so, stage 1 pushes by scp.
 - **Fixture books** for goldens are public-domain EPUBs with known covers, pinned.
 - **Paint budget:** the home screen has a paint-time test as well as goldens; closing a book must land
-  on it without a visible wait (ennUI's prebuild-on-close pattern).
+  on it without a visible wait (built synchronously at the file manager's Show, the file browser never
+  painted).
 - **Boot guard:** a home screen that didn't finish drawing last start is skipped once, with a notice
   (ennUI's `boot_pending`).
 

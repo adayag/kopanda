@@ -232,29 +232,6 @@ describe("the library's kept listing", function()
         assert.same({ listed = 0, rows_read = 0 }, counts())
     end)
 
-    it("reads the closed book's progress again when a library pre-built at another page turns to it", function()
-        -- The fixture's listing in place of the scratch one: 13 books all reading, under the reading
-        -- status in title order; Book 01 closes finished after the library was pre-built at page 2.
-        local books = fixture.books(13)
-        local progress = {}
-        for _, book in ipairs(books) do
-            progress[book.id] = { status = "reading", percent = 0.5 }
-        end
-        fixture.install({ [fixture.ROOT] = { books = books } }, progress)
-        assert.is_true(LibraryOrder.choose(fixture.ROOT, "title", "reading"))
-        harness.show_fm()
-        harness.tick(2)
-        require("home").close()
-        local LibraryChrome = package.loaded["library_chrome"]
-        LibraryChrome.prebuild(Library, { dir = fixture.ROOT, page = 2 }, books[1].path)
-        progress[books[1].id] = { status = "complete" }
-        local library = Library.show{ widget = LibraryChrome.take_pending() }
-        harness.tick(2)
-        assert.equals(2, library.page)
-        library:turn(-1)
-        assert.equals("Book 02", library.tiles[1].record.title)
-    end)
-
     it("repaints in the other variant from the kept listing, without listing", function()
         local library = show()
         local variant = library.ctx.variant

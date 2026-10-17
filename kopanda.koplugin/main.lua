@@ -113,11 +113,9 @@ function KoPanda:init()
         end
         self.in_fm = in_fm
         -- A reader starting means no file browser followed the last close, so that close is no
-        -- longer one the next Show should answer at once, and the chrome window built for it is
-        -- not needed.
+        -- longer one the next Show should answer at once.
         if not self.in_fm then
             Home.just_closed = false
-            LibraryChrome.drop_pending()
         end
         -- DispatcherRegisterActions is broadcast once, from Dispatcher:init (frontend/dispatcher.lua:585-586,
         -- :645), which can run before this instance exists, so the action is also registered here.
@@ -241,23 +239,25 @@ local function return_window()
     return nil
 end
 
--- The return after a book opened from a chrome window, cleared as it is taken: the window pre-built
--- on its close when one fits the screen, else one built afresh at the return (another size or
--- variant, or a failed open that sent no CloseDocument). A view gone by then shows the list
+-- The return after a book opened from a chrome window, cleared as it is taken: the window built and
+-- shown now, inside the file manager's Show, so it reads the progress, status and counts the reader
+-- saved on its close (frontend/apps/reader/readerui.lua:893, UIManager:close's FlushSettings,
+-- frontend/ui/uimanager.lua:298), at the screen's size after showFiles reset the rotation
+-- (frontend/apps/filemanager/filemanager.lua:1322). A view gone by then shows the list
 -- (series-and-authors D23), which the window's build does itself.
 local function show_return(kopanda)
     local cls, fields = return_window()
     Library.return_to, LibraryChrome.return_to = nil, nil
     local started = time.monotonic()
-    local pending = LibraryChrome.take_pending()
     if cls == Library then
-        kopanda:showLibrary{ widget = pending, dir = fields.dir, page = fields.page, started = started }
+        kopanda:showLibrary{ dir = fields.dir, page = fields.page, started = started }
     else
-        show_shelf(cls, { widget = pending, view = fields.showing, page = fields.page, started = started })
+        show_shelf(cls, { view = fields.showing, page = fields.page, started = started })
     end
 end
 
--- The file manager's Show. With a return to a chrome window recorded, that window goes up at once.
+-- The file manager's Show. With a return to a chrome window recorded, that window is built and goes
+-- up at once, as the home does after a close.
 -- Otherwise, right after a book closed, the home is built and goes up at once, inside Show, so
 -- it is on the stack before the next repaint even when the close ran from a scheduled task, and
 -- nothing of start_with follows a book close. The UI loop runs due tasks and then repaints
@@ -341,16 +341,14 @@ local function record_chapter(ui)
     end
 end
 
--- A reader closing its book: record its chapter for the featured book, then, when the book was
--- opened from a chrome window (the library, Series or Authors), build that window for the return
--- (CloseDocument also fires on reload, switch and exit, with no file browser after; that build is
--- wasted, which is accepted, and the next reader's init drops it); else mark the close, so the
--- file manager's Show that usually follows builds the home at once. The home is built there,
--- after the reader saved its sidecar (UIManager:close's FlushSettings,
--- frontend/apps/reader/readerui.lua:893) and Statistics, whose handler runs after this one,
--- flushed the closing session. A reload or switch sets tearing_down before closing
--- (readerui.lua:952, :973; reader to reader, :600, :609) and marks nothing; exit marks the close,
--- but no Show follows. Returns nothing, so the event reaches later modules.
+-- A reader closing its book: record its chapter for the featured book, then, unless the book was
+-- opened from a chrome window (the library, Series or Authors), whose return the open recorded and
+-- the file manager's Show takes, mark the close, so that Show builds the home at once. Neither is
+-- built here: the window or the home is built at that Show, after the reader saved its sidecar
+-- (UIManager:close's FlushSettings, frontend/apps/reader/readerui.lua:893) and Statistics, whose
+-- handler runs after this one, flushed the closing session. A reload or switch sets tearing_down
+-- before closing (readerui.lua:952, :973; reader to reader, :600, :609) and marks nothing; exit
+-- marks the close, but no Show follows. Returns nothing, so the event reaches later modules.
 function KoPanda:onCloseDocument()
     if self.refused then
         return
@@ -359,11 +357,7 @@ function KoPanda:onCloseDocument()
     if self.in_fm then
         return
     end
-    local cls, fields = return_window()
-    if cls then
-        if not LibraryChrome.pending then
-            LibraryChrome.prebuild(cls, fields, self.ui.document and self.ui.document.file)
-        end
+    if return_window() then
         return
     end
     if self.ui and self.ui.tearing_down then

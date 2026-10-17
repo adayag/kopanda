@@ -1,5 +1,5 @@
--- The library window's covers (cover-grid "Covers", "Book close"): the request for a shown page's
--- covers, the tiles an arrival rebuilds, and the closed book's tile a pre-built library rebuilds.
+-- The library window's covers (cover-grid "Covers"): the request for a shown page's covers and the
+-- tiles an arrival rebuilds.
 -- It works on a library (library.lua) it is handed and asks alive() whether that one is still the
 -- library shown, so it needs no module state of its own.
 local BookCovers = require("book_covers")

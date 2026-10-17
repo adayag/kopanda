@@ -186,15 +186,6 @@ function LibraryView.renew(kept, record)
     end
 end
 
--- Leaves kept's items to be made again when it lists the book whose id is id, whose progress has
--- changed, so the next build filters and sorts with the progress read then. A kept of nil, or
--- without that id, is left as it was.
-function LibraryView.forget(kept, id)
-    if listed_at(kept, id) then
-        kept.items = nil
-    end
-end
-
 -- Fills built (dir, page, ctx) from the folder's listing, its hidden sub-folders left out, under the
 -- folder's sort and status, the listing kept (built.kept on entry, as keep takes it) or listed now:
 -- the frame (the header, the page's tiles at the geometry's boxes or the empty note, and the

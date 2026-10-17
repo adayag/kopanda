@@ -1,19 +1,17 @@
 -- The chrome the library's windows share (series-and-authors D1, "The chrome"): a full-screen
 -- KoPanda window over the file manager (cover-grid "The window"), its show and close, its paint
 -- and settled signal, the header frame, the pager and the nav bar in its band, the gesture route
--- (cover-grid "Gestures"), the events that keep it current and the window pre-built on a book's
--- close. A window module extends LibraryChrome.Window and supplies what is its own (library.lua):
+-- (cover-grid "Gestures") and the events that keep it current. A window module extends
+-- LibraryChrome.Window and supplies what is its own (library.lua):
 --   screen, its name in the settled signal and the log; fields, the keys of its build it keeps;
 --   build(view, page), a LibraryChrome.build of view at page; view(), the view it shows;
 --   action_at(pos), the action a tap on its own parts runs, or nil; back(), the back control's tap;
 --   hit(x, y), what lies at a point on the window of its class shown, which a hold's sheet is for;
 --   open(record), a tap's open of a book; refresh(), its re-list;
---   request_covers(), after a page's first paint; book_closed(file), when it is taken pending after
---   that book closed (default: the view rebuilt); closing(), its part of the close. A window listing
+--   request_covers(), after a page's first paint; closing(), its part of the close. A window listing
 --   the whole library asks for its covers through LibraryChrome.request_records.
--- Module state: LibraryChrome.shown, the window on screen or nil; LibraryChrome.pending, one built
--- on a book's close and not yet shown, or nil. A window's class mirrors each in a slot of the same
--- name (Library.shown, Library.pending) while the window held is one of its own.
+-- Module state: LibraryChrome.shown, the window on screen or nil. A window's class mirrors it in a
+-- slot of the same name (Library.shown) while the window shown is one of its own.
 -- LibraryChrome.return_to, { screen = "series" | "authors", view, page } a book was opened from the
 -- Series or Authors window (series-and-authors D7), which the next file manager's show returns to,
 -- or nil, in memory only; the library records its own (Library.return_to).
@@ -45,7 +43,6 @@ local Screen = Device.screen
 local LibraryChrome = {}
 
 LibraryChrome.shown = nil
-LibraryChrome.pending = nil
 LibraryChrome.return_to = nil
 
 -- Whether pos lies in rect, its right and bottom edges outside, as the nav bar tests its columns.
@@ -297,8 +294,8 @@ function LibraryChrome.build(built, fill)
     return built
 end
 
--- Sets LibraryChrome[slot] ("shown" or "pending") to window or nil, and the same slot of the class
--- of the window it names, so the class slot names only one of its own.
+-- Sets LibraryChrome[slot] ("shown") to window or nil, and the same slot of the class of the window
+-- it names, so the class slot names only one of its own.
 local function hold(slot, window)
     local old = LibraryChrome[slot]
     if old then
@@ -512,28 +509,26 @@ local function settle(window, opts)
     local ok, err = pcall(UIManager.event_hook.execute, UIManager.event_hook, "KoPandaSettled", {
         screen = window.screen,
         paint_ms = time.to_ms((window.painted_at or time.monotonic()) - opts.started),
-        prebuilt = opts.prebuilt,
     })
     if not ok then
         logger.err("KoPanda: the " .. window.screen .. "'s settled signal failed:", err)
     end
 end
 
--- Shows a window of cls: opts.widget (one pre-built) or else cls:new(fields). opts.started is
--- time.monotonic() at the start of the show path, which paint_ms runs from (default: now). Closes
--- the home and the window shown, then shows this one and returns it; its settled signal says
--- whether it was pre-built. On any error it is taken off the stack and nil returned, logged, the
--- screen beneath left as it is.
+-- Shows a window of cls, built now as cls:new(fields). opts.started is time.monotonic() at the start
+-- of the show path, which paint_ms runs from (default: now), so paint_ms includes the build. Closes
+-- the home and the window shown, then shows this one and returns it. On any error it is taken off
+-- the stack and nil returned, logged, the screen beneath left as it is.
 function LibraryChrome.show(cls, opts, fields)
     local started = opts.started or time.monotonic()
     local window
     local ok, err = pcall(function()
         Home.close()
         LibraryChrome.close()
-        window = opts.widget or cls:new(fields)
+        window = cls:new(fields)
         hold("shown", window)
         UIManager:show(window, "full")
-        window.settle_opts = { started = started, prebuilt = opts.widget ~= nil }
+        window.settle_opts = { started = started }
     end)
     if ok then
         return window
@@ -551,54 +546,6 @@ function LibraryChrome.close()
     if LibraryChrome.shown then
         close_window(LibraryChrome.shown)
     end
-end
-
--- Builds cls:new(fields) and keeps it as LibraryChrome.pending, not shown; closed is the file of
--- the book that just closed, which take_pending hands it. A failed build is logged and leaves
--- nothing pending, so the show builds afresh.
-function LibraryChrome.prebuild(cls, fields, closed)
-    LibraryChrome.drop_pending()
-    local ok, window = pcall(cls.new, cls, fields)
-    if not ok then
-        logger.err("KoPanda: could not pre-build the " .. cls.screen .. ":", window)
-        return
-    end
-    window.closed = closed
-    hold("pending", window)
-end
-
--- Forgets the pending window and frees it.
-function LibraryChrome.drop_pending()
-    local pending = LibraryChrome.pending
-    hold("pending", nil)
-    if pending then
-        local ok, err = pcall(pending.free, pending)
-        if not ok then
-            logger.err("KoPanda: could not free the pending " .. pending.screen .. ":", err)
-        end
-    end
-end
-
--- Hands over the pending window when it was built at the screen's current size and in the
--- current variant; one of another size (showFiles resets the rotation) or variant is dropped.
--- Returns the window or nil. The window rebuilds what shows the closed book (book_closed), since
--- the reader saves its sidecar after CloseDocument, when the window was built
--- (frontend/apps/reader/readerui.lua:887, then :874-877 on its close at :893).
-function LibraryChrome.take_pending()
-    local pending = LibraryChrome.pending
-    if not pending then
-        return nil
-    end
-    local size = Screen:getSize()
-    if pending.dimen.w ~= size.w or pending.dimen.h ~= size.h or pending.ctx.variant ~= Looks.variant() then
-        LibraryChrome.drop_pending()
-        return nil
-    end
-    hold("pending", nil)
-    if pending.closed then
-        pending:book_closed(pending.closed)
-    end
-    return pending
 end
 
 -- Paints the window, rebuilt first when the variant or the screen's size changed since its build
@@ -643,11 +590,6 @@ function Window:paintTo(bb, x, y)
 end
 
 function Window:request_covers() end
-
--- The view rebuilt, so what shows the closed book reads its progress again.
-function Window:book_closed(_file)
-    self:go(self:view(), self.page)
-end
 
 function Window:closing() end
 

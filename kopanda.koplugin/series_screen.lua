@@ -5,9 +5,8 @@
 -- the series' name, then a page of its book rows in series order with the next unread marked. Each
 -- view pages by whole rows between its header and the pager (D14); the nav bar lights no tab. What
 -- the series are, in what order and state, is shelf_order.lua's; the rows are shelf_rows.lua's.
--- Module state: SeriesScreen.shown and SeriesScreen.pending, the chrome's slots. SeriesScreen.on_open
--- (view, page), run when a tap's book open goes ahead, records the return in the chrome's
--- LibraryChrome.return_to.
+-- Module state: SeriesScreen.shown, the chrome's slot. SeriesScreen.on_open(view, page), run when a
+-- tap's book open goes ahead, records the return in the chrome's LibraryChrome.return_to.
 local Books = require("books")
 local Geom = require("ui/geometry")
 local LibraryChrome = require("library_chrome")
@@ -322,8 +321,8 @@ function SeriesScreen:refresh()
     LibraryChrome.Window.refresh(self)
 end
 
--- opts: view ({ kind = "list" }, the default, or { kind = "series", name }), page, widget and
--- started (LibraryChrome.show's). Returns the window shown, or nil.
+-- opts: view ({ kind = "list" }, the default, or { kind = "series", name }), page and started
+-- (LibraryChrome.show's). Returns the window shown, or nil.
 function SeriesScreen.show(opts)
     opts = opts or {}
     return LibraryChrome.show(SeriesScreen, opts, { showing = opts.view, page = opts.page })

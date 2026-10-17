@@ -447,9 +447,8 @@ describe("the library's lifecycle", function()
     -- shown (readerui.lua:581-596), as prebuild_spec.lua drives the home's.
     describe("after a book opened from it closes", function()
         local Event = require("ui/event")
-        local Geom = require("ui/geometry")
         local ffiutil = require("ffi/util")
-        local Home, LibraryOrder, Looks, util, real_open, opened, progress, signals, listener
+        local Home, LibraryOrder, LibraryView, util, real_open, opened, progress, signals, listener
         local BOOK = harness.library .. "/frankenstein.epub"
         local ID = "file:" .. ffiutil.realpath(BOOK)
         local sub = fixture.folder("Sci-fi")
@@ -457,7 +456,7 @@ describe("the library's lifecycle", function()
         before_each(function()
             Home = package.loaded["home"]
             LibraryOrder = package.loaded["library_order"]
-            Looks = package.loaded["looks"]
+            LibraryView = package.loaded["library_view"]
             util = require("apps/filemanager/filemanagerutil")
             real_open = util.openFile
             opened = nil
@@ -530,71 +529,131 @@ describe("the library's lifecycle", function()
             reader:onClose()
         end
 
-        it("shows it pre-built in one show at the same folder, sort, status and page, with the progress "
-            .. "saved after the close", function()
+        -- The reader saves its sidecar after CloseDocument (readerui.lua:887, then :893 through
+        -- UIManager:close's FlushSettings, uimanager.lua:298); a change to the fixture's progress
+        -- between the close and the file manager's Show stands in for that save.
+        it("builds nothing at the close and the library once at the file manager's Show, at the same "
+            .. "folder, sort, status and page, with the progress saved after the close", function()
                 local library, fm = at_page_two()
                 tap_book(library)
                 goes_ahead(fm)
                 assert.is_nil(Library.shown)
+                local builds = spy.on(LibraryView, "build")
                 read_and_close()
-                local pending = Library.pending
-                assert.is_not_nil(pending)
-                assert.is_false(UIManager:isWidgetShown(pending))
-                assert.is_false(Home.just_closed)
-                assert.is_nil(book_tile(pending).widget.strip)
-                -- The reader writes its sidecar after CloseDocument. The record read again is the
-                -- listing's, so the title stays the spec's.
-                progress[ID] = { status = "reading", percent = 0.4 }
-                Books.with_progress = function() return nil end
-                local builds = spy.on(Library, "new")
-                local new_fm = harness.show_fm()
-                assert.equals(pending, harness.top())
-                assert.equals(new_fm, harness.top(2))
-                assert.equals(pending, Library.shown)
-                assert.is_nil(Library.pending)
-                harness.tick(4)
-                Library.new:revert()
                 assert.spy(builds).was_not_called()
-                assert.equals(pending, harness.top())
+                assert.is_false(Home.just_closed)
+                assert.is_nil(Library.shown)
+                progress[ID] = { status = "reading", percent = 0.4 }
+                local new_fm = harness.show_fm()
+                local shown = Library.shown
+                assert.is_not_nil(shown)
+                assert.equals(shown, harness.top())
+                assert.equals(new_fm, harness.top(2))
+                assert.spy(builds).was_called(1)
+                harness.tick(4)
+                LibraryView.build:revert()
+                assert.spy(builds).was_called(1)
+                assert.equals(shown, harness.top())
                 assert.is_nil(Home.shown)
-                assert.same({ sub.path, 2 }, { pending.dir, pending.page })
-                assert.same({ sort = "title", status = "all" }, LibraryOrder.choice(pending.dir))
-                assert.same({ "Book 07", "Frankenstein" }, titles(pending))
-                assert.is_not_nil(book_tile(pending).widget.strip)
+                assert.same({ sub.path, 2 }, { shown.dir, shown.page })
+                assert.same({ sort = "title", status = "all" }, LibraryOrder.choice(shown.dir))
+                assert.same({ "Book 07", "Frankenstein" }, titles(shown))
+                assert.is_not_nil(book_tile(shown).widget.strip)
                 assert.equals(1, #signals)
-                assert.is_true(signals[1].prebuilt)
                 assert.is_number(signals[1].paint_ms)
             end)
 
-        for _, case in ipairs({
-            { "another size", function(pending)
-                local size = require("device").screen:getSize()
-                pending.dimen = Geom:new{ x = 0, y = 0, w = size.h, h = size.w }
-            end },
-            { "another variant", function(pending)
-                pending.ctx.variant = Looks.variant() == "night" and "day" or "night"
-            end },
-        }) do
-            it("drops one pre-built at " .. case[1] .. " and builds it afresh at the same page", function()
-                local library, fm = at_page_two()
+        -- reloadDocument and switchDocument set tearing_down before onClose (readerui.lua:952, :973).
+        it("builds nothing at a close with the reader tearing down, and still returns to the library", function()
+            local library, fm = at_page_two()
+            tap_book(library)
+            goes_ahead(fm)
+            local reader = harness.open_reader()
+            harness.tick(2)
+            local builds = spy.on(LibraryView, "build")
+            reader.tearing_down = true
+            reader:onClose(false)
+            LibraryView.build:revert()
+            assert.spy(builds).was_not_called()
+            assert.is_false(Home.just_closed)
+            read_and_close()
+            harness.show_fm()
+            harness.tick(2)
+            assert.equals(Library.shown, harness.top())
+            assert.same({ sub.path, 2 }, { Library.shown.dir, Library.shown.page })
+        end)
+
+        -- The build at the return's Show is wrapped like every hook: a throw is logged, no window is
+        -- left, the return is dropped and the file browser is on top.
+        it("logs and leaves the file browser on top when the build at the return's Show throws", function()
+            local logger = require("logger")
+            local library, fm = at_page_two()
+            tap_book(library)
+            goes_ahead(fm)
+            read_and_close()
+            local errors = spy.on(logger, "err")
+            LibraryView.build = function()
+                error("kopanda-test: build failed")
+            end
+            local new_fm = harness.show_fm()
+            harness.tick(2)
+            logger.err:revert()
+            assert.is_nil(Library.shown)
+            assert.is_nil(Library.return_to)
+            assert.equals(new_fm, harness.top())
+            local logged = {}
+            for _, call in ipairs(errors.calls) do
+                for _, value in ipairs(call.vals) do
+                    logged[#logged + 1] = tostring(value)
+                end
+            end
+            local text = table.concat(logged, "\n")
+            assert.truthy(text:find("kopanda-test: build failed", 1, true), text)
+            assert.truthy(text:find("could not show the library", 1, true), text)
+        end)
+
+        -- A book finished in the closing session: its status is saved after CloseDocument.
+        it("leaves a book finished in the closing session out under the Reading filter, and the count with it",
+            function()
+                progress[ID] = { status = "reading", percent = 0.9 }
+                progress[fixture.books(1, sub.path)[1].id] = { status = "reading", percent = 0.2 }
+                assert.is_true(LibraryOrder.choose(sub.path, "title", "reading"))
+                local fm = harness.show_fm()
+                harness.tick(2)
+                Home.close()
+                local library = Library.show{ dir = sub.path, page = 1 }
+                harness.tick(2)
+                assert.same({ "Book 01", "Frankenstein" }, titles(library))
                 tap_book(library)
                 goes_ahead(fm)
                 read_and_close()
-                local pending = Library.pending
-                case[2](pending)
-                local freed = spy.on(pending, "free")
+                progress[ID] = { status = "complete", percent = 1 }
                 harness.show_fm()
                 harness.tick(2)
                 local shown = Library.shown
-                assert.is_not_nil(shown)
-                assert.is_not.equals(pending, shown)
                 assert.equals(shown, harness.top())
-                assert.is_nil(Library.pending)
-                assert.spy(freed).was_called()
-                assert.same({ sub.path, 2 }, { shown.dir, shown.page })
-                assert.same({ "Book 07", "Frankenstein" }, titles(shown))
+                assert.same({ "Book 01" }, titles(shown))
+                assert.equals("1 book on the shelf", shown.header.text.count)
             end)
-        end
+
+        it("lists a book finished in the closing session under the Finished filter, and counts it", function()
+            progress[ID] = { status = "reading", percent = 0.9 }
+            progress[fixture.books(1, sub.path)[1].id] = { status = "complete" }
+            local library, fm = at_page_two()
+            tap_book(library)
+            goes_ahead(fm)
+            -- The folder's status chosen while the book is open, so the window returned to filters
+            -- by Finished.
+            assert.is_true(LibraryOrder.choose(sub.path, "title", "finished"))
+            read_and_close()
+            progress[ID] = { status = "complete", percent = 1 }
+            harness.show_fm()
+            harness.tick(2)
+            local shown = Library.shown
+            assert.equals(shown, harness.top())
+            assert.same({ "Book 01", "Frankenstein" }, titles(shown))
+            assert.equals("2 books on the shelf", shown.header.text.count)
+        end)
 
         it("after a failed open, with no book closed, shows the library afresh at the same page", function()
             local library, fm = at_page_two()
@@ -608,24 +667,22 @@ describe("the library's lifecycle", function()
             assert.is_nil(Home.shown)
             assert.same({ sub.path, 2 }, { shown.dir, shown.page })
             assert.equals(1, #signals)
-            assert.is_false(signals[1].prebuilt)
         end)
 
         it("comes back after another book opened from inside the reader", function()
             local library, fm = at_page_two()
             tap_book(library)
             goes_ahead(fm)
+            local builds = spy.on(LibraryView, "build")
             read_and_close()
-            local pending = Library.pending
-            local freed = spy.on(pending, "free")
             local switched = harness.open_reader("the-time-machine.epub")
-            assert.is_nil(Library.pending)
-            assert.spy(freed).was_called()
             harness.tick(2)
             switched:onClose()
-            assert.is_not_nil(Library.pending)
+            assert.spy(builds).was_not_called()
             harness.show_fm()
             harness.tick(2)
+            LibraryView.build:revert()
+            assert.spy(builds).was_called(1)
             assert.equals(Library.shown, harness.top())
             assert.same({ sub.path, 2 }, { Library.shown.dir, Library.shown.page })
         end)
@@ -637,7 +694,6 @@ describe("the library's lifecycle", function()
             package.loaded["nav_bar"].run("home", "library")
             fm:onShowingReader()
             read_and_close()
-            assert.is_nil(Library.pending)
             harness.show_fm()
             harness.tick(2)
             assert.is_nil(Library.shown)
@@ -656,7 +712,6 @@ describe("the library's lifecycle", function()
             assert.equals(Home.shown, harness.top())
             new_fm:onShowingReader()
             read_and_close()
-            assert.is_nil(Library.pending)
             harness.show_fm()
             harness.tick(2)
             assert.is_nil(Library.shown)
@@ -703,7 +758,6 @@ describe("the library's lifecycle", function()
                     assert.equals(Home.shown, harness.top())
                     fm:onShowingReader()
                     read_and_close()
-                    assert.is_nil(Library.pending)
                     harness.show_fm()
                     harness.tick(2)
                     assert.is_nil(Library.shown)

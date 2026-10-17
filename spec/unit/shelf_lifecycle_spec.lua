@@ -505,10 +505,9 @@ end)
 -- library_lifecycle_spec.lua drives the library's and prebuild_spec.lua the home's.
 describe("the Series and Authors windows' routing", function()
     local Event = require("ui/event")
-    local Geom = require("ui/geometry")
     local ffiutil = require("ffi/util")
     local library_fixture = require("library_fixture")
-    local AuthorsScreen, Home, LauncherEntries, Library, Looks, NavBar, SeriesScreen
+    local AuthorsScreen, Home, LauncherEntries, Library, NavBar, SeriesScreen
     local util, real_open, opened, progress, records, signals, listener
 
     local LIST = { kind = "list" }
@@ -585,7 +584,6 @@ describe("the Series and Authors windows' routing", function()
         Home = package.loaded["home"]
         LauncherEntries = package.loaded["launcher_entries"]
         Library = package.loaded["library"]
-        Looks = package.loaded["looks"]
         NavBar = package.loaded["nav_bar"]
         SeriesScreen = package.loaded["series_screen"]
         util = require("apps/filemanager/filemanagerutil")
@@ -778,68 +776,58 @@ describe("the Series and Authors windows' routing", function()
                 reader:onClose()
             end
 
-            it("shows it pre-built in one show at the same view and page, with the progress saved after the "
-                .. "close", function()
+            -- The reader saves its sidecar after CloseDocument (readerui.lua:887, then :893 through
+            -- UIManager:close's FlushSettings, uimanager.lua:298); a change to the fixture's progress
+            -- between the close and the file manager's Show stands in for that save.
+            it("builds nothing at the close and the window once at the file manager's Show, at the same view "
+                .. "and page, with the progress saved after the close", function()
                     local screen, fm = at_book()
                     tap_book(screen)
                     goes_ahead(fm)
                     assert.is_nil(cls.shown)
+                    local builds = spy.on(cls, "build")
                     read_and_close()
-                    local pending = cls.pending
-                    assert.is_not_nil(pending)
-                    assert.is_false(UIManager:isWidgetShown(pending))
-                    assert.is_false(Home.just_closed)
-                    assert.is_false(w.progressed(w.item(pending)))
-                    -- The reader writes its sidecar after CloseDocument.
-                    progress[ID] = { status = "reading", percent = 0.4 }
-                    local builds = spy.on(cls, "new")
-                    local new_fm = harness.show_fm()
-                    assert.equals(pending, harness.top())
-                    assert.equals(new_fm, harness.top(2))
-                    assert.equals(pending, cls.shown)
-                    assert.is_nil(cls.pending)
-                    assert.is_nil(package.loaded["library_chrome"].return_to)
-                    harness.tick(4)
-                    cls.new:revert()
                     assert.spy(builds).was_not_called()
-                    assert.equals(pending, harness.top())
-                    assert.is_nil(Home.shown)
-                    assert.same({ pending }, kopanda_windows())
-                    assert.same({ w.view, w.page }, { pending.showing, pending.page })
-                    assert.is_true(w.progressed(w.item(pending)))
-                    local got = settled(w.name)
-                    assert.equals(1, #got)
-                    assert.is_true(got[1].prebuilt)
-                end)
-
-            for _, case in ipairs({
-                { "another size", function(pending)
-                    local size = require("device").screen:getSize()
-                    pending.dimen = Geom:new{ x = 0, y = 0, w = size.h, h = size.w }
-                end },
-                { "another variant", function(pending)
-                    pending.ctx.variant = Looks.variant() == "night" and "day" or "night"
-                end },
-            }) do
-                it("drops one pre-built at " .. case[1] .. " and builds it afresh at the same view and page", function()
-                    local screen, fm = at_book()
-                    tap_book(screen)
-                    goes_ahead(fm)
-                    read_and_close()
-                    local pending = cls.pending
-                    case[2](pending)
-                    local freed = spy.on(pending, "free")
-                    harness.show_fm()
-                    harness.tick(2)
+                    assert.is_false(Home.just_closed)
+                    assert.is_nil(cls.shown)
+                    progress[ID] = { status = "reading", percent = 0.4 }
+                    local new_fm = harness.show_fm()
                     local shown = cls.shown
                     assert.is_not_nil(shown)
-                    assert.is_not.equals(pending, shown)
                     assert.equals(shown, harness.top())
-                    assert.is_nil(cls.pending)
-                    assert.spy(freed).was_called()
+                    assert.equals(new_fm, harness.top(2))
+                    assert.spy(builds).was_called(1)
+                    assert.is_nil(package.loaded["library_chrome"].return_to)
+                    harness.tick(4)
+                    cls.build:revert()
+                    assert.spy(builds).was_called(1)
+                    assert.equals(shown, harness.top())
+                    assert.is_nil(Home.shown)
+                    assert.same({ shown }, kopanda_windows())
                     assert.same({ w.view, w.page }, { shown.showing, shown.page })
+                    assert.is_true(w.progressed(w.item(shown)))
+                    assert.equals(1, #settled(w.name))
                 end)
-            end
+
+            -- reloadDocument and switchDocument set tearing_down before onClose (readerui.lua:952, :973).
+            it("builds nothing at a close with the reader tearing down, and still returns to the window", function()
+                local screen, fm = at_book()
+                tap_book(screen)
+                goes_ahead(fm)
+                local reader = harness.open_reader()
+                harness.tick(2)
+                local builds = spy.on(cls, "build")
+                reader.tearing_down = true
+                reader:onClose(false)
+                cls.build:revert()
+                assert.spy(builds).was_not_called()
+                assert.is_false(Home.just_closed)
+                read_and_close()
+                harness.show_fm()
+                harness.tick(2)
+                assert.equals(cls.shown, harness.top())
+                assert.same({ w.view, w.page }, { cls.shown.showing, cls.shown.page })
+            end)
 
             it("after a failed open, with no book closed, shows it afresh at the same view and page", function()
                 local screen, fm = at_book()
@@ -855,7 +843,6 @@ describe("the Series and Authors windows' routing", function()
                 assert.same({ w.view, w.page }, { shown.showing, shown.page })
                 local got = settled(w.name)
                 assert.equals(1, #got)
-                assert.is_false(got[1].prebuilt)
             end)
 
             it("clears the return it shows: a book then opened over the window from elsewhere closes to the "
@@ -899,7 +886,6 @@ describe("the Series and Authors windows' routing", function()
                     assert.equals(screen, harness.top())
                     fm:onShowingReader()
                     read_and_close()
-                    assert.is_nil(cls.pending)
                     harness.show_fm()
                     harness.tick(2)
                     assert.is_nil(cls.shown)
@@ -919,7 +905,6 @@ describe("the Series and Authors windows' routing", function()
                     assert.equals(Home.shown, harness.top())
                     fm:onShowingReader()
                     read_and_close()
-                    assert.is_nil(cls.pending)
                     harness.show_fm()
                     harness.tick(2)
                     assert.is_nil(cls.shown)
@@ -967,7 +952,6 @@ describe("the Series and Authors windows' routing", function()
                 tap_on(tile.rect)
                 goes_ahead(new_fm)
                 read_and_close()
-                assert.is_not_nil(Library.pending)
                 harness.show_fm()
                 harness.tick(2)
                 assert.equals(Library.shown, harness.top())
