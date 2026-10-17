@@ -2,8 +2,11 @@
 -- by spec/emulator/quick_settings_golden_spec.lua after the home fixture patch. It writes nothing.
 -- On the first home's settled signal, from the next tick, it stubs the power device's capacity at
 -- 84 (an instance field, so the emulator's reading of the Mac's battery,
--- frontend/device/sdl/powerd.lua:28-33, stays out) and opens the quick-settings sheet through the
--- loaded module, as the launcher's quick_settings target does. The capture is taken on the sheet's
+-- frontend/device/sdl/powerd.lua:28-33, stays out), stubs NetworkMgr.isWifiOn to true so the sheet's
+-- Wi-Fi cell reads on, and opens the quick-settings sheet through the loaded module, as the
+-- launcher's quick_settings target does. The emulator's isConnected is a copy of the original
+-- isWifiOn (frontend/device/sdl/device.lua:497-500), so it keeps reading the driver's false and no
+-- weather fetch runs; the patch checks that before opening. The capture is taken on the sheet's
 -- own settled signal. Any failure is reported as a "sheet" KoPandaSettled signal with error, the
 -- screen the capture shoots on, so the spec fails with the message.
 local logger = require("logger")
@@ -28,6 +31,13 @@ local ok, err = pcall(function()
             end
             Device:getPowerDevice().getCapacity = function()
                 return 84
+            end
+            local NetworkMgr = require("ui/network/manager")
+            NetworkMgr.isWifiOn = function()
+                return true
+            end
+            if NetworkMgr:isConnected() then
+                error("isConnected reads true under the Wi-Fi stub; a weather fetch could run")
             end
             logger.info("KOPANDA_SCENARIO: open quick settings")
             QuickSettings.open{ started = time.monotonic() }

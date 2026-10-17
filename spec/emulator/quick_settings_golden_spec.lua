@@ -15,6 +15,10 @@ describe("the quick-settings goldens", function()
     -- The sheets' paint budget (sheet_golden_spec.lua): a sheet paints within this many ms of its
     -- open, in the emulator on this Mac. A regression tripwire, not a device figure.
     local PAINT_BUDGET_MS = 250
+    -- About 42 px at 1264×1680, against compare's default of about 1,060, which let the battery
+    -- at 83 % and a hyphen for the slider's minus sign through. Clean captures differ from these
+    -- goldens by 0 px.
+    local MAX_FRACTION = 0.00002
 
     local scenarios = {
         { name = "quick-settings-diner" },
@@ -61,7 +65,7 @@ describe("the quick-settings goldens", function()
             local log = read(result.log)
             assert.equals(1, count(log, "KOPANDA_SHOT: saved"))
             assert.equals(0, count(log, "settle cap"))
-            local checked = golden.assert_golden(scenario_opts.name, "colorsoft", result)
+            local checked = golden.check(scenario_opts.name, "colorsoft", result, { max_fraction = MAX_FRACTION })
             if os.getenv("KOPANDA_UPDATE_GOLDENS") ~= "1" then
                 assert.is_true(checked.ok)
             end
