@@ -534,7 +534,7 @@ describe("Books", function()
                 DocSettings.openSettingsFile = light
             end)
 
-            it("keeps no doc_props and gives each caller its own copy", function()
+            it("keeps no doc_props table and gives each caller its own copy", function()
                 sidecar(a, '{ percent_finished = 0.5, summary = { status = "reading" },'
                     .. ' doc_props = { description = "A long description" } }')
                 local record = Books.for_path(a)
@@ -559,20 +559,30 @@ describe("Books", function()
                 assert.equals(1, opened)
             end)
 
-            it("opens a sidecar Books.progress kept for Books.with_progress, for its doc_props", function()
+            it("gives Books.with_progress the title of a sidecar Books.progress opened, without opening it", function()
                 sidecar(a, '{ percent_finished = 0.5, doc_props = { title = "Frankenstein" } }')
                 local b = book("b.epub")
                 sidecar(b, '{ percent_finished = 0.9, doc_props = { title = "Dracula" } }')
-                Books.with_progress(a)
                 Books.progress({ path = b })
                 opened = 0
                 local record, given = Books.with_progress(b)
-                assert.equals(1, opened)
+                assert.equals(0, opened)
                 assert.equals("Dracula", record.title)
                 assert.equals(0.9, given.percent)
                 opened = 0
                 assert.equals("Dracula", Books.with_progress(b).title)
                 assert.equals(0, opened)
+            end)
+
+            it("gives Books.with_progress a rewritten sidecar's title and authors, not the memo's", function()
+                sidecar(a, '{ doc_props = { title = "Frankenstein", authors = "Mary Shelley" } }')
+                assert.equals("Frankenstein", Books.with_progress(a).title)
+                -- a different size: a same-second rewrite of the same size is served from the memo
+                sidecar(a, '{ doc_props = { title = "Dracula", authors = "Bram Stoker\\nA. Nonymous" } }')
+                local record = Books.with_progress(a)
+                assert.equals("Dracula", record.title)
+                assert.same({ "Bram Stoker", "A. Nonymous" }, record.authors)
+                assert.equals(2, opened)
             end)
 
             it("opens the sidecar of the location now preferred, though its mtime and size match", function()

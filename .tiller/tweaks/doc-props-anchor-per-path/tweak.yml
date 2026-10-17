@@ -1,9 +1,10 @@
 id: TW-y0pzxw
 key: tweaks/doc-props-anchor-per-path
 title: A cover arrival evicts the featured book's doc_props anchor
-status: ready
+status: check
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: T-gj4d8q
 source: .tiller/reviews/2026-10-17-efficiency-pass2-followups.md#L22-L33
@@ -17,3 +18,31 @@ accepted_against:
         kind: git_commit
         value: git:d5aeb78
         observed_at: 2026-10-17T20:44:23.581449Z
+branch: tiller/tweaks/doc-props-anchor-per-path
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:13:32.768306Z
+        against:
+            kind: git_commit
+            value: git:0b98322
+            observed_at: 2026-10-17T21:13:32.768305Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-0b98322-out-7f7d51b0e79624a66ac660e7d7dca33766b18136c76ae96909029a14be6020f3.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T21:13:32.768306Z
+        against:
+            kind: git_commit
+            value: git:0b98322
+            observed_at: 2026-10-17T21:13:32.768305Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-0b98322-out-eeaf4d6d741f22cd161edefd800d9e72703e093111abd2ff906d8ba1b5e2ecbb.txt

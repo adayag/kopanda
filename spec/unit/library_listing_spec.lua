@@ -205,6 +205,51 @@ describe("the library's kept listing", function()
         assert.equals(1, opened)
     end)
 
+    it("leaves the featured book's sidecar unopened by a cover arrival for another book", function()
+        local DocSettings = require("docsettings")
+        local BookCovers = package.loaded["book_covers"]
+        local FeaturedBook = package.loaded["featured_book"]
+        local library = show()
+        local arrived = library.tiles[1].record
+        local featured = files[2]
+        local made = {}
+        for _, path in ipairs({ arrived.path, featured }) do
+            local sdr = DocSettings:getSidecarDir(path, "doc")
+            local side = sdr .. "/" .. DocSettings.getSidecarFilename(path)
+            lfs.mkdir(sdr)
+            local f = assert(io.open(side, "wb"))
+            f:write('return { doc_props = { title = "Sidecar" }, percent_finished = 0.4 }')
+            f:close()
+            made[#made + 1] = { side = side, sdr = sdr }
+        end
+        local open, opened = DocSettings.openSettingsFile, 0
+        DocSettings.openSettingsFile = function(...)
+            opened = opened + 1
+            return open(...)
+        end
+        finally(function()
+            DocSettings.openSettingsFile = open
+            for _, file in ipairs(made) do
+                os.remove(file.side)
+                os.remove(file.sdr)
+            end
+        end)
+        Books.reset()
+        ReadHistory.hist = { { file = featured } }
+        assert.equals(featured, FeaturedBook.current().file)
+        assert.equals(1, opened)
+        local on_done
+        BookCovers.request = function(_, _, done)
+            on_done = done
+        end
+        library:request_covers()
+        on_done({ arrived })
+        assert.equals(2, opened)
+        opened = 0
+        assert.equals(0.4, FeaturedBook.current().percent)
+        assert.equals(0, opened)
+    end)
+
     it("sorts with a tile's record read again on the next build, without listing", function()
         local library = show()
         local first = library.tiles[1].record
