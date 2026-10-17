@@ -51,7 +51,7 @@ gates:
         kind: command
         status: pending
         run_by: allen
-        run_at: 2026-10-17T07:06:43.969282Z
+        run_at: 2026-10-17T07:12:58.578908Z
         against:
             kind: git_commit
             value: git:5bdb32e
@@ -133,7 +133,7 @@ gates:
                     - kind: command_output
                       ref: artifacts/tiller/gates/eval-C15-5bdb32e-out-f602d8ad84666e5c82c36ebc349cf00d9f615b862473498e42765a09a3040e2d.txt
             C16:
-                status: needs_attestation
+                status: pass
             C17:
                 status: needs_attestation
     tests:
@@ -149,3 +149,11 @@ gates:
         evidence:
             - kind: command_output
               ref: artifacts/tiller/gates/tests-5bdb32e-out-eaf80c374fb713e13cdf4a8d01af9d576aeb7260b58b776e0d6b0cb1808c8db5.txt
+attestations:
+    - id: AT-ugermn
+      target:
+        kind: criterion
+        id: C16
+      status: pass
+      by: allen
+      at: 2026-10-17T07:12:58.578908Z
