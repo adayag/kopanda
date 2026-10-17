@@ -1,9 +1,10 @@
 id: T-phfsk7
 key: bars/quick-settings/goldens
 title: Quick-settings goldens in both looks on the Colorsoft and their paint budget
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-n6wve0
@@ -17,3 +18,4 @@ accepted_against:
         kind: git_commit
         value: git:a955bb4
         observed_at: 2026-10-17T03:37:34.552234Z
+branch: tiller/bars/quick-settings/goldens
