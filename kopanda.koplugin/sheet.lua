@@ -1,13 +1,17 @@
--- The sheet: a panel of rows drawn in the look over the home, opened by a hold or a tap and
--- closed by a tap outside it, a tap on a row, KOReader's Back or the Back key. It knows nothing
--- about books or the home: its opener hands it a spec,
---   { name, band, header, rows, hold }
+-- The sheet: a panel of rows drawn in the look over the home or the library, opened by a hold or
+-- a tap and closed by a tap outside it, a tap on a row, KOReader's Back or the Back key. It knows
+-- nothing about books or the home: its opener hands it a spec,
+--   { name, band, header, rows, hold, flush }
 -- name: what the settled signal reports; band: which <band>_band_color token Diner's header
--- takes; header: { heading, aside, aside_beside, hint } or a book's { cover, title, author, meta }
--- (cover a built widget, the sheet's to free), or nil; rows: { icon, label, detail, chip,
--- muted, tick, run } each, run called with no arguments; hold, optional, called with no
--- arguments on a hold inside the panel, after the sheet has closed. A sheet without hold
--- ignores holds.
+-- takes; header: { heading, aside, aside_beside, aside_above, hint, label } or a book's { cover,
+-- title, author, meta } (cover a built widget, the sheet's to free), or nil; aside_above stacks
+-- the aside over the heading, label is set at the header's right (a sheet takes a hint or a
+-- label, not both); rows: { icon, label, sublabel, detail, chip, muted, tick, selected, run }
+-- each, sublabel a second line under the label, selected filling the row and setting a check at
+-- its right, run called with no arguments; hold, optional, called with no arguments on a hold
+-- inside the panel, after the sheet has closed. A sheet without hold ignores holds; flush, for a
+-- sheet whose rows have no icons, sets their labels without the icon's indent. Every field but
+-- name and rows is optional.
 -- Module state: Sheet.shown, the sheet on screen or nil. One sheet at a time: showing one
 -- closes the one shown.
 local Blitbuffer = require("ffi/blitbuffer")
@@ -86,9 +90,10 @@ local function part_of(look, name, muted)
 end
 
 -- Lays out the sheet's spec under ctx in variant into a Panel, and returns it with the panel's
--- rectangle, the rectangle with its shadow, the header's rectangle (or nil), the hint's (or nil)
--- and the rows' places ({ row, rect, label, detail }), all in screen coordinates, and how many
--- rows it left out. A missing icon is logged once per build.
+-- rectangle, the rectangle with its shadow, the header's rectangle (or nil), the hint's (or nil),
+-- a heading header's parts' rectangles ({ heading, aside, hint, label }, each nil without it) and
+-- the rows' places ({ row, rect, label, sublabel, detail, check }), all in screen coordinates,
+-- and how many rows it left out. A missing icon is logged once per build.
 local function build(spec, ctx, variant)
     local look = ctx.look
     local tokens = look.sheet
@@ -129,6 +134,7 @@ local function build(spec, ctx, variant)
 
     -- The header.
     local header_rect, hint_rect
+    local header_parts = {}
     local header = spec.header
     if header then
         local book = header.cover ~= nil
@@ -170,18 +176,36 @@ local function build(spec, ctx, variant)
                 line_y = line_y + line.widget:getSize().h
             end
         else
-            local heading = Typeset.line(look.type.sheet_heading, header.heading or "", inner_w, bctx)
-            local heading_w = heading:getSize().w
-            local parts = { { widget = heading, x = inner_x } }
             local gap = scale(tokens.aside_gap)
+            -- The label at the header's right (SortC.dc.html:43), built first so the heading's
+            -- column leaves room for it.
+            local label, column_w = nil, inner_w
+            if header.label then
+                label = Typeset.line(look.type.sheet_label, header.label, inner_w, bctx)
+                column_w = math.max(1, inner_w - label:getSize().w - gap)
+            end
+            local heading = Typeset.line(look.type.sheet_heading, header.heading or "", column_w, bctx)
+            local heading_w = heading:getSize().w
+            local parts = { { widget = heading, x = inner_x, name = "heading" } }
+            if label then
+                parts[#parts + 1] = { widget = label, x = inner_x + inner_w - label:getSize().w, name = "label" }
+            end
             -- What the heading, and an aside beside it, leave on the header's left.
             local left_w = heading_w
-            if header.aside then
+            -- The aside stacked above the heading (SortC.dc.html:39-41), its own line.
+            local above_h = 0
+            if header.aside and header.aside_above then
+                local above = Typeset.line(look.type.sheet_aside, header.aside, column_w, bctx)
+                local above_size = above:getSize()
+                add(above, inner_x, inner_y)
+                header_parts.aside = { x = inner_x, y = inner_y, w = above_size.w, h = above_size.h }
+                above_h = above_size.h + scale(tokens.aside_above_gap)
+            elseif header.aside then
                 local aside = Typeset.line(look.type.sheet_aside, header.aside,
                     math.max(1, inner_w - heading_w - gap), bctx)
                 local aside_w = aside:getSize().w
                 local x = header.aside_beside and inner_x + heading_w + gap or inner_x + inner_w - aside_w
-                parts[#parts + 1] = { widget = aside, x = x }
+                parts[#parts + 1] = { widget = aside, x = x, name = "aside" }
                 if header.aside_beside then
                     left_w = heading_w + gap + aside_w
                 end
@@ -191,21 +215,23 @@ local function build(spec, ctx, variant)
                 local hint = Typeset.line(look.type.sheet_aside, header.hint,
                     math.max(1, inner_w - left_w - gap), bctx)
                 local hint_size = hint:getSize()
-                local part = { widget = hint, x = inner_x + inner_w - hint_size.w }
+                local part = { widget = hint, x = inner_x + inner_w - hint_size.w, name = "hint" }
                 parts[#parts + 1] = part
                 hint_rect = part
             end
-            -- On one baseline, as the boards align them (HoldHome:35-37).
+            -- On one baseline, as the boards align them (HoldHome:35-37), under an aside above.
             local ascent, descent = 0, 0
             for _, part in ipairs(parts) do
                 part.baseline = Typeset.baseline(part.widget)
                 ascent = math.max(ascent, part.baseline)
                 descent = math.max(descent, part.widget:getSize().h - part.baseline)
             end
-            inner_h = ascent + descent
+            inner_h = above_h + ascent + descent
             for _, part in ipairs(parts) do
-                part.y = inner_y + ascent - part.baseline
+                part.y = inner_y + above_h + ascent - part.baseline
                 add(part.widget, part.x, part.y)
+                local part_size = part.widget:getSize()
+                header_parts[part.name] = { x = part.x, y = part.y, w = part_size.w, h = part_size.h }
             end
             if hint_rect then
                 local hint_size = hint_rect.widget:getSize()
@@ -227,6 +253,7 @@ local function build(spec, ctx, variant)
     local pad_x, pad_y = scale(tokens.row_padding.x), scale(tokens.row_padding.y)
     local icon_size, row_gap = scale(tokens.icon_size), scale(tokens.row_gap)
     local row_w = content_w - 2 * pad_x
+    local indent = spec.flush and 0 or icon_size + row_gap
     local built, unknown = {}, {}
     for _, row in ipairs(spec.rows or {}) do
         local b = { row = row }
@@ -239,7 +266,12 @@ local function build(spec, ctx, variant)
             unknown[icon_id] = true
             logger.warn("KoPanda: the sheet", spec.name, "has no icon", icon_id, "; its place is left blank")
         end
-        local room = row_w - icon_size - row_gap
+        local room = row_w - indent
+        -- The selected row's check at its right (SortC.dc.html:50).
+        if row.selected then
+            b.check = TintedIcon:new{ file = Icons.path("check"), size = icon_size, color = color("ink") }
+            room = room - icon_size - row_gap
+        end
         if row.detail then
             local chip_role = row.chip and tokens[row.chip .. "_chip_color"]
             if chip_role then
@@ -259,7 +291,13 @@ local function build(spec, ctx, variant)
             room = room - b.detail_w - row_gap
         end
         b.label = Typeset.line(part_of(look, "sheet_row", row.muted), row.label or "", math.max(1, room), bctx)
-        b.content_h = math.max(icon_size, b.label:getSize().h, b.detail_h or 0)
+        b.text_h = b.label:getSize().h
+        -- The second line under the label (SortC.dc.html:46-48).
+        if row.sublabel then
+            b.sublabel = Typeset.line(part_of(look, "sheet_sublabel", row.muted), row.sublabel, math.max(1, room), bctx)
+            b.text_h = b.text_h + scale(tokens.sublabel_gap) + b.sublabel:getSize().h
+        end
+        b.content_h = math.max(icon_size, b.text_h, b.detail_h or 0)
         built[#built + 1] = b
     end
 
@@ -284,7 +322,7 @@ local function build(spec, ctx, variant)
     if left_out > 0 then
         for i = kept + 1, #built do
             local b = built[i]
-            for _, widget in ipairs({ b.icon, b.detail, b.label }) do
+            for _, widget in pairs({ b.icon, b.detail, b.label, b.sublabel, b.check }) do
                 widget:free()
             end
             built[i] = nil
@@ -300,15 +338,29 @@ local function build(spec, ctx, variant)
         local function middle(h)
             return cy + math.floor((b.content_h - h) / 2)
         end
+        add_fill(content_x, y, content_w, row_h, b.row.selected and tokens.selected_fill_color)
         if b.icon then
             add(b.icon, x, middle(icon_size))
         end
         local label_size = b.label:getSize()
-        local label = { x = x + icon_size + row_gap, y = middle(label_size.h), w = label_size.w, h = label_size.h }
+        local label = { x = x + indent, y = middle(b.text_h), w = label_size.w, h = label_size.h }
         add(b.label, label.x, label.y)
+        local sublabel
+        if b.sublabel then
+            local sub_size = b.sublabel:getSize()
+            sublabel = { x = label.x, y = label.y + label.h + scale(tokens.sublabel_gap), w = sub_size.w,
+                h = sub_size.h }
+            add(b.sublabel, sublabel.x, sublabel.y)
+        end
+        local check
+        if b.check then
+            check = { x = x + row_w - icon_size, y = middle(icon_size), w = icon_size, h = icon_size }
+            add(b.check, check.x, check.y)
+        end
         local detail
         if b.detail then
-            detail = { x = x + row_w - b.detail_w, y = middle(b.detail_h), w = b.detail_w, h = b.detail_h }
+            local right = x + row_w - (check and icon_size + row_gap or 0)
+            detail = { x = right - b.detail_w, y = middle(b.detail_h), w = b.detail_w, h = b.detail_h }
             local chip = b.chip
             if chip then
                 add_fill(detail.x, detail.y, detail.w, detail.h, chip.fill)
@@ -323,7 +375,7 @@ local function build(spec, ctx, variant)
             end
         end
         rows[i] = { row = b.row, rect = { x = content_x, y = y, w = content_w, h = row_h }, label = label,
-            detail = detail }
+            sublabel = sublabel, detail = detail, check = check }
         y = y + row_h
         if not last then
             add_fill(content_x, y, content_w, row_rule, tokens.row_rule_color)
@@ -376,6 +428,10 @@ local function build(spec, ctx, variant)
     end
     for _, row in ipairs(rows) do
         row.rect, row.label, row.detail = moved(row.rect), moved(row.label), moved(row.detail)
+        row.sublabel, row.check = moved(row.sublabel), moved(row.check)
+    end
+    for name, rect in pairs(header_parts) do
+        header_parts[name] = moved(rect)
     end
     panel.dimen = Geom:new{ x = box_x, y = box_y, w = box_w, h = box_h }
     return {
@@ -384,6 +440,7 @@ local function build(spec, ctx, variant)
         rect = Geom:new{ x = box_x, y = box_y, w = box_w + shadow_x, h = box_h + shadow_y },
         header = moved(header_rect),
         hint = moved(hint_rect),
+        header_parts = header_parts,
         rows = rows,
         left_out = left_out,
     }
@@ -403,6 +460,7 @@ local function lay_out(sheet, variant)
     sheet.rect = laid.rect
     sheet.header_rect = laid.header
     sheet.hint_rect = laid.hint
+    sheet.header_parts = laid.header_parts
     sheet.rows = laid.rows
     sheet.variant = variant
     if old then
@@ -441,8 +499,8 @@ local function close_sheet(sheet)
     end
 end
 
--- Closes the sheet if still up and the home, leaving the file browser. home.lua reaches this
--- module, so home is required here.
+-- Closes the sheet if still up and the screen it was shown over (sheet.beneath, default the
+-- home), leaving the file browser. home.lua reaches this module, so home is required here.
 local function close_all(sheet)
     if UIManager:isWidgetShown(sheet) then
         close_sheet(sheet)
@@ -450,11 +508,11 @@ local function close_all(sheet)
     if Sheet.shown == sheet then
         Sheet.shown = nil
     end
-    local ok, home_err = pcall(function()
-        require("home").close()
+    local ok, beneath_err = pcall(function()
+        (sheet.beneath or require("home")).close()
     end)
     if not ok then
-        logger.err("KoPanda: could not close the home:", home_err)
+        logger.err("KoPanda: could not close the screen beneath the sheet:", beneath_err)
     end
 end
 
@@ -476,7 +534,7 @@ local function free_cover(sheet)
     end
 end
 
--- A failure anywhere in the sheet: logged, then the sheet and the home closed.
+-- A failure anywhere in the sheet: logged, then the sheet and the screen beneath closed.
 local function fail(sheet, what, err)
     logger.err("KoPanda: the sheet", sheet.spec and sheet.spec.name, what, err)
     close_all(sheet)
@@ -501,20 +559,23 @@ local function settle(sheet)
     end
 end
 
--- Shows the sheet of spec under ctx (the home's), closing the one shown. opts.started is the
--- time.monotonic() its opener took on the hold or tap, which paint_ms runs from; without it, the
--- start of the show. A failure is logged, takes the sheet off the stack and closes the home.
+-- Shows the sheet of spec under ctx (the screen's beneath), closing the one shown. opts.started is
+-- the time.monotonic() its opener took on the hold or tap, which paint_ms runs from; without it,
+-- the start of the show. opts.beneath is the screen the sheet is shown over, a table whose close()
+-- closes it; without it, the home. A failure is logged, takes the sheet off the stack and closes
+-- that screen.
 function Sheet.show(spec, ctx, opts)
     local started = opts and opts.started or time.monotonic()
+    local beneath = opts and opts.beneath
     local sheet
     local ok, err = pcall(function()
         Sheet.close()
-        sheet = Sheet:new{ spec = spec, ctx = ctx, started = started }
+        sheet = Sheet:new{ spec = spec, ctx = ctx, started = started, beneath = beneath }
         Sheet.shown = sheet
         UIManager:show(sheet, "ui", sheet.rect)
     end)
     if not ok then
-        sheet = sheet or { spec = spec }
+        sheet = sheet or { spec = spec, beneath = beneath }
         fail(sheet, "could not be shown:", err)
         free_cover(sheet)
     end
@@ -553,7 +614,7 @@ local function paint(sheet, bb, x, y)
 end
 
 -- A widget can't be closed from inside the repaint, so a failed paint closes the sheet and the
--- home from the next tick. The first good paint schedules the settled signal for the next tick,
+-- screen beneath from the next tick. The first good paint schedules the settled signal for the next tick,
 -- which runs past this repaint.
 function Sheet:paintTo(bb, x, y)
     local ok, err = pcall(paint, self, bb, x, y)

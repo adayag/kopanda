@@ -1,21 +1,21 @@
 -- The library: a full-screen KoPanda window over the file manager showing one folder a page at a
 -- time (cover-grid "The window"). What it draws is library_view.lua's, what a folder shows and the
 -- memory library_order.lua's, and its gestures' order library_gestures.lua's; here are its show
--- and close, its paint and settled signal, what a tap on each part does, its covers and the events
--- that keep it current.
+-- and close, its paint and settled signal, what a tap on each part does and the events that keep it
+-- current; its covers are library_covers.lua's.
 -- Module state: Library.shown, the library on screen or nil; Library.pending, one built on book
 -- close and not yet shown, or nil; Library.return_to, { dir, page } a book was opened from, which
 -- the next file manager's show returns to (D4), or nil, in memory only; Library.on_picker(kind),
--- run on a tap on the "sort" or "status" picker, a hook the rest of KoPanda fills (here a no-op).
+-- run on a tap on the "sort" or "status" picker, a hook library_pickers.lua fills (here a no-op).
 local BookCovers = require("book_covers")
-local Books = require("books")
 local Device = require("device")
 local InputContainer = require("ui/widget/container/inputcontainer")
+local LibraryCovers = require("library_covers")
 local LibraryGestures = require("library_gestures")
 local LibraryOrder = require("library_order")
-local LibraryTiles = require("library_tiles")
 local LibraryView = require("library_view")
 local Looks = require("looks")
+local Sheet = require("sheet")
 local UIManager = require("ui/uimanager")
 local logger = require("logger")
 local time = require("ui/time")
@@ -158,7 +158,7 @@ local function action_at(library, pos)
         end
     end
     for _, kind in ipairs({ "sort", "status" }) do
-        if LibraryView.inside(top[kind].rect, pos) then
+        if LibraryView.inside(top[kind].hit, pos) then
             return function()
                 Library.on_picker(kind)
             end
@@ -205,82 +205,6 @@ function Library.hit(x, y)
         end
     end
     return { kind = "empty" }
-end
-
--- Rebuilds in place the tiles of the books whose ids are keys of ids, from their records read again
--- (a title that came with an extraction replaces the file name) and their progress read now,
--- keeping the page's order. A failure is logged with what and leaves every tile as it was. Returns
--- how many tiles it rebuilt.
-local function rebuild_tiles(library, ids, what)
-    local fresh = {}
-    local ok, err = pcall(function()
-        for _, tile in ipairs(library.tiles) do
-            if tile.record and ids[tile.record.id] then
-                local record = Books.get(tile.record.id) or tile.record
-                fresh[#fresh + 1] = { tile = tile, record = record,
-                    widget = LibraryTiles.book(record, Books.progress(record), library.box, library.ctx) }
-            end
-        end
-    end)
-    if not ok then
-        for _, entry in ipairs(fresh) do
-            entry.widget:free()
-        end
-        logger.err("KoPanda: " .. what .. " failed:", err)
-        return 0
-    end
-    for _, entry in ipairs(fresh) do
-        local tile = entry.tile
-        local old = library[1][tile.index]
-        library[1][tile.index] = entry.widget
-        tile.widget, tile.record = entry.widget, entry.record
-        old:free()
-    end
-    return #fresh
-end
-
--- Rebuilds the arrived records' tiles and repaints.
-local function on_arrival(library, arrived)
-    if Library.shown ~= library then
-        return
-    end
-    local ids = {}
-    for _, record in ipairs(arrived) do
-        ids[record.id] = true
-    end
-    if rebuild_tiles(library, ids, "the library's cover arrival") > 0 then
-        UIManager:setDirty(library, "ui")
-    end
-end
-
--- Asks for the shown page's covers at the cover box's size (BookCovers.request), each arrival
--- rebuilding its tiles while this library is shown. A failure is logged; the tiles keep their
--- placeholders.
-local function request_covers(library)
-    if Library.shown ~= library then
-        return
-    end
-    local ok, err = pcall(function()
-        local records = {}
-        for _, tile in ipairs(library.tiles) do
-            if tile.record then
-                records[#records + 1] = tile.record
-            end
-        end
-        if #records == 0 then
-            return
-        end
-        BookCovers.request(records, { max_cover_w = library.box.cover_w, max_cover_h = library.box.cover_h },
-            function(arrived)
-                on_arrival(library, arrived)
-            end,
-            function()
-                return Library.shown == library
-            end)
-    end)
-    if not ok then
-        logger.err("KoPanda: the library's cover request failed:", err)
-    end
 end
 
 -- Signals the library's first paint on the dev loop's settled hook, once per show, as the home's
@@ -378,7 +302,7 @@ function Library.take_pending()
     if pending.closed then
         -- A file's record id, as books.lua's record() makes it.
         local id = "file:" .. (ffiutil.realpath(pending.closed) or pending.closed)
-        rebuild_tiles(pending, { [id] = true }, "the closed book's tile")
+        LibraryCovers.rebuild_tiles(pending, { [id] = true }, "the closed book's tile")
     end
     return pending
 end
@@ -412,7 +336,9 @@ function Library:paintTo(bb, x, y)
     if ok and self.covers_due then
         self.covers_due = nil
         UIManager:nextTick(function()
-            request_covers(self)
+            LibraryCovers.request(self, function()
+                return Library.shown == self
+            end)
         end)
     end
     local opts = self.settle_opts
@@ -454,13 +380,18 @@ function Library:onPrevPage()
     return true
 end
 
--- KOReader may close the library itself; Library.shown must not outlive it, nor its cover check.
--- The folder and page it was left at are stored (D11), and its tiles freed.
+-- KOReader may close the library itself; Library.shown must not outlive it, nor its cover check,
+-- nor a sheet shown over it, as the home closes its own (home.lua:322-339). The folder and page it
+-- was left at are stored (D11), and its tiles freed.
 function Library:onCloseWidget()
     if Library.shown == self then
         Library.shown = nil
     end
     self.settle_opts = nil
+    local sheet_ok, sheet_err = pcall(Sheet.close)
+    if not sheet_ok then
+        logger.err("KoPanda: could not close the sheet over the library:", sheet_err)
+    end
     local ok, err = pcall(BookCovers.cancel)
     if not ok then
         logger.err("KoPanda: could not drop the library's cover check:", err)

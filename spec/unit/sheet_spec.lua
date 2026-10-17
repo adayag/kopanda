@@ -447,6 +447,164 @@ describe("the sheet", function()
         end)
     end)
 
+    -- The boxes four sheets had before the pickers' additions (cover-grid C10), at the Colorsoft's
+    -- size: panel, header, hint, then each row's rect, label and detail, "-" for none. The
+    -- iconless rows are the editor's picker sheets (edit_layout.lua:153-212), which keep the indent.
+    describe("a sheet with none of the pickers' additions", function()
+        local SPECS = {
+            plain = three_rows(),
+            folder = { name = "t", band = "folder",
+                rows = { { icon = "sun", label = "Weather", detail = "KoPanda" } },
+                header = { heading = "Tools", aside = "Folder · 3", aside_beside = true, hint = "Hold to edit" } },
+            picker = { name = "t", band = "home", header = { heading = "Width" },
+                rows = { { label = "1", tick = true }, { label = "2" }, { label = "Clock" } } },
+            bare = { name = "t", band = "home", header = { heading = "Add a widget" },
+                rows = { { label = "Clock" }, { label = "Weather" } } },
+        }
+        local BEFORE = {
+            editorial = {
+                plain = "0 1195 1264 485|85 1200 1094 111|-|"
+                    .. "85 1314 1094 111 166 1356 126 27 1102 1359 77 20|"
+                    .. "85 1428 1094 111 166 1470 90 27 1121 1473 58 20|"
+                    .. "85 1542 1094 79 166 1584 43 27 1077 1587 102 20",
+                folder = "0 1423 1264 257|85 1428 1094 111|1088 1482 91 20|"
+                    .. "85 1542 1094 79 166 1584 65 27 1117 1587 62 20",
+                picker = "0 1195 1264 485|85 1200 1094 111|-|85 1314 1094 111 166 1356 10 27 -|"
+                    .. "85 1428 1094 111 166 1470 10 27 -|85 1542 1094 79 166 1584 44 27 -",
+                bare = "0 1309 1264 371|85 1314 1094 111|-|85 1428 1094 111 166 1470 44 27 -|"
+                    .. "85 1542 1094 79 166 1584 65 27 -",
+            },
+            diner = {
+                plain = "47 1168 1170 465|54 1175 1156 101|-|"
+                    .. "54 1283 1156 111 174 1326 140 25 1087 1329 80 19|"
+                    .. "54 1399 1156 111 174 1442 100 25 1066 1435 101 38|"
+                    .. "54 1515 1156 111 174 1558 47 25 1064 1561 103 19",
+                folder = "47 1400 1170 233|54 1407 1156 101|1082 1442 85 32|"
+                    .. "54 1515 1156 111 174 1558 71 25 1103 1561 64 19",
+                picker = "47 1168 1170 465|54 1175 1156 101|-|54 1283 1156 111 174 1326 6 25 -|"
+                    .. "54 1399 1156 111 174 1442 10 25 -|54 1515 1156 111 174 1558 47 25 -",
+                bare = "47 1284 1170 349|54 1291 1156 101|-|54 1399 1156 111 174 1442 47 25 -|"
+                    .. "54 1515 1156 111 174 1558 71 25 -",
+            },
+        }
+
+        local function box(rect)
+            return rect and table.concat({ rect.x, rect.y, rect.w, rect.h }, " ") or "-"
+        end
+
+        for _, id in ipairs({ "editorial", "diner" }) do
+            it("keeps the boxes it had before them in " .. id, function()
+                for name, spec in pairs(SPECS) do
+                    Sheet.show(spec, ctx_for(id, colorsoft))
+                    local sheet = Sheet.shown
+                    local out = { box(sheet.panel), box(sheet.header_rect), box(sheet.hint_rect) }
+                    for _, row in ipairs(sheet.rows) do
+                        out[#out + 1] = box(row.rect) .. " " .. box(row.label) .. " " .. box(row.detail)
+                    end
+                    assert.equals(BEFORE[id][name], table.concat(out, "|"), id .. " " .. name)
+                end
+            end)
+        end
+    end)
+
+    -- The sort sheet's shape (SortC.dc.html:38-69): the aside over the heading, a label at the
+    -- header's right, iconless rows set flush, each with a second line, the first selected.
+    describe("the pickers' additions", function()
+        local bb
+
+        after_each(function()
+            if bb then
+                bb:free()
+                bb = nil
+            end
+        end)
+
+        local function sort_spec()
+            return { name = "sort", band = "home", flush = true,
+                header = { heading = "Sort", aside = "for this folder", aside_above = true, label = "Library" },
+                rows = { { label = "Recent", sublabel = "Last opened first", selected = true },
+                    { label = "Title", sublabel = "A to Z" } } }
+        end
+
+        -- How many pixels of rect in bb are near colour c.
+        local function inked(rect, c)
+            local n = 0
+            each_pixel(bb, rect, function(p)
+                n = n + (near(c, p, 8) and 1 or 0)
+            end)
+            return n
+        end
+
+        for _, id in ipairs({ "editorial", "diner" }) do
+            it("build and paint in " .. id, function()
+                Sheet.show(sort_spec(), ctx_for(id, colorsoft))
+                local sheet, look = Sheet.shown, Looks.get(id)
+                local tokens, palette = look.sheet, Looks.palette(look, "day")
+                local function scale(px)
+                    return colorsoft:scaleBySize(px)
+                end
+                local header, parts = sheet.header_rect, sheet.header_parts
+                assert.equals(parts.heading.x, parts.aside.x)
+                assert.equals(parts.aside.y + parts.aside.h + scale(tokens.aside_above_gap), parts.heading.y)
+                assert.truthy(parts.aside.y >= header.y and parts.heading.y + parts.heading.h <= header.y + header.h)
+                assert.equals(header.x + header.w - scale(tokens.header_padding.side), parts.label.x + parts.label.w)
+                assert.truthy(parts.label.x > parts.heading.x + parts.heading.w)
+                for i, row in ipairs(sheet.rows) do
+                    assert.equals(row.rect.x + scale(tokens.row_padding.x), row.label.x, "flush " .. i)
+                    assert.equals(row.label.x, row.sublabel.x, i)
+                    assert.equals(row.label.y + row.label.h + scale(tokens.sublabel_gap), row.sublabel.y, i)
+                end
+                local first, second = sheet.rows[1], sheet.rows[2]
+                assert.equals(first.rect.x + first.rect.w - scale(tokens.row_padding.x), first.check.x + first.check.w)
+                assert.is_nil(second.check)
+                bb = buffer(1264, 1680)
+                sheet:paintTo(bb, 0, 0)
+                assert.truthy(inked(parts.label, grey(palette[look.type.sheet_label.color])) > 0, "label")
+                assert.truthy(inked(parts.aside, grey(palette[look.type.sheet_aside.color])) > 0, "aside")
+                assert.truthy(inked(first.sublabel, grey(palette[look.type.sheet_sublabel.color])) > 0, "sublabel")
+                assert.truthy(inked(first.check, grey(palette.ink)) > 0, "check")
+                local fill = tokens.selected_fill_color and palette[tokens.selected_fill_color] or palette.paper
+                assert.is_true(near(rgb(fill), pixel(bb, first.rect.x + 2, first.rect.y + 2), 1), "selected fill")
+                assert.is_true(near(rgb(palette.paper), pixel(bb, second.rect.x + 2, second.rect.y + 2), 1), "plain")
+            end)
+        end
+    end)
+
+    -- A sheet's failure closes the screen it was shown over (opts.beneath), the home without one.
+    describe("a failure with opts.beneath", function()
+        local closed, beneath
+
+        before_each(function()
+            closed = 0
+            beneath = { close = function() closed = closed + 1 end }
+        end)
+
+        it("closes that screen and not the home when a hold throws", function()
+            local spec = three_rows()
+            spec.hold = function()
+                error("kopanda-test: sheet hold failed")
+            end
+            Sheet.show(spec, ctx_for("editorial"), { beneath = beneath })
+            send(harness.gesture("hold", centre(Sheet.shown.rows[1].rect)))
+            assert.same({ 1, 0 }, { closed, sheets_on_stack() })
+            assert.equals(Home.shown, harness.top())
+        end)
+
+        it("closes that screen and not the home when the show raises, or the paint", function()
+            Sheet.show(book_sheet(stub_cover(function() error("kopanda-test: cover size failed") end)),
+                ctx_for("diner"), { beneath = beneath })
+            assert.same({ 1, 0 }, { closed, sheets_on_stack() })
+            local cover = stub_cover()
+            cover.paintTo = function()
+                error("kopanda-test: paint failed")
+            end
+            Sheet.show(book_sheet(cover), ctx_for("diner"), { beneath = beneath })
+            harness.tick(3)
+            assert.same({ 2, 0 }, { closed, sheets_on_stack() })
+            assert.equals(Home.shown, harness.top())
+        end)
+    end)
+
     describe("a heading's hint", function()
         local bb
 

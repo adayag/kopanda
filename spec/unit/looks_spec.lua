@@ -107,7 +107,9 @@ describe("looks", function()
                     "sheet.inset.side", "sheet.book_band_color", "sheet.header_padding.top",
                     "sheet.book_header_padding.bottom", "sheet.row_rule_color", "sheet.status_chip_color",
                     "sheet.chip_padding.x", "type.sheet_heading.face", "type.sheet_aside.color",
-                    "type.sheet_chip.size", "editor.padding.top", "editor.header_band_color",
+                    "type.sheet_chip.size", "sheet.selected_fill_color", "sheet.aside_above_gap",
+                    "sheet.sublabel_gap", "type.sheet_label.face", "type.sheet_sublabel.size",
+                    "editor.padding.top", "editor.header_band_color",
                     "editor.header_rule_width", "editor.body_gap", "editor.button_padding.y", "editor.card_padding.x",
                     "editor.selected_fill_color", "editor.arrow_size", "editor.disabled_color",
                     "editor.box_padding.y", "editor.row_rule_color", "editor.control_size",
@@ -658,6 +660,34 @@ describe("looks", function()
                 local sort, status = looks[id].type.library_picker, looks[id].type.library_picker_status
                 assert.same({ sort.face, sort.size, sort.uppercase, sort.tracking, sort.line_height },
                     { status.face, status.size, status.uppercase, status.tracking, status.line_height }, id)
+            end
+        end)
+
+        -- The sort and status sheets' additions to the sheet block and parts (cover-grid "The pickers"):
+        -- Diner's from SortC.dc.html; Editorial's sort sheet is not drawn, so its are its plain sheet's
+        -- style with no selected fill.
+        it("give the sheet's picker additions the boards' values", function()
+            local SHEET = {
+                diner = { selected_fill_color = "teal", aside_above_gap = 2, sublabel_gap = 2 },
+                editorial = { selected_fill_color = false, aside_above_gap = 2, sublabel_gap = 2 },
+            }
+            local PARTS = {
+                diner = {
+                    sheet_label = { "display", 11, true, 0.08, 0, "on_accent" },
+                    sheet_sublabel = { "text", 12, false, 0, 0, "ink" },
+                },
+                editorial = {
+                    sheet_label = { "text", 12, true, 0.1, 0, "muted" },
+                    sheet_sublabel = { "text", 12, false, 0, 0, "muted" },
+                },
+            }
+            for _, id in ipairs(ids) do
+                for key, value in pairs(SHEET[id]) do
+                    assert.equals(value, looks[id].sheet[key], id .. " sheet." .. key)
+                end
+                for part, values in pairs(PARTS[id]) do
+                    assert.same(values, part_values(looks[id].type[part] or {}), id .. " type." .. part)
+                end
             end
         end)
 
