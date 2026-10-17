@@ -1,9 +1,10 @@
 id: T-hxf2vf
 key: library/series-and-authors/chrome
 title: Factor the library's window chrome into a shared module, the library unchanged
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,4 @@ accepted_against:
         kind: git_commit
         value: git:56440d9
         observed_at: 2026-10-17T07:51:40.76675Z
+branch: tiller/library/series-and-authors/chrome
