@@ -1,0 +1,14 @@
+id: EV-g6bb5y
+type: submit.tweak
+at: 2026-10-17T17:44:48.786239Z
+contributor: allen
+command: submit tweak TW-6fwvl6
+targets:
+    - TW-6fwvl6
+before:
+    status: check
+after:
+    pr: 42
+    status: in_review
+files:
+    - path: .tiller/tweaks/quick-settings-one-redraw/tweak.yml
