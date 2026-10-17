@@ -1,7 +1,7 @@
 id: TW-cypagc
 key: tweaks/library-listing-kept
 title: A library page turn re-lists the folder
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:525b5a5
         observed_at: 2026-10-17T16:06:07.196066Z
 branch: tiller/tweaks/library-listing-kept
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:37:13.139339Z
+        against:
+            kind: git_commit
+            value: git:db1154e
+            observed_at: 2026-10-17T16:37:13.139336Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-db1154e-out-4626740540dd21d8f6b746427395c2e1b80da62eb0b5cf96cfb9c987c42e429f.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T16:37:13.139339Z
+        against:
+            kind: git_commit
+            value: git:db1154e
+            observed_at: 2026-10-17T16:37:13.139336Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-db1154e-out-a5c20a51bb94bad5653304ef52b52cf4f4e4fd61e202fd93f599d63441e2ca31.txt
