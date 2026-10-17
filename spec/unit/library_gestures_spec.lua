@@ -364,6 +364,11 @@ describe("gestures on the library", function()
             assert.same({}, opened)
             assert.same({}, picked)
             assert.same({ ROOT, 1 }, { library.dir, library.page })
+            -- context-menu D15: a hold on the header opens the empty-space sheet over the library.
+            local Sheet = package.loaded["sheet"]
+            assert.equals("library_empty", Sheet.shown.spec.name)
+            assert.equals(library, harness.top(2))
+            Sheet.close()
             assert.equals(library, harness.top())
         end)
 

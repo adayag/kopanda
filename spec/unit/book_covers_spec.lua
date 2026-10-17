@@ -4,7 +4,7 @@
 -- second while extraction runs, at most 30, each calling on_arrival once with exactly the records
 -- that arrived; the last check's cover read; alive(), cancel, a replacing request (one made from
 -- on_arrival too, raising or not), files given up by the last check asked again later and a failed
--- fork.
+-- fork; forget (context-menu C6).
 -- bookinfomanager is stubbed in package.loaded, since this file sorts before
 -- books_coverbrowser_spec.lua, which loads the real one; UIManager's scheduleIn and unschedule
 -- record their calls; each case restores them in finally.
@@ -424,6 +424,114 @@ describe("BookCovers", function()
             assert.same({ files(A, B), files(C) }, bim.extracted)
             assert.is_true(was_logged(logged, "arrival broke after a request on purpose"))
             assert.equals(1, #queue)
+        end)
+    end)
+
+    -- context-menu D9, C6: Refresh covers forgets a folder's books. forget deletes each path's
+    -- CoverBrowser row and BookList's cache entry and drops it from the files asked and the request
+    -- in flight, as CoverBrowser's own refresh does (plugins/coverbrowser.koplugin/main.lua:533-546).
+    describe("forget", function()
+        local BookList = require("ui/widget/booklist")
+
+        -- A manager whose rows are rows (file -> info) and whose deleteBookInfo removes one,
+        -- recording each file in deleted.
+        local function forgetting(rows, extracting)
+            local bim = manager{ info = function(file) return rows[file] end, extracting = extracting }
+            bim.deleted = {}
+            function bim:deleteBookInfo(file)
+                bim.deleted[#bim.deleted + 1] = file
+                rows[file] = nil
+            end
+            return bim
+        end
+
+        -- Sets BookList's cache entry for each path, and clears them in finally.
+        local function cached(...)
+            local paths = { ... }
+            for _, path in ipairs(paths) do
+                BookList.book_info_cache[path] = { been_opened = false }
+            end
+            finally(function()
+                for _, path in ipairs(paths) do
+                    BookList.resetBookInfoCache(path)
+                end
+            end)
+        end
+
+        it("deletes the row and the cache entry and lets a later request ask for the path again", function()
+            local rows = {}
+            local bim = forgetting(rows, { false })
+            local queue = stub(bim)
+            BookCovers.request({ { path = A }, { path = B } }, SPECS, function() end, always)
+            while #queue > 0 do
+                run_next(queue)
+            end
+            BookCovers.request({ { path = A }, { path = B } }, SPECS, function() end, always)
+            assert.same({ files(A, B) }, bim.extracted)
+            rows[A] = usable(nil)
+            cached(A, B)
+            BookCovers.forget({ A })
+            assert.same({ A }, bim.deleted)
+            assert.is_nil(rows[A])
+            assert.is_nil(BookList.book_info_cache[A])
+            assert.is_not_nil(BookList.book_info_cache[B])
+            BookCovers.request({ { path = A }, { path = B } }, SPECS, function() end, always)
+            assert.same({ files(A, B), files(A) }, bim.extracted)
+        end)
+
+        it("drops a forgotten path from the request in flight, so its check never reports it", function()
+            local rows = {}
+            local bim = forgetting(rows, { true })
+            local queue = stub(bim)
+            local calls, on_arrival = recorder()
+            BookCovers.request({ { path = A }, { path = B } }, SPECS, on_arrival, always)
+            BookCovers.forget({ A })
+            rows[A], rows[B] = usable(nil), usable(nil)
+            while #queue > 0 do
+                run_next(queue)
+            end
+            assert.same({ { check = 0, paths = { B } } }, calls)
+        end)
+
+        it("logs a delete that raises and leaves that path as it was, forgetting the others", function()
+            local rows = {}
+            local bim = forgetting(rows, { false })
+            local delete = bim.deleteBookInfo
+            function bim:deleteBookInfo(file)
+                if file == A then
+                    error("delete broke on purpose")
+                end
+                return delete(self, file)
+            end
+            local queue, logged = stub(bim)
+            BookCovers.request({ { path = A }, { path = B } }, SPECS, function() end, always)
+            while #queue > 0 do
+                run_next(queue)
+            end
+            cached(A, B)
+            BookCovers.forget({ A, B })
+            assert.is_true(was_logged(logged, "delete broke on purpose"))
+            assert.is_not_nil(BookList.book_info_cache[A])
+            assert.is_nil(BookList.book_info_cache[B])
+            BookCovers.request({ { path = A }, { path = B } }, SPECS, function() end, always)
+            assert.same({ files(A, B), files(B) }, bim.extracted)
+        end)
+
+        it("does nothing and logs nothing without CoverBrowser", function()
+            local _, logged = stub(false)
+            cached(A)
+            BookCovers.forget({ A })
+            assert.is_not_nil(BookList.book_info_cache[A])
+            assert.same({}, logged)
+        end)
+
+        it("tells whether CoverBrowser is enabled, by the test the reads and requests make", function()
+            stub(manager{})
+            assert.is_true(BookCovers.enabled())
+            BookCovers.reset()
+            package.loaded.bookinfomanager = nil
+            package.preload.bookinfomanager = function() error("CoverBrowser is disabled") end
+            assert.is_false(BookCovers.enabled())
         end)
     end)
 

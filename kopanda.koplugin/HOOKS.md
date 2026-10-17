@@ -1123,7 +1123,9 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   per file per process unless a later request replaced the one that asked for it (its
   extraction terminated, `:695`) or the check gave up on it at its cap (below), with every wanted
   file of the batch in one call; the featured cover asks through `FeaturedCover.after_show`, the
-  library for its page (`library_covers.lua`), and the Series and Authors windows, once per show,
+  library for its page (`library_covers.lua`), the library's Refresh covers for every book with a
+  file directly in its folder, in place of the page's request (`Library:refresh_covers`, the
+  empty-space sheet's entry below), and the Series and Authors windows, once per show,
   for every book of the library at the library grid's cover box (`LibraryChrome.request_records`,
   `library_chrome.lua`), each from the next tick after a paint, never from `build` or `paintTo`.
 - `isExtractingInBackground()` (`:685-687`), the only completion signal, counts CoverBrowser's own
@@ -1770,6 +1772,29 @@ guard (`sheet.lua`).
 - Hide stores the folder's realpath under the state file's `library.hidden` (the runtime state
   file's entry above) and touches nothing in KOReader: `Books.folder` and `Books.all` still list the
   folder (the book records' entry above); only the library's grid leaves it out.
+
+### The empty-space sheet: `BookInfoManager:deleteBookInfo`, `BookList.resetBookInfoCache`
+
+- Refresh covers (`library_sheets.lua`, through `BookCovers.forget` in `book_covers.lua`) does what
+  CoverBrowser's own "Refresh cached book information" does, for one file
+  (`plugins/coverbrowser.koplugin/main.lua:596-606`) and for the files selected
+  (`:533-546`): `BookInfoManager:deleteBookInfo(file)` then the cache reset, per file.
+- `deleteBookInfo(filepath)` (`plugins/coverbrowser.koplugin/bookinfomanager.lua:592-600`): splits
+  the path into directory and file name and deletes the row keyed by them (`:68`), committed at
+  once. The whole row goes, its `ignore_cover` and `ignore_meta` flags with it (the columns at
+  `:46-47`), which CoverBrowser's file dialog sets (`main.lua:567-592`): a cover or metadata the
+  owner ignored there shows again after a refresh, as after KOReader's own. A book marked
+  `unsupported` loses that mark too and is asked once more; its extraction marks it again
+  (`bookinfomanager.lua:422-570`). Reached by `pcall(require, "bookinfomanager")` (the featured
+  cover's entry above), so with CoverBrowser disabled the row is greyed and nothing is deleted; a
+  delete that raises is logged and its file left as it was.
+- `BookList.resetBookInfoCache(file)` (`frontend/ui/widget/booklist.lua:328-330`) clears the file's
+  entry in `BookList.book_info_cache`, a table on the class every file chooser shares (`:15`), as
+  CoverBrowser calls it through its menu (`main.lua:541`, `:605`) and `deleteFile` does
+  (`frontend/apps/filemanager/filemanager.lua:1173`).
+- Then the library re-lists its folder at its page, and from the tick after that paint makes the one
+  extraction request for the folder's books (the featured cover's entry above). Until a book's row
+  is written again its tile shows the sidecar's title or the file name on the typographic cover.
 
 ### Widget and support modules
 

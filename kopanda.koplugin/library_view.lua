@@ -84,24 +84,28 @@ end
 -- on the header's band, the count over the title in its left column, the back mark before the
 -- folder's name inside a sub-folder, and the status and sort pickers in its right-hand slot.
 -- Returns the header and its parts: the frame's (title_rect where a tap goes up, nil at the root),
--- count, and sort and status ({ rect, hit, label, mark }).
+-- count, sort and status ({ rect, hit, label, mark }), and text, the words it draws ({ count, title,
+-- sort, status }), which the empty-space sheet's header and chips repeat (context-menu D10).
 local function header(built, w, books, choice)
     local ctx = built.ctx
     local scale = tools(ctx)
     local look = ctx.look
     local tokens = look.library.header
-    local status_chip, status = picker(look.type.library_picker_status, STATUS_LABELS[choice.status],
-        tokens.status_fill_color, ctx)
-    local sort_chip, sort = picker(look.type.library_picker, SORT_LABELS[choice.sort], tokens.sort_fill_color, ctx)
     local sub = not LibraryView.same_dir(built.dir, LibraryView.root())
+    local text = { count = count_text(books, look.title_bar.count_on_shelf),
+        title = sub and name_of(built.dir) or "Library", sort = SORT_LABELS[choice.sort],
+        status = STATUS_LABELS[choice.status] }
+    local status_chip, status = picker(look.type.library_picker_status, text.status, tokens.status_fill_color, ctx)
+    local sort_chip, sort = picker(look.type.library_picker, text.sort, tokens.sort_fill_color, ctx)
     local box, parts = LibraryChrome.header(ctx, w, {
         height = LibraryTiles.header_height(ctx),
         band = tokens.fill_color,
         right = { status_chip, sort_chip },
-        aside = { part = look.type.library_count, text = count_text(books, look.title_bar.count_on_shelf) },
-        title = { part = look.type.library_title, text = sub and name_of(built.dir) or "Library" },
+        aside = { part = look.type.library_count, text = text.count },
+        title = { part = look.type.library_title, text = text.title },
         back = sub,
     })
+    parts.text = text
     status.rect, sort.rect = parts.right[1], parts.right[2]
     -- Where a tap opens each picker: its chip, reaching down through the padding to the edge, as
     -- far up, and halfway across the gap at each side, so Editorial's unpadded label line
