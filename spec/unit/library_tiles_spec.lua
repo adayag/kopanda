@@ -315,7 +315,7 @@ describe("library tiles", function()
                         { record(), READING, true, "reading" },
                         { record(), { status = "abandoned", percent = 0.3 }, true, "on hold" },
                         { record(), { status = "reading" }, false, "reading with no percent" },
-                        { record(), { status = "new" }, false, "new" },
+                        { record(), { status = "new", percent = 0.3 }, false, "new" },
                         { record(), { status = "complete", percent = 1 }, false, "complete" },
                         { remote(), READING, false, "path-less" },
                     }
@@ -414,6 +414,73 @@ describe("library tiles", function()
                     assert.same(role(ctx, shadow.color), at(box.cover_w + scale(shadow.x) - 1, mid_y), id .. " shadow")
                     bb:free()
                     built:free()
+                end
+            end)
+        end)
+
+        -- The hairline FeaturedCover.build frames the featured cover in (featured_cover.lua): the
+        -- outline role, false by day, so the day cover runs to the box's edge.
+        it("frames Editorial's cached cover in the outline role at night and in grey and in none by day", function()
+            local cover_w, cover_h
+            covers(function()
+                return { has_cover = true, cover_fetched = "Y", cover_w = cover_w, cover_h = cover_h,
+                    cover_bb = red_bb(cover_w, cover_h) }
+            end)
+            harness.at_colorsoft(function()
+                for _, variant in ipairs({ "day", "night", "grey" }) do
+                    local ctx = ctx_for("editorial", variant)
+                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx)
+                    cover_w, cover_h = box.cover_w, box.cover_h
+                    local built = LibraryTiles.book(record(), { status = "new" }, box, ctx)
+                    local bb, at = paint(built)
+                    local want = variant == "day" and RED or role(ctx, "outline")
+                    local mid_x, mid_y = math.floor(box.cover_w / 2), math.floor(box.cover_h / 2)
+                    assert.is_true(near(want, at(0, mid_y)), variant .. " the cover's left edge")
+                    assert.is_true(near(want, at(mid_x, 0)), variant .. " the cover's top edge")
+                    assert.same(RED, at(mid_x, mid_y), variant .. " the cover's middle")
+                    bb:free()
+                    built:free()
+                end
+            end)
+        end)
+
+        -- The cover's bitmap goes with the ImageWidget holding it and a TintedIcon's mask with
+        -- the icon, so a tile frees them through its children.
+        it("frees its cover's bitmap and its icons' masks", function()
+            local Books = package.loaded["books"]
+            local ImageWidget = require("ui/widget/imagewidget")
+            local TintedIcon = package.loaded["tinted_icon"]
+            Books.add_source({ name = "shelf", cover = function(_, w, h)
+                return red_bb(w, h)
+            end })
+            local image_free, icon_free = ImageWidget.free, TintedIcon.free
+            local freed = { images = 0, icons = 0 }
+            ImageWidget.free = function(self, ...)
+                freed.images = freed.images + 1
+                return image_free(self, ...)
+            end
+            TintedIcon.free = function(self, ...)
+                freed.icons = freed.icons + 1
+                return icon_free(self, ...)
+            end
+            finally(function()
+                ImageWidget.free, TintedIcon.free = image_free, icon_free
+                Books.reset()
+            end)
+            harness.at_colorsoft(function()
+                for _, id in ipairs({ "diner", "editorial" }) do
+                    local ctx = ctx_for(id)
+                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx)
+                    local built = LibraryTiles.book(remote(), { status = "new" }, box, ctx)
+                    assert.is_table(built.badge, id)
+                    freed.images, freed.icons = 0, 0
+                    built:free()
+                    assert.same({ images = 1, icons = 1 }, freed, id .. " a path-less book's tile")
+                    built = LibraryTiles.folder({ name = "Hugo winners", path = "/books/hugo" },
+                        { books = 14, reading = 3 }, box, ctx)
+                    freed.images, freed.icons = 0, 0
+                    built:free()
+                    assert.same({ images = 0, icons = 1 }, freed, id .. " a folder's tile")
                 end
             end)
         end)

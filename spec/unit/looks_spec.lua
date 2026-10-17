@@ -205,8 +205,13 @@ describe("looks", function()
                     end
                     if tostring(key):match("color$") then
                         assert.is_not_nil(look.palettes.day[value], where .. " names no palette role: " .. value)
-                        assert.is_not_false(look.palettes.day[value],
-                            where .. " names a role this look lacks: " .. value)
+                        -- A role false by day but drawn at night or in grey, as Editorial's outline, is
+                        -- one the look has.
+                        local drawn = false
+                        for _, palette in pairs(look.palettes) do
+                            drawn = drawn or palette[value] ~= false
+                        end
+                        assert.is_true(drawn, where .. " names a role this look lacks: " .. value)
                     elseif key == "face" then
                         assert.is_table(look.faces[value], where .. " names no face: " .. value)
                     elseif key == "fill_grey" then
@@ -530,7 +535,9 @@ describe("looks", function()
                 },
                 grid = { padding_top = 22, side = 40, row_gap = 22, column_gap = 20, cover_h = 218, strip_gap = 10,
                     title_gap = 8 },
-                cover = { outline_width = 0, outline_color = false, radius = 3,
+                -- The owner's hairline, not GridA.dc.html:43's none: the outline role is false by day, so
+                -- the day cover still has no border.
+                cover = { outline_width = 1, outline_color = "outline", radius = 3,
                     shadow = { x = 2, y = 3, color = "shadow" }, padding = { x = 12, y = 16 } },
                 strip = { height = 4, outline_width = 0 },
                 folder = { fill_color = "paper", outline_width = 1, outline_color = "hairline", icon_size = 36,

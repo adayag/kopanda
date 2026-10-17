@@ -520,8 +520,11 @@ return {
             title_gap = 8, -- the tile's gap (GridA.dc.html:42)
         },
         cover = {
-            outline_width = 0, -- no border (GridA.dc.html:43)
-            outline_color = false,
+            -- The hairline outline the look's cover takes at night and in grey (the direction doc :65,
+            -- :74), as FeaturedCover.build frames the featured cover; the role is false by day, so
+            -- GridA.dc.html:43 draws none (the owner's choice over the feature's token table).
+            outline_width = 1,
+            outline_color = "outline",
             radius = 3, -- GridA.dc.html:43
             shadow = { x = 2, y = 3, color = "shadow" }, -- GridA.dc.html:43
             padding = { x = 12, y = 16 }, -- the placeholder's (GridA.dc.html:43)
