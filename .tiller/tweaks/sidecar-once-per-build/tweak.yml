@@ -1,7 +1,7 @@
 id: TW-wghsy7
 key: tweaks/sidecar-once-per-build
 title: The featured book's sidecar is parsed twice per home build
-status: check
+status: in_review
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         value: git:5aa14a6
         observed_at: 2026-10-17T07:16:23.434548Z
 branch: tiller/tweaks/sidecar-once-per-build
+pr: 38
 gates:
     build:
         required: true
