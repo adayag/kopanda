@@ -1,0 +1,13 @@
+id: EV-xbmnvn
+type: check.bug
+at: 2026-10-17T21:48:46.991165Z
+contributor: allen
+command: check bug B-fip6q6
+targets:
+    - B-fip6q6
+before:
+    status: check
+after:
+    status: check
+files:
+    - path: .tiller/bugs/library-prebuild-stale-and-wasted/bug.yml
