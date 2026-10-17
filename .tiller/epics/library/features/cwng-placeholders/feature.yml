@@ -1,7 +1,7 @@
 id: F-yy4zaa
 key: library/cwng-placeholders
 title: cwngsync placeholders read as not downloaded and download from the sheet
-status: ready
+status: active
 blocked: false
 source: design/2026-10-16-kopanda-library-direction.md
 change_type: modify
@@ -12,6 +12,7 @@ order:
     - T-xtol0q
     - T-lk235s
 review_grain: feature
+branch: tiller/reviews/features/library/cwng-placeholders
 accepted_against:
     spec:
         kind: git_blob
