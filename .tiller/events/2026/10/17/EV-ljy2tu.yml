@@ -1,0 +1,14 @@
+id: EV-ljy2tu
+type: sync.bug
+at: 2026-10-17T07:58:26.734592Z
+contributor: allen
+command: sync bug B-2o8ya3
+targets:
+    - B-2o8ya3
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/bugs/prebuild-stale-and-wasted/bug.yml
