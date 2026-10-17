@@ -46,11 +46,17 @@ sections "Tokens", "The page", "The fit", decisions D2, D12, D13, D14.
    `pager_height(ctx)` here, so the screen task builds to the same numbers. Then step the `library` vertical
    tokens down by board pixels, cover height first, header and grid top padding next, the pager last, until
    it passes in both looks on both profiles; each changed value gets a comment "D2: board N".
+5. **The swatch's icon grid.** The two icons bring the registry to 31, which wraps the swatch's icon grid
+   (`swatch.lua:259-299`, ten cells a row) onto a fourth row, and Diner's palette panels then overflow
+   (`spec/unit/swatch_spec.lua:440`, "content 414 in 398" at the Colorsoft). Tighten the grid's cell gap so
+   31 icons fit three rows at the Colorsoft and the Paperwhite, leaving icon and label sizes as they are
+   (if the gap alone cannot, bring the numbers to the lead before changing anything else);
+   the swatch spec passes unchanged, and the swatch goldens are regenerated after this step.
 
 ## Surfaces
 
 - `kopanda.koplugin/looks/diner.lua`, `looks/editorial.lua`, `icons.lua`, `icons/` (three SVGs),
-  `library_tiles.lua` (new), `featured_cover.lua`, `widgets/featured.lua`, `main.lua`, `HOOKS.md`.
+  `library_tiles.lua` (new), `featured_cover.lua`, `widgets/featured.lua`, `swatch.lua`, `main.lua`, `HOOKS.md`.
 - `studio/src/catalog.json` (regenerated), `spec/goldens/swatch-*` (regenerated).
 - `spec/unit/library_tiles_spec.lua` (new), `spec/unit/looks_spec.lua`, `spec/unit/icons_spec.lua`,
   `spec/plugin_harness.lua`.
