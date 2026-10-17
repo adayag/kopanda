@@ -1289,6 +1289,61 @@ describe("KoPanda failing safe", function()
             assert.is_nil(package.loaded["sheet"].shown)
             closed_onto_file_browser()
         end)
+
+        -- Shows the library over one book whose file is real, holds it and taps the book sheet's row
+        -- labelled label. Returns the library, its tiles before the tap and the book's path.
+        local function tap_held_book(label)
+            local path = os.getenv("KO_HOME") .. "/failsafe-held-book.epub"
+            local f = assert(io.open(path, "wb"))
+            f:write("not really a book")
+            f:close()
+            finally(function()
+                os.remove(path)
+            end)
+            fixture.install({ [fixture.ROOT] = { books = {
+                { id = "file:" .. path, path = path, title = "Held", authors = {} },
+            } } })
+            local library = fixture.show()
+            local tiles = widgets(library)
+            hold_on(library, library.tiles[1].rect)
+            local sheet = package.loaded["sheet"].shown
+            assert.equals("book", sheet.spec.name)
+            for _, place in ipairs(sheet.rows) do
+                if place.row.label == label then
+                    local rect = place.rect
+                    local ok = pcall(UIManager.sendEvent, UIManager, Event:new("Gesture",
+                        harness.gesture("tap", rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2))))
+                    assert.is_true(ok)
+                    return library, tiles, path
+                end
+            end
+            error("no row " .. label)
+        end
+
+        it("logs a pin that throws on Add to the home and leaves the library as it was", function()
+            package.loaded["settings"].set = function()
+                error("kopanda-test: pin failed")
+            end
+            local library, tiles = tap_held_book("Add to the home")
+            assert.is_true(logged_error("kopanda-test: pin failed"))
+            assert.is_nil(package.loaded["sheet"].shown)
+            as_it_was(library, tiles)
+        end)
+
+        it("logs a delete confirm that throws on Delete and leaves the library and the book as they were", function()
+            local show = FileManager.showDeleteFileDialog
+            finally(function()
+                FileManager.showDeleteFileDialog = show
+            end)
+            FileManager.showDeleteFileDialog = function()
+                error("kopanda-test: delete failed")
+            end
+            local library, tiles, path = tap_held_book("Delete…")
+            assert.is_true(logged_error("kopanda-test: delete failed"))
+            assert.is_nil(package.loaded["sheet"].shown)
+            as_it_was(library, tiles)
+            assert.equals("file", require("libs/libkoreader-lfs").attributes(path, "mode"))
+        end)
     end)
 
     -- series-and-authors C9, C11 ("Failure behaviour"): as the library's, through the chrome.

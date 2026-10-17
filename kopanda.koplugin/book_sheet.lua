@@ -2,10 +2,11 @@
 -- details, Read status and More by this author. The featured book's (BookSheet.open), opened by a
 -- hold on it (widgets/featured.lua), adds Feature a different book and This widget's settings; a
 -- library record's (BookSheet.open_record), opened by a hold on a book in the library or on a shelf
--- screen (library_sheets.lua), runs the window's own open and re-list (context-menu D13). Read
--- status opens a sub-sheet of KOReader's own three status buttons, which write the sidecar
--- themselves; Feature a different book opens the picker, which writes featured.pinned. Nothing
--- else here writes.
+-- screen (library_sheets.lua), runs the window's own open and re-list (context-menu D13) and adds
+-- Add to the home and Delete. Read status opens a sub-sheet of KOReader's own three status
+-- buttons, which write the sidecar themselves; Feature a different book opens the picker and Add
+-- to the home pins the book, both writing featured.pinned; Delete is KOReader's own delete
+-- confirm. Nothing else here writes.
 local BookList = require("ui/widget/booklist")
 local Books = require("books")
 local DocSettings = require("docsettings")
@@ -266,6 +267,70 @@ local function book_rows(file, title, on, ctx, beneath)
     return rows
 end
 
+-- Runs fn, logging what failed when it raises, so a row's failure leaves the window it was shown
+-- over as it was rather than closing it, as the sheet's own failure would (context-menu "Failure
+-- behaviour").
+local function guarded(what, fn)
+    return function()
+        local ok, err = pcall(fn)
+        if not ok then
+            logger.err("KoPanda: " .. what .. " failed:", err)
+        end
+    end
+end
+
+-- Add to the home (context-menu D8): pins the book at file by its realpath, as the picker pins
+-- one, history holding realpaths (readhistory.lua:26). The window stays shown and the home, closed
+-- while a library window is up, builds afresh on its next show, so nothing is refreshed. When
+-- featured.pinned already names the book, by realpath, and is a file, as the picker reads the pin,
+-- the row reads On the home, ticked, so a tap runs nothing. A refused write is logged and changes
+-- nothing. Greyed with no file (D2).
+local function home_row(file)
+    local row = { icon = "home_plus", label = "Add to the home" }
+    if not file then
+        row.muted = true
+        return row
+    end
+    local real = ffiutil.realpath(file) or file
+    local pinned = Settings.get("featured.pinned")
+    if pinned and lfs.attributes(pinned, "mode") == "file" and (ffiutil.realpath(pinned) or pinned) == real then
+        row.label = "On the home"
+        row.tick = true
+        return row
+    end
+    row.run = guarded("the pin to the home", function()
+        local ok, err = Settings.set("featured.pinned", real)
+        if not ok then
+            logger.err("KoPanda: could not change the featured book:", err)
+        end
+    end)
+    return row
+end
+
+-- Delete… (context-menu D7): KOReader's own delete confirm for the book at file, called on the
+-- file manager's instance as the file browser's Delete calls it
+-- (frontend/apps/filemanager/filemanager.lua:228-233, :1121-1153), with its wording, its archive
+-- check and its notices. Its post-delete callback, run only once the delete succeeded (:1141-1142),
+-- re-lists window. Without a file manager, logged and nothing shown. Greyed with no file (D2).
+local function delete_row(file, window)
+    local row = { icon = "trash", label = "Delete…" }
+    if not file then
+        row.muted = true
+        return row
+    end
+    row.run = guarded("the delete", function()
+        local fm = file_manager()
+        if not fm then
+            logger.warn("KoPanda: no file manager to delete the book from")
+            return
+        end
+        fm:showDeleteFileDialog(file, function()
+            window:refresh()
+        end)
+    end)
+    return row
+end
+
 -- The sheet's cover size under ctx, the tokens' cover_w by cover_h.
 local function cover_size(ctx)
     local tokens = ctx.look.sheet
@@ -320,10 +385,10 @@ end
 -- Shows the sheet of record (a Books record, books.lua) held on window (the library or a shelf
 -- screen) under ctx, the window's, with opts passed on to Sheet.show (its beneath the window).
 -- Open runs window:open(record), the open its tap on the book runs; a status write re-lists the
--- window (window:refresh()); More by this author shows the record's first author. A record whose
--- file has gone since the window was built re-lists the window instead and shows no sheet. The
--- cover is the featured cover's frame round the record's cached cover (FeaturedCover.framed),
--- never asking for an extraction.
+-- window (window:refresh()); More by this author shows the record's first author; then Add to the
+-- home and Delete. A record whose file has gone since the window was built re-lists the window
+-- instead and shows no sheet. The cover is the featured cover's frame round the record's cached
+-- cover (FeaturedCover.framed), never asking for an extraction.
 function BookSheet.open_record(record, window, ctx, opts)
     local file = record.path
     if file and lfs.attributes(file, "mode") ~= "file" then
@@ -341,6 +406,8 @@ function BookSheet.open_record(record, window, ctx, opts)
             return record.authors[1]
         end,
     }, ctx, opts and opts.beneath)
+    rows[#rows + 1] = home_row(file)
+    rows[#rows + 1] = delete_row(file, window)
     local header = {
         title = record.title,
         author = #record.authors > 0 and table.concat(record.authors, ", ") or nil,

@@ -1,0 +1,16 @@
+id: EV-7wt39g
+type: submit.task
+at: 2026-10-17T17:56:59.081144Z
+contributor: allen
+command: submit task T-lnzmw0
+targets:
+    - T-lnzmw0
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/context-menu/book-actions
+        head: git:9e36f28
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/book-actions/task.yml

@@ -1541,6 +1541,33 @@ guard (`sheet.lua`).
   and never asks for an extraction; a cached cover too small for the box is
   left out by `BookInfoManager.isCachedCoverInvalid`
   (`plugins/coverbrowser.koplugin/bookinfomanager.lua:1013-1030`; the featured cover's entry above).
+- `FileManager.instance:showDeleteFileDialog(filepath, post_delete_callback, pre_delete_callback)`
+  (`frontend/apps/filemanager/filemanager.lua:1121-1153`), a library record's Delete…, called on
+  the instance read through `package.loaded` at tap time, as the file browser's own Delete calls it
+  (`:228-233`); `book_sheet.lua` passes the record's path and the window's re-list as
+  `post_delete_callback`, and no `pre_delete_callback`. It realpaths the path and shows "File not
+  found" with no callback when that fails (`:1122-1129`); else a `ConfirmBox` "Delete file
+  permanently?" with the realpath and "Delete" (`:1130-1136`), whose OK runs `deleteFile(file,
+  is_file)` and the callback only when that returned true (`:1137-1144`). The confirm's buttons run
+  their callback, then close the box (`frontend/ui/widget/confirmbox.lua:107-122`), and the close
+  marks the window under it dirty (`frontend/ui/uimanager.lua:290-360`). For a file whose cached
+  `BookList.hasBookBeenOpened` is true and whose sidecar has `doc_props` and
+  `partial_md5_checksum`, it adds the metadata archive check (`filemanager.lua:1146-1151`,
+  `:1155-1167`). KoPanda adds no confirm and no notice of its own.
+- `FileManager:deleteFile(file, is_file)`, its file branch (`filemanager.lua:1169-1192`):
+  `os.remove`, then `BookList.resetBookInfoCache(file)` (`frontend/ui/widget/booklist.lua:328-330`),
+  `DocSettings.updateLocation(file)` with no new path, which deletes the sidecar folder, archiving
+  its metadata when that is on (`frontend/docsettings.lua:433`), `ReadHistory:fileDeleted(file)`
+  (`frontend/readhistory.lua:214-234`: the entry removed under
+  `autoremove_deleted_items_from_history`, else dimmed with `select_enabled = false`, which the
+  featured book's walk skips) and `ReadCollection:removeItem(file)`
+  (`frontend/readcollection.lua:188`), returning true; a failed `os.remove` shows "Failed to
+  delete" and returns nothing (`filemanager.lua:1188-1191`). It leaves CoverBrowser's row, which
+  `BookInfoManager:removeNonExistantEntries` prunes later
+  (`plugins/coverbrowser.koplugin/bookinfomanager.lua:602-625`; the library lists the disk, so the
+  row never shows), and a `featured.pinned` naming the file, which the featured book then reads as
+  gone and features the last one opened. KOReader sends no event for a delete, so the window
+  re-lists through the callback.
 
 ### The library's order: `ReadHistory.hist` and its times
 
