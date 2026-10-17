@@ -1,0 +1,13 @@
+id: EV-ktlcjb
+type: start.tweak
+at: 2026-10-17T16:37:39.063356Z
+contributor: allen
+command: start tweak TW-zih0x2
+targets:
+    - TW-zih0x2
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/metadata-events-coalesced/tweak.yml
