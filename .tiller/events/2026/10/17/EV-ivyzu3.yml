@@ -1,0 +1,15 @@
+id: EV-ivyzu3
+type: start.task
+at: 2026-10-17T05:35:14.16795Z
+contributor: allen
+command: start task T-czph2w
+targets:
+    - T-czph2w
+before:
+    status: ready
+after:
+    branch: tiller/bars/quick-settings/settings-hold
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/bars/features/quick-settings/tasks/settings-hold/task.yml
