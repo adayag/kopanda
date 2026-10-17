@@ -1,0 +1,14 @@
+id: EV-6xw8ro
+type: add.tweak
+at: 2026-10-17T18:07:46.615342Z
+contributor: allen
+command: add tweak layout-fit-timeout-race
+targets:
+    - TW-5vfush
+after:
+    attached_to: F-l0kw8m
+    key: tweaks/layout-fit-timeout-race
+    status: proposed
+files:
+    - path: .tiller/tweaks/layout-fit-timeout-race/tweak.md
+    - path: .tiller/tweaks/layout-fit-timeout-race/tweak.yml
