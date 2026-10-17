@@ -162,6 +162,11 @@ return {
             icon_size = 34, -- HoldFolderC.dc.html:37
             icon_color = "ink", -- HoldFolderC.dc.html:37
         },
+        -- The library's empty-space sheet (context-menu D10) and its hidden-folders sub-sheet (D17):
+        -- the band, and the sort and show chips (a chip on paper sets its text in sheet_chip_plain).
+        library_empty_band_color = "mustard", -- HoldEmptyC.dc.html:35
+        sort_chip_color = "paper", -- HoldEmptyC.dc.html:47
+        show_chip_color = "pink", -- HoldEmptyC.dc.html:54
     },
 
     -- The quick-settings sheet's body. No board draws Diner's: its own sheet's rows and rules, its
@@ -362,6 +367,11 @@ return {
         -- A row's detail in its chip, the read status (HoldBookC.dc.html:52).
         sheet_chip = {
             face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
+        },
+        -- sheet_chip in ink, since on_accent is the night paper by night: a row's detail in its chip
+        -- on paper, the sort's (HoldEmptyC.dc.html:47).
+        sheet_chip_plain = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
         },
         -- The header's label at its right, "Library" (SortC.dc.html:43).
         sheet_label = {

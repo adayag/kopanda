@@ -1002,6 +1002,43 @@ describe("looks", function()
             end
         end)
 
+        -- The empty-space sheet's band, its sort and show chips and the plain chip part (context-menu
+        -- "Tokens", D10, D17): Diner's from HoldEmptyC.dc.html:35-54; Editorial's undrawn, so no band
+        -- and plain details, as its status chip, and its plain chip part its sheet_chip; each value
+        -- commented with its board line or the lead's analogy.
+        it("give the empty-space sheet's band, chips and plain chip part the boards' values, each commented",
+            function()
+            local wanted = {
+                diner = { library_empty_band_color = "mustard", sort_chip_color = "paper", show_chip_color = "pink",
+                    plain = { "display", 11, true, 0.08, 0, "ink" } },
+                editorial = { library_empty_band_color = false, sort_chip_color = false, show_chip_color = false,
+                    plain = part_values(looks.editorial.type.sheet_chip) },
+            }
+            for _, id in ipairs(ids) do
+                for _, key in ipairs({ "library_empty_band_color", "sort_chip_color", "show_chip_color" }) do
+                    assert.equals(wanted[id][key], looks[id].sheet[key], id .. " sheet." .. key)
+                end
+                assert.same(wanted[id].plain, part_values(looks[id].type.sheet_chip_plain or {}), id)
+                -- Each token's own comment; the part's, the comment line above it, as every part's.
+                local comments, previous = {}, ""
+                for line in io.lines(harness.plugin_dir .. "/looks/" .. id .. ".lua") do
+                    local key = line:match("^%s+([%w_]+) = ")
+                    if key == "library_empty_band_color" or key == "sort_chip_color" or key == "show_chip_color" then
+                        comments[key] = line:match("%-%-%s*(.*)$") or ""
+                    elseif key == "sheet_chip_plain" then
+                        comments[key] = previous:match("^%s+%-%-%s*(.*)$") or ""
+                    end
+                    previous = line
+                end
+                for _, key in ipairs({ "library_empty_band_color", "sort_chip_color", "show_chip_color",
+                        "sheet_chip_plain" }) do
+                    local comment = comments[key]
+                    assert.truthy(comment and (comment:find("%.dc%.html:%d") or comment:find("lead")),
+                        id .. " " .. key .. ": " .. tostring(comment))
+                end
+            end
+        end)
+
         -- D7: the bar always shows on the home, and NavBarC:70 draws no stripe above it; NavBar:19,
         -- :61 leave 20 px under Editorial's last row.
         it("give Diner no footer stripe and Editorial a 20 px bottom margin above the bar", function()

@@ -1,0 +1,13 @@
+id: EV-9w9enh
+type: claim.task
+at: 2026-10-17T18:07:05.516896Z
+contributor: allen
+command: claim task T-ivn2lk
+targets:
+    - T-ivn2lk
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/space-sheet/task.yml

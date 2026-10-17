@@ -270,7 +270,10 @@ function SheetLayout.build(spec, ctx, variant)
             if chip_role then
                 local chip_outline = scale(tokens.chip_outline_width)
                 local cx, cy = scale(tokens.chip_padding.x) + chip_outline, scale(tokens.chip_padding.y) + chip_outline
-                b.detail = Typeset.line(part_of(look, "sheet_chip", row.muted), row.detail,
+                -- A chip on paper sets its text in ink (HoldEmptyC.dc.html:47): sheet_chip's
+                -- on_accent is the night paper itself by night.
+                local chip_part = chip_role == "paper" and "sheet_chip_plain" or "sheet_chip"
+                b.detail = Typeset.line(part_of(look, chip_part, row.muted), row.detail,
                     math.max(1, room - 2 * cx), bctx)
                 local text = b.detail:getSize()
                 b.chip = { w = text.w + 2 * cx, h = text.h + 2 * cy, inset_x = cx, inset_y = cy,

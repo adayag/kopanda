@@ -1409,6 +1409,144 @@ describe("KoPanda failing safe", function()
                 as_it_was(library, tiles)
             end)
         end)
+
+        -- The empty-space sheet's rows (context-menu C8, "Failure behaviour"): Refresh covers whose
+        -- delete, request or re-list raises, and a Hidden folders tap whose unhide raises.
+        describe("with the empty-space sheet", function()
+            local Sheet, sub
+
+            before_each(function()
+                Sheet = package.loaded["sheet"]
+                sub = fixture.folder("Sci-fi")
+                fixture.install({ [fixture.ROOT] = { folders = { sub }, books = fixture.books(3) } })
+            end)
+
+            -- CoverBrowser enabled as a stub in package.loaded with no rows, its deleteBookInfo
+            -- running delete(file), restored in finally.
+            local function coverbrowser(delete)
+                local loaded = package.loaded.bookinfomanager
+                package.loaded.bookinfomanager = {
+                    getBookInfo = function() return nil end,
+                    deleteBookInfo = function(_, file)
+                        delete(file)
+                    end,
+                    extractInBackground = function() return true end,
+                    isExtractingInBackground = function() return false end,
+                    isCachedCoverInvalid = function() return true end,
+                }
+                finally(function()
+                    package.loaded.bookinfomanager = loaded
+                    package.loaded["book_covers"].reset()
+                end)
+            end
+
+            -- Taps the shown sheet's row labelled label.
+            local function tap(label)
+                for _, place in ipairs(Sheet.shown.rows) do
+                    if place.row.label == label then
+                        UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", fixture.centre(place.rect))))
+                        return
+                    end
+                end
+                error("no row " .. label)
+            end
+
+            -- Holds the header, empty space, then taps the empty-space sheet's row labelled label.
+            local function tap_row(library, label)
+                hold_on(library, library.header.rect)
+                assert.equals("library_empty", Sheet.shown.spec.name)
+                tap(label)
+            end
+
+            -- The library is up and on top at the root's first page, the sheet gone.
+            local function relisted(library)
+                assert.is_nil(Sheet.shown)
+                assert.equals(library, harness.top())
+                assert.equals(library, Library.shown)
+                assert.same({ fixture.ROOT, 1 }, { library.dir, library.page })
+                assert.equals(4, #library.tiles)
+            end
+
+            it("logs a Refresh covers whose delete throws and re-lists the library at its page", function()
+                coverbrowser(function()
+                    error("kopanda-test: delete failed")
+                end)
+                local library = fixture.show()
+                tap_row(library, "Refresh covers")
+                assert.is_true(logged_error("kopanda-test: delete failed"))
+                relisted(library)
+                harness.tick(3)
+                relisted(library)
+            end)
+
+            it("logs a Refresh covers whose request throws and re-lists the library at its page", function()
+                coverbrowser(function() end)
+                local library = fixture.show()
+                package.loaded["book_covers"].request = function()
+                    error("kopanda-test: request failed")
+                end
+                tap_row(library, "Refresh covers")
+                relisted(library)
+                harness.tick(3)
+                assert.is_true(logged_error("kopanda-test: request failed"))
+                relisted(library)
+            end)
+
+            it("logs a Refresh covers whose re-list throws, leaves the page and asks for no covers", function()
+                -- Sci-fi and Book 01 to 05 on page 1, Book 06 to 08 on page 2.
+                local books = fixture.books(8)
+                fixture.install({ [fixture.ROOT] = { folders = { sub }, books = books } })
+                coverbrowser(function() end)
+                local extracted = {}
+                package.loaded.bookinfomanager.extractInBackground = function(_, files)
+                    extracted[#extracted + 1] = files
+                    return true
+                end
+                local library = fixture.show()
+                local tiles = widgets(library)
+                extracted = {}
+                local LibraryView = package.loaded["library_view"]
+                local build = LibraryView.build
+                LibraryView.build = function()
+                    error("kopanda-test: re-list failed")
+                end
+                tap_row(library, "Refresh covers")
+                assert.is_true(logged_error("kopanda-test: re-list failed"))
+                assert.is_nil(Sheet.shown)
+                as_it_was(library, tiles)
+                harness.tick(3)
+                as_it_was(library, tiles)
+                assert.same({}, extracted)
+                -- The next page's covers are that page's alone, not the folder's the refresh asked.
+                LibraryView.build = build
+                library:go(fixture.ROOT, 2)
+                harness.tick(3)
+                assert.equals(2, library.page)
+                assert.equals(1, #extracted)
+                local files = {}
+                for i, file in ipairs(extracted[1]) do
+                    files[i] = file.filepath
+                end
+                assert.same({ books[6].path, books[7].path, books[8].path }, files)
+            end)
+
+            it("logs a Hidden folders tap whose unhide throws and leaves the library as it was", function()
+                assert.is_true(package.loaded["library_order"].hide(sub.path))
+                local library = fixture.show()
+                local tiles = widgets(library)
+                package.loaded["library_order"].unhide = function()
+                    error("kopanda-test: unhide failed")
+                end
+                tap_row(library, "Hidden folders")
+                assert.equals("library_hidden", Sheet.shown.spec.name)
+                tap("Sci-fi")
+                assert.is_true(logged_error("kopanda-test: unhide failed"))
+                assert.is_nil(Sheet.shown)
+                as_it_was(library, tiles)
+                harness.tick(2)
+                as_it_was(library, tiles)
+            end)
+        end)
     end)
 
     -- series-and-authors C9, C11 ("Failure behaviour"): as the library's, through the chrome.

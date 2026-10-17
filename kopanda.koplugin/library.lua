@@ -148,11 +148,26 @@ function Library:book_closed(file)
 end
 
 -- The page's covers, while this is the library shown. The check in flight goes on: a request that
--- starts a new batch replaces it, and its arrivals rebuild only the tiles the page shows.
+-- starts a new batch replaces it, and its arrivals rebuild only the tiles the page shows. After
+-- Library:refresh_covers, the folder's books in its place, so the re-list's paint makes the one
+-- request, whatever the order of the ticks.
 function Library:request_covers()
+    local records = self.covers_records
+    self.covers_records = nil
     LibraryCovers.request(self, function()
         return Library.shown == self
-    end)
+    end, records)
+end
+
+-- Refresh covers (context-menu D9): re-lists the folder at its page and, from the tick after that
+-- paint, asks for the covers of records (the folder's books with a file, their covers forgotten)
+-- in one request in place of the page's. A build that fails leaves the page and asks nothing.
+function Library:refresh_covers(records)
+    self.covers_records = records
+    self:go(self:view(), self.page)
+    if not self.covers_due then
+        self.covers_records = nil
+    end
 end
 
 -- The root check (context-menu D6): when KOReader's home folder is no longer the one the library

@@ -56,18 +56,21 @@ local function on_arrival(library, arrived, alive)
     end
 end
 
--- Asks for the library's page's covers at the cover box's size (BookCovers.request), each arrival
--- rebuilding its tiles while alive() says the library is the one shown. A failure is logged; the
--- tiles keep their placeholders.
-function LibraryCovers.request(library, alive)
+-- Asks for the covers of records (default: the library's page's books) at the cover box's size
+-- (BookCovers.request), each arrival rebuilding the tiles the page shows of them while alive() says
+-- the library is the one shown; an arrival off the page rebuilds none and stays in CoverBrowser's
+-- cache for a later page. A failure is logged; the tiles keep their placeholders.
+function LibraryCovers.request(library, alive, records)
     if not alive() then
         return
     end
     local ok, err = pcall(function()
-        local records = {}
-        for _, tile in ipairs(library.tiles) do
-            if tile.record then
-                records[#records + 1] = tile.record
+        if not records then
+            records = {}
+            for _, tile in ipairs(library.tiles) do
+                if tile.record then
+                    records[#records + 1] = tile.record
+                end
             end
         end
         if #records == 0 then

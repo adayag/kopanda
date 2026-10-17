@@ -8,6 +8,7 @@
 -- (frontend/pluginloader.lua:283-287), so a failed require means it is disabled.
 -- Module state: asked, the files extraction was asked for in this process; pending, the records of
 -- the request in flight whose covers have not arrived; check, the scheduled check or nil.
+local BookList = require("ui/widget/booklist")
 local Books = require("books")
 local UIManager = require("ui/uimanager")
 local logger = require("logger")
@@ -28,6 +29,11 @@ local function manager()
         return bim
     end
     return nil
+end
+
+-- Whether CoverBrowser is enabled: the test every read and request makes.
+function BookCovers.enabled()
+    return manager() ~= nil
 end
 
 -- getBookInfo(file, get_cover) (bookinfomanager.lua:325-404), or nil on a failure, logged.
@@ -150,8 +156,8 @@ end
 -- drops its check, forgets its files that hadn't arrived and asks again for those it repeats. The
 -- 30th check, the cap, forgets in the same way the files that had not arrived, which the extraction
 -- going on may not have reached, so a later request asks for them again; once the extraction has
--- ended, a file that did not arrive stays asked. The home's featured cover, the library and the
--- Series and Authors windows ask through here.
+-- ended, a file that did not arrive stays asked. The home's featured cover, the library (its page,
+-- or its folder after Refresh covers) and the Series and Authors windows ask through here.
 function BookCovers.request(records, specs, on_arrival, alive)
     local bim = manager()
     if not bim then
@@ -239,6 +245,37 @@ function BookCovers.request(records, specs, on_arrival, alive)
     end
     check = this_check
     UIManager:scheduleIn(1, this_check)
+end
+
+-- Forgets each of paths' cover (Refresh covers, context-menu D9), as CoverBrowser's own refresh
+-- pairs the two (plugins/coverbrowser.koplugin/main.lua:533-546, :596-606): its row deleted, which
+-- drops its ignore_cover and ignore_meta flags with it, and BookList's cached entry reset; then it
+-- is no longer asked, and no longer in the request in flight, so that check doesn't report the row
+-- a later request has to ask for again. A delete that raises is logged and its path left as it
+-- was. Without CoverBrowser, nothing.
+function BookCovers.forget(paths)
+    local bim = manager()
+    if not bim then
+        return
+    end
+    local forgotten = {}
+    for _, path in ipairs(paths) do
+        local ok, err = pcall(bim.deleteBookInfo, bim, path)
+        if ok then
+            BookList.resetBookInfoCache(path)
+            asked[path] = nil
+            forgotten[path] = true
+        else
+            logger.err("KoPanda: CoverBrowser could not delete the row of", path, ":", err)
+        end
+    end
+    local still = {}
+    for _, record in ipairs(pending) do
+        if not forgotten[record.path] then
+            still[#still + 1] = record
+        end
+    end
+    pending = still
 end
 
 -- Forgets the files asked for and drops the check, as in a new process. For specs.

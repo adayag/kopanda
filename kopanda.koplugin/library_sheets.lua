@@ -2,8 +2,11 @@
 -- (library_chrome.lua) hands it the window held on and what lies under the hold, the window's
 -- hit(x, y), and it opens that thing's sheet over the window. A book, on the library and on the
 -- one-series and one-author screens, opens the book sheet (D3, D13); a folder tile, on the
--- library alone, the folder sheet ("The folder sheet"); every other kind opens nothing.
+-- library alone, the folder sheet ("The folder sheet"); anywhere else on the library, the header
+-- and the pager included, the empty-space sheet (D10, D15); every other kind opens nothing.
+local BookCovers = require("book_covers")
 local BookSheet = require("book_sheet")
+local Books = require("books")
 local FeaturedCover = require("featured_cover")
 local Geom = require("ui/geometry")
 local Icons = require("icons")
@@ -69,7 +72,7 @@ local function guarded(what, fn)
     return function()
         local ok, err = pcall(fn)
         if not ok then
-            logger.err("KoPanda: the library's folder sheet could not " .. what .. ":", err)
+            logger.err("KoPanda: the library's sheet could not " .. what .. ":", err)
         end
     end
 end
@@ -119,6 +122,121 @@ function LibrarySheets.folder(window, folder, counts, opts)
     Sheet.show({ name = "library_folder", band = "library_folder", header = header, rows = rows }, ctx, opts)
 end
 
+-- The sub-folders of library's folder hidden from its grid (D1), in the grid's folder order.
+local function hidden_folders(library)
+    local folders = Books.folder(library:view()).folders
+    local shown = {}
+    for _, folder in ipairs(LibraryOrder.visible(folders)) do
+        shown[folder] = true
+    end
+    local hidden = {}
+    for _, folder in ipairs(folders) do
+        if not shown[folder] then
+            hidden[#hidden + 1] = folder
+        end
+    end
+    return LibraryOrder.view({ books = {}, folders = hidden }, nil, nil, nil, {})
+end
+
+-- Shows the hidden-folders sheet of library's folder (D1, D17), opts passed on to Sheet.show: on the
+-- empty-space sheet's band, "tap one to show it again" above the heading and the folder's name at
+-- the right, a flush row for each hidden sub-folder by name, whose tap unhides it and re-lists the
+-- library at its page.
+function LibrarySheets.hidden(library, opts)
+    local rows = {}
+    for i, folder in ipairs(hidden_folders(library)) do
+        rows[i] = {
+            label = folder.name,
+            run = guarded("show the folder again", function()
+                LibraryOrder.unhide(folder.path)
+                library:refresh()
+            end),
+        }
+    end
+    Sheet.show({
+        name = "library_hidden",
+        band = "library_empty",
+        header = { aside = "tap one to show it again", aside_above = true, heading = "Hidden folders",
+            label = library.header.text.title },
+        rows = rows,
+        flush = true,
+    }, library.ctx, opts)
+end
+
+-- The books directly in library's folder with a file, their records as Books.folder lists them.
+local function folder_files(library)
+    local records = {}
+    for _, record in ipairs(Books.folder(library:view()).books) do
+        if record.path then
+            records[#records + 1] = record
+        end
+    end
+    return records
+end
+
+-- Shows the empty-space sheet of library's folder (HoldEmptyC.dc.html, D10), opts passed on to
+-- Sheet.show (its beneath the library): "this folder" above the folder's name, as the library's
+-- header titles it, and the header's own count at the right; Sort and Show, the folder's choices
+-- as the header's pickers word them, opening the pickers' own sheets; Refresh covers (D9), greyed
+-- with CoverBrowser disabled; Hidden folders, only when a sub-folder of this one is hidden.
+function LibrarySheets.empty(library, opts)
+    local text = library.header.text
+    local rows = {
+        {
+            icon = "sort",
+            label = "Sort",
+            detail = text.sort .. " ›",
+            chip = "sort",
+            run = guarded("show the sort", function()
+                require("library_pickers").sort(library)
+            end),
+        },
+        {
+            icon = "filter",
+            label = "Show",
+            detail = text.status .. " ›",
+            chip = "show",
+            run = guarded("show the status", function()
+                require("library_pickers").status(library)
+            end),
+        },
+        {
+            icon = "refresh",
+            label = "Refresh covers",
+            sublabel = "Re-reads covers for this folder",
+        },
+    }
+    if BookCovers.enabled() then
+        rows[3].run = guarded("refresh the covers", function()
+            local records = folder_files(library)
+            local paths = {}
+            for i, record in ipairs(records) do
+                paths[i] = record.path
+            end
+            BookCovers.forget(paths)
+            library:refresh_covers(records)
+        end)
+    else
+        rows[3].muted = true
+    end
+    if #hidden_folders(library) > 0 then
+        rows[#rows + 1] = {
+            icon = "eye_off",
+            label = "Hidden folders",
+            detail = "›",
+            run = guarded("show the hidden folders", function()
+                LibrarySheets.hidden(library, { beneath = library })
+            end),
+        }
+    end
+    Sheet.show({
+        name = "library_empty",
+        band = "library_empty",
+        header = { aside = "this folder", aside_above = true, heading = text.title, label = text.count },
+        rows = rows,
+    }, library.ctx, opts)
+end
+
 -- The counts window's tile for folder was built with, or nil.
 local function tile_counts(window, folder)
     for _, tile in ipairs(window.tiles or {}) do
@@ -140,6 +258,9 @@ local SHEETS = {
 local LIBRARY_SHEETS = {
     folder = function(window, hit, opts)
         LibrarySheets.folder(window, hit.folder, tile_counts(window, hit.folder), opts)
+    end,
+    empty = function(window, _, opts)
+        LibrarySheets.empty(window, opts)
     end,
 }
 
