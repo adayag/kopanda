@@ -1,0 +1,13 @@
+id: EV-f6diqg
+type: approve.task
+at: 2026-10-17T07:51:40.856807Z
+contributor: allen
+command: approve task T-m5pho3
+targets:
+    - T-m5pho3
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/authors/task.yml
