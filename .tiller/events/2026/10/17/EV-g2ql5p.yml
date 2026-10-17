@@ -1,0 +1,13 @@
+id: EV-g2ql5p
+type: check.tweak
+at: 2026-10-17T07:42:36.548927Z
+contributor: allen
+command: check tweak TW-wghsy7
+targets:
+    - TW-wghsy7
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/sidecar-once-per-build/tweak.yml
