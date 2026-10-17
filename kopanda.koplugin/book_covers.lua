@@ -147,7 +147,11 @@ end
 -- (covermenu.lua:164-175). Each check calls on_arrival(records) once with the records whose cover
 -- arrived since the last, and stops at once when alive() is false. One request is in flight at a
 -- time: extractInBackground terminates the one before (bookinfomanager.lua:695), so a new request
--- drops its check, forgets its files that hadn't arrived and asks again for those it repeats.
+-- drops its check, forgets its files that hadn't arrived and asks again for those it repeats. The
+-- 30th check, the cap, forgets in the same way the files that had not arrived, which the extraction
+-- going on may not have reached, so a later request asks for them again; once the extraction has
+-- ended, a file that did not arrive stays asked. The home's featured cover, the library and the
+-- Series and Authors windows ask through here.
 function BookCovers.request(records, specs, on_arrival, alive)
     local bim = manager()
     if not bim then
@@ -206,7 +210,8 @@ function BookCovers.request(records, specs, on_arrival, alive)
                 end
                 return
             end
-            -- The last check: each file still pending read with its cover, its bitmap freed.
+            -- The last check: each file still pending read with its cover, its bitmap freed, and at
+            -- the cap one that did not arrive forgotten as asked.
             for _, record in ipairs(pending) do
                 local info = book_info(bim, record.path, true)
                 local usable = info ~= nil and is_usable(bim, info, specs)
@@ -215,6 +220,8 @@ function BookCovers.request(records, specs, on_arrival, alive)
                 end
                 if usable then
                     arrived[#arrived + 1] = record
+                elseif runs >= MAX_CHECKS then
+                    asked[record.path] = nil
                 end
             end
             pending = {}

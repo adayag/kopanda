@@ -7,12 +7,14 @@
 --   build(view, page), a LibraryChrome.build of view at page; view(), the view it shows;
 --   action_at(pos), the action a tap on its own parts runs, or nil; back(), the back control's tap;
 --   request_covers(), after a page's first paint; book_closed(file), when it is taken pending after
---   that book closed; closing(), its part of the close.
+--   that book closed; closing(), its part of the close. A window listing the whole library asks for
+--   its covers through LibraryChrome.request_records.
 -- Module state: LibraryChrome.shown, the window on screen or nil; LibraryChrome.pending, one built
 -- on a book's close and not yet shown, or nil. A window's class mirrors each in a slot of the same
 -- name (Library.shown, Library.pending) while the window held is one of its own.
 local BD = require("ui/bidi")
 local BookCovers = require("book_covers")
+local Books = require("books")
 local Device = require("device")
 local FeaturedCover = require("featured_cover")
 local Geom = require("ui/geometry")
@@ -98,22 +100,73 @@ end
 
 local tools = LibraryChrome.tools
 
+-- The detail header's back control under ctx: its outline and its height, the taller of its icon
+-- and its label inside its padding and outline (SeriesBooksC.dc.html:20-21, AuthorBooksA.dc.html:20-21).
+local function back_metrics(ctx)
+    local scale, _, line_height = tools(ctx)
+    local back = ctx.look.shelf.back
+    local outline = scale(back.outline_width)
+    return outline, math.max(scale(back.icon_size), line_height(ctx.look.type.shelf_back))
+        + 2 * (scale(back.padding.y) + outline)
+end
+
+-- The one-series and one-author header's height under ctx: the detail padding, the back control,
+-- the back gap, the count over the detail title at the header's line gap, and the edge.
+function LibraryChrome.detail_header_height(ctx)
+    local scale, _, line_height = tools(ctx)
+    local look = ctx.look
+    local detail, header = look.shelf.detail, look.library.header
+    local _, back_h = back_metrics(ctx)
+    return scale(detail.padding.top) + back_h + scale(detail.back_gap) + line_height(look.type.library_count)
+        + scale(header.line_gap) + line_height(look.type.shelf_detail_title) + scale(detail.padding.bottom)
+        + scale(header.edge_width)
+end
+
+-- The detail header's back control to text: the back icon and text in shelf_back inside shelf.back's
+-- padding and outline on its fill, a chip in Diner, a plain link in Editorial. Returns it and its label.
+local function back_control(ctx, text)
+    local scale, color = tools(ctx)
+    local look = ctx.look
+    local back, part = look.shelf.back, look.type.shelf_back
+    local outline, h = back_metrics(ctx)
+    local label = Typeset.line(part, text, Screen:getWidth(), ctx)
+    local icon = TintedIcon:new{ file = Icons.path("back"), size = scale(back.icon_size), color = color(part.color) }
+    local icon_x = outline + scale(back.padding.left)
+    local label_x = icon_x + icon.size + scale(back.gap)
+    local box = new_box(label_x + label:getSize().w + scale(back.padding.right) + outline, h, color(back.fill_color),
+        outline, color(look.library.header.picker_outline_color))
+    add(box, icon, icon_x, math.floor((h - icon.size) / 2))
+    add(box, label, label_x, math.floor((h - label:getSize().h) / 2))
+    return box, label
+end
+
 -- The header frame under ctx, w wide and spec.height tall (Main.dc.html:19-27, GridA.dc.html:19-27):
 -- the band in spec.band's colour; the right-hand slot, spec.right's widgets laid right to left
 -- from the side padding the picker gap apart; the left column, spec.aside over spec.title (each
 -- { part, text }) with the back mark before the title when spec.back; all resting on the padding's
--- bottom, then the edge. Returns the header and its parts: rect, aside, title, back (nil without
--- spec.back), back_place, title_place, title_rect (the back control, nil without spec.back) and
--- right (each widget's rect, in spec.right's order).
+-- bottom, then the edge. With spec.back_label, the detail header (SeriesBooksC.dc.html:19-30,
+-- AuthorBooksA.dc.html:19-28) in the detail padding, LibraryChrome.detail_header_height tall: the back
+-- control on its own row at the top, labelled spec.back_label. Returns the header and its parts:
+-- rect, aside, title, back (nil without spec.back), back_place, title_place, title_rect (the back
+-- control, nil without spec.back), back_rect and back_label (the detail back control and its label,
+-- nil without spec.back_label) and right (each widget's rect, in spec.right's order).
 function LibraryChrome.header(ctx, w, spec)
     local scale, color, line_height = tools(ctx)
     local tokens = ctx.look.library.header
+    local padding = spec.back_label and ctx.look.shelf.detail.padding or tokens.padding
     local h = spec.height
     local box = new_box(w, h, color(spec.band))
     local parts = { rect = Geom:new{ x = 0, y = 0, w = w, h = h }, right = {} }
-    local side, gap = scale(tokens.padding.side), scale(tokens.picker_gap)
+    local side, gap = scale(padding.side), scale(tokens.picker_gap)
     local edge = scale(tokens.edge_width)
-    local bottom = h - edge - scale(tokens.padding.bottom)
+    local bottom = h - edge - scale(padding.bottom)
+    if spec.back_label then
+        local control
+        control, parts.back_label = back_control(ctx, spec.back_label)
+        local size = control:getSize()
+        parts.back_rect = Geom:new{ x = side, y = scale(padding.top), w = size.w, h = size.h }
+        add(box, control, side, parts.back_rect.y)
+    end
     local x = w - side
     for i, widget in ipairs(spec.right) do
         local size = widget:getSize()
@@ -341,6 +394,60 @@ function Window:go(view, page)
     self.covers_due = true
 end
 
+-- An arrival of records for window (LibraryChrome.request_records), while alive.
+local function arrive(window, arrived, alive)
+    if not alive() then
+        return
+    end
+    local ok, err = pcall(function()
+        local fresh, drawn = {}, false
+        for _, record in ipairs(arrived) do
+            fresh[record.id] = Books.get(record.id) or record
+            drawn = drawn or window.drawn[record.id] or false
+        end
+        local records = {}
+        for i, record in ipairs(window.records) do
+            records[i] = fresh[record.id] or record
+        end
+        window.records = records
+        local keys = window:page_keys(window:view(), window.page)
+        if drawn or table.concat(keys, "\0") ~= table.concat(window.keys, "\0") then
+            rebuild(window, window:view(), window.page)
+        end
+    end)
+    if not ok then
+        logger.err("KoPanda: the " .. window.screen .. "'s cover arrival failed:", err)
+    end
+end
+
+-- Asks once per window, while it is the one shown, for the covers of every one of window.records at
+-- the library grid's cover box, the largest these windows and the library draw (series-and-authors
+-- D2, "Extraction"). An arrival re-reads each arrived record (Books.get) in window.records, then
+-- rebuilds the view in place, and so repaints, only when the page shown changes: when
+-- window:page_keys(view, page), the keys of its items in order under window.records now, differ from
+-- window.keys, the build's, or the page draws an arrived record (a key of window.drawn). A failure is
+-- logged with the page as it was.
+function LibraryChrome.request_records(window)
+    if window.records_asked or LibraryChrome.shown ~= window then
+        return
+    end
+    window.records_asked = true
+    local function alive()
+        return LibraryChrome.shown == window
+    end
+    local ok, err = pcall(function()
+        local box = LibraryTiles.geometry(window.dimen.w, window.ctx)
+        BookCovers.request(window.records, { max_cover_w = box.cover_w, max_cover_h = box.cover_h },
+            function(arrived)
+                arrive(window, arrived, alive)
+            end,
+            alive)
+    end)
+    if not ok then
+        logger.err("KoPanda: the " .. window.screen .. "'s cover request failed:", err)
+    end
+end
+
 -- The page delta pages on, unless that is past the first or the last (no wrap).
 function Window:turn(delta)
     local page = self.page + delta
@@ -357,7 +464,8 @@ local function action_at(window, pos)
         return own
     end
     local top, foot = window.header, window.pager
-    if top.title_rect and LibraryChrome.inside(top.title_rect, pos) then
+    local back = top.back_rect or top.title_rect
+    if back and LibraryChrome.inside(back, pos) then
         return function()
             window:back()
         end

@@ -1094,13 +1094,18 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `true` (`:744`), or `false` when the fork fails (`:724`). One subprocess walks the batch's
   files in order, extracting each (`:702-711`). Asked only from `BookCovers.request`, at most once
   per file per process unless a later request replaced the one that asked for it (its
-  extraction terminated, `:695`), with every wanted file of the batch in one call; the featured
-  cover asks through `FeaturedCover.after_show`, never from `build` or `paintTo`.
+  extraction terminated, `:695`) or the check gave up on it at its cap (below), with every wanted
+  file of the batch in one call; the featured cover asks through `FeaturedCover.after_show`, the
+  library for its page (`library_covers.lua`), and the Series and Authors windows, once per show,
+  for every book of the library at the library grid's cover box (`LibraryChrome.request_records`,
+  `library_chrome.lua`), each from the next tick after a paint, never from `build` or `paintTo`.
 - `isExtractingInBackground()` (`:685-687`), the only completion signal, counts CoverBrowser's own
   jobs too. CoverBrowser polls it once a second (`plugins/coverbrowser.koplugin/covermenu.lua:164-175`);
   `book_covers.lua` does the same through `UIManager:scheduleIn` (`frontend/ui/uimanager.lua:413`)
-  for at most 30 checks, and `BookCovers.cancel` (through `FeaturedCover.cancel`) drops it with
-  `UIManager:unschedule` (`:518`).
+  for at most 30 checks, and `BookCovers.cancel` (through `FeaturedCover.cancel`, and a library
+  window's close) drops it with `UIManager:unschedule` (`:518`). The cap: on a large library the
+  extraction outlives the 30 checks, so the 30th forgets the files that had not arrived, and a later
+  request, which terminates that extraction, asks for them again.
 - It turns false only when CoverBrowser's collector reaps the extraction's pid, every
   `subprocesses_collect_interval` = 10 s (`bookinfomanager.lua:139`; `collectSubprocesses`
   `:627-650`, first scheduled by `extractInBackground` at `:735-742`), so a cover written at 2 s

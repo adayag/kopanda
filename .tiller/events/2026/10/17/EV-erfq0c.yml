@@ -1,0 +1,15 @@
+id: EV-erfq0c
+type: start.task
+at: 2026-10-17T13:05:26.628713Z
+contributor: allen
+command: start task T-y7g8mr
+targets:
+    - T-y7g8mr
+before:
+    status: ready
+after:
+    branch: tiller/library/series-and-authors/series
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/series/task.yml

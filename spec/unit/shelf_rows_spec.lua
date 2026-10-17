@@ -652,6 +652,19 @@ describe("shelf rows", function()
             end)
         end)
 
+        -- The fit measures the one-series and one-author header by the boards' sum above; the chrome
+        -- draws it at that height.
+        it("measures the header the chrome draws for one series or one author", function()
+            local LibraryChrome = package.loaded["library_chrome"]
+            each_profile(function(where)
+                for _, id in ipairs(IDS) do
+                    local ctx = ctx_for(id)
+                    assert.equals(detail_header_height(ctx), LibraryChrome.detail_header_height(ctx),
+                        id .. " at " .. where)
+                end
+            end)
+        end)
+
         -- The boards' counts per page at the Colorsoft: five series rows (SeriesC), three book rows
         -- (SeriesBooksC), seven author rows in five groups (AuthorsC), each group's cost counted whole.
         it("holds the boards' rows per page at the Colorsoft", function()
