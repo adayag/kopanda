@@ -1,0 +1,14 @@
+id: EV-v8wnqa
+type: submit.tweak
+at: 2026-10-17T05:27:13.999221Z
+contributor: allen
+command: submit tweak TW-f9nvsm
+targets:
+    - TW-f9nvsm
+before:
+    status: check
+after:
+    pr: 32
+    status: in_review
+files:
+    - path: .tiller/tweaks/flaky-layout-editor-fit-after-done/tweak.yml

@@ -5,12 +5,12 @@
 local Dispatcher = require("dispatcher")
 local Home = require("home")
 local InfoMessage = require("ui/widget/infomessage")
+local PaintClock = require("paint_clock")
 local SettingsMenu = require("settings_menu")
 local UIManager = require("ui/uimanager")
 local T = require("ffi/util").template
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
-local time = require("ui/time")
 
 local LauncherEntries = {}
 
@@ -140,7 +140,7 @@ local KOPANDA_RUN = {
     quick_settings = function()
         -- The tap's start, which the sheet's paint_ms runs from. quick_settings requires this
         -- module, so it is required here, at call time.
-        local started = time.monotonic()
+        local started = PaintClock.now()
         require("quick_settings").open{ started = started }
     end,
 }
@@ -171,7 +171,7 @@ function LauncherEntries.run(entry, ctx)
     if kind == "folder" then
         -- The tap's start, which the sheet's paint_ms runs from. folder_sheet requires this
         -- module, so it is required here, at call time.
-        local started = time.monotonic()
+        local started = PaintClock.now()
         require("folder_sheet").open(entry, ctx, { started = started })
         return
     end

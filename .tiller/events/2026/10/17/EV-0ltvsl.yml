@@ -1,0 +1,11 @@
+id: EV-0ltvsl
+type: claim.tweak
+at: 2026-10-17T05:02:16.376616Z
+contributor: allen
+command: claim tweak tweaks/flaky-night-golden-paint-budget
+targets:
+    - TW-8wduca
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/flaky-night-golden-paint-budget/tweak.yml

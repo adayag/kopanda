@@ -88,7 +88,7 @@ describe("the pull's probation and notices", function()
             Home.close()
             local calls = {}
             Home.show{
-                started = time.monotonic(),
+                started = { wall = time.monotonic(), cpu = os.clock() },
                 finished = function(...)
                     calls[#calls + 1] = { n = select("#", ...), ... }
                 end,
@@ -124,7 +124,7 @@ describe("the pull's probation and notices", function()
                 Home.close()
                 local calls = {}
                 Home.show{
-                    started = time.monotonic(),
+                    started = { wall = time.monotonic(), cpu = os.clock() },
                     finished = function(...)
                         calls[#calls + 1] = { n = select("#", ...), ... }
                     end,
@@ -158,7 +158,7 @@ describe("the pull's probation and notices", function()
                 harness.tick(2)
                 Home.close()
                 Home.show{
-                    started = time.monotonic(),
+                    started = { wall = time.monotonic(), cpu = os.clock() },
                     finished = function()
                         error("kopanda-test: finished failed")
                     end,
@@ -190,7 +190,7 @@ describe("the pull's probation and notices", function()
             end
             local calls = {}
             Home.show{
-                started = time.monotonic(),
+                started = { wall = time.monotonic(), cpu = os.clock() },
                 finished = function(...)
                     calls[#calls + 1] = { n = select("#", ...), ... }
                 end,
@@ -205,7 +205,7 @@ describe("the pull's probation and notices", function()
             Home.close()
             local calls = {}
             Home.show{
-                started = time.monotonic(),
+                started = { wall = time.monotonic(), cpu = os.clock() },
                 finished = function(...)
                     calls[#calls + 1] = { n = select("#", ...), ... }
                 end,

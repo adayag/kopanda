@@ -291,7 +291,7 @@ describe("the quick-settings sheet", function()
                 UIManager.event_hook:unregister("KoPandaSettled", listener)
             end
             local home = Home.shown
-            QuickSettings.open{ started = time.monotonic() }
+            QuickSettings.open{ started = { wall = time.monotonic(), cpu = os.clock() } }
             harness.tick(3)
             local sheet = Sheet.shown
             assert.equals("quick_settings", sheet.spec.name)

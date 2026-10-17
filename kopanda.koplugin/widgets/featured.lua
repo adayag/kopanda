@@ -15,6 +15,7 @@ local Layout = require("layout")
 local Looks = require("looks")
 local Math = require("optmath")
 local Paint = require("paint")
+local PaintClock = require("paint_clock")
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local Typeset = require("typeset")
 local VerticalGroup = require("ui/widget/verticalgroup")
@@ -22,7 +23,6 @@ local VerticalSpan = require("ui/widget/verticalspan")
 local Widget = require("ui/widget/widget")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local lfs = require("libs/libkoreader-lfs")
-local time = require("ui/time")
 
 local Featured = {
     id = "featured",
@@ -480,7 +480,7 @@ end
 -- on the first run, so the home's sheet opens. book_sheet requires this module, so it is
 -- required here, at call time.
 function Featured.hold(ctx, _, built)
-    local started = time.monotonic()
+    local started = PaintClock.now()
     if not (built and built.book) then
         return false
     end

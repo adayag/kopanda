@@ -415,6 +415,45 @@ describe("the file browser's nav bar", function()
             assert.equals(1, #signals)
         end)
 
+        -- A reinit lays out a new frame: its band's height, read once the layout has begun, takes
+        -- 2 ms of CPU, the wait for the repaint 500 ms and the file browser's paint 4 ms.
+        it("counts cpu_ms on the CPU clock over the layout and the paint, not the time between", function()
+            local fm = fm_on_top()
+            harness.tick(2)
+            assert.equals(1, #signals)
+            local setup, height = FileManager.setupLayout, NavBar.height
+            restores[#restores + 1] = function()
+                FileManager.setupLayout, NavBar.height = setup, height
+            end
+            harness.with_cpu_clock(1, function(cpu)
+                local laying_out, counted = false, false
+                FileManager.setupLayout = function(...)
+                    laying_out = true
+                    setup(...)
+                    laying_out = false
+                end
+                NavBar.height = function(...)
+                    if laying_out and not counted then
+                        counted = true
+                        cpu.now = cpu.now + 0.002
+                    end
+                    return height(...)
+                end
+                fm:reinit()
+                assert.is_true(counted)
+                cpu.now = cpu.now + 0.5
+                local fm_ui = fm[1].fm_ui
+                local fm_ui_paint = fm_ui.paintTo
+                fm_ui.paintTo = function(...)
+                    cpu.now = cpu.now + 0.004
+                    return fm_ui_paint(...)
+                end
+                harness.tick(3)
+            end)
+            assert.equals(2, #signals)
+            assert.equals(6, signals[2].cpu_ms)
+        end)
+
         -- The frame painted first is replaced before its signal's tick, so only the frame that
         -- replaced it, painted next, sends one.
         it("goes out once when a reinit replaces the frame before its paint settles", function()

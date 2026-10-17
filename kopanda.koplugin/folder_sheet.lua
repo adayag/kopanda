@@ -5,9 +5,9 @@
 -- launcher management (FolderOpen.dc.html:35-40). Folders don't nest, so a folder sheet never
 -- opens another. Nothing here writes a setting.
 local LauncherEntries = require("launcher_entries")
+local PaintClock = require("paint_clock")
 local Settings = require("settings")
 local Sheet = require("sheet")
-local time = require("ui/time")
 local util = require("util")
 
 local FolderSheet = {}
@@ -57,7 +57,7 @@ function FolderSheet.open(entry, ctx, opts)
         -- launcher_manage is required here, not at load, so loading the sheet doesn't load the
         -- editor and picker chain.
         hold = function()
-            local started = time.monotonic()
+            local started = PaintClock.now()
             require("launcher_manage").open{ folder = index_of(entry), started = started }
         end,
     }, ctx, opts)

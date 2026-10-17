@@ -441,8 +441,9 @@ describe("the nav bar", function()
                     local after = time.monotonic()
                     assert.equals(1, #opens, id .. " " .. where)
                     local started = opens[1][1].started
-                    assert.is_number(started, id .. " " .. where)
-                    assert.is_true(started >= before and started <= after, id .. " " .. where)
+                    assert.is_number(started.wall, id .. " " .. where)
+                    assert.is_number(started.cpu, id .. " " .. where)
+                    assert.is_true(started.wall >= before and started.wall <= after, id .. " " .. where)
                     assert.same({}, runs, id .. " " .. where)
                     bar:free()
                 end

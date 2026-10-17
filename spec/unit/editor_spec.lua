@@ -572,7 +572,7 @@ describe("the editor frame", function()
         end)
 
         it("follows the first paint once, with the screen and paint_ms from opts.started", function()
-            Editor.show(screen_spec(), { started = time.monotonic() - time.ms(200) })
+            Editor.show(screen_spec(), { started = { wall = time.monotonic() - time.ms(200), cpu = os.clock() } })
             harness.tick(3)
             assert.equals(1, #signals)
             assert.equals("edit_layout", signals[1].screen)
@@ -590,6 +590,39 @@ describe("the editor frame", function()
             assert.equals(1, #signals)
             assert.equals("launcher", signals[1].screen)
             assert.truthy(signals[1].paint_ms < 200, signals[1].paint_ms)
+        end)
+
+        -- The editor, its paint moving the CPU clock on by 300 ms once the paint is done, so a
+        -- cpu_ms that ran on to the signal would show it.
+        local function late_after_paint(editor, cpu)
+            editor.paintTo = function(self, ...)
+                Editor.paintTo(self, ...)
+                cpu.now = cpu.now + 0.3
+            end
+        end
+
+        it("counts cpu_ms on the CPU clock from opts.started to the first paint", function()
+            harness.with_cpu_clock(10, function(cpu)
+                local started = { wall = time.monotonic(), cpu = os.clock() }
+                cpu.now = 10.2
+                local editor = Editor.show(screen_spec(), { started = started })
+                cpu.now = 10.25
+                late_after_paint(editor, cpu)
+                harness.tick(3)
+            end)
+            assert.equals(1, #signals)
+            assert.equals(250, signals[1].cpu_ms)
+        end)
+
+        it("counts cpu_ms from the show without opts.started", function()
+            harness.with_cpu_clock(5, function(cpu)
+                local editor = Editor.show(screen_spec())
+                cpu.now = 5.009
+                late_after_paint(editor, cpu)
+                harness.tick(3)
+            end)
+            assert.equals(1, #signals)
+            assert.equals(9, signals[1].cpu_ms)
         end)
 
         it("is not sent when the paint fails", function()

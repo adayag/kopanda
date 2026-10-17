@@ -8,14 +8,11 @@ describe("the file-browser goldens", function()
     require("commonrequire")
     local driver = require("emulator.driver")
     local golden = require("emulator.golden")
+    local paint_budget = require("emulator.paint_budget")
     local root = os.getenv("KOPANDA_ROOT")
     local plugin = root .. "/kopanda.koplugin"
     local fixture = root .. "/spec/emulator/scenarios/2-scenario-home-fixture.lua"
     local scenario = root .. "/spec/emulator/scenarios/2-scenario-file-browser.lua"
-    -- The file browser's paint budget: the wrapped setupLayout and its first paint on top within
-    -- this many ms, in the emulator on this Mac, the home's tripwire (home_capture_spec.lua). A
-    -- regression tripwire, not a device figure.
-    local PAINT_BUDGET_MS = 250
     -- About 42 px at 1264×1680, against compare's default of about 1,060. Clean captures differ
     -- from these goldens by 0 px; the file list's progress text at 63 % differs by 114 px or more
     -- on every golden, which the default let through (as on the home goldens, TW-i9qml9).
@@ -60,12 +57,7 @@ describe("the file-browser goldens", function()
             local sidecar = result.sidecar
             assert.is_nil(sidecar.error, sidecar.error)
             assert.equals("file_browser", sidecar.screen)
-            assert.is_number(sidecar.paint_ms)
-            assert.truthy(sidecar.paint_ms > 0)
-            assert.truthy(sidecar.paint_ms <= PAINT_BUDGET_MS,
-                string.format("paint_ms %s over the %d ms budget", tostring(sidecar.paint_ms), PAINT_BUDGET_MS))
-            print(string.format("%s paint on %s: paint_ms=%s", scenario_opts.name, scenario_opts.profile,
-                tostring(sidecar.paint_ms)))
+            paint_budget.check(scenario_opts.name .. " paint on " .. scenario_opts.profile, sidecar)
             local log = read(result.log)
             assert.equals(1, count(log, "KOPANDA_SHOT: saved"))
             assert.equals(0, count(log, "settle cap"))

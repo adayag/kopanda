@@ -1,0 +1,14 @@
+id: EV-ywttan
+type: sync.tweak
+at: 2026-10-17T06:44:36.493741Z
+contributor: allen
+command: sync tweak TW-8wduca
+targets:
+    - TW-8wduca
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/flaky-night-golden-paint-budget/tweak.yml

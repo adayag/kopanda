@@ -358,8 +358,9 @@ describe("LauncherEntries", function()
             local after = time.monotonic()
             assert.spy(show).was.called(1)
             local opts = show.calls[1].vals[3]
-            assert.is_number(opts.started)
-            assert.truthy(before <= opts.started and opts.started <= after)
+            assert.is_number(opts.started.wall)
+            assert.is_number(opts.started.cpu)
+            assert.truthy(before <= opts.started.wall and opts.started.wall <= after)
             local sheet = Sheet.shown
             assert.equals("quick_settings", sheet.spec.name)
             assert.equals(sheet, harness.top())

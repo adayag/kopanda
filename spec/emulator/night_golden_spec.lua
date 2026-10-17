@@ -14,6 +14,7 @@ describe("the night goldens", function()
     local rapidjson = require("rapidjson")
     local driver = require("emulator.driver")
     local golden = require("emulator.golden")
+    local paint_budget = require("emulator.paint_budget")
     local compare = require("emulator.compare")
     local root = os.getenv("KOPANDA_ROOT")
     local plugin = root .. "/kopanda.koplugin"
@@ -27,8 +28,6 @@ describe("the night goldens", function()
         { name = "diner", look = "", paper = { 0x1e, 0x1c, 0x1a } },
         { name = "editorial", look = "editorial", paper = { 0x15, 0x16, 0x1a } },
     }
-    -- The home-layout tripwire, in the emulator on this Mac.
-    local PAINT_BUDGET_MS = 250
 
     local function night_capture(profile, look, extra)
         local opts = {
@@ -92,10 +91,7 @@ describe("the night goldens", function()
                     string.format("paper corner %02x%02x%02x, want %02x%02x%02x",
                         corner[1], corner[2], corner[3], look.paper[1], look.paper[2], look.paper[3]))
             end
-            local paint_ms = result.sidecar.paint_ms
-            print(string.format("%s colorsoft paint_ms=%s", name, tostring(paint_ms)))
-            assert.is_number(paint_ms)
-            assert.truthy(paint_ms <= PAINT_BUDGET_MS, "paint_ms " .. tostring(paint_ms))
+            paint_budget.check(name .. " colorsoft", result.sidecar)
             local checked = golden.assert_golden(name, "colorsoft", result)
             if os.getenv("KOPANDA_UPDATE_GOLDENS") ~= "1" then
                 assert.is_true(checked.ok)

@@ -426,7 +426,8 @@ local function header()
 end
 
 -- Shows the sheet over whatever is on top, the home or the bare file browser: it needs no home.
--- opts.started, the time.monotonic() the opener took, is passed to Sheet.show for paint_ms.
+-- opts.started, the PaintClock stamp the opener took, is passed to Sheet.show for paint_ms and
+-- cpu_ms.
 function QuickSettings.open(opts)
     local ctx = {
         look = Looks.active(),

@@ -697,7 +697,8 @@ describe("the sheet", function()
         end)
 
         it("counts paint_ms from opts.started, and from the show without it", function()
-            Sheet.show(three_rows(), ctx_for("diner"), { started = time.monotonic() - time.ms(200) })
+            Sheet.show(three_rows(), ctx_for("diner"),
+                { started = { wall = time.monotonic() - time.ms(200), cpu = os.clock() } })
             harness.tick(3)
             assert.equals(1, #signals)
             assert.truthy(signals[1].paint_ms >= 200, signals[1].paint_ms)
@@ -705,6 +706,39 @@ describe("the sheet", function()
             harness.tick(3)
             assert.equals(2, #signals)
             assert.truthy(signals[2].paint_ms < 200, signals[2].paint_ms)
+        end)
+
+        -- The sheet shown, its paint moving the CPU clock on by 300 ms once the paint is done, so
+        -- a cpu_ms that ran on to the signal would show it.
+        local function late_after_paint(cpu)
+            Sheet.shown.paintTo = function(self, ...)
+                Sheet.paintTo(self, ...)
+                cpu.now = cpu.now + 0.3
+            end
+        end
+
+        it("counts cpu_ms on the CPU clock from opts.started to the first paint", function()
+            harness.with_cpu_clock(10, function(cpu)
+                local started = { wall = time.monotonic(), cpu = os.clock() }
+                cpu.now = 10.2
+                Sheet.show(three_rows(), ctx_for("diner"), { started = started })
+                cpu.now = 10.25
+                late_after_paint(cpu)
+                harness.tick(3)
+            end)
+            assert.equals(1, #signals)
+            assert.equals(250, signals[1].cpu_ms)
+        end)
+
+        it("counts cpu_ms from the show without opts.started", function()
+            harness.with_cpu_clock(5, function(cpu)
+                Sheet.show(three_rows(), ctx_for("diner"))
+                cpu.now = 5.009
+                late_after_paint(cpu)
+                harness.tick(3)
+            end)
+            assert.equals(1, #signals)
+            assert.equals(9, signals[1].cpu_ms)
         end)
     end)
 

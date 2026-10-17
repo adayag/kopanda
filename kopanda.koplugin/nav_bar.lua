@@ -14,11 +14,11 @@ local InputContainer = require("ui/widget/container/inputcontainer")
 local Layout = require("layout")
 local Looks = require("looks")
 local Paint = require("paint")
+local PaintClock = require("paint_clock")
 local Screen = require("device").screen
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
 local logger = require("logger")
-local time = require("ui/time")
 
 local NavBar = {}
 
@@ -201,7 +201,7 @@ end
 -- and goes no further, so the screen under the bar stays as it was.
 local function open_quick_settings()
     local ok, err = pcall(function()
-        require("quick_settings").open{ started = time.monotonic() }
+        require("quick_settings").open{ started = PaintClock.now() }
     end)
     if not ok then
         logger.err("KoPanda: the nav bar's Settings hold failed:", err)

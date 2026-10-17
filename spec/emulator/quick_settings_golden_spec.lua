@@ -8,13 +8,11 @@ describe("the quick-settings goldens", function()
     require("commonrequire")
     local driver = require("emulator.driver")
     local golden = require("emulator.golden")
+    local paint_budget = require("emulator.paint_budget")
     local root = os.getenv("KOPANDA_ROOT")
     local plugin = root .. "/kopanda.koplugin"
     local fixture = root .. "/spec/emulator/scenarios/2-scenario-home-fixture.lua"
     local scenario = root .. "/spec/emulator/scenarios/2-scenario-quick-settings.lua"
-    -- The sheets' paint budget (sheet_golden_spec.lua): a sheet paints within this many ms of its
-    -- open, in the emulator on this Mac. A regression tripwire, not a device figure.
-    local PAINT_BUDGET_MS = 250
     -- About 42 px at 1264×1680, against compare's default of about 1,060, which let the battery
     -- at 83 % and a hyphen for the slider's minus sign through. Clean captures differ from these
     -- goldens by 0 px.
@@ -57,11 +55,7 @@ describe("the quick-settings goldens", function()
             assert.is_nil(sidecar.error, sidecar.error)
             assert.equals("sheet", sidecar.screen)
             assert.equals("quick_settings", sidecar.name)
-            assert.is_number(sidecar.paint_ms)
-            assert.truthy(sidecar.paint_ms > 0)
-            assert.truthy(sidecar.paint_ms <= PAINT_BUDGET_MS,
-                string.format("paint_ms %s over the %d ms budget", tostring(sidecar.paint_ms), PAINT_BUDGET_MS))
-            print(string.format("%s paint on colorsoft: paint_ms=%s", scenario_opts.name, tostring(sidecar.paint_ms)))
+            paint_budget.check(scenario_opts.name .. " paint on colorsoft", sidecar)
             local log = read(result.log)
             assert.equals(1, count(log, "KOPANDA_SHOT: saved"))
             assert.equals(0, count(log, "settle cap"))

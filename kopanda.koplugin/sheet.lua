@@ -20,10 +20,10 @@ local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local Looks = require("looks")
+local PaintClock = require("paint_clock")
 local SheetLayout = require("sheet_layout")
 local UIManager = require("ui/uimanager")
 local logger = require("logger")
-local time = require("ui/time")
 
 local Sheet = InputContainer:extend{
     name = "kopanda_sheet",
@@ -167,10 +167,12 @@ local function settle(sheet)
     end
     sheet.settled = true
     local ok, err = pcall(function()
+        local paint_ms, cpu_ms = PaintClock.ms(PaintClock.since(sheet.started, sheet.painted_at))
         UIManager.event_hook:execute("KoPandaSettled", {
             screen = "sheet",
             name = sheet.spec.name,
-            paint_ms = time.to_ms(sheet.painted_at - sheet.started),
+            paint_ms = paint_ms,
+            cpu_ms = cpu_ms,
         })
     end)
     if not ok then
@@ -179,10 +181,10 @@ local function settle(sheet)
 end
 
 -- Shows the sheet of spec under ctx (the home's), closing the one shown. opts.started is the
--- time.monotonic() its opener took on the hold or tap, which paint_ms runs from; without it, the
--- start of the show. A failure is logged, takes the sheet off the stack and closes the home.
+-- PaintClock stamp its opener took on the hold or tap, which paint_ms and cpu_ms run from;
+-- without it, the start of the show. A failure is logged, takes the sheet off the stack and closes the home.
 function Sheet.show(spec, ctx, opts)
-    local started = opts and opts.started or time.monotonic()
+    local started = opts and opts.started or PaintClock.now()
     local sheet
     local ok, err = pcall(function()
         Sheet.close()
@@ -242,7 +244,7 @@ end
 function Sheet:paintTo(bb, x, y)
     local ok, err = pcall(paint, self, bb, x, y)
     if ok and not self.painted_at then
-        self.painted_at = time.monotonic()
+        self.painted_at = PaintClock.now()
         UIManager:nextTick(function()
             settle(self)
         end)

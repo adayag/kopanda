@@ -40,7 +40,7 @@ local ok, err = pcall(function()
                 error("isConnected reads true under the Wi-Fi stub; a weather fetch could run")
             end
             logger.info("KOPANDA_SCENARIO: open quick settings")
-            QuickSettings.open{ started = time.monotonic() }
+            QuickSettings.open{ started = { wall = time.monotonic(), cpu = os.clock() } }
         end)
         if not run_ok then
             report_error(tostring(run_err))
