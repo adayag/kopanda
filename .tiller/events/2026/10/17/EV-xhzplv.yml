@@ -1,0 +1,14 @@
+id: EV-xhzplv
+type: sync.task
+at: 2026-10-17T20:38:49.47328Z
+contributor: allen
+command: sync task T-512xrc
+targets:
+    - T-512xrc
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/goldens/task.yml

@@ -1,0 +1,14 @@
+id: EV-ld7h3v
+type: sync.task
+at: 2026-10-17T20:38:49.002234Z
+contributor: allen
+command: sync task T-m9850d
+targets:
+    - T-m9850d
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/icons/task.yml

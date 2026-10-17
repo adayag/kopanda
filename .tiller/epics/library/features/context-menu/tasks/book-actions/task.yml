@@ -1,7 +1,7 @@
 id: T-lnzmw0
 key: library/context-menu/book-actions
 title: Add to the home and Delete on the library's book sheet
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -26,6 +26,7 @@ review_ref:
         kind: git_commit
         value: git:9e36f28
         observed_at: 2026-10-17T17:56:59.080949Z
+done_basis: ancestry
 gates:
     build:
         required: true

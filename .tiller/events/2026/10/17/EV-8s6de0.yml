@@ -1,0 +1,14 @@
+id: EV-8s6de0
+type: sync.task
+at: 2026-10-17T20:38:49.180369Z
+contributor: allen
+command: sync task T-lnzmw0
+targets:
+    - T-lnzmw0
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/book-actions/task.yml

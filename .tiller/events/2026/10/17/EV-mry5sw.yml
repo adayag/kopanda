@@ -1,0 +1,14 @@
+id: EV-mry5sw
+type: sync.epic
+at: 2026-10-17T20:38:49.651452Z
+contributor: allen
+command: sync epic E-cnq4d0
+targets:
+    - E-cnq4d0
+before:
+    status: ready
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/library/epic.yml

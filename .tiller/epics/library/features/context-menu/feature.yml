@@ -1,7 +1,7 @@
 id: F-l0kw8m
 key: library/context-menu
 title: Hold on a book, a folder or empty space
-status: active
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -34,6 +34,23 @@ accepted_against:
         kind: git_commit
         value: git:febf828
         observed_at: 2026-10-17T16:43:29.306228Z
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:c3f7d6e6e5ac48937a018af4bf0db41f55566d1d
+        path: .tiller/epics/library/features/context-menu/feature.md
+        observed_at: 2026-10-17T20:38:49.521907Z
+    eval:
+        kind: git_blob
+        value: git:e6bfd7b8ddabfe1d8ef2bf606fe048d9ce2b25a7
+        path: .tiller/epics/library/features/context-menu/feature.eval.md
+        observed_at: 2026-10-17T20:38:49.521907Z
+    commit:
+        kind: git_commit
+        value: git:d3c51d4
+        observed_at: 2026-10-17T20:38:48.915783Z
+    surfaces: []
+done_basis: rollup
 gates:
     build:
         required: true

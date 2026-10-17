@@ -1,0 +1,14 @@
+id: EV-suys03
+type: sync.task
+at: 2026-10-17T20:38:49.371912Z
+contributor: allen
+command: sync task T-ivn2lk
+targets:
+    - T-ivn2lk
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/space-sheet/task.yml

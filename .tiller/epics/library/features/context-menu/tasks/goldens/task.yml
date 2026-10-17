@@ -1,7 +1,7 @@
 id: T-512xrc
 key: library/context-menu/goldens
 title: Hold-sheet goldens on the Colorsoft, the paint budget and the device check
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -26,6 +26,7 @@ review_ref:
         kind: git_commit
         value: git:4095da0
         observed_at: 2026-10-17T19:31:16.893172Z
+done_basis: ancestry
 gates:
     build:
         required: true

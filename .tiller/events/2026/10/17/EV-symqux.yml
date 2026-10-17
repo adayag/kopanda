@@ -1,0 +1,14 @@
+id: EV-symqux
+type: sync.feature
+at: 2026-10-17T20:38:49.576269Z
+contributor: allen
+command: sync feature F-l0kw8m
+targets:
+    - F-l0kw8m
+before:
+    status: active
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/library/features/context-menu/feature.yml
