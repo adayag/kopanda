@@ -4,7 +4,6 @@
 -- restored where it is made.
 describe("the sheet", function()
     local harness = require("plugin_harness")
-    local Blitbuffer = require("ffi/blitbuffer")
     local Device = require("device")
     local Event = require("ui/event")
     local Geom = require("ui/geometry")
@@ -15,158 +14,14 @@ describe("the sheet", function()
     local Screen = Device.screen
     local Home, Looks, Sheet
 
-    local function send(ges)
-        UIManager:sendEvent(Event:new("Gesture", ges))
-    end
-
-    local function centre(rect)
-        return rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2)
-    end
-
-    -- { r, g, b } of a #rrggbb; the grey KOReader draws a TextWidget in for it
-    -- (frontend/ui/widget/textwidget.lua:369); and the per-channel inverse of that grey.
-    local function rgb(hex)
-        local r, g, b = hex:match("^#(%x%x)(%x%x)(%x%x)$")
-        return { tonumber(r, 16), tonumber(g, 16), tonumber(b, 16) }
-    end
-
-    local function grey(hex)
-        local v = Blitbuffer.colorFromString(hex):getColor8().a
-        return { v, v, v }
-    end
-
-    local function inverse_grey(hex)
-        local v = 255 - Blitbuffer.colorFromString(hex):getColor8().a
-        return { v, v, v }
-    end
-
-    local function near(a, b, tolerance)
-        return math.abs(a[1] - b[1]) <= tolerance and math.abs(a[2] - b[2]) <= tolerance
-            and math.abs(a[3] - b[3]) <= tolerance
-    end
-
-    local function pixel(bb, x, y)
-        local c = bb:getPixel(x, y):getColorRGB32()
-        return { c:getR(), c:getG(), c:getB() }
-    end
-
-    -- Every pixel of rect in bb, passed to f.
-    local function each_pixel(bb, rect, f)
-        for y = rect.y, rect.y + rect.h - 1 do
-            for x = rect.x, rect.x + rect.w - 1 do
-                f(pixel(bb, x, y))
-            end
-        end
-    end
-
-    -- A white w by h RGB32 buffer, its inverse flag set when night.
-    local function buffer(w, h, night)
-        local bb = Blitbuffer.new(w, h, Blitbuffer.TYPE_BBRGB32)
-        bb:fill(Blitbuffer.COLOR_WHITE)
-        if night then
-            bb:invert()
-        end
-        return bb
-    end
-
-    -- The Colorsoft's screen, 1264 by 1680, scaled as KOReader scales it by its size
-    -- (base/ffi/framebuffer.lua:414).
-    local colorsoft = setmetatable({
-        getWidth = function() return 1264 end,
-        getHeight = function() return 1680 end,
-        getSize = function() return Geom:new{ x = 0, y = 0, w = 1264, h = 1680 } end,
-    }, { __index = Screen })
-
-    -- The shown home's ctx in look id, on screen (default: the device's).
-    local function ctx_for(id, screen)
-        local ctx = {}
-        for k, v in pairs(Home.shown.ctx) do
-            ctx[k] = v
-        end
-        ctx.look = Looks.get(id)
-        ctx.variant = Looks.variant()
-        ctx.screen = screen or Screen
-        return ctx
-    end
-
-    -- A heading sheet of three rows: a plain detail, a status chip and a muted row. runs[i]
-    -- counts row i's taps; shown[i] is Sheet.shown when row i ran.
-    local function three_rows(runs, shown)
-        runs, shown = runs or {}, shown or {}
-        local function counter(i)
-            return function()
-                runs[i] = (runs[i] or 0) + 1
-                shown[i] = Sheet.shown or false
-            end
-        end
-        return {
-            name = "test",
-            band = "home",
-            header = { heading = "Home", aside = "KoPanda" },
-            rows = {
-                { icon = "sun", label = "Refresh weather", detail = "20 min ago", run = counter(1) },
-                { icon = "bookmark", label = "Read status", detail = "Reading", chip = "status", run = counter(2) },
-                { icon = "moon", label = "Sleep", detail = "not available", muted = true, run = counter(3) },
-            },
-        }
-    end
-
-    -- Wraps t[name] to record each call's arguments as passed (a spy keeps copies), then call
-    -- through. Returns the calls and a function that restores t[name].
-    local function record(t, name)
-        local original, calls = t[name], {}
-        t[name] = function(...)
-            calls[#calls + 1] = { ... }
-            return original(...)
-        end
-        return calls, function()
-            t[name] = original
-        end
-    end
-
-    local function sheets_on_stack()
-        local count = 0
-        for _, widget in ipairs(harness.stack()) do
-            if widget.name == "kopanda_sheet" then
-                count = count + 1
-            end
-        end
-        return count
-    end
-
-    -- A stand-in for a book's cover widget, counting its paints and frees; get_size, if given,
-    -- replaces its getSize.
-    local function stub_cover(get_size)
-        local cover = { paints = 0, frees = 0 }
-        cover.getSize = get_size or function() return Geom:new{ w = 40, h = 60 } end
-        cover.paintTo = function()
-            cover.paints = cover.paints + 1
-        end
-        cover.free = function()
-            cover.frees = cover.frees + 1
-        end
-        return cover
-    end
-
-    local function book_sheet(cover)
-        local spec = three_rows()
-        spec.band = "book"
-        spec.header = { cover = cover, title = "A book", author = "An author", meta = "12%" }
-        return spec
-    end
-
-    -- How many of the calls spied on logger.warn carry text.
-    local function warnings(warned, text)
-        local count = 0
-        for _, call in ipairs(warned.calls) do
-            for _, arg in ipairs(call.vals) do
-                if tostring(arg):find(text, 1, true) then
-                    count = count + 1
-                end
-            end
-        end
-        return count
-    end
+    local fixture = require("sheet_fixture")
+    local send, centre, rgb, grey, inverse_grey = fixture.send, fixture.centre, fixture.rgb, fixture.grey,
+        fixture.inverse_grey
+    local near, pixel, each_pixel, buffer, colorsoft = fixture.near, fixture.pixel, fixture.each_pixel,
+        fixture.buffer, fixture.colorsoft
+    local ctx_for, three_rows, record, sheets_on_stack = fixture.ctx_for, fixture.three_rows, fixture.record,
+        fixture.sheets_on_stack
+    local stub_cover, book_sheet, warnings = fixture.stub_cover, fixture.book_sheet, fixture.warnings
 
     before_each(function()
         harness.load()
@@ -566,6 +421,35 @@ describe("the sheet", function()
                 local fill = tokens.selected_fill_color and palette[tokens.selected_fill_color] or palette.paper
                 assert.is_true(near(rgb(fill), pixel(bb, first.rect.x + 2, first.rect.y + 2), 1), "selected fill")
                 assert.is_true(near(rgb(palette.paper), pixel(bb, second.rect.x + 2, second.rect.y + 2), 1), "plain")
+            end)
+
+            it("keeps each row's two lines inside its padding in " .. id, function()
+                Sheet.show(sort_spec(), ctx_for(id, colorsoft))
+                local rows, tokens = Sheet.shown.rows, Looks.get(id).sheet
+                local pad_y = colorsoft:scaleBySize(tokens.row_padding.y)
+                for i, row in ipairs(rows) do
+                    local foot = i == #rows and colorsoft:scaleBySize(tokens.last_row_bottom) or pad_y
+                    assert.truthy(row.label.y >= row.rect.y + pad_y, "label top " .. i)
+                    assert.truthy(row.sublabel.y + row.sublabel.h <= row.rect.y + row.rect.h - foot, "sublabel " .. i)
+                end
+            end)
+
+            it("cuts a selected row's long label short of its check in " .. id, function()
+                local spec = sort_spec()
+                spec.rows[1].label = string.rep("A label long enough to be cut ", 8)
+                Sheet.show(spec, ctx_for(id, colorsoft))
+                local row = Sheet.shown.rows[1]
+                local gap = colorsoft:scaleBySize(Looks.get(id).sheet.row_gap)
+                assert.truthy(row.label.x + row.label.w <= row.check.x - gap, row.label.x + row.label.w)
+            end)
+
+            it("cuts a long heading short of the header's label in " .. id, function()
+                local spec = sort_spec()
+                spec.header.heading = string.rep("A heading long enough to be cut ", 8)
+                Sheet.show(spec, ctx_for(id, colorsoft))
+                local parts = Sheet.shown.header_parts
+                local gap = colorsoft:scaleBySize(Looks.get(id).sheet.aside_gap)
+                assert.truthy(parts.heading.x + parts.heading.w <= parts.label.x - gap, parts.heading.w)
             end)
         end
     end)
@@ -1037,6 +921,35 @@ describe("the sheet", function()
                 assert.equals(1, logged, where)
                 Sheet.close()
             end
+        end
+    end)
+
+    it("frees the label and second line of each row it leaves out, an iconless row's too", function()
+        local Typeset = require("typeset")
+        local line, freed = Typeset.line, {}
+        Typeset.line = function(...)
+            local widget, text = line(...), select(2, ...)
+            local free = widget.free
+            widget.free = function(...)
+                freed[text] = (freed[text] or 0) + 1
+                return free(...)
+            end
+            return widget
+        end
+        local spec = three_rows()
+        spec.flush = true
+        spec.rows = {}
+        for i = 1, 40 do
+            spec.rows[i] = { label = "Entry " .. i, sublabel = "Second line " .. i, run = function() end }
+        end
+        local ok, err = pcall(Sheet.show, spec, ctx_for("editorial", colorsoft))
+        Typeset.line = line
+        assert.is_true(ok, tostring(err))
+        local kept = #Sheet.shown.rows
+        assert.truthy(kept < 40, kept)
+        for i = kept + 1, 40 do
+            assert.equals(1, freed["Entry " .. i], "label " .. i)
+            assert.equals(1, freed["Second line " .. i], "second line " .. i)
         end
     end)
 

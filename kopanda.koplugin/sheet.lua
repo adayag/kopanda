@@ -5,13 +5,13 @@
 -- name: what the settled signal reports; band: which <band>_band_color token Diner's header
 -- takes; header: { heading, aside, aside_beside, aside_above, hint, label } or a book's { cover,
 -- title, author, meta } (cover a built widget, the sheet's to free), or nil; aside_above stacks
--- the aside over the heading, label is set at the header's right (a sheet takes a hint or a
--- label, not both); rows: { icon, label, sublabel, detail, chip, muted, tick, selected, run }
--- each, sublabel a second line under the label, selected filling the row and setting a check at
--- its right, run called with no arguments; hold, optional, called with no arguments on a hold
--- inside the panel, after the sheet has closed. A sheet without hold ignores holds; flush, for a
--- sheet whose rows have no icons, sets their labels without the icon's indent. Every field but
--- name and rows is optional.
+-- the aside over the heading, label is set at the header's right (a label takes the header's
+-- right, so a sheet with one has no hint and its aside beside or above); rows: { icon, label,
+-- sublabel, detail, chip, muted, tick, selected, run } each, sublabel a second line under the
+-- label, selected filling the row and setting a check at its right, run called with no
+-- arguments; hold, optional, called with no arguments on a hold inside the panel, after the sheet
+-- has closed. A sheet without hold ignores holds; flush, for a sheet whose rows have no icons,
+-- sets their labels without the icon's indent. Every field but name and rows is optional.
 -- Module state: Sheet.shown, the sheet on screen or nil. One sheet at a time: showing one
 -- closes the one shown.
 local Blitbuffer = require("ffi/blitbuffer")
