@@ -449,6 +449,98 @@ describe("LibraryOrder", function()
             }, data.library)
         end)
 
+        describe("leaving", function()
+            local State, set, writes, fail_next
+
+            -- Counts State.set from here on; when fail_next, the next one stores the value in the
+            -- file's cache and on disk but reports a failure, as a flush whose read-back disagreed
+            -- leaves the cache ahead of what the library knows it wrote.
+            local function count_writes()
+                State = require("state")
+                set, writes, fail_next = State.set, 0, false
+                State.set = function(...)
+                    writes = writes + 1
+                    local ok = set(...)
+                    if fail_next then
+                        fail_next = false
+                        return false
+                    end
+                    return ok
+                end
+            end
+
+            after_each(function()
+                if State then
+                    State.set = set
+                end
+            end)
+
+            it("writes the place already stored once on the first close of a process, then not again", function()
+                lfs.mkdir(harness.state_dir)
+                LuaSettings:open(harness.state_file):saveSetting("library", { at = { dir = two, page = 3 } }):flush()
+                reload()
+                count_writes()
+                assert.is_true(LibraryOrder.leave(two, 3))
+                assert.equals(1, writes)
+                assert.is_true(LibraryOrder.leave(two, 3))
+                assert.is_true(LibraryOrder.leave(two, 3))
+                assert.equals(1, writes)
+                assert.same({ dir = two, page = 3 }, stored().at)
+            end)
+
+            it("writes nothing on a close at the folder and page already stored", function()
+                count_writes()
+                assert.is_true(LibraryOrder.leave(two, 3))
+                writes = 0
+                assert.is_true(LibraryOrder.leave(two, 3))
+                assert.equals(0, writes)
+            end)
+
+            it("writes once on a close after a turn, and once on a move to another folder", function()
+                count_writes()
+                assert.is_true(LibraryOrder.leave(two, 3))
+                writes = 0
+                assert.is_true(LibraryOrder.leave(two, 4))
+                assert.equals(1, writes)
+                assert.is_true(LibraryOrder.leave(one, 4))
+                assert.equals(2, writes)
+                assert.same({ dir = one, page = 4 }, stored().at)
+            end)
+
+            it("writes again on the next close at the same place after a failed write", function()
+                count_writes()
+                assert.is_true(LibraryOrder.leave(two, 3))
+                fail_next = true
+                assert.is_false(LibraryOrder.leave(two, 4))
+                writes = 0
+                assert.is_true(LibraryOrder.leave(two, 4))
+                assert.equals(1, writes)
+                assert.is_true(LibraryOrder.leave(two, 4))
+                assert.equals(1, writes)
+            end)
+
+            it("writes on a close back at the place last written after a failed write", function()
+                count_writes()
+                assert.is_true(LibraryOrder.leave(two, 3))
+                fail_next = true
+                assert.is_false(LibraryOrder.leave(two, 4))
+                writes = 0
+                assert.is_true(LibraryOrder.leave(two, 3))
+                assert.equals(1, writes)
+                assert.same({ dir = two, page = 3 }, stored().at)
+            end)
+
+            it("writes on a close at the same place after a choice's write failed", function()
+                count_writes()
+                assert.is_true(LibraryOrder.leave(two, 3))
+                fail_next = true
+                assert.is_false(LibraryOrder.choose(one, "title", "all"))
+                writes = 0
+                assert.is_true(LibraryOrder.leave(two, 3))
+                assert.equals(1, writes)
+            end)
+        end)
+
         describe("a malformed value", function()
             local logged
 
