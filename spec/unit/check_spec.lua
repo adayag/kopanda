@@ -123,6 +123,20 @@ describe("bin/check", function()
         assert.falsy(contains(output, "has monolibtic"), output)
     end)
 
+    it("keeps a passing test's [  NOTE    ] lines and drops the rest of its output", function()
+        local dir = run("mktemp -d"):gsub("\n$", "")
+        local _, setup = run("printf '%s\\n' 'describe(\"scratch\", function()'"
+            .. " '    it(\"notes\", function() print(\"chatter\"); print(\"[  NOTE    ] wall time not judged\") end)'"
+            .. " 'end)' > '" .. dir .. "/noting_spec.lua'")
+        assert.equals(0, setup)
+        local output, status = run("'" .. check .. "' '" .. dir .. "/noting_spec.lua'")
+        run("rm -rf '" .. dir .. "'")
+        assert.equals(0, status, output)
+        assert.truthy(contains(output, "\n[  NOTE    ] wall time not judged\n"), output)
+        assert.falsy(contains(output, "chatter"), output)
+        assert.falsy(contains(output, "[  FAILED  ]"), output)
+    end)
+
     it("prints Busted's per-test lines and KOReader's library chatter with --verbose", function()
         local output, status = run("cd '" .. root .. "' && bin/check --verbose spec/unit/environment_spec.lua")
         assert.equals(0, status, output)
