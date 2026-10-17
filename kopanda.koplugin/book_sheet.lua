@@ -309,7 +309,7 @@ end
 
 -- Delete… (context-menu D7): KOReader's own delete confirm for the book at file, called on the
 -- file manager's instance as the file browser's Delete calls it
--- (frontend/apps/filemanager/filemanager.lua:228-233, :1121-1152), with its wording, its archive
+-- (frontend/apps/filemanager/filemanager.lua:228-233, :1121-1153), with its wording, its archive
 -- check and its notices. Its post-delete callback, run only once the delete succeeded (:1141-1142),
 -- re-lists window. Without a file manager, logged and nothing shown. Greyed with no file (D2).
 local function delete_row(file, window)
