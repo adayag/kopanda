@@ -1,7 +1,7 @@
 id: T-1ms8w2
 key: library/book-model/covers
 title: Cover reads and batched extraction with arrival, and the featured cover through them
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -19,3 +19,30 @@ accepted_against:
         value: git:f3fd5f9
         observed_at: 2026-10-16T22:58:33.544858Z
 branch: tiller/library/book-model/covers
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T00:17:10.910921Z
+        against:
+            kind: git_commit
+            value: git:79e4872
+            observed_at: 2026-10-17T00:17:10.910915Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-79e4872-out-fd72cb8f2a5222d20c17af4d582f498c182b7b3b9b263d2eaecf676f68d36969.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T00:17:10.910921Z
+        against:
+            kind: git_commit
+            value: git:79e4872
+            observed_at: 2026-10-17T00:17:10.910915Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-79e4872-out-8fe8bf46c9aab81ba0bef0cce1a8f804680fc5decc2ad02ded69f96c6d1f09df.txt
