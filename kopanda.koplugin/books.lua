@@ -84,7 +84,7 @@ local function sidecar(path)
     return try("the sidecar of " .. path, DocSettings.openSettingsFile, file), true
 end
 
--- The cover availability of a row, in featured_cover.lua's (and mosaicmenu.lua:471-488's) order.
+-- The cover availability of a row, in BookCovers.wants' (and mosaicmenu.lua:471-488's) order.
 local function cover_state(info, enabled)
     if not enabled then
         return "none"
@@ -371,6 +371,17 @@ function Books.progress(book)
         end
     end
     return { status = "new" }
+end
+
+-- A path-less book's cover for a w by h box, a bitmap the caller owns, from its source's cover, or
+-- nil when the source has none or its cover raises, logged.
+function Books.cover(book, w, h)
+    for _, source in ipairs(sources) do
+        if source.name == book.source and source.cover then
+            return try("the cover of " .. tostring(book.id), source.cover, book, w, h)
+        end
+    end
+    return nil
 end
 
 -- Adds a source of books without a path: { name, books, cover, progress }.

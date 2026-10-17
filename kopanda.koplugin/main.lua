@@ -23,6 +23,7 @@ local logger = require("logger")
 local time = require("ui/time")
 -- Required here only so they load while the plugin root is on package.path; the modules that
 -- use them get them from the require cache.
+require("book_covers")
 require("book_index")
 require("book_sheet")
 require("books")

@@ -1,12 +1,8 @@
 -- The featured book's cover box: the cover from CoverBrowser's cache fitted on paper, a
--- typographic placeholder when there is none, the first run's dashed frame, and the one path
--- that asks CoverBrowser to extract a cover, with its bounded check for the result.
---
--- CoverBrowser is reached through pcall(require, "bookinfomanager"): its folder joins
--- package.path only when the plugin is enabled (frontend/pluginloader.lua:283-287), so a failed
--- require means it is disabled, and the placeholder is drawn.
--- Module state: asked, the files extraction was asked for in this process; check, the scheduled
--- check or nil.
+-- typographic placeholder when there is none, and the first run's dashed frame. The cover read,
+-- the extraction ask and its bounded check are book_covers.lua's; this module's functions for
+-- them delegate there.
+local BookCovers = require("book_covers")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Fonts = require("fonts")
 local Geom = require("ui/geometry")
@@ -17,9 +13,7 @@ local Math = require("optmath")
 local Paint = require("paint")
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local Typeset = require("typeset")
-local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local logger = require("logger")
 
 local FeaturedCover = {}
 
@@ -27,67 +21,6 @@ local FeaturedCover = {}
 local TITLE_LINES = 4
 -- The smallest size the placeholder title steps down to so no word of it is split.
 local MIN_TITLE_SIZE = 8
--- The checks while an extraction runs, one a second, before giving up.
-local MAX_CHECKS = 30
-
-local asked = {}
-local check
-
--- BookInfoManager, or nil when CoverBrowser is disabled.
-local function manager()
-    local ok, bim = pcall(require, "bookinfomanager")
-    if ok and type(bim) == "table" then
-        return bim
-    end
-    return nil
-end
-
--- getBookInfo(file, get_cover) (bookinfomanager.lua:325-404), or nil on a failure, logged.
-local function book_info(bim, file, get_cover)
-    local ok, info = pcall(bim.getBookInfo, bim, file, get_cover)
-    if not ok then
-        logger.err("KoPanda: CoverBrowser's book info failed:", info)
-        return nil
-    end
-    return info
-end
-
--- Whether info's cover, cached or about to be read, suits a box of specs: there is one, the
--- book's cover is not ignored (CoverBrowser draws none for such rows, mosaicmenu.lua:508,
--- listmenu.lua:272), and it is not too small for the box (bookinfomanager.lua:1013-1030).
-local function has_fitting_cover(bim, info, specs)
-    return info ~= nil and info.has_cover and not info.ignore_cover
-        and not bim.isCachedCoverInvalid(info, specs)
-end
-
--- Whether info's cached cover bitmap can be drawn in a box of specs.
-local function is_usable(bim, info, specs)
-    return has_fitting_cover(bim, info, specs) and info.cover_bb ~= nil
-end
-
--- The cached cover of file for a w by h box, or nil. An unusable bitmap is freed, as
--- mosaicmenu.lua:478-479 does.
-local function read_cover(file, w, h)
-    local bim = manager()
-    if not bim or not file then
-        return nil
-    end
-    local info = book_info(bim, file, true)
-    if not info then
-        return nil
-    end
-    local ok, usable = pcall(is_usable, bim, info, { max_cover_w = w, max_cover_h = h })
-    if ok and usable then
-        return info.cover_bb
-    end
-    if not ok then
-        logger.err("KoPanda: CoverBrowser's cover check failed:", usable)
-    end
-    if info.cover_bb then
-        info.cover_bb:free()
-    end
-    return nil
-end
 
 -- The cover box, box_w by box_h, with its shadow below and right of it: the shadow, the fill,
 -- each child at its place (self.places[i], from the box's top left), then the outline.
@@ -265,7 +198,7 @@ function FeaturedCover.build(book, w, h, ctx)
     }
     local inner_w, inner_h = w - 2 * outline, h - 2 * outline
 
-    local cover_bb = read_cover(book.file, w, h)
+    local cover_bb = BookCovers.read({ path = book.file }, w, h)
     if cover_bb then
         -- Square: FrameContainer rounds its background and border, not its content
         -- (frontend/ui/widget/container/framecontainer.lua:124-139), and neither does this box.
@@ -292,107 +225,31 @@ function FeaturedCover.build(book, w, h, ctx)
 end
 
 -- Whether to ask CoverBrowser to extract a cover for info, its getBookInfo row or nil, in a box
--- of specs ({ max_cover_w, max_cover_h }). Never without CoverBrowser. Otherwise in
--- mosaicmenu.lua:471-488's order: the never-ask rows come before the size test, since
--- isCachedCoverInvalid is true for any row without cover_w (bookinfomanager.lua:1014-1015).
-function FeaturedCover.wants_extraction(info, specs)
-    local bim = manager()
-    if not bim then
-        return false
-    end
-    if info == nil then
-        return true
-    end
-    if info.unsupported or info.ignore_cover or (info.cover_fetched and not info.has_cover) then
-        return false
-    end
-    if not info.cover_fetched then
-        return true
-    end
-    return (info.has_cover and bim.isCachedCoverInvalid(info, specs)) and true or false
-end
+-- of specs ({ max_cover_w, max_cover_h }): BookCovers.wants.
+FeaturedCover.wants_extraction = BookCovers.wants
 
 -- Drops the scheduled check, if any. The widget's close path calls it, so a closed home leaves
 -- nothing queued.
 function FeaturedCover.cancel()
-    if check then
-        UIManager:unschedule(check)
-        check = nil
-    end
+    BookCovers.cancel()
 end
 
--- After the home's first paint: asks CoverBrowser once per file per process to extract file's
--- cover for a box of specs when wants_extraction says so, then checks each second while the
--- extraction runs, at most 30 times. CoverBrowser has no completion event, and polls the same
--- way itself (covermenu.lua:164-175). A check that finds the cover's row refreshes home once and
--- stops; so does the last check, when the cover is there.
+-- After the home's first paint: asks CoverBrowser for file's cover in a box of specs through
+-- BookCovers.request, which refreshes home once the cover arrives while home is still shown.
 function FeaturedCover.after_show(home, file, specs)
-    local bim = manager()
-    if not bim or not file or asked[file] then
+    if not file then
         return
     end
-    local ok, wanted = pcall(FeaturedCover.wants_extraction, book_info(bim, file, false), specs)
-    if not ok then
-        logger.err("KoPanda: the cover extraction test failed:", wanted)
-        return
-    end
-    if not wanted then
-        return
-    end
-    asked[file] = true
-    FeaturedCover.cancel()
-    local started, launched = pcall(bim.extractInBackground, bim, { { filepath = file, cover_specs = specs } })
-    if not started or not launched then
-        logger.err("KoPanda: CoverBrowser's extraction didn't start:", launched)
-        return
-    end
-    local runs = 0
-    local this_check
-    this_check = function()
-        if check ~= this_check then
-            return
-        end
-        check = nil
-        local done, err = pcall(function()
-            runs = runs + 1
-            local Home = require("home")
-            if Home.shown ~= home then
-                return
-            end
-            -- The cover's row, read without its bitmap: once it is there, stop early, rather than
-            -- wait for the extraction to end, which is noticed only when CoverBrowser reaps the
-            -- process every 10 s (bookinfomanager.lua:139, :627-650).
-            if has_fitting_cover(bim, book_info(bim, file, false), specs) then
-                home:refresh()
-                return
-            end
-            if runs < MAX_CHECKS and bim:isExtractingInBackground() then
-                check = this_check
-                UIManager:scheduleIn(1, this_check)
-                return
-            end
-            local info = book_info(bim, file, true)
-            local usable = info ~= nil and is_usable(bim, info, specs)
-            if info and info.cover_bb then
-                info.cover_bb:free()
-            end
-            if usable then
-                home:refresh()
-            end
-        end)
-        if not done then
-            check = nil
-            logger.err("KoPanda: the cover check failed:", err)
-        end
-    end
-    check = this_check
-    UIManager:scheduleIn(1, this_check)
+    BookCovers.request({ { path = file } }, specs, function()
+        home:refresh()
+    end, function()
+        return require("home").shown == home
+    end)
 end
 
 -- Forgets the files asked for and drops the check, as in a new process. For specs.
 function FeaturedCover.reset()
-    FeaturedCover.cancel()
-    asked = {}
+    BookCovers.reset()
 end
 
 return FeaturedCover
