@@ -1,7 +1,7 @@
 id: B-0wpe5u
 key: bugs/swatch-settle-before-paint
 title: Swatch settled signal can fire before its first paint
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -20,6 +20,7 @@ accepted_against:
         observed_at: 2026-10-17T04:34:24.279325Z
 branch: tiller/bugs/swatch-settle-before-paint
 pr: 30
+done_basis: ancestry
 gates:
     build:
         required: true
