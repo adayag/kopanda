@@ -209,7 +209,11 @@ describe("the file browser's nav bar", function()
     end)
 
     describe("a tap or hold in the bar", function()
-        it("runs Library's entry, which calls onHome once", function()
+        -- cover-grid C8: Library's entry shows the library over the file browser.
+        it("runs Library's entry, which shows the library over the file browser", function()
+            local fixture = require("library_fixture")
+            fixture.install({ [fixture.ROOT] = { books = fixture.books(2) } })
+            finally(fixture.restore)
             local fm = fm_on_top()
             local homes = 0
             fm.onHome = function()
@@ -217,7 +221,11 @@ describe("the file browser's nav bar", function()
                 return true
             end
             send(harness.gesture("tap", tab_centre(fm[1].bar, 2)))
-            assert.equals(1, homes)
+            local Library = package.loaded["library"]
+            assert.is_not_nil(Library.shown)
+            assert.equals(Library.shown, harness.top())
+            assert.equals(fm, harness.top(2))
+            assert.equals(0, homes)
         end)
 
         it("shows the home from Home", function()

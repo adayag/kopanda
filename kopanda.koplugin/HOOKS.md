@@ -59,8 +59,8 @@ Upgrading KOReader walks this list.
 - `frontend/ui/uimanager.lua:300` (`UIManager:close` sends it);
   `frontend/apps/filemanager/filemanager.lua:819-826` (`onClose`, on quit), `:842-849`
   (`onShowingReader`, when a book opens).
-- Reaches the plugin instance as an array child; the instance closes the home, which would
-  otherwise keep KOReader from quitting.
+- Reaches the plugin instance as an array child; the instance closes the home and the library,
+  either of which would otherwise keep KOReader from quitting.
 
 ### `CloseDocument`, the pre-build on book close
 
@@ -69,9 +69,10 @@ Upgrading KOReader walks this list.
   browser follows from `ReaderUI:onHome` `:935-940`, `showFileManager` `:581-596` and the
   reader menu's file-browser tab `frontend/apps/reader/modules/readermenu.lua:65-74`.
 - A reader instance's `onCloseDocument` first records the book's chapter for the featured book
-  (the featured book entry below), then builds the home into `Home.pending` (not shown) and
-  returns nothing, so the event reaches later modules. The next file-manager `Show` puts the
-  pending home up synchronously, before the UI loop's next `_repaint`
+  (the featured book entry below), then builds the home into `Home.pending` (not shown), or the
+  library into `Library.pending` when a return to the library is recorded (the library's return
+  entry below), and returns nothing, so the event reaches later modules. The next file-manager
+  `Show` puts the pending home or library up synchronously, before the UI loop's next `_repaint`
   (`frontend/ui/uimanager.lua:1537-1564`: `_checkTasks` at `:1543`, `_repaint` at `:1563`). A
   deferred show would lose when the close runs inside a scheduled task (KOReader's end-of-book
   file-browser action, `frontend/apps/reader/modules/readerstatus.lua:144-148`): `nextTick`
@@ -83,15 +84,16 @@ Upgrading KOReader walks this list.
 - `frontend/apps/reader/readerui.lua:959` (`reloadDocument`), `:979` (`switchDocument`);
   `frontend/apps/reader/modules/readermenu.lua:386-393` (`exitOrRestart`).
 - The pre-build happens there too and is wasted. A reader instance's `init` (the new reader of a
-  reload or switch, `readerui.lua:464-478`) drops and frees the pending home; exit drops it with
-  the process.
+  reload or switch, `readerui.lua:464-478`) drops and frees the pending home and library; exit
+  drops them with the process. A switch keeps the library's return, so the next close builds the
+  library again.
 
 ### `setRotationMode` in `showFiles`
 
 - `frontend/apps/filemanager/filemanager.lua:1322` (`showFiles` resets the rotation before
   building the file manager), `:63-69` (`setRotationMode`).
-- The screen can have another size at show than at close, so a pending home whose `dimen`
-  differs from `Screen:getSize()` is dropped (`free()`,
+- The screen can have another size at show than at close, so a pending home or library whose
+  `dimen` differs from `Screen:getSize()` is dropped (`free()`,
   `frontend/ui/widget/container/widgetcontainer.lua:110-117`) and a fresh one built.
 
 ### `covers_fullscreen` in `UIManager:_repaint`
@@ -1126,15 +1128,15 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `lines_per_page` makes `math.min` raise out of `FeaturedCover.build`. A renamed `use_xtext`
   reads as the non-xtext fallback, smaller titles where only a hidden line split.
 
-### The featured widget: `FileManager:openFile`, `onHome` and `FrameContainer`'s stripes
+### The featured widget: `FileManager:openFile` and `FrameContainer`'s stripes
 
 - `FileManager:openFile(file)` (`frontend/apps/filemanager/filemanager.lua:1616-1639`): with no
   provider given it picks one (`DocumentRegistry:getProvider`) and opens a document through
   `ReaderUI:showReader`, KOReader's own path to the reader, which closes the file manager and the
   home with it. A tap on the featured book calls it on `FileManager.instance` (the entry above),
   read through `package.loaded` at tap time.
-- `FileManager:onHome()` (`filemanager.lua:865-870`): resumes repaints and sends the file chooser to
-  the home folder. The first run's "Open the Library" closes the home, then calls it.
+- The first run's "Open the Library" runs the launcher's library entry (the launcher's entries
+  below), which closes the home and shows the library.
 - `FrameContainer`'s `stripe_color` and `stripe_width`
   (`frontend/ui/widget/container/framecontainer.lua:48-50`): with both set and no `stripe_over`, it
   hatches its area after its background (`:128-132`) through `hatchRect`
@@ -1183,8 +1185,10 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   silently to the nearest existing ancestor (`:342-346`), so a directory entry is checked with
   `lfs.attributes(path, "mode")` first and again at tap time; it fires `PathChanged`
   (`:367-369`), which updates the file manager's title bar (`filemanager.lua:108-114`).
-- `FileManager:onHome()` (`filemanager.lua:865-870`), as the featured widget's entry above: the
-  Library entry closes the home, then calls it.
+- The Library entry shows KoPanda's library through the file manager's KoPanda instance,
+  `FileManager.instance.kopanda` (the `FileManager.instance` entry above), and its
+  `showLibrary`; when that library fails to build, `changeToPath` leaves the file browser at the
+  folder it was to show (the library's return entry below).
 - `ffi/util`: `template` (`base/ffi/util.lua:785`), the unavailable notes.
 - A folder entry's tap opens the folder sheet (`folder_sheet.lua`) through `sheet.lua`, with
   the `ui/time` `monotonic` it took on the tap as the sheet's start; `folder_sheet` is required
@@ -1504,6 +1508,29 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
 - The library's touch zones, its `onGesture` and its paint follow the home's (the `InputContainer`,
   touch lock, `covers_fullscreen` and `nextTick` entries above), and its covers the featured cover's
   bounded check (`book_covers.lua`, the featured cover's entry above).
+
+### The library's return: `caller_pre_callback`, `onShowingReader`, the failed-open paths and `changeToPath`
+
+- The return is recorded from `filemanagerutil.openFile`'s `caller_pre_callback`
+  (`frontend/apps/filemanager/filemanagerutil.lua:498-502`), so a cancelled "Open this file?"
+  (`:523-528`) records none (the library window's entry above). History's own open passes its own
+  callback (`frontend/apps/filemanager/filemanagerhistory.lua:169-171`), so a book opened from
+  History over the library records no return and closes to the home.
+- `FileManager:onShowingReader()` (`frontend/apps/filemanager/filemanager.lua:842-849`), run on the
+  `ShowingReader` broadcast before the reader opens (`frontend/apps/reader/readerui.lua:640`),
+  closes the file manager (`filemanager.lua:848`), whose `CloseWidget` closes the library (the
+  file-manager close entry above), which stores the folder and page it was left at.
+- An open that fails after that broadcast shows a file manager with no `CloseDocument` before it:
+  `showReaderCoroutine`'s crash path (`readerui.lua:734`), no document (`:754`) and a locked
+  document left locked (`:764`), each through `showFileManager` (`:581-596`), which builds a new file
+  manager with `FileManager:showFiles` when none is open. Its `Show` finds the return and no pending
+  library, so the library is built afresh at the return. The unsupported-file path (`:672`) runs
+  before the broadcast, with the file manager and the library still up; its return stands until
+  the next file manager's `Show`.
+- The return lives in module state only, so a restart shows the home.
+- `FileChooser:changeToPath(path)` (`frontend/ui/widget/filechooser.lua:341-371`; the launcher's
+  entries above): a library that fails to build when shown leaves the file browser at the folder it
+  was to show, the nearest existing ancestor when the folder has gone (`:342-346`).
 
 ### Widget and support modules
 

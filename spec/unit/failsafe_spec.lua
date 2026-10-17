@@ -1040,6 +1040,26 @@ describe("KoPanda failing safe", function()
             return out
         end
 
+        -- The library target's show (KoPanda:showLibrary) with a build that raises.
+        it("leaves the file browser at the folder it was to show, the home closed, when it fails to build", function()
+            local lfs = require("libs/libkoreader-lfs")
+            local dir = os.getenv("KO_HOME") .. "/failsafe-library-left"
+            if not lfs.attributes(dir, "mode") then
+                assert(lfs.mkdir(dir))
+            end
+            assert.is_true(require("library_order").leave(dir, 2))
+            local fm = harness.show_fm()
+            harness.tick(2)
+            assert.is_not_nil(Home.shown)
+            package.loaded["library_view"].build = function()
+                error("kopanda-test: library build failed")
+            end
+            package.loaded["launcher_entries"].run({ kind = "kopanda", target = "library" }, {})
+            assert.equals(require("ffi/util").realpath(dir), fm.file_chooser.path)
+            closed_onto_file_browser()
+            assert.is_true(logged_error("kopanda-test: library build failed"))
+        end)
+
         it("closes onto the file browser from the next tick when its paint throws", function()
             harness.show_fm()
             harness.tick(2)

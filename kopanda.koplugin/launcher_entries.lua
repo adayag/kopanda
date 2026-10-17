@@ -5,6 +5,7 @@
 local Dispatcher = require("dispatcher")
 local Home = require("home")
 local InfoMessage = require("ui/widget/infomessage")
+local LibraryOrder = require("library_order")
 local SettingsMenu = require("settings_menu")
 local UIManager = require("ui/uimanager")
 local T = require("ffi/util").template
@@ -120,11 +121,21 @@ local function file_manager()
 end
 
 local KOPANDA_RUN = {
+    -- The library (cover-grid D6): on the library, its root's first page, in place; from anywhere
+    -- else, the home closed and the library shown at the folder and page it was last left at, or
+    -- its root's first page the first time. library and library_view are required now: through
+    -- library_tiles they reach widgets/featured, which requires this module.
     library = function()
+        local Library = require("library")
+        if Library.shown then
+            Library.shown:go(require("library_view").root(), 1)
+            return
+        end
         Home.close()
         local fm = file_manager()
         if fm then
-            fm:onHome()
+            local left = LibraryOrder.left()
+            fm.kopanda:showLibrary(left and { dir = left.dir, page = left.page } or {})
         end
     end,
     series = function()

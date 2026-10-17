@@ -311,12 +311,21 @@ describe("LauncherEntries", function()
             assert.matches("spec: execute failed", err)
         end)
 
-        it("opens the Library: closes the home and sends the file browser home once", function()
+        -- cover-grid C8: the library, no longer the file browser's home folder.
+        it("opens the Library: closes the home and shows the library at its root's first page", function()
+            local fixture = require("library_fixture")
+            fixture.install({ [fixture.ROOT] = { books = fixture.books(2) } })
+            cleanup(fixture.restore)
             local fm = fm_with_home()
             local on_home = spy.on(fm, "onHome")
             LauncherEntries.run({ kind = "kopanda", target = "library" }, {})
+            local Library = package.loaded["library"]
             assert.is_nil(Home.shown)
-            assert.spy(on_home).was.called(1)
+            assert.is_not_nil(Library.shown)
+            assert.equals(Library.shown, harness.top())
+            assert.equals(fm, harness.top(2))
+            assert.same({ fixture.ROOT, 1 }, { Library.shown.dir, Library.shown.page })
+            assert.spy(on_home).was_not_called()
         end)
 
         it("opens a directory entry: closes the home and leaves the file browser at the folder", function()

@@ -310,7 +310,11 @@ describe("gestures on the KoPanda home", function()
             assert.equals(home, harness.top())
         end)
 
-        it("closes the home and goes to the home folder once on a tap on the Library tab", function()
+        -- cover-grid C8: the Library tab's run is now the library, not the home folder.
+        it("closes the home and shows the library on a tap on the Library tab", function()
+            local fixture = require("library_fixture")
+            fixture.install({ [fixture.ROOT] = { books = fixture.books(2) } })
+            finally(fixture.restore)
             local fm = fm_with_home()
             local on_home = fm.onHome
             local calls = 0
@@ -319,9 +323,12 @@ describe("gestures on the KoPanda home", function()
                 return on_home(...)
             end
             send(harness.gesture("tap", tab_centre(2)))
-            assert.equals(1, calls)
+            local Library = package.loaded["library"]
+            assert.equals(0, calls)
             assert.is_nil(Home.shown)
-            assert.equals(fm, harness.top())
+            assert.is_not_nil(Library.shown)
+            assert.equals(Library.shown, harness.top())
+            assert.equals(fm, harness.top(2))
         end)
 
         it("still opens the full settings list on a swipe up starting in the band", function()
