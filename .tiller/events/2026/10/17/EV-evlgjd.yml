@@ -1,0 +1,14 @@
+id: EV-evlgjd
+type: submit.chore
+at: 2026-10-17T21:50:27.868211Z
+contributor: allen
+command: submit chore CH-58w77v
+targets:
+    - CH-58w77v
+before:
+    status: check
+after:
+    pr: 45
+    status: in_review
+files:
+    - path: .tiller/chores/fewer-goldens-per-feature/chore.yml
