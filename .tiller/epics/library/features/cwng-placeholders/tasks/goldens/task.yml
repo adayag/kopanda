@@ -1,9 +1,10 @@
 id: T-lk235s
 key: library/cwng-placeholders/goldens
 title: A placeholder's library golden on the Colorsoft and the owner's device check
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 depends_on:
     - T-3cuakg
@@ -18,3 +19,4 @@ accepted_against:
         kind: git_commit
         value: git:30d3a29
         observed_at: 2026-10-17T21:40:49.909981Z
+branch: tiller/library/cwng-placeholders/goldens

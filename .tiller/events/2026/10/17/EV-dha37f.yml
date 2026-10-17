@@ -1,0 +1,15 @@
+id: EV-dha37f
+type: start.task
+at: 2026-10-17T23:06:32.234135Z
+contributor: allen
+command: start task T-lk235s
+targets:
+    - T-lk235s
+before:
+    status: ready
+after:
+    branch: tiller/library/cwng-placeholders/goldens
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/goldens/task.yml
