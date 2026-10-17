@@ -1,0 +1,14 @@
+id: EV-bxyu86
+type: sync.task
+at: 2026-10-17T07:49:26.934535Z
+contributor: allen
+command: sync task T-eia0v5
+targets:
+    - T-eia0v5
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/pickers/task.yml

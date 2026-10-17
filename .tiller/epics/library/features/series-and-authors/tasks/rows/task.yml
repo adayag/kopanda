@@ -1,7 +1,17 @@
 id: T-qrlexd
 key: library/series-and-authors/rows
 title: Series and authors tokens, row widgets and the one-author tile, fitted
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:214e5b77dbaaf4075295147119a0329db2ed71ea
+        path: .tiller/epics/library/features/series-and-authors/tasks/rows/task.md
+        observed_at: 2026-10-17T07:51:40.790159Z
+    commit:
+        kind: git_commit
+        value: git:56440d9
+        observed_at: 2026-10-17T07:51:40.811433Z

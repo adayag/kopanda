@@ -1,9 +1,19 @@
 id: T-m36ahd
 key: library/series-and-authors/goldens
 title: Series and authors goldens on the Colorsoft, the paint budget and the device check
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-8j0bc0
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:944df6feb1f573729bba28e1d84f90f023fb862e
+        path: .tiller/epics/library/features/series-and-authors/tasks/goldens/task.md
+        observed_at: 2026-10-17T07:51:40.880267Z
+    commit:
+        kind: git_commit
+        value: git:56440d9
+        observed_at: 2026-10-17T07:51:40.902887Z

@@ -1,0 +1,14 @@
+id: EV-zcu2ry
+type: sync.tweak
+at: 2026-10-17T07:45:53.516291Z
+contributor: allen
+command: sync tweak TW-9atgka
+targets:
+    - TW-9atgka
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/tinted-icon-mask-cache/tweak.yml

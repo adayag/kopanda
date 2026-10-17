@@ -1,0 +1,13 @@
+id: EV-ypxvrk
+type: configure.feature
+at: 2026-10-17T07:51:40.573657Z
+contributor: allen
+command: configure feature library/series-and-authors --review-grain feature
+targets:
+    - F-yaihx9
+before:
+    review_grain: ""
+after:
+    review_grain: feature
+files:
+    - path: .tiller/epics/library/features/series-and-authors/feature.yml

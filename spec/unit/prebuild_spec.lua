@@ -171,7 +171,7 @@ describe("the KoPanda home pre-built on book close", function()
 
     describe("recording the chapter", function()
         local logger = require("logger")
-        local State, order, real_set, real_prebuild
+        local State, order, real_set, real_set_many, real_prebuild
         local file = "/mnt/us/books/frankenstein.epub"
 
         -- A reader's KoPanda over a stub ui reading book (default: file) whose TOC answers with
@@ -196,10 +196,19 @@ describe("the KoPanda home pre-built on book close", function()
         before_each(function()
             State = package.loaded["state"]
             order = {}
-            real_set, real_prebuild = State.set, Home.prebuild
+            real_set, real_set_many, real_prebuild = State.set, State.set_many, Home.prebuild
             State.set = function(key, value)
                 order[#order + 1] = "set " .. key
                 return real_set(key, value)
+            end
+            State.set_many = function(values)
+                local keys = {}
+                for key in pairs(values) do
+                    keys[#keys + 1] = key
+                end
+                table.sort(keys)
+                order[#order + 1] = "set " .. table.concat(keys, " ")
+                return real_set_many(values)
             end
             Home.prebuild = function()
                 order[#order + 1] = "prebuild"
@@ -207,13 +216,31 @@ describe("the KoPanda home pre-built on book close", function()
         end)
 
         after_each(function()
-            State.set, Home.prebuild = real_set, real_prebuild
+            State.set, State.set_many, Home.prebuild = real_set, real_set_many, real_prebuild
         end)
 
-        it("writes the file and the TOC title to the state before it pre-builds", function()
+        -- One flush for both keys, and none when the book closes again on the same chapter:
+        -- each flush is an fsync on the way from the book to the home.
+        it("writes the file and the TOC title in one write before it pre-builds, and none again unchanged", function()
+            local util = require("util")
+            local write = util.writeToFile
+            local writes = 0
+            util.writeToFile = function(...)
+                writes = writes + 1
+                return write(...)
+            end
+            finally(function()
+                util.writeToFile = write
+            end)
             reader_kopanda("Letter IV"):onCloseDocument()
-            assert.same({ "set featured_chapter_file", "set featured_chapter", "prebuild" }, order)
+            assert.equals(1, writes)
+            assert.same({ "set featured_chapter featured_chapter_file", "prebuild" }, order)
             assert.equals(file, State.get("featured_chapter_file"))
+            assert.equals("Letter IV", State.get("featured_chapter"))
+            writes, order = 0, {}
+            reader_kopanda("Letter IV"):onCloseDocument()
+            assert.equals(0, writes)
+            assert.same({ "prebuild" }, order)
             assert.equals("Letter IV", State.get("featured_chapter"))
         end)
 
@@ -228,7 +255,7 @@ describe("the KoPanda home pre-built on book close", function()
             Home.pending = {}
             kopanda:onCloseDocument()
             Home.pending = nil
-            assert.same({ "set featured_chapter_file", "set featured_chapter" }, order)
+            assert.same({ "set featured_chapter featured_chapter_file" }, order)
         end)
 
         -- C3: a raising lookup on a re-close leaves no chapter, not the one recorded before.
@@ -255,20 +282,17 @@ describe("the KoPanda home pre-built on book close", function()
             assert.equals("prebuild", order[#order])
         end)
 
-        it("clears the chapter when the file's write fails, logs it and pre-builds", function()
+        it("clears the chapter when the write fails, logs it and pre-builds", function()
             reader_kopanda("Letter IV"):onCloseDocument()
             order = {}
             local errored = spy.on(logger, "err")
-            local logged_set = State.set
-            State.set = function(key, value)
-                if key == "featured_chapter_file" then
-                    order[#order + 1] = "set " .. key
-                    return false
-                end
-                return logged_set(key, value)
+            local logged_set_many = State.set_many
+            State.set_many = function()
+                order[#order + 1] = "set_many"
+                return false
             end
             reader_kopanda("Letter V"):onCloseDocument()
-            State.set = logged_set
+            State.set_many = logged_set_many
             logger.err:revert()
             assert.equals("", State.get("featured_chapter"))
             assert.spy(errored).was_called()

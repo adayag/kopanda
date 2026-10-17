@@ -319,6 +319,80 @@ describe("FeaturedBook", function()
         end)
     end)
 
+    -- A build opens the sidecar once for the record and the progress both, and a later build
+    -- opens it again only when the sidecar file's path, mtime or size has changed.
+    describe("sidecar opens", function()
+        local a, path, mtime, saved_open_file, opened
+
+        before_each(function()
+            a = book("a.epub")
+            history({ { file = a, select_enabled = true } })
+            path = sidecar(a, '{ percent_finished = 0.5, doc_props = { title = "Frankenstein" } }')
+            mtime = lfs.attributes(path, "modification")
+            saved_open_file = DocSettings.openSettingsFile
+            opened = 0
+            DocSettings.openSettingsFile = function(...)
+                opened = opened + 1
+                return saved_open_file(...)
+            end
+        end)
+
+        after_each(function()
+            DocSettings.openSettingsFile = saved_open_file
+        end)
+
+        it("opens it once per build, not again while its mtime and size hold, and again for a new mtime", function()
+            local first = FeaturedBook.current()
+            assert.equals(1, opened)
+            assert.equals(0.5, first.percent)
+            assert.equals("Frankenstein", first.title)
+
+            opened = 0
+            assert.same(first, FeaturedBook.current())
+            assert.equals(0, opened)
+
+            -- The same size under a new mtime.
+            write(path, 'return { percent_finished = 0.7, doc_props = { title = "Frankenstein" } }')
+            assert.is_true(lfs.touch(path, mtime + 10, mtime + 10))
+            opened = 0
+            assert.equals(0.7, FeaturedBook.current().percent)
+            assert.equals(1, opened)
+        end)
+
+        it("opens it again for a new size under the same mtime", function()
+            FeaturedBook.current()
+            write(path, 'return { percent_finished = 0.75, doc_props = { title = "Frankenstein" } }')
+            assert.is_true(lfs.touch(path, mtime, mtime))
+            opened = 0
+            assert.equals(0.75, FeaturedBook.current().percent)
+            assert.equals(1, opened)
+        end)
+
+        it("reads CoverBrowser's row on every build while the sidecar is kept", function()
+            coverbrowser({ title = "Cached title", authors = "Mary Shelley" })
+            assert.equals("Cached title", FeaturedBook.current().title)
+            coverbrowser({ title = "Indexed title", authors = "Mary Shelley" })
+            opened = 0
+            assert.equals("Indexed title", FeaturedBook.current().title)
+            assert.equals(0, opened)
+        end)
+
+        it("opens another book's sidecar of the same mtime and size", function()
+            local b = book("b.epub")
+            local other = sidecar(b, '{ percent_finished = 0.9, doc_props = { title = "DrJekyllHyde" } }')
+            assert.is_true(lfs.touch(other, mtime, mtime))
+            assert.equals(lfs.attributes(path, "size"), lfs.attributes(other, "size"))
+            assert.equals(0.5, FeaturedBook.current().percent)
+
+            assert.is_true(Settings.set("featured.pinned", b))
+            opened = 0
+            local current = FeaturedBook.current()
+            assert.equals(0.9, current.percent)
+            assert.equals("DrJekyllHyde", current.title)
+            assert.equals(1, opened)
+        end)
+    end)
+
     describe("seconds left", function()
         local a
 

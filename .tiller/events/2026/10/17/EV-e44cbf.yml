@@ -1,0 +1,14 @@
+id: EV-e44cbf
+type: sync.tweak
+at: 2026-10-17T07:45:53.721398Z
+contributor: allen
+command: sync tweak TW-wghsy7
+targets:
+    - TW-wghsy7
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/sidecar-once-per-build/tweak.yml

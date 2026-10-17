@@ -146,6 +146,11 @@ return {
         state_chip_color = "teal", -- the Wi-Fi state (HoldHomeC.dc.html:55)
         chip_padding = { x = 8, y = 2 }, -- HoldBookC.dc.html:52
         chip_outline_width = 2, -- HoldBookC.dc.html:52
+        -- The sort and status sheets (cover-grid "The pickers"); SortC.dc.html's heading 28 and row
+        -- padding 16 are not taken, so the other sheets keep their sizes.
+        selected_fill_color = "teal", -- the current choice's row (SortC.dc.html:45)
+        aside_above_gap = 2, -- "for this folder" over "Sort" (SortC.dc.html:39)
+        sublabel_gap = 2, -- a row's label over its second line (SortC.dc.html:46)
     },
 
     -- The quick-settings sheet's body. No board draws Diner's: its own sheet's rows and rules, its
@@ -347,6 +352,12 @@ return {
         sheet_chip = {
             face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
         },
+        -- The header's label at its right, "Library" (SortC.dc.html:43).
+        sheet_label = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
+        },
+        -- A row's second line, "Last opened first", weight 500 in the board's ink (SortC.dc.html:48).
+        sheet_sublabel = { face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
         -- A quick-settings bar's label and value; no board: sheet_detail's style.
         quick_label = {
             face = "strong", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "muted",
@@ -436,6 +447,10 @@ return {
         -- A picker's label, ink on the paper chip (Main.dc.html:25, weight 800).
         library_picker = {
             face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
+        },
+        -- The status picker's label on its pink chip (Main.dc.html:26), the dark text on accents.
+        library_picker_status = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
         },
         -- A tile's title, one line, CSS line height 1.2 (Main.dc.html:47, weight 800).
         tile_title = {
@@ -645,6 +660,9 @@ return {
             prev_fill_color = "paper", -- Main.dc.html:86
             next_fill_color = "mustard", -- Main.dc.html:88
             dead_color = false, -- Main draws no dead arrow: it is left out (cover-grid D16)
+            prev_icon_color = "ink", -- on the paper box (Main.dc.html:86)
+            next_icon_color = "on_accent", -- on the mustard box, dark by night too (Main.dc.html:88)
+            label_in_words = true, -- "Page 1 of 24" (Main.dc.html:87)
         },
     },
 }

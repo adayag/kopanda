@@ -1,0 +1,15 @@
+id: EV-55oc0e
+type: start.task
+at: 2026-10-17T05:27:07.629222Z
+contributor: allen
+command: start task T-eia0v5
+targets:
+    - T-eia0v5
+before:
+    status: ready
+after:
+    branch: tiller/library/cover-grid/pickers
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/pickers/task.yml

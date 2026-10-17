@@ -1,9 +1,19 @@
 id: T-m5pho3
 key: library/series-and-authors/authors
 title: 'The Authors window: the letter-grouped list and one author''s grid'
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-y7g8mr
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:cdaa3c545879cf60379d04fd4d1d54b964464614
+        path: .tiller/epics/library/features/series-and-authors/tasks/authors/task.md
+        observed_at: 2026-10-17T07:51:40.834724Z
+    commit:
+        kind: git_commit
+        value: git:56440d9
+        observed_at: 2026-10-17T07:51:40.856734Z

@@ -1,0 +1,15 @@
+id: EV-vdo3af
+type: start.task
+at: 2026-10-17T06:00:17.609177Z
+contributor: allen
+command: start task T-lmmmgv
+targets:
+    - T-lmmmgv
+before:
+    status: ready
+after:
+    branch: tiller/library/cover-grid/goldens
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/goldens/task.yml

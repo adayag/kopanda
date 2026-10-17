@@ -1,7 +1,17 @@
 id: T-hxf2vf
 key: library/series-and-authors/chrome
 title: Factor the library's window chrome into a shared module, the library unchanged
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:a5d5f9e06eef163fa03b5ddaf8a75bc53fb62437
+        path: .tiller/epics/library/features/series-and-authors/tasks/chrome/task.md
+        observed_at: 2026-10-17T07:51:40.743337Z
+    commit:
+        kind: git_commit
+        value: git:56440d9
+        observed_at: 2026-10-17T07:51:40.76675Z

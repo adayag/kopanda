@@ -1056,6 +1056,166 @@ describe("KoPanda failing safe", function()
         assert.same({ dir = harness.library, page = 2 }, LibraryOrder.left())
     end)
 
+    -- cover-grid C11: the library window fails safe, as the home does.
+    describe("the library", function()
+        local fixture = require("library_fixture")
+        local Library
+
+        before_each(function()
+            Library = package.loaded["library"]
+            fixture.install({ [fixture.ROOT] = { books = fixture.books(8) } })
+        end)
+
+        after_each(function()
+            fixture.restore()
+        end)
+
+        local function libraries_on_stack()
+            local count = 0
+            for _, widget in ipairs(harness.stack()) do
+                if widget.name == "kopanda_library" then
+                    count = count + 1
+                end
+            end
+            return count
+        end
+
+        -- The library is gone and the file manager on top, taking input.
+        local function closed_onto_file_browser()
+            assert.equals(0, libraries_on_stack())
+            assert.is_nil(Library.shown)
+            file_manager_usable()
+        end
+
+        -- The library is up as it was: on top, at the same folder and page, with the same tiles.
+        local function as_it_was(library, tiles)
+            assert.equals(library, harness.top())
+            assert.equals(library, Library.shown)
+            assert.same({ fixture.ROOT, 1 }, { library.dir, library.page })
+            for i, tile in ipairs(library.tiles) do
+                assert.equals(tiles[i], tile.widget, "tile " .. i)
+            end
+        end
+
+        local function widgets(library)
+            local out = {}
+            for i, tile in ipairs(library.tiles) do
+                out[i] = tile.widget
+            end
+            return out
+        end
+
+        -- The library target's show (KoPanda:showLibrary) with a build that raises.
+        it("leaves the file browser at the folder it was to show, the home closed, when it fails to build", function()
+            local lfs = require("libs/libkoreader-lfs")
+            local dir = os.getenv("KO_HOME") .. "/failsafe-library-left"
+            if not lfs.attributes(dir, "mode") then
+                assert(lfs.mkdir(dir))
+            end
+            assert.is_true(require("library_order").leave(dir, 2))
+            local fm = harness.show_fm()
+            harness.tick(2)
+            assert.is_not_nil(Home.shown)
+            package.loaded["library_view"].build = function()
+                error("kopanda-test: library build failed")
+            end
+            package.loaded["launcher_entries"].run({ kind = "kopanda", target = "library" }, {})
+            assert.equals(require("ffi/util").realpath(dir), fm.file_chooser.path)
+            closed_onto_file_browser()
+            assert.is_true(logged_error("kopanda-test: library build failed"))
+        end)
+
+        it("closes onto the file browser from the next tick when its paint throws", function()
+            harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            InputContainer.paintTo = function(self, ...)
+                if self.name == "kopanda_library" then
+                    error("kopanda-test: library paint failed")
+                end
+                return original_paint(self, ...)
+            end
+            assert.is_not_nil(Library.show{ dir = fixture.ROOT })
+            harness.tick(3)
+            closed_onto_file_browser()
+            assert.is_true(logged_error("kopanda-test: library paint failed"))
+        end)
+
+        it("consumes a gesture and closes onto the file browser when its route throws", function()
+            local library = fixture.show()
+            Library.routeGesture = function()
+                error("kopanda-test: library gesture failed")
+            end
+            local size = Screen:getSize()
+            local ok, consumed = pcall(library.handleEvent, library,
+                Event:new("Gesture", harness.gesture("tap", size.w / 2, size.h / 2)))
+            assert.is_true(ok)
+            assert.is_true(consumed)
+            closed_onto_file_browser()
+            assert.is_true(logged_error("kopanda-test: library gesture failed"))
+        end)
+
+        it("logs a book's open that throws and leaves the page as it was", function()
+            local library = fixture.show()
+            local tiles = widgets(library)
+            local util = require("apps/filemanager/filemanagerutil")
+            local real_open = util.openFile
+            finally(function()
+                util.openFile = real_open
+            end)
+            util.openFile = function()
+                error("kopanda-test: open failed")
+            end
+            UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", fixture.centre(library.tiles[1].rect))))
+            assert.is_true(logged_error("kopanda-test: open failed"))
+            as_it_was(library, tiles)
+        end)
+
+        it("logs a page whose build throws and leaves the page as it was", function()
+            local library = fixture.show()
+            local tiles = widgets(library)
+            package.loaded["library_tiles"].book = function()
+                error("kopanda-test: page build failed")
+            end
+            UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", fixture.centre(library.pager.next.rect))))
+            assert.is_true(logged_error("kopanda-test: page build failed"))
+            as_it_was(library, tiles)
+            harness.tick(2)
+            as_it_was(library, tiles)
+        end)
+
+        it("logs a cover request that throws and keeps the page's placeholders", function()
+            package.loaded["book_covers"].request = function()
+                error("kopanda-test: cover request failed")
+            end
+            local library = fixture.show()
+            harness.tick(2)
+            assert.is_true(logged_error("kopanda-test: cover request failed"))
+            assert.is_true(logged_error("the library's cover request failed"))
+            as_it_was(library, widgets(library))
+        end)
+
+        it("logs a cover arrival that throws and keeps the page as it was", function()
+            local arrive
+            package.loaded["book_covers"].request = function(records, _, on_arrival)
+                arrive = function()
+                    on_arrival({ records[1] })
+                end
+            end
+            local library = fixture.show()
+            local tiles = widgets(library)
+            package.loaded["books"].get = function()
+                error("kopanda-test: arrival failed")
+            end
+            assert.is_function(arrive)
+            local ok = pcall(arrive)
+            assert.is_true(ok)
+            assert.is_true(logged_error("kopanda-test: arrival failed"))
+            assert.is_true(logged_error("the library's cover arrival failed"))
+            as_it_was(library, tiles)
+        end)
+    end)
+
     describe("the menu entries", function()
         local PluginLoader = require("pluginloader")
 

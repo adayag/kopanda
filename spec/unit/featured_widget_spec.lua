@@ -204,6 +204,11 @@ describe("the featured widget", function()
             onHome = function()
                 calls.log[#calls.log + 1] = "onHome"
             end,
+            kopanda = {
+                showLibrary = function()
+                    calls.log[#calls.log + 1] = "showLibrary"
+                end,
+            },
         }
         Home.close = function()
             calls.log[#calls.log + 1] = "close"
@@ -595,7 +600,8 @@ describe("the featured widget", function()
             return (table.concat(found):gsub(" ", ""))
         end
 
-        it("closes the home and opens the file browser on a tap on the button", function()
+        -- cover-grid C8: the button runs the launcher's library entry.
+        it("closes the home and shows the library on a tap on the button", function()
             calls.book = nil
             for _, id in ipairs({ "editorial", "diner" }) do
                 calls.log = {}
@@ -606,7 +612,7 @@ describe("the featured widget", function()
                 assert.equals("OPENTHELIBRARY", painted_in(built, rect), id)
                 local ges = harness.gesture("tap", rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2))
                 assert.is_true(Featured.tap(ctx, ges, built), id)
-                assert.same({ "close", "onHome" }, calls.log, id)
+                assert.same({ "close", "showLibrary" }, calls.log, id)
                 built:free()
             end
         end)

@@ -1,0 +1,14 @@
+id: EV-340k1j
+type: submit.tweak
+at: 2026-10-17T07:43:32.633039Z
+contributor: allen
+command: submit tweak TW-wghsy7
+targets:
+    - TW-wghsy7
+before:
+    status: check
+after:
+    pr: 38
+    status: in_review
+files:
+    - path: .tiller/tweaks/sidecar-once-per-build/tweak.yml

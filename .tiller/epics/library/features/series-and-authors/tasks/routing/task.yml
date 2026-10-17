@@ -1,9 +1,19 @@
 id: T-8j0bc0
 key: library/series-and-authors/routing
 title: Entry points, the Authors tab, More by this author and the return after a book closes
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-m5pho3
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:b45b662bfe03dcff53a8546288c136cb5066b8f6
+        path: .tiller/epics/library/features/series-and-authors/tasks/routing/task.md
+        observed_at: 2026-10-17T07:51:40.857058Z
+    commit:
+        kind: git_commit
+        value: git:56440d9
+        observed_at: 2026-10-17T07:51:40.87985Z

@@ -1,0 +1,13 @@
+id: EV-7syhxy
+type: check.tweak
+at: 2026-10-17T07:42:34.092279Z
+contributor: allen
+command: check tweak TW-9atgka
+targets:
+    - TW-9atgka
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/tinted-icon-mask-cache/tweak.yml

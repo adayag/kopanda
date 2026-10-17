@@ -1,0 +1,16 @@
+id: EV-iplnx8
+type: submit.task
+at: 2026-10-17T07:13:45.958303Z
+contributor: allen
+command: submit task T-lmmmgv
+targets:
+    - T-lmmmgv
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/cover-grid/goldens
+        head: git:5159f22
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/cover-grid/tasks/goldens/task.yml

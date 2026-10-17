@@ -1,0 +1,14 @@
+id: EV-jfde4m
+type: sync.tweak
+at: 2026-10-17T07:45:53.621522Z
+contributor: allen
+command: sync tweak TW-soxspy
+targets:
+    - TW-soxspy
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/state-set-many/tweak.yml

@@ -1,0 +1,13 @@
+id: EV-whmule
+type: start.tweak
+at: 2026-10-17T07:17:47.106132Z
+contributor: allen
+command: start tweak TW-soxspy
+targets:
+    - TW-soxspy
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/state-set-many/tweak.yml
