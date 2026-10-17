@@ -465,6 +465,29 @@ describe("the nav bar", function()
         end)
     end)
 
+    -- series-and-authors C4: the Series window carries the bar with no tab lit.
+    describe("on the Series window", function()
+        it("lights no tab", function()
+            for _, id in ipairs(Looks.ids()) do
+                local bar = bar_for(id, "series")
+                assert.is_nil(bar.active, id)
+                bar:free()
+            end
+        end)
+
+        it("runs Home by closing the window and showing the home", function()
+            local fixture = require("shelf_fixture")
+            fixture.install(fixture.series("Earthsea", 2))
+            local Home, SeriesScreen = package.loaded["home"], package.loaded["series_screen"]
+            local screen = fixture.show()
+            NavBar.run("home", "series")
+            assert.is_nil(SeriesScreen.shown)
+            assert.is_false(require("ui/uimanager"):isWidgetShown(screen))
+            assert.is_not_nil(Home.shown)
+            assert.equals(Home.shown, harness.top())
+        end)
+    end)
+
     describe("a hold and other gestures", function()
         local time = require("ui/time")
 

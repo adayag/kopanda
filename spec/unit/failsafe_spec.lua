@@ -1216,6 +1216,175 @@ describe("KoPanda failing safe", function()
         end)
     end)
 
+    -- series-and-authors C9, C11 ("Failure behaviour"): as the library's, through the chrome.
+    describe("the Series window", function()
+        local fixture = require("shelf_fixture")
+        local SeriesScreen
+
+        before_each(function()
+            SeriesScreen = package.loaded["series_screen"]
+            local records = {}
+            for i = 1, 8 do
+                for _, record in ipairs(fixture.series(("Series %02d"):format(i), 2)) do
+                    records[#records + 1] = record
+                end
+            end
+            fixture.install(records)
+        end)
+
+        local function windows_on_stack()
+            local count = 0
+            for _, widget in ipairs(harness.stack()) do
+                if widget.name == "kopanda_series" then
+                    count = count + 1
+                end
+            end
+            return count
+        end
+
+        local function closed_onto_file_browser()
+            assert.equals(0, windows_on_stack())
+            assert.is_nil(SeriesScreen.shown)
+            file_manager_usable()
+        end
+
+        local function widgets(screen)
+            local out = {}
+            for i, row in ipairs(screen.rows) do
+                out[i] = row.widget
+            end
+            return out
+        end
+
+        -- The window is up as it was: on top, at the same view and page, with the same rows.
+        local function as_it_was(screen, view, page, rows)
+            assert.equals(screen, harness.top())
+            assert.equals(screen, SeriesScreen.shown)
+            assert.same({ view, page }, { screen.showing, screen.page })
+            for i, row in ipairs(screen.rows) do
+                assert.equals(rows[i], row.widget, "row " .. i)
+            end
+        end
+
+        local function tap(rect)
+            UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", require("library_fixture").centre(rect))))
+        end
+
+        it("leaves the file browser up, the home closed, when it fails to build", function()
+            harness.show_fm()
+            harness.tick(2)
+            assert.is_not_nil(Home.shown)
+            package.loaded["shelf_rows"].series = function()
+                error("kopanda-test: series build failed")
+            end
+            Home.close()
+            assert.is_nil(SeriesScreen.show{})
+            closed_onto_file_browser()
+            assert.is_true(logged_error("kopanda-test: series build failed"))
+        end)
+
+        it("closes onto the file browser from the next tick when its paint throws", function()
+            harness.show_fm()
+            harness.tick(2)
+            Home.close()
+            InputContainer.paintTo = function(self, ...)
+                if self.name == "kopanda_series" then
+                    error("kopanda-test: series paint failed")
+                end
+                return original_paint(self, ...)
+            end
+            assert.is_not_nil(SeriesScreen.show{})
+            harness.tick(3)
+            closed_onto_file_browser()
+            assert.is_true(logged_error("kopanda-test: series paint failed"))
+        end)
+
+        it("consumes a gesture and closes onto the file browser when its route throws", function()
+            local screen = fixture.show()
+            SeriesScreen.routeGesture = function()
+                error("kopanda-test: series gesture failed")
+            end
+            local size = Screen:getSize()
+            local ok, consumed = pcall(screen.handleEvent, screen,
+                Event:new("Gesture", harness.gesture("tap", size.w / 2, size.h / 2)))
+            assert.is_true(ok)
+            assert.is_true(consumed)
+            closed_onto_file_browser()
+            assert.is_true(logged_error("kopanda-test: series gesture failed"))
+        end)
+
+        it("logs a book's open that throws and leaves the page as it was", function()
+            local view = { kind = "series", name = "Series 01" }
+            local screen = fixture.show(view)
+            local rows = widgets(screen)
+            local util = require("apps/filemanager/filemanagerutil")
+            local real_open = util.openFile
+            finally(function()
+                util.openFile = real_open
+            end)
+            util.openFile = function()
+                error("kopanda-test: open failed")
+            end
+            tap(screen.rows[1].rect)
+            assert.is_true(logged_error("kopanda-test: open failed"))
+            as_it_was(screen, view, 1, rows)
+        end)
+
+        it("logs a view whose build throws and leaves the page as it was", function()
+            local screen = fixture.show()
+            local rows = widgets(screen)
+            package.loaded["shelf_rows"].book = function()
+                error("kopanda-test: view build failed")
+            end
+            tap(screen.rows[1].rect)
+            assert.is_true(logged_error("kopanda-test: view build failed"))
+            as_it_was(screen, { kind = "list" }, 1, rows)
+        end)
+
+        it("logs a progress read that throws on a page turn and leaves the page as it was", function()
+            local screen = fixture.show()
+            local rows = widgets(screen)
+            package.loaded["books"].progress = function()
+                error("kopanda-test: progress failed")
+            end
+            tap(screen.pager.next.rect)
+            assert.is_true(logged_error("kopanda-test: progress failed"))
+            as_it_was(screen, { kind = "list" }, 1, rows)
+            harness.tick(2)
+            as_it_was(screen, { kind = "list" }, 1, rows)
+        end)
+
+        it("logs a cover request that throws and keeps the page", function()
+            package.loaded["book_covers"].request = function()
+                error("kopanda-test: cover request failed")
+            end
+            local screen = fixture.show()
+            harness.tick(2)
+            assert.is_true(logged_error("kopanda-test: cover request failed"))
+            assert.is_true(logged_error("the series's cover request failed"))
+            as_it_was(screen, { kind = "list" }, 1, widgets(screen))
+        end)
+
+        it("logs a cover arrival that throws and keeps the page as it was", function()
+            local arrive
+            package.loaded["book_covers"].request = function(records, _, on_arrival)
+                arrive = function()
+                    on_arrival({ records[1] })
+                end
+            end
+            local screen = fixture.show()
+            local rows = widgets(screen)
+            package.loaded["books"].get = function()
+                error("kopanda-test: arrival failed")
+            end
+            assert.is_function(arrive)
+            assert.is_true(pcall(arrive))
+            assert.is_true(logged_error("kopanda-test: arrival failed"))
+            assert.is_true(logged_error("the series's cover arrival failed"))
+            as_it_was(screen, { kind = "list" }, 1, rows)
+        end)
+    end)
+
     describe("the menu entries", function()
         local PluginLoader = require("pluginloader")
 
