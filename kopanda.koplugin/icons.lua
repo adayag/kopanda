@@ -22,7 +22,7 @@ Icons.entries = {
       file = "icons/history.svg" },
     { id = "wifi", label = "Wi-Fi", used_in = { "launcher", "home sheet", "quick settings" },
       file = "icons/wifi.svg" },
-    { id = "wifi_off", label = "Wi-Fi off", used_in = { "launcher", "empty states", "home sheet" },
+    { id = "wifi_off", label = "Wi-Fi off", used_in = { "launcher", "empty states", "home sheet", "quick settings" },
       file = "icons/wifi_off.svg" },
     { id = "settings", label = "Settings",
       used_in = { "launcher", "nav", "book sheet", "home sheet", "launcher management" },
@@ -71,6 +71,8 @@ Icons.entries = {
     -- Lucide's `arrow-down-to-line` as the library boards draw it (Main.dc.html:67), not Lucide's
     -- `download`, which has a tray (ISC; see icons/LICENSE-lucide.txt).
     { id = "download", label = "Not downloaded", used_in = { "library" }, file = "icons/download.svg" },
+    -- Lucide's `sliders-horizontal` icon (ISC; see icons/LICENSE-lucide.txt).
+    { id = "quick_settings", label = "Quick settings", used_in = { "launcher" }, file = "icons/quick_settings.svg" },
 }
 
 -- The path of the icon file for id, in the form Fonts.path gives a plugin file, or nil for an

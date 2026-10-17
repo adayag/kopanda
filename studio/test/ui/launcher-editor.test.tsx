@@ -333,7 +333,7 @@ describe("adding", () => {
     await open(settings([L]));
 
     fireEvent.click(adding().getByRole("button", { name: kind }));
-    const targets = kind === "KoPanda screen" ? ["Library", "Series", "Authors", "Settings"] : ["History", "Favorites", "Collections", "Wi-Fi"];
+    const targets = kind === "KoPanda screen" ? ["Library", "Series", "Authors", "Settings", "Quick settings"] : ["History", "Favorites", "Collections", "Wi-Fi"];
     expect(adding().getAllByRole("button").map((b) => b.textContent)).toEqual([...targets, "Cancel"]);
     expect(adding().getByRole("button", { name: label }).querySelector(".icon-tile img")).not.toBeNull();
     fireEvent.click(adding().getByRole("button", { name: label }));
