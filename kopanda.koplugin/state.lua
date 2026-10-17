@@ -102,6 +102,10 @@ function State.set_many(values)
     for key, value in pairs(values) do
         list[#list + 1] = { key, value }
     end
+    -- No keys: nothing to store, so the file isn't written again.
+    if #list == 0 then
+        return true
+    end
     return write(list)
 end
 

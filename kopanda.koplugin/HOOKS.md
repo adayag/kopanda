@@ -1660,9 +1660,10 @@ guard (`sheet.lua`).
 - The download badge is a circle: `paintRoundedRect` and `paintBorder` with a radius of half the
   badge's size (`base/ffi/blitbuffer.lua:2169-2197`, `:2096-2135`), which they cap at half the side
   (`:2105-2106`, `:2175-2176`), through `Paint`.
-- Freeing a tile frees its cover's bitmap and its icons' masks: `WidgetContainer:free` frees each
-  child (`frontend/ui/widget/container/widgetcontainer.lua:110-117`), `ImageWidget` its
-  `image_disposable` image (the featured cover's entry above) and `TintedIcon` its mask.
+- Freeing a tile frees its cover's bitmap and lets go of its icons: `WidgetContainer:free` frees
+  each child (`frontend/ui/widget/container/widgetcontainer.lua:110-117`), `ImageWidget` its
+  `image_disposable` image (the featured cover's entry above), and `TintedIcon` only drops its
+  reference to the mask, which stays in its cache by file and size (`tinted_icon.lua:65-68`).
 
 ### The library window: `filemanagerutil.openFile`, the page keys, `Menu:onSwipe`'s directions and the metadata events
 
