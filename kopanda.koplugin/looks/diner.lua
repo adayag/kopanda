@@ -477,6 +477,60 @@ return {
         pager_label = {
             face = "display", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
         },
+        -- The series and authors screens' parts (SeriesC.dc.html, SeriesBooksC.dc.html and
+        -- AuthorsC.dc.html under .tiller/design/2026-10-16-kopanda-library-screens/); weight 700 is the
+        -- strong face and 800 the display face. Text on the mustard, pink and teal fills is on_accent.
+        -- One series' title on its band, CSS line height 0.95 (SeriesBooksC.dc.html:27, weight 800).
+        shelf_detail_title = {
+            face = "display", size = 36, uppercase = false, tracking = -0.01, line_height = -0.05,
+            color = "on_accent",
+        },
+        -- The back control's label, ink on its paper box (SeriesBooksC.dc.html:20, weight 800).
+        shelf_back = { face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink" },
+        -- A series row's name, CSS line height 1.1 (SeriesC.dc.html:35, weight 800).
+        series_name = {
+            face = "display", size = 19, uppercase = false, tracking = 0, line_height = 0.1, color = "ink",
+        },
+        -- Its sub-line (SeriesC.dc.html:36, weight 500).
+        series_sub = { face = "text", size = 13, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        -- A chip's label on its mustard, teal or pink fill (SeriesC.dc.html:39, weight 800).
+        shelf_chip = {
+            face = "display", size = 10, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
+        },
+        -- A chip's label on its paper fill (SeriesC.dc.html:88, weight 800).
+        shelf_chip_plain = {
+            face = "display", size = 10, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
+        },
+        -- A book row's series index, CSS line height 1 (SeriesBooksC.dc.html:34, weight 800).
+        book_index = { face = "display", size = 40, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        -- Its title, CSS line height 1.1 (SeriesBooksC.dc.html:37, weight 800).
+        book_row_title = {
+            face = "display", size = 20, uppercase = false, tracking = 0, line_height = 0.1, color = "ink",
+        },
+        -- "read this one next" in Caveat on the mustard row, CSS line height 1 (SeriesBooksC.dc.html:47).
+        book_next_note = {
+            face = "accent", size = 22, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
+        },
+        -- "Not on the Kindle yet" (SeriesBooksC.dc.html:60, weight 500).
+        book_row_note = { face = "text", size = 13, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        -- A group's letter on its mustard column (AuthorsC.dc.html:29, weight 800).
+        author_letter = {
+            face = "display", size = 24, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
+        },
+        -- An author's name (AuthorsC.dc.html:31, weight 700).
+        author_name = { face = "strong", size = 17, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        -- Their count, "4 books ›" (AuthorsC.dc.html:33, weight 800).
+        author_count = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
+        },
+        -- The empty note, as the library's (pager_label, Main.dc.html:87).
+        shelf_empty = {
+            face = "display", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
+        },
+        -- The header's static label on the band, "Under way first" (SeriesC.dc.html:24, AuthorsC.dc.html:24).
+        shelf_label = {
+            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
+        },
     },
 
     -- The launcher: a grid of outlined tiles with the tile shadow, the first three on accents.
@@ -663,6 +717,110 @@ return {
             prev_icon_color = "ink", -- on the paper box (Main.dc.html:86)
             next_icon_color = "on_accent", -- on the mustard box, dark by night too (Main.dc.html:88)
             label_in_words = true, -- "Page 1 of 24" (Main.dc.html:87)
+        },
+    },
+    -- The series and authors screens: the library's header on a pink or teal band, outlined rows with
+    -- hard shadows, stacked covers and filled chips, the up-next book on mustard, and letter groups
+    -- (SeriesC.dc.html, SeriesBooksC.dc.html, AuthorsC.dc.html under
+    -- .tiller/design/2026-10-16-kopanda-library-screens/). Outlines are the tile's outline role and
+    -- shadows the tile's shadow role, ink by day and cream by night; covers are outlined in the
+    -- library's cover role. Diner's one author is undrawn (D26).
+    shelf = {
+        series_fill_color = "pink", -- SeriesC.dc.html:19
+        authors_fill_color = "teal", -- AuthorsC.dc.html:19
+        detail = {
+            padding = { top = 22, side = 40, bottom = 18 }, -- SeriesBooksC.dc.html:19
+            back_gap = 10, -- SeriesBooksC.dc.html:19
+        },
+        back = {
+            fill_color = "paper", -- SeriesBooksC.dc.html:20
+            outline_width = 2, -- SeriesBooksC.dc.html:20
+            padding = { left = 6, right = 10, y = 4 }, -- SeriesBooksC.dc.html:20
+            icon_size = 14, -- SeriesBooksC.dc.html:21
+            gap = 6, -- SeriesBooksC.dc.html:20
+        },
+        list = {
+            padding_top = 22, -- SeriesC.dc.html:27
+            side = 40, -- SeriesC.dc.html:27
+            row_gap = 14, -- SeriesC.dc.html:27
+        },
+        row = {
+            -- y: owner's fit 2026-10-17: board 12, five rows a page at the Colorsoft
+            padding = { x = 16, y = 11 }, -- SeriesC.dc.html:28
+            gap = 18, -- SeriesC.dc.html:28
+            line_gap = 3, -- SeriesC.dc.html:34, the name to its sub-line
+            outline_width = 3, -- SeriesC.dc.html:28
+            shadow = { x = 4, y = 4 }, -- SeriesC.dc.html:28
+            rule_width = 0, -- boxed, not ruled (SeriesC.dc.html:28)
+            rule_color = "ink", -- SeriesC.dc.html:28, unused at rule_width 0
+        },
+        stack = {
+            cover_w = 38, -- SeriesC.dc.html:30-32
+            cover_h = 56, -- SeriesC.dc.html:30-32
+            offset_x = 10, -- SeriesC.dc.html:30-32
+            offset_y = 2, -- SeriesC.dc.html:30-32
+            outline_width = 2, -- SeriesC.dc.html:30-32
+            outline_color = "outline", -- SeriesC.dc.html:30-32
+        },
+        chip = {
+            padding = { x = 7, y = 1 }, -- SeriesC.dc.html:39
+            outline_width = 2, -- SeriesC.dc.html:39
+            under_way_fill_color = "mustard", -- SeriesC.dc.html:39
+            finished_fill_color = "teal", -- SeriesC.dc.html:76
+            not_started_fill_color = "paper", -- SeriesC.dc.html:88
+            up_next_fill_color = "paper", -- SeriesBooksC.dc.html:49
+            not_downloaded_fill_color = "pink", -- SeriesBooksC.dc.html:62
+        },
+        books = {
+            padding_top = 24, -- SeriesBooksC.dc.html:32
+            row_gap = 18, -- SeriesBooksC.dc.html:32
+        },
+        book = {
+            padding = { x = 16, y = 14 }, -- SeriesBooksC.dc.html:33
+            index_w = 40, -- SeriesBooksC.dc.html:34
+            cover_w = 64, -- the content, the outline outside it, as the board's CSS (SeriesBooksC.dc.html:35)
+            cover_h = 96, -- the content, the outline outside it, as the board's CSS (SeriesBooksC.dc.html:35)
+            cover_outline_width = 2, -- SeriesBooksC.dc.html:35
+            line_gap = 6, -- SeriesBooksC.dc.html:36
+            bar_height = 10, -- the track inside the outline (SeriesBooksC.dc.html:38)
+            bar_outline_width = 2, -- SeriesBooksC.dc.html:38
+            badge_size = 28, -- SeriesBooksC.dc.html:54
+            badge_outline_width = 2, -- SeriesBooksC.dc.html:54
+            badge_icon_size = 14, -- SeriesBooksC.dc.html:55
+            badge_inset = -10, -- overhanging the corner (SeriesBooksC.dc.html:54, right: -10px; top: -10px)
+        },
+        next = {
+            fill_color = "mustard", -- SeriesBooksC.dc.html:42
+            shadow = { x = 6, y = 6 }, -- SeriesBooksC.dc.html:42
+            line_gap = 4, -- SeriesBooksC.dc.html:45
+            text_color = "on_accent", -- the dark text on mustard (SeriesBooksC.dc.html:42)
+        },
+        groups = {
+            padding_top = 22, -- AuthorsC.dc.html:27
+            gap = 12, -- AuthorsC.dc.html:27
+        },
+        group = {
+            outline_width = 3, -- AuthorsC.dc.html:28
+            shadow = { x = 4, y = 4 }, -- AuthorsC.dc.html:28
+            rule_width = 0, -- boxed, not ruled (AuthorsC.dc.html:28)
+            rule_color = "ink", -- AuthorsC.dc.html:28, unused at rule_width 0
+            letter_w = 48, -- AuthorsC.dc.html:29
+            letter_fill_color = "mustard", -- AuthorsC.dc.html:29
+            letter_rule_width = 3, -- AuthorsC.dc.html:29
+        },
+        author = {
+            padding = { x = 16, y = 11 }, -- AuthorsC.dc.html:31
+            rule_width = 2, -- AuthorsC.dc.html:31
+            rule_color = "outline", -- AuthorsC.dc.html:31
+        },
+        author_grid = {
+            -- Main.dc.html:32's 200, less the one-author header's 26 px over the library's
+            -- (SeriesBooksC.dc.html:19-30 against Main.dc.html:19-27).
+            cover_h = 174, -- lead: by analogy with Main.dc.html:32
+        },
+        up_next = {
+            fill_color = "paper", -- SeriesBooksC.dc.html:49
+            outline_width = 2, -- SeriesBooksC.dc.html:49
         },
     },
 }

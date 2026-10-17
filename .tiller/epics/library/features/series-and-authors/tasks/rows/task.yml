@@ -1,9 +1,10 @@
 id: T-qrlexd
 key: library/series-and-authors/rows
 title: Series and authors tokens, row widgets and the one-author tile, fitted
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,37 @@ accepted_against:
         kind: git_commit
         value: git:56440d9
         observed_at: 2026-10-17T07:51:40.811433Z
+branch: tiller/library/series-and-authors/rows
+review_ref:
+    branch: tiller/library/series-and-authors/rows
+    head:
+        kind: git_commit
+        value: git:21728de
+        observed_at: 2026-10-17T12:58:47.5118Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T12:54:55.25924Z
+        against:
+            kind: git_commit
+            value: git:c1cebb2
+            observed_at: 2026-10-17T12:54:55.259236Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-c1cebb2-out-c6ca6e51d1177be253a154dd6df3f17a2637b53d414114d3b72dc5531d6f56ba.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T12:54:55.25924Z
+        against:
+            kind: git_commit
+            value: git:c1cebb2
+            observed_at: 2026-10-17T12:54:55.259236Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-c1cebb2-out-87333fa99ef8915820684496fa4dd14bdb53d760dea96477b5080c09e1cd2e93.txt

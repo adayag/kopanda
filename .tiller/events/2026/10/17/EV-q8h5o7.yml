@@ -1,0 +1,16 @@
+id: EV-q8h5o7
+type: submit.task
+at: 2026-10-17T12:58:47.512095Z
+contributor: allen
+command: submit task T-qrlexd
+targets:
+    - T-qrlexd
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/series-and-authors/rows
+        head: git:21728de
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/series-and-authors/tasks/rows/task.yml
