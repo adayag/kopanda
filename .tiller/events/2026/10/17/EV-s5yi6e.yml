@@ -1,0 +1,13 @@
+id: EV-s5yi6e
+type: approve.feature
+at: 2026-10-17T01:34:14.077048Z
+contributor: allen
+command: approve feature F-iwl43d
+targets:
+    - F-iwl43d
+before:
+    status: specced
+after:
+    status: ready
+files:
+    - path: .tiller/epics/bars/features/title-bar/feature.yml

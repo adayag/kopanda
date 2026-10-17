@@ -1,9 +1,19 @@
 id: T-m6bm2e
 key: bars/title-bar/goldens
 title: File-browser goldens with the title bar in both looks on both profiles
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 depends_on:
     - T-le8x0f
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:5cfe52e87a9a79e636adeaff752f8820fd5ad0f0
+        path: .tiller/epics/bars/features/title-bar/tasks/goldens/task.md
+        observed_at: 2026-10-17T01:34:14.125948Z
+    commit:
+        kind: git_commit
+        value: git:c18ec4f
+        observed_at: 2026-10-17T01:34:14.148364Z

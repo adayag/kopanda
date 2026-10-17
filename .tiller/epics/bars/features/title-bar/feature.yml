@@ -1,7 +1,7 @@
 id: F-iwl43d
 key: bars/title-bar
 title: File manager title bar in look tokens
-status: specced
+status: ready
 blocked: false
 source: design/2026-10-13-kopanda-ui-direction.md
 change_type: create
@@ -12,3 +12,18 @@ order:
     - T-nzshf0
     - T-le8x0f
     - T-m6bm2e
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:cc5b4629b53153a5311275df59a083da67b35d79
+        path: .tiller/epics/bars/features/title-bar/feature.md
+        observed_at: 2026-10-17T01:34:14.042831Z
+    eval:
+        kind: git_blob
+        value: git:976960e66c50a044298bb683822501bdfddd5171
+        path: .tiller/epics/bars/features/title-bar/feature.eval.md
+        observed_at: 2026-10-17T01:34:14.042831Z
+    commit:
+        kind: git_commit
+        value: git:c18ec4f
+        observed_at: 2026-10-17T01:34:14.076847Z

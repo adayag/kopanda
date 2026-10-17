@@ -1,0 +1,13 @@
+id: EV-4d8ps0
+type: approve.task
+at: 2026-10-17T01:34:14.14848Z
+contributor: allen
+command: approve task T-m6bm2e
+targets:
+    - T-m6bm2e
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/goldens/task.yml

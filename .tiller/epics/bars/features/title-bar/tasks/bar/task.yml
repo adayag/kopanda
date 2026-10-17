@@ -1,7 +1,17 @@
 id: T-nzshf0
 key: bars/title-bar/bar
 title: 'The title bar widget: its tokens in both looks, the plus icon and its paint'
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:ea83b4895fb86df091d92156cdfcfafe5bc2e0eb
+        path: .tiller/epics/bars/features/title-bar/tasks/bar/task.md
+        observed_at: 2026-10-17T01:34:14.077472Z
+    commit:
+        kind: git_commit
+        value: git:c18ec4f
+        observed_at: 2026-10-17T01:34:14.102976Z
