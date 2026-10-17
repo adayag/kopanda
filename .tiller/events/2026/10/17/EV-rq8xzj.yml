@@ -1,0 +1,16 @@
+id: EV-rq8xzj
+type: submit.task
+at: 2026-10-17T18:06:31.108792Z
+contributor: allen
+command: submit task T-id5xlc
+targets:
+    - T-id5xlc
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/context-menu/folder-sheet
+        head: git:3891fa6
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/folder-sheet/task.yml

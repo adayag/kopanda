@@ -429,6 +429,129 @@ describe("the library window", function()
         end)
     end)
 
+    -- context-menu C1, D1 ("Hidden folders"): on a real folder, so Books.folder and Books.all read the disk.
+    describe("hidden folders", function()
+        local lfs = require("libs/libkoreader-lfs")
+        local dir = os.getenv("KO_HOME") .. "/library-hidden"
+        local made = {}
+
+        local function copy(path)
+            local from = assert(io.open(harness.library .. "/frankenstein.epub", "rb"))
+            local to = assert(io.open(path, "wb"))
+            to:write(from:read("*a"))
+            from:close()
+            to:close()
+            table.insert(made, 1, path)
+        end
+
+        local function mkdir(path)
+            assert(lfs.mkdir(path))
+            table.insert(made, 1, path)
+        end
+
+        before_each(function()
+            made = {}
+            mkdir(dir)
+            mkdir(dir .. "/Hidden")
+            mkdir(dir .. "/Shown")
+            copy(dir .. "/top.epub")
+            copy(dir .. "/Hidden/inside.epub")
+            G_reader_settings:saveSetting("home_dir", dir)
+        end)
+
+        after_each(function()
+            for _, path in ipairs(made) do
+                os.remove(path)
+            end
+        end)
+
+        it("drops a hidden sub-folder's tile, the count kept, while Books.folder and Books.all list it", function()
+            local library = fixture.show(dir)
+            local count = fixture.text(library.header.count)
+            assert.same({ "Hidden", "Shown" }, { library.tiles[1].folder.name, library.tiles[2].folder.name })
+            assert.equals(3, #library.tiles)
+            assert.is_true(LibraryOrder.hide(dir .. "/Hidden"))
+            library:refresh()
+            assert.equals(2, #library.tiles)
+            assert.equals("Shown", library.tiles[1].folder.name)
+            assert.equals("book", library.tiles[2].kind)
+            assert.equals(count, fixture.text(library.header.count))
+            local Books = package.loaded["books"]
+            local names = {}
+            for i, folder in ipairs(Books.folder(dir).folders) do
+                names[i] = folder.name
+            end
+            assert.same({ "Hidden", "Shown" }, names)
+            local inside = false
+            for _, record in ipairs(Books.all()) do
+                inside = inside or (record.path or ""):match("/Hidden/inside%.epub$") ~= nil
+            end
+            assert.is_true(inside, "Books.all lists the hidden folder's book")
+            assert.is_true(LibraryOrder.unhide(dir .. "/Hidden"))
+            library:refresh()
+            assert.equals(3, #library.tiles)
+        end)
+    end)
+
+    -- context-menu C1, C5, D6: KOReader's home folder changed under the shown library (Set as library
+    -- root's OK, whose ConfirmBox close marks the library dirty, frontend/ui/uimanager.lua:349-353).
+    describe("the root", function()
+        local sub
+
+        before_each(function()
+            sub = fixture.folder("Sci-fi")
+            fixture.install({
+                [ROOT] = { books = fixture.books(8), folders = { sub } },
+                [sub.path] = { books = fixture.books(8, sub.path) },
+            })
+        end)
+
+        it("shows the new root at page 1 on the next paint after home_dir changes, recorded as left", function()
+            local library = fixture.show(ROOT, 2)
+            assert.equals(2, library.page)
+            G_reader_settings:saveSetting("home_dir", sub.path)
+            UIManager:setDirty(library, "ui")
+            harness.tick(2)
+            assert.same({ sub.path, 1 }, { library.dir, library.page })
+            assert.equals("Library", fixture.text(library.header.title))
+            assert.is_nil(library.header.back)
+            assert.same({ dir = sub.path, page = 1 }, LibraryOrder.left())
+            assert.equals(library, Library.shown)
+            assert.equals(library, harness.top())
+        end)
+
+        it("does not rebuild on a paint with the root unchanged", function()
+            local library = fixture.show(ROOT, 2)
+            local frame = library[1]
+            local left = LibraryOrder.left()
+            UIManager:setDirty(library, "ui")
+            harness.tick(2)
+            assert.equals(frame, library[1])
+            assert.same({ ROOT, 2 }, { library.dir, library.page })
+            assert.same(left, LibraryOrder.left())
+        end)
+
+        it("leaves where it was left unchanged when the new root fails to build", function()
+            local library = fixture.show(ROOT, 2)
+            local frame = library[1]
+            local left = LibraryOrder.left()
+            local LibraryView = package.loaded["library_view"]
+            local build = LibraryView.build
+            LibraryView.build = function(dir, page)
+                if dir == sub.path then
+                    error("kopanda-test: the new root failed to build")
+                end
+                return build(dir, page)
+            end
+            G_reader_settings:saveSetting("home_dir", sub.path)
+            UIManager:setDirty(library, "ui")
+            harness.tick(2)
+            assert.equals(frame, library[1])
+            assert.same({ ROOT, 2 }, { library.dir, library.page })
+            assert.same(left, LibraryOrder.left())
+        end)
+    end)
+
     describe("the settled signal", function()
         it("is sent once per show after its first paint, with screen library and a numeric paint_ms", function()
             local signals = {}

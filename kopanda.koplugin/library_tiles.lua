@@ -280,6 +280,8 @@ function LibraryTiles.book(record, progress, box, ctx, chip_spec)
     return tile
 end
 
+-- A folder's book count in words: "No books", "1 book", "14 books"; the folder sheet's meta reads
+-- it so (context-menu D12).
 local function books_text(n)
     if n == 0 then
         return "No books"
@@ -288,6 +290,7 @@ local function books_text(n)
     end
     return n .. " books"
 end
+LibraryTiles.books_text = books_text
 
 -- A folder's tile for folder ({ name, path }) with counts ({ books, reading }, the books directly
 -- in it and how many of them are reading) in box: the cover box filled in folder.fill_color with

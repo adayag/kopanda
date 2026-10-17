@@ -115,22 +115,27 @@ local function header(built, w, books, choice)
     return box, parts
 end
 
--- The counts a folder's tile shows: the books directly in it and how many are reading.
+-- The counts a folder's tile shows, and its sheet's meta (context-menu D12): the books directly
+-- in it and how many are reading and finished.
 local function folder_counts(folder, progress)
     local books = Books.folder(folder.path).books
-    local reading = 0
+    local reading, finished = 0, 0
     for _, book in ipairs(books) do
-        if progress(book).status == "reading" then
+        local status = progress(book).status
+        if status == "reading" then
             reading = reading + 1
+        elseif status == "complete" then
+            finished = finished + 1
         end
     end
-    return { books = #books, reading = reading }
+    return { books = #books, reading = reading, finished = finished }
 end
 
--- Fills built (dir, page, ctx) from Books.folder(dir) under the folder's sort and status: the
--- frame (the header, the page's tiles at the geometry's boxes or the empty note, and the chrome's
--- foot), and what gestures and covers read: page and pages, header, tiles ({ rect, kind, record
--- or folder, widget, index in the frame }), box (LibraryTiles.geometry), note.
+-- Fills built (dir, page, ctx) from Books.folder(dir), its hidden sub-folders left out
+-- (LibraryOrder.visible, context-menu D1), under the folder's sort and status: the frame (the
+-- header, the page's tiles at the geometry's boxes or the empty note, and the chrome's foot), and
+-- what gestures and covers read: page and pages, header, tiles ({ rect, kind, record or folder and
+-- its counts, widget, index in the frame }), box (LibraryTiles.geometry), note.
 local function fill(built, frame, w)
     local ctx = built.ctx
     local scale = tools(ctx)
@@ -143,6 +148,7 @@ local function fill(built, frame, w)
         return seen[record]
     end
     local listing = Books.folder(built.dir)
+    listing = { books = listing.books, folders = LibraryOrder.visible(listing.folders) }
     local choice = LibraryOrder.choice(built.dir)
     local items = LibraryOrder.view(listing, choice.sort, choice.status, progress, LibraryOrder.history_times())
     local slice
@@ -163,8 +169,8 @@ local function fill(built, frame, w)
             tile.kind, tile.record = "book", item
             tile.widget = LibraryTiles.book(item, progress(item), box, ctx)
         else
-            tile.kind, tile.folder = "folder", item
-            tile.widget = LibraryTiles.folder(item, folder_counts(item, progress), box, ctx)
+            tile.kind, tile.folder, tile.counts = "folder", item, folder_counts(item, progress)
+            tile.widget = LibraryTiles.folder(item, tile.counts, box, ctx)
         end
         tile.index = add(frame, tile.widget, x, y)
         built.tiles[i] = tile

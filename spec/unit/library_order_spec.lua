@@ -500,6 +500,114 @@ describe("LibraryOrder", function()
                 assert.same({ folders = { [ffiutil.realpath(one)] = { sort = "title", status = "all" } } },
                     stored())
             end)
+
+            -- context-menu C1, D1: a hidden entry that is not a realpath string to true.
+            it("drops a malformed hidden entry, logged, keeping the well-formed ones and the other parts", function()
+                local real_one, real_two = ffiutil.realpath(one), ffiutil.realpath(two)
+                store({
+                    folders = { [real_one] = { sort = "title", status = "all" } },
+                    at = { dir = two, page = 2 },
+                    hidden = { [real_one] = true, [real_two] = "yes", [3] = true, root .. "/listed" },
+                })
+                assert.is_true(LibraryOrder.is_hidden(one))
+                assert.is_false(LibraryOrder.is_hidden(two))
+                assert.is_false(LibraryOrder.is_hidden(root .. "/listed"))
+                assert.spy(logged).was_called()
+                assert.same({ sort = "title", status = "all" }, LibraryOrder.choice(one))
+                assert.same({ dir = two, page = 2 }, LibraryOrder.left())
+                assert.is_true(LibraryOrder.leave(two, 3))
+                assert.same({
+                    folders = { [real_one] = { sort = "title", status = "all" } },
+                    at = { dir = two, page = 3 },
+                    hidden = { [real_one] = true },
+                }, stored())
+            end)
+
+            it("reads a hidden value that is not a table as nothing hidden, logged, the other parts kept", function()
+                store({ at = { dir = one, page = 2 }, hidden = "one" })
+                assert.is_false(LibraryOrder.is_hidden(one))
+                assert.same({ dir = one, page = 2 }, LibraryOrder.left())
+                assert.spy(logged).was_called()
+            end)
+        end)
+
+        -- context-menu C1, D1 ("Hidden folders"): the hidden set, by realpath, beside the choices and
+        -- the folder left.
+        describe("the hidden set", function()
+            it("reads a hidden folder back after the plugin reloads", function()
+                assert.is_false(LibraryOrder.is_hidden(one))
+                assert.is_true(LibraryOrder.hide(one))
+                assert.is_true(LibraryOrder.is_hidden(one))
+                assert.is_false(LibraryOrder.is_hidden(two))
+                reload()
+                assert.is_true(LibraryOrder.is_hidden(one))
+                assert.is_false(LibraryOrder.is_hidden(two))
+                assert.same({ [ffiutil.realpath(one)] = true }, stored().hidden)
+            end)
+
+            it("hides a folder by its realpath, so its other name is hidden too", function()
+                assert.is_true(LibraryOrder.hide(link))
+                assert.is_true(LibraryOrder.is_hidden(one))
+                assert.is_true(LibraryOrder.is_hidden(link))
+                assert.same({ [ffiutil.realpath(one)] = true }, stored().hidden)
+            end)
+
+            it("unhides a folder, its key gone from the file, and writes no hidden key once none is", function()
+                assert.is_true(LibraryOrder.hide(one))
+                assert.is_true(LibraryOrder.hide(two))
+                assert.is_true(LibraryOrder.unhide(link))
+                assert.is_false(LibraryOrder.is_hidden(one))
+                assert.same({ [ffiutil.realpath(two)] = true }, stored().hidden)
+                reload()
+                assert.is_false(LibraryOrder.is_hidden(one))
+                assert.is_true(LibraryOrder.unhide(two))
+                assert.is_nil(stored().hidden)
+            end)
+
+            it("keeps the choices and the folder left across a hide and an unhide, and the set across both", function()
+                assert.is_true(LibraryOrder.choose(one, "author", "finished"))
+                assert.is_true(LibraryOrder.leave(two, 3))
+                assert.is_true(LibraryOrder.hide(one))
+                assert.is_true(LibraryOrder.hide(two))
+                assert.is_true(LibraryOrder.unhide(two))
+                assert.is_true(LibraryOrder.choose(two, "title", "all"))
+                assert.is_true(LibraryOrder.leave(one, 2))
+                assert.same({
+                    folders = {
+                        [ffiutil.realpath(one)] = { sort = "author", status = "finished" },
+                        [ffiutil.realpath(two)] = { sort = "title", status = "all" },
+                    },
+                    at = { dir = one, page = 2 },
+                    hidden = { [ffiutil.realpath(one)] = true },
+                }, stored())
+            end)
+
+            it("holds a hide and an unhide for the session when the state file refuses the write", function()
+                assert.is_true(LibraryOrder.hide(two))
+                package.loaded["state"].set = function()
+                    return false
+                end
+                assert.is_false(LibraryOrder.hide(one))
+                assert.is_false(LibraryOrder.unhide(two))
+                assert.is_true(LibraryOrder.is_hidden(one))
+                assert.is_false(LibraryOrder.is_hidden(two))
+                assert.same({ [ffiutil.realpath(two)] = true }, stored().hidden)
+            end)
+
+            it("keeps the folders not hidden, in their order, each by its realpath", function()
+                local listed = {
+                    { name = "two", path = two },
+                    { name = "link", path = link },
+                    { name = "one", path = one },
+                    { name = "gone", path = root .. "/gone" },
+                }
+                assert.same(listed, LibraryOrder.visible(listed))
+                assert.is_true(LibraryOrder.hide(one))
+                assert.same({ listed[1], listed[4] }, LibraryOrder.visible(listed))
+                assert.is_true(LibraryOrder.hide(root .. "/gone"))
+                assert.same({ listed[1] }, LibraryOrder.visible(listed))
+                assert.same({}, LibraryOrder.visible({}))
+            end)
         end)
     end)
 end)

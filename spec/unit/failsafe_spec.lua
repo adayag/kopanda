@@ -1344,6 +1344,71 @@ describe("KoPanda failing safe", function()
             as_it_was(library, tiles)
             assert.equals("file", require("libs/libkoreader-lfs").attributes(path, "mode"))
         end)
+
+        -- The folder sheet's rows and the root check ("The folder sheet", D6).
+        describe("with a folder tile", function()
+            local Sheet
+
+            before_each(function()
+                Sheet = package.loaded["sheet"]
+                local sub = fixture.folder("Sci-fi")
+                fixture.install({ [fixture.ROOT] = { folders = { sub }, books = fixture.books(8) } })
+            end)
+
+            -- Holds the folder tile, then taps its sheet's row labelled label.
+            local function tap_row(library, label)
+                hold_on(library, library.tiles[1].rect)
+                assert.equals("library_folder", Sheet.shown.spec.name)
+                for _, place in ipairs(Sheet.shown.rows) do
+                    if place.row.label == label then
+                        UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", fixture.centre(place.rect))))
+                        return
+                    end
+                end
+                error("no row " .. label)
+            end
+
+            it("logs a Set as library root whose setHome throws and leaves the library as it was", function()
+                local library, fm = fixture.show()
+                local tiles = widgets(library)
+                fm.setHome = function()
+                    error("kopanda-test: setHome failed")
+                end
+                tap_row(library, "Set as library root")
+                assert.is_true(logged_error("kopanda-test: setHome failed"))
+                assert.is_nil(Sheet.shown)
+                as_it_was(library, tiles)
+                harness.tick(2)
+                as_it_was(library, tiles)
+            end)
+
+            it("logs a Hide that throws and leaves the library as it was", function()
+                local library = fixture.show()
+                local tiles = widgets(library)
+                package.loaded["library_order"].hide = function()
+                    error("kopanda-test: hide failed")
+                end
+                tap_row(library, "Hide")
+                assert.is_true(logged_error("kopanda-test: hide failed"))
+                assert.is_nil(Sheet.shown)
+                as_it_was(library, tiles)
+                harness.tick(2)
+                as_it_was(library, tiles)
+            end)
+
+            it("logs a root check that throws and paints the library as it was", function()
+                local library = fixture.show()
+                local tiles = widgets(library)
+                package.loaded["library_view"].root = function()
+                    error("kopanda-test: root check failed")
+                end
+                UIManager:setDirty(library, "ui")
+                harness.tick(2)
+                assert.is_true(logged_error("kopanda-test: root check failed"))
+                assert.is_nil(library.paint_failed)
+                as_it_was(library, tiles)
+            end)
+        end)
     end)
 
     -- series-and-authors C9, C11 ("Failure behaviour"): as the library's, through the chrome.

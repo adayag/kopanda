@@ -148,6 +148,17 @@ return {
         selected_fill_color = false,
         aside_above_gap = 2,
         sublabel_gap = 2,
+        -- The library's folder sheet (context-menu D17): no board draws Editorial's, so no band, and
+        -- its folder icon's box is Editorial's folder tile's (GridA.dc.html:32-33) at Diner's sizes.
+        library_folder_band_color = false, -- lead: by analogy with book_band_color, no band
+        folder_box = {
+            size = 60, -- lead: by analogy with HoldFolderC.dc.html:36
+            outline_width = 1, -- lead: by analogy with the folder tile, GridA.dc.html:32
+            outline_color = "hairline", -- lead: by analogy with the folder tile, GridA.dc.html:32
+            fill_color = "paper", -- lead: by analogy with the folder tile, GridA.dc.html:32
+            icon_size = 34, -- lead: by analogy with HoldFolderC.dc.html:37
+            icon_color = "ink", -- lead: by analogy with the folder tile, GridA.dc.html:33
+        },
     },
 
     -- The quick-settings sheet's body: two ruled sections of a label row over a minus button, a
