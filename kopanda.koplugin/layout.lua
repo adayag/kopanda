@@ -125,6 +125,19 @@ local function footer_height(home)
     return 0
 end
 
+-- The nav bar's height in look on Layout.screen, in device pixels, or 0, logged, when it raises,
+-- so the home still lays out. nav_bar is required at call time: it requires this module.
+local function bar_height(look)
+    local ok, h = pcall(function()
+        return require("nav_bar").height(look, Layout.screen)
+    end)
+    if ok and type(h) == "number" then
+        return h
+    end
+    logger.err("KoPanda: the nav bar's height failed; the home has no band:", ok and tostring(h) or h)
+    return 0
+end
+
 -- Bottom-aligns slots measured at their heights in a row content_h tall: sets each slot's
 -- offset, the drop of its widget from the row's top, and returns the row's height. A slot whose
 -- module gives a baseline (its last line's, from its top) for column width w under ctx sits with
@@ -163,12 +176,16 @@ end
 -- slot is { widget, module, x, y, w, h, offset, error }, h its row's content height and offset
 -- the drop of its widget from y (0 but in an aligned row). A slot whose widget has no module, or
 -- whose height raises, measures 0; slot.error is the height's error. rows is not changed. The
--- home is sized by Layout.screen, the screen its lengths are scaled for.
+-- home is sized by Layout.screen, the screen its lengths are scaled for. The rows, the footer
+-- and the free height take the screen's height less the nav bar's, whose band across the
+-- bottom is nav.
 local function arrange(rows, ctx, placer)
     local home = ctx.look.home
     local header = home.header
     local width, height = Layout.screen:getWidth(), Layout.screen:getHeight()
     local side = scale(home.margin.side)
+    local bar = bar_height(ctx.look)
+    local above = height - bar
 
     local measured, heights = {}, {}
     for i, row in ipairs(rows) do
@@ -209,9 +226,17 @@ local function arrange(rows, ctx, placer)
     end
 
     local first_gap = header.rule_color and 0 or nil
-    local ys, dropped = placer(heights, height, home.margin, home.row_gap, home.free_space, footer_height(home),
+    local ys, dropped = placer(heights, above, home.margin, home.row_gap, home.free_space, footer_height(home),
         first_gap)
-    local arranged = { width = width, height = height, heights = heights, rows = {}, dropped = dropped, header = {} }
+    local arranged = {
+        width = width,
+        height = height,
+        heights = heights,
+        rows = {},
+        dropped = dropped,
+        header = {},
+        nav = { x = 0, y = above, w = width, h = bar },
+    }
     for i, y in ipairs(ys) do
         local row = measured[i]
         row.y = y
@@ -247,7 +272,7 @@ local function arrange(rows, ctx, placer)
         local h = scale(footer)
         arranged.footer = {
             x = 0,
-            y = height - scale(home.margin.bottom) - h,
+            y = above - scale(home.margin.bottom) - h,
             w = width,
             h = h,
             edge = scale(home.footer.edge_width),

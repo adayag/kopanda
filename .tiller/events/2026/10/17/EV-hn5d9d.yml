@@ -1,0 +1,11 @@
+id: EV-hn5d9d
+type: submit.feature
+at: 2026-10-17T01:31:17.302189Z
+contributor: allen
+command: submit feature nav-bar/nav-bar
+targets:
+    - F-78e5ij
+after:
+    pr: 22
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/feature.yml

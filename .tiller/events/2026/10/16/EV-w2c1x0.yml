@@ -1,0 +1,13 @@
+id: EV-w2c1x0
+type: check.task
+at: 2026-10-16T22:15:31.884204Z
+contributor: allen
+command: check task T-1r8qb2
+targets:
+    - T-1r8qb2
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/goldens/task.yml

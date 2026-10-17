@@ -49,6 +49,10 @@ Upgrading KOReader walks this list.
 - Read through `package.loaded` as `apps/filemanager/filemanager` when the deferred show runs,
   since the file manager can close between `Show` and that tick, and the same way at gesture
   time by the home and at call time by the dispatcher wrapper.
+- The nav bar's Home tab in the file browser reaches KoPanda's instance through it as
+  `instance.kopanda`: `registerModule` stores a module under its name
+  (`frontend/apps/filemanager/filemanager.lua:379-389`), and plugin instances are registered by
+  their plugin's name (`:424`).
 
 ### `CloseWidget` on file-manager close
 
@@ -372,6 +376,18 @@ Upgrading KOReader walks this list.
 - The Gestures plugin registers its zones on the file manager (`plugins/gestures.koplugin/main.lua:1287-1288`,
   `self.ui:registerTouchZones`) and binds one-finger west and east swipes only in the top and
   bottom edge bands (`:1168-1195`); its actions run `Dispatcher:execute` (`:1327`).
+- The nav bar's step runs before the file manager's zones: a tap or a hold the home's own zones
+  name that lies in the bar's band goes to the bar, so Gestures' bottom corner zones
+  (`DTAP_ZONE_BOTTOM_LEFT`, `DTAP_ZONE_BOTTOM_RIGHT`, `defaults.lua:68-69` in the KOReader root,
+  each an eighth of each side; read at `plugins/gestures.koplugin/main.lua:985-998`) never
+  see it there. Gestures binds the bottom-left corner tap to `toggle_frontlight` by default on
+  any device with a frontlight (`plugins/gestures.koplugin/defaults.lua:9`), the emulator
+  included (`hasFrontlight`, `frontend/device/sdl/device.lua:157`), which would otherwise take
+  most of the Home tab. In portrait the band is shorter than an eighth of the screen, so each
+  corner zone still has its strip above the bar. In landscape it isn't: `scaleBySize` scales by
+  the shorter side (`base/ffi/framebuffer.lua:416`), so the bar keeps its portrait height while
+  the eighth shrinks to 1264 / 8 = 158 px on the Colorsoft, and both bottom corner zones lie
+  wholly inside the band; on the home the bar takes every tap and hold there.
 
 ### KOReader's touch lock: `setIgnoreTouchInput`, `_onGestureFiltered`, `isGestureAlwaysActive`
 
@@ -404,6 +420,62 @@ Upgrading KOReader walks this list.
   previous value back after, re-raising an action's error unchanged; otherwise it calls the
   original straight through. An error in its own work is logged and the original runs.
   `spec/plugin_harness.lua` puts the unwrapped function back on each load, as a new process has it.
+
+### The nav bar in the file browser: `setupLayout`, the chooser's height and the event order
+
+- `frontend/apps/filemanager/filemanager.lua:116-359` (`FileManager.setupLayout`): the title bar
+  (`:118-136`), then `FileChooser:new{ name = "filemanager", ... }` with no `height` or `width`
+  (`:138-154`; `return_arrow_propagation` at `:145-146` lets a bottom-left tap through the hidden
+  return arrow, which now sits above the band), kept as `self.file_chooser` (`:155`), inside
+  `fm_ui`, a `FrameContainer` with no padding or border on white (`:346-351`), set as `self[1]`
+  (`:353`); `self.layout = file_chooser.layout` (`:356`), which KoPanda leaves the chooser's.
+- Its callers: `init` (`:431`), after every plugin instance is made (`:418-429`), so the
+  wrapper is in place for the first layout; `reinit` (`:789-810`, `setupLayout` at `:802`, the
+  folder and its page items kept at `:795-804`), which is also `rotate` (`:812`, from
+  `onSetRotationMode`, `:71-79`) and the keyboard connect handlers (`:816-817`).
+  `registerModule` (`:379-389`) registers KoPanda's instance as `fm.kopanda` (`:424`), which the
+  wrapper checks with its `refused` flag.
+- `frontend/ui/widget/filechooser.lua:18` (`FileChooser` extends `BookList`), `:98-106` (its
+  `init` calls `BookList.init`); `frontend/ui/widget/booklist.lua:11-16` (`BookList` extends
+  `Menu`), `:276-279` (its `init` calls `Menu.init`); `frontend/ui/widget/pathchooser.lua:13`
+  (`PathChooser` extends `FileChooser`). `ui/widget/filechooser` is required by `fm_nav.lua`
+  for the class field.
+- `frontend/ui/widget/menu.lua:701-704` (`Menu:init` sets `dimen.h` to `self.height` or the
+  screen's height), `:706-710` (the inner height from it), `:655-691` (`_recalculateDimen`: the
+  item height from the inner height less title and footer, at the same items per page),
+  `:893-924` (the page footer and return arrow on the inner height's bottom). A shorter chooser
+  keeps its items per page, shrinks each item and puts its footer above the band.
+- `frontend/ui/widget/widget.lua:26-48` (`Widget:new` makes the class an instance's metatable,
+  so a field read through the instance falls back to the class). `fm_nav.lua` sets
+  `FileChooser.height` on the class only while the original `setupLayout` runs and puts it back
+  on every path, so a `PathChooser` or any chooser built later never sees it.
+- `frontend/ui/widget/menu.lua:1316-1319` (`Menu:onScreenResize` re-runs `init`, at full
+  height): `ScreenResize` is sent only by the SDL and Android ports on a window resize
+  (`frontend/device/sdl/device.lua:314`, `frontend/device/android/device.lua:169`), never on the
+  Kindle, so it is not handled.
+- The event order: `frontend/ui/widget/container/widgetcontainer.lua:80-107` (a container offers
+  an event to its children in order before its own handler),
+  `frontend/ui/widget/container/inputcontainer.lua:266-285` (`onGesture` tries touch zones, then
+  `ges_events`). The frame in `fm[1]` holds the bar first, so a gesture in the band reaches the
+  bar before the chooser and before the file manager's own zones; the bar takes taps and holds
+  through `ges_events`, so KOReader's touch lock silences it.
+- Gestures' bottom corners: `plugins/gestures.koplugin/defaults.lua:9` (the bottom-left tap
+  toggles the frontlight by default), `plugins/gestures.koplugin/main.lua:985-990` (the zone from
+  `DTAP_ZONE_BOTTOM_LEFT`, KOReader's `defaults.lua:68`), `:1287-1288` (registered on the file
+  manager). Inside the band the bar wins by child order.
+- `frontend/ui/uimanager.lua:832` (`getNthTopWidget`): the frame sends its `KoPandaSettled`
+  only once the file manager is the topmost window, through `UIManager.event_hook` and
+  `tickAfterNext` as the home does (the entries above).
+- A failed bar paint fills the band white, the chooser's paper (`fm_ui`'s background,
+  `filemanager.lua:349`), through `paint.lua` (`base/ffi/blitbuffer.lua:1704`, `paintRect`).
+  A failed bar build leaves `fm_ui` as `fm[1]` with its `height` set to the screen's:
+  `frontend/ui/widget/container/framecontainer.lua:115-126` (`FrameContainer:paintTo` paints
+  its background over `self.height or my_size.h`), so the band under the short chooser is paper.
+- Guarded by the tripwire in `spec/unit/fm_nav_spec.lua`, which checks KOReader's unwrapped
+  function is defined at `filemanager.lua:116`, that it leaves `fm[1]` a `FrameContainer` holding
+  only `fm.file_chooser`, named `"filemanager"`, and that a chooser built with
+  `FileChooser.height` set has that height. `spec/plugin_harness.lua` puts the unwrapped function
+  back on each load.
 
 ### Main menu registration, both apps
 
@@ -1119,6 +1191,10 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   (`DTAP_ZONE_TOP_RIGHT`, `defaults.lua:67`: x from 1106 and y under 210 on the Colorsoft) covers
   the right end of both looks' clock, so a hold there refreshes the hidden file chooser and opens
   no sheet.
+- A hold in the nav bar's band is the bar's and runs nothing, before the zones on the file
+  manager (gestures under the home, above): Gestures' bottom hold corners
+  (`hold_bottom_left_corner`, `hold_bottom_right_corner`, `plugins/gestures.koplugin/main.lua:1124-1139`)
+  don't fire there, and neither a slot's hold nor the home sheet runs.
 - The home sheet's Sleep row is the dispatcher's `suspend` (`frontend/dispatcher.lua:94`, listed
   only with `Device:canSuspend()`), run through `LauncherEntries.run` and the dispatch bridge as
   the launcher's action entries are: its `RequestSuspend` reaches the file manager's
@@ -1469,7 +1545,7 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   plugin loads, binding `tap_right_bottom_corner` to `history` (`frontend/dispatcher.lua:68`,
   event `ShowHist`).
 - The tap: a `Gesture` event sent with `UIManager:sendEvent` inside `DTAP_ZONE_BOTTOM_RIGHT`
-  (`defaults.lua:69`), with the fields `GestureRange:match` reads
+  (`defaults.lua:69`), 10 px above the nav bar's band, with the fields `GestureRange:match` reads
   (`frontend/ui/gesturerange.lua:21-51`).
 - `FileManager.instance.history.booklist_menu`: `frontend/apps/filemanager/filemanagerhistory.lua:59-61`
   (the list `onShowHist` shows), checked with `UIManager:isWidgetShown`

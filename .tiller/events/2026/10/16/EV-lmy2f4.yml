@@ -1,0 +1,13 @@
+id: EV-lmy2f4
+type: claim.task
+at: 2026-10-16T20:58:14.116392Z
+contributor: allen
+command: claim task T-3648b1
+targets:
+    - T-3648b1
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/bar/task.yml

@@ -7,9 +7,11 @@ describe("Layout", function()
     local logger = require("logger")
     local Layout = require("layout")
     local Widgets = require("widgets")
+    local NavBar = require("nav_bar")
     local editorial = require("looks/editorial")
     local diner = require("looks/diner")
     local real_get = Widgets.get
+    local real_bar_height = NavBar.height
 
     -- A screen of w by h that scales as KOReader's framebuffer does (base/ffi/framebuffer.lua:414-425).
     local function screen(w, h)
@@ -23,6 +25,7 @@ describe("Layout", function()
     after_each(function()
         Layout.screen = Screen
         Widgets.get = real_get
+        NavBar.height = real_bar_height
     end)
 
     describe("columns", function()
@@ -183,6 +186,8 @@ describe("Layout", function()
 
     describe("arrange and fits", function()
         local heights
+        -- The bar's height in device pixels, whatever the look and screen.
+        local BAR = 180
 
         -- Stub widgets whose height is heights[id] (0 when unset).
         local function stub_widgets()
@@ -213,17 +218,22 @@ describe("Layout", function()
             { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
         }
 
-        before_each(stub_widgets)
+        before_each(function()
+            stub_widgets()
+            NavBar.height = function()
+                return BAR
+            end
+        end)
 
         it("adds Editorial's rule under row 1 and Diner's band to row 1's height", function()
             heights = { date = 60, clock = 50, quote = 100, weather = 20, stats = 30 }
             local c = ctx(editorial, 1264, 1680)
             local s = function(px) return Layout.screen:scaleBySize(px) end
             local arranged = Layout.arrange(default, c)
-            assert.same({ 60 + s(22) + s(2) + s(22), 100, 30 }, arranged.heights)
+            assert.same({ 60 + s(17) + s(2) + s(17), 100, 30 }, arranged.heights)
             c = ctx(diner, 1264, 1680)
             arranged = Layout.arrange(default, c)
-            assert.same({ s(36) + 60 + s(28) + s(4), 100, 30 }, arranged.heights)
+            assert.same({ s(22) + 60 + s(17) + s(4), 100, 30 }, arranged.heights)
         end)
 
         it("lays row 1's slots inside the band's padding for Diner and the margins for Editorial", function()
@@ -233,27 +243,67 @@ describe("Layout", function()
             local row = arranged.rows[1]
             assert.equals(s(40), row.slots[1].x)
             assert.equals(1264 - s(40), row.slots[2].x + row.slots[2].w)
-            assert.equals(s(36), row.slots[1].y)
-            assert.same({ x = 0, y = 0, w = 1264, h = s(36) + 60 + s(28) + s(4) }, arranged.header.band)
+            assert.equals(s(22), row.slots[1].y)
+            assert.same({ x = 0, y = 0, w = 1264, h = s(22) + 60 + s(17) + s(4) }, arranged.header.band)
             arranged = Layout.arrange(default, ctx(editorial, 1264, 1680))
             row = arranged.rows[1]
             assert.equals(s(40), row.slots[1].x)
-            assert.equals(s(44), row.slots[1].y)
+            assert.equals(s(33), row.slots[1].y)
             assert.is_nil(arranged.header.band)
-            assert.same({ x = s(40), y = s(44) + 60 + s(22), w = 1264 - 2 * s(40), h = s(2) },
+            assert.same({ x = s(40), y = s(33) + 60 + s(17), w = 1264 - 2 * s(40), h = s(2) },
                 arranged.header.rule)
-            -- 22 px below the rule as above it (Main.dc.html:30), no row gap after.
-            assert.equals(arranged.header.rule.y + s(2) + s(22), arranged.rows[2].y)
+            -- 17 px below the rule as above it (Main.dc.html:30's 22, tightened), no row gap after.
+            assert.equals(arranged.header.rule.y + s(2) + s(17), arranged.rows[2].y)
         end)
 
-        it("puts Diner's footer on the bottom edge with its stripe scaled, and Editorial none", function()
+        it("draws no footer in either look", function()
             heights = { date = 60, clock = 50, quote = 100 }
-            local s = function(px) return Layout.screen:scaleBySize(px) end
-            local arranged = Layout.arrange(default, ctx(diner, 1264, 1680))
-            assert.same({ x = 0, y = 1680 - s(26), w = 1264, h = s(26), edge = s(4), line = s(2), pitch = s(10) },
-                arranged.footer)
-            arranged = Layout.arrange(default, ctx(editorial, 1264, 1680))
-            assert.is_nil(arranged.footer)
+            for _, look in ipairs({ editorial, diner }) do
+                assert.is_nil(Layout.arrange(default, ctx(look, 1264, 1680)).footer)
+            end
+        end)
+
+        it("places the rows above the bar's band and reports the band as nav", function()
+            heights = { date = 60, clock = 50, quote = 100, weather = 20, stats = 30 }
+            for _, look in ipairs({ editorial, diner }) do
+                local c = ctx(look, 1264, 1680)
+                local s = function(px) return Layout.screen:scaleBySize(px) end
+                local arranged = Layout.arrange(default, c)
+                assert.same({ x = 0, y = 1680 - BAR, w = 1264, h = BAR }, arranged.nav)
+                assert.equals(1680, arranged.height)
+                assert.same({}, arranged.dropped)
+                local floor = 1680 - BAR - s(look.home.margin.bottom)
+                for i, row in ipairs(arranged.rows) do
+                    assert.truthy(row.y + row.h <= floor, i)
+                end
+                local last = arranged.rows[3]
+                if look.home.free_space == "before_last_row" then
+                    -- Editorial's last row sits on the bottom margin above the band.
+                    assert.equals(floor, last.y + last.h)
+                end
+            end
+        end)
+
+        it("drops the last row of a layout that fits the full height but not the height less the band", function()
+            for _, look in ipairs({ editorial, diner }) do
+                local c = ctx(look, 1264, 1680)
+                local home = look.home
+                local first_gap = home.header.rule_color and 0 or nil
+                heights = { date = 60, clock = 60, quote = 100, weather = 20, stats = 20 }
+                local fixed = Layout.arrange(default, c).heights
+                -- The weather row's height that fills the full height exactly, and so overflows
+                -- the height less the band.
+                local probe = { fixed[1], fixed[2], 0 }
+                local ys = Layout.place(probe, 1680, home.margin, home.row_gap, "before_footer", 0, first_gap)
+                local s = function(px) return Layout.screen:scaleBySize(px) end
+                heights.weather = 1680 - s(home.margin.bottom) - ys[3] - s(home.row_gap)
+                local _, full = Layout.place(Layout.arrange(default, c).heights, 1680, home.margin, home.row_gap,
+                    home.free_space, 0, first_gap)
+                assert.same({}, full, "the layout fits the full height")
+                assert.same({ 3 }, Layout.arrange(default, c).dropped)
+                assert.equals(1, Layout.overflow(default, c))
+                assert.is_false(Layout.fits(default, c))
+            end
         end)
 
         it("draws no header chrome when row 1 measures 0", function()
@@ -328,7 +378,7 @@ describe("Layout", function()
                     local home = look.home
                     local footer = home.footer.height > 0 and home.footer.height + home.footer.edge_width or 0
                     local first_gap = home.header.rule_color and 0 or nil
-                    local _, dropped = Layout.place(arranged.heights, 1680, home.margin, home.row_gap,
+                    local _, dropped = Layout.place(arranged.heights, 1680 - BAR, home.margin, home.row_gap,
                         home.free_space, footer, first_gap)
                     local fits = Layout.fits(default, c)
                     assert.equals(#dropped == 0, fits, quote)
@@ -412,6 +462,146 @@ describe("Layout", function()
             heights = { quote = 100 }
             Layout.arrange(default, ctx(diner, 1264, 1680))
             assert.same(copy, default)
+        end)
+    end)
+
+    -- Open fact F1 (feature.md, "Fitting the default home above the bar"): the schema's default
+    -- rows with the real widgets and the real bar, in both looks at each text size, on the
+    -- Colorsoft and the Paperwhite, with the home goldens' content (2-scenario-home-fixture.lua):
+    -- populated, a featured book with its chapter, a weather reading and the quote of their day;
+    -- empty, none of them and the fixture's six launcher entries. Text is measured by Font:getFace
+    -- at the device screen's scale (frontend/ui/font.lua:276), so the device screen itself answers
+    -- as each profile's, as harness.at_colorsoft makes it the Colorsoft's.
+    describe("the default home above the bar", function()
+        local harness = require("plugin_harness")
+        local Geom = require("ui/geometry")
+        local TextWidget = require("ui/widget/textwidget")
+        -- The goldens' frozen time, 2026-10-13 08:42.
+        local NOW = os.time{ year = 2026, month = 10, day = 13, hour = 8, min = 42, sec = 0 }
+
+        -- harness.at_colorsoft's stubs at the Paperwhite's 1236×1648, no DPI override.
+        local function at_paperwhite(fn)
+            local W, H = 1236, 1648
+            local function scale(px)
+                return math.ceil(px * W / 600)
+            end
+            local stubs = {
+                { Screen, "getWidth", function() return W end },
+                { Screen, "getHeight", function() return H end },
+                { Screen, "getSize", function() return Geom:new{ x = 0, y = 0, w = W, h = H } end },
+                { Screen, "scaleBySize", function(_, px) return scale(px) end },
+                { TextWidget, "padding", scale(2) },
+            }
+            local saved = {}
+            for i, stub in ipairs(stubs) do
+                saved[i] = rawget(stub[1], stub[2])
+                stub[1][stub[2]] = stub[3]
+            end
+            local ok, err = pcall(fn)
+            for i, stub in ipairs(stubs) do
+                stub[1][stub[2]] = saved[i]
+            end
+            if not ok then
+                error(err, 0)
+            end
+        end
+
+        local CONTENT = {
+            populated = {
+                book = {
+                    file = harness.library .. "/frankenstein.epub",
+                    title = "Frankenstein",
+                    authors = "Mary Shelley",
+                    percent = 0.62,
+                    status = "reading",
+                    pages = 220,
+                    seconds_left = 220 * 0.38 * 90,
+                    chapter = "Letter IV",
+                },
+                reading = {
+                    fetched_at = NOW - 20 * 60,
+                    temperature = 61.4,
+                    weather_code = 2,
+                    is_day = 1,
+                    units = "fahrenheit",
+                    latitude = 41.85003,
+                    longitude = -87.65005,
+                },
+            },
+            empty = {
+                entries = {
+                    { kind = "kopanda", target = "library" },
+                    { kind = "kopanda", target = "series" },
+                    { kind = "kopanda", target = "authors" },
+                    { kind = "koreader", target = "history" },
+                    { kind = "koreader", target = "wifi" },
+                    { kind = "plugin", plugin = "kopanda_absent", action = "terminal", label = "Terminal",
+                        icon = "terminal" },
+                },
+            },
+        }
+
+        before_each(function()
+            harness.load()
+        end)
+
+        -- "profile look content text_size" to the rows Layout.overflow leaves out.
+        local function overflows()
+            local FeaturedBook = require("featured_book")
+            local Looks = require("looks")
+            local Schema = require("schema")
+            local Settings = require("settings")
+            local Weather = require("weather")
+            local real_current, real_reading = FeaturedBook.current, Weather.reading
+            local defaults = {}
+            for _, key in ipairs(Schema.keys) do
+                defaults[key.id] = key.default
+            end
+            local rows = defaults["layout.rows"]
+            local counts = {}
+            local function count(profile)
+                for _, content in ipairs({ "populated", "empty" }) do
+                    local c = CONTENT[content]
+                    FeaturedBook.current = function() return c.book end
+                    Weather.reading = function() return c.reading end
+                    assert.is_true(Settings.set("launcher.entries", c.entries or defaults["launcher.entries"]))
+                    for _, look in ipairs({ "diner", "editorial" }) do
+                        for _, size in ipairs({ "small", "medium", "large" }) do
+                            local ctx = {
+                                look = Looks.get(look),
+                                variant = "day",
+                                text_size = size,
+                                now = NOW,
+                                screen = Screen,
+                            }
+                            counts[table.concat({ profile, look, content, size }, " ")] =
+                                require("layout").overflow(rows, ctx)
+                        end
+                    end
+                end
+            end
+            local ok, err = pcall(function()
+                harness.at_colorsoft(function() count("colorsoft") end)
+                at_paperwhite(function() count("paperwhite") end)
+            end)
+            FeaturedBook.current, Weather.reading = real_current, real_reading
+            assert(ok, err)
+            return counts
+        end
+
+        -- The looks' home spacing is tightened until this holds (looks/diner.lua, looks/editorial.lua).
+        -- At large, every case still leaves out the last row, the weather and the stats; that is
+        -- reported, not tightened further.
+        it("leaves no row out at small and medium on either profile, populated or empty, and one at large", function()
+            local counts = overflows()
+            local expected, cases = {}, 0
+            for key in pairs(counts) do
+                expected[key] = key:match(" large$") and 1 or 0
+                cases = cases + 1
+            end
+            -- Two profiles, two looks, two contents, three text sizes.
+            assert.equals(24, cases)
+            assert.same(expected, counts)
         end)
     end)
 

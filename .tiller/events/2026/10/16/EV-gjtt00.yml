@@ -1,0 +1,16 @@
+id: EV-gjtt00
+type: submit.task
+at: 2026-10-16T21:54:11.302623Z
+contributor: allen
+command: submit task T-9h0fhs
+targets:
+    - T-9h0fhs
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/nav-bar/nav-bar/file-browser
+        head: git:1b88c37
+    status: in_review
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/file-browser/task.yml

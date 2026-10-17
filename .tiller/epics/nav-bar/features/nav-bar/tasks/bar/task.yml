@@ -1,9 +1,10 @@
 id: T-3648b1
 key: nav-bar/nav-bar/bar
 title: 'The nav bar: its tokens in both looks and its five tabs'
-status: ready
+status: in_review
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 accepted_against:
     spec:
@@ -15,3 +16,37 @@ accepted_against:
         kind: git_commit
         value: git:fae01e4
         observed_at: 2026-10-16T20:56:58.408991Z
+branch: tiller/nav-bar/nav-bar/bar
+review_ref:
+    branch: tiller/nav-bar/nav-bar/bar
+    head:
+        kind: git_commit
+        value: git:4328d4f
+        observed_at: 2026-10-16T21:20:12.627413Z
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T21:18:06.067319Z
+        against:
+            kind: git_commit
+            value: git:d324cbb
+            observed_at: 2026-10-16T21:18:06.067314Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-d324cbb-out-c4c00208bf8ca41881845be3c6dfd0e3b41670215156f5a5fe15fb87feb2cba1.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-16T21:18:06.067319Z
+        against:
+            kind: git_commit
+            value: git:d324cbb
+            observed_at: 2026-10-16T21:18:06.067314Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-d324cbb-out-ccc10d9ae02ada9f5abb89a5412ad9094ca0cba66f9fc482f78d581c5241d699.txt

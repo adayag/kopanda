@@ -1,0 +1,13 @@
+id: EV-u351ef
+type: claim.task
+at: 2026-10-16T21:54:20.89748Z
+contributor: allen
+command: claim task T-1r8qb2
+targets:
+    - T-1r8qb2
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/goldens/task.yml

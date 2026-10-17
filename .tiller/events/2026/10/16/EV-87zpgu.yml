@@ -1,0 +1,16 @@
+id: EV-87zpgu
+type: submit.task
+at: 2026-10-16T22:15:36.494132Z
+contributor: allen
+command: submit task T-1r8qb2
+targets:
+    - T-1r8qb2
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/nav-bar/nav-bar/goldens
+        head: git:1ef940c
+    status: in_review
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/tasks/goldens/task.yml

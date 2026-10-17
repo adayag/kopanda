@@ -1,0 +1,13 @@
+id: EV-63y60y
+type: attest.feature
+at: 2026-10-17T01:30:58.696696Z
+contributor: allen
+command: attest feature F-78e5ij
+targets:
+    - F-78e5ij
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/nav-bar/features/nav-bar/feature.yml

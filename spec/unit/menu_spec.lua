@@ -201,6 +201,74 @@ describe("the settings menu's rows", function()
         end)
     end)
 
+    -- The looks' bars differ in height, so a stored look change re-lays the file browser out
+    -- (fm_nav.lua's relayout).
+    describe("a look change and the file browser", function()
+        local FileManager = require("apps/filemanager/filemanager")
+        local Screen = require("device").screen
+        local UIManager = require("ui/uimanager")
+
+        local function spy_reinit()
+            local reinit = spy.on(FileManager, "reinit")
+            finally(function()
+                reinit:revert()
+            end)
+            return reinit
+        end
+
+        local function choose(text)
+            local look = row(SchemaMenu.items(), "look")
+            choice(look.sub_item_table_func(), text).callback()
+        end
+
+        it("re-lays a file manager out once at the new look's band and redraws it", function()
+            local fm = gestures.fm_with_home()
+            local reinit = spy_reinit()
+            local set_dirty = spy.on(UIManager, "setDirty")
+            finally(function()
+                set_dirty:revert()
+            end)
+            choose("Editorial")
+            assert.spy(reinit).was.called(1)
+            assert.spy(set_dirty).was.called_with(match.is_ref(UIManager), match.is_ref(fm), "ui")
+            local band = require("nav_bar").height(require("looks").get("editorial"), Screen)
+            assert.equals(require("fm_nav").Frame, getmetatable(fm[1]))
+            assert.equals(band, fm[1].band)
+            assert.equals(Screen:getHeight() - band, fm.file_chooser.dimen.h)
+        end)
+
+        it("re-lays nothing out for the look already stored", function()
+            gestures.fm_with_home()
+            local reinit = spy_reinit()
+            choose("Diner")
+            assert.spy(reinit).was_not_called()
+        end)
+
+        it("re-lays nothing out for a write to a key other than the look", function()
+            gestures.fm_with_home()
+            local reinit = spy_reinit()
+            row(SchemaMenu.items(), "stats.show").callback()
+            assert.is_false(Settings.get("stats.show"))
+            assert.spy(reinit).was_not_called()
+        end)
+
+        it("does nothing with no file manager, as from a reader's menu", function()
+            harness.open_reader()
+            harness.tick(2)
+            assert.is_nil(FileManager.instance)
+            -- After the reader's own start, whose font registration logs errors in the emulator.
+            local logged = spy.on(logger, "err")
+            finally(function()
+                logged:revert()
+            end)
+            local reinit = spy_reinit()
+            choose("Editorial")
+            assert.equals("editorial", Settings.get("look"))
+            assert.spy(reinit).was_not_called()
+            assert.spy(logged).was_not_called()
+        end)
+    end)
+
     describe("the boolean row", function()
         it("is checked by its value and writes the negation on each tap", function()
             local sets = record_sets()
