@@ -1,0 +1,15 @@
+id: EV-2oza64
+type: start.task
+at: 2026-10-17T17:30:36.943524Z
+contributor: allen
+command: start task T-id5xlc
+targets:
+    - T-id5xlc
+before:
+    status: ready
+after:
+    branch: tiller/library/context-menu/folder-sheet
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/folder-sheet/task.yml
