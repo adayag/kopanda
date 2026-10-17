@@ -1,0 +1,13 @@
+id: EV-k0fs2b
+type: check.tweak
+at: 2026-10-17T21:12:40.37828Z
+contributor: allen
+command: check tweak TW-s7jikb
+targets:
+    - TW-s7jikb
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/task-gate-skips-emulator/tweak.yml

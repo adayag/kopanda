@@ -1,0 +1,11 @@
+id: EV-mefwl3
+type: claim.tweak
+at: 2026-10-17T20:46:31.100516Z
+contributor: allen
+command: claim tweak tweaks/task-gate-skips-emulator
+targets:
+    - TW-s7jikb
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/task-gate-skips-emulator/tweak.yml
