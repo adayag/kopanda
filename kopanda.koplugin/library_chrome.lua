@@ -7,7 +7,7 @@
 --   build(view, page), a LibraryChrome.build of view at page; view(), the view it shows;
 --   action_at(pos), the action a tap on its own parts runs, or nil; back(), the back control's tap;
 --   hit(x, y), what lies at a point on the window of its class shown, which a hold's sheet is for;
---   open(record), a tap's open of a book; refresh(), its re-list;
+--   on_open(view, page), run as Window:open's book open goes ahead; refresh(), its re-list;
 --   request_covers(), after a page's first paint; closing(), its part of the close. A window listing
 --   the whole library asks for its covers through LibraryChrome.request_records.
 -- Module state: LibraryChrome.shown, the window on screen or nil. A window's class mirrors it in a
@@ -497,6 +497,22 @@ function Window:tap(pos)
         logger.err("KoPanda: the " .. self.screen .. "'s tap failed:", err)
     end
     return true
+end
+
+-- Opens record's file as the file browser's own tap does (cover-grid D15; filemanager.lua:160-169),
+-- which asks first when the owner set "ask before opening", running the window's on_open with the
+-- view and page it shows once the open goes ahead (filemanagerutil.lua:498-502). Without a file
+-- manager it opens nothing.
+function Window:open(record)
+    local FileManager = package.loaded["apps/filemanager/filemanager"]
+    local fm = FileManager and FileManager.instance
+    if not fm then
+        return
+    end
+    local view, page = self:view(), self.page
+    require("apps/filemanager/filemanagerutil").openFile(fm, record.path, function()
+        self.on_open(view, page)
+    end)
 end
 
 -- Signals the window's first paint on the dev loop's settled hook, once per show, as the home's

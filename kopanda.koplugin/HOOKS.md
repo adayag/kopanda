@@ -1708,9 +1708,9 @@ guard (`sheet.lua`).
   (`frontend/apps/filemanager/filemanagerutil.lua:498-532`) runs `caller_pre_callback` first inside
   its `openFile` (`:500-502`), which runs at once or from the "Open this file?" confirm's OK when
   `file_ask_to_open` is set (`:523-528`), so a cancelled confirm runs no callback; in the file
-  manager it then calls `ui:openFile` (`:519`). `library.lua`'s `Library:open` passes the file manager
-  as `ui` and a callback running `Library.on_open(dir, page)`. The module is required at call time,
-  as `books.lua` requires it.
+  manager it then calls `ui:openFile` (`:519`). `library_chrome.lua`'s `Window:open`, the library's,
+  Series' and Authors' own, passes the file manager as `ui` and a callback running the window's
+  `on_open(view, page)`. The module is required at call time, as `books.lua` requires it.
 - The page keys, the swipes and the metadata events below are the chrome's
   (`library_chrome.lua`'s `LibraryChrome.Window`, which the library extends).
 - The page keys, as `Menu:registerKeyEvents` sets them (`frontend/ui/widget/menu.lua:984-992`):
