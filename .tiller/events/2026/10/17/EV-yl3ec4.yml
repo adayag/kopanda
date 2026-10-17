@@ -1,0 +1,14 @@
+id: EV-yl3ec4
+type: submit.tweak
+at: 2026-10-17T21:50:37.859032Z
+contributor: allen
+command: submit tweak TW-wny5j4
+targets:
+    - TW-wny5j4
+before:
+    status: check
+after:
+    pr: 45
+    status: in_review
+files:
+    - path: .tiller/tweaks/shared-book-open/tweak.yml
