@@ -1,0 +1,13 @@
+id: EV-564pb3
+type: check.task
+at: 2026-10-17T03:25:16.573158Z
+contributor: allen
+command: check task T-m6bm2e
+targets:
+    - T-m6bm2e
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/goldens/task.yml
