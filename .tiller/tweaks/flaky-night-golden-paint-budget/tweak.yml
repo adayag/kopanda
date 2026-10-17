@@ -1,9 +1,19 @@
 id: TW-8wduca
 key: tweaks/flaky-night-golden-paint-budget
 title: The night golden's paint budget fails intermittently in a full bin/check under load
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 attached_to: F-4jh8sz
 source: spec/emulator/night_golden_spec.lua#L85-L98
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:ed6d29cc50e7cc854e2a71fb29e11029f0b465c9
+        path: .tiller/tweaks/flaky-night-golden-paint-budget/tweak.md
+        observed_at: 2026-10-17T05:02:04.964644Z
+    commit:
+        kind: git_commit
+        value: git:d8ed975
+        observed_at: 2026-10-17T05:02:05.035653Z
