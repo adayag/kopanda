@@ -1,0 +1,16 @@
+id: EV-ji5708
+type: submit.task
+at: 2026-10-17T19:31:16.89424Z
+contributor: allen
+command: submit task T-512xrc
+targets:
+    - T-512xrc
+before:
+    status: check
+after:
+    review_ref:
+        branch: tiller/library/context-menu/goldens
+        head: git:4095da0
+    status: in_review
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/goldens/task.yml
