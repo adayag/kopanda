@@ -1,0 +1,13 @@
+id: EV-mz2kpr
+type: check.task
+at: 2026-10-17T03:17:16.606435Z
+contributor: allen
+command: check task T-le8x0f
+targets:
+    - T-le8x0f
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/bars/features/title-bar/tasks/file-browser/task.yml
