@@ -1,0 +1,13 @@
+id: EV-b6gi6d
+type: check.feature
+at: 2026-10-17T07:11:38.705336Z
+contributor: allen
+command: check feature F-rce9ko
+targets:
+    - F-rce9ko
+before:
+    status: active
+after:
+    status: active
+files:
+    - path: .tiller/epics/bars/features/quick-settings/feature.yml
