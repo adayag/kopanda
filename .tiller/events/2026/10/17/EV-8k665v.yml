@@ -1,0 +1,13 @@
+id: EV-8k665v
+type: claim.task
+at: 2026-10-17T18:45:51.530006Z
+contributor: allen
+command: claim task T-512xrc
+targets:
+    - T-512xrc
+before:
+    owner: ""
+after:
+    owner: allen
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/goldens/task.yml
