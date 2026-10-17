@@ -1,0 +1,13 @@
+id: EV-qx8yl7
+type: check.task
+at: 2026-10-17T17:30:04.744763Z
+contributor: allen
+command: check task T-1rl35j
+targets:
+    - T-1rl35j
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/epics/library/features/context-menu/tasks/book-sheet/task.yml

@@ -1,7 +1,7 @@
 id: T-1rl35j
 key: library/context-menu/book-sheet
 title: The book sheet over a library record, opened by a hold on a book in the library and on the one-series and one-author screens
-status: in_progress
+status: check
 blocked: false
 started: true
 owner: allen
@@ -17,3 +17,30 @@ accepted_against:
         value: git:febf828
         observed_at: 2026-10-17T16:43:29.355147Z
 branch: tiller/library/context-menu/book-sheet
+gates:
+    build:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T17:25:21.897761Z
+        against:
+            kind: git_commit
+            value: git:7659472
+            observed_at: 2026-10-17T17:25:21.897755Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/build-7659472-out-6daecb9c7045d154a0e024a928c340f88883f3f0117d70260828b9dd74ac4374.txt
+    tests:
+        required: true
+        kind: command
+        status: pass
+        run_by: allen
+        run_at: 2026-10-17T17:25:21.897761Z
+        against:
+            kind: git_commit
+            value: git:7659472
+            observed_at: 2026-10-17T17:25:21.897755Z
+        evidence:
+            - kind: command_output
+              ref: artifacts/tiller/gates/tests-7659472-out-0019dfbc034f8c4dbacf02bc18221f5dd373aa852e245294f97efdb14106473d.txt
