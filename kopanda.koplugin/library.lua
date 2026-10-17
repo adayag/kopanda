@@ -92,15 +92,12 @@ local function rebuild(library, dir, page)
     return true
 end
 
--- Shows dir at page (clamped to its pages) in place, its covers asked for after its first paint
--- (the last page's check dropped first). A failure is logged and leaves the page as it was.
+-- Shows dir at page (clamped to its pages) in place, its covers asked for after its first paint.
+-- The check in flight goes on: a request that starts a new batch replaces it, and its arrivals
+-- rebuild only the tiles the page shows. A failure is logged and leaves the page as it was.
 function Library:go(dir, page)
     if not rebuild(self, dir, page) then
         return
-    end
-    local ok, err = pcall(BookCovers.cancel)
-    if not ok then
-        logger.err("KoPanda: could not drop the library's cover check:", err)
     end
     self.covers_due = true
 end

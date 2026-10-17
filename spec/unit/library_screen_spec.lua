@@ -71,6 +71,25 @@ describe("the library window", function()
             assert.is_nil(Library.shown)
             assert.equals(fm, harness.top())
         end)
+
+        it("closes a library already shown before showing another, storing where the first was left", function()
+            local sub = fixture.folder("Sci-fi")
+            fixture.install({ [ROOT] = { folders = { sub } }, [sub.path] = { books = fixture.books(8, sub.path) } })
+            local first = fixture.show()
+            first:go(sub.path, 2)
+            local second = Library.show{ dir = ROOT }
+            local libraries = 0
+            for _, widget in ipairs(harness.stack()) do
+                if widget.name == "kopanda_library" then
+                    libraries = libraries + 1
+                end
+            end
+            assert.equals(1, libraries)
+            assert.is_false(UIManager:isWidgetShown(first))
+            assert.equals(second, Library.shown)
+            assert.is_true(UIManager:isWidgetShown(second))
+            assert.same({ dir = sub.path, page = 2 }, LibraryOrder.left())
+        end)
     end)
 
     describe("the header", function()
