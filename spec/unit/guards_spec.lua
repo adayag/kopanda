@@ -433,6 +433,21 @@ describe("KoPanda's guards", function()
             assert.same(value, State.get("kopanda_test_table"))
         end)
 
+        it("reports an empty table written without writing the file", function()
+            local State = require("state")
+            local write = util.writeToFile
+            local writes = 0
+            util.writeToFile = function(...)
+                writes = writes + 1
+                return write(...)
+            end
+            finally(function()
+                util.writeToFile = write
+            end)
+            assert.is_true(State.set_many({}))
+            assert.equals(0, writes)
+        end)
+
         it("refuses what it can't store as State.set does: a nil key to set, a non-table to "
             .. "set_many; false and logged, not raised", function()
             local State = require("state")

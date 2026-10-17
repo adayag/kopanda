@@ -1,0 +1,13 @@
+id: EV-ijqfh1
+type: start.chore
+at: 2026-10-17T17:31:43.380174Z
+contributor: allen
+command: start chore CH-au9w25
+targets:
+    - CH-au9w25
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/chores/stale-efficiency-docs/chore.yml

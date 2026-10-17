@@ -466,7 +466,7 @@ describe("library tiles", function()
 
         -- The cover's bitmap goes with the ImageWidget holding it, so a tile frees it and its
         -- icons through its children; the icons' masks stay in TintedIcon's cache.
-        it("frees its cover's bitmap and its icons' masks", function()
+        it("frees its cover's bitmap and lets go of its icons", function()
             local Books = package.loaded["books"]
             local ImageWidget = require("ui/widget/imagewidget")
             local TintedIcon = package.loaded["tinted_icon"]

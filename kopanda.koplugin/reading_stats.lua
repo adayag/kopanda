@@ -164,7 +164,9 @@ local function finish(numbers, now)
 end
 
 -- The numbers again, on a connection opened for a book's rate, when the memo holds them for an
--- older stamp or none: a home build after a Statistics write then opens the database once. They
+-- older stamp or none: a home build after a Statistics write then opens the database once when
+-- the files are settled. With no stamp, as in the build right after a book closes, nothing is
+-- refreshed, and read and seconds_per_page each open it. They
 -- are read for the latest date read, so the last numbers a busy database reads as stay that
 -- date's. A failure leaves them stale, for read to open again.
 local function refresh_numbers(conn, key)
