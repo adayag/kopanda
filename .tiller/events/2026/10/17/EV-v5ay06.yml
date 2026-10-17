@@ -1,0 +1,14 @@
+id: EV-v5ay06
+type: submit.bug
+at: 2026-10-17T21:50:34.633089Z
+contributor: allen
+command: submit bug B-fip6q6
+targets:
+    - B-fip6q6
+before:
+    status: check
+after:
+    pr: 45
+    status: in_review
+files:
+    - path: .tiller/bugs/library-prebuild-stale-and-wasted/bug.yml
