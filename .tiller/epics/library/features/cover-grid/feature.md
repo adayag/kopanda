@@ -221,13 +221,13 @@ comment, every colour an existing palette role, by `looks_spec.lua`'s rules (`sp
 | `library.header.sort_fill_color`, `status_fill_color` | false, false | `paper`, `pink` (:25-26) |
 | `library.grid.padding_top`, `side`; `row_gap`, `column_gap` | 22, 40; 22, 20 (:30) | 22, 40; 22, 22 (:30) |
 | `library.grid.cover_h`; `strip_gap` (cover to strip), `title_gap` (strip to title) | 218; 10, 8 (:32, :43, :46) | 200; 12, 8 (:32, :43, :46) |
-| `library.cover.outline_width`, `radius`, `shadow` x, y | 0, 3, 2, 3 (:43) | 3, 0, 5, 5 (:43) |
+| `library.cover.outline_width`, `radius`, `shadow` x, y | 1, 3, 2, 3 (:43; owner: the width 1 is the hairline the cover takes at night and in grey, on the `outline` role, false by day, so the day cover stays borderless as GridA draws it) | 3, 0, 5, 5 (:43) |
 | `library.strip.height`, `outline_width` | 4, 0 (:46) | 14, 2 (:46) |
 | `library.folder.fill_color`, `outline_width`, `icon_size` | `paper`, 1, 36 (:32-33) | `pink`, 3, 44 (:32-33) |
 | `library.folder.padding` x, y; `count_gap` | 14, 16; 4 (:32, :34) | 12, 14; 4 (:32, :34) |
 | `library.cover.padding` x, y (the placeholder's) | 12, 16 (:43) | 10, 14 (:43) |
 | `library.badge.size`, `outline_width`, `icon_size`, `inset`, `align` | 30, 1, 16, 8, `"bottom"` (:65-67) | 38, 3, 20, −12, `"top"` (:65-67) |
-| `library.not_downloaded.fill_color`, `outline_width`, `padding` x, y | `paper`, 0, 6, 2 (lead: on the cover, D13; the board's plain text, :73, would sit on the artwork) | `pink`, 2, 6, 1 (:73) |
+| `library.not_downloaded.fill_color`, `outline_width`, `padding` x, y | `paper`, 0, 4, 2 (lead: on the cover, D13; the board's plain text, :73, would sit on the artwork; owner: x 4, not 6, so the label fits beside the badge) | `pink`, 2, 6, 1 (:73) |
 | `library.pager.button_w`, `button_h`, `gap`, `bottom`, `outline_width` | 44, 32, 22, 16, 0 (:85-88) | 44, 32, 18, 16, 2 (:85-88) |
 | `library.pager.prev_fill_color`, `next_fill_color`, `dead_color` | false, false, `hairline` (:86-88) | `paper`, `mustard`, false (:86-88) |
 
@@ -235,7 +235,7 @@ Type parts (face, size, uppercase, tracking, line height, colour): `library_coun
 caps 0.14 `muted`, GridA:21; Diner `accent` 24, Main:21), `library_title` (Editorial `display` 34, GridA:22;
 Diner `display` 40 −0.01, Main:22), `library_picker` (Editorial `strong` 11 caps 0.12 `text`, GridA:25; Diner
 `display` 11 caps 0.08, Main:25), `tile_title` (Editorial `strong` 12, GridA:47; Diner `display` 12 caps 0.04,
-Main:47), `folder_count`, `folder_reading` (GridA:35-36, Main:35-36), `not_downloaded` (GridA:73, Main:73),
+Main:47), `folder_count`, `folder_reading` (GridA:35-36, Main:35-36), `not_downloaded` (GridA:73, Main:73; owner: Editorial's untracked, as GridA's 0.14 does not fit beside the badge),
 `pager_label` (GridA:87, Main:87), and `tile_cover_title`, the placeholder's title at grid scale
 (Editorial `display` 18, GridA:44, :51; Diner `display` 17, Main:44, :51, the display face standing in for
 the board's Georgia as `cover_title` does). `library.badge.align` uses the `top`/`bottom` values
