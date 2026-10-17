@@ -1,0 +1,13 @@
+id: EV-s8fx4w
+type: start.bug
+at: 2026-10-17T07:21:38.04147Z
+contributor: allen
+command: start bug B-2o8ya3
+targets:
+    - B-2o8ya3
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/bugs/prebuild-stale-and-wasted/bug.yml

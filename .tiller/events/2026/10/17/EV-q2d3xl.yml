@@ -1,0 +1,11 @@
+id: EV-q2d3xl
+type: claim.bug
+at: 2026-10-17T07:21:37.957371Z
+contributor: allen
+command: claim bug bugs/prebuild-stale-and-wasted
+targets:
+    - B-2o8ya3
+after:
+    owner: allen
+files:
+    - path: .tiller/bugs/prebuild-stale-and-wasted/bug.yml
