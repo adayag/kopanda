@@ -1,0 +1,13 @@
+id: EV-3j3yb5
+type: check.bug
+at: 2026-10-17T04:57:07.920411Z
+contributor: allen
+command: check bug B-0wpe5u
+targets:
+    - B-0wpe5u
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/bugs/swatch-settle-before-paint/bug.yml
