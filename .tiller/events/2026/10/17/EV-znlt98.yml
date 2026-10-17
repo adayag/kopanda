@@ -1,0 +1,13 @@
+id: EV-znlt98
+type: start.tweak
+at: 2026-10-17T21:12:01.58001Z
+contributor: allen
+command: start tweak TW-43jvrb
+targets:
+    - TW-43jvrb
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/shelf-screens-keep-rows/tweak.yml
