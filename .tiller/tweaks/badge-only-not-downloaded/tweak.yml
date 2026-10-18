@@ -1,7 +1,7 @@
 id: TW-iacy1n
 key: tweaks/badge-only-not-downloaded
 title: A book not downloaded shows only the download badge, no Not downloaded chip
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         observed_at: 2026-10-18T02:41:23.578866Z
 branch: tiller/tweaks/badge-only-not-downloaded
 pr: 48
+done_basis: ancestry
 gates:
     build:
         required: true

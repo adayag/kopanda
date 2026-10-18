@@ -1,0 +1,14 @@
+id: EV-itok13
+type: sync.tweak
+at: 2026-10-18T03:09:41.642609Z
+contributor: allen
+command: sync tweak TW-iacy1n
+targets:
+    - TW-iacy1n
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/tweaks/badge-only-not-downloaded/tweak.yml
