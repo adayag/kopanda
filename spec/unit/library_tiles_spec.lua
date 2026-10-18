@@ -533,7 +533,9 @@ describe("library tiles", function()
             end)
         end)
 
-        it("puts the badge and the Not downloaded chip on a path-less record's cover only", function()
+        -- The badge is a book not downloaded's one sign: no Not downloaded chip on the cover's foot
+        -- (tweaks/badge-only-not-downloaded).
+        it("puts the badge on a path-less record's cover only, and no chip", function()
             covers()
             harness.at_colorsoft(function()
                 for _, id in ipairs({ "diner", "editorial" }) do
@@ -549,15 +551,9 @@ describe("library tiles", function()
 
                     local built = LibraryTiles.book(remote(), { status = "new" }, box, ctx)
                     assert.is_table(built.badge, id)
-                    assert.is_table(built.chip, id)
-                    assert.is_true(has_text(built.chip, "NOT DOWNLOADED"), id)
-                    local badge, chip = built:place(built.badge), built:place(built.chip)
-                    local chip_size = built.chip:getSize()
-                    -- The chip sits on the cover's foot, left of the badge's corner.
-                    assert.is_true(chip.y + chip_size.h <= box.cover_h, id .. " chip below the cover")
-                    assert.is_true(chip.y + chip_size.h >= box.cover_h - scale(40), id .. " chip off the foot")
-                    assert.is_true(chip.x + chip_size.w <= badge.x or chip.y + chip_size.h <= badge.y
-                        or chip.y >= badge.y + size, id .. " chip under the badge")
+                    assert.is_nil(built.chip, id)
+                    assert.is_false(has_text(built, "NOT DOWNLOADED"), id)
+                    local badge = built:place(built.badge)
                     if id == "diner" then
                         -- Overhanging the cover's top right corner (Main.dc.html:66).
                         assert.is_true(badge.x + size > box.cover_w, id .. " badge not past the right edge")
@@ -585,41 +581,15 @@ describe("library tiles", function()
                         end
                     end
                     assert.is_true(inked > 0, id .. " the badge has no download mark")
-                    -- The chip's fill (Diner pink, Editorial paper) at its middle's left padding.
-                    assert.is_true(near(role(ctx, ctx.look.library.not_downloaded.fill_color),
-                        at(chip.x + scale(ctx.look.library.not_downloaded.outline_width) + 1,
-                            chip.y + math.floor(chip_size.h / 2))), id .. " the chip's fill")
                     bb:free()
                     built:free()
                 end
             end)
         end)
 
-        -- A tracked line too wide for its room falls back to one TextWidget, untracked and cut with
-        -- KOReader's ellipsis (typeset.lua), which keeps its full text but draws "NOT DOWNLOAD…"; so
-        -- the chip's line must be as wide as the label set in its type with room to spare.
-        it("sets Not downloaded in full, tracked as its type says, on both profiles in both looks", function()
-            covers()
-            local Typeset = require("typeset")
-            each_profile(function(where)
-                for _, id in ipairs({ "diner", "editorial" }) do
-                    local ctx = ctx_for(id)
-                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx)
-                    local built = LibraryTiles.book(remote(), { status = "new" }, box, ctx)
-                    local label = id .. " at " .. where
-                    assert.is_true(has_text(built.chip, "NOT DOWNLOADED"), label)
-                    local free = Typeset.line(ctx.look.type.not_downloaded, "Not downloaded",
-                        10 * Screen:getWidth(), ctx)
-                    assert.equals(free:getSize().w, built.chip[1]:getSize().w, label .. ": the label is cut")
-                    free:free()
-                    built:free()
-                end
-            end)
-        end)
-
-        -- D5, D19: "Up next" on the cover's foot where Not downloaded goes; on a path-less record it
-        -- replaces that chip and the badge stays. The tile keeps its height.
-        it("puts the Up next chip on the cover's foot, in place of Not downloaded, the badge kept", function()
+        -- D5, D19: "Up next" on the cover's foot, at the same place on a path-less record, whose badge
+        -- stays. The tile keeps its height.
+        it("puts the Up next chip on the cover's foot, on a path-less record too, the badge kept", function()
             covers()
             each_profile(function(where)
                 for _, id in ipairs({ "diner", "editorial" }) do
@@ -647,16 +617,13 @@ describe("library tiles", function()
                     bb:free()
                     built:free()
 
-                    local remote_plain = LibraryTiles.book(remote(), { status = "new" }, box, ctx)
-                    local nd_place = remote_plain:place(remote_plain.chip)
-                    remote_plain:free()
                     built = LibraryTiles.book(remote(), { status = "new" }, box, ctx, { label = "Up next" })
                     assert.equals(plain_h, built:getSize().h, label .. " path-less")
                     assert.is_table(built.badge, label .. " path-less badge")
                     assert.is_true(has_text(built.chip, "UP NEXT"), label .. " path-less chip")
                     assert.is_false(has_text(built, "NOT DOWNLOADED"), label .. " path-less")
                     local up = built:place(built.chip)
-                    assert.equals(nd_place.x, up.x, label .. " at Not downloaded's place")
+                    assert.same(chip, up, label .. " at the downloaded record's place")
                     local badge, size = built:place(built.badge), built.badge:getSize().w
                     local up_size = built.chip:getSize()
                     assert.is_true(up.x + up_size.w <= badge.x or up.y + up_size.h <= badge.y
@@ -794,7 +761,7 @@ describe("library tiles", function()
             harness.at_colorsoft(function()
                 local ctx = ctx_for("diner", "night")
                 local look = ctx.look
-                for _, part in ipairs({ "folder_count", "folder_reading", "not_downloaded" }) do
+                for _, part in ipairs({ "folder_count", "folder_reading" }) do
                     assert.equals("on_accent", look.type[part].color, part)
                 end
                 assert.equals("on_accent", look.library.folder.icon_color)

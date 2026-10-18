@@ -490,10 +490,6 @@ return {
         folder_reading = {
             face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
         },
-        -- "Not downloaded" on its pink chip (Main.dc.html:73, weight 800).
-        not_downloaded = {
-            face = "display", size = 10, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
-        },
         -- "Page 1 of 24" between the pager's boxes (Main.dc.html:87, weight 800).
         pager_label = {
             face = "display", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
@@ -719,9 +715,9 @@ return {
             inset = -12, -- overhanging the corner (Main.dc.html:66, right: -12px; top: -12px)
             align = "top", -- Main.dc.html:66
         },
+        -- The board's Not downloaded chip, gone (tweaks/badge-only-not-downloaded); its padding and
+        -- outline colour stay as the one-author grid's Up next chip on the cover (series-and-authors D5).
         not_downloaded = {
-            fill_color = "pink", -- Main.dc.html:73
-            outline_width = 2, -- Main.dc.html:73
             outline_color = "outline", -- Main.dc.html:73
             padding = { x = 6, y = 1 }, -- Main.dc.html:73
         },
@@ -792,7 +788,6 @@ return {
             finished_fill_color = "teal", -- SeriesC.dc.html:76
             not_started_fill_color = "paper", -- SeriesC.dc.html:88
             up_next_fill_color = "paper", -- SeriesBooksC.dc.html:49
-            not_downloaded_fill_color = "pink", -- SeriesBooksC.dc.html:62
         },
         books = {
             padding_top = 24, -- SeriesBooksC.dc.html:32

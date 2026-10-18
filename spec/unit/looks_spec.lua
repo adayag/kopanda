@@ -591,8 +591,7 @@ describe("looks", function()
                     icon_color = "on_accent", padding = { x = 12, y = 14 }, count_gap = 4 },
                 badge = { size = 38, outline_width = 3, outline_color = "outline", fill_color = "paper",
                     icon_size = 20, icon_color = "ink", inset = -12, align = "top" },
-                not_downloaded = { fill_color = "pink", outline_width = 2, outline_color = "outline",
-                    padding = { x = 6, y = 1 } },
+                not_downloaded = { outline_color = "outline", padding = { x = 6, y = 1 } },
                 pager = { button_w = 44, button_h = 32, gap = 18, bottom = 16, outline_width = 2,
                     outline_color = "outline", prev_fill_color = "paper", next_fill_color = "mustard",
                     dead_color = false, prev_icon_color = "ink", next_icon_color = "on_accent",
@@ -616,9 +615,8 @@ describe("looks", function()
                     icon_color = "ink", padding = { x = 14, y = 16 }, count_gap = 4 },
                 badge = { size = 30, outline_width = 1, outline_color = "ink", fill_color = "paper",
                     icon_size = 16, icon_color = "ink", inset = 8, align = "bottom" },
-                -- x 4, not 6: the owner's tightening so "Not downloaded" fits beside the badge.
-                not_downloaded = { fill_color = "paper", outline_width = 0, outline_color = false,
-                    padding = { x = 4, y = 2 } },
+                -- x 4, not 6: the owner's tightening so "Not downloaded" fit beside the badge.
+                not_downloaded = { outline_color = false, padding = { x = 4, y = 2 } },
                 pager = { button_w = 44, button_h = 32, gap = 22, bottom = 16, outline_width = 0,
                     outline_color = false, prev_fill_color = false, next_fill_color = false,
                     dead_color = "hairline", prev_icon_color = "ink", next_icon_color = "ink",
@@ -636,7 +634,6 @@ describe("looks", function()
                 tile_cover_title = { "display", 17, false, 0, 0.1, "on_cover" },
                 folder_count = { "accent", 26, false, 0, 0, "on_accent" },
                 folder_reading = { "display", 11, true, 0.08, 0, "on_accent" },
-                not_downloaded = { "display", 10, true, 0.08, 0, "on_accent" },
                 pager_label = { "display", 12, true, 0.08, 0, "ink" },
             },
             editorial = {
@@ -648,8 +645,6 @@ describe("looks", function()
                 tile_cover_title = { "display", 18, false, 0, 0.1, "on_cover" },
                 folder_count = { "display", 22, false, 0, 0.05, "ink" },
                 folder_reading = { "text", 11, true, 0.14, 0, "muted" },
-                -- Untracked, not 0.14: the owner's tightening, as the chip's padding above.
-                not_downloaded = { "text", 10, true, 0, 0, "muted" },
                 pager_label = { "text", 11, true, 0.14, 0, "muted" },
             },
         }
@@ -751,8 +746,7 @@ describe("looks", function()
                 stack = { cover_w = 38, cover_h = 56, offset_x = 10, offset_y = 2, outline_width = 2,
                     outline_color = "outline" },
                 chip = { padding = { x = 7, y = 1 }, outline_width = 2, under_way_fill_color = "mustard",
-                    finished_fill_color = "teal", not_started_fill_color = "paper", up_next_fill_color = "paper",
-                    not_downloaded_fill_color = "pink" },
+                    finished_fill_color = "teal", not_started_fill_color = "paper", up_next_fill_color = "paper" },
                 books = { padding_top = 24, row_gap = 18 },
                 book = { padding = { x = 16, y = 14 }, index_w = 40, cover_w = 64, cover_h = 96,
                     cover_outline_width = 2, line_gap = 6,
@@ -778,8 +772,7 @@ describe("looks", function()
                 stack = { cover_w = 38, cover_h = 56, offset_x = 10, offset_y = 2, outline_width = 1,
                     outline_color = "paper" },
                 chip = { padding = { x = 0, y = 0 }, outline_width = 0, under_way_fill_color = false,
-                    finished_fill_color = false, not_started_fill_color = false, up_next_fill_color = false,
-                    not_downloaded_fill_color = false },
+                    finished_fill_color = false, not_started_fill_color = false, up_next_fill_color = false },
                 books = { padding_top = 24, row_gap = 0 },
                 book = { padding = { x = 0, y = 14 }, index_w = 40, cover_w = 64, cover_h = 96,
                     cover_outline_width = 0, line_gap = 6,

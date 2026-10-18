@@ -460,12 +460,6 @@ return {
         folder_reading = {
             face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted",
         },
-        -- "Not downloaded" (GridA.dc.html:73), now on its paper chip on the cover (cover-grid D13).
-        -- Untracked: the owner's tightening so the label fits beside the badge on both profiles
-        -- (board tracking 0.14).
-        not_downloaded = {
-            face = "text", size = 10, uppercase = true, tracking = 0, line_height = 0, color = "muted",
-        },
         -- "1 / 24" between the pager's arrows (GridA.dc.html:85, :87).
         pager_label = { face = "text", size = 11, uppercase = true, tracking = 0.14, line_height = 0, color = "muted" },
         -- The series and authors screens' parts (AuthorBooksA.dc.html and GridA.dc.html under
@@ -688,13 +682,13 @@ return {
             inset = 8, -- inside the corner (GridA.dc.html:66, right: 8px; bottom: 8px)
             align = "bottom", -- GridA.dc.html:66
         },
+        -- The Not downloaded chip, gone (tweaks/badge-only-not-downloaded); its padding and outline
+        -- colour stay as the one-author grid's Up next chip on the cover (series-and-authors D5).
         not_downloaded = {
             -- No board: the board's plain text (GridA.dc.html:73) would sit on the artwork, so a paper
             -- chip on the cover (cover-grid D13).
-            fill_color = "paper",
-            outline_width = 0,
             outline_color = false,
-            -- No board: as above. x is the owner's tightening from 6 so "Not downloaded" fits beside the
+            -- No board: as above. x is the owner's tightening from 6 so "Not downloaded" fit beside the
             -- badge on both profiles.
             padding = { x = 4, y = 2 },
         },
@@ -762,7 +756,6 @@ return {
             finished_fill_color = false, -- lead: small caps, as GridA.dc.html:73
             not_started_fill_color = false, -- lead: small caps, as GridA.dc.html:73
             up_next_fill_color = false, -- lead: small caps, as GridA.dc.html:73
-            not_downloaded_fill_color = false, -- lead: small caps, as GridA.dc.html:73
         },
         books = {
             padding_top = 24, -- lead: by analogy with SeriesBooksC.dc.html:32
@@ -810,8 +803,8 @@ return {
             cover_h = 198, -- D14: board 206 (AuthorBooksA.dc.html:32), so two rows fit
         },
         up_next = {
-            fill_color = "paper", -- lead: as the library's not-downloaded chip (library.not_downloaded)
-            outline_width = 0, -- lead: as the library's not-downloaded chip (library.not_downloaded)
+            fill_color = "paper", -- lead: as the Not downloaded chip had it (cover-grid D13)
+            outline_width = 0, -- lead: as the Not downloaded chip had it (cover-grid D13)
         },
     },
 }
