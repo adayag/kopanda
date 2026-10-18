@@ -412,6 +412,9 @@ local function arrive(window, arrived, alive)
         for _, record in ipairs(arrived) do
             fresh[record.id] = Books.get(record.id) or record
             drawn = drawn or window.drawn[record.id] or false
+            if window.downloads then
+                window.downloads[record.id] = nil
+            end
         end
         local records = {}
         for i, record in ipairs(window.records) do
@@ -625,7 +628,8 @@ end
 -- series_index it was listed by: cwngsync's broadcast had CoverBrowser delete the row
 -- (plugins/coverbrowser.koplugin/main.lua:800-803), and the series and authors come only from it
 -- (books.lua record()), so the book stays in its place and the page with it until the row's
--- arrival re-reads it (LibraryChrome.request_records); a book whose row is back is listed by it.
+-- arrival re-reads it (LibraryChrome.request_records); a book whose row is back is listed by it and
+-- forgotten, as the arrival forgets it, so a later deletion of the row doesn't list it as it was.
 -- Returns records.
 function LibraryChrome.keep_downloaded(window, records)
     local downloads = window.downloads or {}
@@ -634,6 +638,8 @@ function LibraryChrome.keep_downloaded(window, records)
         if listed and record.cover == "missing" then
             record.title, record.authors = listed.title, listed.authors
             record.series, record.series_index = listed.series, listed.series_index
+        elseif listed then
+            downloads[record.id] = nil
         end
     end
     return records

@@ -361,9 +361,11 @@ function AuthorsScreen:refresh()
         return
     end
     self.kept = nil
-    local ok, records = pcall(Books.all)
+    local ok, records = pcall(function()
+        return LibraryChrome.keep_downloaded(self, Books.all())
+    end)
     if ok then
-        self.records = LibraryChrome.keep_downloaded(self, records)
+        self.records = records
     else
         logger.err("KoPanda: could not re-read the authors' books:", records)
     end
