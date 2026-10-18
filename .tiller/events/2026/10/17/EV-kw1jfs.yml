@@ -1,0 +1,17 @@
+id: EV-kw1jfs
+type: start.task
+at: 2026-10-17T21:42:01.551415Z
+contributor: allen
+command: start task T-3cuakg
+targets:
+    - T-3cuakg
+before:
+    status: ready
+after:
+    aggregate_branch: tiller/reviews/features/library/cwng-placeholders
+    branch: tiller/library/cwng-placeholders/placeholders
+    started: true
+    status: in_progress
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/placeholders/task.yml
+    - path: .tiller/epics/library/features/cwng-placeholders/feature.yml

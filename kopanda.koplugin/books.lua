@@ -1,10 +1,12 @@
 -- The book records: every book KoPanda knows, by an id rather than a path. Books with a file are
 -- listed from KOReader's home folder with the file browser's own filters, their metadata from
--- CoverBrowser's cache, then the sidecar, then the file name; books without one come from the
+-- CoverBrowser's cache, then the sidecar, then the file name, and flagged placeholder when cwngsync
+-- records the file as a book not downloaded yet (cloud_books.lua); books without one come from the
 -- sources added here. Read status and progress are read on request, from the sidecar or the
 -- source. Only reads: no extraction is asked, and no sidecar, settings file or CoverBrowser row
 -- is written. Every read is caught; a failure is logged and that source reads as absent.
 -- Module state: the sources, and the progress memo of the sidecars read.
+local CloudBooks = require("cloud_books")
 local DocSettings = require("docsettings")
 local ffiutil = require("ffi/util")
 local lfs = require("libs/libkoreader-lfs")
@@ -120,8 +122,9 @@ end
 -- The record of the file at path, from one getBookInfo call, then the sidecar, then the file name.
 -- The sidecar's doc_props are read always with always_sidecar, else only when the row gives no
 -- title or no authors, by props_of(path), sidecar_props when not given; CoverBrowser's fields come
--- first either way, so the record is the same.
-local function record(path, always_sidecar, props_of)
+-- first either way, so the record is the same. placeholder = true when CloudBooks.is(index, path),
+-- index being CloudBooks.index()'s, and left out otherwise.
+local function record(path, always_sidecar, props_of, index)
     local info, enabled = row(path)
     local title = info and text(info.title)
     local authors = names(info and info.authors)
@@ -143,6 +146,7 @@ local function record(path, always_sidecar, props_of)
         series = info and text(info.series),
         series_index = info and tonumber(info.series_index),
         cover = cover_state(info, enabled),
+        placeholder = CloudBooks.is(index, path) or nil,
     }
 end
 
@@ -260,9 +264,9 @@ end
 function Books.folder(dir)
     dir = trimmed(dir)
     local folders, files = scan(dir)
-    local books = {}
+    local books, index = {}, CloudBooks.index()
     for _, file in ipairs(files) do
-        books[#books + 1] = record(file.path, false)
+        books[#books + 1] = record(file.path, false, nil, index)
     end
     if same_dir(dir, trimmed(home_folder())) then
         for _, book in ipairs(all_source_books()) do
@@ -297,7 +301,7 @@ end
 -- Every book under the library root: each folder's books, then its sub-folders in turn, then the
 -- sources' books. Each folder is visited once by its realpath and each id listed once.
 function Books.all()
-    local list, visited, seen = {}, {}, {}
+    local list, visited, seen, index = {}, {}, {}, CloudBooks.index()
     local function add(book)
         if not seen[book.id] then
             seen[book.id] = true
@@ -312,7 +316,7 @@ function Books.all()
         visited[real] = true
         local folders, files = scan(dir)
         for _, file in ipairs(files) do
-            add(record(file.path, false))
+            add(record(file.path, false, nil, index))
         end
         for _, folder in ipairs(folders) do
             walk(folder.path)
@@ -331,7 +335,7 @@ function Books.for_path(path)
     if type(path) ~= "string" or lfs.attributes(path, "mode") ~= "file" then
         return nil
     end
-    return record(path, true)
+    return record(path, true, nil, CloudBooks.index())
 end
 
 -- The record with id, or nil: a file's by its path, a source's from that source.
@@ -462,7 +466,7 @@ function Books.with_progress(path)
     local read = sidecar_read(path)
     local book = record(path, true, function()
         return read.props
-    end)
+    end, CloudBooks.index())
     return book, copy(read.progress)
 end
 

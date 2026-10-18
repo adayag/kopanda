@@ -8,8 +8,10 @@
 --   action_at(pos), the action a tap on its own parts runs, or nil; back(), the back control's tap;
 --   hit(x, y), what lies at a point on the window of its class shown, which a hold's sheet is for;
 --   on_open(view, page), run as Window:open's book open goes ahead; refresh(), its re-list;
---   request_covers(), after a page's first paint; closing(), its part of the close. A window listing
---   the whole library asks for its covers through LibraryChrome.request_records.
+--   request_covers(), after a page's first paint; downloaded(record), once cwngsync downloaded that
+--   book over its placeholder (default: the re-list, every record's cover asked for again);
+--   closing(), its part of the close. A window listing the whole library asks for its covers
+--   through LibraryChrome.request_records.
 -- Module state: LibraryChrome.shown, the window on screen or nil. A window's class mirrors it in a
 -- slot of the same name (Library.shown) while the window shown is one of its own.
 -- LibraryChrome.return_to, { screen = "series" | "authors", view, page } a book was opened from the
@@ -615,6 +617,23 @@ function Window:refresh()
     if LibraryChrome.shown == self then
         rebuild(self, self:view(), self.page)
     end
+end
+
+-- After cwngsync downloaded _record's book over its placeholder (cwng-placeholders D17): the view
+-- re-listed (window:refresh()), then every one of window.records' covers asked for again after the
+-- paint (LibraryChrome.request_records), the once-per-window mark dropped. BookCovers asks only for
+-- a file not asked in this process whose row wants a cover, so on a page of cached covers that is
+-- the downloaded book alone, its cover just forgotten. The re-list stands for the one cwngsync's
+-- broadcasts left due (refresh_soon), which is dropped. Nothing while the window isn't the one
+-- shown.
+function Window:downloaded(_record)
+    if LibraryChrome.shown ~= self then
+        return
+    end
+    self:refresh()
+    self.stale = nil
+    self.records_asked = nil
+    self.covers_due = true
 end
 
 -- Marks the window stale and refreshes it once from the next tick, however many events marked it
