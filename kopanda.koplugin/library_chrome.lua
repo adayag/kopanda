@@ -11,7 +11,8 @@
 --   request_covers(), after a page's first paint; downloaded(record), once cwngsync downloaded that
 --   book over its placeholder (default: the re-list, every record's cover asked for again);
 --   closing(), its part of the close. A window listing the whole library asks for its covers
---   through LibraryChrome.request_records.
+--   through LibraryChrome.request_records, and passes its re-list's records through
+--   LibraryChrome.keep_downloaded.
 -- Module state: LibraryChrome.shown, the window on screen or nil. A window's class mirrors it in a
 -- slot of the same name (Library.shown) while the window shown is one of its own.
 -- LibraryChrome.return_to, { screen = "series" | "authors", view, page } a book was opened from the
@@ -619,17 +620,39 @@ function Window:refresh()
     end
 end
 
--- After cwngsync downloaded _record's book over its placeholder (cwng-placeholders D17): the view
--- re-listed (window:refresh()), then every one of window.records' covers asked for again after the
--- paint (LibraryChrome.request_records), the once-per-window mark dropped. BookCovers asks only for
--- a file not asked in this process whose row wants a cover, so on a page of cached covers that is
--- the downloaded book alone, its cover just forgotten. The re-list stands for the one cwngsync's
+-- records, a re-list of window's books, each book window:downloaded was given whose CoverBrowser row
+-- hasn't come back (its record's cover "missing") keeping the title, authors, series and
+-- series_index it was listed by: cwngsync's broadcast had CoverBrowser delete the row
+-- (plugins/coverbrowser.koplugin/main.lua:800-803), and the series and authors come only from it
+-- (books.lua record()), so the book stays in its place and the page with it until the row's
+-- arrival re-reads it (LibraryChrome.request_records); a book whose row is back is listed by it.
+-- Returns records.
+function LibraryChrome.keep_downloaded(window, records)
+    local downloads = window.downloads or {}
+    for _, record in ipairs(records) do
+        local listed = downloads[record.id]
+        if listed and record.cover == "missing" then
+            record.title, record.authors = listed.title, listed.authors
+            record.series, record.series_index = listed.series, listed.series_index
+        end
+    end
+    return records
+end
+
+-- After cwngsync downloaded record's book over its placeholder (cwng-placeholders D17): the view
+-- re-listed (window:refresh()), record kept in its place until its row is back
+-- (LibraryChrome.keep_downloaded), then every one of window.records' covers asked for again after
+-- the paint (LibraryChrome.request_records), the once-per-window mark dropped. BookCovers asks only
+-- for a file not asked in this process whose row wants a cover, so on a page of cached covers that
+-- is the downloaded book alone, its cover just forgotten. The re-list stands for the one cwngsync's
 -- broadcasts left due (refresh_soon), which is dropped. Nothing while the window isn't the one
 -- shown.
-function Window:downloaded(_record)
+function Window:downloaded(record)
     if LibraryChrome.shown ~= self then
         return
     end
+    self.downloads = self.downloads or {}
+    self.downloads[record.id] = record
     self:refresh()
     self.stale = nil
     self.records_asked = nil

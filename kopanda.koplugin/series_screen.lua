@@ -305,8 +305,9 @@ function SeriesScreen:request_covers()
     LibraryChrome.request_records(self)
 end
 
--- The metadata events and the sheets re-list: the kept sort dropped, the books read again, then the
--- view rebuilt. A failed read is logged and the view rebuilt from the books as they were.
+-- The metadata events and the sheets re-list: the kept sort dropped, the books read again (a book
+-- just downloaded kept in its place, LibraryChrome.keep_downloaded), then the view rebuilt. A
+-- failed read is logged and the view rebuilt from the books as they were.
 function SeriesScreen:refresh()
     if SeriesScreen.shown ~= self then
         return
@@ -314,7 +315,7 @@ function SeriesScreen:refresh()
     self.kept = nil
     local ok, records = pcall(Books.all)
     if ok then
-        self.records = records
+        self.records = LibraryChrome.keep_downloaded(self, records)
     else
         logger.err("KoPanda: could not re-read the series' books:", records)
     end

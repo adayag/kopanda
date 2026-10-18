@@ -554,6 +554,62 @@ describe("Download on a placeholder's sheet", function()
             end)
         end
 
+        -- Books 9 to 20 written beside the eight, so a page of the kind is full; then, with k the
+        -- parts of its first page, every book past k + 1 removed and the held one made book k + 1,
+        -- the last, alone on the last page.
+        local function alone_on_last_page(kind)
+            for i = COUNT + 1, 20 do
+                write(path_of(i), "book " .. i)
+                bim.rows[path_of(i)] = row_of(i)
+            end
+            local first = WINDOWS[kind].show(1)
+            harness.tick(3)
+            local k = #first[WINDOWS[kind].parts]
+            assert.truthy(first.pages > 1 and k < 20, "a page of the " .. kind .. " holds every book")
+            for i = k + 2, 20 do
+                os.remove(path_of(i))
+                bim.rows[path_of(i)] = nil
+            end
+            held = path_of(k + 1)
+        end
+
+        for _, kind in ipairs({ "one series", "one author" }) do
+            it("keeps the book listed on every paint of the " .. kind .. " until its row returns, alone on "
+                .. "the last page, and ends on that page", function()
+                alone_on_last_page(kind)
+                local stub = cwngsync()
+                stub.openLibraryPlaceholder = cwngsync_download
+                local window = show_held(kind)
+                local page = window.page
+                assert.equals(window.pages, page)
+                assert.equals(1, #window[WINDOWS[kind].parts])
+                hold(window, kind)
+                local painted = {}
+                local paint = window.paintTo
+                window.paintTo = function(...)
+                    paint(...)
+                    painted[#painted + 1] = { page = window.page, listed = part_of(window, kind) ~= nil }
+                end
+                tap("Download")
+                harness.tick(3)
+                assert.same({ { held } }, bim.extracted)
+                assert.truthy(#painted >= 2, "the " .. kind .. " painted only " .. #painted .. " times")
+                for i, seen in ipairs(painted) do
+                    assert.same({ page = page, listed = true }, seen, "paint " .. i)
+                end
+                assert.equals(page, window.page)
+                local part = part_of(window, kind)
+                assert.is_not_nil(part)
+                assert.is_nil(part.record.placeholder)
+                assert.equals("Held " .. held:match("held%-(%d+)"), part.record.title)
+                -- Its row back, a re-list lists the book by the row.
+                bim.rows[held].title = "The real book"
+                window:refresh()
+                assert.equals("The real book", part_of(window, kind).record.title)
+                assert.same({}, logged)
+            end)
+        end
+
         it("does nothing when the window it was held on is no longer shown", function()
             local library, _, callback = tapped("library")
             local library_refreshes = count_refreshes(library)
