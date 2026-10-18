@@ -1,0 +1,13 @@
+id: EV-llcc8m
+type: start.tweak
+at: 2026-10-18T02:41:26.797015Z
+contributor: allen
+command: start tweak TW-iacy1n
+targets:
+    - TW-iacy1n
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/tweaks/badge-only-not-downloaded/tweak.yml

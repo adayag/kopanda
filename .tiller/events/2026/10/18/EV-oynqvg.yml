@@ -1,0 +1,11 @@
+id: EV-oynqvg
+type: claim.tweak
+at: 2026-10-18T02:41:26.688521Z
+contributor: allen
+command: claim tweak tweaks/badge-only-not-downloaded
+targets:
+    - TW-iacy1n
+after:
+    owner: allen
+files:
+    - path: .tiller/tweaks/badge-only-not-downloaded/tweak.yml

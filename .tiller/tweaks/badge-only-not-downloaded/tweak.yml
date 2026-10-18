@@ -1,9 +1,10 @@
 id: TW-iacy1n
 key: tweaks/badge-only-not-downloaded
 title: A book not downloaded shows only the download badge, no Not downloaded chip
-status: ready
+status: in_progress
 blocked: false
-started: false
+started: true
+owner: allen
 proposed_by: allen
 attached_to: F-2nt0fx
 accepted_against:
@@ -16,3 +17,4 @@ accepted_against:
         kind: git_commit
         value: git:be6d270
         observed_at: 2026-10-18T02:41:23.578866Z
+branch: tiller/tweaks/badge-only-not-downloaded
