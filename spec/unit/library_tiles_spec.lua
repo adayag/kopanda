@@ -1,6 +1,6 @@
 -- LibraryTiles (cover-grid C4, C5): the grid's geometry and the two-row fit at the Colorsoft and
 -- the Paperwhite, and one tile of each kind: a book's cover or placeholder, its progress strip, its
--- one-line title, the not-downloaded badge and chip, and a folder's art and counts. Every case runs
+-- one-line title, the not-downloaded badge, and a folder's art and counts. Every case runs
 -- at a device profile's size, as the screen will.
 describe("library tiles", function()
     local harness = require("plugin_harness")
