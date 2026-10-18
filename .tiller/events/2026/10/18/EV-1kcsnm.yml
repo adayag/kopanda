@@ -1,0 +1,13 @@
+id: EV-1kcsnm
+type: check.bug
+at: 2026-10-18T00:54:08.530078Z
+contributor: allen
+command: check bug B-w36ehz
+targets:
+    - B-w36ehz
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/bugs/downloaded-book-leaves-shelf-screen/bug.yml
