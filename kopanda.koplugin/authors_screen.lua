@@ -353,14 +353,17 @@ function AuthorsScreen:request_covers()
     LibraryChrome.request_records(self)
 end
 
--- The metadata events and the sheets re-list: the kept sort dropped, the books read again, then the
--- view rebuilt. A failed read is logged and the view rebuilt from the books as they were.
+-- The metadata events and the sheets re-list: the kept sort dropped, the books read again (a book
+-- just downloaded kept in its place, LibraryChrome.keep_downloaded), then the view rebuilt. A
+-- failed read is logged and the view rebuilt from the books as they were.
 function AuthorsScreen:refresh()
     if AuthorsScreen.shown ~= self then
         return
     end
     self.kept = nil
-    local ok, records = pcall(Books.all)
+    local ok, records = pcall(function()
+        return LibraryChrome.keep_downloaded(self, Books.all())
+    end)
     if ok then
         self.records = records
     else

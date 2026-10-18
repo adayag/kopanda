@@ -1,0 +1,11 @@
+id: EV-h7p22j
+type: claim.bug
+at: 2026-10-18T00:27:14.409271Z
+contributor: allen
+command: claim bug bugs/downloaded-book-leaves-shelf-screen
+targets:
+    - B-w36ehz
+after:
+    owner: allen
+files:
+    - path: .tiller/bugs/downloaded-book-leaves-shelf-screen/bug.yml

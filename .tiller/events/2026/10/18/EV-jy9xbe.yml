@@ -1,0 +1,13 @@
+id: EV-jy9xbe
+type: start.bug
+at: 2026-10-18T00:27:14.504882Z
+contributor: allen
+command: start bug B-w36ehz
+targets:
+    - B-w36ehz
+before:
+    status: ready
+after:
+    status: in_progress
+files:
+    - path: .tiller/bugs/downloaded-book-leaves-shelf-screen/bug.yml

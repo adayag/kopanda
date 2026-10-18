@@ -554,6 +554,113 @@ describe("Download on a placeholder's sheet", function()
             end)
         end
 
+        -- Books 9 to 20 written beside the eight, so a page of the kind is full; then, with k the
+        -- parts of its first page, every book past k + 1 removed and the held one made book k + 1,
+        -- the last, alone on the last page.
+        local function alone_on_last_page(kind)
+            for i = COUNT + 1, 20 do
+                write(path_of(i), "book " .. i)
+                bim.rows[path_of(i)] = row_of(i)
+            end
+            local first = WINDOWS[kind].show(1)
+            harness.tick(3)
+            local k = #first[WINDOWS[kind].parts]
+            assert.truthy(first.pages > 1 and k < 20, "a page of the " .. kind .. " holds every book")
+            for i = k + 2, 20 do
+                os.remove(path_of(i))
+                bim.rows[path_of(i)] = nil
+            end
+            held = path_of(k + 1)
+        end
+
+        for _, kind in ipairs({ "one series", "one author" }) do
+            it("keeps the book listed on every paint of the " .. kind .. " until its row returns, alone on "
+                .. "the last page, and ends on that page", function()
+                alone_on_last_page(kind)
+                local stub = cwngsync()
+                stub.openLibraryPlaceholder = cwngsync_download
+                local window = show_held(kind)
+                local page = window.page
+                assert.equals(window.pages, page)
+                assert.equals(1, #window[WINDOWS[kind].parts])
+                hold(window, kind)
+                local n = tonumber(held:match("held%-(%d+)"))
+                local painted = {}
+                local paint = window.paintTo
+                window.paintTo = function(...)
+                    paint(...)
+                    -- The book is a placeholder, badged, until the download (the notice's paint).
+                    local part = part_of(window, kind)
+                    painted[#painted + 1] = { page = window.page, listed = part ~= nil,
+                        title = part and part.record.title, series_index = part and part.record.series_index,
+                        placeholder = part and part.record.placeholder or nil,
+                        badge = part and part.widget.badge ~= nil or nil,
+                        before = stub.books["7"].kind == "placeholder" or nil }
+                end
+                tap("Download")
+                harness.tick(3)
+                assert.same({ { held } }, bim.extracted)
+                assert.truthy(#painted >= 2, "the " .. kind .. " painted only " .. #painted .. " times")
+                for i, seen in ipairs(painted) do
+                    assert.same({ page = page, listed = true, title = "Held " .. n, series_index = n,
+                        placeholder = seen.before, badge = seen.before, before = seen.before }, seen, "paint " .. i)
+                end
+                assert.equals(page, window.page)
+                local part = part_of(window, kind)
+                assert.is_not_nil(part)
+                assert.is_nil(part.record.placeholder)
+                assert.equals("Held " .. n, part.record.title)
+                -- Its row back and then deleted again (a metadata edit's InvalidateMetadataCache), a
+                -- re-list no longer keeps the book as it was listed while downloading.
+                bim.rows[held] = nil
+                window:refresh()
+                part = part_of(window, kind)
+                assert.is_true(part == nil or part.record.title ~= "Held " .. n)
+                -- Its row back, a re-list lists the book by the row (on its page again: it went with the
+                -- row, the page clamped back).
+                bim.rows[held] = row_of(n)
+                bim.rows[held].title = "The real book"
+                window:refresh()
+                window:go(window:view(), page)
+                assert.equals("The real book", part_of(window, kind).record.title)
+                assert.same({}, logged)
+            end)
+        end
+
+        it("lists a downloaded book by its re-read record once its row is back, and forgets it", function()
+            local LibraryChrome = package.loaded["library_chrome"]
+            local listed = { id = held, title = "Held 7", authors = { "Ann Author" }, series = "Held",
+                series_index = 7 }
+            local window = { downloads = { [held] = listed } }
+            local back = { id = held, title = "The real book", authors = {}, cover = "cached" }
+            LibraryChrome.keep_downloaded(window, { back })
+            assert.equals("The real book", back.title)
+            assert.is_nil(back.series)
+            local gone = { id = held, title = "held-7", authors = {}, cover = "missing" }
+            LibraryChrome.keep_downloaded(window, { gone })
+            assert.equals("held-7", gone.title)
+            assert.is_nil(gone.series)
+        end)
+
+        for _, kind in ipairs({ "one series", "one author" }) do
+            it("logs a raising keep of the downloaded books on the " .. kind .. "'s deferred re-list, its page "
+                .. "kept", function()
+                cwngsync()
+                local window = show_held(kind)
+                local page, records = window.page, window.records
+                replace(package.loaded["library_chrome"], "keep_downloaded", function()
+                    error("kopanda-test: the keep failed")
+                end)
+                UIManager:broadcastEvent(Event:new("BookMetadataChanged"))
+                harness.tick(3)
+                assert.is_true(was_logged("kopanda-test: the keep failed"))
+                assert.equals(window, harness.top())
+                assert.equals(page, window.page)
+                assert.equals(records, window.records)
+                assert.is_not_nil(part_of(window, kind))
+            end)
+        end
+
         it("does nothing when the window it was held on is no longer shown", function()
             local library, _, callback = tapped("library")
             local library_refreshes = count_refreshes(library)
