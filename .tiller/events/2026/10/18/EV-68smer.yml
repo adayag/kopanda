@@ -1,0 +1,13 @@
+id: EV-68smer
+type: check.tweak
+at: 2026-10-18T03:04:01.068172Z
+contributor: allen
+command: check tweak TW-iacy1n
+targets:
+    - TW-iacy1n
+before:
+    status: in_progress
+after:
+    status: check
+files:
+    - path: .tiller/tweaks/badge-only-not-downloaded/tweak.yml
