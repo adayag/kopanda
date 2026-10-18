@@ -1,0 +1,14 @@
+id: EV-98q2uy
+type: add.tweak
+at: 2026-10-18T02:40:50.12883Z
+contributor: allen
+command: add tweak badge-only-not-downloaded
+targets:
+    - TW-iacy1n
+after:
+    attached_to: F-2nt0fx
+    key: tweaks/badge-only-not-downloaded
+    status: proposed
+files:
+    - path: .tiller/tweaks/badge-only-not-downloaded/tweak.md
+    - path: .tiller/tweaks/badge-only-not-downloaded/tweak.yml
