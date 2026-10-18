@@ -705,6 +705,13 @@ Upgrading KOReader walks this list.
 - `fonts.lua` takes the plugin folder from its own source path as `require` found it, and its
   join (KoPanda's own, exposed to `spec/unit/fonts_spec.lua` as Fonts._join) gives a relative
   folder a `./` prefix so `getFace` treats the file as a path.
+- `Fonts.face_name` hands `getFace` neither form: a stable release (v2026.07.2 on the Kindle,
+  `frontend/ui/font.lua:306` at that tag) joins every name onto `FontList.fontdir`, a path
+  included, and the path forms landed in c4f1127 (2026-08-16). The name is a relative path that
+  climbs out of the fonts folder to the file's absolute path, which both versions join the same
+  way: `fontlist` (`frontend/fontlist.lua:11`, `fontdir = "./fonts"`) for the folder, `ffi/util`
+  (`realpath`, `base/ffi/util.lua:171-176`, nil for a missing path) for the depth and the absolute
+  file; a file that doesn't resolve gets the plain plugin path.
 - `base/ffi/freetype.lua:207-225` (`newFaceSize` has no variation-axis calls), so the fonts ship
   as static instances: a variable font would render its default instance only.
 
@@ -809,6 +816,12 @@ Upgrading KOReader walks this list.
   off (`frontend/ui/widget/horizontalgroup.lua:11`). A line too wide for its column falls back
   to one TextWidget with `max_width`, which KOReader cuts with an ellipsis
   (`frontend/ui/widget/textwidget.lua:36-37`, `:202-238`).
+- Measured on make: `TextWidget:paintTo` calls `updateSize` first
+  (`frontend/ui/widget/textwidget.lua:339`), which sets `_xtext` (`:190`) and `_updated` (`:94`,
+  once; `:91` returns early after), but a user patch that replaces `paintTo` may not: Bookends'
+  `bookends_textwidget_patch.lua` (AndyHazz/bookends.koplugin) shapes a colour `fgcolor`'s glyphs
+  from `_xtext` straight away. `typeset.lua` calls `updateSize` on the plain line it makes; a
+  tracked group is measured by its own `getSize`.
 - Line height: TextWidget's `forced_height` and `forced_baseline`
   (`frontend/ui/widget/textwidget.lua:43-44`), which `getSize` reports (`:298`) and the xtext
   paint draws at (`:362`); `getBaseline` (`:312`) gives the face's baseline, not a forced one.

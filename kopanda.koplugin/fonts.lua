@@ -5,6 +5,8 @@
 -- relative to the KOReader directory, plugins/kopanda.koplugin (frontend/pluginloader.lua:24,
 -- :204), so a plugin path is given a ./ prefix when it has neither.
 local Font = require("ui/font")
+local FontList = require("fontlist")
+local ffiUtil = require("ffi/util")
 local logger = require("logger")
 
 local Fonts = {}
@@ -29,11 +31,28 @@ function Fonts.path(rel)
     return join(plugin_dir, rel)
 end
 
+-- The name Fonts.face hands Font:getFace for the font file at rel. Stable KOReader (v2026.07.x,
+-- frontend/ui/font.lua:306) joins every name onto FontList.fontdir, a path included; the pinned
+-- build takes a name starting with / or ./ as a path (font.lua:307-312, since c4f1127) and joins
+-- the rest the same way. One name works under both: a relative path that climbs out of the fonts
+-- folder to the file's absolute path. A file realpath can't resolve gets the plain plugin path,
+-- so getFace fails on it as before.
+function Fonts.face_name(rel)
+    local path = Fonts.path(rel)
+    local absolute = ffiUtil.realpath(path)
+    local font_dir = ffiUtil.realpath(FontList.fontdir)
+    if not absolute or not font_dir then
+        return path
+    end
+    local _, depth = font_dir:gsub("[^/]+", "")
+    return string.rep("../", depth) .. absolute:sub(2)
+end
+
 -- The KOReader face for the font file at rel at size (unscaled; getFace scales it, font.lua:276),
 -- or nil, logged, when it won't load.
 function Fonts.face(rel, size)
     local ok, face = pcall(function()
-        return Font:getFace(Fonts.path(rel), size)
+        return Font:getFace(Fonts.face_name(rel), size)
     end)
     if not ok then
         logger.err("KoPanda: font failed to load:", rel, face)

@@ -71,7 +71,7 @@ describe("the date and clock widgets", function()
     -- Asserts every glyph of line is set in the look's type part under ctx.
     local function assert_styled(line, part_name, ctx)
         local part = ctx.look.type[part_name]
-        local file = Fonts.path(ctx.look.faces[part.face].file)
+        local file = Fonts.face_name(ctx.look.faces[part.face].file)
         local size = Screen:scaleBySize(Layout.font_size(part.size, ctx.text_size))
         local color = Looks.color(ctx.look.palettes[ctx.variant][part.color])
         assert.truthy(#line.glyphs > 0)

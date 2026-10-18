@@ -820,7 +820,7 @@ describe("reading stats", function()
                 local look = Looks.get(id)
                 local token = look.type.stats
                 local text = first_text_widget(Stats.build(WIDE, ctx_for(id)))
-                assert.equals(Fonts.path(look.faces[token.face].file), text.face.realname, id)
+                assert.equals(Fonts.face_name(look.faces[token.face].file), text.face.realname, id)
                 assert.equals(token.size, text.face.orig_size, id)
                 assert.equals(Looks.color(look.palettes.day[token.color]), text.fgcolor, id)
             end

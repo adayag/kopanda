@@ -135,7 +135,7 @@ describe("the featured widget", function()
         where = where .. " " .. part_name .. " " .. tostring(line and line.text)
         assert.is_table(line, where)
         local part = ctx.look.type[part_name]
-        local file = Fonts.path(ctx.look.faces[part.face].file)
+        local file = Fonts.face_name(ctx.look.faces[part.face].file)
         local size = Screen:scaleBySize(Layout.font_size(part.size, ctx.text_size))
         local color = Looks.color(ctx.look.palettes[ctx.variant][part.color])
         for _, glyph in ipairs(line.glyphs) do

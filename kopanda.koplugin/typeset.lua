@@ -75,7 +75,7 @@ function Typeset.line(part, text, max_width, ctx)
         end
         group:free()
     end
-    return TextWidget:new{
+    local line = TextWidget:new{
         text = text,
         face = face,
         fgcolor = color,
@@ -83,6 +83,11 @@ function Typeset.line(part, text, max_width, ctx)
         forced_height = forced_height,
         forced_baseline = forced_baseline,
     }
+    -- Measured now: TextWidget:paintTo measures first (textwidget.lua:339), but a patch that
+    -- replaces it may not (Bookends' bookends_textwidget_patch.lua shapes a colour fgcolor's
+    -- glyphs from _xtext straight away), and a line is often painted without being asked its size.
+    line:updateSize()
+    return line
 end
 
 -- The y of the baseline of a line from Typeset.line, from the line's top. TextWidget:getBaseline

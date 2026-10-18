@@ -163,6 +163,26 @@ describe("fonts", function()
             Fonts._join("/mnt/us/koreader/plugins/kopanda.koplugin", "fonts/x.ttf"))
     end)
 
+    -- Stable KOReader (v2026.07.x, frontend/ui/font.lua:306) joins every face name onto
+    -- FontList.fontdir, even a path; the pinned build takes a / or ./ name as a path
+    -- (font.lua:307-312, since c4f1127). The name Fonts.face hands getFace must resolve both ways.
+    it("hands getFace a name that resolves to the file with and without the fonts folder prepended", function()
+        local FontList = require("fontlist")
+        local ffiUtil = require("ffi/util")
+        for _, file in ipairs(ttf_files()) do
+            local name = Fonts.face_name(file)
+            assert.is_nil(name:find("^/"), name)
+            assert.is_nil(name:find("^%./"), name)
+            local expected = ffiUtil.realpath(harness.plugin_dir .. "/" .. file)
+            assert.equals(expected, ffiUtil.realpath(FontList.fontdir .. "/" .. name), file)
+            assert.truthy(Font:getFace(name, 20), name)
+        end
+    end)
+
+    it("falls back to the plain plugin path for a file that doesn't exist", function()
+        assert.equals(Fonts.path("fonts/nope/missing.ttf"), Fonts.face_name("fonts/nope/missing.ttf"))
+    end)
+
     it("returns a face for a shipped file", function()
         local face = Fonts.face("fonts/caveat/Caveat-Regular.ttf", 20)
         assert.truthy(face)

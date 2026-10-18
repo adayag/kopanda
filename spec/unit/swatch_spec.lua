@@ -446,7 +446,7 @@ describe("the swatch screen", function()
                         expected = expected + 1
                         local line
                         for _, w in ipairs(lines) do
-                            if w.face.realname == Fonts.path(face.file) then
+                            if w.face.realname == Fonts.face_name(face.file) then
                                 line = w
                             end
                         end
