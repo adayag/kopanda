@@ -354,19 +354,26 @@ describe("shelf rows", function()
                     end
                     built:free()
 
+                    -- A book not downloaded: the badge is its one sign, so no chip of its own
+                    -- (tweaks/badge-only-not-downloaded).
                     local stone = remote("The Stone Sky", { series_index = 3 })
                     built = row(stone, NEW, false)
                     assert.is_table(built.badge, id .. " badge")
                     assert.same({ "Not on the Kindle yet" }, texts(built.note), id)
-                    assert.same({ "NOT DOWNLOADED" }, texts(built.chip), id)
+                    assert.is_nil(built.chip, id .. " not-downloaded chip")
                     assert.is_falsy(built.marked, id)
                     built:free()
 
-                    -- D19: marked, its note, and the chip says Not downloaded.
+                    built = row(stone, COMPLETE, false)
+                    assert.is_table(built.badge, id .. " finished badge")
+                    assert.same({ "FINISHED" }, texts(built.chip), id)
+                    built:free()
+
+                    -- D19: marked, its note, and the chip says Up next.
                     built = row(stone, NEW, true)
                     assert.is_table(built.badge, id .. " up-next badge")
                     assert.same({ next_note }, texts(built.note), id)
-                    assert.same({ "NOT DOWNLOADED" }, texts(built.chip), id)
+                    assert.same({ "UP NEXT" }, texts(built.chip), id)
                     assert.is_true(built.marked, id)
                     if id == "diner" then
                         local bb, at = paint(built)
@@ -609,7 +616,7 @@ describe("shelf rows", function()
             end)
         end)
         -- Diner's chip text: ink on the paper chips, on_accent on the filled ones (SeriesC.dc.html:39, :76,
-        -- :88; SeriesBooksC.dc.html:49, :62); by night the two roles part.
+        -- :88; SeriesBooksC.dc.html:49); by night the two roles part.
         it("sets Diner's chip text by kind at night, ink on paper and on_accent on a fill", function()
             covers()
             harness.at_colorsoft(function()
@@ -622,8 +629,6 @@ describe("shelf rows", function()
                     { ShelfRows.book(OBELISK, { status = "new" }, true, width, ctx), "UP NEXT", ink },
                     { ShelfRows.series(entry(), width, ctx), "1 OF 3", on_accent },
                     { ShelfRows.series(entry{ state = "finished", complete = 3 }, width, ctx), "FINISHED", on_accent },
-                    { ShelfRows.book(remote("The Stone Sky"), { status = "new" }, false, width, ctx), "NOT DOWNLOADED",
-                        on_accent },
                 }
                 for _, case in ipairs(cases) do
                     local built, text, want = case[1], case[2], case[3]

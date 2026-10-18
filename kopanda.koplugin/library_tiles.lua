@@ -194,9 +194,9 @@ local function badge(ctx)
     }
 end
 
--- A chip on the cover's foot, at most max_w wide: text in part inside not_downloaded's padding and
--- outline colour at outline_width (board pixels), on fill_color. "Not downloaded" takes the
--- library's not_downloaded tokens; "Up next" the shelf's up_next ones (series-and-authors D5).
+-- A chip on the cover's foot, at most max_w wide: text in part inside the library's not_downloaded
+-- padding and outline colour at outline_width (board pixels), on fill_color. "Up next" takes the
+-- shelf's up_next fill and outline width (series-and-authors D5).
 local function chip(text, part, fill_color, outline_width, max_w, ctx)
     local scale, color = scaler(ctx), colorer(ctx)
     local tokens = ctx.look.library.not_downloaded
@@ -239,10 +239,10 @@ local function badge_place(box, ctx)
     }
 end
 
--- Adds the chip on the cover's foot and, for a book not downloaded (badged), the badge at its place
--- (badge_place). The chip sits left of the badge's place: beside it where both are on the foot, at
--- the placeholder's padding where the badge is on top. The chip is "Not downloaded", or the
--- caller's label, "Up next", which takes its place (series-and-authors D19).
+-- Adds the caller's label, "Up next" (series-and-authors D19), as a chip on the cover's foot when
+-- given, and for a book not downloaded (badged) the badge at its place (badge_place), its one sign
+-- (tweaks/badge-only-not-downloaded). The chip sits left of the badge's place: beside it where both
+-- are on the foot, at the placeholder's padding where the badge is on top.
 local function foot(tile, box, ctx, badged, label)
     local scale = scaler(ctx)
     local look = ctx.look
@@ -253,18 +253,14 @@ local function foot(tile, box, ctx, badged, label)
     local pad = library.cover.padding
     local chip_x = edge + scale(pad.x)
     local room = on_foot and badge_x - scale(library.not_downloaded.padding.x) - chip_x or box.cover_w - 2 * chip_x
-    local the_chip
     if label then
         local up_next = look.shelf.up_next
-        the_chip = chip(label, look.type.shelf_chip_plain, up_next.fill_color, up_next.outline_width, room, ctx)
-    else
-        local not_downloaded = library.not_downloaded
-        the_chip = chip("Not downloaded", look.type.not_downloaded, not_downloaded.fill_color,
-            not_downloaded.outline_width, room, ctx)
+        local the_chip = chip(label, look.type.shelf_chip_plain, up_next.fill_color, up_next.outline_width, room, ctx)
+        local chip_h = the_chip:getSize().h
+        local chip_y = on_foot and badge_y + math.floor((size - chip_h) / 2)
+            or box.cover_h - edge - scale(pad.y) - chip_h
+        tile.chip = add(tile, the_chip, chip_x, chip_y)
     end
-    local chip_h = the_chip:getSize().h
-    local chip_y = on_foot and badge_y + math.floor((size - chip_h) / 2) or box.cover_h - edge - scale(pad.y) - chip_h
-    tile.chip = add(tile, the_chip, chip_x, chip_y)
     if badged then
         tile.badge = add(tile, badge(ctx), badge_x, badge_y)
     end
@@ -289,10 +285,10 @@ end
 -- percent }) in box, a LibraryTiles.geometry: its cover or placeholder, the strip when the book
 -- has a file and a percent and is neither new nor complete, its title in one line, and for a book
 -- not downloaded (a record with no path, or cwngsync's placeholder, cwng-placeholders D1) the
--- download badge and the Not downloaded chip on the cover. chip, optional, is { label }, a chip
--- drawn on the cover's foot in Not downloaded's place, which it replaces on a book not downloaded
--- while the badge stays (the one-author grid's "Up next", series-and-authors D5, D19). The tile
--- keeps cover, strip, title, badge and chip, the last three nil where not drawn.
+-- download badge on the cover, its one sign (tweaks/badge-only-not-downloaded). chip, optional, is
+-- { label }, a chip drawn on the cover's foot, beside the badge on a book not downloaded (the
+-- one-author grid's "Up next", series-and-authors D5, D19). The tile keeps cover, strip, title,
+-- badge and chip, the last three nil where not drawn.
 function LibraryTiles.book(record, progress, box, ctx, chip_spec)
     ctx = fixed(ctx)
     local look = ctx.look

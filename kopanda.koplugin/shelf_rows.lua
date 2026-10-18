@@ -183,7 +183,6 @@ local CHIPS = {
     finished = { fill = "finished_fill_color", part = "shelf_chip" },
     not_started = { fill = "not_started_fill_color", part = "shelf_chip_plain" },
     up_next = { fill = "up_next_fill_color", part = "shelf_chip_plain" },
-    not_downloaded = { fill = "not_downloaded_fill_color", part = "shelf_chip" },
 }
 
 local function chip_pads(ctx)
@@ -383,12 +382,11 @@ local function not_downloaded(record)
     return not record.path or record.placeholder == true
 end
 
--- D20's chip for a book: Finished, else Not downloaded for a book not downloaded (D19), else Up next.
-local function book_chip(record, progress, marked)
+-- D20's chip for a book: Finished, else Up next. A book not downloaded takes no chip of its own: the
+-- cover's badge is its one sign (tweaks/badge-only-not-downloaded).
+local function book_chip(progress, marked)
     if progress.status == "complete" then
         return "finished", "Finished"
-    elseif not_downloaded(record) then
-        return "not_downloaded", "Not downloaded"
     elseif marked then
         return "up_next", "Up next"
     end
@@ -448,7 +446,7 @@ function ShelfRows.book(record, progress, mark, width, ctx)
 
     local text_x = cover_x + cover_w + f.gap
     local text_right = right
-    local kind, label = book_chip(record, progress, marked)
+    local kind, label = book_chip(progress, marked)
     if kind then
         row.chip = chip(kind, label, math.max(1, right - text_x), ctx)
         local size = row.chip:getSize()
