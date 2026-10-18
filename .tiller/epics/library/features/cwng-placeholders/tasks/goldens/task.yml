@@ -1,7 +1,7 @@
 id: T-lk235s
 key: library/cwng-placeholders/goldens
 title: A placeholder's library golden on the Colorsoft and the owner's device check
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -26,6 +26,7 @@ review_ref:
         kind: git_commit
         value: git:218b565
         observed_at: 2026-10-17T23:25:45.107874Z
+done_basis: ancestry
 gates:
     build:
         required: true

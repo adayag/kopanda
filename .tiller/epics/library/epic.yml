@@ -1,7 +1,7 @@
 id: E-cnq4d0
 key: library
 title: KoPanda's library replaces the file browser
-status: ready
+status: done
 blocked: false
 source: design/2026-10-13-kopanda-design.md
 order:
@@ -9,3 +9,15 @@ order:
     - F-2nt0fx
     - F-l0kw8m
     - F-yaihx9
+verified_against:
+    spec:
+        kind: git_blob
+        value: git:f920d4591f208adf1caf1596c0d1d86c0443d04b
+        path: .tiller/epics/library/epic.md
+        observed_at: 2026-10-18T00:25:57.509276Z
+    commit:
+        kind: git_commit
+        value: git:074a6aa
+        observed_at: 2026-10-18T00:25:56.972871Z
+    surfaces: []
+done_basis: rollup

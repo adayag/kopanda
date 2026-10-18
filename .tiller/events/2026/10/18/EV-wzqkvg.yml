@@ -1,0 +1,14 @@
+id: EV-wzqkvg
+type: sync.task
+at: 2026-10-18T00:25:57.170577Z
+contributor: allen
+command: sync task T-xtol0q
+targets:
+    - T-xtol0q
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/download-row/task.yml

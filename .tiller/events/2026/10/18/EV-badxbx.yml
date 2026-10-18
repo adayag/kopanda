@@ -1,0 +1,14 @@
+id: EV-badxbx
+type: sync.task
+at: 2026-10-18T00:25:57.058491Z
+contributor: allen
+command: sync task T-3cuakg
+targets:
+    - T-3cuakg
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/epics/library/features/cwng-placeholders/tasks/placeholders/task.yml

@@ -1,7 +1,7 @@
 id: T-3cuakg
 key: library/cwng-placeholders/placeholders
 title: cwngsync's placeholders read as not downloaded on every surface that draws a book
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -23,6 +23,7 @@ review_ref:
         kind: git_commit
         value: git:275fb8d
         observed_at: 2026-10-17T22:37:25.863803Z
+done_basis: ancestry
 gates:
     build:
         required: true

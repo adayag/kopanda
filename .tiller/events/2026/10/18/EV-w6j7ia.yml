@@ -1,0 +1,14 @@
+id: EV-w6j7ia
+type: sync.epic
+at: 2026-10-18T00:25:57.536306Z
+contributor: allen
+command: sync epic E-cnq4d0
+targets:
+    - E-cnq4d0
+before:
+    status: ready
+after:
+    basis: rollup
+    status: done
+files:
+    - path: .tiller/epics/library/epic.yml
