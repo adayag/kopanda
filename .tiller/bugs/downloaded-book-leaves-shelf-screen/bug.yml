@@ -1,8 +1,18 @@
 id: B-w36ehz
 key: bugs/downloaded-book-leaves-shelf-screen
 title: A book downloaded on one series or one author drops out until its cover returns
-status: proposed
+status: ready
 blocked: false
 started: false
 proposed_by: allen
 attached_to: T-xtol0q
+accepted_against:
+    spec:
+        kind: git_blob
+        value: git:1de74110ba2c3467833df15eb09ffe1be5f9fefd
+        path: .tiller/bugs/downloaded-book-leaves-shelf-screen/bug.md
+        observed_at: 2026-10-18T00:27:06.612561Z
+    commit:
+        kind: git_commit
+        value: git:57e2a70
+        observed_at: 2026-10-18T00:27:06.633937Z

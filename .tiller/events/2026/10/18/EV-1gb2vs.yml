@@ -1,0 +1,13 @@
+id: EV-1gb2vs
+type: approve.bug
+at: 2026-10-18T00:27:06.634083Z
+contributor: allen
+command: approve bug B-w36ehz
+targets:
+    - B-w36ehz
+before:
+    status: proposed
+after:
+    status: ready
+files:
+    - path: .tiller/bugs/downloaded-book-leaves-shelf-screen/bug.yml
