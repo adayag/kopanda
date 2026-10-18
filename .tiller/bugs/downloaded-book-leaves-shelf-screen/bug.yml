@@ -1,7 +1,7 @@
 id: B-w36ehz
 key: bugs/downloaded-book-leaves-shelf-screen
 title: A book downloaded on one series or one author drops out until its cover returns
-status: in_review
+status: done
 blocked: false
 started: true
 owner: allen
@@ -19,6 +19,7 @@ accepted_against:
         observed_at: 2026-10-18T00:27:06.633937Z
 branch: tiller/bugs/downloaded-book-leaves-shelf-screen
 pr: 47
+done_basis: ancestry
 gates:
     build:
         required: true

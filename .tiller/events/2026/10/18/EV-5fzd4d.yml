@@ -1,0 +1,14 @@
+id: EV-5fzd4d
+type: sync.bug
+at: 2026-10-18T02:39:10.543078Z
+contributor: allen
+command: sync bug B-w36ehz
+targets:
+    - B-w36ehz
+before:
+    status: in_review
+after:
+    basis: ancestry
+    status: done
+files:
+    - path: .tiller/bugs/downloaded-book-leaves-shelf-screen/bug.yml
