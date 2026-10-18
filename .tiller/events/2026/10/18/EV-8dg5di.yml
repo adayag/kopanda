@@ -1,0 +1,14 @@
+id: EV-8dg5di
+type: submit.tweak
+at: 2026-10-18T03:04:22.981244Z
+contributor: allen
+command: submit tweak TW-iacy1n
+targets:
+    - TW-iacy1n
+before:
+    status: check
+after:
+    pr: 48
+    status: in_review
+files:
+    - path: .tiller/tweaks/badge-only-not-downloaded/tweak.yml
