@@ -72,6 +72,7 @@ The owner's own interface for KOReader e-readers: a plugin that replaces the she
 
 ### Code
 - YAGNI, especially before adding a dependency or an abstraction. Prefer the simple solution; simple doesn't equal clever.
+- Comments say what the code can't. A module opens with one to three sentences: what it is, and which KOReader internals it reads or patches, each with its `file:line` (HOOKS.md carries the long form). A function gets a comment only when its name and signature don't say what it does: one sentence, what and why, never how. Cite KOReader by `file:line`. Never cite Tiller decisions, facts, board HTML or design docs in code: the spec is the record of why, the commit message is the record of what lost, the code is the record of what is. No comment restates the line under it. A look file's comment names where a value comes from only when the value isn't the base's.
 - Write idiomatic code for the language at hand; don't invent patterns or conventions the ecosystem doesn't use.
 - Tests must prove correctness — no tests that merely mirror the implementation.
 - Don't use deprecated or undocumented APIs.
@@ -87,6 +88,7 @@ The owner's own interface for KOReader e-readers: a plugin that replaces the she
 
 ### Before committing
 - Self-review every change against the plan: unintended side effects, missing tests, missing docs.
+- Comments in the diff pass the rule above: a reviewer may strike any that cite a decision ID or run past three lines without a citation to justify them.
 - Present a summary of the changes and a proposed commit message, then ask: "Ready to commit and push?" Never commit without approval.
 - `git add <specific files>`, never `git add -A`.
 - Work on `main`. Never force-push. Never include AI attribution (Claude, Anthropic, Co-Authored-By) in commits.
