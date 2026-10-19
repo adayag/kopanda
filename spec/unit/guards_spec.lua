@@ -164,12 +164,19 @@ describe("KoPanda's guards", function()
             end
             assert.truthy(#ids > 0)
             assert.is_false(contains(ids, "kopanda_home"))
+            assert.is_false(contains(ids, "kopanda_quick_settings"))
             assert.same({ "Studio", "Swatches" }, kopanda_texts(fm.menu.tab_item_table))
             assert.is_false(contains(registered, "kopanda_home"))
             fm.menu:onCloseFileManagerMenu()
             fm:onClose()
             local reader = harness.open_reader()
             reader.menu:onShowMenu()
+            local reader_tabs = {}
+            for _, tab in ipairs(reader.menu.tab_item_table) do
+                reader_tabs[#reader_tabs + 1] = tab.id
+            end
+            assert.truthy(#reader_tabs > 0)
+            assert.is_false(contains(reader_tabs, "kopanda_quick_settings"))
             assert.same({ "Studio", "Swatches" }, kopanda_texts(reader.menu.tab_item_table))
         end)
 

@@ -625,10 +625,10 @@ Upgrading KOReader walks this list.
   both apps register their menu module before making plugin instances
   (`frontend/apps/filemanager/filemanager.lua:404`, :418-429;
   `frontend/apps/reader/readerui.lua:176`, :464-478). A refused instance registers too, and its
-  `addToMainMenu` gives Tools › KoPanda the items Studio and Swatches; the Home tab, Home and
-  Settings are left out.
+  `addToMainMenu` gives Tools › KoPanda the items Studio and Swatches; the Home tab, the
+  quick-settings tab, Home and Settings are left out.
 
-### The cached menu order, `ui/elements/filemanager_menu_order`
+### The cached menu orders, `ui/elements/filemanager_menu_order` and `ui/elements/reader_menu_order`
 
 - `frontend/apps/filemanager/filemanagermenu.lua:858-862` (`setUpdateItemTable` sorts the menu
   against the require-cached table); `frontend/ui/plugin/insert_menu.lua:1-19` (cached for
@@ -638,16 +638,34 @@ Upgrading KOReader walks this list.
   sets `kopanda_home = {}` in the table, the empty order entry the reader's file-browser tab
   has (`frontend/ui/elements/reader_menu_order.lua:228`). Bookshelf inserts its tab the same way
   (`plugins/bookshelf.koplugin/main.lua:605-618` in the emulator's install; AGPL, read only).
+- The reader sorts its menu against `ui/elements/reader_menu_order`, required at
+  `frontend/apps/reader/modules/readermenu.lua:348` and merged at `:351`, after each registered
+  widget's `addToMainMenu` is pcalled (`:340-345`). The tab table is built when
+  `tab_item_table` is nil, by `onShowMenu` (`readermenu.lua:396-400`) or
+  `_getTabIndexFromLocation` (`:467-469`), and reset by `teardownMenu` (`:522-527`); the insert
+  is idempotent. The order's tabs are
+  `frontend/ui/elements/reader_menu_order.lua:4-12`; the reader's default tab buttons are
+  `readermenu.lua:54-77` (`getDefaultMenuButtons`).
+- `menu_entries.lua` inserts `kopanda_quick_settings` just before `main` in `KOMenu:menu_buttons`
+  of both orders when absent (appended when `main` is missing) and sets
+  `kopanda_quick_settings = {}` in each. The far-right tab stays Main, so a menu swipe starting
+  in the right third of the screen, which opens the last tab (`readermenu.lua:466-482`,
+  `_getTabIndexFromLocation`; `filemanagermenu.lua:1083-1100`), still opens Main. A
+  `remember = false` tab can't be far right: TouchMenu's init switches to the opening index
+  (`frontend/ui/widget/touchmenu.lua:668`), and an index on such a tab becomes tab 1
+  (`:458-462`).
 
 ### `ui/menusorter`: the user's order file and orphans
 
 - `frontend/ui/menusorter.lua:22-32` (`MenuSorter:readMSSettings`, which `dofile`s
-  `settings/filemanager_menu_order.lua`), `:34-43` (`mergeAndSort` copies the user's top-level
+  `settings/filemanager_menu_order.lua`, or `settings/reader_menu_order.lua` for
+  `MenuSorter:readMSSettings("reader")`), `:34-43` (`mergeAndSort` copies the user's top-level
   entries into the cached order, `:37-39`), `:60` and `:70-72` (an id with no order entry
   becomes a plain item), `:139-146` (a top-level item without `sub_item_table` is dropped),
   `:161-185` (orphans go to the end of their `sorting_hint` menu, or into tab 1 without one).
-- With a user list in that file, the tab is added only when the list names `kopanda_home`,
-  and the user's list is left alone. The file is read at every menu build.
+- With a user list in that file, a tab is added only when the list names it (`kopanda_home`,
+  `kopanda_quick_settings`), and the user's list is left alone. The file is read at every menu
+  build.
 - `frontend/ui/elements/filemanager_menu_order.lua:122-136` and
   `frontend/ui/elements/reader_menu_order.lua:176-191`: Tools ends with "More tools", so the
   KoPanda entry, with `sorting_hint = "tools"` and text, lands after it.
@@ -660,6 +678,12 @@ Upgrading KOReader walks this list.
   far-right tabs).
 - On the first insert in a profile a saved index of 2 or more is incremented, once, after
   `menu_tab_shifted` is stored in `settings/kopanda/state.lua`. Not with a user's own order.
+  The quick-settings tab, inserted before `main`, shifts no index, so an index saved on Main
+  before the tab existed names the quick-settings tab, and that menu opens on tab 1 once
+  (`frontend/ui/widget/touchmenu.lua:458-462`); its close saves the tab then shown.
+- The reader's tab index is per book, `readermenu_tab_index` in the document's settings
+  (`frontend/apps/reader/modules/readermenu.lua:547-548`, read; `:551-553`, saved on close, from
+  `onCloseReaderMenu` at `:445-451`). KoPanda leaves it alone.
 
 ### `TouchMenu` tab callbacks and `remember`
 
@@ -674,6 +698,14 @@ Upgrading KOReader walks this list.
   `FileManagerMenu:onCloseFileManagerMenu` (`frontend/apps/filemanager/filemanagermenu.lua:1049-1056`)
   and goes home. The Tools items act from `UIManager:nextTick`. Each callback catches its own
   errors.
+- The quick-settings tab, in both apps, is `{ icon = "appbar.contrast", remember = false,
+  callback }`, with KOReader's `resources/icons/mdlight/appbar.contrast.svg`, found by name in
+  `ICONS_DIRS` (`frontend/ui/widget/iconwidget.lua:20-29`: an `icons/` folder under the data
+  directory when it exists at launch, then KOReader's own) and cached (`:58-84`). Its callback
+  closes the menu, the reader's with `ReaderMenu:onTapCloseMenu`
+  (`frontend/apps/reader/modules/readermenu.lua:517-520`, which also closes the bottom config
+  menu) or the file browser's with `onCloseFileManagerMenu`, then opens the quick-settings
+  sheet; in the reader the sheet's `beneath` is a no-op, so a failed sheet leaves the page.
 
 ### `dispatcher`: the KoPanda: home action
 

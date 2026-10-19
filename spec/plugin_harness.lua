@@ -60,8 +60,8 @@ M.fm_setup_layout = require("apps/filemanager/filemanager").setupLayout
 
 -- Loads the plugin as the only enabled one, with its modules' state, runtime state file and
 -- settings file fresh (no boot flag or setting left by an earlier spec), KOReader's
--- require-cached file manager menu order fresh (no Home tab inserted and no user order merged
--- by an earlier spec), and
+-- require-cached file manager and reader menu orders fresh (no tab inserted and no user order
+-- merged by an earlier spec), and
 -- Dispatcher.execute and FileManager.setupLayout unwrapped, as in a new process, and returns
 -- the plugin module (the class KOReader makes an instance of per file manager and reader).
 -- PluginLoader:_load reads main, meta, path and name (frontend/pluginloader.lua:231-271).
@@ -77,6 +77,7 @@ function M.load()
         package.unload(name) -- luacheck: ignore 143
     end
     package.unload("ui/elements/filemanager_menu_order") -- luacheck: ignore 143
+    package.unload("ui/elements/reader_menu_order") -- luacheck: ignore 143
     os.remove(M.state_file)
     os.remove(M.state_file .. ".old")
     os.remove(M.settings_file)

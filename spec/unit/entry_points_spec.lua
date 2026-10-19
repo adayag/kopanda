@@ -128,7 +128,8 @@ describe("KoPanda's entry points", function()
             local fm = harness.show_fm()
             fm.menu:onShowMenu()
             local tabs = fm.menu.tab_item_table
-            assert.equals(baseline + 1, #tabs)
+            -- KOReader's tabs, the Home tab and the quick-settings tab.
+            assert.equals(baseline + 2, #tabs)
             assert.equals("kopanda_home", tabs[2].id)
             assert.equals("home", tabs[2].icon)
             assert.is_false(tabs[2].remember)

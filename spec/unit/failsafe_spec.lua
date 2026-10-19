@@ -2004,7 +2004,10 @@ describe("KoPanda failing safe", function()
             harness.tick(2)
             fm.menu:onShowMenu()
             local tabs = fm.menu.tab_item_table
-            assert.equals(baseline, #tabs)
+            -- KOReader's tabs and the quick-settings tab, just before Main, which has its own insert.
+            assert.equals(baseline + 1, #tabs)
+            assert.equals("kopanda_quick_settings", tabs[#tabs - 1].id)
+            assert.equals("main", tabs[#tabs].id)
             for _, tab in ipairs(tabs) do
                 assert.is_not.equals("kopanda_home", tab.id)
             end

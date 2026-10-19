@@ -461,6 +461,29 @@ function KoPanda:addToMainMenu(menu_items)
             end),
         }
     end
+    -- The quick-settings tab, just before Main in both menus (docs/plans/2026-10-18-menu-quick-
+    -- settings-design.md): the shape of the reader's file-browser tab (readermenu.lua:65-74). Its
+    -- callback closes the menu, then opens the sheet; in the reader nothing lies beneath the
+    -- sheet to close on failure, so the page stays.
+    local app = self.in_fm and "filemanager" or "reader"
+    if MenuEntries.tab(app .. "_quick_settings") then
+        menu_items.kopanda_quick_settings = {
+            icon = "appbar.contrast",
+            remember = false,
+            callback = guarded("the Quick settings tab", function()
+                local started = PaintClock.now()
+                if self.in_fm then
+                    self.ui.menu:onCloseFileManagerMenu()
+                else
+                    self.ui.menu:onTapCloseMenu()
+                end
+                require("quick_settings").open{
+                    started = started,
+                    beneath = not self.in_fm and { close = function() end } or nil,
+                }
+            end),
+        }
+    end
     menu_items.kopanda = {
         text = "KoPanda",
         sorting_hint = "tools",

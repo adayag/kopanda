@@ -29,7 +29,8 @@ local ok, err = pcall(function()
             if not run_ok then logger.warn("KOPANDA_SCENARIO: " .. tostring(run_err)) end
             UIManager:scheduleIn(1.5, function()
                 UIManager:forceRePaint()
-                UIManager.event_hook:execute("KoPandaSettled", { screen = "mock", error = not run_ok and tostring(run_err) or nil })
+                UIManager.event_hook:execute("KoPandaSettled",
+                    { screen = "mock", error = not run_ok and tostring(run_err) or nil })
             end)
         end)
     end)
