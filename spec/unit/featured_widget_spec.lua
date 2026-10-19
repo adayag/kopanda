@@ -366,6 +366,33 @@ describe("the featured widget", function()
             built:free()
         end)
 
+        -- toybox.md: the chip a mint pill in a 2 px ink outline.
+        it("draws Toybox's chip as a mint pill in its outline", function()
+            calls.book = record()
+            local ctx = ctx_for("toybox")
+            local built = Featured.build(1264, ctx)
+            local bb = paint(built)
+            local chip = find(built, "kopanda_featured_chip")
+            local rect = chip.screen_rect
+            local outline = Screen:scaleBySize(ctx.look.featured.chip_outline)
+            local function at(x, y)
+                local c = bb:getPixel(x, y):getColorRGB32()
+                return { c.r, c.g, c.b }
+            end
+            local function rgb(role)
+                local c = Looks.color(ctx.look.palettes.day[role])
+                return { c:getR(), c:getG(), c:getB() }
+            end
+            assert.same(rgb("outline"), at(rect.x, rect.y + math.floor(rect.h / 2)), "the outline round its left end")
+            assert.same(rgb("outline"), at(rect.x + math.floor(rect.w / 2), rect.y), "the outline along its top")
+            assert.same(rgb("mint"), at(rect.x + math.floor(rect.w / 2), rect.y + outline), "the fill")
+            local corner = at(rect.x, rect.y)
+            assert.is_not.same(rgb("outline"), corner, "the corner is round")
+            assert.is_not.same(rgb("mint"), corner, "the corner is round")
+            bb:free()
+            built:free()
+        end)
+
         -- The harness's screen scales by 1, so at both profiles' widths a 120-character title
         -- fits in two lines; at the harness's own 600 px it runs over.
         it("sets a 120-character title in at most two lines, cut with an ellipsis where it runs over", function()
@@ -549,8 +576,8 @@ describe("the featured widget", function()
             return n, size.w - 2 * outline, bar
         end
 
-        it("fills to the shown percent of its inner width in both looks", function()
-            for _, id in ipairs({ "editorial", "diner" }) do
+        it("fills to the shown percent of its inner width in each look", function()
+            for _, id in ipairs({ "editorial", "diner", "toybox" }) do
                 local n = filled(id, { percent = 0 })
                 assert.equals(0, n, id .. " at 0")
                 local inner
@@ -571,6 +598,40 @@ describe("the featured widget", function()
             assert.equals(Screen:scaleBySize(p.height) + 2 * Screen:scaleBySize(p.outline_width), bar:getSize().h)
             _, _, bar = filled("editorial", {})
             assert.equals(Screen:scaleBySize(Looks.get("editorial").progress.height), bar:getSize().h)
+        end)
+
+        -- toybox.md: an 18 px pill, its ends round: the bar's corners stay as they were, its outline
+        -- runs round its ends and its fill starts inside it.
+        it("rounds Toybox's bar into a pill, its fill inside its outline", function()
+            calls.book = record({ percent = 0.62 })
+            local ctx = ctx_for("toybox")
+            local built = Featured.build(1264, ctx)
+            local bar = find(built, "kopanda_featured_bar")
+            local size = bar:getSize()
+            local bb = Blitbuffer.new(size.w, size.h, Blitbuffer.TYPE_BBRGB32)
+            bb:paintRectRGB32(0, 0, size.w, size.h, SENTINEL)
+            bar:paintTo(bb, 0, 0)
+            local function rgb_at(x, y)
+                local c = bb:getPixel(x, y):getColorRGB32()
+                return { c.r, c.g, c.b }
+            end
+            local function rgb(role)
+                local c = Looks.color(ctx.look.palettes.day[role])
+                return { c:getR(), c:getG(), c:getB() }
+            end
+            local green = { 0, 255, 0 }
+            for _, corner in ipairs({ { 0, 0 }, { size.w - 1, 0 }, { 0, size.h - 1 }, { size.w - 1, size.h - 1 } }) do
+                assert.same(green, rgb_at(corner[1], corner[2]), "corner " .. corner[1] .. "," .. corner[2])
+            end
+            local mid = math.floor(size.h / 2)
+            assert.same(rgb("outline"), rgb_at(0, mid), "the outline round the left end")
+            assert.same(rgb("outline"), rgb_at(math.floor(size.w / 2), 0), "the outline along the top")
+            local outline = Screen:scaleBySize(ctx.look.progress.outline_width)
+            assert.same(rgb("coral"), rgb_at(outline, mid), "the fill inside the outline")
+            assert.same(rgb("paper"), rgb_at(size.w - outline - 1, mid), "the track at the right end")
+            assert.equals(size.h, Screen:scaleBySize(12) + 2 * outline)
+            bb:free()
+            built:free()
         end)
 
         it("fills Diner's grey bar with a striped FrameContainer and Editorial's with a plain fill", function()

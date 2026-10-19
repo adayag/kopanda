@@ -13,6 +13,7 @@ return {
                 { value = "diner", label = "Diner" },
                 { value = "editorial", label = "Editorial" },
                 { value = "riso", label = "Riso" },
+                { value = "toybox", label = "Toybox" },
             },
             default = "diner",
             label = "Look",

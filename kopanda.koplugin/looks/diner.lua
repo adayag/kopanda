@@ -34,6 +34,10 @@ return {
             pink = "#e8a59d",
             mustard = "#e0bd6a",
             tint = false, -- Riso's pink tint; Diner has none
+            sun = false, -- Toybox's accents and its nav pill's white; Diner has none
+            coral = false, -- as sun
+            mint = false, -- as sun
+            die = false, -- as sun
             band = "#6fb3ab", -- the canvas's header band is teal (HomeRetro.dc.html)
             outline = "#2f2e2b", -- the doc: strokes are ink
             shadow = "#2f2e2b", -- the doc: hard shadows are ink
@@ -53,6 +57,10 @@ return {
             pink = "#b86f68",
             mustard = "#b8923c",
             tint = false,
+            sun = false, -- as by day
+            coral = false, -- as sun
+            mint = false, -- as sun
+            die = false, -- as sun
             band = "#2f6b65", -- the canvas's night band is the night teal (NightC.dc.html)
             outline = "#f1ece0", -- the doc: outlines turn cream, the night ink
             shadow = "#f1ece0", -- the doc: hard shadows turn cream, the night ink
@@ -73,6 +81,10 @@ return {
             pink = "#e0e0e0", -- pink
             mustard = "#c8c8c8", -- mustard
             tint = false,
+            sun = false, -- as by day
+            coral = false, -- as sun
+            mint = false, -- as sun
+            die = false, -- as sun
             band = "#9a9a9a",
             outline = "#111111", -- implied: strokes are ink
             shadow = "#111111", -- implied: hard shadows are ink
@@ -105,7 +117,7 @@ return {
 
     radius = {
         cover = 0,
-        box = 0,
+        box = 0, -- the launcher's boxed tiles: 0 paints them square through paintRect, as before the radius
     },
 
     -- A filled box with an outline and a hard shadow.
@@ -124,6 +136,9 @@ return {
         outline_color = "outline",
         outline_width = 2, -- the canvas's bar outline (HomeRetro.dc.html)
         fill_grey = "hatch_135",
+        -- Square ends: 0 paints the bar through paintRect, as it was before the radius
+        -- (Paint.fill with no radius).
+        radius = 0,
     },
 
     -- An outlined box with an 8 px ink shadow and a coloured header band; the band's colour is a
@@ -183,6 +198,7 @@ return {
         library_empty_band_color = "mustard", -- HoldEmptyC.dc.html:35
         sort_chip_color = "paper", -- HoldEmptyC.dc.html:47
         show_chip_color = "pink", -- HoldEmptyC.dc.html:54
+        radius = 0, -- square: 0 paints the box and its band through paintRect, as before the radius
     },
 
     -- The quick-settings sheet's body. No board draws Diner's: its own sheet's rows and rules, its
@@ -227,6 +243,7 @@ return {
         text_color = "ink",
         fill_color = "pink", -- the canvas's "Now reading" chip (HomeRetro.dc.html)
         outline_color = "outline",
+        radius = 0, -- square: 0 paints the chip through paintRect, as before the radius
     },
 
     -- 11 px uppercase, 800, 0.1 em tracking.
@@ -596,6 +613,18 @@ return {
         accent_3_color = "teal", -- HomeRetro.dc.html:64
         suffix_gap = 6, -- no board; unused while the suffix is below
         suffix_below = true, -- no board: "Terminal PLUGIN MISSING" doesn't fit a third on one line
+        -- No badge: a size of 0 draws the tile's icon bare, as the tiles were before badges.
+        badge = {
+            size = 0, -- no badge
+            outline_width = 0, -- no badge
+            outline_color = false, -- no badge
+            fill_1_color = false, -- no badge
+            fill_2_color = false, -- no badge
+            fill_3_color = false, -- no badge
+            fill_4_color = false, -- no badge
+            fill_5_color = false, -- no badge
+            fill_6_color = false, -- no badge
+        },
     },
 
     -- The quote: in the tile (no rule colour) with the tile's outline and shadow, or between rules
@@ -680,6 +709,16 @@ return {
         active_fill_color = "mustard", -- NavBarC.dc.html:71
         divider_width = 3, -- NavBarC.dc.html:71, :75, :79, :83; none on the last tab (:87)
         divider_color = "outline", -- the doc: strokes are ink (NavBarC.dc.html:71)
+        -- A bar across the screen's bottom, not Toybox's floating pill: float false paints the band
+        -- and its tabs as the bar did before the pill, and the pill's tokens are none.
+        float = false,
+        margin = { side = 0, bottom = 0 }, -- no pill: the bar meets the screen's sides and bottom
+        radius = 0, -- no pill
+        float_fill_color = false, -- no pill
+        shadow = { x = 0, y = 0, color = false }, -- no pill
+        tab_gap = 0, -- the tabs share the width with no gap, as before the pill
+        active_outline_width = 0, -- the lit tab is not outlined, as before the pill
+        active_outline_color = false, -- not outlined
     },
     -- The file browser's title bar: a mustard band over a 4 px ink edge, a handwritten count over the
     -- title, and the pickers as outlined chips, sort on paper and status on pink (LibraryC.dc.html:19-27).
@@ -698,6 +737,7 @@ return {
         icon_size = 16, -- no board draws the plus: the pickers' size
         icon_color = "on_accent", -- no board draws the plus: the band's dark text
         count_on_shelf = true, -- "142 books on the shelf" (LibraryC.dc.html:21)
+        picker_radius = 0, -- square: 0 paints the pickers through paintRect, as before the radius
     },
     -- The library: a mustard header over a 4 px ink edge, three columns of outlined covers with hard
     -- shadows and a hatched-chip strip under each, and a pager of outlined boxes above the nav bar
@@ -716,6 +756,7 @@ return {
             picker_outline_color = "outline", -- Main.dc.html:25-26
             sort_fill_color = "paper", -- Main.dc.html:25
             status_fill_color = "pink", -- Main.dc.html:26
+            picker_radius = 0, -- square: 0 paints the pickers through paintRect, as before the radius
         },
         grid = {
             padding_top = 22, -- Main.dc.html:30

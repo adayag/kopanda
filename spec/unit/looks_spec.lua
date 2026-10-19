@@ -176,7 +176,15 @@ describe("looks", function()
                     "palettes.day.tint", "misregister.x", "misregister.y", "misregister.color",
                     "shadow.cover.outline_width", "shadow.tile.outline_width", "shadow.sheet.outline_width",
                     "library.cover.shadow.outline_width", "featured.cover_outline_color", "sheet.outline_width",
-                    "quote.padding", "quote.rule_width", "quote.rule_color" }) do
+                    "quote.padding", "quote.rule_width", "quote.rule_color",
+                    "palettes.day.sun", "palettes.day.coral", "palettes.day.mint", "palettes.night.die",
+                    "radius.box", "progress.radius", "chip.radius", "sheet.radius",
+                    "title_bar.picker_radius", "library.header.picker_radius",
+                    "launcher.badge.size", "launcher.badge.outline_width", "launcher.badge.outline_color",
+                    "launcher.badge.fill_1_color", "launcher.badge.fill_6_color",
+                    "nav.float", "nav.margin.side", "nav.margin.bottom", "nav.radius", "nav.float_fill_color",
+                    "nav.shadow.x", "nav.shadow.y", "nav.shadow.color", "nav.tab_gap",
+                    "nav.active_outline_width", "nav.active_outline_color" }) do
                 local found = false
                 for _, path in ipairs(diner) do
                     found = found or path == wanted
@@ -424,6 +432,11 @@ describe("looks", function()
             assert.same({ "mustard", "outline" }, { diner.button_fill_color, diner.button_outline_color })
         end)
 
+        -- A launcher whose tiles draw no badge: no size, no ring and no fills.
+        local NO_BADGE = { size = 0, outline_width = 0, outline_color = false, fill_1_color = false,
+            fill_2_color = false, fill_3_color = false, fill_4_color = false, fill_5_color = false,
+            fill_6_color = false }
+
         -- The launcher (Main.dc.html:60-62, HomeRetro.dc.html:55-64, EmptyStates.dc.html:65 under
         -- .tiller/design/2026-10-13-kopanda-screens/): its block and its two type parts. Editorial's
         -- row padding (15) and Diner's row gap (14) are tightened to fit the home above the nav bar
@@ -433,11 +446,13 @@ describe("looks", function()
                 columns = 2, column_gap = 32, row_gap = 0, icon_size = 22, icon_gap = 14,
                 padding = { x = 0, y = 11 }, tile_height = false, accent_1_color = false,
                 accent_2_color = false, accent_3_color = false, suffix_gap = 6, suffix_below = false,
+                badge = NO_BADGE,
             }, looks.editorial.launcher)
             assert.same({
                 columns = 3, column_gap = 14, row_gap = 9, icon_size = 28, icon_gap = false,
                 padding = { x = 14, y = 12 }, tile_height = 104, accent_1_color = "mustard",
                 accent_2_color = "pink", accent_3_color = "teal", suffix_gap = 6, suffix_below = true,
+                badge = NO_BADGE,
             }, looks.diner.launcher)
             local wanted = {
                 editorial = {
@@ -652,7 +667,7 @@ describe("looks", function()
                     fill_color = "mustard", padding = { top = 28, side = 40, bottom = 18 }, edge_width = 4,
                     edge_color = "ink", line_gap = 2, picker_gap = 10, picker_padding = { x = 10, y = 4 },
                     picker_outline_width = 2, picker_outline_color = "outline", sort_fill_color = "paper",
-                    status_fill_color = "pink",
+                    status_fill_color = "pink", picker_radius = 0,
                 },
                 grid = { padding_top = 22, side = 40, row_gap = 22, column_gap = 22, cover_h = 200, strip_gap = 12,
                     title_gap = 8 },
@@ -675,7 +690,7 @@ describe("looks", function()
                     fill_color = false, padding = { top = 40, side = 40, bottom = 16 }, edge_width = 2,
                     edge_color = "ink", line_gap = 2, picker_gap = 20, picker_padding = { x = 0, y = 0 },
                     picker_outline_width = 0, picker_outline_color = false, sort_fill_color = false,
-                    status_fill_color = false,
+                    status_fill_color = false, picker_radius = 0,
                 },
                 grid = { padding_top = 22, side = 40, row_gap = 22, column_gap = 20, cover_h = 218, strip_gap = 10,
                     title_gap = 8 },
@@ -1182,6 +1197,80 @@ describe("looks", function()
             end
         end)
 
+        -- The corner radii, in board pixels: 0 draws square, as every look but Toybox does; a
+        -- radius above half a side draws that side's ends round (base/ffi/blitbuffer.lua:2169-2197).
+        it("give every radius as a number of 0 or more, Diner's, Editorial's and Riso's 0 but a cover's", function()
+            local function radii(look)
+                return { cover = look.radius.cover, box = look.radius.box, progress = look.progress.radius,
+                    chip = look.chip.radius, sheet = look.sheet.radius, nav = look.nav.radius,
+                    title_bar_picker = look.title_bar.picker_radius,
+                    library_picker = look.library.header.picker_radius, library_cover = look.library.cover.radius }
+            end
+            for _, id in ipairs(ids) do
+                for name, radius in pairs(radii(looks[id])) do
+                    assert.is_true(type(radius) == "number" and radius >= 0, id .. " " .. name .. " radius")
+                end
+            end
+            -- Editorial's covers are rounded 3 (GridA.dc.html:43); nothing else of theirs is.
+            for _, id in ipairs({ "diner", "editorial", "riso" }) do
+                for name, radius in pairs(radii(looks[id])) do
+                    if name ~= "cover" and name ~= "library_cover" then
+                        assert.equals(0, radius, id .. " " .. name .. " radius")
+                    end
+                end
+            end
+        end)
+
+        -- The launcher tile's badge: a round fill of its tile's colour under the icon, ringed, or a
+        -- size of 0 with no ring and no colours for a look whose tiles have none.
+        it("give every launcher badge a size, ring and six fill roles, or none, only Toybox's drawn", function()
+            for _, id in ipairs(ids) do
+                local badge = looks[id].launcher.badge
+                if badge.size == 0 then
+                    assert.same({ size = 0, outline_width = 0, outline_color = false, fill_1_color = false,
+                        fill_2_color = false, fill_3_color = false, fill_4_color = false, fill_5_color = false,
+                        fill_6_color = false }, badge, id)
+                else
+                    assert.is_true(badge.size > 0 and badge.outline_width > 0, id)
+                    assert.is_string(looks[id].palettes.day[badge.outline_color], id)
+                    for i = 1, 6 do
+                        assert.is_string(looks[id].palettes.day[badge["fill_" .. i .. "_color"]], id .. " fill " .. i)
+                    end
+                    assert.is_true(badge.size >= looks[id].launcher.icon_size, id .. ": the icon overruns its badge")
+                end
+            end
+            for _, id in ipairs({ "diner", "editorial", "riso" }) do
+                assert.equals(0, looks[id].launcher.badge.size, id)
+            end
+        end)
+
+        -- A floating nav is a pill inset from the screen's sides and bottom on the page, its own
+        -- fill and shadow; a bar across the bottom has none of those.
+        it("give every nav a floating pill's margins, fill, shadow and lit outline, or none of them", function()
+            for _, id in ipairs(ids) do
+                local nav = looks[id].nav
+                assert.is_boolean(nav.float, id)
+                if nav.float then
+                    assert.is_true(nav.margin.side > 0 and nav.margin.bottom > 0, id .. " margin")
+                    assert.is_true(nav.margin.bottom >= nav.shadow.y, id .. ": the shadow runs off the screen")
+                    assert.is_string(looks[id].palettes.day[nav.float_fill_color], id .. " fill")
+                    assert.is_string(looks[id].palettes.day[nav.shadow.color], id .. " shadow")
+                    assert.is_true(nav.active_outline_width > 0, id)
+                    assert.is_string(looks[id].palettes.day[nav.active_outline_color], id)
+                else
+                    assert.same({ margin = { side = 0, bottom = 0 }, radius = 0, float_fill_color = false,
+                        shadow = { x = 0, y = 0, color = false }, tab_gap = 0, active_outline_width = 0,
+                        active_outline_color = false }, { margin = nav.margin, radius = nav.radius,
+                        float_fill_color = nav.float_fill_color, shadow = nav.shadow, tab_gap = nav.tab_gap,
+                        active_outline_width = nav.active_outline_width,
+                        active_outline_color = nav.active_outline_color }, id)
+                end
+            end
+            for _, id in ipairs({ "diner", "editorial", "riso" }) do
+                assert.is_false(looks[id].nav.float, id)
+            end
+        end)
+
         -- Riso (.tiller/design/2026-10-19-kopanda-looks/riso.md, its token table and Lua export):
         -- two inks on cream, the pink printed out of register.
         describe("Riso", function()
@@ -1275,7 +1364,7 @@ describe("looks", function()
 
             it("fills its progress pink on paper in a 2 px ink outline, 14 tall", function()
                 assert.same({ height = 14, fill_color = "pink", track_color = "paper", outline_color = "outline",
-                    outline_width = 2, fill_grey = "hatch_135" }, riso.progress)
+                    outline_width = 2, fill_grey = "hatch_135", radius = 0 }, riso.progress)
             end)
 
             it("sets its chips ink on tint with no border", function()
@@ -1325,6 +1414,198 @@ describe("looks", function()
                 assert.truthy(values > 300, "too few values: " .. values)
             end)
         end)
+
+        -- Toybox (.tiller/design/2026-10-19-kopanda-looks/toybox.md, its token table and Lua
+        -- export): rounded paper blocks on a solid ink edge, the colour in round badges.
+        describe("Toybox", function()
+            local toybox
+            setup(function()
+                toybox = looks.toybox
+            end)
+
+            it("sets display type in Baloo 2 ExtraBold and text in Nunito, its quote italic, with no accent face",
+                    function()
+                local faces = toybox.faces
+                assert.equals("fonts/baloo-2/Baloo2-ExtraBold.ttf", faces.display.file)
+                assert.equals("fonts/nunito/Nunito-Bold.ttf", faces.text.file)
+                assert.equals("fonts/nunito/Nunito-ExtraBold.ttf", faces.strong.file)
+                assert.equals("fonts/nunito/Nunito-SemiBoldItalic.ttf", faces.quote.file)
+                assert.same({ file = false, label = false }, faces.accent)
+            end)
+
+            it("gives its day, night and grey palettes the design's values", function()
+                local wanted = {
+                    day = { paper = "#fbf5ec", ink = "#2b2934", text = "#2b2934", muted = "#5b5867",
+                        hairline_light = "#e7ddcd", sun = "#ffc94a", coral = "#ff8f75", mint = "#86d3b4",
+                        die = "#ffffff" },
+                    night = { paper = "#1e1d26", ink = "#f4f0ea", text = "#f4f0ea", muted = "#b4b1c0",
+                        hairline_light = "#383645", sun = "#8a6a12", coral = "#a2493a", mint = "#2f7a5c",
+                        die = "#282733" },
+                    -- The design's grey die is its paper, #ffffff: false, so the pill shows the paper.
+                    grey = { paper = "#ffffff", ink = "#000000", text = "#000000", muted = "#333333",
+                        hairline_light = "#cccccc", sun = "#dddddd", coral = "#999999", mint = "#bbbbbb",
+                        die = false },
+                }
+                for variant, roles in pairs(wanted) do
+                    local palette = toybox.palettes[variant]
+                    for role, value in pairs(roles) do
+                        assert.equals(value, palette[role], variant .. " " .. role)
+                    end
+                    -- Structure and the edge are the ink; the sheet's band is the mint.
+                    assert.equals(palette.ink, palette.outline, variant .. " outline")
+                    assert.equals(palette.ink, palette.shadow, variant .. " shadow")
+                    assert.equals(palette.mint, palette.band, variant .. " band")
+                    for _, role in ipairs({ "teal", "pink", "mustard", "tint" }) do
+                        assert.is_false(palette[role], variant .. " " .. role)
+                    end
+                end
+                assert.equals("hatch_135", toybox.progress.fill_grey)
+                -- The other looks have none of Toybox's accents.
+                for _, id in ipairs({ "diner", "editorial", "riso" }) do
+                    for variant, palette in pairs(looks[id].palettes) do
+                        for _, role in ipairs({ "sun", "coral", "mint", "die" }) do
+                            assert.is_false(palette[role], id .. " " .. variant .. " " .. role)
+                        end
+                    end
+                end
+            end)
+
+            it("prints display type once", function()
+                assert.same({ x = 0, y = 0, color = false }, toybox.misregister)
+            end)
+
+            it("sets its cover, tiles and sheet on a solid ink edge straight below them", function()
+                assert.same({ x = 0, y = 6, color = "shadow", outline_width = false }, toybox.shadow.cover)
+                assert.same({ x = 0, y = 6, color = "shadow", outline_width = false }, toybox.shadow.tile)
+                assert.same({ x = 0, y = 8, color = "shadow", outline_width = false }, toybox.shadow.sheet)
+                assert.same({ x = 0, y = 6, color = "shadow", outline_width = false }, toybox.library.cover.shadow)
+                assert.equals("outline", toybox.featured.cover_outline_color)
+                assert.equals(3, toybox.stroke.outline)
+            end)
+
+            it("rounds its cover 6, its tiles 18, its sheet 24 and its pills, progress and nav to their ends",
+                    function()
+                assert.same({ cover = 6, box = 18 }, toybox.radius)
+                assert.equals(6, toybox.library.cover.radius)
+                assert.equals(24, toybox.sheet.radius)
+                for name, radius in pairs({ progress = toybox.progress.radius, chip = toybox.chip.radius,
+                        nav = toybox.nav.radius, title_bar_picker = toybox.title_bar.picker_radius,
+                        library_picker = toybox.library.header.picker_radius }) do
+                    assert.equals(999, radius, name)
+                end
+            end)
+
+            it("draws MingCute Line icons", function()
+                assert.equals("mingcute-line", toybox.icons.set)
+            end)
+
+            it("chooses the home's shapes the design draws", function()
+                assert.same({ weather_order = "degrees_first", date_lines = 1, stats_line = "joined",
+                    stats_streak = "count_first", featured_label = "now_reading", featured_details = "joined" },
+                    home_choices(toybox))
+            end)
+
+            it("sets the design's sizes with no band and no rule over the header", function()
+                local t = toybox.type
+                assert.same({ "strong", 18, false, 0, 0.1, "ink" }, part_values(t.date))
+                assert.same({ "display", 100, false, -0.02, -0.2, "ink" }, part_values(t.clock))
+                assert.same({ "display", 36, "ink" }, { t.featured_title.face, t.featured_title.size,
+                    t.featured_title.color })
+                assert.same({ "text", 16, "text" }, { t.featured_authors.face, t.featured_authors.size,
+                    t.featured_authors.color })
+                assert.same({ "quote", 18, "ink" }, { t.quote.face, t.quote.size, t.quote.color })
+                assert.same({ "text", 19, "ink" }, { t.launcher_label.face, t.launcher_label.size,
+                    t.launcher_label.color })
+                assert.same({ "text", 18, "ink" }, { t.sheet_row.face, t.sheet_row.size, t.sheet_row.color })
+                assert.same({ "strong", 11, true, 0.1, 0, "muted" }, part_values(t.nav_label))
+                assert.same({ "strong", 11, true, 0.1, 0, "ink" }, part_values(t.nav_label_active))
+                assert.same({ size = 11, face = "strong", small_caps = false, uppercase = true, tracking = 0.1 },
+                    toybox.label)
+                local header = toybox.home.header
+                assert.same({ false, 0, false }, { header.band_color, header.edge_width, header.rule_color })
+            end)
+
+            it("sets its quote plain, with no rules and no tile", function()
+                assert.equals(0, toybox.quote.rule_width)
+                assert.equals(0, toybox.quote.padding)
+                -- A rule colour sets the quote between rules, here of no width, rather than in a tile.
+                assert.is_string(toybox.quote.rule_color)
+            end)
+
+            it("blocks its tiles in 3 px ink on paper, three to a row, 84 tall, each with a ringed badge", function()
+                assert.same({ box = true, fill_color = "paper", outline_color = "outline", rule_color = false },
+                    toybox.tile)
+                local launcher = toybox.launcher
+                assert.same({ 3, 84, 16, 22 }, { launcher.columns, launcher.tile_height, launcher.column_gap,
+                    launcher.icon_size })
+                assert.same({ false, false, false }, { launcher.accent_1_color, launcher.accent_2_color,
+                    launcher.accent_3_color })
+                assert.same({ size = 42, outline_width = 2.5, outline_color = "outline", fill_1_color = "sun",
+                    fill_2_color = "coral", fill_3_color = "mint", fill_4_color = "coral", fill_5_color = "mint",
+                    fill_6_color = "sun" }, launcher.badge)
+            end)
+
+            it("fills its progress coral on paper in a 3 px ink pill, 18 tall with its outline", function()
+                assert.same({ height = 12, fill_color = "coral", track_color = "paper", outline_color = "outline",
+                    outline_width = 3, fill_grey = "hatch_135", radius = 999 }, toybox.progress)
+            end)
+
+            it("sets its chips as mint pills in a 2 px ink outline", function()
+                assert.same({ small_caps = false, uppercase = true, text_color = "ink", fill_color = "mint",
+                    outline_color = "outline", radius = 999 }, toybox.chip)
+                assert.equals(2, toybox.featured.chip_outline)
+                assert.same({ "mint", 2 }, { toybox.sheet.status_chip_color, toybox.sheet.chip_outline_width })
+            end)
+
+            it("floats its nav as a white pill 22 in and 20 up, on a 6 px ink edge, its lit tab a sun pill",
+                    function()
+                local nav = toybox.nav
+                assert.is_true(nav.float)
+                assert.same({ side = 22, bottom = 20 }, nav.margin)
+                assert.same({ "paper", "die", 3, "ink", 5, 4 }, { nav.fill_color, nav.float_fill_color,
+                    nav.edge_width, nav.edge_color, nav.padding_x, nav.tab_gap })
+                assert.same({ x = 0, y = 6, color = "shadow" }, nav.shadow)
+                assert.same({ "sun", 2, "outline", 0, 0 }, { nav.active_fill_color, nav.active_outline_width,
+                    nav.active_outline_color, nav.active_rule_width, nav.divider_width })
+                assert.same({ 24, "muted", "ink" }, { nav.icon_size, nav.icon_color, nav.active_icon_color })
+            end)
+
+            it("insets its sheet 16, outlined 3 px in ink, under a mint band, its rows ruled in hairlines", function()
+                local sheet = toybox.sheet
+                assert.same({ side = 16, bottom = 16 }, sheet.inset)
+                assert.same({ "outline", 3, true }, { sheet.outline_color, sheet.outline_width, sheet.header_band })
+                assert.same({ "mint", "mint" }, { sheet.book_band_color, sheet.home_band_color })
+                assert.same({ "hairline_light", 2 }, { sheet.row_rule_color, sheet.row_rule_width })
+            end)
+
+            it("boxes its pickers as 2 px ink pills on paper", function()
+                for _, header in ipairs({ toybox.title_bar, toybox.library.header }) do
+                    assert.same({ 2, "outline", "paper", "paper", 999 }, { header.picker_outline_width,
+                        header.picker_outline_color, header.sort_fill_color, header.status_fill_color,
+                        header.picker_radius })
+                end
+            end)
+
+            -- Every value is commented with its source, the design (toybox.md or the design file) or
+            -- "no board" and the analogy, on its line or the line above it.
+            it("comments every value with its source", function()
+                local previous_commented, values = false, 0
+                for line in io.lines(harness.plugin_dir .. "/looks/toybox.lua") do
+                    local code, comment = line:match("^(.-)%s*%-%-%s*(.*)$")
+                    local commented = comment ~= nil and comment ~= ""
+                    code = code or line
+                    if code:match("[%w_]+ = [^{%s]") then
+                        values = values + 1
+                        assert.is_true(commented or previous_commented, "uncommented: " .. line)
+                    end
+                    -- A line that only opens a table passes the comment above it to its first line.
+                    if commented or not code:match("^%s*[%w_]+ = {%s*$") then
+                        previous_commented = commented
+                    end
+                end
+                assert.truthy(values > 300, "too few values: " .. values)
+            end)
+        end)
     end)
 
     describe("Looks", function()
@@ -1351,9 +1632,9 @@ describe("looks", function()
             end
         end)
 
-        it("lists the looks in the swatch's column order, Editorial, Diner then Riso first", function()
+        it("lists the looks in the swatch's order, Editorial, Diner, Riso then Toybox first", function()
             local listed = Looks.ids()
-            assert.same({ "editorial", "diner", "riso" }, { listed[1], listed[2], listed[3] })
+            assert.same({ "editorial", "diner", "riso", "toybox" }, { listed[1], listed[2], listed[3], listed[4] })
         end)
 
         it("lists a fresh copy each time", function()

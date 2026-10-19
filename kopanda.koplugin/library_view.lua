@@ -63,8 +63,8 @@ end
 local new_box, add, tools = LibraryChrome.box, LibraryChrome.add, LibraryChrome.tools
 
 -- A picker: its label in part, then the chevron_down mark sized to the label's line in the
--- label's colour, inside the header's picker padding and outline, on fill. Returns the chip and
--- { label, mark }.
+-- label's colour, inside the header's picker padding and outline, on fill, rounded by the
+-- header's picker radius where it has one (Toybox's pills). Returns the chip and { label, mark }.
 local function picker(part, text, fill, ctx)
     local scale, color = tools(ctx)
     local tokens = ctx.look.library.header
@@ -75,6 +75,10 @@ local function picker(part, text, fill, ctx)
     local size = label:getSize()
     local mark = TintedIcon:new{ file = Icons.path("chevron_down"), size = size.h, color = color(part.color) }
     local chip = new_box(size.w + size.h + 2 * pad_x, size.h + 2 * pad_y, color(fill), outline, outline_color)
+    if tokens.picker_radius > 0 then
+        chip.radius = scale(tokens.picker_radius)
+        chip.fill_radius = chip.radius
+    end
     add(chip, label, pad_x, pad_y)
     add(chip, mark, pad_x + size.w, pad_y)
     return chip, { label = label, mark = mark }

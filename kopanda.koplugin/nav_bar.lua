@@ -1,5 +1,6 @@
 -- The nav bar: five tabs across a screen's bottom, Home, Library, Authors, History and Settings,
--- drawn from the look's nav tokens. The home, the file browser and the library each build one with
+-- drawn from the look's nav tokens: a band across the bottom, or with nav.float a pill on the
+-- page inset by nav.margin (Toybox). The home, the file browser and the library each build one with
 -- their own tab active and set its dimen's x and y where they place it. A tap in a tab's column runs
 -- the tab, a hold on Settings opens the quick-settings sheet, any other hold on the bar is consumed
 -- and runs nothing, and every other gesture passes through.
@@ -57,11 +58,16 @@ local function label_height(look, screen)
 end
 
 -- The bar's height in look on screen, in device pixels: the content's top, the icon, the gap,
--- a label line and the tab's bottom padding. Raises when a label face won't load.
+-- a label line and the tab's bottom padding; a floating pill's outline at its foot and its margin
+-- below it besides. Raises when a label face won't load.
 function NavBar.height(look, screen)
     local nav = look.nav
-    return content_top(nav, screen) + screen:scaleBySize(nav.icon_size) + screen:scaleBySize(nav.icon_gap)
+    local h = content_top(nav, screen) + screen:scaleBySize(nav.icon_size) + screen:scaleBySize(nav.icon_gap)
         + label_height(look, screen) + screen:scaleBySize(nav.padding_bottom)
+    if nav.float then
+        h = h + screen:scaleBySize(nav.edge_width) + screen:scaleBySize(nav.margin.bottom)
+    end
+    return h
 end
 
 -- The window module each chrome window's bar closes on Home, by where.
@@ -108,16 +114,22 @@ local Bar = InputContainer:extend{
     listen = false,
 }
 
--- Builds each tab's icon and label once; the columns split the width less the side padding.
+-- Builds each tab's icon and label once; the columns split the width less the side padding, and
+-- for a floating pill its margin and outline, with the tab gap between them.
 function Bar:init()
     local look, nav = self.look, self.look.nav
     self.dimen = Geom:new{ x = 0, y = 0, w = self.width, h = NavBar.height(look, Screen) }
+    -- Where the columns start from the bar's left: its side padding, and a floating pill's margin
+    -- and outline before it.
     self.padding_x = Screen:scaleBySize(nav.padding_x)
+    if nav.float then
+        self.padding_x = self.padding_x + Screen:scaleBySize(nav.margin.side) + Screen:scaleBySize(nav.edge_width)
+    end
     local shares = {}
     for i = 1, #NavBar.TABS do
         shares[i] = { share = 1 }
     end
-    self.columns = Layout.columns(self.width - 2 * self.padding_x, shares, 0)
+    self.columns = Layout.columns(self.width - 2 * self.padding_x, shares, nav.tab_gap)
     local palette = Looks.palette(look, self.variant)
     local ctx = { look = look, variant = self.variant }
     local icon_size = Screen:scaleBySize(nav.icon_size)
@@ -147,14 +159,46 @@ function Bar:init()
     end
 end
 
--- The fill, the active tab's fill, the dividers right of every tab but the last, the edge across
--- the width, the active rule from the bar's top, then the icons and labels.
-function Bar:paintTo(bb, x, y)
+-- A floating pill on the band's fill: the pill's shadow, its fill, the active tab's pill and its
+-- outline inside the pill's padding, then the pill's outline; all rounded by nav.radius, which
+-- the paint holds to half the pill's height (base/ffi/blitbuffer.lua:2169-2197).
+local function paint_pill(self, bb, x, y, color)
     local nav = self.look.nav
-    local palette = Looks.palette(self.look, self.variant)
-    local function color(role)
-        return Looks.color(palette[role])
+    local function scale(px)
+        return Screen:scaleBySize(px)
     end
+    local w, h = self.dimen.w, self.dimen.h
+    local edge, radius = scale(nav.edge_width), scale(nav.radius)
+    local side = scale(nav.margin.side)
+    local pill_x, pill_w, pill_h = x + side, w - 2 * side, h - scale(nav.margin.bottom)
+    Paint.fill(bb, x, y, w, h, color(nav.fill_color))
+    local shadow_color = color(nav.shadow.color)
+    if shadow_color then
+        Paint.fill(bb, pill_x + scale(nav.shadow.x), y + scale(nav.shadow.y), pill_w, pill_h, shadow_color, radius)
+    end
+    -- A pill whose fill role the variant lacks takes the page's, so its shadow stays under it.
+    Paint.fill(bb, pill_x, y, pill_w, pill_h, color(nav.float_fill_color) or color(nav.fill_color), radius)
+    local active = self.columns[self.active]
+    if active then
+        local inset = edge + scale(nav.padding_x)
+        local lit_x, lit_y, lit_h = x + self.padding_x + active.x, y + inset, pill_h - 2 * inset
+        if nav.active_fill_color then
+            Paint.fill(bb, lit_x, lit_y, active.w, lit_h, color(nav.active_fill_color), radius)
+        end
+        if nav.active_outline_width > 0 then
+            Paint.border(bb, lit_x, lit_y, active.w, lit_h, scale(nav.active_outline_width),
+                color(nav.active_outline_color), radius)
+        end
+    end
+    if edge > 0 then
+        Paint.border(bb, pill_x, y, pill_w, pill_h, edge, color(nav.edge_color), radius)
+    end
+end
+
+-- The band across the bottom: its fill, the active tab's fill, the dividers right of every tab
+-- but the last, the edge across the width and the active rule from the bar's top.
+local function paint_band(self, bb, x, y, color)
+    local nav = self.look.nav
     local w, h = self.dimen.w, self.dimen.h
     local edge = Screen:scaleBySize(nav.edge_width)
     local left = x + self.padding_x
@@ -177,6 +221,21 @@ function Bar:paintTo(bb, x, y)
         Paint.fill(bb, left + active.x, y, active.w, Screen:scaleBySize(nav.active_rule_width),
             color(nav.active_rule_color))
     end
+end
+
+-- The band (paint_band) or the floating pill (paint_pill), then the icons and labels.
+function Bar:paintTo(bb, x, y)
+    local nav = self.look.nav
+    local palette = Looks.palette(self.look, self.variant)
+    local function color(role)
+        return role and palette[role] and Looks.color(palette[role]) or nil
+    end
+    if nav.float then
+        paint_pill(self, bb, x, y, color)
+    else
+        paint_band(self, bb, x, y, color)
+    end
+    local left = x + self.padding_x
     local icon_size = Screen:scaleBySize(nav.icon_size)
     local icon_top = y + content_top(nav, Screen)
     local label_top = icon_top + icon_size + Screen:scaleBySize(nav.icon_gap)

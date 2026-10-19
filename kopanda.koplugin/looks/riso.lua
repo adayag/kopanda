@@ -41,6 +41,10 @@ return {
             pink = "#e9508a", -- riso.md: fluoro pink, a1
             mustard = false, -- Diner's accent; Riso has none
             tint = "#f6c6d8", -- riso.md: pink tint
+            sun = false, -- Toybox's accents and its nav pill's white; Riso has none
+            coral = false, -- as sun
+            mint = false, -- as sun
+            die = false, -- as sun
             band = "#f6c6d8", -- riso.md: the tint band at the top of the sheet
             outline = "#22509f", -- riso.md: structure is ink
             shadow = false, -- riso.md: misregistration, not shadow
@@ -61,6 +65,10 @@ return {
             pink = "#f0729f", -- riso.md
             mustard = false, -- as by day
             tint = "#4a2643", -- riso.md
+            sun = false, -- as by day
+            coral = false, -- as sun
+            mint = false, -- as sun
+            die = false, -- as sun
             band = "#4a2643", -- riso.md: the tint
             outline = "#f1ece0", -- riso.md: structure is the ink
             shadow = false, -- as by day
@@ -80,6 +88,10 @@ return {
             pink = "#999999", -- riso.md: a1, hatched where it fills a bar (progress.fill_grey)
             mustard = false, -- as by day
             tint = "#dddddd", -- riso.md
+            sun = false, -- as by day
+            coral = false, -- as sun
+            mint = false, -- as sun
+            die = false, -- as sun
             band = "#dddddd", -- riso.md: the tint
             outline = "#000000", -- riso.md: structure is the ink
             shadow = false, -- as by day
@@ -135,6 +147,9 @@ return {
         outline_color = "outline", -- riso.md: progress.outlineColor ink
         outline_width = 2, -- riso.md: progress.outline
         fill_grey = "hatch_135", -- riso.md: a1Fill hatch, angle 135
+        -- Square ends: 0 paints the bar through paintRect, as it was before the radius
+        -- (Paint.fill with no radius).
+        radius = 0,
     },
 
     -- riso.md: inset 20, a 3 px ink outline, pink 8/8 behind it (shadow.sheet), a tint header band
@@ -188,6 +203,7 @@ return {
         library_empty_band_color = "tint", -- no board: the book sheet's band
         sort_chip_color = "tint", -- no board: riso.md's chips are a tint fill
         show_chip_color = "tint", -- no board: riso.md's chips are a tint fill
+        radius = 0, -- square: 0 paints the box and its band through paintRect, as before the radius
     },
 
     -- The quick-settings sheet's body. No board draws Riso's: the sheet's rows and pink rules, its
@@ -230,6 +246,7 @@ return {
         text_color = "ink", -- riso.md: chip.color ink
         fill_color = "tint", -- riso.md: chip.fill tint
         outline_color = false, -- riso.md: chip.border 0
+        radius = 0, -- square: 0 paints the chip through paintRect, as before the radius
     },
 
     -- riso.md: 11 px uppercase 700, 0.12 em, muted.
@@ -584,6 +601,18 @@ return {
         -- On the label's line: the board's sub-label under it (Looks.dc.html:682) runs into the icon
         -- in an 84 px tile at KOReader's line heights.
         suffix_below = false,
+        -- No badge: a size of 0 draws the tile's icon bare, as the tiles were before badges.
+        badge = {
+            size = 0, -- no badge
+            outline_width = 0, -- no badge
+            outline_color = false, -- no badge
+            fill_1_color = false, -- no badge
+            fill_2_color = false, -- no badge
+            fill_3_color = false, -- no badge
+            fill_4_color = false, -- no badge
+            fill_5_color = false, -- no badge
+            fill_6_color = false, -- no badge
+        },
     },
 
     -- The quote between 2 px pink rules (riso.md: quote.style ruleBoth), 14 px between the rules and
@@ -668,6 +697,16 @@ return {
         active_fill_color = "tint", -- riso.md: nav.lit fill, litColor tint
         divider_width = 0, -- no dividers between tabs (Looks.dc.html:620)
         divider_color = false, -- no dividers
+        -- A bar across the screen's bottom, not Toybox's floating pill: float false paints the band
+        -- and its tabs as the bar did before the pill, and the pill's tokens are none.
+        float = false,
+        margin = { side = 0, bottom = 0 }, -- no pill: the bar meets the screen's sides and bottom
+        radius = 0, -- no pill
+        float_fill_color = false, -- no pill
+        shadow = { x = 0, y = 0, color = false }, -- no pill
+        tab_gap = 0, -- the tabs share the width with no gap, as before the pill
+        active_outline_width = 0, -- the lit tab is not outlined, as before the pill
+        active_outline_color = false, -- not outlined
     },
     -- The file browser's title bar. No board draws Riso's: the library's header (Looks.dc.html:744-749),
     -- a count and a 56 px title on paper with no rule, the pickers boxed in 2 px ink on tint.
@@ -686,6 +725,7 @@ return {
         icon_size = 16, -- no board draws the plus: the pickers' size
         icon_color = "ink", -- no board draws the plus: the pickers' ink
         count_on_shelf = false, -- no board: "148 books", as the library's (Looks.dc.html:129)
+        picker_radius = 0, -- square: 0 paints the pickers through paintRect, as before the radius
     },
     -- The library (Looks.dc.html:740-790): a 56 px title and count on paper with no rule, the
     -- pickers boxed in 2 px ink on tint, three columns of covers each with its ink outline out of
@@ -703,6 +743,7 @@ return {
             picker_outline_color = "outline", -- riso.md: picker.borderColor ink
             sort_fill_color = "tint", -- riso.md: picker.fill tint
             status_fill_color = "tint", -- riso.md: picker.fill tint
+            picker_radius = 0, -- square: 0 paints the pickers through paintRect, as before the radius
         },
         grid = {
             padding_top = 28, -- the body's gap and the grid's margin (Looks.dc.html:607, :751)

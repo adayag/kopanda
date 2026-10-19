@@ -171,6 +171,20 @@ describe("the swatch screen", function()
         return a.r == b.r and a.g == b.g and a.b == b.b
     end
 
+    -- The swatch's panels on every page, page by page, turning it to each look's page in turn and
+    -- back to the first.
+    local function every_panel(swatch)
+        local panels = {}
+        for page = 1, #Looks.ids() do
+            swatch:show_page(page)
+            for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+                panels[#panels + 1] = panel
+            end
+        end
+        swatch:show_page(1)
+        return panels
+    end
+
     local function sorted_keys(t)
         local keys = {}
         for key in pairs(t) do
@@ -217,25 +231,56 @@ describe("the swatch screen", function()
                 texts(kopanda_item(reader.menu.tab_item_table).sub_item_table))
         end)
 
-        it("shows a full-screen swatch over the file manager that a tap closes", function()
+        -- A tap turns to the next look's page; on the last it closes.
+        it("shows a full-screen swatch over the file manager that taps page through and the last closes", function()
             local fm = open_from_fm()
             local top = harness.top()
             assert.equals("kopanda_swatch", top.name)
             assert.is_true(top.covers_fullscreen)
             assert.equals(1, swatches_on_stack())
+            local ids = Looks.ids()
+            for page = 1, #ids - 1 do
+                assert.equals(page, top.page)
+                assert.equals(ids[page], top.look)
+                tap_mid()
+                assert.equals(1, swatches_on_stack(), "after the tap on page " .. page)
+                assert.equals(top, harness.top())
+            end
+            assert.equals(#ids, top.page)
             tap_mid()
             assert.equals(0, swatches_on_stack())
             assert.equals(fm, harness.top())
         end)
 
-        it("shows a full-screen swatch over the book that a tap closes", function()
+        it("shows a full-screen swatch over the book that taps page through and the last closes", function()
             local reader = open_from_reader()
             local top = harness.top()
             assert.equals("kopanda_swatch", top.name)
             assert.is_true(top.covers_fullscreen)
+            for _ = 1, #Looks.ids() - 1 do
+                tap_mid()
+                assert.equals(1, swatches_on_stack())
+            end
             tap_mid()
             assert.equals(0, swatches_on_stack())
             assert.equals(reader, harness.top())
+        end)
+
+        it("names the look, its page and what a tap does in its title", function()
+            open_from_fm()
+            local swatch = harness.top()
+            local ids = Looks.ids()
+            local function title()
+                return collect(swatch, function(w)
+                    return has_text(w) and w.text:find("^KoPanda swatches") ~= nil
+                end)
+            end
+            assert.same({ "KoPanda swatches · Editorial, 1 of " .. #ids .. ". Tap for the next look." },
+                texts(title()))
+            swatch:show_page(#ids)
+            local last = ids[#ids]:gsub("^%l", string.upper)
+            assert.same({ "KoPanda swatches · " .. last .. ", " .. #ids .. " of " .. #ids .. ". Tap to close." },
+                texts(title()))
         end)
 
         it("announces its first paint with the settled signal on screen swatch", function()
@@ -362,15 +407,14 @@ describe("the swatch screen", function()
             assert.equals("kopanda_swatch", swatch.name)
         end)
 
-        it("has a panel per look across and day, night and grey down", function()
-            local panels = collect(swatch, named("kopanda_swatch_panel"))
+        it("has a page per look in order, its day, night and grey panels across", function()
             local order = {}
-            for _, panel in ipairs(panels) do
+            for _, panel in ipairs(every_panel(swatch)) do
                 order[#order + 1] = panel.look .. " " .. panel.variant
             end
             local expected = {}
-            for _, variant in ipairs({ "day", "night", "grey" }) do
-                for _, id in ipairs(Looks.ids()) do
+            for _, id in ipairs(Looks.ids()) do
+                for _, variant in ipairs({ "day", "night", "grey" }) do
                     expected[#expected + 1] = id .. " " .. variant
                 end
             end
@@ -379,7 +423,7 @@ describe("the swatch screen", function()
 
         -- A role the look lacks (false) gets no chip and no line of its own.
         it("draws a chip with role and hex in ink for each role the palette has, in role order", function()
-            for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+            for _, panel in ipairs(every_panel(swatch)) do
                 local where = panel.look .. " " .. panel.variant
                 local palette = Looks.get(panel.look).palettes[panel.variant]
                 local ink = Looks.color(palette.ink)
@@ -413,10 +457,10 @@ describe("the swatch screen", function()
             end
         end)
 
-        -- Where the line goes is the "where the lacks text goes" cases'. On its own line under three
-        -- looks' narrow panels it may take two lines (Editorial lacks seven roles).
-        it("names the roles a palette lacks, in role order, in one text of at most two lines", function()
-            for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+        -- Where the line goes is the "where the lacks text goes" cases'. On its own line in a third
+        -- of the width it may take three lines (Editorial lacks twelve roles).
+        it("names the roles a palette lacks, in role order, in one text of at most three lines", function()
+            for _, panel in ipairs(every_panel(swatch)) do
                 local where = panel.look .. " " .. panel.variant
                 local palette = Looks.get(panel.look).palettes[panel.variant]
                 local missing = {}
@@ -432,12 +476,12 @@ describe("the swatch screen", function()
                 assert.equals("lacks: " .. table.concat(missing, ", "), line.text)
                 assert.is_true(same_color(Looks.color(palette.ink), line.fgcolor))
                 assert.is_true(same_color(Looks.color(palette.paper), line.bgcolor))
-                assert.truthy(#line.vertical_string_list <= 2, where .. " lacks text wraps past two lines")
+                assert.truthy(#line.vertical_string_list <= 3, where .. " lacks text wraps past three lines")
             end
         end)
 
         it("draws a line per face in that face, naming it", function()
-            for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+            for _, panel in ipairs(every_panel(swatch)) do
                 local faces = Looks.get(panel.look).faces
                 local lines = collect(panel, named("kopanda_swatch_face"))
                 local expected = 0
@@ -462,7 +506,7 @@ describe("the swatch screen", function()
         -- Each panel's paint stops at its box, but its content paints on past it: content taller
         -- than the panel runs into the panel or the icons below.
         it("fits every panel's content inside its panel, and the panels and icons on the screen", function()
-            for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+            for _, panel in ipairs(every_panel(swatch)) do
                 local size = panel[1]:getSize()
                 local where = panel.look .. " " .. panel.variant
                 assert.truthy(size.h <= panel.dimen.h - 2 * panel.inset, where .. " h " .. size.h)
@@ -506,7 +550,7 @@ describe("the swatch screen", function()
         color_enabled(false)
         open_from_fm()
         local swatch = harness.top()
-        local panels = collect(swatch, named("kopanda_swatch_panel"))
+        local panels = every_panel(swatch)
         assert.equals(3 * #Looks.ids(), #panels)
         local function grey_of(hex)
             return Looks.color(hex):getColor8()
@@ -527,17 +571,36 @@ describe("the swatch screen", function()
         end
     end)
 
-    -- The capture profiles' sizes (spec/emulator/profiles.lua), where Diner's 14 chips, on_accent
-    -- among them, leave the lacks text no empty cell: every face line still ends inside its
-    -- panel.
-    it("fits every panel's content inside its panel at the Colorsoft's and the Paperwhite's sizes", function()
+    -- Five looks: the four and a fifth stubbed with Toybox's tokens, the most roles of any look.
+    local function five_looks()
+        local toybox, real_get = Looks.get("toybox"), Looks.get
+        local ids_stub = stub(Looks, "ids", function()
+            return { "editorial", "diner", "riso", "toybox", "fifth" }
+        end)
+        local get_stub = stub(Looks, "get", function(id)
+            if id == "fifth" then
+                return toybox
+            end
+            return real_get(id)
+        end)
+        finally(function()
+            ids_stub:revert()
+            get_stub:revert()
+        end)
+    end
+
+    -- The capture profiles' sizes (spec/emulator/profiles.lua), with five looks, a page each: every
+    -- panel's content, Diner's 14 chips and Toybox's 16 among them, ends inside its panel, and the
+    -- page on the screen.
+    it("fits every panel's content inside its panel on each of five looks' pages at both devices' sizes", function()
         local roles = 0
-        for _, hex in pairs(Looks.get("diner").palettes.day) do
+        for _, hex in pairs(Looks.get("toybox").palettes.day) do
             if hex then
                 roles = roles + 1
             end
         end
-        assert.equals(14, roles)
+        assert.equals(16, roles)
+        five_looks()
         color_enabled(true)
         local stubbed = { "getWidth", "getHeight", "getSize" }
         local saved = {}
@@ -555,68 +618,59 @@ describe("the swatch screen", function()
             rawset(Screen, "getHeight", function() return h end)
             rawset(Screen, "getSize", function() return Geom:new{ x = 0, y = 0, w = w, h = h } end)
             local swatch = Swatch:new{}
-            local panels = collect(swatch, named("kopanda_swatch_panel"))
-            assert.equals(3 * #Looks.ids(), #panels)
-            for _, panel in ipairs(panels) do
-                local where = w .. "x" .. h .. " " .. panel.look .. " " .. panel.variant
-                local content = panel[1]:getSize()
-                assert.truthy(content.h <= panel.dimen.h - 2 * panel.inset,
-                    where .. ": content " .. content.h .. " in " .. (panel.dimen.h - 2 * panel.inset))
-                assert.truthy(content.w <= panel.dimen.w - 2 * panel.inset, where .. " w " .. content.w)
+            for page = 1, 5 do
+                swatch:show_page(page)
+                local panels = collect(swatch, named("kopanda_swatch_panel"))
+                assert.equals(3, #panels)
+                for _, panel in ipairs(panels) do
+                    local where = w .. "x" .. h .. " page " .. page .. " " .. panel.look .. " " .. panel.variant
+                    local content = panel[1]:getSize()
+                    assert.truthy(content.h <= panel.dimen.h - 2 * panel.inset,
+                        where .. ": content " .. content.h .. " in " .. (panel.dimen.h - 2 * panel.inset))
+                    assert.truthy(content.w <= panel.dimen.w - 2 * panel.inset, where .. " w " .. content.w)
+                end
+                local frame = swatch[1]
+                assert.truthy(frame[1]:getSize().h <= h - 2 * frame.padding, w .. "x" .. h .. " page " .. page)
             end
-            local frame = swatch[1]
-            assert.truthy(frame[1]:getSize().h <= h - 2 * frame.padding, w .. "x" .. h .. " overall")
             swatch:free()
         end
     end)
 
-    -- A third look is a third column: each variant's row holds a panel per look, sharing the
-    -- width between the margins with a gap between panels.
-    it("draws a panel per look in each row, the looks sharing the width", function()
-        local diner = Looks.get("diner")
-        local ids_stub = stub(Looks, "ids", function()
-            return { "editorial", "diner", "third" }
-        end)
-        local real_get = Looks.get
-        local get_stub = stub(Looks, "get", function(id)
-            if id == "third" then
-                return diner
-            end
-            return real_get(id)
-        end)
-        finally(function()
-            ids_stub:revert()
-            get_stub:revert()
-        end)
+    -- A fifth look is a fifth page: each page holds the look's three variants across, sharing the
+    -- width between the margins with a gap between panels, and a tap on the fifth closes it.
+    it("turns through five looks a page at a time, each page's three panels sharing the width", function()
+        five_looks()
         color_enabled(true)
         local swatch = Swatch:new{}
-        local panels = collect(swatch, named("kopanda_swatch_panel"))
-        local order = {}
-        for _, panel in ipairs(panels) do
-            order[#order + 1] = panel.look .. " " .. panel.variant
-        end
-        local expected = {}
-        for _, variant in ipairs({ "day", "night", "grey" }) do
-            for _, id in ipairs({ "editorial", "diner", "third" }) do
-                expected[#expected + 1] = id .. " " .. variant
-            end
-        end
-        assert.same(expected, order)
         local gap = Screen:scaleBySize(4)
         local inner_w = Screen:getWidth() - 2 * Screen:scaleBySize(8)
         local panel_w = math.floor((inner_w - 2 * gap) / 3)
-        for _, panel in ipairs(panels) do
-            assert.equals(panel_w, panel.dimen.w, panel.look .. " " .. panel.variant)
+        for page, id in ipairs({ "editorial", "diner", "riso", "toybox", "fifth" }) do
+            assert.same({ page, id }, { swatch.page, swatch.look })
+            local order = {}
+            for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+                order[#order + 1] = panel.look .. " " .. panel.variant
+                assert.equals(panel_w, panel.dimen.w, panel.look .. " " .. panel.variant)
+            end
+            assert.same({ id .. " day", id .. " night", id .. " grey" }, order)
+            -- One row: three panels with a gap between, as wide as the margins leave.
+            local rows = collect(swatch, function(w)
+                return w[1] ~= nil and w[1].name == "kopanda_swatch_panel"
+            end)
+            assert.equals(1, #rows)
+            assert.equals(5, #rows[1])
+            assert.equals(3 * panel_w + 2 * gap, rows[1]:getSize().w)
+            if page < 5 then
+                swatch:turn()
+            end
         end
-        -- Each row: three panels with a gap between, as wide as the margins leave.
-        local rows = collect(swatch, function(w)
-            return w[1] ~= nil and w[1].name == "kopanda_swatch_panel"
-        end)
-        assert.equals(3, #rows)
-        for _, row in ipairs(rows) do
-            assert.equals(5, #row)
-            assert.equals(3 * panel_w + 2 * gap, row:getSize().w)
+        local closed = 0
+        swatch.close = function()
+            closed = closed + 1
         end
+        swatch:turn()
+        assert.equals(1, closed)
+        assert.equals(5, swatch.page)
         swatch:free()
     end)
 
@@ -631,7 +685,7 @@ describe("the swatch screen", function()
         open_from_fm()
         local swatch = harness.top()
         local checked = 0
-        for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
+        for _, panel in ipairs(every_panel(swatch)) do
             local lacks = collect(panel, named("kopanda_swatch_lacks"))
             if panel.look == "editorial" and panel.variant == "day" then
                 checked = checked + 1
@@ -725,11 +779,11 @@ describe("the swatch screen", function()
             assert.equals(placed.panel.dimen.x + placed.panel.inset, lacks.dimen.x)
             assert.is_true(lacks.dimen.y >= bottom, "lacks y " .. lacks.dimen.y .. " above " .. bottom)
             assert.is_true(lacks.dimen.y + lacks:getSize().h <= placed.faces[1].dimen.y)
-            assert.truthy(#lacks.vertical_string_list <= 2)
+            assert.truthy(#lacks.vertical_string_list <= 3)
         end
 
         it("goes in the empty last cell, from its chip x, for an odd chip count when it fits", function()
-            local placed = editorial_day(6)
+            local placed = editorial_day(10)
             assert.equals(1, placed.chips % 2)
             local col = columns(placed.labels)
             local lacks = placed.lacks
@@ -754,11 +808,11 @@ describe("the swatch screen", function()
         end)
 
         it("goes on the heading's line, from the right column's chip x, for an even chip count when it fits", function()
-            local placed = editorial_day(5)
+            local placed = editorial_day(9)
             assert.equals(0, placed.chips % 2)
             local col = columns(placed.labels)
             local lacks = placed.lacks
-            assert.equals("lacks: pink, teal, tint", lacks.text)
+            assert.equals("lacks: sun, teal, tint", lacks.text)
             local chip_x = math.max(unpack(placed.chip_xs))
             assert.equals(chip_x, lacks.dimen.x)
             assert.equals(col.right_x - chip_x + col.right_w, lacks.width)
@@ -854,7 +908,7 @@ describe("the swatch screen", function()
 
         it("closes over the file manager when the tap handler throws", function()
             open_from_fm()
-            harness.top().close = function()
+            harness.top().turn = function()
                 error("kopanda-test: swatch tap failed")
             end
             tap_mid()
@@ -882,7 +936,7 @@ describe("the swatch screen", function()
 
         it("closes over the reader when the tap handler throws", function()
             local reader = open_from_reader()
-            harness.top().close = function()
+            harness.top().turn = function()
                 error("kopanda-test: swatch tap failed")
             end
             tap_mid()

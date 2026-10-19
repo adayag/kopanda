@@ -247,6 +247,8 @@ describe("the quote of the day", function()
             end
         end)
 
+        -- A face whose glyphs stand taller than the line (Toybox's Nunito) adds their overhang
+        -- below it (frontend/ui/widget/textboxwidget.lua:154-163, :850-851).
         it("shrinks to one line for a short text, its height that line and the chrome", function()
             Quote.sources.builtin = { { text = "Read.", author = "A", work = "W" } }
             for _, look_id in ipairs(Looks.ids()) do
@@ -264,8 +266,9 @@ describe("the quote of the day", function()
                 local built = Quote.build(400, ctx)
                 local box = built.text_box
                 assert.equals(1, #box.vertical_string_list, look_id)
-                assert.equals(box.line_height_px, box:getSize().h, look_id)
-                assert.equals(box.line_height_px + chrome, height, look_id)
+                local line = box.line_height_px + box.line_glyph_extra_height
+                assert.equals(line, box:getSize().h, look_id)
+                assert.equals(line + chrome, height, look_id)
                 built:free()
             end
         end)
@@ -303,16 +306,26 @@ describe("the quote of the day", function()
         end)
 
         it("is exactly the width it was built at, as tall as height says", function()
+            local chromed = {}
             for _, look_id in ipairs(Looks.ids()) do
                 local ctx = ctx_for(look_id)
+                local quote = ctx.look.quote
                 for _, width in ipairs({ 300, 600 }) do
                     local built = Quote.build(width, ctx)
                     assert.equals(width, built:getSize().w)
                     assert.equals(Quote.height(width, ctx), built:getSize().h)
-                    assert.truthy(built:getSize().h > built.text_box:getSize().h)
+                    -- A quote with padding or rules is taller than its text; Toybox's plain quote
+                    -- has no chrome to add.
+                    if quote.padding > 0 or quote.rule_width > 0 then
+                        assert.truthy(built:getSize().h > built.text_box:getSize().h, look_id)
+                        chromed[look_id] = true
+                    else
+                        assert.truthy(built:getSize().h >= built.text_box:getSize().h, look_id)
+                    end
                     built:free()
                 end
             end
+            assert.same({ diner = true, editorial = true, riso = true }, chromed)
         end)
 
         it("draws Editorial and Riso between rules and Diner in its tile with a hard shadow", function()

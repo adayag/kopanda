@@ -33,6 +33,10 @@ return {
             pink = false,
             mustard = false,
             tint = false, -- Riso's pink tint; Editorial has none
+            sun = false, -- Toybox's accents and its nav pill's white; Editorial has none
+            coral = false, -- as sun
+            mint = false, -- as sun
+            die = false, -- as sun
             band = false,
             outline = false, -- implied: by day the cover takes a shadow, not an outline
             shadow = "#c9c5b8", -- the doc: shadow in the hairline colour
@@ -52,6 +56,10 @@ return {
             pink = false,
             mustard = false,
             tint = false,
+            sun = false, -- as by day
+            coral = false, -- as sun
+            mint = false, -- as sun
+            die = false, -- as sun
             band = false,
             outline = "#3a3b40", -- the doc: the cover gets a hairline outline instead of a shadow
             shadow = false, -- the doc: at night the outline replaces the shadow
@@ -72,6 +80,10 @@ return {
             pink = false,
             mustard = false,
             tint = false,
+            sun = false, -- as by day
+            coral = false, -- as sun
+            mint = false, -- as sun
+            die = false, -- as sun
             band = false,
             outline = "#8c8c8c", -- implied: the Paperwhite cover gains an outline, Editorial's is a hairline
             shadow = "#8c8c8c", -- implied: the shadow is the hairline colour
@@ -103,7 +115,7 @@ return {
 
     radius = {
         cover = 3,
-        box = 0,
+        box = 0, -- the launcher's boxed tiles: 0 paints them square through paintRect, as before the radius
     },
 
     -- A text row with a hairline under it.
@@ -122,6 +134,9 @@ return {
         outline_color = false,
         outline_width = 0,
         fill_grey = false,
+        -- Square ends: 0 paints the bar through paintRect, as it was before the radius
+        -- (Paint.fill with no radius).
+        radius = 0,
     },
 
     -- A paper panel from the bottom edge under a 2 px rule.
@@ -179,6 +194,7 @@ return {
         library_empty_band_color = false, -- lead: by analogy with book_band_color, no band
         sort_chip_color = false, -- lead: by analogy with status_chip_color, HoldBook.dc.html:56
         show_chip_color = false, -- lead: by analogy with status_chip_color, HoldBook.dc.html:56
+        radius = 0, -- square: 0 paints the box and its band through paintRect, as before the radius
     },
 
     -- The quick-settings sheet's body: two ruled sections of a label row over a minus button, a
@@ -221,6 +237,7 @@ return {
         text_color = "muted",
         fill_color = false,
         outline_color = false,
+        radius = 0, -- square: 0 paints the chip through paintRect, as before the radius
     },
 
     -- 11 px small caps, 0.14 em tracking.
@@ -560,6 +577,18 @@ return {
         accent_3_color = false,
         suffix_gap = 6, -- the suffix's margin-left (EmptyStates.dc.html:65)
         suffix_below = false, -- the suffix sits on the label's line (EmptyStates.dc.html:65)
+        -- No badge: a size of 0 draws the tile's icon bare, as the tiles were before badges.
+        badge = {
+            size = 0, -- no badge
+            outline_width = 0, -- no badge
+            outline_color = false, -- no badge
+            fill_1_color = false, -- no badge
+            fill_2_color = false, -- no badge
+            fill_3_color = false, -- no badge
+            fill_4_color = false, -- no badge
+            fill_5_color = false, -- no badge
+            fill_6_color = false, -- no badge
+        },
     },
 
     -- The quote between hairline rules (Main.dc.html:56).
@@ -642,6 +671,16 @@ return {
         active_fill_color = false, -- the active tab has no fill (NavBar.dc.html:69)
         divider_width = 0, -- no dividers between tabs (NavBar.dc.html:69-87)
         divider_color = false,
+        -- A bar across the screen's bottom, not Toybox's floating pill: float false paints the band
+        -- and its tabs as the bar did before the pill, and the pill's tokens are none.
+        float = false,
+        margin = { side = 0, bottom = 0 }, -- no pill: the bar meets the screen's sides and bottom
+        radius = 0, -- no pill
+        float_fill_color = false, -- no pill
+        shadow = { x = 0, y = 0, color = false }, -- no pill
+        tab_gap = 0, -- the tabs share the width with no gap, as before the pill
+        active_outline_width = 0, -- the lit tab is not outlined, as before the pill
+        active_outline_color = false, -- not outlined
     },
     -- The file browser's title bar: a count over a serif title, and the sort and status pickers as
     -- plain text, above a 1 px ink edge on paper (Library.dc.html:17-27).
@@ -660,6 +699,7 @@ return {
         icon_size = 16, -- no board draws the plus: the pickers' size
         icon_color = "text", -- no board draws the plus: the pickers' colour (Library.dc.html:24)
         count_on_shelf = false, -- "142 books" (Library.dc.html:21)
+        picker_radius = 0, -- square: 0 paints the pickers through paintRect, as before the radius
     },
     -- The library: a count over a serif title and plain small-caps pickers above a 2 px ink rule,
     -- three columns of covers with soft shadows and a hairline strip under each, and borderless
@@ -678,6 +718,7 @@ return {
             picker_outline_color = false,
             sort_fill_color = false, -- the pickers are plain text (GridA.dc.html:25-26)
             status_fill_color = false,
+            picker_radius = 0, -- square: 0 paints the pickers through paintRect, as before the radius
         },
         grid = {
             padding_top = 22, -- GridA.dc.html:30

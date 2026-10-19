@@ -1,9 +1,9 @@
 -- The sheet's layout: its spec laid out under a ctx in a variant into a panel widget, with the
 -- rectangles sheet.lua matches taps against. sheet.lua's header comment gives the spec.
-local Blitbuffer = require("ffi/blitbuffer")
 local Geom = require("ui/geometry")
 local Icons = require("icons")
 local Looks = require("looks")
+local Paint = require("paint")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -11,27 +11,9 @@ local logger = require("logger")
 
 local SheetLayout = {}
 
--- A filled rectangle; a colour goes through paintRectRGB32, since paintRect greys it
--- (base/ffi/blitbuffer.lua:1704-1724, :1827).
-local function fill(bb, x, y, w, h, color)
-    if Blitbuffer.isColor8(color) then
-        bb:paintRect(x, y, w, h, color)
-    else
-        bb:paintRectRGB32(x, y, w, h, color)
-    end
-end
-
-local function border(bb, x, y, w, h, width, color)
-    if Blitbuffer.isColor8(color) then
-        bb:paintBorder(x, y, w, h, width, color)
-    else
-        bb:paintBorderRGB32(x, y, w, h, width, color)
-    end
-end
-
--- The built panel: its fills and borders, then its widgets, each at its screen place. The
--- widgets it made are its array part, so free() reaches them; the header's cover is the
--- sheet's and is painted from self.cover.
+-- The built panel: its fills and borders, each rounded by its radius where it has one (paint.lua),
+-- then its widgets, each at its screen place. The widgets it made are its array part, so free()
+-- reaches them; the header's cover is the sheet's and is painted from self.cover.
 local Panel = WidgetContainer:extend{
     name = "kopanda_sheet_panel",
 }
@@ -39,9 +21,9 @@ local Panel = WidgetContainer:extend{
 function Panel:paintTo(bb, x, y)
     for _, part in ipairs(self.fills) do
         if part.border then
-            border(bb, x + part.x, y + part.y, part.w, part.h, part.border, part.color)
+            Paint.border(bb, x + part.x, y + part.y, part.w, part.h, part.border, part.color, part.radius)
         else
-            fill(bb, x + part.x, y + part.y, part.w, part.h, part.color)
+            Paint.fill(bb, x + part.x, y + part.y, part.w, part.h, part.color, part.radius)
         end
     end
     for i, widget in ipairs(self) do
@@ -92,10 +74,10 @@ function SheetLayout.build(spec, ctx, variant)
     local panel = Panel:new{ fills = {}, places = {} }
     -- Parts are placed relative to the panel's box first and moved to the screen at the end.
     local fills = panel.fills
-    local function add_fill(x, y, w, h, role)
+    local function add_fill(x, y, w, h, role, radius)
         local c = color(role)
         if c and w > 0 and h > 0 then
-            fills[#fills + 1] = { x = x, y = y, w = w, h = h, color = c }
+            fills[#fills + 1] = { x = x, y = y, w = w, h = h, color = c, radius = radius }
         end
     end
     local function add(widget, x, y)
@@ -104,6 +86,10 @@ function SheetLayout.build(spec, ctx, variant)
     end
 
     local box_w = size.w - 2 * scale(tokens.inset.side)
+    -- The box's corners, round where the look rounds its sheet (Toybox), square otherwise; its
+    -- chips pills where the look rounds its chips.
+    local radius = tokens.radius > 0 and scale(tokens.radius) or nil
+    local chip_radius = look.chip.radius > 0 and scale(look.chip.radius) or nil
     local outline = tokens.outline_color and scale(tokens.outline_width) or 0
     local rule = tokens.rule_color and scale(tokens.rule_width) or 0
     local content_x = outline + scale(tokens.padding.side)
@@ -218,7 +204,16 @@ function SheetLayout.build(spec, ctx, variant)
         end
         local header_h = scale(pad.top) + inner_h + scale(pad.bottom)
         if tokens.header_band and spec.band then
-            add_fill(content_x, y, content_w, header_h, tokens[spec.band .. "_band_color"])
+            local band_role = tokens[spec.band .. "_band_color"]
+            -- A band at the top of a round box is round at its top inside the outline: a rounded
+            -- fill, then a square one over its lower corners.
+            local inner_radius = radius and y <= outline and math.max(0, radius - outline)
+            if inner_radius and inner_radius > 0 and header_h > inner_radius then
+                add_fill(content_x, y, content_w, header_h, band_role, inner_radius)
+                add_fill(content_x, y + inner_radius, content_w, header_h - inner_radius, band_role)
+            else
+                add_fill(content_x, y, content_w, header_h, band_role)
+            end
         end
         header_rect = { x = content_x, y = y, w = content_w, h = header_h }
         y = y + header_h
@@ -396,11 +391,11 @@ function SheetLayout.build(spec, ctx, variant)
             detail = { x = right - b.detail_w, y = middle(b.detail_h), w = b.detail_w, h = b.detail_h }
             local chip = b.chip
             if chip then
-                add_fill(detail.x, detail.y, detail.w, detail.h, chip.fill)
+                add_fill(detail.x, detail.y, detail.w, detail.h, chip.fill, chip_radius)
                 local outline_color = color("outline")
                 if chip.outline > 0 and outline_color then
                     fills[#fills + 1] = { x = detail.x, y = detail.y, w = detail.w, h = detail.h,
-                        border = chip.outline, color = outline_color }
+                        border = chip.outline, color = outline_color, radius = chip_radius }
                 end
                 add(b.detail, detail.x + chip.inset_x, detail.y + chip.inset_y)
             else
@@ -425,11 +420,12 @@ function SheetLayout.build(spec, ctx, variant)
     local shadow_color = color(shadow.color)
     if shadow_color then
         shadow_x, shadow_y = scale(shadow.x), scale(shadow.y)
-        chrome[#chrome + 1] = { x = shadow_x, y = shadow_y, w = box_w, h = box_h, color = shadow_color }
+        chrome[#chrome + 1] = { x = shadow_x, y = shadow_y, w = box_w, h = box_h, color = shadow_color,
+            radius = radius }
     end
     local fill_color = color(tokens.fill_color)
     if fill_color then
-        chrome[#chrome + 1] = { x = 0, y = 0, w = box_w, h = box_h, color = fill_color }
+        chrome[#chrome + 1] = { x = 0, y = 0, w = box_w, h = box_h, color = fill_color, radius = radius }
     end
     local rule_color = color(tokens.rule_color)
     if rule > 0 and rule_color then
@@ -440,7 +436,8 @@ function SheetLayout.build(spec, ctx, variant)
     end
     local outline_color = color(tokens.outline_color)
     if outline > 0 and outline_color then
-        chrome[#chrome + 1] = { x = 0, y = 0, w = box_w, h = box_h, border = outline, color = outline_color }
+        chrome[#chrome + 1] = { x = 0, y = 0, w = box_w, h = box_h, border = outline, color = outline_color,
+            radius = radius }
     end
     panel.fills = chrome
 

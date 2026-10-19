@@ -205,7 +205,7 @@ describe("the launcher widget", function()
 
     describe("geometry", function()
         it("is exactly the column wide and height(width) high in each look at both profiles' widths", function()
-            for _, id in ipairs({ "editorial", "diner" }) do
+            for _, id in ipairs({ "editorial", "diner", "toybox" }) do
                 for _, width in ipairs(widths(id)) do
                     local ctx = ctx_for(id)
                     local h = Launcher.height(width, ctx)
@@ -370,6 +370,91 @@ describe("the launcher widget", function()
                 end
             end)
 
+        -- toybox.md: paper blocks rounded 18 on a 6 px ink edge straight below, each with a 42 px
+        -- badge in sun, coral, mint, coral, mint, sun, ringed 2.5 px in ink, the icon at its centre
+        -- and the label beside it, both centred down the block.
+        it("draws Toybox's tiles as rounded paper blocks on their edge, each a ringed badge round its icon",
+                function()
+            for _, variant in ipairs({ "day", "grey" }) do
+                local ctx = ctx_for("toybox", variant)
+                local look = ctx.look
+                local built = Launcher.build(1184, ctx)
+                local fills = { "sun", "coral", "mint", "coral", "mint", "sun" }
+                local size, ring = scale(42), scale(2.5)
+                local outline = scale(look.stroke.outline)
+                for i, entry in ipairs(entries_of(built)) do
+                    local where = variant .. " tile " .. i
+                    assert.is_true(same_color(role(ctx, "paper"), entry.fill_color), where)
+                    assert.equals(scale(18), entry.radius, where)
+                    assert.equals(outline, entry.outline, where)
+                    assert.same({ 0, scale(6) }, { entry.shadow_x, entry.shadow_y }, where)
+                    assert.is_true(same_color(role(ctx, "shadow"), entry.shadow_color), where)
+                    local badges = find(entry, function(w)
+                        return w.name == "kopanda_launcher_badge"
+                    end)
+                    assert.equals(1, #badges, where)
+                    local badge = badges[1]
+                    assert.same({ size, size }, { badge:getSize().w, badge:getSize().h }, where)
+                    assert.is_true(same_color(role(ctx, fills[i]), badge.fill_color), where .. " fill")
+                    assert.is_true(same_color(role(ctx, "outline"), badge.ring_color), where .. " ring")
+                    assert.equals(ring, badge.ring, where)
+                    local icon = icons_of(badge)[1]
+                    assert.equals(scale(22), icon.size, where)
+                    local inset = math.floor((size - icon.size) / 2)
+                    assert.same({ x = inset, y = inset }, badge.icon_place, where)
+                    -- The badge and the label each centred down the block, the label beside the badge.
+                    local at = place_in(entry, badge)
+                    local inner_h = entry:getSize().h - 2 * outline
+                    assert.same({ x = outline + scale(11), y = outline + math.floor((inner_h - size) / 2) }, at, where)
+                    local label = line_of(entry, LABELS[i]).widget
+                    local label_at = place_in(entry, label)
+                    assert.equals(at.x + size + scale(10), label_at.x, where)
+                    assert.equals(outline + math.floor((inner_h - label:getSize().h) / 2), label_at.y, where)
+                end
+                built:free()
+            end
+        end)
+
+        -- The tile's radius and the badge's circle reach the paint: the block's corner and the
+        -- badge's corner stay as they were, the badge's edge is the ring and inside it the fill.
+        it("paints Toybox's block with round corners and its badge as a ringed disc", function()
+            local Blitbuffer = require("ffi/blitbuffer")
+            local ctx = ctx_for("toybox")
+            local built = Launcher.build(1184, ctx)
+            local entry = entries_of(built)[2]
+            local size = entry:getSize()
+            local sentinel = Blitbuffer.colorFromString("#00ff00")
+            local bb = Blitbuffer.new(size.w, size.h + scale(6), Blitbuffer.TYPE_BBRGB32)
+            bb:paintRectRGB32(0, 0, bb:getWidth(), bb:getHeight(), sentinel)
+            entry:paintTo(bb, 0, 0)
+            assert.is_true(same_color(sentinel, bb:getPixel(0, 0)), "the block's top-left corner")
+            assert.is_true(same_color(sentinel, bb:getPixel(size.w - 1, size.h + scale(6) - 1)),
+                "the edge's bottom-right corner")
+            assert.is_true(same_color(role(ctx, "shadow"), bb:getPixel(math.floor(size.w / 2), size.h + scale(6) - 1)),
+                "the edge below the block")
+            local badge = find(entry, function(w)
+                return w.name == "kopanda_launcher_badge"
+            end)[1]
+            local at, d = place_in(entry, badge), badge:getSize().w
+            local r = math.floor(d / 2)
+            local cx = at.x + r
+            assert.is_true(same_color(role(ctx, "paper"), bb:getPixel(at.x, at.y)), "the badge's corner is the block")
+            assert.is_true(same_color(role(ctx, "outline"), bb:getPixel(cx, at.y + 1)), "the ring at the badge's top")
+            assert.is_true(same_color(role(ctx, "coral"), bb:getPixel(cx, at.y + badge.ring + 1)),
+                "the fill inside the ring")
+            -- The icon over the disc: some of its rectangle is the ink the disc would hide.
+            local icon = icons_of(badge)[1]
+            local inked = false
+            for y = at.y + badge.icon_place.y, at.y + badge.icon_place.y + icon.size - 1 do
+                for x = at.x + badge.icon_place.x, at.x + badge.icon_place.x + icon.size - 1 do
+                    inked = inked or same_color(role(ctx, "ink"), bb:getPixel(x, y))
+                end
+            end
+            assert.is_true(inked, "the icon's ink over the disc")
+            bb:free()
+            built:free()
+        end)
+
         it("rules each Editorial entry in hairline_light at the hairline's width, with no fill or outline", function()
             for _, variant in ipairs({ "day", "grey" }) do
                 local ctx = ctx_for("editorial", variant)
@@ -390,7 +475,7 @@ describe("the launcher widget", function()
 
         it("paints inside its own rectangle", function()
             local Blitbuffer = require("ffi/blitbuffer")
-            for _, id in ipairs({ "editorial", "diner" }) do
+            for _, id in ipairs({ "editorial", "diner", "toybox" }) do
                 local built = Launcher.build(560, ctx_for(id))
                 local size = built:getSize()
                 local margin = 10

@@ -13,6 +13,10 @@
                 {
                     "label": "Riso",
                     "value": "riso"
+                },
+                {
+                    "label": "Toybox",
+                    "value": "toybox"
                 }
             ],
             "default": "diner",

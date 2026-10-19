@@ -1,9 +1,10 @@
 -- The swatch screen: a test pattern of every look's palettes and faces and of the icon registry,
 -- full screen over the file manager or the reader, for settling the token values on a real
--- panel. A panel per look and palette, the looks across and the day, night and grey down, each filled
--- with its paper and holding a chip per colour role, the roles the look lacks named on one
--- line, and a line per face; the icons below. A tap closes it. It is not part of the shell, so it
--- opens while another shell plugin is enabled.
+-- panel. One look a page, in Looks.ids() order: its day, night and grey panels across, each
+-- filled with its paper and holding a chip per colour role, the roles the look lacks named on one
+-- line, and a line per face; the icons below. A tap turns to the next look's page, and on the
+-- last page closes it. It is not part of the shell, so it opens while another shell plugin is
+-- enabled.
 local Blitbuffer = require("ffi/blitbuffer")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Font = require("ui/font")
@@ -42,14 +43,17 @@ local ICON_ROW_GAP = 1
 local TITLE_SIZE = 11
 local NOTE_SIZE = 9
 local HEADER_SIZE = 10
--- The chip labels and face lines, small enough that three looks' panels across hold their content.
+-- The chip labels and face lines, small enough that three panels across hold their content.
 local LABEL_SIZE = 7
 local FACE_SIZE = 9
 local ICON_LABEL_SIZE = 7
 
 local VARIANTS = { "day", "night", "grey" }
 
-local TITLE = "KoPanda swatches. Tap to close."
+-- The page's title: the look's name, its page and what a tap does there.
+local TITLE = "KoPanda swatches · %s, %d of %d. %s"
+local TAP_NEXT = "Tap for the next look."
+local TAP_CLOSE = "Tap to close."
 local NIGHT_NOTE = "Night mode is on: KOReader inverts these colours. Turn it off to judge them."
 
 -- A rectangle of one colour, optionally outlined, with an optional child at an inset. KOReader's
@@ -320,17 +324,48 @@ function Swatch:init()
             ges = "tap",
             screen_zone = FULL_SCREEN,
             handler = function()
-                self:close()
+                self:turn()
                 return true
             end,
         },
     })
+    self[1] = self:page_widget(self.page or 1)
+end
+
+-- Builds page (1 to the number of looks) and puts it in place of the page shown, which is freed.
+function Swatch:show_page(page)
+    local old = self[1]
+    self[1] = self:page_widget(page)
+    if old then
+        old:free()
+    end
+end
+
+-- Turns to the next look's page, or closes the swatch on the last.
+function Swatch:turn()
+    if self.page < #Looks.ids() then
+        self:show_page(self.page + 1)
+        UIManager:setDirty(self, "full")
+    else
+        self:close()
+    end
+end
+
+-- The widget of page: the title and night note, the look's day, night and grey panels across
+-- the width, sharing what the header and the icons leave of the height, and the icons. Sets
+-- self.page and self.look.
+function Swatch:page_widget(page)
+    local ids = Looks.ids()
+    local id = ids[page]
+    self.page, self.look = page, id
     local margin = scaled(MARGIN)
     local gap = scaled(GAP)
     local inner_w = self.dimen.w - 2 * margin
+    local name = id:gsub("^%l", string.upper)
+    local title = TITLE:format(name, page, #ids, page < #ids and TAP_NEXT or TAP_CLOSE)
     local header = VerticalGroup:new{
         align = "left",
-        TextWidget:new{ text = TITLE, face = Font:getFace("cfont", TITLE_SIZE) },
+        TextWidget:new{ text = title, face = Font:getFace("cfont", TITLE_SIZE) },
         VerticalSpan:new{ width = gap },
     }
     -- G_reader_settings' night_mode is KOReader's own toggle (frontend/device/devicelistener.lua:14-27).
@@ -347,25 +382,19 @@ function Swatch:init()
     -- each is measured once complete (frontend/ui/widget/verticalgroup.lua:15-31).
     local used = header:getSize().h + gap + icons:getSize().h
     local column = VerticalGroup:new{ align = "left", header }
-    local panel_h = math.floor((self.dimen.h - 2 * margin - used - 2 * gap) / #VARIANTS)
-    local ids = Looks.ids()
-    local panel_w = math.floor((inner_w - (#ids - 1) * gap) / #ids)
+    local panel_h = self.dimen.h - 2 * margin - used
+    local panel_w = math.floor((inner_w - (#VARIANTS - 1) * gap) / #VARIANTS)
+    local row = HorizontalGroup:new{ align = "top" }
     for v, variant in ipairs(VARIANTS) do
-        local row = HorizontalGroup:new{ align = "top" }
-        for i, id in ipairs(ids) do
-            if i > 1 then
-                row[#row + 1] = HorizontalSpan:new{ width = gap }
-            end
-            row[#row + 1] = panel(id, variant, panel_w, panel_h)
+        if v > 1 then
+            row[#row + 1] = HorizontalSpan:new{ width = gap }
         end
-        column[#column + 1] = row
-        if v < #VARIANTS then
-            column[#column + 1] = VerticalSpan:new{ width = gap }
-        end
+        row[#row + 1] = panel(id, variant, panel_w, panel_h)
     end
+    column[#column + 1] = row
     column[#column + 1] = VerticalSpan:new{ width = gap }
     column[#column + 1] = icons
-    self[1] = FrameContainer:new{
+    return FrameContainer:new{
         width = self.dimen.w,
         height = self.dimen.h,
         bordersize = 0,

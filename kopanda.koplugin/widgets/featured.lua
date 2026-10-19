@@ -62,7 +62,8 @@ function Box:paintTo(bb, x, y)
     Paint.outline(bb, x, y, w, h, self)
 end
 
--- The progress bar: its track, its fill (self[1]) inside its outline, then the outline.
+-- The progress bar: its track, its fill (self[1]) inside its outline, then the outline; the
+-- track and the outline rounded by radius, square without one.
 local Bar = WidgetContainer:extend{
     name = "kopanda_featured_bar",
 }
@@ -70,22 +71,22 @@ local Bar = WidgetContainer:extend{
 function Bar:paintTo(bb, x, y)
     local w, h = self.dimen.w, self.dimen.h
     if self.track_color then
-        Paint.fill(bb, x, y, w, h, self.track_color)
+        Paint.fill(bb, x, y, w, h, self.track_color, self.radius)
     end
     self[1]:paintTo(bb, x + self.outline, y + self.outline)
     if self.outline > 0 then
-        Paint.border(bb, x, y, w, h, self.outline, self.outline_color)
+        Paint.border(bb, x, y, w, h, self.outline, self.outline_color, self.radius)
     end
 end
 
--- A plain fill of dimen in color.
+-- A plain fill of dimen in color, rounded by radius, square without one.
 local Fill = Widget:extend{
     name = "kopanda_featured_fill",
 }
 
 function Fill:paintTo(bb, x, y)
     if self.dimen.w > 0 and self.color then
-        Paint.fill(bb, x, y, self.dimen.w, self.dimen.h, self.color)
+        Paint.fill(bb, x, y, self.dimen.w, self.dimen.h, self.color, self.radius)
     end
 end
 
@@ -194,6 +195,8 @@ local function label(width, ctx)
     end
     local scale, color = scaler(ctx), colorer(ctx)
     local outline = scale(tokens.chip_outline)
+    -- A pill where the look rounds its chips (Toybox), square otherwise.
+    local radius = look.chip.radius > 0 and scale(look.chip.radius) or nil
     local pad_x, pad_y = scale(tokens.chip_padding.x), scale(tokens.chip_padding.y)
     local line = Typeset.line(look.type.featured_label, text, width - 2 * (outline + pad_x), ctx)
     local size = line:getSize()
@@ -206,6 +209,8 @@ local function label(width, ctx)
         fill_color = color(look.chip.fill_color),
         outline = outline,
         outline_color = color(look.chip.outline_color),
+        radius = radius,
+        fill_radius = radius,
         pad_x = pad_x,
         pad_y = pad_y,
         line,
@@ -248,7 +253,8 @@ end
 -- A progress bar width wide at percent shown, its track inner_h high (device pixels) inside an
 -- outline of outline_width (board pixels) where the look's progress.outline_color is set, filled
 -- to floor(inner width × shown / 100) in the look's progress colours: the featured book's bar and
--- the library tiles' strip. Where fill_grey is hatch_135 in the grey variant, the fill is a
+-- the library tiles' strip, its ends rounded by progress.radius where the look has one (Toybox's
+-- pill; the fill rounded inside the outline). Where fill_grey is hatch_135 in the grey variant, the fill is a
 -- FrameContainer striped ink over paper, whose hatchRect draws along x + y = constant, the board's
 -- 135° (frontend/ui/widget/container/framecontainer.lua:48-50, :128-132;
 -- base/ffi/blitbuffer.lua:2209-2235).
@@ -259,6 +265,7 @@ function Featured.bar(shown, width, inner_h, outline_width, ctx)
     local outline = outline_color and scale(outline_width) or 0
     local inner_w = width - 2 * outline
     local fill_w = math.floor(inner_w * shown / 100)
+    local radius = tokens.radius > 0 and scale(tokens.radius) or nil
     local filled
     if tokens.fill_grey == "hatch_135" and ctx.variant == "grey" then
         filled = FrameContainer:new{
@@ -271,13 +278,18 @@ function Featured.bar(shown, width, inner_h, outline_width, ctx)
             Widget:new{ dimen = Geom:new{ w = fill_w, h = inner_h } },
         }
     else
-        filled = Fill:new{ dimen = Geom:new{ w = fill_w, h = inner_h }, color = color(tokens.fill_color) }
+        filled = Fill:new{
+            dimen = Geom:new{ w = fill_w, h = inner_h },
+            color = color(tokens.fill_color),
+            radius = radius and math.max(0, radius - outline),
+        }
     end
     return Bar:new{
         dimen = Geom:new{ w = width, h = inner_h + 2 * outline },
         track_color = color(tokens.track_color),
         outline = outline,
         outline_color = outline_color,
+        radius = radius,
         filled,
     }
 end

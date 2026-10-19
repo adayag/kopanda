@@ -353,6 +353,24 @@ describe("the library window", function()
             bb:free()
         end)
 
+        -- toybox.md: the pickers 2 px ink pills on paper, their corners the page's.
+        it("draws Toybox's pickers as ink pills on paper", function()
+            fixture.install({ [ROOT] = { books = fixture.books(2) } })
+            assert.is_true(Settings.set("look", "toybox"))
+            local library = fixture.show()
+            local bb = painted(library)
+            local palette = Looks.palette(library.ctx.look, library.ctx.variant)
+            for _, name in ipairs({ "sort", "status" }) do
+                local rect = library.header[name].rect
+                local mid = rect.y + math.floor(rect.h / 2)
+                assert.is_true(near(rgb(palette.outline), pixel(bb, rect.x, mid), 8), name .. " round its left end")
+                assert.is_true(near(rgb(palette.outline), pixel(bb, rect.x + math.floor(rect.w / 2), rect.y), 8),
+                    name .. " along its top")
+                assert.is_true(near(rgb(palette.paper), pixel(bb, rect.x, rect.y), 8), name .. "'s corner is round")
+            end
+            bb:free()
+        end)
+
         it("draws a dead arrow in Editorial's hairline and leaves it out of Diner's box", function()
             fixture.install({ [ROOT] = { books = fixture.books(8) } })
             assert.is_true(Settings.set("look", "editorial"))

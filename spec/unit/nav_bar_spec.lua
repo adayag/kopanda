@@ -36,7 +36,8 @@ describe("the nav bar", function()
     end
 
     -- The feature's height: edge, the active rule's overhang, the tab's padding, icon and gap and
-    -- the taller of the two label lines, each length scaled, the lines set with no text size.
+    -- the taller of the two label lines, each length scaled, the lines set with no text size. A
+    -- floating pill adds its outline at its foot and its margin below it.
     local function formula(look)
         local nav = look.nav
         local ctx = { look = look, variant = "day" }
@@ -47,8 +48,23 @@ describe("the nav bar", function()
             line:free()
         end
         local edge = scale(nav.edge_width)
-        return edge + math.max(0, scale(nav.active_rule_width) - edge) + scale(nav.padding_top)
+        local h = edge + math.max(0, scale(nav.active_rule_width) - edge) + scale(nav.padding_top)
             + scale(nav.icon_size) + scale(nav.icon_gap) + label + scale(nav.padding_bottom)
+        if nav.float then
+            h = h + edge + scale(nav.margin.bottom)
+        end
+        return h
+    end
+
+    -- Where the columns start from the bar's left: its side padding, and a floating pill's margin
+    -- and outline before it.
+    local function columns_left(look)
+        local nav = look.nav
+        local left = scale(nav.padding_x)
+        if nav.float then
+            left = left + scale(nav.margin.side) + scale(nav.edge_width)
+        end
+        return left
     end
 
     -- A bar across the screen's width in look id, placed on the screen's bottom edge.
@@ -67,9 +83,8 @@ describe("the nav bar", function()
 
     -- The screen x of column i's left edge and its width.
     local function column(bar, i)
-        local pad = scale(bar.look.nav.padding_x)
         local col = bar.columns[i]
-        return bar.dimen.x + pad + col.x, col.w
+        return bar.dimen.x + columns_left(bar.look) + col.x, col.w
     end
 
     local function centre(bar, i)
@@ -155,13 +170,12 @@ describe("the nav bar", function()
         it("are five equal shares of the width less the side padding, filling it", function()
             for _, id in ipairs(Looks.ids()) do
                 local bar = bar_for(id, "home")
-                local pad = scale(Looks.get(id).nav.padding_x)
-                local inner = Screen:getWidth() - 2 * pad
+                local inner = Screen:getWidth() - 2 * columns_left(Looks.get(id))
                 local shares = {}
                 for i = 1, 5 do
                     shares[i] = { share = 1 }
                 end
-                assert.same(Layout.columns(inner, shares, 0), bar.columns, id)
+                assert.same(Layout.columns(inner, shares, Looks.get(id).nav.tab_gap), bar.columns, id)
                 local last = bar.columns[5]
                 assert.equals(inner, last.x + last.w, id)
                 bar:free()
@@ -296,6 +310,89 @@ describe("the nav bar", function()
             end
             return n
         end
+
+        -- toybox.md: a pill 22 in from the sides and 20 up from the bottom, filled die and outlined
+        -- 3 px in ink on a 6 px ink edge, the lit tab a sun pill in a 2 px ink outline, the page's
+        -- paper round it (Looks.dc.html:608, :620).
+        it("floats Toybox's pill on the page with its edge below and lights the active tab in a ringed sun pill",
+                function()
+            harness.at_colorsoft(function()
+                for _, variant in ipairs({ "day", "night", "grey" }) do
+                    local bar, bb, holds = painted("toybox", "home", variant)
+                    local nav = bar.look.nav
+                    local size = bar:getSize()
+                    local side, edge, pad = scale(22), scale(3), scale(5)
+                    local pill_h = size.h - scale(20)
+                    local mid = math.floor(size.w / 2)
+                    holds("paper", side - 1, math.floor(pill_h / 2), variant .. " the page beside the pill")
+                    holds("paper", size.w - side, math.floor(pill_h / 2), variant .. " the page right of the pill")
+                    holds("paper", side, 0, variant .. " the pill's rounded corner")
+                    holds("ink", mid, 0, variant .. " the outline's top")
+                    holds("ink", mid, pill_h - 1, variant .. " the outline's foot")
+                    holds("shadow", mid, pill_h + scale(6) - 1, variant .. " the edge under the pill")
+                    holds("paper", mid, pill_h + scale(6), variant .. " the page under the edge")
+                    -- The pill's die inside its outline, the paper in grey, where die is none.
+                    local x2 = column(bar, 2)
+                    holds(variant == "grey" and "paper" or "die", x2 + math.floor(bar.columns[2].w / 2), edge + 1,
+                        variant .. " the pill's fill")
+                    -- The lit tab: its 2 px ink ring at its top, sun inside it; the next tab unlit.
+                    local x1, w1 = column(bar, 1)
+                    local lit_x, ring = x1 + math.floor(w1 / 2), scale(2)
+                    holds("outline", lit_x, edge + pad, variant .. " the lit tab's ring")
+                    holds("sun", lit_x, edge + pad + ring, variant .. " the lit tab's fill")
+                    holds(variant == "grey" and "paper" or "die", x2 + math.floor(bar.columns[2].w / 2),
+                        edge + pad + ring, variant .. " the unlit tab")
+                    assert.equals(scale(nav.tab_gap), bar.columns[2].x - (bar.columns[1].x + bar.columns[1].w))
+                    bar:free()
+                    bb:free()
+                end
+            end)
+        end)
+
+        -- Each tab's icon sits centred in its own column, the columns starting inside the pill's
+        -- margin, outline and padding: the lit Home icon's ink within the lit pill, clear of its
+        -- round ends, and each unlit icon's muted within its column, all in the icon's own box.
+        it("centres Toybox's icons in their columns inside the floating pill", function()
+            harness.at_colorsoft(function()
+                for _, variant in ipairs({ "day", "night" }) do
+                    local bar, bb = painted("toybox", "home", variant)
+                    local nav = bar.look.nav
+                    local palette = Looks.palette(bar.look, variant)
+                    local icon_size = scale(nav.icon_size)
+                    local icon_top = scale(nav.edge_width) + scale(nav.padding_top)
+                    local lit_h = bar:getSize().h - scale(nav.margin.bottom) - 2 * (scale(nav.edge_width)
+                        + scale(nav.padding_x))
+                    for i = 1, 5 do
+                        local x0, w = column(bar, i)
+                        local box_x = x0 + math.floor((w - icon_size) / 2)
+                        local role = i == 1 and "ink" or "muted"
+                        -- The lit tab's ring curves through the icon's rows at its round ends.
+                        local from, to = x0, x0 + w - 1
+                        if i == 1 then
+                            from, to = x0 + math.ceil(lit_h / 2), x0 + w - 1 - math.ceil(lit_h / 2)
+                        end
+                        local found, stray = 0, nil
+                        for y = icon_top, icon_top + icon_size - 1 do
+                            for x = from, to do
+                                if near(rgb(palette[role]), pixel(bb, x, y), 2) then
+                                    if x >= box_x and x < box_x + icon_size then
+                                        found = found + 1
+                                    else
+                                        stray = stray or ("%d,%d"):format(x, y)
+                                    end
+                                end
+                            end
+                        end
+                        assert.is_true(found > 0, ("%s column %d's icon has no %s pixel in its box"):format(
+                            variant, i, role))
+                        assert.is_nil(stray, ("%s column %d: a %s pixel outside the icon's centred box"):format(
+                            variant, i, role))
+                    end
+                    bar:free()
+                    bb:free()
+                end
+            end)
+        end)
 
         it("sets Diner's active label and icon in on_accent, which no other column draws, at night", function()
             harness.at_colorsoft(function()

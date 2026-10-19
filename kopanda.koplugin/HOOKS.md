@@ -194,6 +194,9 @@ Upgrading KOReader walks this list.
   first `paintTo` schedules, past that `_repaint`, and is not sent when that paint failed;
   nothing is scheduled before the paint, as for the home (the `nextTick` and `tickAfterNext`
   entry above).
+- A tap before the last page turns to the next look's page and asks for a whole-screen redraw with
+  `UIManager:setDirty(self, "full")` (`frontend/ui/uimanager.lua:659`), so the page turned from
+  leaves no ghost; on the last page the tap closes the swatch as above.
 
 ### `G_defaults` keys `DTAP_ZONE_MENU`, `DTAP_ZONE_MENU_EXT` and the `DSWIPE_ZONE_*` edges
 
@@ -607,6 +610,13 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
   only `fm.file_chooser`, named `"filemanager"`, and that a chooser built with
   `FileChooser.height` set has that height. `spec/plugin_harness.lua` puts the unwrapped function
   back on each load.
+- Toybox's floating pill (`paint_pill` in `nav_bar.lua`): its shadow, its fill, the lit tab's fill
+  and the pill's and the lit tab's outlines go through `paint.lua` to
+  `base/ffi/blitbuffer.lua:2169-2197` (`paintRoundedRect` and `paintRoundedRectRGB32`) and
+  `:2096-2135` (`paintBorder` and `paintBorderRGB32` with a radius). Its `radius` of 999 is held to
+  half the pill's height: each of them first clamps r to `floor(h/2)` and `floor(w/2)`
+  (`:2105-2106`, `:2127-2128`, `:2175-2176`, `:2191-2192`), as `paintRoundedCorner` paints nothing
+  when `2*r > h` or `2*r > w` (`:2016-2020`).
 
 ### The file browser's title bar: `TitleBar.new` inside `setupLayout`, its consumers and the sort and status menus
 
@@ -703,6 +713,11 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
   callbacks; afterwards `fm.title_bar` is that bar and the chooser's `title_bar` the same table,
   and the chooser's available height is its inner height less the bar's `getHeight()` and its page
   footer. An upgrade walks this entry before changing the pin.
+- The sort and status pickers are pills where the look rounds them (Toybox's `picker_radius`,
+  `title_bar.lua`): their fill and outline go through `paint.lua` to
+  `base/ffi/blitbuffer.lua:2169-2197` (`paintRoundedRect` and `paintRoundedRectRGB32`) and
+  `:2096-2135` (`paintBorder` and `paintBorderRGB32` with a radius), the radius held to half the
+  picker's height (`:2105-2106`, `:2127-2128`, `:2175-2176`, `:2191-2192`).
 
 ### Main menu registration, both apps
 
@@ -1357,6 +1372,13 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `height_overflow_show_ellipsis` (`:54`), at line heights as `:151` counts them.
 - The first run's button keeps its rectangle on the screen when it paints, and a tap inside it is
   tested with `Geom:contains` (`frontend/ui/geometry.lua:255-266`), which takes the far edges in.
+- The progress bar and the status chip are rounded where the look rounds them (Toybox's
+  `progress.radius` and `chip.radius`, both pills, `widgets/featured.lua`): the track, the fill and
+  the outline, and the chip's fill and outline, go through `paint.lua` to
+  `base/ffi/blitbuffer.lua:2169-2197` (`paintRoundedRect` and `paintRoundedRectRGB32`) and
+  `:2096-2135` (`paintBorder` and `paintBorderRGB32` with a radius), the radius held to half the
+  bar's or the chip's height (`:2105-2106`, `:2127-2128`, `:2175-2176`, `:2191-2192`); the fill
+  inside the outline is rounded by the radius less the outline.
 
 ### The launcher's entries: plugins, dispatcher ids, Wi-Fi, `changeToPath` and notes
 
@@ -1426,6 +1448,11 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `frontend/ui/widget/imagewidget.lua:570-579` proposes the mask method used here.
 - The tiles and rows: `paintRect` and `paintRectRGB32`, `paintBorder` and `paintBorderRGB32`, as
   the quote's tile above.
+- Toybox's rounded blocks and round badges (`widgets/launcher.lua`) go through `paint.lua` to
+  `base/ffi/blitbuffer.lua:2169-2197` (`paintRoundedRect` and `paintRoundedRectRGB32`) and
+  `:2096-2135` (`paintBorder` and `paintBorderRGB32` with a radius); a badge's radius of half its
+  size is what they clamp it to anyway (`:2105-2106`, `:2127-2128`, `:2175-2176`, `:2191-2192`), and
+  `paintRoundedCorner` paints nothing when `2*r > h` (`:2016-2020`).
 - A tap reaches the widget as `tap(ctx, ges, built)` from `HomeGestures.route` (through `Home:routeGesture`), `ges.pos` in screen
   coordinates; the grid keeps the origin it was last painted at and tests each entry's
   rectangle with `Geom:contains` (`frontend/ui/geometry.lua:255-266`).
@@ -1501,6 +1528,12 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
 - The home closing by any path, KOReader's own close included, closes a shown sheet with it:
   `UIManager:close` sends `CloseWidget` before it walks the stack (`frontend/ui/uimanager.lua:298-300`),
   and the home's `onCloseWidget` calls `Sheet.close` in a `pcall`.
+- Toybox's sheet (`sheet_layout.lua`): the box, its shadow and its outline are rounded by
+  `sheet.radius`; the header band at the box's top is a fill rounded by the radius less the outline
+  under a square fill over its lower corners; the chips are pills. All go through `paint.lua` to
+  `base/ffi/blitbuffer.lua:2169-2197` (`paintRoundedRect` and `paintRoundedRectRGB32`) and
+  `:2096-2135` (`paintBorder` and `paintBorderRGB32` with a radius), each radius held to half its
+  rectangle's height (`:2105-2106`, `:2127-2128`, `:2175-2176`, `:2191-2192`).
 
 ### The quick-settings sheet: the power device, the radio, `night_mode` and `lock_rotation`
 
@@ -1911,6 +1944,11 @@ guard (`sheet.lua`).
   (`plugins/coverbrowser.koplugin/covermenu.lua:144-157`). The tiles' rects are joined with
   `Geom:combine` (`frontend/ui/geometry.lua:151-153`, `Geom.boundingBox` at `:458-481`) and the
   region clipped to the library's `dimen` with `Geom:intersect` (`:162-184`).
+- The library header's pickers are pills where the look rounds them (Toybox's `picker_radius`,
+  `library_view.lua`): their fill and outline go through `paint.lua` to
+  `base/ffi/blitbuffer.lua:2169-2197` (`paintRoundedRect` and `paintRoundedRectRGB32`) and
+  `:2096-2135` (`paintBorder` and `paintBorderRGB32` with a radius), the radius held to half the
+  picker's height (`:2105-2106`, `:2127-2128`, `:2175-2176`, `:2191-2192`).
 
 ### The library's return: `caller_pre_callback`, `onShowingReader`, the failed-open paths and `changeToPath`
 

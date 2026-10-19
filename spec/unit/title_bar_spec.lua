@@ -581,6 +581,22 @@ describe("the title bar", function()
             end
         end)
 
+        -- No board draws Toybox's file browser: the library's pickers, 2 px ink pills on paper.
+        it("draws Toybox's pickers as ink pills on paper, their corners the bar's paper", function()
+            for _, variant in ipairs({ "day", "grey" }) do
+                painted("toybox", variant, function(bar, holds)
+                    for _, name in ipairs({ "sort", "status" }) do
+                        local box = bar.boxes[name]
+                        local mid = box.y + math.floor(box.h / 2)
+                        holds("outline", box.x, mid, name .. " round its left end")
+                        holds("outline", box.x + math.floor(box.w / 2), box.y, name .. " along its top")
+                        holds("paper", box.x, box.y, name .. "'s round corner")
+                        holds("paper", box.x + math.floor(box.w / 2), box.y + scale(2), name .. " fill")
+                    end
+                end)
+            end
+        end)
+
         it("draws Diner's mustard band over a 4 px ink edge and the chips on paper and pink, outlined", function()
             for _, variant in ipairs({ "day", "night", "grey" }) do
                 painted("diner", variant, function(bar, holds, count)

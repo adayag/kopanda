@@ -166,16 +166,18 @@ describe("the settings menu's rows", function()
             local look = row(SchemaMenu.items(), "look")
             assert.equals("Look · Diner", look.text_func())
             local sub = look.sub_item_table_func()
-            assert.equals(3, #sub)
+            assert.equals(4, #sub)
             assert.equals("Diner", sub[1].text)
             assert.equals("Editorial", sub[2].text)
             assert.equals("Riso", sub[3].text)
-            assert.is_true(sub[1].radio)
-            assert.is_true(sub[2].radio)
-            assert.is_true(sub[3].radio)
+            assert.equals("Toybox", sub[4].text)
+            for i = 1, 4 do
+                assert.is_true(sub[i].radio, sub[i].text)
+            end
             assert.is_true(sub[1].checked_func())
-            assert.is_false(sub[2].checked_func())
-            assert.is_false(sub[3].checked_func())
+            for i = 2, 4 do
+                assert.is_false(sub[i].checked_func(), sub[i].text)
+            end
         end)
 
         it("writes another choice once and refreshes a shown home once", function()
