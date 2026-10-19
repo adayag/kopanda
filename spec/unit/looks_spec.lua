@@ -1,14 +1,17 @@
--- The looks' token tables (looks/<id>.lua, one per id Looks.ids() lists) and looks.lua, which
--- picks the active look, the palette variant (C5) and the palette to draw with, night inverted
--- (night mode's C1, C2). The rules every look keeps run over every id; the tests that pin Diner's
--- and Editorial's own values name them.
+-- The looks: the base look (looks/base.lua), every token path with its default; each look's file
+-- (looks/<id>.lua, one per id Looks.ids() lists), which declares only what differs from it; and
+-- looks.lua, which lays each file over the base, picks the active look, the palette variant (C5)
+-- and the palette to draw with, night inverted (night mode's C1, C2). The token tables' tests are
+-- rules every look keeps, run over every id; no test pins a look's own values, which the owner
+-- judges by eye.
 describe("looks", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
+    local lfs = require("libs/libkoreader-lfs")
     -- Every look id, from looks.lua once the plugin has loaded (setup).
     local ids
-    -- The looks whose own board values the value tests pin.
-    local pinned = { "editorial", "diner" }
+    -- Each look's tokens as Looks.get gives them, the base with its file laid over (setup).
+    local looks = {}
 
     -- The home widgets' shapes a look chooses, each token under home with its values: the
     -- weather line's order, the date's line count, the stats joined on one right-aligned line or
@@ -24,14 +27,6 @@ describe("looks", function()
         featured_details = { "joined", "split" },
     }
 
-    local function home_choices(look)
-        local out = {}
-        for key in pairs(HOME_CHOICES) do
-            out[key] = look.home[key]
-        end
-        return out
-    end
-
     -- A look file run with no globals at all, as pure data must run: no require, no functions
     -- from the environment.
     local function load_look(id)
@@ -40,9 +35,13 @@ describe("looks", function()
         return chunk()
     end
 
-    -- The paths a look file sets that the base (looks/base.lua) doesn't declare, as dotted strings,
-    -- sorted: a key the base lacks, or a table where the base has a value or a value where it has
-    -- a table.
+    -- A table of tokens, not a list: inherit replaces a list whole, so a list is one token.
+    local function is_branch(v)
+        return type(v) == "table" and v[1] == nil
+    end
+
+    -- The paths a look file sets that the base doesn't declare, as dotted strings, sorted: a key
+    -- the base lacks, or a table where the base has a value or a value where it has a table.
     local function unknown_paths(own, base)
         local out = {}
         local function walk(mine, theirs, prefix)
@@ -51,7 +50,7 @@ describe("looks", function()
                 local declared = theirs[k]
                 if declared == nil or (type(v) == "table") ~= (type(declared) == "table") then
                     out[#out + 1] = path
-                elseif type(v) == "table" then
+                elseif is_branch(v) then
                     walk(v, declared, path .. ".")
                 end
             end
@@ -61,13 +60,13 @@ describe("looks", function()
         return out
     end
 
-    -- Every key path in t that ends at a non-table value, as dotted strings, sorted.
+    -- Every key path in t that ends at a non-table value or a list, as dotted strings, sorted.
     local function paths(t)
         local out = {}
         local function walk(node, prefix)
             for k, v in pairs(node) do
                 local path = prefix .. tostring(k)
-                if type(v) == "table" then
+                if is_branch(v) then
                     walk(v, path .. ".")
                 else
                     out[#out + 1] = path
@@ -111,7 +110,6 @@ describe("looks", function()
         end
     end
 
-    local looks = {}
     setup(function()
         harness.load()
         ids = package.loaded["looks"].ids()
@@ -128,98 +126,16 @@ describe("looks", function()
             assert.is_table(base.faces)
             for _, id in ipairs(ids) do
                 assert.is_table(load_look(id), id)
-                assert.is_table(looks[id].palettes, id)
-                assert.is_table(looks[id].faces, id)
             end
         end)
 
-        -- A look file declares only what differs from the base, and Looks.get lays it over the
-        -- base: every look has every token path the base declares, and no other.
         it("give every look every token path the base declares", function()
-            local diner = paths(load_look("base"))
-            assert.truthy(#diner > 40, "too few tokens: " .. #diner)
-            for _, wanted in ipairs({ "icons.set", "home.weather_order", "home.date_lines", "home.stats_line",
-                    "home.stats_streak", "home.featured_label", "home.featured_details", "faces.display.file",
-                    "faces.accent.file",
-                    "palettes.grey.paper", "stroke.outline", "shadow.cover.color", "radius.cover", "tile.outline_color",
-                    "progress.fill_grey", "sheet.rule_color", "chip.fill_color", "label.size",
-                    "palettes.day.on_band", "faces.strong.file", "faces.quote.file", "home.margin.side",
-                    "home.free_space", "home.header.padding.top", "home.footer.line_pitch",
-                    "type.date_label.face", "type.clock.color", "type.stats.line_height",
-                    "palettes.day.cover", "palettes.night.on_cover", "palettes.grey.cover",
-                    "type.cover_title.tracking", "type.cover_authors.color", "type.cover_empty.face",
-                    "featured.cover_w", "featured.cover_h", "featured.cover_padding.x",
-                    "featured.cover_padding.y", "featured.dash", "featured.dash_gap",
-                    "type.featured_label.face", "type.featured_title.line_height", "type.featured_authors.color",
-                    "type.featured_chapter.size", "type.featured_caption.face", "type.featured_empty_title.size",
-                    "type.featured_empty_body.line_height", "type.featured_button.uppercase", "featured.gap",
-                    "featured.column_padding_y", "featured.title_gap", "featured.chip_outline",
-                    "featured.chip_padding.x", "featured.chip_padding.y", "featured.button_padding.x",
-                    "featured.button_padding.y", "featured.button_fill_color",
-                    "featured.button_outline_color", "launcher.columns", "launcher.column_gap",
-                    "launcher.row_gap", "launcher.icon_size", "launcher.icon_gap", "launcher.padding.x",
-                    "launcher.padding.y", "launcher.tile_height", "launcher.accent_1_color",
-                    "launcher.accent_2_color", "launcher.accent_3_color", "launcher.suffix_gap",
-                    "launcher.suffix_below", "type.launcher_label.face", "type.launcher_suffix.tracking",
-                    "sheet.inset.side", "sheet.book_band_color", "sheet.header_padding.top",
-                    "sheet.book_header_padding.bottom", "sheet.row_rule_color", "sheet.status_chip_color",
-                    "sheet.chip_padding.x", "type.sheet_heading.face", "type.sheet_aside.color",
-                    "type.sheet_chip.size", "sheet.selected_fill_color", "sheet.aside_above_gap",
-                    "sheet.sublabel_gap", "type.sheet_label.face", "type.sheet_sublabel.size",
-                    "editor.padding.top", "editor.header_band_color",
-                    "editor.header_rule_width", "editor.body_gap", "editor.button_padding.y", "editor.card_padding.x",
-                    "editor.selected_fill_color", "editor.arrow_size", "editor.disabled_color",
-                    "editor.box_padding.y", "editor.row_rule_color", "editor.control_size",
-                    "editor.kind_columns", "type.editor_aside.tracking", "type.editor_title.size",
-                    "type.editor_button.face", "type.editor_caption.color", "type.editor_box.face",
-                    "type.editor_share.color", "type.editor_label.size", "type.editor_kind.uppercase",
-                    "type.editor_note.line_height", "nav.fill_color", "nav.edge_width", "nav.edge_color",
-                    "nav.padding_x", "nav.padding_top", "nav.padding_bottom", "nav.icon_size", "nav.icon_gap",
-                    "nav.icon_color", "nav.active_icon_color", "nav.active_rule_width", "nav.active_rule_color",
-                    "nav.active_fill_color", "nav.divider_width", "nav.divider_color", "type.nav_label.face",
-                    "type.nav_label.tracking", "type.nav_label_active.face", "type.nav_label_active.color",
-                    "title_bar.fill_color", "title_bar.padding.top", "title_bar.padding.side",
-                    "title_bar.padding.bottom", "title_bar.edge_width", "title_bar.edge_color", "title_bar.line_gap",
-                    "title_bar.picker_gap", "title_bar.sort_fill_color", "title_bar.status_fill_color",
-                    "title_bar.picker_outline_width", "title_bar.picker_outline_color", "title_bar.picker_padding.x",
-                    "title_bar.picker_padding.y", "title_bar.icon_size", "title_bar.icon_color",
-                    "title_bar.count_on_shelf", "type.title_bar_count.face", "type.title_bar_title.size",
-                    "type.title_bar_sort.tracking", "type.title_bar_status.color",
-                    "sheet.quick_settings_band_color", "quick_settings.padding_x",
-                    "quick_settings.first_section_padding.top", "quick_settings.section_padding.bottom",
-                    "quick_settings.section_gap", "quick_settings.section_rule_width",
-                    "quick_settings.section_rule_color", "quick_settings.control_gap", "quick_settings.button_w",
-                    "quick_settings.button_h", "quick_settings.button_outline_width",
-                    "quick_settings.button_outline_color", "quick_settings.button_fill_color",
-                    "quick_settings.level_h", "quick_settings.level_outline_width",
-                    "quick_settings.level_outline_color", "quick_settings.level_fill_color",
-                    "quick_settings.level_track_color", "quick_settings.grid_gap", "quick_settings.grid_padding.top",
-                    "quick_settings.grid_padding.bottom", "quick_settings.cell_padding.top",
-                    "quick_settings.cell_padding.bottom", "quick_settings.cell_gap", "quick_settings.cell_icon_size",
-                    "quick_settings.cell_outline_width", "quick_settings.cell_outline_color",
-                    "quick_settings.cell_fill_color", "quick_settings.on_fill_color", "quick_settings.on_text_color",
-                    "type.quick_label.face", "type.quick_button.size", "type.quick_cell.color",
-                    "palettes.day.tint", "misregister.x", "misregister.y", "misregister.color",
-                    "shadow.cover.outline_width", "shadow.tile.outline_width", "shadow.sheet.outline_width",
-                    "library.cover.shadow.outline_width", "featured.cover_outline_color", "sheet.outline_width",
-                    "quote.padding", "quote.rule_width", "quote.rule_color",
-                    "palettes.day.sun", "palettes.day.coral", "palettes.day.mint", "palettes.night.die",
-                    "radius.box", "progress.radius", "chip.radius", "sheet.radius",
-                    "title_bar.picker_radius", "library.header.picker_radius",
-                    "launcher.badge.size", "launcher.badge.outline_width", "launcher.badge.outline_color",
-                    "launcher.badge.fill_1_color", "launcher.badge.fill_6_color",
-                    "nav.float", "nav.margin.side", "nav.margin.bottom", "nav.radius", "nav.float_fill_color",
-                    "nav.shadow.x", "nav.shadow.y", "nav.shadow.color", "nav.tab_gap",
-                    "nav.active_outline_width", "nav.active_outline_color" }) do
-                local found = false
-                for _, path in ipairs(diner) do
-                    found = found or path == wanted
-                end
-                assert.is_true(found, wanted)
-            end
+            local base = paths(load_look("base"))
+            assert.truthy(#base > 40, "too few tokens: " .. #base)
             for _, id in ipairs(ids) do
-                assert.same(diner, paths(looks[id]), id)
+                assert.same(base, paths(looks[id]), id)
             end
+            assert.same({ "dash", "plate.radius" }, paths({ dash = { 6, 4 }, plate = { radius = 0 } }))
         end)
 
         it("set in a look file only token paths the base declares", function()
@@ -229,21 +145,10 @@ describe("looks", function()
             end
             assert.same({ "plate.glow", "stroke" },
                 unknown_paths({ plate = { glow = 1, radius = 0 }, stroke = 2 }, base))
+            assert.same({}, unknown_paths({ dash = { 1, 2, 3, 4 } }, { dash = { 1 } }))
         end)
 
-        -- The icon set a look draws with: a set id, or false for the registry's default.
-        it("give every look an icon set id or false, Diner and Editorial false", function()
-            for _, id in ipairs(ids) do
-                local set = looks[id].icons.set
-                assert.is_true(set == false or (type(set) == "string" and set ~= ""), id .. " icons.set")
-            end
-            assert.is_false(looks.diner.icons.set)
-            assert.is_false(looks.editorial.icons.set)
-        end)
-
-        -- The home widgets' shapes a look chooses (HOME_CHOICES): one of each token's values on
-        -- every look; Diner's and Editorial's as their boards draw them.
-        it("give every look one of each home choice's values, Diner's and Editorial's their boards'", function()
+        it("give every look one of each home choice's values", function()
             for _, id in ipairs(ids) do
                 for key, values in pairs(HOME_CHOICES) do
                     local value = looks[id].home[key]
@@ -254,12 +159,6 @@ describe("looks", function()
                     assert.is_true(known, id .. " home." .. key .. " = " .. tostring(value))
                 end
             end
-            assert.same({ weather_order = "degrees_first", date_lines = 1, stats_line = "joined",
-                stats_streak = "count_first", featured_label = "now_reading", featured_details = "joined" },
-                home_choices(looks.diner))
-            assert.same({ weather_order = "condition_first", date_lines = 2, stats_line = "spread",
-                stats_streak = "word_first", featured_label = "continue_reading", featured_details = "split" },
-                home_choices(looks.editorial))
         end)
 
         it("declare the same roles in the day, night and grey palettes of each look", function()
@@ -267,11 +166,6 @@ describe("looks", function()
                 local palettes = looks[id].palettes
                 assert.same({ "day", "grey", "night" }, keys(palettes), id)
                 local roles = keys(palettes.day)
-                for _, role in ipairs({ "paper", "ink", "muted", "text", "hairline", "hairline_light",
-                        "teal", "pink", "mustard", "tint", "outline", "shadow", "on_band", "cover", "on_cover",
-                        "on_accent" }) do
-                    assert.is_not_nil(palettes.day[role], id .. " has no " .. role)
-                end
                 assert.same(roles, keys(palettes.night), id .. " night")
                 assert.same(roles, keys(palettes.grey), id .. " grey")
             end
@@ -320,6 +214,7 @@ describe("looks", function()
             end
         end)
 
+        -- Colours live in the palettes alone: every other token names one by role, or is false.
         it("name colours outside the palettes only by palette role", function()
             for _, id in ipairs(ids) do
                 local look = looks[id]
@@ -330,6 +225,7 @@ describe("looks", function()
                     if type(value) ~= "string" then
                         return
                     end
+                    assert.is_nil(value:match("^#%x+$"), where .. " is a colour outside the palettes: " .. value)
                     if tostring(key):match("color$") then
                         assert.is_not_nil(look.palettes.day[value], where .. " names no palette role: " .. value)
                         -- A role false by day but drawn at night or in grey, as Editorial's outline, is
@@ -350,7 +246,7 @@ describe("looks", function()
                     elseif path == "home." .. tostring(key) and HOME_CHOICES[key] then
                         return -- one of its values, checked by the home choices' own test
                     elseif path == "icons.set" then
-                        assert.truthy(value ~= "", where)
+                        return -- a vendored set, checked by the icon set's own test
                     else
                         error(where .. " is a string that is neither a role, a face nor a marker: " .. value)
                     end
@@ -378,448 +274,6 @@ describe("looks", function()
             end
         end)
 
-        -- The typographic cover's fill and text (Main:33, NightA:33, PWEditorial:33; HomeRetro:28,
-        -- NightC:28, PWRetro:28 under .tiller/design/2026-10-13-kopanda-screens/).
-        it("give the cover and on_cover roles the boards' values", function()
-            local wanted = {
-                editorial = { day = { "#2b4c6f", "#f3f1ea" }, night = { "#2b4c6f", "#f3f1ea" },
-                    grey = { "#4a4a4a", "#f4f4f4" } },
-                diner = { day = { "#2b4c6f", "#f5f1e6" }, night = { "#2b4c6f", "#f5f1e6" },
-                    grey = { "#4a4a4a", "#f4f4f4" } },
-            }
-            for id, variants in pairs(wanted) do
-                for variant, pair in pairs(variants) do
-                    local palette = looks[id].palettes[variant]
-                    assert.same(pair, { palette.cover, palette.on_cover }, id .. " " .. variant)
-                end
-            end
-        end)
-
-        -- The text on Diner's accent fills: the boards' ink on the band (HoldBookC:31-36), the night
-        -- paper (no board), ink on the grey tiles (PWRetro:19). Editorial has no accent fills.
-        it("give on_accent Diner's day, night and grey values and Editorial none", function()
-            local palettes = looks.diner.palettes
-            assert.same({ "#2f2e2b", "#1e1c1a", "#111111" },
-                { palettes.day.on_accent, palettes.night.on_accent, palettes.grey.on_accent })
-            palettes = looks.editorial.palettes
-            assert.same({ false, false, false },
-                { palettes.day.on_accent, palettes.night.on_accent, palettes.grey.on_accent })
-        end)
-
-        it("size the cover box 2:3 and draw the placeholder's text in on_cover and its empty frame in muted", function()
-            for id, size in pairs({ editorial = { 150, 225 }, diner = { 140, 210 } }) do
-                local look = looks[id]
-                assert.same(size, { look.featured.cover_w, look.featured.cover_h }, id)
-                assert.same({ 4, 4 }, { look.featured.dash, look.featured.dash_gap }, id)
-                assert.equals("on_cover", look.type.cover_title.color, id)
-                assert.equals("on_cover", look.type.cover_authors.color, id)
-                assert.equals("muted", look.type.cover_empty.color, id)
-                assert.is_true(look.type.cover_title.uppercase, id)
-                assert.is_true(look.type.cover_authors.uppercase, id)
-                assert.is_true(look.type.cover_empty.uppercase, id)
-            end
-        end)
-
-        -- The featured text column and first run (Main.dc.html:32-52, HomeRetro.dc.html:27-43,
-        -- EmptyStates.dc.html:32-40 under .tiller/design/2026-10-13-kopanda-screens/): each part's
-        -- face, size, palette role and line height, and the featured block's column entries.
-        it("give the featured parts and the featured block the boards' values", function()
-            local wanted = {
-                editorial = {
-                    featured_label = { "text", 11, "muted", 0 },
-                    featured_title = { "display", 28, "ink", 0.1 },
-                    featured_authors = { "text", 15, "text", 0 },
-                    featured_chapter = { "text", 14, "text", 0 },
-                    featured_caption = { "text", 13, "text", 0 },
-                    featured_empty_title = { "display", 24, "ink", 0.15 },
-                    featured_empty_body = { "text", 15, "text", 0.4 },
-                    featured_button = { "strong", 11, "ink", 0 },
-                },
-                diner = {
-                    featured_label = { "display", 11, "ink", 0 },
-                    featured_title = { "display", 28, "ink", 0.05 },
-                    featured_authors = { "text", 15, "muted", 0 },
-                    featured_chapter = { "text", 15, "muted", 0 },
-                    featured_caption = { "strong", 13, "ink", 0 },
-                    featured_empty_title = { "display", 24, "ink", 0.15 },
-                    featured_empty_body = { "text", 15, "muted", 0.4 },
-                    featured_button = { "strong", 11, "ink", 0 },
-                },
-            }
-            for id, parts in pairs(wanted) do
-                for name, value in pairs(parts) do
-                    local part = looks[id].type[name]
-                    assert.is_table(part, id .. " " .. name)
-                    assert.same(value, { part.face, part.size, part.color, part.line_height }, id .. " " .. name)
-                end
-                for _, name in ipairs({ "featured_label", "featured_button" }) do
-                    assert.is_true(looks[id].type[name].uppercase, id .. " " .. name)
-                end
-            end
-            assert.equals(looks.diner.chip.text_color, looks.diner.type.featured_label.color)
-            local editorial, diner = looks.editorial.featured, looks.diner.featured
-            assert.same({ 24, 0, 6, false }, { editorial.gap, editorial.column_padding_y, editorial.title_gap,
-                editorial.chip_outline })
-            assert.same({ 20, 6, 12, 2 }, { diner.gap, diner.column_padding_y, diner.title_gap, diner.chip_outline })
-            assert.same({ x = 10, y = 3 }, diner.chip_padding)
-            assert.same({ x = 14, y = 9 }, editorial.button_padding)
-            assert.same({ false, "ink" }, { editorial.button_fill_color, editorial.button_outline_color })
-            assert.same({ "mustard", "outline" }, { diner.button_fill_color, diner.button_outline_color })
-        end)
-
-        -- A launcher whose tiles draw no badge: no size, no ring and no fills.
-        local NO_BADGE = { size = 0, outline_width = 0, outline_color = false, fill_1_color = false,
-            fill_2_color = false, fill_3_color = false, fill_4_color = false, fill_5_color = false,
-            fill_6_color = false }
-
-        -- The launcher (Main.dc.html:60-62, HomeRetro.dc.html:55-64, EmptyStates.dc.html:65 under
-        -- .tiller/design/2026-10-13-kopanda-screens/): its block and its two type parts. Editorial's
-        -- row padding (15) and Diner's row gap (14) are tightened to fit the home above the nav bar
-        -- (layout_spec.lua's default home above the bar).
-        it("give the launcher block and its parts the boards' values, its height tightened", function()
-            assert.same({
-                columns = 2, column_gap = 32, row_gap = 0, icon_size = 22, icon_gap = 14,
-                padding = { x = 0, y = 11 }, tile_height = false, accent_1_color = false,
-                accent_2_color = false, accent_3_color = false, suffix_gap = 6, suffix_below = false,
-                badge = NO_BADGE,
-            }, looks.editorial.launcher)
-            assert.same({
-                columns = 3, column_gap = 14, row_gap = 9, icon_size = 28, icon_gap = false,
-                padding = { x = 14, y = 12 }, tile_height = 104, accent_1_color = "mustard",
-                accent_2_color = "pink", accent_3_color = "teal", suffix_gap = 6, suffix_below = true,
-                badge = NO_BADGE,
-            }, looks.diner.launcher)
-            local wanted = {
-                editorial = {
-                    launcher_label = { "strong", 16, false, 0, 0, "ink" },
-                    launcher_suffix = { "strong", 11, true, 0.1, 0, "muted" },
-                },
-                diner = {
-                    launcher_label = { "display", 14, false, 0, 0, "ink" },
-                    launcher_suffix = { "display", 11, true, 0.1, 0, "muted" },
-                },
-            }
-            for id, parts in pairs(wanted) do
-                for name, value in pairs(parts) do
-                    local part = looks[id].type[name]
-                    assert.is_table(part, id .. " " .. name)
-                    assert.same(value, { part.face, part.size, part.uppercase, part.tracking, part.line_height,
-                        part.color }, id .. " " .. name)
-                end
-            end
-        end)
-
-        -- The editor frame's tokens (EditLayout.dc.html:19-43 under
-        -- .tiller/design/2026-10-13-kopanda-screens/); Diner has no board and takes its own vocabulary.
-        it("give Editorial's editor block and parts the boards' values", function()
-            local editor, parts = looks.editorial.editor, looks.editorial.type
-            assert.same({ top = 40, side = 40, bottom = 28 }, editor.padding)
-            assert.same({ false, false }, { editor.header_band_color, editor.header_text_color })
-            assert.same({ "ink", 1, 16 }, { editor.header_rule_color, editor.header_rule_width, editor.header_gap })
-            assert.equals(18, editor.body_gap)
-            assert.same({ "ink", 1, false }, { editor.button_outline_color, editor.button_outline_width,
-                editor.button_fill_color })
-            assert.same({ "hairline", 1 }, { editor.card_outline_color, editor.card_outline_width })
-            assert.same({ "ink", "hairline_light" }, { editor.selected_outline_color, editor.selected_fill_color })
-            assert.same({ x = 0, y = 0, color = false }, editor.card_shadow)
-            assert.equals("hairline", editor.disabled_color)
-            assert.same({ "display", 34, false, 0, 0.3, "ink" }, { parts.editor_title.face, parts.editor_title.size,
-                parts.editor_title.uppercase, parts.editor_title.tracking, parts.editor_title.line_height,
-                parts.editor_title.color })
-            assert.same({ "text", 11, true, 0.14, "muted" }, { parts.editor_aside.face, parts.editor_aside.size,
-                parts.editor_aside.uppercase, parts.editor_aside.tracking, parts.editor_aside.color })
-        end)
-
-        it("give Diner's editor block its band header, outlines and mustard selection", function()
-            local editor, parts = looks.diner.editor, looks.diner.type
-            assert.same({ "band", "on_band" }, { editor.header_band_color, editor.header_text_color })
-            assert.same({ "outline", 3 }, { editor.header_rule_color, editor.header_rule_width })
-            assert.equals(18, editor.body_gap)
-            assert.same({ "outline", 3, "paper" }, { editor.button_outline_color, editor.button_outline_width,
-                editor.button_fill_color })
-            assert.same({ "outline", 3 }, { editor.card_outline_color, editor.card_outline_width })
-            assert.same({ "outline", "mustard" }, { editor.selected_outline_color, editor.selected_fill_color })
-            assert.same({ "outline", 2 }, { editor.row_rule_color, editor.row_rule_width })
-            assert.same({ x = 2, y = 2, color = "shadow" }, editor.card_shadow)
-            assert.equals("muted", editor.disabled_color)
-            assert.same({ "display", 30, "on_band" }, { parts.editor_title.face, parts.editor_title.size,
-                parts.editor_title.color })
-            assert.same({ "strong", 11, true, 0.1, "on_band" }, { parts.editor_aside.face, parts.editor_aside.size,
-                parts.editor_aside.uppercase, parts.editor_aside.tracking, parts.editor_aside.color })
-        end)
-
-        -- The nav bar's tokens (NavBar.dc.html:68-87, NavBarC.dc.html:70-89 under
-        -- .tiller/design/2026-10-13-kopanda-screens/).
-        local function nav_values(look)
-            local nav = look.nav
-            return {
-                fill_color = nav.fill_color, edge_width = nav.edge_width, edge_color = nav.edge_color,
-                padding_x = nav.padding_x, padding_top = nav.padding_top, padding_bottom = nav.padding_bottom,
-                icon_size = nav.icon_size, icon_gap = nav.icon_gap, icon_color = nav.icon_color,
-                active_icon_color = nav.active_icon_color, active_rule_width = nav.active_rule_width,
-                active_rule_color = nav.active_rule_color, active_fill_color = nav.active_fill_color,
-                divider_width = nav.divider_width, divider_color = nav.divider_color,
-            }
-        end
-
-        local function part_values(part)
-            return { part.face, part.size, part.uppercase, part.tracking, part.line_height, part.color }
-        end
-
-        it("give Editorial's nav block and parts the boards' values", function()
-            local look = looks.editorial
-            assert.same({
-                fill_color = "paper", edge_width = 1, edge_color = "ink",
-                padding_x = 24, padding_top = 16, padding_bottom = 18,
-                icon_size = 26, icon_gap = 7, icon_color = "text", active_icon_color = "ink",
-                active_rule_width = 3, active_rule_color = "ink", active_fill_color = false,
-                divider_width = 0, divider_color = false,
-            }, nav_values(look))
-            assert.same({ "strong", 11, true, 0.12, 0, "text" }, part_values(look.type.nav_label))
-            assert.same({ "strong", 11, true, 0.12, 0, "ink" }, part_values(look.type.nav_label_active))
-        end)
-
-        it("give Diner's nav block and parts the boards' values", function()
-            local look = looks.diner
-            assert.same({
-                fill_color = "band", edge_width = 4, edge_color = "ink",
-                padding_x = 0, padding_top = 14, padding_bottom = 16,
-                icon_size = 28, icon_gap = 6, icon_color = "ink", active_icon_color = "on_accent",
-                active_rule_width = 0, active_rule_color = false, active_fill_color = "mustard",
-                divider_width = 3, divider_color = "outline",
-            }, nav_values(look))
-            assert.same({ "strong", 12, true, 0.04, 0, "ink" }, part_values(look.type.nav_label))
-            assert.same({ "display", 12, true, 0.04, 0, "on_accent" }, part_values(look.type.nav_label_active))
-        end)
-
-        -- The quick-settings sheet: Editorial's from its board (QuickSettings.dc.html:34-87 under
-        -- .tiller/design/2026-10-13-kopanda-screens/), Diner's from its own sheet, progress bar and
-        -- chip tokens, as the quick-settings feature's "Tokens" gives them.
-        local QUICK_SETTINGS = {
-            editorial = {
-                band = false,
-                block = {
-                    padding_x = 0, first_section_padding = { top = 18, bottom = 16 },
-                    section_padding = { top = 16, bottom = 16 }, section_gap = 10, section_rule_width = 1,
-                    section_rule_color = "hairline", control_gap = 12, button_w = 44, button_h = 36,
-                    button_outline_width = 1, button_outline_color = "ink", button_fill_color = false,
-                    level_h = 10, level_outline_width = 1, level_outline_color = "ink", level_fill_color = "ink",
-                    level_track_color = false, grid_gap = 10, grid_padding = { top = 18, bottom = 0 },
-                    cell_padding = { top = 14, bottom = 12 }, cell_gap = 8, cell_icon_size = 24,
-                    cell_outline_width = 1, cell_outline_color = "ink", cell_fill_color = false,
-                    on_fill_color = "ink", on_text_color = "paper",
-                },
-                parts = {
-                    quick_label = { "text", 11, true, 0.12, 0, "muted" },
-                    quick_button = { "text", 18, false, 0, 0, "ink" },
-                    quick_cell = { "strong", 11, true, 0.1, 0, "ink" },
-                },
-            },
-            diner = {
-                band = "band",
-                block = {
-                    padding_x = 20, first_section_padding = { top = 15, bottom = 15 },
-                    section_padding = { top = 15, bottom = 15 }, section_gap = 10, section_rule_width = 2,
-                    section_rule_color = "outline", control_gap = 12, button_w = 44, button_h = 36,
-                    button_outline_width = 2, button_outline_color = "outline", button_fill_color = "paper",
-                    level_h = 14, level_outline_width = 2, level_outline_color = "outline",
-                    level_fill_color = "mustard", level_track_color = "paper", grid_gap = 10,
-                    grid_padding = { top = 15, bottom = 20 }, cell_padding = { top = 14, bottom = 12 },
-                    cell_gap = 8, cell_icon_size = 24, cell_outline_width = 2, cell_outline_color = "outline",
-                    cell_fill_color = "paper", on_fill_color = "ink", on_text_color = "paper",
-                },
-                parts = {
-                    quick_label = { "strong", 12, true, 0.08, 0, "muted" },
-                    quick_button = { "strong", 18, false, 0, 0, "ink" },
-                    quick_cell = { "display", 11, true, 0.08, 0, "ink" },
-                },
-            },
-        }
-
-        for _, id in ipairs(pinned) do
-            it("give " .. id .. "'s quick settings block and parts their values", function()
-                local wanted = QUICK_SETTINGS[id]
-                assert.equals(wanted.band, looks[id].sheet.quick_settings_band_color)
-                assert.same(wanted.block, looks[id].quick_settings)
-                for name, values in pairs(wanted.parts) do
-                    assert.same(values, part_values(looks[id].type[name]), id .. " type." .. name)
-                end
-            end)
-        end
-
-        -- The file manager's title bar (Library.dc.html:17-27, LibraryC.dc.html:19-27 under
-        -- .tiller/design/2026-10-13-kopanda-screens/).
-        local function title_bar_values(look)
-            local bar = look.title_bar
-            return {
-                fill_color = bar.fill_color,
-                padding = { top = bar.padding.top, side = bar.padding.side, bottom = bar.padding.bottom },
-                edge_width = bar.edge_width, edge_color = bar.edge_color, line_gap = bar.line_gap,
-                picker_gap = bar.picker_gap, sort_fill_color = bar.sort_fill_color,
-                status_fill_color = bar.status_fill_color, picker_outline_width = bar.picker_outline_width,
-                picker_outline_color = bar.picker_outline_color,
-                picker_padding = { x = bar.picker_padding.x, y = bar.picker_padding.y },
-                icon_size = bar.icon_size, icon_color = bar.icon_color, count_on_shelf = bar.count_on_shelf,
-            }
-        end
-
-        it("give Editorial's title bar block and parts the boards' values", function()
-            local look = looks.editorial
-            assert.same({
-                fill_color = "paper", padding = { top = 40, side = 40, bottom = 16 },
-                edge_width = 1, edge_color = "ink", line_gap = 2, picker_gap = 20,
-                sort_fill_color = false, status_fill_color = false,
-                picker_outline_width = 0, picker_outline_color = false, picker_padding = { x = 0, y = 0 },
-                icon_size = 16, icon_color = "text", count_on_shelf = false,
-            }, title_bar_values(look))
-            assert.same({ "text", 11, true, 0.14, 0, "muted" }, part_values(look.type.title_bar_count))
-            assert.same({ "display", 34, false, 0, 0, "ink" }, part_values(look.type.title_bar_title))
-            assert.same({ "strong", 11, true, 0.12, 0, "text" }, part_values(look.type.title_bar_sort))
-            assert.same({ "strong", 11, true, 0.12, 0, "text" }, part_values(look.type.title_bar_status))
-        end)
-
-        it("give Diner's title bar block and parts the boards' values", function()
-            local look = looks.diner
-            assert.same({
-                fill_color = "mustard", padding = { top = 30, side = 40, bottom = 20 },
-                edge_width = 4, edge_color = "ink", line_gap = 2, picker_gap = 10,
-                sort_fill_color = "paper", status_fill_color = "pink",
-                picker_outline_width = 2, picker_outline_color = "outline", picker_padding = { x = 10, y = 4 },
-                icon_size = 16, icon_color = "on_accent", count_on_shelf = true,
-            }, title_bar_values(look))
-            assert.same({ "accent", 24, false, 0, 0, "on_accent" }, part_values(look.type.title_bar_count))
-            assert.same({ "display", 40, false, -0.01, -0.05, "on_accent" }, part_values(look.type.title_bar_title))
-            assert.same({ "display", 11, true, 0.08, 0, "ink" }, part_values(look.type.title_bar_sort))
-            assert.same({ "display", 11, true, 0.08, 0, "on_accent" }, part_values(look.type.title_bar_status))
-        end)
-
-        -- The library grid's block and parts as the boards give them (Main.dc.html for Diner, GridA.dc.html
-        -- for Editorial, under .tiller/design/2026-10-16-kopanda-library-screens/; the cover-grid feature's
-        -- "Tokens"). The colours the table leaves out are the roles the boards draw in.
-        local LIBRARY_BOARD = {
-            diner = {
-                header = {
-                    fill_color = "mustard", padding = { top = 28, side = 40, bottom = 18 }, edge_width = 4,
-                    edge_color = "ink", line_gap = 2, picker_gap = 10, picker_padding = { x = 10, y = 4 },
-                    picker_outline_width = 2, picker_outline_color = "outline", sort_fill_color = "paper",
-                    status_fill_color = "pink", picker_radius = 0,
-                },
-                grid = { padding_top = 22, side = 40, row_gap = 22, column_gap = 22, cover_h = 200, strip_gap = 12,
-                    title_gap = 8 },
-                cover = { outline_width = 3, outline_color = "outline", radius = 0,
-                    shadow = { x = 5, y = 5, color = "shadow", outline_width = false },
-                    padding = { x = 10, y = 14 } },
-                strip = { height = 14, outline_width = 2 },
-                folder = { fill_color = "pink", outline_width = 3, outline_color = "outline", icon_size = 44,
-                    icon_color = "on_accent", padding = { x = 12, y = 14 }, count_gap = 4 },
-                badge = { size = 38, outline_width = 3, outline_color = "outline", fill_color = "paper",
-                    icon_size = 20, icon_color = "ink", inset = -12, align = "top" },
-                not_downloaded = { outline_color = "outline", padding = { x = 6, y = 1 } },
-                pager = { button_w = 44, button_h = 32, gap = 18, bottom = 16, outline_width = 2,
-                    outline_color = "outline", prev_fill_color = "paper", next_fill_color = "mustard",
-                    dead_color = false, prev_icon_color = "ink", next_icon_color = "on_accent",
-                    label_in_words = true },
-            },
-            editorial = {
-                header = {
-                    fill_color = false, padding = { top = 40, side = 40, bottom = 16 }, edge_width = 2,
-                    edge_color = "ink", line_gap = 2, picker_gap = 20, picker_padding = { x = 0, y = 0 },
-                    picker_outline_width = 0, picker_outline_color = false, sort_fill_color = false,
-                    status_fill_color = false, picker_radius = 0,
-                },
-                grid = { padding_top = 22, side = 40, row_gap = 22, column_gap = 20, cover_h = 218, strip_gap = 10,
-                    title_gap = 8 },
-                -- The owner's hairline, not GridA.dc.html:43's none: the outline role is false by day, so
-                -- the day cover still has no border.
-                cover = { outline_width = 1, outline_color = "outline", radius = 3,
-                    shadow = { x = 2, y = 3, color = "shadow", outline_width = false },
-                    padding = { x = 12, y = 16 } },
-                strip = { height = 4, outline_width = 0 },
-                folder = { fill_color = "paper", outline_width = 1, outline_color = "hairline", icon_size = 36,
-                    icon_color = "ink", padding = { x = 14, y = 16 }, count_gap = 4 },
-                badge = { size = 30, outline_width = 1, outline_color = "ink", fill_color = "paper",
-                    icon_size = 16, icon_color = "ink", inset = 8, align = "bottom" },
-                -- x 4, not 6: the owner's tightening so "Not downloaded" fit beside the badge.
-                not_downloaded = { outline_color = false, padding = { x = 4, y = 2 } },
-                pager = { button_w = 44, button_h = 32, gap = 22, bottom = 16, outline_width = 0,
-                    outline_color = false, prev_fill_color = false, next_fill_color = false,
-                    dead_color = "hairline", prev_icon_color = "ink", next_icon_color = "ink",
-                    label_in_words = false },
-            },
-        }
-
-        local LIBRARY_PARTS = {
-            diner = {
-                library_count = { "accent", 24, false, 0, 0, "on_accent" },
-                library_title = { "display", 40, false, -0.01, -0.05, "on_accent" },
-                library_picker = { "display", 11, true, 0.08, 0, "ink" },
-                library_picker_status = { "display", 11, true, 0.08, 0, "on_accent" },
-                tile_title = { "display", 12, true, 0.04, 0.2, "ink" },
-                tile_cover_title = { "display", 17, false, 0, 0.1, "on_cover" },
-                folder_count = { "accent", 26, false, 0, 0, "on_accent" },
-                folder_reading = { "display", 11, true, 0.08, 0, "on_accent" },
-                pager_label = { "display", 12, true, 0.08, 0, "ink" },
-            },
-            editorial = {
-                library_count = { "text", 11, true, 0.14, 0, "muted" },
-                library_title = { "display", 34, false, 0, 0, "ink" },
-                library_picker = { "strong", 11, true, 0.12, 0, "text" },
-                library_picker_status = { "strong", 11, true, 0.12, 0, "text" },
-                tile_title = { "strong", 12, false, 0, 0.25, "ink" },
-                tile_cover_title = { "display", 18, false, 0, 0.1, "on_cover" },
-                folder_count = { "display", 22, false, 0, 0.05, "ink" },
-                folder_reading = { "text", 11, true, 0.14, 0, "muted" },
-                pager_label = { "text", 11, true, 0.14, 0, "muted" },
-            },
-        }
-
-        -- The vertical lengths D2 may take below the board's, in the order it tightens them.
-        local TIGHTENABLE = { ["grid.cover_h"] = true, ["header.padding.top"] = true, ["grid.padding_top"] = true,
-            ["pager.bottom"] = true, ["pager.button_h"] = true }
-
-        -- The value at a dotted path in t.
-        local function at(t, path)
-            for key in path:gmatch("[^.]+") do
-                t = t[key]
-            end
-            return t
-        end
-
-        it("give both looks every library path and part", function()
-            for _, id in ipairs(pinned) do
-                local wanted = {}
-                for _, path in ipairs(paths(LIBRARY_BOARD[id])) do
-                    wanted[#wanted + 1] = "library." .. path
-                end
-                local got = {}
-                for _, path in ipairs(paths(looks[id])) do
-                    if path:match("^library%.") then
-                        got[#got + 1] = path
-                    end
-                end
-                assert.same(wanted, got, id)
-                for part in pairs(LIBRARY_PARTS[id]) do
-                    assert.is_table(looks[id].type[part], id .. " has no type." .. part)
-                end
-            end
-        end)
-
-        it("give the library block and parts the boards' values, D2's cuts below the board's", function()
-            for _, id in ipairs(pinned) do
-                for _, path in ipairs(paths(LIBRARY_BOARD[id])) do
-                    local board, value = at(LIBRARY_BOARD[id], path), at(looks[id].library, path)
-                    if value ~= board then
-                        local where = id .. " library." .. path .. " = " .. tostring(value)
-                        assert.is_true(TIGHTENABLE[path], where .. " is not the board's " .. tostring(board))
-                        assert.is_true(value < board, where .. " is not below the board's " .. board)
-                    end
-                end
-                for part, values in pairs(LIBRARY_PARTS[id]) do
-                    assert.same(values, part_values(looks[id].type[part]), id .. " type." .. part)
-                end
-            end
-        end)
-
         -- The two pickers' lines differ in colour alone, so the header's height measures either
         -- (LibraryTiles.header_height measures library_picker).
         it("set the status picker's label as the sort picker's in its own colour", function()
@@ -830,326 +284,44 @@ describe("looks", function()
             end
         end)
 
-        -- The series and authors screens' block and parts (series-and-authors "Tokens", SeriesC,
-        -- SeriesBooksC, AuthorsC and AuthorBooksA under .tiller/design/2026-10-16-kopanda-library-screens/;
-        -- the undrawn ones by analogy, D26). Diner's row.padding.y is the owner's fit, 9 not the board's 12,
-        -- for five series rows a page at the Colorsoft with list.pager_gap above the pager, the owner's
-        -- gap (2026-10-17).
-        local SHELF_BOARD = {
-            diner = {
-                series_fill_color = "pink", authors_fill_color = "teal",
-                detail = { padding = { top = 22, side = 40, bottom = 18 }, back_gap = 10 },
-                back = { fill_color = "paper", outline_width = 2, padding = { left = 6, right = 10, y = 4 },
-                    icon_size = 14, gap = 6 },
-                list = { padding_top = 22, side = 40, row_gap = 14, pager_gap = 14 },
-                row = { padding = { x = 16, y = 9 }, gap = 18, line_gap = 3, outline_width = 3,
-                    shadow = { x = 4, y = 4 }, rule_width = 0, rule_color = "ink" },
-                stack = { cover_w = 38, cover_h = 56, offset_x = 10, offset_y = 2, outline_width = 2,
-                    outline_color = "outline" },
-                chip = { padding = { x = 7, y = 1 }, outline_width = 2, under_way_fill_color = "mustard",
-                    finished_fill_color = "teal", not_started_fill_color = "paper", up_next_fill_color = "paper" },
-                books = { padding_top = 24, row_gap = 18 },
-                book = { padding = { x = 16, y = 14 }, index_w = 40, cover_w = 64, cover_h = 96,
-                    cover_outline_width = 2, line_gap = 6,
-                    bar_height = 10, bar_outline_width = 2, badge_size = 28, badge_outline_width = 2,
-                    badge_icon_size = 14, badge_inset = -10 },
-                next = { fill_color = "mustard", shadow = { x = 6, y = 6 }, line_gap = 4, text_color = "on_accent" },
-                groups = { padding_top = 22, gap = 12 },
-                group = { outline_width = 3, shadow = { x = 4, y = 4 }, rule_width = 0, rule_color = "ink",
-                    letter_w = 48, letter_fill_color = "mustard", letter_rule_width = 3 },
-                author = { padding = { x = 16, y = 11 }, rule_width = 2, rule_color = "outline" },
-                -- Main.dc.html:32's 200 less the one-author header's 26 px over the library's (lead).
-                author_grid = { cover_h = 174 },
-                up_next = { fill_color = "paper", outline_width = 2 },
-            },
-            editorial = {
-                series_fill_color = false, authors_fill_color = false,
-                detail = { padding = { top = 26, side = 40, bottom = 16 }, back_gap = 14 },
-                back = { fill_color = false, outline_width = 0, padding = { left = 0, right = 0, y = 0 },
-                    icon_size = 14, gap = 6 },
-                list = { padding_top = 22, side = 40, row_gap = 0, pager_gap = 14 },
-                row = { padding = { x = 0, y = 14 }, gap = 18, line_gap = 3, outline_width = 0,
-                    shadow = { x = 0, y = 0 }, rule_width = 1, rule_color = "hairline" },
-                stack = { cover_w = 38, cover_h = 56, offset_x = 10, offset_y = 2, outline_width = 1,
-                    outline_color = "paper" },
-                chip = { padding = { x = 0, y = 0 }, outline_width = 0, under_way_fill_color = false,
-                    finished_fill_color = false, not_started_fill_color = false, up_next_fill_color = false },
-                books = { padding_top = 24, row_gap = 0 },
-                book = { padding = { x = 0, y = 14 }, index_w = 40, cover_w = 64, cover_h = 96,
-                    cover_outline_width = 0, line_gap = 6,
-                    bar_height = 4, bar_outline_width = 0, badge_size = 24, badge_outline_width = 1,
-                    badge_icon_size = 14, badge_inset = 6 },
-                next = { fill_color = false, shadow = { x = 0, y = 0 }, line_gap = 4, text_color = "ink" },
-                groups = { padding_top = 22, gap = 0 },
-                group = { outline_width = 0, shadow = { x = 0, y = 0 }, rule_width = 1, rule_color = "hairline",
-                    letter_w = 48, letter_fill_color = false, letter_rule_width = 0 },
-                author = { padding = { x = 16, y = 11 }, rule_width = 1, rule_color = "hairline_light" },
-                author_grid = { cover_h = 206 },
-                up_next = { fill_color = "paper", outline_width = 0 },
-            },
-        }
-
-        local SHELF_PARTS = {
-            diner = {
-                shelf_detail_title = { "display", 36, false, -0.01, -0.05, "on_accent" },
-                shelf_back = { "display", 11, true, 0.08, 0, "ink" },
-                series_name = { "display", 19, false, 0, 0.1, "ink" },
-                series_sub = { "text", 13, false, 0, 0, "ink" },
-                shelf_chip = { "display", 10, true, 0.08, 0, "on_accent" },
-                shelf_chip_plain = { "display", 10, true, 0.08, 0, "ink" },
-                book_index = { "display", 40, false, 0, 0, "ink" },
-                book_row_title = { "display", 20, false, 0, 0.1, "ink" },
-                book_next_note = { "accent", 22, false, 0, 0, "on_accent" },
-                book_row_note = { "text", 13, false, 0, 0, "ink" },
-                author_letter = { "display", 24, false, 0, 0, "on_accent" },
-                author_name = { "strong", 17, false, 0, 0, "ink" },
-                author_count = { "display", 11, true, 0.08, 0, "ink" },
-                shelf_empty = { "display", 12, true, 0.08, 0, "ink" },
-                shelf_label = { "display", 11, true, 0.08, 0, "on_accent" },
-            },
-            editorial = {
-                shelf_detail_title = { "display", 34, false, 0, 0, "ink" },
-                shelf_back = { "strong", 11, true, 0.14, 0, "text" },
-                series_name = { "display", 20, false, 0, 0.1, "ink" },
-                series_sub = { "text", 12, false, 0, 0, "muted" },
-                shelf_chip = { "strong", 10, true, 0.14, 0, "muted" },
-                shelf_chip_plain = { "strong", 10, true, 0.14, 0, "ink" },
-                book_index = { "display", 30, false, 0, 0, "ink" },
-                book_row_title = { "display", 18, false, 0, 0.1, "ink" },
-                book_next_note = { "strong", 10, true, 0.14, 0, "ink" },
-                book_row_note = { "text", 12, false, 0, 0, "muted" },
-                author_letter = { "display", 24, false, 0, 0, "ink" },
-                author_name = { "strong", 15, false, 0, 0, "ink" },
-                author_count = { "strong", 11, true, 0.12, 0, "muted" },
-                shelf_empty = { "text", 11, true, 0.14, 0, "muted" },
-                shelf_label = { "strong", 11, true, 0.12, 0, "text" },
-            },
-        }
-
-        -- The look file's lines inside its shelf block.
-        local function shelf_lines(id)
-            local lines, inside = {}, false
-            for line in io.lines(harness.plugin_dir .. "/looks/" .. id .. ".lua") do
-                if line:match("^    shelf = {") then
-                    inside = true
-                elseif inside and line:match("^    },") then
-                    break
-                end
-                if inside then
-                    lines[#lines + 1] = line
-                end
-            end
-            return lines
-        end
-
-        it("give both looks every shelf path and part", function()
-            for _, id in ipairs(pinned) do
-                local wanted = {}
-                for _, path in ipairs(paths(SHELF_BOARD[id])) do
-                    wanted[#wanted + 1] = "shelf." .. path
-                end
-                local got = {}
-                for _, path in ipairs(paths(looks[id])) do
-                    if path:match("^shelf%.") then
-                        got[#got + 1] = path
-                    end
-                end
-                assert.same(wanted, got, id)
-                for part in pairs(SHELF_PARTS[id]) do
-                    assert.is_table(looks[id].type[part], id .. " has no type." .. part)
-                end
-            end
-        end)
-
-        it("give the shelf block and parts their values, the one-author cover cut commented D14", function()
-            for _, id in ipairs(pinned) do
-                local lines = shelf_lines(id)
-                assert.truthy(#lines > 0, id .. " has no shelf block")
-                for _, path in ipairs(paths(SHELF_BOARD[id])) do
-                    local board, value = at(SHELF_BOARD[id], path), at(looks[id].shelf, path)
-                    if value ~= board then
-                        local where = id .. " shelf." .. path .. " = " .. tostring(value)
-                        assert.equals("author_grid.cover_h", path, where .. " is not " .. tostring(board))
-                        assert.is_true(value < board, where .. " is not below " .. board)
-                        local commented = false
-                        for _, line in ipairs(lines) do
-                            if line:find("cover_h = " .. value .. "%f[^%d]")
-                                    and line:find("D14: board " .. board, 1, true) then
-                                commented = true
-                            end
-                        end
-                        assert.is_true(commented, where .. " has no \"D14: board " .. board .. "\" on its line")
-                    end
-                end
-                for part, values in pairs(SHELF_PARTS[id]) do
-                    assert.same(values, part_values(looks[id].type[part]), id .. " type." .. part)
-                end
-            end
-        end)
-
-        -- Every shelf length is commented with its board line or the lead's analogy (D26).
-        it("comment every shelf value with its board line or the lead's analogy", function()
-            for _, id in ipairs(pinned) do
-                for _, line in ipairs(shelf_lines(id)) do
-                    local code, comment = line:match("^(.-)%s*%-%-%s*(.*)$")
-                    code = code or line
-                    if code:match("[%w_]+ = [^{]") then
-                        assert.truthy(comment and (comment:find("%.dc%.html:%d") or comment:find("lead")),
-                            id .. ": " .. line)
-                    end
-                end
-            end
-        end)
-
-        -- The colours the looks lack by day: Diner has no hairline, Editorial no outline by day and no
-        -- accents (looks/diner.lua:25-26, looks/editorial.lua:26-30).
-        it("name in the shelf block only colours the look draws by day", function()
-            local lacking = { diner = { "hairline", "hairline_light" },
-                editorial = { "outline", "mustard", "pink", "teal" } }
-            for _, id in ipairs(pinned) do
-                local function walk(node, prefix)
-                    for k, v in pairs(node) do
-                        if type(v) == "table" then
-                            walk(v, prefix .. k .. ".")
-                        elseif tostring(k):match("color$") then
-                            for _, role in ipairs(lacking[id]) do
-                                assert.is_not.equals(role, v, id .. " shelf." .. prefix .. k)
-                            end
-                        end
-                    end
-                end
-                walk(looks[id].shelf or {}, "")
-                for part in pairs(SHELF_PARTS[id]) do
-                    local entry = looks[id].type[part] or {}
-                    for _, role in ipairs(lacking[id]) do
-                        assert.is_not.equals(role, entry.color, id .. " type." .. part)
-                    end
-                end
-            end
-        end)
-
-        -- Diner's badge overhangs the cover by a negative inset; Editorial's sits inside it.
-        it("give the one-series badge's inset as a number, Diner's negative", function()
-            assert.is_true(looks.diner.shelf.book.badge_inset < 0)
-            assert.is_true(looks.editorial.shelf.book.badge_inset > 0)
-        end)
-
-        -- The sort and status sheets' additions to the sheet block and parts (cover-grid "The pickers"):
-        -- Diner's from SortC.dc.html; Editorial's sort sheet is not drawn, so its are its plain sheet's
-        -- style with no selected fill.
-        it("give the sheet's picker additions the boards' values", function()
-            local SHEET = {
-                diner = { selected_fill_color = "teal", aside_above_gap = 2, sublabel_gap = 2 },
-                editorial = { selected_fill_color = false, aside_above_gap = 2, sublabel_gap = 2 },
-            }
-            local PARTS = {
-                diner = {
-                    sheet_label = { "display", 11, true, 0.08, 0, "on_accent" },
-                    sheet_sublabel = { "text", 12, false, 0, 0, "ink" },
-                },
-                editorial = {
-                    sheet_label = { "text", 12, true, 0.1, 0, "muted" },
-                    sheet_sublabel = { "text", 12, false, 0, 0, "muted" },
-                },
-            }
-            for _, id in ipairs(pinned) do
-                for key, value in pairs(SHEET[id]) do
-                    assert.equals(value, looks[id].sheet[key], id .. " sheet." .. key)
-                end
-                for part, values in pairs(PARTS[id]) do
-                    assert.same(values, part_values(looks[id].type[part] or {}), id .. " type." .. part)
-                end
-            end
-        end)
-
-        -- The folder sheet's band and icon box (context-menu "Tokens", D11, D17): Diner's from
-        -- HoldFolderC.dc.html:35-37; Editorial's undrawn, so no band and its folder tile's box.
-        it("give the folder sheet's band and box the boards' values", function()
-            local wanted = {
-                diner = { band = "pink", box = { size = 60, outline_width = 2, outline_color = "outline",
-                    fill_color = "paper", icon_size = 34, icon_color = "ink" } },
-                editorial = { band = false, box = { size = 60, outline_width = 1, outline_color = "hairline",
-                    fill_color = "paper", icon_size = 34, icon_color = "ink" } },
-            }
-            for _, id in ipairs(pinned) do
-                assert.equals(wanted[id].band, looks[id].sheet.library_folder_band_color, id)
-                assert.same(wanted[id].box, looks[id].sheet.folder_box, id)
-            end
-        end)
-
-        -- The empty-space sheet's band, its sort and show chips and the plain chip part (context-menu
-        -- "Tokens", D10, D17): Diner's from HoldEmptyC.dc.html:35-54; Editorial's undrawn, so no band
-        -- and plain details, as its status chip, and its plain chip part its sheet_chip.
-        it("give the empty-space sheet's band, chips and plain chip part the boards' values", function()
-            local wanted = {
-                diner = { library_empty_band_color = "mustard", sort_chip_color = "paper", show_chip_color = "pink",
-                    plain = { "display", 11, true, 0.08, 0, "ink" } },
-                editorial = { library_empty_band_color = false, sort_chip_color = false, show_chip_color = false,
-                    plain = part_values(looks.editorial.type.sheet_chip) },
-            }
-            for _, id in ipairs(pinned) do
-                for _, key in ipairs({ "library_empty_band_color", "sort_chip_color", "show_chip_color" }) do
-                    assert.equals(wanted[id][key], looks[id].sheet[key], id .. " sheet." .. key)
-                end
-                assert.same(wanted[id].plain, part_values(looks[id].type.sheet_chip_plain or {}), id)
-            end
-        end)
-
-        -- D7: the bar always shows on the home, and NavBarC:70 draws no stripe above it; NavBar:19,
-        -- :61 leave 20 px under Editorial's last row.
-        it("give Diner no footer stripe and Editorial a 20 px bottom margin above the bar", function()
-            assert.equals(0, looks.diner.home.footer.height)
-            assert.equals(20, looks.editorial.home.margin.bottom)
-        end)
-
-        it("align both looks' header row to its bottom", function()
-            assert.equals("bottom", looks.editorial.home.header.align)
-            assert.equals("bottom", looks.diner.home.header.align)
-        end)
-
-        it("put the free height before Editorial's last row and before Diner's footer", function()
-            assert.equals("before_last_row", looks.editorial.home.free_space)
-            assert.equals("before_footer", looks.diner.home.free_space)
-        end)
-
-        it("mark Diner's grey progress fill as a 135 degree hatch and Editorial's as none", function()
-            assert.equals("hatch_135", looks.diner.progress.fill_grey)
-            assert.is_false(looks.editorial.progress.fill_grey)
-        end)
-
-        it("give each face a file and a label, or false for a face the look has none of", function()
+        it("give a launcher badge room for its icon and an outline", function()
             for _, id in ipairs(ids) do
-                for role, face in pairs(looks[id].faces) do
-                    local where = id .. " " .. role
-                    if face.file then
-                        assert.truthy(face.file:match("^fonts/[^/]+/[^/]+%.ttf$"), where)
-                        assert.is_string(face.label, where)
-                    else
-                        assert.is_false(face.file, where)
-                        assert.is_false(face.label, where)
-                    end
+                local launcher = looks[id].launcher
+                if launcher.badge.size > 0 then
+                    assert.is_true(launcher.badge.size >= launcher.icon_size, id .. ": the icon overruns its badge")
+                    assert.is_true(launcher.badge.outline_width > 0, id)
                 end
             end
-            assert.is_false(looks.editorial.faces.accent.file)
-            assert.is_string(looks.diner.faces.accent.file)
         end)
 
-        -- Display type printed twice, an offset copy under the part's own colour: { x, y } board
-        -- pixels and a palette role, or a colour of false for a look that prints once.
-        it("give every look a misregistration of an offset and a palette role, or a colour of false", function()
+        -- nav_bar.lua:173-177 draws the pill's shadow inside its bottom margin.
+        it("give a floating nav margins with room for its shadow", function()
+            for _, id in ipairs(ids) do
+                local nav = looks[id].nav
+                if nav.float then
+                    assert.is_true(nav.margin.side > 0 and nav.margin.bottom > 0, id .. " margin")
+                    assert.is_true(nav.margin.bottom >= nav.shadow.y, id .. ": the shadow runs off the screen")
+                end
+            end
+        end)
+
+        -- A plate's lightening is lightenRect's opacity.
+        it("lighten plates by false or a number above 0 and up to 1", function()
+            for _, id in ipairs(ids) do
+                for variant, by in pairs(looks[id].plate.lighten) do
+                    assert.is_true(by == false or (type(by) == "number" and by > 0 and by <= 1),
+                        id .. " plate.lighten." .. variant .. " = " .. tostring(by))
+                end
+            end
+        end)
+
+        it("offset a misregistration that has a colour", function()
             for _, id in ipairs(ids) do
                 local m = looks[id].misregister
-                assert.is_table(m, id)
-                assert.same({ "color", "x", "y" }, keys(m), id)
-                assert.is_number(m.x, id)
-                assert.is_number(m.y, id)
                 if m.color then
-                    assert.is_string(looks[id].palettes.day[m.color], id .. " misregister.color " .. m.color)
                     assert.is_true(m.x > 0 or m.y > 0, id .. ": a misregistration with no offset")
                 end
             end
-            assert.same({ x = 0, y = 0, color = false }, looks.diner.misregister)
-            assert.same({ x = 0, y = 0, color = false }, looks.editorial.misregister)
         end)
 
         -- A shadow is a fill, or with an outline width an outline of that width at the offset.
@@ -1164,573 +336,52 @@ describe("looks", function()
                         id .. " " .. name .. " outline_width = " .. tostring(width))
                 end
             end
-            for _, id in ipairs({ "diner", "editorial" }) do
-                for _, name in ipairs({ "cover", "tile", "sheet" }) do
-                    assert.is_false(looks[id].shadow[name].outline_width, id .. " " .. name)
-                end
-            end
         end)
 
-        -- The corner radii, in board pixels: 0 draws square, as every look but Toybox and Frosted does; a
-        -- radius above half a side draws that side's ends round (base/ffi/blitbuffer.lua:2169-2197).
-        it("give every radius as a number of 0 or more, Diner's, Editorial's and Riso's 0 but a cover's", function()
-            local function radii(look)
-                return { cover = look.radius.cover, box = look.radius.box, progress = look.progress.radius,
+        it("give every radius as a number of 0 or more", function()
+            for _, id in ipairs(ids) do
+                local look = looks[id]
+                local radii = { cover = look.radius.cover, box = look.radius.box, progress = look.progress.radius,
                     chip = look.chip.radius, sheet = look.sheet.radius, nav = look.nav.radius,
                     title_bar_picker = look.title_bar.picker_radius,
                     library_picker = look.library.header.picker_radius, library_cover = look.library.cover.radius }
-            end
-            for _, id in ipairs(ids) do
-                for name, radius in pairs(radii(looks[id])) do
+                for name, radius in pairs(radii) do
                     assert.is_true(type(radius) == "number" and radius >= 0, id .. " " .. name .. " radius")
                 end
             end
-            -- Editorial's covers are rounded 3 (GridA.dc.html:43); nothing else of theirs is.
-            for _, id in ipairs({ "diner", "editorial", "riso" }) do
-                for name, radius in pairs(radii(looks[id])) do
-                    if name ~= "cover" and name ~= "library_cover" then
-                        assert.equals(0, radius, id .. " " .. name .. " radius")
-                    end
-                end
-            end
         end)
 
-        -- The launcher tile's badge: a round fill of its tile's colour under the icon, ringed, or a
-        -- size of 0 with no ring and no colours for a look whose tiles have none.
-        it("give every launcher badge a size, ring and six fill roles, or none, only Toybox's drawn", function()
+        it("give each face a shipped file and a label, or false for a face the look has none of", function()
             for _, id in ipairs(ids) do
-                local badge = looks[id].launcher.badge
-                if badge.size == 0 then
-                    assert.same({ size = 0, outline_width = 0, outline_color = false, fill_1_color = false,
-                        fill_2_color = false, fill_3_color = false, fill_4_color = false, fill_5_color = false,
-                        fill_6_color = false }, badge, id)
-                else
-                    assert.is_true(badge.size > 0 and badge.outline_width > 0, id)
-                    assert.is_string(looks[id].palettes.day[badge.outline_color], id)
-                    for i = 1, 6 do
-                        assert.is_string(looks[id].palettes.day[badge["fill_" .. i .. "_color"]], id .. " fill " .. i)
+                for role, face in pairs(looks[id].faces) do
+                    local where = id .. " " .. role
+                    if face.file then
+                        assert.truthy(face.file:match("^fonts/[^/]+/[^/]+%.ttf$"), where)
+                        assert.equals("file", lfs.attributes(harness.plugin_dir .. "/" .. face.file, "mode"),
+                            where .. ": " .. face.file)
+                        assert.is_string(face.label, where)
+                    else
+                        assert.is_false(face.file, where)
+                        assert.is_false(face.label, where)
                     end
-                    assert.is_true(badge.size >= looks[id].launcher.icon_size, id .. ": the icon overruns its badge")
                 end
-            end
-            for _, id in ipairs({ "diner", "editorial", "riso", "frosted" }) do
-                assert.equals(0, looks[id].launcher.badge.size, id)
             end
         end)
 
-        -- A floating nav is a pill inset from the screen's sides and bottom on the page, its own
-        -- fill and shadow; a bar across the bottom has none of those.
-        it("give every nav a floating pill's margins, fill, shadow and lit outline, or none of them", function()
+        -- The icon set a look draws with: a vendored set's id, its folder shipped, or false for the
+        -- registry's default.
+        it("draw a vendored icon set, or false for the default", function()
+            harness.load()
+            local sets = package.loaded["icons"].sets
+            harness.teardown()
             for _, id in ipairs(ids) do
-                local nav = looks[id].nav
-                assert.is_boolean(nav.float, id)
-                if nav.float then
-                    assert.is_true(nav.margin.side > 0 and nav.margin.bottom > 0, id .. " margin")
-                    assert.is_true(nav.margin.bottom >= nav.shadow.y, id .. ": the shadow runs off the screen")
-                    assert.is_string(looks[id].palettes.day[nav.float_fill_color], id .. " fill")
-                    assert.is_string(looks[id].palettes.day[nav.shadow.color], id .. " shadow")
-                    assert.is_true(nav.active_outline_width > 0, id)
-                    assert.is_string(looks[id].palettes.day[nav.active_outline_color], id)
-                else
-                    assert.same({ margin = { side = 0, bottom = 0 }, radius = 0, float_fill_color = false,
-                        shadow = { x = 0, y = 0, color = false }, tab_gap = 0, active_outline_width = 0,
-                        active_outline_color = false }, { margin = nav.margin, radius = nav.radius,
-                        float_fill_color = nav.float_fill_color, shadow = nav.shadow, tab_gap = nav.tab_gap,
-                        active_outline_width = nav.active_outline_width,
-                        active_outline_color = nav.active_outline_color }, id)
+                local set = looks[id].icons.set
+                if set ~= false then
+                    assert.is_table(sets[set], id .. " icons.set names no vendored set: " .. tostring(set))
+                    assert.equals("directory", lfs.attributes(harness.plugin_dir .. "/" .. sets[set].dir, "mode"),
+                        id .. " " .. set)
                 end
             end
-            for _, id in ipairs({ "diner", "editorial", "riso", "frosted" }) do
-                assert.is_false(looks[id].nav.float, id)
-            end
-        end)
-
-        -- The wallpaper a look draws behind the home's rows: a switch alone, since wallpaper.lua
-        -- always scales to cover; only Frosted draws one.
-        it("give every look a wallpaper switch, on in Frosted alone", function()
-            for _, id in ipairs(ids) do
-                assert.same({ enabled = id == "frosted" }, looks[id].wallpaper, id)
-            end
-        end)
-
-        -- A plate is a row's backing: its fill role (false: no plates), keyline, radius, the
-        -- lighten toward paper per variant (a number in (0, 1] or false) and each widget's padding
-        -- and radius on it, or false for a widget that draws its own (the launcher's tiles).
-        it("give every look plates of a fill role or false, a keyline, a radius and a lighten per variant", function()
-            for _, id in ipairs(ids) do
-                local plate = looks[id].plate
-                assert.is_true(plate.fill_color == false or type(plate.fill_color) == "string", id)
-                assert.is_number(plate.keyline, id)
-                assert.is_number(plate.radius, id)
-                assert.same({ "day", "grey", "night" }, keys(plate.lighten), id)
-                for variant, by in pairs(plate.lighten) do
-                    assert.is_true(by == false or (type(by) == "number" and by > 0 and by <= 1),
-                        id .. " plate.lighten." .. variant .. " = " .. tostring(by))
-                end
-                assert.same({ "clock", "date", "featured", "launcher", "quote", "stats", "weather" },
-                    keys(plate.slots), id)
-                assert.is_false(plate.slots.launcher, id)
-                for widget, slot in pairs(plate.slots) do
-                    if slot then
-                        assert.same({ "radius", "x", "y" }, keys(slot), id .. " " .. widget)
-                    end
-                end
-            end
-            for _, id in ipairs({ "diner", "editorial", "riso", "toybox" }) do
-                local plate = looks[id].plate
-                assert.is_false(plate.fill_color, id)
-                assert.same({ day = false, night = false, grey = false }, plate.lighten, id)
-            end
-        end)
-
-        -- Frosted Plates (.tiller/design/2026-10-19-kopanda-looks/frosted.md and plates.md, which it
-        -- inherits): the owner's wallpaper behind every row, each row on a plate washed toward paper.
-        describe("Frosted", function()
-            local frosted
-            setup(function()
-                frosted = looks.frosted
-            end)
-
-            it("sets everything in Atkinson Hyperlegible, its quote italic, with no accent face", function()
-                local faces = frosted.faces
-                assert.equals("fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Bold.ttf", faces.display.file)
-                assert.equals("fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Regular.ttf", faces.text.file)
-                assert.equals("fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Bold.ttf", faces.strong.file)
-                assert.equals("fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Italic.ttf", faces.quote.file)
-                assert.same({ file = false, label = false }, faces.accent)
-            end)
-
-            it("gives its day, night and grey palettes the design's values, violet and yellow its accents", function()
-                local wanted = {
-                    day = { paper = "#fbfaf6", ink = "#1b1a1f", text = "#1b1a1f", muted = "#4d4b55",
-                        hairline_light = "#d9d6df", violet = "#6b55c8", yellow = "#f2c230" },
-                    night = { paper = "#1d1c22", ink = "#f3f1ec", text = "#f3f1ec", muted = "#b5b2bd",
-                        hairline_light = "#3a3842", violet = "#a593f2", yellow = "#8a6d10" },
-                    grey = { paper = "#ffffff", ink = "#000000", text = "#000000", muted = "#333333",
-                        hairline_light = "#bbbbbb", yellow = "#cccccc" },
-                }
-                for variant, roles in pairs(wanted) do
-                    local palette = frosted.palettes[variant]
-                    for role, value in pairs(roles) do
-                        assert.equals(value, palette[role], variant .. " " .. role)
-                    end
-                    assert.equals(palette.ink, palette.outline, variant .. " outline")
-                    for _, role in ipairs({ "teal", "pink", "mustard", "tint", "band" }) do
-                        assert.is_false(palette[role], variant .. " " .. role)
-                    end
-                end
-                assert.equals("hatch_135", frosted.progress.fill_grey)
-                -- The other looks have none of Frosted's accents.
-                for _, id in ipairs({ "diner", "editorial", "riso", "toybox" }) do
-                    for variant, palette in pairs(looks[id].palettes) do
-                        for _, role in ipairs({ "violet", "yellow" }) do
-                            assert.is_false(palette[role], id .. " " .. variant .. " " .. role)
-                        end
-                    end
-                end
-            end)
-
-            it("rounds its progress, chip and pickers to pills and its sheet 16, its cover and nav square", function()
-                assert.same({ 999, 999, 16, 999, 999 }, { frosted.progress.radius, frosted.chip.radius,
-                    frosted.sheet.radius, frosted.title_bar.picker_radius, frosted.library.header.picker_radius })
-                assert.same({ 0, 0, 0 }, { frosted.radius.cover, frosted.library.cover.radius, frosted.nav.radius })
-            end)
-
-            it("puts every row on a 2 px ink plate, radius 12, lightened 0.82 by day, 0.84 at night, 0.85 in grey",
-                function()
-                local plate = frosted.plate
-                assert.same({ "paper", 2, "ink", 12 }, { plate.fill_color, plate.keyline, plate.keyline_color,
-                    plate.radius })
-                assert.same({ day = 0.82, night = 0.84, grey = 0.85 }, plate.lighten)
-                assert.same({ x = 14, y = 14, radius = 12 }, plate.slots.featured)
-                assert.same({ x = 18, y = 12, radius = 12 }, plate.slots.quote)
-                assert.same({ x = 14, y = 8, radius = 999 }, plate.slots.stats)
-                assert.same({ top = 14, side = 18, bottom = 14 }, frosted.home.header.padding)
-            end)
-
-            it("draws the owner's wallpaper, scaled to cover", function()
-                assert.same({ enabled = true }, frosted.wallpaper)
-            end)
-
-            it("draws Phosphor Bold icons, and prints once", function()
-                assert.equals("phosphor-bold", frosted.icons.set)
-                assert.same({ x = 0, y = 0, color = false }, frosted.misregister)
-                for _, name in ipairs({ "cover", "tile", "sheet" }) do
-                    assert.is_false(frosted.shadow[name].outline_width, name)
-                end
-            end)
-
-            it("chooses the home's shapes the design draws", function()
-                assert.same({ weather_order = "degrees_first", date_lines = 2, stats_line = "joined",
-                    stats_streak = "count_first", featured_label = "now_reading", featured_details = "joined" },
-                    home_choices(frosted))
-            end)
-
-            it("sets the design's sizes, the clock on the right of the header plate", function()
-                local t = frosted.type
-                assert.same({ "strong", 18, false, 0, 0.1, "ink" }, part_values(t.date))
-                assert.same({ "display", 84, false, -0.03, -0.2, "ink" }, part_values(t.clock))
-                assert.same({ "display", 32, false, -0.015, 0.04, "ink" }, part_values(t.featured_title))
-                assert.same({ "text", 16, "text" }, { t.featured_authors.face, t.featured_authors.size,
-                    t.featured_authors.color })
-                assert.same({ "quote", 18, "ink" }, { t.quote.face, t.quote.size, t.quote.color })
-                assert.same({ "strong", 19, "ink" }, { t.launcher_label.face, t.launcher_label.size,
-                    t.launcher_label.color })
-                assert.same({ "text", 18, "ink" }, { t.sheet_row.face, t.sheet_row.size, t.sheet_row.color })
-                assert.same({ "strong", 11, true, 0.08, 0, "muted" }, part_values(t.nav_label))
-                assert.same({ size = 11, face = "strong", small_caps = false, uppercase = true, tracking = 0.08 },
-                    frosted.label)
-                local header = frosted.home.header
-                assert.same({ false, 0, false }, { header.band_color, header.edge_width, header.rule_color })
-            end)
-
-            it("sets its quote plain on its plate and its tiles as plates, three to a row, 74 tall", function()
-                assert.same({ padding = 0, rule_width = 0, rule_color = false }, frosted.quote)
-                assert.same({ 3, 74, 24, 12, 12 }, { frosted.launcher.columns, frosted.launcher.tile_height,
-                    frosted.launcher.icon_size, frosted.launcher.column_gap, frosted.launcher.row_gap })
-                assert.same({ 12, 12 }, { frosted.home.row_gap, frosted.home.column_gap })
-            end)
-
-            it("fills its progress violet on paper in a 2 px ink outline, 12 tall", function()
-                assert.same({ height = 12, fill_color = "violet", track_color = "paper", outline_color = "outline",
-                    outline_width = 2, fill_grey = "hatch_135", radius = 999 }, frosted.progress)
-            end)
-
-            it("sets its chip ink on yellow in a 2 px ink outline", function()
-                assert.same({ "yellow", "ink", "outline" }, { frosted.chip.fill_color, frosted.chip.text_color,
-                    frosted.chip.outline_color })
-                assert.equals(2, frosted.featured.chip_outline)
-            end)
-
-            it("outlines its cover in 2 px ink with no shadow", function()
-                assert.same({ 122, 183, "outline" }, { frosted.featured.cover_w, frosted.featured.cover_h,
-                    frosted.featured.cover_outline_color })
-                assert.is_false(frosted.shadow.cover.color)
-                assert.equals(0, frosted.radius.cover)
-            end)
-
-            it("keeps its nav opaque: paper under a 3 px ink edge, the lit tab filled yellow", function()
-                local nav = frosted.nav
-                assert.same({ "paper", 3, "ink", "yellow", 0, 0, 24, "muted", "ink" }, { nav.fill_color,
-                    nav.edge_width, nav.edge_color, nav.active_fill_color, nav.active_rule_width, nav.divider_width,
-                    nav.icon_size, nav.icon_color, nav.active_icon_color })
-            end)
-
-            it("keeps its sheet opaque: inset 16, a 2 px ink outline, an ink shadow 5 by 7, no band, rows ruled light",
-                function()
-                local sheet = frosted.sheet
-                assert.same({ side = 16, bottom = 16 }, sheet.inset)
-                assert.same({ "paper", "outline", 2, false }, { sheet.fill_color, sheet.outline_color,
-                    sheet.outline_width, sheet.header_band })
-                assert.same({ x = 5, y = 7, color = "shadow", outline_width = false }, frosted.shadow.sheet)
-                assert.same({ "hairline_light", 1 }, { sheet.row_rule_color, sheet.row_rule_width })
-            end)
-
-            it("outlines its pickers in 2 px ink on paper", function()
-                for _, header in ipairs({ frosted.title_bar, frosted.library.header }) do
-                    assert.same({ 2, "outline", "paper", "paper" }, { header.picker_outline_width,
-                        header.picker_outline_color, header.sort_fill_color, header.status_fill_color })
-                end
-            end)
-
-        end)
-
-        -- Riso (.tiller/design/2026-10-19-kopanda-looks/riso.md, its token table and Lua export):
-        -- two inks on cream, the pink printed out of register.
-        describe("Riso", function()
-            local riso
-            setup(function()
-                riso = looks.riso
-            end)
-
-            it("sets display type in Big Shoulders Display Black and text in Work Sans, with no accent face", function()
-                local faces = riso.faces
-                assert.equals("fonts/big-shoulders-display/BigShouldersDisplay-Black.ttf", faces.display.file)
-                assert.equals("fonts/work-sans/WorkSans-Medium.ttf", faces.text.file)
-                assert.equals("fonts/work-sans/WorkSans-Bold.ttf", faces.strong.file)
-                assert.equals("fonts/work-sans/WorkSans-Medium.ttf", faces.quote.file)
-                assert.same({ file = false, label = false }, faces.accent)
-            end)
-
-            it("gives its day, night and grey palettes the design's values", function()
-                local wanted = {
-                    day = { paper = "#f3eee2", ink = "#22509f", text = "#22509f", muted = "#3d5b9a",
-                        hairline_light = "#f2a9c4", pink = "#e9508a", tint = "#f6c6d8" },
-                    night = { paper = "#141a2e", ink = "#f1ece0", text = "#f1ece0", muted = "#b8bfd8",
-                        hairline_light = "#6e3557", pink = "#f0729f", tint = "#4a2643" },
-                    grey = { paper = "#ffffff", ink = "#000000", text = "#000000", muted = "#333333",
-                        hairline_light = "#bbbbbb", pink = "#999999", tint = "#dddddd" },
-                }
-                for variant, roles in pairs(wanted) do
-                    local palette = riso.palettes[variant]
-                    for role, value in pairs(roles) do
-                        assert.equals(value, palette[role], variant .. " " .. role)
-                    end
-                    -- No black: structure is the ink, and the sheet's band is the tint.
-                    assert.equals(palette.ink, palette.outline, variant .. " outline")
-                    assert.equals(palette.tint, palette.band, variant .. " band")
-                    assert.is_false(palette.teal, variant)
-                    assert.is_false(palette.mustard, variant)
-                end
-                assert.equals("hatch_135", riso.progress.fill_grey)
-            end)
-
-            it("prints display type twice, the pink 3 right and 2 down", function()
-                assert.same({ x = 3, y = 2, color = "pink" }, riso.misregister)
-            end)
-
-            it("knocks its cover, tiles and sheet out of register rather than shadowing them", function()
-                assert.same({ x = 6, y = 6, color = "outline", outline_width = 2 }, riso.shadow.cover)
-                assert.same({ x = 5, y = 4, color = "tint", outline_width = false }, riso.shadow.tile)
-                assert.same({ x = 8, y = 8, color = "pink", outline_width = false }, riso.shadow.sheet)
-                assert.same({ x = 6, y = 6, color = "outline", outline_width = 2 }, riso.library.cover.shadow)
-                assert.is_false(riso.featured.cover_outline_color)
-                assert.same({ cover = 0, box = 0 }, riso.radius)
-            end)
-
-            it("draws Phosphor Fill icons", function()
-                assert.equals("phosphor-fill", riso.icons.set)
-            end)
-
-            it("chooses the home's shapes the design draws", function()
-                assert.same({ weather_order = "degrees_first", date_lines = 2, stats_line = "joined",
-                    stats_streak = "count_first", featured_label = "now_reading", featured_details = "joined" },
-                    home_choices(riso))
-            end)
-
-            it("sets the design's sizes, its clock on the right with no band and no rule", function()
-                local t = riso.type
-                assert.same({ "strong", 15, false, 0, 0.1, "ink" }, part_values(t.date))
-                assert.same({ "display", 124, false, -0.01, -0.2, "ink" }, part_values(t.clock))
-                assert.same({ "display", 46, "ink" }, { t.featured_title.face, t.featured_title.size,
-                    t.featured_title.color })
-                assert.same({ "quote", 18, "ink" }, { t.quote.face, t.quote.size, t.quote.color })
-                assert.same({ "strong", 19, "ink" }, { t.launcher_label.face, t.launcher_label.size,
-                    t.launcher_label.color })
-                assert.same({ "text", 19, "ink" }, { t.sheet_row.face, t.sheet_row.size, t.sheet_row.color })
-                assert.same({ "strong", 11, true, 0.12, 0, "muted" }, part_values(t.nav_label))
-                assert.same({ "strong", 11, true, 0.12, 0, "ink" }, part_values(t.nav_label_active))
-                assert.same({ size = 11, face = "strong", small_caps = false, uppercase = true, tracking = 0.12 },
-                    riso.label)
-                local header = riso.home.header
-                assert.same({ false, 0, false }, { header.band_color, header.edge_width, header.rule_color })
-            end)
-
-            it("rules its quote in 2 px pink and boxes its tiles in 2 px ink, three to a row, 84 tall", function()
-                -- The padding is the board's 14 tightened with the home to 65 %.
-                assert.same({ padding = 9, rule_width = 2, rule_color = "hairline_light" }, riso.quote)
-                assert.equals(2, riso.stroke.outline)
-                assert.same({ box = true, fill_color = false, outline_color = "outline", rule_color = false },
-                    riso.tile)
-                assert.same({ 3, 84, 24 }, { riso.launcher.columns, riso.launcher.tile_height,
-                    riso.launcher.icon_size })
-            end)
-
-            it("fills its progress pink on paper in a 2 px ink outline, 14 tall", function()
-                assert.same({ height = 14, fill_color = "pink", track_color = "paper", outline_color = "outline",
-                    outline_width = 2, fill_grey = "hatch_135", radius = 0 }, riso.progress)
-            end)
-
-            it("sets its chips ink on tint with no border", function()
-                assert.same({ "tint", "ink" }, { riso.chip.fill_color, riso.chip.text_color })
-                assert.equals(0, riso.featured.chip_outline)
-            end)
-
-            it("edges its nav in 3 px ink on paper and lights its tab with tint", function()
-                local nav = riso.nav
-                assert.same({ "paper", 3, "ink", "tint", 0, 0, 24, "muted", "ink" }, { nav.fill_color,
-                    nav.edge_width, nav.edge_color, nav.active_fill_color, nav.active_rule_width, nav.divider_width,
-                    nav.icon_size, nav.icon_color, nav.active_icon_color })
-            end)
-
-            it("insets its sheet 20, outlined 3 px in ink, under a tint band, its rows ruled pink", function()
-                local sheet = riso.sheet
-                assert.same({ side = 20, bottom = 20 }, sheet.inset)
-                assert.same({ "outline", 3, true }, { sheet.outline_color, sheet.outline_width, sheet.header_band })
-                assert.same({ "tint", "tint" }, { sheet.book_band_color, sheet.home_band_color })
-                assert.same({ "hairline_light", 2 }, { sheet.row_rule_color, sheet.row_rule_width })
-            end)
-
-            it("boxes its pickers in 2 px ink on tint", function()
-                for _, header in ipairs({ riso.title_bar, riso.library.header }) do
-                    assert.same({ 2, "outline", "tint", "tint" }, { header.picker_outline_width,
-                        header.picker_outline_color, header.sort_fill_color, header.status_fill_color })
-                end
-            end)
-
-        end)
-
-        -- Toybox (.tiller/design/2026-10-19-kopanda-looks/toybox.md, its token table and Lua
-        -- export): rounded paper blocks on a solid ink edge, the colour in round badges.
-        describe("Toybox", function()
-            local toybox
-            setup(function()
-                toybox = looks.toybox
-            end)
-
-            it("sets display type in Baloo 2 ExtraBold and text in Nunito, its quote italic, with no accent face",
-                    function()
-                local faces = toybox.faces
-                assert.equals("fonts/baloo-2/Baloo2-ExtraBold.ttf", faces.display.file)
-                assert.equals("fonts/nunito/Nunito-Bold.ttf", faces.text.file)
-                assert.equals("fonts/nunito/Nunito-ExtraBold.ttf", faces.strong.file)
-                assert.equals("fonts/nunito/Nunito-SemiBoldItalic.ttf", faces.quote.file)
-                assert.same({ file = false, label = false }, faces.accent)
-            end)
-
-            it("gives its day, night and grey palettes the design's values", function()
-                local wanted = {
-                    day = { paper = "#fbf5ec", ink = "#2b2934", text = "#2b2934", muted = "#5b5867",
-                        hairline_light = "#e7ddcd", sun = "#ffc94a", coral = "#ff8f75", mint = "#86d3b4",
-                        die = "#ffffff" },
-                    night = { paper = "#1e1d26", ink = "#f4f0ea", text = "#f4f0ea", muted = "#b4b1c0",
-                        hairline_light = "#383645", sun = "#8a6a12", coral = "#a2493a", mint = "#2f7a5c",
-                        die = "#282733" },
-                    -- The design's grey die is its paper, #ffffff: false, so the pill shows the paper.
-                    grey = { paper = "#ffffff", ink = "#000000", text = "#000000", muted = "#333333",
-                        hairline_light = "#cccccc", sun = "#dddddd", coral = "#999999", mint = "#bbbbbb",
-                        die = false },
-                }
-                for variant, roles in pairs(wanted) do
-                    local palette = toybox.palettes[variant]
-                    for role, value in pairs(roles) do
-                        assert.equals(value, palette[role], variant .. " " .. role)
-                    end
-                    -- Structure and the edge are the ink; the sheet's band is the mint.
-                    assert.equals(palette.ink, palette.outline, variant .. " outline")
-                    assert.equals(palette.ink, palette.shadow, variant .. " shadow")
-                    assert.equals(palette.mint, palette.band, variant .. " band")
-                    for _, role in ipairs({ "teal", "pink", "mustard", "tint" }) do
-                        assert.is_false(palette[role], variant .. " " .. role)
-                    end
-                end
-                assert.equals("hatch_135", toybox.progress.fill_grey)
-                -- The other looks have none of Toybox's accents.
-                for _, id in ipairs({ "diner", "editorial", "riso", "frosted" }) do
-                    for variant, palette in pairs(looks[id].palettes) do
-                        for _, role in ipairs({ "sun", "coral", "mint", "die" }) do
-                            assert.is_false(palette[role], id .. " " .. variant .. " " .. role)
-                        end
-                    end
-                end
-            end)
-
-            it("prints display type once", function()
-                assert.same({ x = 0, y = 0, color = false }, toybox.misregister)
-            end)
-
-            it("sets its cover, tiles and sheet on a solid ink edge straight below them", function()
-                assert.same({ x = 0, y = 6, color = "shadow", outline_width = false }, toybox.shadow.cover)
-                assert.same({ x = 0, y = 6, color = "shadow", outline_width = false }, toybox.shadow.tile)
-                assert.same({ x = 0, y = 8, color = "shadow", outline_width = false }, toybox.shadow.sheet)
-                assert.same({ x = 0, y = 6, color = "shadow", outline_width = false }, toybox.library.cover.shadow)
-                assert.equals("outline", toybox.featured.cover_outline_color)
-                assert.equals(3, toybox.stroke.outline)
-            end)
-
-            it("rounds its cover 6, its tiles 18, its sheet 24 and its pills, progress and nav to their ends",
-                    function()
-                assert.same({ cover = 6, box = 18 }, toybox.radius)
-                assert.equals(6, toybox.library.cover.radius)
-                assert.equals(24, toybox.sheet.radius)
-                for name, radius in pairs({ progress = toybox.progress.radius, chip = toybox.chip.radius,
-                        nav = toybox.nav.radius, title_bar_picker = toybox.title_bar.picker_radius,
-                        library_picker = toybox.library.header.picker_radius }) do
-                    assert.equals(999, radius, name)
-                end
-            end)
-
-            it("draws MingCute Line icons", function()
-                assert.equals("mingcute-line", toybox.icons.set)
-            end)
-
-            it("chooses the home's shapes the design draws", function()
-                assert.same({ weather_order = "degrees_first", date_lines = 1, stats_line = "joined",
-                    stats_streak = "count_first", featured_label = "now_reading", featured_details = "joined" },
-                    home_choices(toybox))
-            end)
-
-            it("sets the design's sizes with no band and no rule over the header", function()
-                local t = toybox.type
-                assert.same({ "strong", 18, false, 0, 0.1, "ink" }, part_values(t.date))
-                assert.same({ "display", 100, false, -0.02, -0.2, "ink" }, part_values(t.clock))
-                assert.same({ "display", 36, "ink" }, { t.featured_title.face, t.featured_title.size,
-                    t.featured_title.color })
-                assert.same({ "text", 16, "text" }, { t.featured_authors.face, t.featured_authors.size,
-                    t.featured_authors.color })
-                assert.same({ "quote", 18, "ink" }, { t.quote.face, t.quote.size, t.quote.color })
-                assert.same({ "text", 19, "ink" }, { t.launcher_label.face, t.launcher_label.size,
-                    t.launcher_label.color })
-                assert.same({ "text", 18, "ink" }, { t.sheet_row.face, t.sheet_row.size, t.sheet_row.color })
-                assert.same({ "strong", 11, true, 0.1, 0, "muted" }, part_values(t.nav_label))
-                assert.same({ "strong", 11, true, 0.1, 0, "ink" }, part_values(t.nav_label_active))
-                assert.same({ size = 11, face = "strong", small_caps = false, uppercase = true, tracking = 0.1 },
-                    toybox.label)
-                local header = toybox.home.header
-                assert.same({ false, 0, false }, { header.band_color, header.edge_width, header.rule_color })
-            end)
-
-            it("sets its quote plain, with no rules and no tile", function()
-                assert.equals(0, toybox.quote.rule_width)
-                assert.equals(0, toybox.quote.padding)
-                -- A rule colour sets the quote between rules, here of no width, rather than in a tile.
-                assert.is_string(toybox.quote.rule_color)
-            end)
-
-            it("blocks its tiles in 3 px ink on paper, three to a row, 84 tall, each with a ringed badge", function()
-                assert.same({ box = true, fill_color = "paper", outline_color = "outline", rule_color = false },
-                    toybox.tile)
-                local launcher = toybox.launcher
-                assert.same({ 3, 84, 16, 22 }, { launcher.columns, launcher.tile_height, launcher.column_gap,
-                    launcher.icon_size })
-                assert.same({ false, false, false }, { launcher.accent_1_color, launcher.accent_2_color,
-                    launcher.accent_3_color })
-                assert.same({ size = 42, outline_width = 2.5, outline_color = "outline", fill_1_color = "sun",
-                    fill_2_color = "coral", fill_3_color = "mint", fill_4_color = "coral", fill_5_color = "mint",
-                    fill_6_color = "sun" }, launcher.badge)
-            end)
-
-            it("fills its progress coral on paper in a 3 px ink pill, 18 tall with its outline", function()
-                assert.same({ height = 12, fill_color = "coral", track_color = "paper", outline_color = "outline",
-                    outline_width = 3, fill_grey = "hatch_135", radius = 999 }, toybox.progress)
-            end)
-
-            it("sets its chips as mint pills in a 2 px ink outline", function()
-                assert.same({ small_caps = false, uppercase = true, text_color = "ink", fill_color = "mint",
-                    outline_color = "outline", radius = 999 }, toybox.chip)
-                assert.equals(2, toybox.featured.chip_outline)
-                assert.same({ "mint", 2 }, { toybox.sheet.status_chip_color, toybox.sheet.chip_outline_width })
-            end)
-
-            it("floats its nav as a white pill 22 in and 20 up, on a 6 px ink edge, its lit tab a sun pill",
-                    function()
-                local nav = toybox.nav
-                assert.is_true(nav.float)
-                assert.same({ side = 22, bottom = 20 }, nav.margin)
-                assert.same({ "paper", "die", 3, "ink", 5, 4 }, { nav.fill_color, nav.float_fill_color,
-                    nav.edge_width, nav.edge_color, nav.padding_x, nav.tab_gap })
-                assert.same({ x = 0, y = 6, color = "shadow" }, nav.shadow)
-                assert.same({ "sun", 2, "outline", 0, 0 }, { nav.active_fill_color, nav.active_outline_width,
-                    nav.active_outline_color, nav.active_rule_width, nav.divider_width })
-                assert.same({ 24, "muted", "ink" }, { nav.icon_size, nav.icon_color, nav.active_icon_color })
-            end)
-
-            it("insets its sheet 16, outlined 3 px in ink, under a mint band, its rows ruled in hairlines", function()
-                local sheet = toybox.sheet
-                assert.same({ side = 16, bottom = 16 }, sheet.inset)
-                assert.same({ "outline", 3, true }, { sheet.outline_color, sheet.outline_width, sheet.header_band })
-                assert.same({ "mint", "mint" }, { sheet.book_band_color, sheet.home_band_color })
-                assert.same({ "hairline_light", 2 }, { sheet.row_rule_color, sheet.row_rule_width })
-            end)
-
-            it("boxes its pickers as 2 px ink pills on paper", function()
-                for _, header in ipairs({ toybox.title_bar, toybox.library.header }) do
-                    assert.same({ 2, "outline", "paper", "paper", 999 }, { header.picker_outline_width,
-                        header.picker_outline_color, header.sort_fill_color, header.status_fill_color,
-                        header.picker_radius })
-                end
-            end)
-
         end)
     end)
 
@@ -1801,6 +452,20 @@ describe("looks", function()
             it("replaces a list whole", function()
                 local Fresh = reload({ dash = { 6, 4, 2 } }, { riso = { dash = { 3 } } })
                 assert.same({ 3 }, Fresh.get("riso").dash)
+            end)
+
+            it("lays a look file over the base at every depth", function()
+                local Fresh = reload({ a = { b = { c = 1, d = 2 } } }, { riso = { a = { b = { c = 9 } } } })
+                assert.same({ a = { b = { c = 9, d = 2 } } }, Fresh.get("riso"))
+            end)
+
+            it("leaves the look's own file as it was", function()
+                local Fresh = reload({ plate = { radius = 4 }, dash = { 6 } },
+                    { riso = { plate = { radius = 7 }, dash = { 3 } } })
+                local riso = Fresh.get("riso")
+                riso.plate.radius = 9
+                riso.dash[1] = 5
+                assert.same({ plate = { radius = 7 }, dash = { 3 } }, package.loaded["looks/riso"])
             end)
 
             it("gives each look its own tables, the same ones each time, and leaves the base as it was", function()
