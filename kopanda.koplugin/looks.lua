@@ -1,6 +1,7 @@
 -- The looks: their token tables by id, the active one from the look setting, and the palette
--- variant to draw with. Adding a look is its id here, its token file looks/<id>.lua, its
--- require in main.lua and its choice of the look setting in schema.lua.
+-- variant to draw with. Every token path is declared in looks/base.lua; a look's file
+-- looks/<id>.lua declares only what differs from it. Adding a look is its id here, its token
+-- file, its require in main.lua and its choice of the look setting in schema.lua.
 local Blitbuffer = require("ffi/blitbuffer")
 local Device = require("device")
 local Settings = require("settings")
@@ -10,11 +11,40 @@ local Looks = {}
 -- The look ids in the swatch's column order.
 local ids = { "editorial", "diner", "riso", "toybox", "frosted" }
 
+-- A fresh copy of a token value, its tables copied all the way down.
+local function deep_copy(value)
+    if type(value) ~= "table" then
+        return value
+    end
+    local out = {}
+    for k, v in pairs(value) do
+        out[k] = deep_copy(v)
+    end
+    return out
+end
+
+-- The base's tokens with a look file's laid over them, both left as they were: a key the file
+-- sets wins, false included; a table under the same key in both is laid over key by key; a list
+-- (a table with [1]) is replaced whole.
+local function inherit(base, own)
+    local merged = deep_copy(own)
+    for k, v in pairs(base) do
+        local mine = own[k]
+        if mine == nil then
+            merged[k] = deep_copy(v)
+        elseif type(v) == "table" and type(mine) == "table" and v[1] == nil and mine[1] == nil then
+            merged[k] = inherit(v, mine)
+        end
+    end
+    return merged
+end
+
+-- The plugin's own looks/base.lua and looks/<id>.lua, not KOReader modules HOOKS.md names.
+local base = require("looks/base")
 local looks = {}
 for _, id in ipairs(ids) do
-    -- The plugin's own looks/<id>.lua, not a KOReader module HOOKS.md names.
     local module = "looks/" .. id
-    looks[id] = require(module)
+    looks[id] = inherit(base, require(module))
 end
 
 -- The look ids in the swatch's column order, as a fresh list.

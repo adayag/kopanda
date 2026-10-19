@@ -1,11 +1,8 @@
 -- Diner: a heavy grotesque, ink outlines, hard shadows and flat accent fills. Pure data, typed
 -- from the direction doc (.tiller/design/2026-10-13-kopanda-ui-direction.md, "The two looks",
 -- the night palettes, "Greys for the Paperwhite"); where the doc leaves a value out, the line's
--- comment names where it comes from. Editorial (looks/editorial.lua) declares the same paths.
---
--- Sizes are board pixels (the canvas's half size), scaled at draw time by Screen:scaleBySize;
--- font sizes go to Font:getFace unscaled. Colours are #rrggbb in the palettes only; every other
--- token names a colour by its palette role. false is a token this look doesn't have.
+-- comment names where it comes from. It declares only what differs from the base look
+-- (looks/base.lua), which holds every other token.
 return {
     faces = {
         display = { file = "fonts/bricolage-grotesque/BricolageGrotesque-ExtraBold.ttf",
@@ -16,30 +13,15 @@ return {
         quote = { file = "fonts/bricolage-grotesque/BricolageGrotesque-Medium.ttf", label = "Bricolage Grotesque 500" },
     },
 
-    -- The icon set the look draws with: a set id under icons/, or false for the registry's
-    -- default Lucide set.
-    icons = {
-        set = false,
-    },
-
     palettes = {
         day = {
             paper = "#f5f1e6",
             ink = "#2f2e2b",
             muted = "#5a5750",
             text = "#2f2e2b", -- implied: Diner's text is its ink
-            hairline = false,
-            hairline_light = false,
             teal = "#6fb3ab",
             pink = "#e8a59d",
             mustard = "#e0bd6a",
-            violet = false, -- Frosted's accent; Diner has none
-            yellow = false, -- Frosted's accent; Diner has none
-            tint = false, -- Riso's pink tint; Diner has none
-            sun = false, -- Toybox's accents and its nav pill's white; Diner has none
-            coral = false, -- as sun
-            mint = false, -- as sun
-            die = false, -- as sun
             band = "#6fb3ab", -- the canvas's header band is teal (HomeRetro.dc.html)
             outline = "#2f2e2b", -- the doc: strokes are ink
             shadow = "#2f2e2b", -- the doc: hard shadows are ink
@@ -53,18 +35,9 @@ return {
             ink = "#f1ece0",
             muted = "#bdb7a9",
             text = "#f1ece0", -- implied: Diner's text is its ink
-            hairline = false,
-            hairline_light = false,
             teal = "#2f6b65",
             pink = "#b86f68",
             mustard = "#b8923c",
-            violet = false, -- Frosted's accent; Diner has none
-            yellow = false, -- Frosted's accent; Diner has none
-            tint = false,
-            sun = false, -- as by day
-            coral = false, -- as sun
-            mint = false, -- as sun
-            die = false, -- as sun
             band = "#2f6b65", -- the canvas's night band is the night teal (NightC.dc.html)
             outline = "#f1ece0", -- the doc: outlines turn cream, the night ink
             shadow = "#f1ece0", -- the doc: hard shadows turn cream, the night ink
@@ -79,157 +52,64 @@ return {
             ink = "#111111",
             muted = "#444444", -- the darker of the doc's two muted greys (PWRetro.dc.html)
             text = "#111111", -- implied: Diner's text is its ink
-            hairline = false,
-            hairline_light = false,
             teal = "#b0b0b0", -- the doc's tiles in the canvas's tile order: teal (PWRetro.dc.html)
             pink = "#e0e0e0", -- pink
             mustard = "#c8c8c8", -- mustard
-            violet = false, -- Frosted's accent; Diner has none
-            yellow = false, -- Frosted's accent; Diner has none
-            tint = false,
-            sun = false, -- as by day
-            coral = false, -- as sun
-            mint = false, -- as sun
-            die = false, -- as sun
             band = "#9a9a9a",
             outline = "#111111", -- implied: strokes are ink
             shadow = "#111111", -- implied: hard shadows are ink
             on_band = "#111111", -- PWRetro.dc.html:19: ink on the grey band
             on_accent = "#111111", -- ink on the grey tiles (PWRetro.dc.html:19)
-            cover = "#4a4a4a", -- PWRetro.dc.html:28
             on_cover = "#f4f4f4", -- PWRetro.dc.html:28
         },
     },
 
-    stroke = {
-        hairline = false,
-        hairline_grey = false,
-        rule = false,
-        outline = 3,
-        band = 4, -- band edges
-    },
+    stroke = { hairline = false, hairline_grey = false, rule = false, band = 4 }, -- band edges
 
     -- A shadow is a fill at its offset, or with an outline_width an outline that wide; Diner's
     -- are fills.
     shadow = {
         -- The doc: 4–8 px, pink under the cover; 6 from the canvas.
-        cover = { x = 6, y = 6, color = "pink", outline_width = false },
-        tile = { x = 4, y = 4, color = "shadow", outline_width = false }, -- 4 from the canvas (HomeRetro.dc.html)
-        sheet = { x = 8, y = 8, color = "shadow", outline_width = false },
-    },
-
-    -- Display type printed twice, an offset copy in color under the part's own: Diner prints once.
-    misregister = { x = 0, y = 0, color = false },
-
-    -- The plates Frosted sets its home rows on (looks/frosted.lua): Diner has none, so its rows
-    -- sit on the page as before plates (fill_color false skips them in layout.lua and
-    -- home_rows.lua), with no padding round a widget and nothing lightened.
-    plate = {
-        fill_color = false, -- no plates
-        keyline = 0, -- no plates
-        keyline_color = false, -- no plates
-        radius = 0, -- no plates
-        lighten = { day = false, night = false, grey = false }, -- no plates, nothing lightened
-        slots = {
-            date = { x = 0, y = 0, radius = 0 }, -- no plates: the widget at its slot's edge
-            clock = { x = 0, y = 0, radius = 0 }, -- no plates
-            weather = { x = 0, y = 0, radius = 0 }, -- no plates
-            stats = { x = 0, y = 0, radius = 0 }, -- no plates
-            quote = { x = 0, y = 0, radius = 0 }, -- no plates
-            featured = { x = 0, y = 0, radius = 0 }, -- no plates
-            launcher = false, -- the launcher's tiles are its own
-        },
-    },
-
-    -- The owner's image behind the home (wallpaper.file): Frosted's alone; Diner draws its paper.
-    wallpaper = {
-        enabled = false, -- the paper, as before the wallpaper setting
-    },
-
-    radius = {
-        cover = 0,
-        box = 0, -- the launcher's boxed tiles: 0 paints them square through paintRect, as before the radius
-    },
-
-    -- A filled box with an outline and a hard shadow.
-    tile = {
-        box = true,
-        fill_color = "paper",
-        outline_color = "outline",
-        rule_color = false,
+        cover = { color = "pink" },
+        tile = { x = 4, y = 4, color = "shadow" }, -- 4 from the canvas (HomeRetro.dc.html)
+        sheet = { x = 8 },
     },
 
     -- A 14 px outlined bar with a mustard fill; in grey a 135° hatch of ink on paper.
-    progress = {
-        height = 14,
-        fill_color = "mustard",
-        track_color = "paper", -- the canvas's track (HomeRetro.dc.html)
-        outline_color = "outline",
-        outline_width = 2, -- the canvas's bar outline (HomeRetro.dc.html)
-        fill_grey = "hatch_135",
-        -- Square ends: 0 paints the bar through paintRect, as it was before the radius
-        -- (Paint.fill with no radius).
-        radius = 0,
-    },
+    progress = { fill_color = "mustard" },
 
     -- An outlined box with an 8 px ink shadow and a coloured header band; the band's colour is a
     -- token per sheet, below (pink on the book's, mustard on the home's in the canvas).
     sheet = {
-        fill_color = "paper",
-        rule_color = false,
-        rule_width = 0,
-        outline_color = "outline",
-        outline_width = 3, -- stroke.outline (HoldBookC.dc.html:30)
-        header_band = true,
         inset = { side = 22, bottom = 22 }, -- HoldBookC.dc.html:30
-        padding = { top = 0, side = 0, bottom = 0 }, -- HoldBookC.dc.html:30
+        padding = { bottom = 0 }, -- HoldBookC.dc.html:30
         book_band_color = "pink", -- HoldBookC.dc.html:31
         home_band_color = "mustard", -- HoldHomeC.dc.html:31
         folder_band_color = "teal", -- no board draws Diner's folder sheet
         -- No board: the nav bar's band, the Settings tab the sheet rises from (nav.fill_color)
         quick_settings_band_color = "band",
-        header_rule_color = "outline", -- HoldBookC.dc.html:31
         header_rule_width = 3, -- HoldBookC.dc.html:31
-        header_padding = { top = 16, side = 20, bottom = 16 }, -- HoldHomeC.dc.html:31
-        book_header_padding = { top = 18, side = 20, bottom = 18 }, -- HoldBookC.dc.html:31
-        cover_gap = 16, -- HoldBookC.dc.html:31
+        header_padding = { top = 16 }, -- HoldHomeC.dc.html:31
+        book_header_padding = { bottom = 18 }, -- HoldBookC.dc.html:31
         cover_w = 60, -- HoldBookC.dc.html:32
         cover_h = 90, -- HoldBookC.dc.html:32
         line_gap = 3, -- HoldBookC.dc.html:33
-        meta_gap = 4, -- HoldBookC.dc.html:36
-        aside_gap = 12, -- no board: Editorial's (FolderOpen.dc.html:36)
-        row_padding = { x = 20, y = 15 }, -- HoldBookC.dc.html:39
-        row_gap = 14, -- HoldBookC.dc.html:39
-        icon_size = 22, -- HoldBookC.dc.html:40
+        row_padding = { y = 15 }, -- HoldBookC.dc.html:39
         row_rule_color = "outline", -- HoldBookC.dc.html:39
-        row_rule_width = 2, -- HoldBookC.dc.html:39
         last_row_bottom = 15, -- HoldBookC.dc.html:65
         status_chip_color = "mustard", -- the read status (HoldBookC.dc.html:52)
         state_chip_color = "teal", -- the Wi-Fi state (HoldHomeC.dc.html:55)
-        chip_padding = { x = 8, y = 2 }, -- HoldBookC.dc.html:52
-        chip_outline_width = 2, -- HoldBookC.dc.html:52
+        chip_padding = { y = 2 }, -- HoldBookC.dc.html:52
         -- The sort and status sheets (cover-grid "The pickers"); SortC.dc.html's heading 28 and row
         -- padding 16 are not taken, so the other sheets keep their sizes.
         selected_fill_color = "teal", -- the current choice's row (SortC.dc.html:45)
-        aside_above_gap = 2, -- "for this folder" over "Sort" (SortC.dc.html:39)
-        sublabel_gap = 2, -- a row's label over its second line (SortC.dc.html:46)
         -- The library's folder sheet (context-menu D11): its band, and the box its folder icon sits in
         -- as the header's cover, the icon tinted (TintedIcon) so night's paper doesn't hide it.
         library_folder_band_color = "pink", -- HoldFolderC.dc.html:35
-        folder_box = {
-            size = 60, -- HoldFolderC.dc.html:36
-            outline_width = 2, -- HoldFolderC.dc.html:36
-            outline_color = "outline", -- HoldFolderC.dc.html:36
-            fill_color = "paper", -- HoldFolderC.dc.html:36
-            icon_size = 34, -- HoldFolderC.dc.html:37
-            icon_color = "ink", -- HoldFolderC.dc.html:37
-        },
         -- The library's empty-space sheet (context-menu D10) and its hidden-folders sub-sheet (D17):
         -- the band, and the sort and show chips (a chip on paper sets its text in sheet_chip_plain).
         library_empty_band_color = "mustard", -- HoldEmptyC.dc.html:35
-        sort_chip_color = "paper", -- HoldEmptyC.dc.html:47
         show_chip_color = "pink", -- HoldEmptyC.dc.html:54
-        radius = 0, -- square: 0 paints the box and its band through paintRect, as before the radius
     },
 
     -- The quick-settings sheet's body. No board draws Diner's: its own sheet's rows and rules, its
@@ -237,54 +117,16 @@ return {
     -- an ink fill with paper text (the direction doc's "The two looks"); the rest Editorial's
     -- (QuickSettings.dc.html).
     quick_settings = {
-        padding_x = 20, -- the sheet's row_padding.x, above
-        first_section_padding = { top = 15, bottom = 15 }, -- the sheet's row_padding.y
-        section_padding = { top = 15, bottom = 15 }, -- the sheet's row_padding.y
-        section_gap = 10, -- no board: Editorial's (QuickSettings.dc.html:40)
-        section_rule_width = 2, -- the sheet's row_rule_width
         section_rule_color = "outline", -- the sheet's row_rule_color
-        control_gap = 12, -- no board: Editorial's (QuickSettings.dc.html:44)
-        button_w = 44, -- no board: Editorial's (QuickSettings.dc.html:45)
-        button_h = 36, -- no board: Editorial's (QuickSettings.dc.html:45)
-        button_outline_width = 2, -- the sheet's chip_outline_width
-        button_outline_color = "outline", -- the doc: strokes are ink
-        button_fill_color = "paper", -- the sheet's fill_color
-        level_h = 14, -- progress.height
-        level_outline_width = 2, -- progress.outline_width
-        level_outline_color = "outline", -- progress.outline_color
         level_fill_color = "mustard", -- progress.fill_color
-        level_track_color = "paper", -- progress.track_color
-        grid_gap = 10, -- no board: Editorial's (QuickSettings.dc.html:62)
-        -- The sheet's row_padding.y above; below, its row_padding.x, since the sheet has no bottom padding
-        grid_padding = { top = 15, bottom = 20 },
-        cell_padding = { top = 14, bottom = 12 }, -- no board: Editorial's (QuickSettings.dc.html:63)
-        cell_gap = 8, -- no board: Editorial's (QuickSettings.dc.html:63)
-        cell_icon_size = 24, -- no board: Editorial's (QuickSettings.dc.html:64)
-        cell_outline_width = 2, -- the owner's 2 px outlined tiles
-        cell_outline_color = "outline", -- the doc: strokes are ink
-        cell_fill_color = "paper", -- the sheet's fill_color
-        on_fill_color = "ink", -- the owner: the on state an ink fill
         on_text_color = "paper", -- with paper text
     },
 
     -- An outlined box on an accent.
-    chip = {
-        small_caps = false,
-        uppercase = true, -- the canvas's chips are uppercase labels (HomeRetro.dc.html)
-        text_color = "ink",
-        fill_color = "pink", -- the canvas's "Now reading" chip (HomeRetro.dc.html)
-        outline_color = "outline",
-        radius = 0, -- square: 0 paints the chip through paintRect, as before the radius
-    },
+    chip = { fill_color = "pink" }, -- the canvas's "Now reading" chip (HomeRetro.dc.html)
 
     -- 11 px uppercase, 800, 0.1 em tracking.
-    label = {
-        size = 11,
-        face = "display",
-        small_caps = false,
-        uppercase = true,
-        tracking = 0.1,
-    },
+    label = { face = "display" },
 
     -- The home's page: its margins, the gaps between rows and between columns, where the free
     -- height goes, the header drawn with row 1 and the footer. HomeRetro.dc.html is the board.
@@ -296,7 +138,7 @@ return {
     home = {
         -- The band and the stripe are full-bleed; every other row has a 40 px side gutter
         -- (HomeRetro.dc.html:17-19, :26).
-        margin = { top = 0, side = 40, bottom = 0 },
+        margin = { top = 0, bottom = 0 },
         row_gap = 14, -- the strip's and the launcher's top padding (HomeRetro.dc.html:47, :55; was 22)
         column_gap = 14, -- the launcher grid's gap (HomeRetro.dc.html:55)
         free_space = "before_footer", -- the stripe's margin-top: auto (HomeRetro.dc.html:82)
@@ -305,19 +147,12 @@ return {
             band_color = "band",
             edge_width = 4,
             edge_color = "ink",
-            rule_color = false,
-            rule_width = 0,
-            rule_space = 0,
             padding = { top = 22, side = 40, bottom = 17 }, -- was 36, 40, 28
-            -- Its slots on its bottom, the clock's baseline level with the date
-            -- (HomeRetro.dc.html:19, align-items: flex-end).
-            align = "bottom",
         },
         -- HomeRetro.dc.html:82 draws 22 px of 2 px ink lines every 10 px on paper under a 4 px
         -- ink edge; the bar always shows on the home and NavBarC.dc.html:70 draws no stripe above
         -- it, so the stripe has no height (was 22).
         footer = {
-            height = 0,
             stripe_color = "ink",
             gap_color = "paper",
             line_width = 2,
@@ -327,22 +162,9 @@ return {
         },
         -- The weather's sun or moon before its line, and the gap after it (HomeRetro.dc.html:48-49).
         weather_icon = { size = 20, gap = 8 },
-        -- The weather line's order: degrees_first ("61° partly cloudy", HomeRetro.dc.html:48-51) or
-        -- condition_first ("Partly cloudy, 61°").
-        weather_order = "degrees_first",
         -- The date's lines: 1, "Tuesday, October 13" (HomeRetro.dc.html:22), or 2, the weekday over
         -- the month and day.
         date_lines = 1,
-        -- The stats: joined, the parts on one right-aligned line as many as fit, or spread across
-        -- the column; the streak count_first, "4-day streak", or word_first, "Streak 4 days"
-        -- (HomeRetro.dc.html:52).
-        stats_line = "joined",
-        stats_streak = "count_first",
-        -- The featured book: its label now_reading, "Now reading", or continue_reading
-        -- (HomeRetro.dc.html:34); its authors and chapter, and its caption's parts, joined on one
-        -- line each, or split (HomeRetro.dc.html:27-43).
-        featured_label = "now_reading",
-        featured_details = "joined",
     },
 
     -- The home widgets' text, per part: a face role, a size in board pixels (before text_size),
@@ -350,320 +172,155 @@ return {
     -- em, frontend/ui/widget/textboxwidget.lua:48, so CSS 1.4 is 0.4) and a palette role.
     type = {
         -- Not drawn: Diner's date is one line. The look's label style, on the band.
-        date_label = {
-            face = "display", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "on_band",
-        },
+        date_label = { face = "display", color = "on_band" },
         -- The date on the band (HomeRetro.dc.html:22).
-        date = { face = "strong", size = 16, uppercase = true, tracking = 0.04, line_height = 0, color = "on_band" },
+        date = { size = 16, uppercase = true, tracking = 0.04, line_height = 0, color = "on_band" },
         -- The clock on the band, CSS line height 0.9 (HomeRetro.dc.html:24).
-        clock = {
-            face = "display", size = 56, uppercase = false, tracking = -0.02, line_height = -0.1, color = "on_band",
-        },
+        clock = { size = 56, line_height = -0.1, color = "on_band" },
         -- The strip's weather (HomeRetro.dc.html:47).
-        weather = { face = "strong", size = 13, uppercase = true, tracking = 0.06, line_height = 0, color = "ink" },
+        weather = { face = "strong", size = 13, uppercase = true, tracking = 0.06, color = "ink" },
         -- No board draws Diner's quote; the quote face at Editorial's size and line height.
-        quote = { face = "quote", size = 18, uppercase = false, tracking = 0, line_height = 0.4, color = "ink" },
+        quote = { line_height = 0.4 },
         -- The strip's reading stats (HomeRetro.dc.html:47).
-        stats = { face = "strong", size = 13, uppercase = true, tracking = 0.06, line_height = 0, color = "ink" },
+        stats = { size = 13, tracking = 0.06, color = "ink" },
         -- The typographic cover's title, CSS line height 1.05 (HomeRetro.dc.html:29). The board's
         -- Georgia is not a Diner face, so the display face stands in.
-        cover_title = {
-            face = "display", size = 22, uppercase = true, tracking = 0.04, line_height = 0.05, color = "on_cover",
-        },
+        cover_title = { size = 22 },
         -- Its authors at the foot (HomeRetro.dc.html:30).
-        cover_authors = {
-            face = "text", size = 10, uppercase = true, tracking = 0.12, line_height = 0, color = "on_cover",
-        },
+        cover_authors = { face = "text" },
         -- "No book yet" in the first run's dashed frame. No board draws Diner's first run; Editorial's
         -- line (EmptyStates.dc.html:33) in Diner's strong face.
-        cover_empty = {
-            face = "strong", size = 12, uppercase = true, tracking = 0.1, line_height = 0, color = "muted",
-        },
+        cover_empty = { size = 12 },
         -- "Now reading" in its chip, in chip.text_color (HomeRetro.dc.html:34).
-        featured_label = {
-            face = "display", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "ink",
-        },
+        featured_label = { face = "display" },
         -- The featured book's title, two lines at most, CSS line height 1.05 (HomeRetro.dc.html:35).
-        featured_title = {
-            face = "display", size = 28, uppercase = false, tracking = 0, line_height = 0.05, color = "ink",
-        },
+        featured_title = { line_height = 0.05 },
         -- "authors · chapter" (HomeRetro.dc.html:36).
-        featured_authors = {
-            face = "text", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "muted",
-        },
+        featured_authors = { size = 15, color = "muted" },
         -- Not drawn on its own: Diner's chapter joins the authors line (HomeRetro.dc.html:36), in its style.
-        featured_chapter = {
-            face = "text", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "muted",
-        },
+        featured_chapter = { size = 15, color = "muted" },
         -- "62% · 2 h 10 min left" under the bar (HomeRetro.dc.html:41).
-        featured_caption = {
-            face = "strong", size = 13, uppercase = false, tracking = 0, line_height = 0, color = "ink",
-        },
+        featured_caption = { size = 13, color = "ink" },
         -- No board draws Diner's first run; Editorial's sizes and line heights
         -- (EmptyStates.dc.html:36-38) in Diner's faces, the body in muted as its authors line.
-        featured_empty_title = {
-            face = "display", size = 24, uppercase = false, tracking = 0, line_height = 0.15, color = "ink",
-        },
-        featured_empty_body = {
-            face = "text", size = 15, uppercase = false, tracking = 0, line_height = 0.4, color = "muted",
-        },
-        featured_button = {
-            face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "ink",
-        },
+        featured_empty_title = { line_height = 0.15 },
+        featured_empty_body = { size = 15, color = "muted" },
         -- A launcher tile's label (HomeRetro.dc.html:56, weight 800).
-        launcher_label = {
-            face = "display", size = 14, uppercase = false, tracking = 0, line_height = 0, color = "ink",
-        },
+        launcher_label = { face = "display", size = 14, line_height = 0 },
         -- Its suffix, "off" or "plugin missing": no board; the look's label style (label above).
-        launcher_suffix = {
-            face = "display", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "muted",
-        },
+        launcher_suffix = { face = "display" },
         -- A sheet's heading on its band, "Home" (HoldHomeC.dc.html:32).
-        sheet_heading = {
-            face = "display", size = 24, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
-        },
+        sheet_heading = { size = 24, line_height = 0 },
         -- The heading's aside, "KoPanda" (HoldHomeC.dc.html:33).
-        sheet_aside = {
-            face = "accent", size = 22, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
-        },
-        -- The book header's title, CSS line height 1.05 (HoldBookC.dc.html:34).
-        sheet_title = {
-            face = "display", size = 24, uppercase = false, tracking = 0, line_height = 0.05, color = "on_accent",
-        },
+        sheet_aside = { face = "accent", size = 22, uppercase = false, tracking = 0, color = "on_accent" },
         -- Its author (HoldBookC.dc.html:35).
-        sheet_author = {
-            face = "text", size = 14, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
-        },
+        sheet_author = { size = 14 },
         -- Its meta line, "62% · Part 3 · opened yesterday" (HoldBookC.dc.html:36).
-        sheet_meta = {
-            face = "strong", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
-        },
+        sheet_meta = { size = 12, uppercase = true, tracking = 0.08 },
         -- A sheet row's label (HoldBookC.dc.html:39).
-        sheet_row = { face = "strong", size = 17, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        sheet_row = { face = "strong" },
         -- A row's plain detail, the weather's age (HoldHomeC.dc.html:48).
-        sheet_detail = {
-            face = "strong", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "muted",
-        },
+        sheet_detail = { size = 12, tracking = 0.08 },
         -- A row's detail in its chip, the read status (HoldBookC.dc.html:52).
-        sheet_chip = {
-            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
-        },
+        sheet_chip = { face = "display", tracking = 0.08 },
         -- sheet_chip in ink, since on_accent is the night paper by night: a row's detail in its chip
         -- on paper, the sort's (HoldEmptyC.dc.html:47).
-        sheet_chip_plain = {
-            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
-        },
+        sheet_chip_plain = { face = "display", tracking = 0.08 },
         -- The header's label at its right, "Library" (SortC.dc.html:43).
-        sheet_label = {
-            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
-        },
+        sheet_label = { face = "display", tracking = 0.08, color = "on_accent" },
         -- A row's second line, "Last opened first", weight 500 in the board's ink (SortC.dc.html:48).
-        sheet_sublabel = { face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        sheet_sublabel = { size = 12, color = "ink" },
         -- A quick-settings bar's label and value; no board: sheet_detail's style.
-        quick_label = {
-            face = "strong", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "muted",
-        },
-        -- The bars' minus and plus; no board: sheet_row's face at Editorial's size (QuickSettings.dc.html:45).
-        quick_button = {
-            face = "strong", size = 18, uppercase = false, tracking = 0, line_height = 0, color = "ink",
-        },
+        quick_label = { size = 12, tracking = 0.08 },
         -- A quick-settings tile's label; no board: sheet_chip's style.
-        quick_cell = {
-            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
-        },
+        quick_cell = { face = "display", tracking = 0.08 },
         -- The editor screens have no Diner board: the direction doc's vocabulary ("The two looks"),
         -- the header's aside and title on the band as the home's date and clock are (HomeRetro.dc.html:22-24),
         -- the rest in the look's label style and Editorial's sizes.
         -- no board: Editorial's line height, so the default layout's five rows fit above the foot
-        editor_aside = {
-            face = "strong", size = 11, uppercase = true, tracking = 0.1, line_height = 0.3, color = "on_band",
-        },
+        editor_aside = { color = "on_band" },
         -- no board: Editorial's line height
-        editor_title = {
-            face = "display", size = 30, uppercase = false, tracking = 0, line_height = 0.3, color = "on_band",
-        },
+        editor_title = { size = 30, color = "on_band" },
         -- no board: Editorial's line height
-        editor_button = {
-            face = "display", size = 11, uppercase = true, tracking = 0.1, line_height = 0.3, color = "ink",
-        },
+        editor_button = { face = "display", tracking = 0.1 },
         -- no board: Editorial's line height
-        editor_caption = {
-            face = "strong", size = 11, uppercase = true, tracking = 0.1, line_height = 0.3, color = "muted",
-        },
+        editor_caption = { tracking = 0.1 },
         -- no board: Editorial's line height
-        editor_box = {
-            face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
-        },
-        -- no board: Editorial's line height
-        editor_share = {
-            face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0.3, color = "muted",
-        },
-        -- no board: Editorial's line height, so six rows fit above the add-an-entry foot
-        editor_label = {
-            face = "strong", size = 16, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
-        },
-        -- no board: Editorial's line height
-        editor_kind = {
-            face = "strong", size = 11, uppercase = true, tracking = 0.08, line_height = 0.3, color = "muted",
-        },
-        -- no board: Editorial's line height
-        editor_note = {
-            face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0.3, color = "muted",
-        },
+        editor_kind = { tracking = 0.08 },
         -- A nav tab's label (NavBarC.dc.html:75, weight 700).
-        nav_label = { face = "strong", size = 12, uppercase = true, tracking = 0.04, line_height = 0, color = "ink" },
+        nav_label = { size = 12, tracking = 0.04, color = "ink" },
         -- The active tab's label on its mustard block (NavBarC.dc.html:71, weight 800), in the dark
         -- text the look puts on mustard, so the night block keeps dark text.
-        nav_label_active = {
-            face = "display", size = 12, uppercase = true, tracking = 0.04, line_height = 0, color = "on_accent",
-        },
+        nav_label_active = { face = "display", size = 12, tracking = 0.04, color = "on_accent" },
         -- The file browser's book count over its title, in Caveat at its default weight
         -- (LibraryC.dc.html:21; CSS line height 1), in the band's dark text.
-        title_bar_count = {
-            face = "accent", size = 24, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
-        },
+        title_bar_count = { face = "accent", size = 24, uppercase = false, tracking = 0, color = "on_accent" },
         -- Its title (LibraryC.dc.html:22, weight 800); CSS line height 0.95, as the clock's -0.1 for 0.9.
-        title_bar_title = {
-            face = "display", size = 40, uppercase = false, tracking = -0.01, line_height = -0.05,
-            color = "on_accent",
-        },
+        title_bar_title = { size = 40, tracking = -0.01, color = "on_accent" },
         -- The sort chip's label, ink on paper (LibraryC.dc.html:25, weight 800).
-        title_bar_sort = {
-            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
-        },
+        title_bar_sort = { face = "display", tracking = 0.08 },
         -- The status chip's label on pink (LibraryC.dc.html:26, weight 800), the dark text on accents.
-        title_bar_status = {
-            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
-        },
+        title_bar_status = { face = "display", tracking = 0.08, color = "on_accent" },
         -- The library's parts (Main.dc.html under .tiller/design/2026-10-16-kopanda-library-screens/).
         -- The count over the title, in Caveat, CSS line height 1, in the band's dark text (Main.dc.html:21).
-        library_count = {
-            face = "accent", size = 24, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
-        },
+        library_count = { face = "accent", size = 24, uppercase = false, tracking = 0, color = "on_accent" },
         -- The title (Main.dc.html:22, weight 800); CSS line height 0.95, as the clock's -0.1 for 0.9.
-        library_title = {
-            face = "display", size = 40, uppercase = false, tracking = -0.01, line_height = -0.05,
-            color = "on_accent",
-        },
+        library_title = { size = 40, tracking = -0.01, color = "on_accent" },
         -- A picker's label, ink on the paper chip (Main.dc.html:25, weight 800).
-        library_picker = {
-            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
-        },
+        library_picker = { face = "display", tracking = 0.08 },
         -- The status picker's label on its pink chip (Main.dc.html:26), the dark text on accents.
-        library_picker_status = {
-            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
-        },
+        library_picker_status = { face = "display", tracking = 0.08, color = "on_accent" },
         -- A tile's title, one line, CSS line height 1.2 (Main.dc.html:47, weight 800).
-        tile_title = {
-            face = "display", size = 12, uppercase = true, tracking = 0.04, line_height = 0.2, color = "ink",
-        },
+        tile_title = { face = "display", uppercase = true, tracking = 0.04 },
         -- The placeholder's title at the grid's size, CSS line height 1.1 (Main.dc.html:51). The board's
         -- Georgia is not a Diner face, so the display face stands in, as in cover_title.
-        tile_cover_title = {
-            face = "display", size = 17, uppercase = false, tracking = 0, line_height = 0.1, color = "on_cover",
-        },
+        tile_cover_title = { size = 17 },
         -- A folder's book count on its pink box, in Caveat, CSS line height 1 (Main.dc.html:35).
-        folder_count = {
-            face = "accent", size = 26, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
-        },
+        folder_count = { face = "accent", size = 26, line_height = 0, color = "on_accent" },
         -- Its reading count (Main.dc.html:36, weight 800).
-        folder_reading = {
-            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
-        },
+        folder_reading = { face = "display", color = "on_accent" },
         -- "Page 1 of 24" between the pager's boxes (Main.dc.html:87, weight 800).
-        pager_label = {
-            face = "display", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
-        },
+        pager_label = { face = "display", size = 12 },
         -- The series and authors screens' parts (SeriesC.dc.html, SeriesBooksC.dc.html and
         -- AuthorsC.dc.html under .tiller/design/2026-10-16-kopanda-library-screens/); weight 700 is the
         -- strong face and 800 the display face. Text on the mustard, pink and teal fills is on_accent.
         -- One series' title on its band, CSS line height 0.95 (SeriesBooksC.dc.html:27, weight 800).
-        shelf_detail_title = {
-            face = "display", size = 36, uppercase = false, tracking = -0.01, line_height = -0.05,
-            color = "on_accent",
-        },
+        shelf_detail_title = { tracking = -0.01, color = "on_accent" },
         -- The back control's label, ink on its paper box (SeriesBooksC.dc.html:20, weight 800).
-        shelf_back = { face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink" },
-        -- A series row's name, CSS line height 1.1 (SeriesC.dc.html:35, weight 800).
-        series_name = {
-            face = "display", size = 19, uppercase = false, tracking = 0, line_height = 0.1, color = "ink",
-        },
+        shelf_back = { face = "display" },
         -- Its sub-line (SeriesC.dc.html:36, weight 500).
-        series_sub = { face = "text", size = 13, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        series_sub = { color = "ink" },
         -- A chip's label on its mustard, teal or pink fill (SeriesC.dc.html:39, weight 800).
-        shelf_chip = {
-            face = "display", size = 10, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
-        },
+        shelf_chip = { face = "display" },
         -- A chip's label on its paper fill (SeriesC.dc.html:88, weight 800).
-        shelf_chip_plain = {
-            face = "display", size = 10, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
-        },
-        -- A book row's series index, CSS line height 1 (SeriesBooksC.dc.html:34, weight 800).
-        book_index = { face = "display", size = 40, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        shelf_chip_plain = { face = "display" },
         -- Its title, CSS line height 1.1 (SeriesBooksC.dc.html:37, weight 800).
-        book_row_title = {
-            face = "display", size = 20, uppercase = false, tracking = 0, line_height = 0.1, color = "ink",
-        },
+        book_row_title = { size = 20 },
         -- "read this one next" in Caveat on the mustard row, CSS line height 1 (SeriesBooksC.dc.html:47).
-        book_next_note = {
-            face = "accent", size = 22, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
-        },
+        book_next_note = { face = "accent", size = 22, uppercase = false, tracking = 0 },
         -- "Not on the Kindle yet" (SeriesBooksC.dc.html:60, weight 500).
-        book_row_note = { face = "text", size = 13, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        book_row_note = { color = "ink" },
         -- A group's letter on its mustard column (AuthorsC.dc.html:29, weight 800).
-        author_letter = {
-            face = "display", size = 24, uppercase = false, tracking = 0, line_height = 0, color = "on_accent",
-        },
-        -- An author's name (AuthorsC.dc.html:31, weight 700).
-        author_name = { face = "strong", size = 17, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        author_letter = { size = 24 },
         -- Their count, "4 books ›" (AuthorsC.dc.html:33, weight 800).
-        author_count = {
-            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
-        },
+        author_count = { face = "display", tracking = 0.08, color = "ink" },
         -- The empty note, as the library's (pager_label, Main.dc.html:87).
-        shelf_empty = {
-            face = "display", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
-        },
+        shelf_empty = { face = "display", color = "ink" },
         -- The header's static label on the band, "Under way first" (SeriesC.dc.html:24, AuthorsC.dc.html:24).
-        shelf_label = {
-            face = "display", size = 11, uppercase = true, tracking = 0.08, line_height = 0, color = "on_accent",
-        },
+        shelf_label = { face = "display", tracking = 0.08, color = "on_accent" },
     },
 
     -- The launcher: a grid of outlined tiles with the tile shadow, the first three on accents.
     launcher = {
-        columns = 3, -- HomeRetro.dc.html:55
         column_gap = 14, -- HomeRetro.dc.html:55
         row_gap = 9, -- HomeRetro.dc.html:55; was 14, tightened with the home (home above)
         icon_size = 28, -- HomeRetro.dc.html:57
-        icon_gap = false, -- the icon sits above the label, not beside it
         padding = { x = 14, y = 12 }, -- HomeRetro.dc.html:56
         tile_height = 104, -- HomeRetro.dc.html:56
         accent_1_color = "mustard", -- HomeRetro.dc.html:56
         accent_2_color = "pink", -- HomeRetro.dc.html:60
         accent_3_color = "teal", -- HomeRetro.dc.html:64
-        suffix_gap = 6, -- no board; unused while the suffix is below
         suffix_below = true, -- no board: "Terminal PLUGIN MISSING" doesn't fit a third on one line
-        -- No badge: a size of 0 draws the tile's icon bare, as the tiles were before badges.
-        badge = {
-            size = 0, -- no badge
-            outline_width = 0, -- no badge
-            outline_color = false, -- no badge
-            fill_1_color = false, -- no badge
-            fill_2_color = false, -- no badge
-            fill_3_color = false, -- no badge
-            fill_4_color = false, -- no badge
-            fill_5_color = false, -- no badge
-            fill_6_color = false, -- no badge
-        },
-    },
-
-    -- The quote: in the tile (no rule colour) with the tile's outline and shadow, or between rules
-    -- rule_width wide; padding between the chrome and the text.
-    quote = {
-        padding = 18, -- no board draws Diner's quote; Editorial's (Main.dc.html:56)
-        rule_width = 0, -- in the tile, not ruled
-        rule_color = false,
     },
 
     -- The featured book's cover box.
@@ -671,105 +328,56 @@ return {
         cover_w = 140, -- HomeRetro.dc.html:28
         cover_h = 210, -- HomeRetro.dc.html:28
         cover_padding = { x = 12, y = 16 }, -- the placeholder's padding (HomeRetro.dc.html:28)
-        cover_outline_color = "outline", -- the doc: the cover is outlined in ink, stroke.outline wide
-        dash = 4, -- the first run's dashed frame, as Editorial's: 4 px dashes
-        dash_gap = 4, -- with 4 px gaps (EmptyStates.dc.html:33)
         gap = 20, -- between the cover and the text column (HomeRetro.dc.html:27)
         column_padding_y = 6, -- the text column's padding (HomeRetro.dc.html:32)
-        title_gap = 12, -- the column's 6 px gap and the title's 6 px margin (HomeRetro.dc.html:33, :35)
-        chip_outline = 2, -- the "Now reading" chip's border (HomeRetro.dc.html:34)
         chip_padding = { x = 10, y = 3 }, -- HomeRetro.dc.html:34
-        -- No board draws Diner's first run: the button takes Editorial's padding
-        -- (EmptyStates.dc.html:38) and the Library tile's fill, outline and tile shadow (HomeRetro.dc.html:56).
-        button_padding = { x = 14, y = 9 },
         button_fill_color = "mustard",
-        button_outline_color = "outline",
     },
+
     -- The editor screens, edit layout and launcher management. No board draws Diner's: the
     -- direction doc's vocabulary ("The two looks"), a teal header band, 3 px ink outlines, hard
     -- 2 px shadows on cards (card_shadow) and a flat mustard fill for the selected card; spacing as
     -- Editorial's boards give it.
     editor = {
-        padding = { top = 40, side = 40, bottom = 28 }, -- no board: Editorial's
         header_band_color = "band", -- no board: the home's teal header band (HomeRetro.dc.html)
         header_text_color = "on_band", -- no board: the band's text (HomeRetro.dc.html:19)
-        header_rule_color = "outline", -- no board: the doc's ink strokes
-        header_rule_width = 3, -- no board: stroke.outline
-        header_gap = 16, -- no board: Editorial's
-        body_gap = 18, -- no board: Editorial's
-        button_outline_color = "outline", -- no board: the doc's ink strokes
         button_outline_width = 3, -- no board: stroke.outline
-        button_fill_color = "paper", -- no board: a paper button on the band
-        button_padding = { x = 14, y = 8 }, -- no board: Editorial's
-        card_gap = 10, -- no board: 10, so the default layout's five rows fit with one selected (owner decision)
-        card_padding = { x = 14, y = 12 }, -- no board: Editorial's
-        card_outline_color = "outline", -- no board: the doc's ink outlines
-        card_outline_width = 3, -- no board: stroke.outline
         card_shadow = { x = 2, y = 2, color = "shadow" }, -- owner: half the home tiles' 4, so the screens read lighter
-        selected_outline_color = "outline", -- no board: the doc's ink outlines
         selected_fill_color = "mustard", -- no board: the doc's flat accent fills
-        arrow_size = 28, -- no board: Editorial's
-        arrow_gap = 14, -- no board: Editorial's
-        disabled_color = "muted", -- no board: Diner has no hairline
-        box_padding = { x = 12, y = 10 }, -- no board: Editorial's
-        box_gap = 8, -- no board: Editorial's
-        row_padding = { y = 14 }, -- no board: Editorial's
         row_rule_color = "outline", -- no board: the doc's ink strokes
-        row_rule_width = 2, -- no board: the sheets' row rules (sheet.row_rule_width)
-        icon_size = 22, -- no board: Editorial's
-        icon_gap = 14, -- no board: Editorial's
-        control_size = 30, -- no board: Editorial's
-        kind_gap = 8, -- no board: Editorial's
-        kind_columns = 2, -- no board: Editorial's
     },
+
     -- The nav bar: a teal band under a 4 px ink edge, five tabs of an icon over an uppercase label
     -- split by outline dividers, and the active tab a mustard block (NavBarC.dc.html:70-89).
     nav = {
         fill_color = "band", -- NavBarC.dc.html:70
         edge_width = 4, -- NavBarC.dc.html:70, as the header's edge (home.header.edge_width)
-        edge_color = "ink", -- NavBarC.dc.html:70
-        padding_x = 0, -- the bar is unpadded at its sides (NavBarC.dc.html:70)
         padding_top = 14, -- a tab's (NavBarC.dc.html:71)
         padding_bottom = 16, -- NavBarC.dc.html:71
         icon_size = 28, -- NavBarC.dc.html:72
         icon_gap = 6, -- the icon to the label (NavBarC.dc.html:71)
         icon_color = "ink", -- the page's ink, inherited (NavBarC.dc.html:14, :17)
         active_icon_color = "on_accent", -- the dark text on the mustard block, ink by day (NavBarC.dc.html:71)
-        active_rule_width = 0, -- the active tab has no rule (NavBarC.dc.html:71)
-        active_rule_color = false,
         active_fill_color = "mustard", -- NavBarC.dc.html:71
         divider_width = 3, -- NavBarC.dc.html:71, :75, :79, :83; none on the last tab (:87)
         divider_color = "outline", -- the doc: strokes are ink (NavBarC.dc.html:71)
-        -- A bar across the screen's bottom, not Toybox's floating pill: float false paints the band
-        -- and its tabs as the bar did before the pill, and the pill's tokens are none.
-        float = false,
-        margin = { side = 0, bottom = 0 }, -- no pill: the bar meets the screen's sides and bottom
-        radius = 0, -- no pill
-        float_fill_color = false, -- no pill
-        shadow = { x = 0, y = 0, color = false }, -- no pill
-        tab_gap = 0, -- the tabs share the width with no gap, as before the pill
-        active_outline_width = 0, -- the lit tab is not outlined, as before the pill
-        active_outline_color = false, -- not outlined
     },
+
     -- The file browser's title bar: a mustard band over a 4 px ink edge, a handwritten count over the
     -- title, and the pickers as outlined chips, sort on paper and status on pink (LibraryC.dc.html:19-27).
     title_bar = {
         fill_color = "mustard", -- LibraryC.dc.html:19
-        padding = { top = 30, side = 40, bottom = 20 }, -- LibraryC.dc.html:19
+        padding = { top = 30, bottom = 20 }, -- LibraryC.dc.html:19
         edge_width = 4, -- LibraryC.dc.html:19
         edge_color = "ink", -- LibraryC.dc.html:19
         line_gap = 2, -- the count to the title (LibraryC.dc.html:20)
         picker_gap = 10, -- LibraryC.dc.html:24
-        sort_fill_color = "paper", -- LibraryC.dc.html:25
         status_fill_color = "pink", -- LibraryC.dc.html:26
-        picker_outline_width = 2, -- LibraryC.dc.html:25-26
-        picker_outline_color = "outline", -- the look's chip outline (chip.outline_color), ink by day
-        picker_padding = { x = 10, y = 4 }, -- LibraryC.dc.html:25
-        icon_size = 16, -- no board draws the plus: the pickers' size
+        picker_padding = { y = 4 }, -- LibraryC.dc.html:25
         icon_color = "on_accent", -- no board draws the plus: the band's dark text
         count_on_shelf = true, -- "142 books on the shelf" (LibraryC.dc.html:21)
-        picker_radius = 0, -- square: 0 paints the pickers through paintRect, as before the radius
     },
+
     -- The library: a mustard header over a 4 px ink edge, three columns of outlined covers with hard
     -- shadows and a hatched-chip strip under each, and a pager of outlined boxes above the nav bar
     -- (Main.dc.html:19-88 under .tiller/design/2026-10-16-kopanda-library-screens/). The colours the
@@ -777,78 +385,43 @@ return {
     library = {
         header = {
             fill_color = "mustard", -- Main.dc.html:19
-            padding = { top = 28, side = 40, bottom = 18 }, -- Main.dc.html:19
+            padding = { top = 28, bottom = 18 }, -- Main.dc.html:19
             edge_width = 4, -- Main.dc.html:19
             edge_color = "ink", -- Main.dc.html:19
             line_gap = 2, -- the count to the title (Main.dc.html:20)
             picker_gap = 10, -- Main.dc.html:24
-            picker_padding = { x = 10, y = 4 }, -- Main.dc.html:25
-            picker_outline_width = 2, -- Main.dc.html:25-26
-            picker_outline_color = "outline", -- Main.dc.html:25-26
-            sort_fill_color = "paper", -- Main.dc.html:25
+            picker_padding = { y = 4 }, -- Main.dc.html:25
             status_fill_color = "pink", -- Main.dc.html:26
-            picker_radius = 0, -- square: 0 paints the pickers through paintRect, as before the radius
         },
         grid = {
             padding_top = 22, -- Main.dc.html:30
-            side = 40, -- Main.dc.html:30
-            row_gap = 22, -- Main.dc.html:30
             column_gap = 22, -- Main.dc.html:30
-            cover_h = 195, -- D2: board 200, so two rows fit (Main.dc.html:32, :43)
-            strip_gap = 12, -- the tile's 8 px gap and the strip's 4 px margin (Main.dc.html:42, :46)
-            title_gap = 8, -- the tile's gap (Main.dc.html:42)
         },
         cover = {
-            outline_width = 3, -- Main.dc.html:43
-            outline_color = "outline", -- Main.dc.html:43
-            radius = 0, -- Main.dc.html:43
-            shadow = { x = 5, y = 5, color = "shadow", outline_width = false }, -- Main.dc.html:43
-            padding = { x = 10, y = 14 }, -- the placeholder's (Main.dc.html:43)
+            shadow = { x = 5, y = 5 }, -- Main.dc.html:43
+            padding = { y = 14 }, -- the placeholder's (Main.dc.html:43)
         },
-        strip = {
-            height = 14, -- its outline included (Main.dc.html:46, box-sizing: border-box)
-            outline_width = 2, -- Main.dc.html:46
-        },
+        strip = { height = 14 }, -- its outline included (Main.dc.html:46, box-sizing: border-box)
         folder = {
             fill_color = "pink", -- Main.dc.html:32
-            outline_width = 3, -- Main.dc.html:32
-            outline_color = "outline", -- Main.dc.html:32
             icon_size = 44, -- Main.dc.html:33
             icon_color = "on_accent", -- the board's ink on pink (Main.dc.html:33), dark by night too
-            padding = { x = 12, y = 14 }, -- Main.dc.html:32
-            count_gap = 4, -- Main.dc.html:34
+            padding = { x = 12 }, -- Main.dc.html:32
         },
         badge = {
             size = 38, -- Main.dc.html:66
             outline_width = 3, -- Main.dc.html:66
-            outline_color = "outline", -- Main.dc.html:66
-            fill_color = "paper", -- Main.dc.html:66
-            icon_size = 20, -- Main.dc.html:67
-            icon_color = "ink", -- Main.dc.html:67
             inset = -12, -- overhanging the corner (Main.dc.html:66, right: -12px; top: -12px)
-            align = "top", -- Main.dc.html:66
         },
         -- The board's Not downloaded chip, gone (tweaks/badge-only-not-downloaded); its padding and
         -- outline colour stay as the one-author grid's Up next chip on the cover (series-and-authors D5).
-        not_downloaded = {
-            outline_color = "outline", -- Main.dc.html:73
-            padding = { x = 6, y = 1 }, -- Main.dc.html:73
-        },
+        not_downloaded = { padding = { x = 6, y = 1 } }, -- Main.dc.html:73
         pager = {
-            button_w = 44, -- Main.dc.html:86, :88
-            button_h = 32, -- Main.dc.html:86, :88
-            gap = 18, -- Main.dc.html:85
-            bottom = 16, -- Main.dc.html:85
-            outline_width = 2, -- Main.dc.html:86, :88
-            outline_color = "outline", -- Main.dc.html:86, :88
-            prev_fill_color = "paper", -- Main.dc.html:86
             next_fill_color = "mustard", -- Main.dc.html:88
-            dead_color = false, -- Main draws no dead arrow: it is left out (cover-grid D16)
-            prev_icon_color = "ink", -- on the paper box (Main.dc.html:86)
             next_icon_color = "on_accent", -- on the mustard box, dark by night too (Main.dc.html:88)
-            label_in_words = true, -- "Page 1 of 24" (Main.dc.html:87)
         },
     },
+
     -- The series and authors screens: the library's header on a pink or teal band, outlined rows with
     -- hard shadows, stacked covers and filled chips, the up-next book on mustard, and letter groups
     -- (SeriesC.dc.html, SeriesBooksC.dc.html, AuthorsC.dc.html under
@@ -858,100 +431,36 @@ return {
     shelf = {
         series_fill_color = "pink", -- SeriesC.dc.html:19
         authors_fill_color = "teal", -- AuthorsC.dc.html:19
-        detail = {
-            padding = { top = 22, side = 40, bottom = 18 }, -- SeriesBooksC.dc.html:19
-            back_gap = 10, -- SeriesBooksC.dc.html:19
-        },
-        back = {
-            fill_color = "paper", -- SeriesBooksC.dc.html:20
-            outline_width = 2, -- SeriesBooksC.dc.html:20
-            padding = { left = 6, right = 10, y = 4 }, -- SeriesBooksC.dc.html:20
-            icon_size = 14, -- SeriesBooksC.dc.html:21
-            gap = 6, -- SeriesBooksC.dc.html:20
-        },
+        detail = { padding = { top = 22, bottom = 18 } }, -- SeriesBooksC.dc.html:19
         list = {
             padding_top = 22, -- SeriesC.dc.html:27
-            side = 40, -- SeriesC.dc.html:27
             row_gap = 14, -- SeriesC.dc.html:27
-            -- the owner, 2026-10-17: the row gap, kept clear above the pager, its last row's shadow inside it
-            pager_gap = 14, -- the owner's, as row_gap (SeriesC.dc.html:27)
         },
         row = {
-            -- y: owner's fit 2026-10-17: board 12, five rows a page at the Colorsoft with pager_gap above the pager
-            padding = { x = 16, y = 9 }, -- SeriesC.dc.html:28
-            gap = 18, -- SeriesC.dc.html:28
-            line_gap = 3, -- SeriesC.dc.html:34, the name to its sub-line
-            outline_width = 3, -- SeriesC.dc.html:28
             shadow = { x = 4, y = 4 }, -- SeriesC.dc.html:28
-            rule_width = 0, -- boxed, not ruled (SeriesC.dc.html:28)
             rule_color = "ink", -- SeriesC.dc.html:28, unused at rule_width 0
-        },
-        stack = {
-            cover_w = 38, -- SeriesC.dc.html:30-32
-            cover_h = 56, -- SeriesC.dc.html:30-32
-            offset_x = 10, -- SeriesC.dc.html:30-32
-            offset_y = 2, -- SeriesC.dc.html:30-32
-            outline_width = 2, -- SeriesC.dc.html:30-32
-            outline_color = "outline", -- SeriesC.dc.html:30-32
         },
         chip = {
             padding = { x = 7, y = 1 }, -- SeriesC.dc.html:39
-            outline_width = 2, -- SeriesC.dc.html:39
             under_way_fill_color = "mustard", -- SeriesC.dc.html:39
             finished_fill_color = "teal", -- SeriesC.dc.html:76
-            not_started_fill_color = "paper", -- SeriesC.dc.html:88
             up_next_fill_color = "paper", -- SeriesBooksC.dc.html:49
         },
-        books = {
-            padding_top = 24, -- SeriesBooksC.dc.html:32
-            row_gap = 18, -- SeriesBooksC.dc.html:32
-        },
         book = {
-            padding = { x = 16, y = 14 }, -- SeriesBooksC.dc.html:33
-            index_w = 40, -- SeriesBooksC.dc.html:34
-            cover_w = 64, -- the content, the outline outside it, as the board's CSS (SeriesBooksC.dc.html:35)
-            cover_h = 96, -- the content, the outline outside it, as the board's CSS (SeriesBooksC.dc.html:35)
             cover_outline_width = 2, -- SeriesBooksC.dc.html:35
-            line_gap = 6, -- SeriesBooksC.dc.html:36
             bar_height = 10, -- the track inside the outline (SeriesBooksC.dc.html:38)
-            bar_outline_width = 2, -- SeriesBooksC.dc.html:38
-            badge_size = 28, -- SeriesBooksC.dc.html:54
-            badge_outline_width = 2, -- SeriesBooksC.dc.html:54
-            badge_icon_size = 14, -- SeriesBooksC.dc.html:55
-            badge_inset = -10, -- overhanging the corner (SeriesBooksC.dc.html:54, right: -10px; top: -10px)
         },
         next = {
             fill_color = "mustard", -- SeriesBooksC.dc.html:42
             shadow = { x = 6, y = 6 }, -- SeriesBooksC.dc.html:42
-            line_gap = 4, -- SeriesBooksC.dc.html:45
-            text_color = "on_accent", -- the dark text on mustard (SeriesBooksC.dc.html:42)
         },
-        groups = {
-            padding_top = 22, -- AuthorsC.dc.html:27
-            gap = 12, -- AuthorsC.dc.html:27
-        },
+        groups = { padding_top = 22 }, -- AuthorsC.dc.html:27
         group = {
-            outline_width = 3, -- AuthorsC.dc.html:28
             shadow = { x = 4, y = 4 }, -- AuthorsC.dc.html:28
-            rule_width = 0, -- boxed, not ruled (AuthorsC.dc.html:28)
             rule_color = "ink", -- AuthorsC.dc.html:28, unused at rule_width 0
-            letter_w = 48, -- AuthorsC.dc.html:29
             letter_fill_color = "mustard", -- AuthorsC.dc.html:29
             letter_rule_width = 3, -- AuthorsC.dc.html:29
         },
-        author = {
-            padding = { x = 16, y = 11 }, -- AuthorsC.dc.html:31
-            rule_width = 2, -- AuthorsC.dc.html:31
-            rule_color = "outline", -- AuthorsC.dc.html:31
-        },
-        author_grid = {
-            -- Main.dc.html:32's 200, less the one-author header's 26 px over the library's
-            -- (SeriesBooksC.dc.html:19-30 against Main.dc.html:19-27).
-            cover_h = 174, -- lead: by analogy with Main.dc.html:32
-        },
-        up_next = {
-            fill_color = "paper", -- SeriesBooksC.dc.html:49
-            outline_width = 2, -- SeriesBooksC.dc.html:49
-        },
+        author = { rule_color = "outline" }, -- AuthorsC.dc.html:31
     },
 }

@@ -222,7 +222,7 @@ describe("fonts", function()
     it("ships and loads every face a look names", function()
         local named = 0
         for _, id in ipairs({ "editorial", "diner" }) do
-            for role, face in pairs(package.loaded["looks/" .. id].faces) do
+            for role, face in pairs(package.loaded["looks"].get(id).faces) do
                 if face.file then
                     named = named + 1
                     local where = id .. " " .. role .. ": " .. face.file
@@ -237,7 +237,7 @@ describe("fonts", function()
     it("names in the looks' tables exactly the eight look faces", function()
         local seen, files = {}, {}
         for _, id in ipairs({ "editorial", "diner" }) do
-            for _, face in pairs(package.loaded["looks/" .. id].faces) do
+            for _, face in pairs(package.loaded["looks"].get(id).faces) do
                 if face.file and not seen[face.file] then
                     seen[face.file] = true
                     files[#files + 1] = face.file

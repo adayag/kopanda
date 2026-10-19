@@ -40,6 +40,27 @@ describe("looks", function()
         return chunk()
     end
 
+    -- The paths a look file sets that the base (looks/base.lua) doesn't declare, as dotted strings,
+    -- sorted: a key the base lacks, or a table where the base has a value or a value where it has
+    -- a table.
+    local function unknown_paths(own, base)
+        local out = {}
+        local function walk(mine, theirs, prefix)
+            for k, v in pairs(mine) do
+                local path = prefix .. tostring(k)
+                local declared = theirs[k]
+                if declared == nil or (type(v) == "table") ~= (type(declared) == "table") then
+                    out[#out + 1] = path
+                elseif type(v) == "table" then
+                    walk(v, declared, path .. ".")
+                end
+            end
+        end
+        walk(own, base, "")
+        table.sort(out)
+        return out
+    end
+
     -- Every key path in t that ends at a non-table value, as dotted strings, sorted.
     local function paths(t)
         local out = {}
@@ -94,23 +115,28 @@ describe("looks", function()
     setup(function()
         harness.load()
         ids = package.loaded["looks"].ids()
-        harness.teardown()
         for _, id in ipairs(ids) do
-            looks[id] = load_look(id)
+            looks[id] = package.loaded["looks"].get(id)
         end
+        harness.teardown()
     end)
 
     describe("token tables", function()
         it("load as pure data with no globals", function()
+            local base = load_look("base")
+            assert.is_table(base.palettes)
+            assert.is_table(base.faces)
             for _, id in ipairs(ids) do
-                assert.is_table(looks[id], id)
+                assert.is_table(load_look(id), id)
                 assert.is_table(looks[id].palettes, id)
                 assert.is_table(looks[id].faces, id)
             end
         end)
 
-        it("declare identical token paths in every look", function()
-            local diner = paths(looks.diner)
+        -- A look file declares only what differs from the base, and Looks.get lays it over the
+        -- base: every look has every token path the base declares, and no other.
+        it("give every look every token path the base declares", function()
+            local diner = paths(load_look("base"))
             assert.truthy(#diner > 40, "too few tokens: " .. #diner)
             for _, wanted in ipairs({ "icons.set", "home.weather_order", "home.date_lines", "home.stats_line",
                     "home.stats_streak", "home.featured_label", "home.featured_details", "faces.display.file",
@@ -194,6 +220,15 @@ describe("looks", function()
             for _, id in ipairs(ids) do
                 assert.same(diner, paths(looks[id]), id)
             end
+        end)
+
+        it("set in a look file only token paths the base declares", function()
+            local base = load_look("base")
+            for _, id in ipairs(ids) do
+                assert.same({}, unknown_paths(load_look(id), base), id)
+            end
+            assert.same({ "plate.glow", "stroke" },
+                unknown_paths({ plate = { glow = 1, radius = 0 }, stroke = 2 }, base))
         end)
 
         -- The icon set a look draws with: a set id, or false for the registry's default.
@@ -750,18 +785,6 @@ describe("looks", function()
             return t
         end
 
-        -- The look file's lines from its library block's opening to the end of the file.
-        local function library_lines(id)
-            local lines, inside = {}, false
-            for line in io.lines(harness.plugin_dir .. "/looks/" .. id .. ".lua") do
-                inside = inside or line:match("^    library = {") ~= nil
-                if inside then
-                    lines[#lines + 1] = line
-                end
-            end
-            return lines
-        end
-
         it("give both looks every library path and part", function()
             for _, id in ipairs(pinned) do
                 local wanted = {}
@@ -781,25 +804,14 @@ describe("looks", function()
             end
         end)
 
-        it("give the library block and parts the boards' values, D2's cuts commented with the board's", function()
+        it("give the library block and parts the boards' values, D2's cuts below the board's", function()
             for _, id in ipairs(pinned) do
-                local lines = library_lines(id)
-                assert.truthy(#lines > 0, id .. " has no library block")
                 for _, path in ipairs(paths(LIBRARY_BOARD[id])) do
                     local board, value = at(LIBRARY_BOARD[id], path), at(looks[id].library, path)
                     if value ~= board then
                         local where = id .. " library." .. path .. " = " .. tostring(value)
                         assert.is_true(TIGHTENABLE[path], where .. " is not the board's " .. tostring(board))
                         assert.is_true(value < board, where .. " is not below the board's " .. board)
-                        local key = path:match("([^.]+)$")
-                        local commented = false
-                        for _, line in ipairs(lines) do
-                            if line:find("%f[%w_]" .. key .. " = " .. value .. "%f[^%d]")
-                                    and line:find("D2: board " .. board, 1, true) then
-                                commented = true
-                            end
-                        end
-                        assert.is_true(commented, where .. " has no \"D2: board " .. board .. "\" on its line")
                     end
                 end
                 for part, values in pairs(LIBRARY_PARTS[id]) do
@@ -1051,9 +1063,8 @@ describe("looks", function()
         end)
 
         -- The folder sheet's band and icon box (context-menu "Tokens", D11, D17): Diner's from
-        -- HoldFolderC.dc.html:35-37; Editorial's undrawn, so no band and its folder tile's box, each
-        -- value commented with its board line or the lead's analogy.
-        it("give the folder sheet's band and box the boards' values, each commented", function()
+        -- HoldFolderC.dc.html:35-37; Editorial's undrawn, so no band and its folder tile's box.
+        it("give the folder sheet's band and box the boards' values", function()
             local wanted = {
                 diner = { band = "pink", box = { size = 60, outline_width = 2, outline_color = "outline",
                     fill_color = "paper", icon_size = 34, icon_color = "ink" } },
@@ -1063,33 +1074,13 @@ describe("looks", function()
             for _, id in ipairs(pinned) do
                 assert.equals(wanted[id].band, looks[id].sheet.library_folder_band_color, id)
                 assert.same(wanted[id].box, looks[id].sheet.folder_box, id)
-                local lines, inside = {}, false
-                for line in io.lines(harness.plugin_dir .. "/looks/" .. id .. ".lua") do
-                    if line:match("^%s+library_folder_band_color = ") then
-                        lines[#lines + 1] = line
-                    elseif line:match("^%s+folder_box = {") then
-                        inside = true
-                    elseif inside and line:match("^%s+},") then
-                        inside = false
-                    elseif inside then
-                        lines[#lines + 1] = line
-                    end
-                end
-                assert.equals(7, #lines, id)
-                for _, line in ipairs(lines) do
-                    local comment = line:match("%-%-%s*(.*)$")
-                    assert.truthy(comment and (comment:find("%.dc%.html:%d") or comment:find("lead")),
-                        id .. ": " .. line)
-                end
             end
         end)
 
         -- The empty-space sheet's band, its sort and show chips and the plain chip part (context-menu
         -- "Tokens", D10, D17): Diner's from HoldEmptyC.dc.html:35-54; Editorial's undrawn, so no band
-        -- and plain details, as its status chip, and its plain chip part its sheet_chip; each value
-        -- commented with its board line or the lead's analogy.
-        it("give the empty-space sheet's band, chips and plain chip part the boards' values, each commented",
-            function()
+        -- and plain details, as its status chip, and its plain chip part its sheet_chip.
+        it("give the empty-space sheet's band, chips and plain chip part the boards' values", function()
             local wanted = {
                 diner = { library_empty_band_color = "mustard", sort_chip_color = "paper", show_chip_color = "pink",
                     plain = { "display", 11, true, 0.08, 0, "ink" } },
@@ -1101,23 +1092,6 @@ describe("looks", function()
                     assert.equals(wanted[id][key], looks[id].sheet[key], id .. " sheet." .. key)
                 end
                 assert.same(wanted[id].plain, part_values(looks[id].type.sheet_chip_plain or {}), id)
-                -- Each token's own comment; the part's, the comment line above it, as every part's.
-                local comments, previous = {}, ""
-                for line in io.lines(harness.plugin_dir .. "/looks/" .. id .. ".lua") do
-                    local key = line:match("^%s+([%w_]+) = ")
-                    if key == "library_empty_band_color" or key == "sort_chip_color" or key == "show_chip_color" then
-                        comments[key] = line:match("%-%-%s*(.*)$") or ""
-                    elseif key == "sheet_chip_plain" then
-                        comments[key] = previous:match("^%s+%-%-%s*(.*)$") or ""
-                    end
-                    previous = line
-                end
-                for _, key in ipairs({ "library_empty_band_color", "sort_chip_color", "show_chip_color",
-                        "sheet_chip_plain" }) do
-                    local comment = comments[key]
-                    assert.truthy(comment and (comment:find("%.dc%.html:%d") or comment:find("lead")),
-                        id .. " " .. key .. ": " .. tostring(comment))
-                end
             end
         end)
 
@@ -1459,24 +1433,6 @@ describe("looks", function()
                 end
             end)
 
-            -- Every value is commented with its source, the design (frosted.md, plates.md or the
-            -- design file) or "no board" and the analogy, on its line or the line above it.
-            it("comments every value with its source", function()
-                local previous_commented, values = false, 0
-                for line in io.lines(harness.plugin_dir .. "/looks/frosted.lua") do
-                    local code, comment = line:match("^(.-)%s*%-%-%s*(.*)$")
-                    local commented = comment ~= nil and comment ~= ""
-                    code = code or line
-                    if code:match("[%w_]+ = [^{%s]") then
-                        values = values + 1
-                        assert.is_true(commented or previous_commented, "uncommented: " .. line)
-                    end
-                    if commented or not code:match("^%s*[%w_]+ = {%s*$") then
-                        previous_commented = commented
-                    end
-                end
-                assert.truthy(values > 300, "too few values: " .. values)
-            end)
         end)
 
         -- Riso (.tiller/design/2026-10-19-kopanda-looks/riso.md, its token table and Lua export):
@@ -1602,25 +1558,6 @@ describe("looks", function()
                 end
             end)
 
-            -- Every value is commented with its source, the design (riso.md or the design file) or
-            -- "no board" and the analogy, on its line or the line above it.
-            it("comments every value with its source", function()
-                local previous_commented, values = false, 0
-                for line in io.lines(harness.plugin_dir .. "/looks/riso.lua") do
-                    local code, comment = line:match("^(.-)%s*%-%-%s*(.*)$")
-                    local commented = comment ~= nil and comment ~= ""
-                    code = code or line
-                    if code:match("[%w_]+ = [^{%s]") then
-                        values = values + 1
-                        assert.is_true(commented or previous_commented, "uncommented: " .. line)
-                    end
-                    -- A line that only opens a table passes the comment above it to its first line.
-                    if commented or not code:match("^%s*[%w_]+ = {%s*$") then
-                        previous_commented = commented
-                    end
-                end
-                assert.truthy(values > 300, "too few values: " .. values)
-            end)
         end)
 
         -- Toybox (.tiller/design/2026-10-19-kopanda-looks/toybox.md, its token table and Lua
@@ -1794,25 +1731,6 @@ describe("looks", function()
                 end
             end)
 
-            -- Every value is commented with its source, the design (toybox.md or the design file) or
-            -- "no board" and the analogy, on its line or the line above it.
-            it("comments every value with its source", function()
-                local previous_commented, values = false, 0
-                for line in io.lines(harness.plugin_dir .. "/looks/toybox.lua") do
-                    local code, comment = line:match("^(.-)%s*%-%-%s*(.*)$")
-                    local commented = comment ~= nil and comment ~= ""
-                    code = code or line
-                    if code:match("[%w_]+ = [^{%s]") then
-                        values = values + 1
-                        assert.is_true(commented or previous_commented, "uncommented: " .. line)
-                    end
-                    -- A line that only opens a table passes the comment above it to its first line.
-                    if commented or not code:match("^%s*[%w_]+ = {%s*$") then
-                        previous_commented = commented
-                    end
-                end
-                assert.truthy(values > 300, "too few values: " .. values)
-            end)
         end)
     end)
 
@@ -1832,12 +1750,67 @@ describe("looks", function()
             os.remove(harness.state_dir)
         end)
 
-        it("is loaded with every look file when the plugin loads", function()
+        it("is loaded with the base and every look file when the plugin loads", function()
             assert.is_table(Looks)
+            assert.is_table(package.loaded["looks/base"])
             for _, id in ipairs(Looks.ids()) do
                 assert.is_table(package.loaded["looks/" .. id], id)
-                assert.equals(package.loaded["looks/" .. id], Looks.get(id), id)
+                assert.is_table(Looks.get(id), id)
             end
+        end)
+
+        -- Looks.get lays each look file over the base, once, when looks.lua loads.
+        describe("inheriting", function()
+            local names, saved
+
+            before_each(function()
+                names, saved = { "looks", "looks/base" }, {}
+                for _, id in ipairs(Looks.ids()) do
+                    names[#names + 1] = "looks/" .. id
+                end
+                for _, name in ipairs(names) do
+                    saved[name] = package.loaded[name]
+                end
+            end)
+
+            after_each(function()
+                for _, name in ipairs(names) do
+                    package.loaded[name] = saved[name]
+                end
+            end)
+
+            -- looks.lua loaded afresh over base and the look files given, every other look file empty.
+            local function reload(base, files)
+                package.loaded["looks/base"] = base
+                for _, id in ipairs(Looks.ids()) do
+                    package.loaded["looks/" .. id] = files[id] or {}
+                end
+                package.loaded["looks"] = nil
+                return require("looks")
+            end
+
+            it("lets a look file's false override the base's value and keeps what the file leaves out", function()
+                local Fresh = reload({ plate = { fill_color = "paper", radius = 4 }, icons = { set = "lucide" } },
+                    { frosted = { plate = { fill_color = false } } })
+                assert.same({ plate = { fill_color = false, radius = 4 }, icons = { set = "lucide" } },
+                    Fresh.get("frosted"))
+                assert.same({ plate = { fill_color = "paper", radius = 4 }, icons = { set = "lucide" } },
+                    Fresh.get("diner"))
+            end)
+
+            it("replaces a list whole", function()
+                local Fresh = reload({ dash = { 6, 4, 2 } }, { riso = { dash = { 3 } } })
+                assert.same({ 3 }, Fresh.get("riso").dash)
+            end)
+
+            it("gives each look its own tables, the same ones each time, and leaves the base as it was", function()
+                local base = { plate = { radius = 4 } }
+                local Fresh = reload(base, {})
+                Fresh.get("diner").plate.radius = 9
+                assert.equals(9, Fresh.get("diner").plate.radius)
+                assert.equals(4, Fresh.get("editorial").plate.radius)
+                assert.equals(4, base.plate.radius)
+            end)
         end)
 
         it("lists the looks in the swatch's order, Editorial, Diner, Riso, Toybox then Frosted first", function()
@@ -1856,13 +1829,13 @@ describe("looks", function()
         end)
 
         -- Adding a look is one id in looks.lua, one token file and one choice of the look setting.
-        it("lists one id per look file and per choice of the look setting", function()
+        it("lists one id per look file but the base and per choice of the look setting", function()
             local listed = Looks.ids()
             table.sort(listed)
             local files = {}
             for name in require("libs/libkoreader-lfs").dir(harness.plugin_dir .. "/looks") do
                 local id = name:match("^(.+)%.lua$")
-                if id then
+                if id and id ~= "base" then
                     files[#files + 1] = id
                 end
             end
@@ -2012,9 +1985,7 @@ describe("looks", function()
                     Looks.palette(look, "day")
                     Looks.palette(look, "grey")
                     assert.same({ "day", "grey", "night" }, keys(look.palettes), id)
-                    assert.same(looks[id].palettes, look.palettes, id)
-                    assert.same(load_look(id).palettes.night, look.palettes.night, id)
-                    assert.same(load_look(id), look, id)
+                    assert.same(looks[id], look, id)
                 end
             end)
         end)

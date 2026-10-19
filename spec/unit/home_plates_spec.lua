@@ -230,7 +230,7 @@ describe("the home on plates", function()
         end)
         harness.at_colorsoft(function()
             local home = Home:new{}
-            Wallpaper.get(require("looks/frosted"), "day", 600, 800, "another home")
+            Wallpaper.get(require("looks").get("frosted"), "day", 600, 800, "another home")
             local bb = Blitbuffer.new(1264, 1680, Blitbuffer.TYPE_BBRGB32)
             local ok, err = pcall(function()
                 home:paintTo(bb, 0, 0)

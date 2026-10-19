@@ -6,8 +6,8 @@ describe("plate", function()
     require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
     local Plate = require("plate")
-    local frosted = require("looks/frosted")
-    local diner = require("looks/diner")
+    local frosted = require("looks").get("frosted")
+    local diner = require("looks").get("diner")
 
     local BASE = { 32, 64, 128 }
     local INK = { 0x1b, 0x1a, 0x1f }

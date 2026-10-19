@@ -8,9 +8,9 @@ describe("Layout", function()
     local Layout = require("layout")
     local Widgets = require("widgets")
     local NavBar = require("nav_bar")
-    local editorial = require("looks/editorial")
-    local diner = require("looks/diner")
-    local frosted = require("looks/frosted")
+    local editorial = require("looks").get("editorial")
+    local diner = require("looks").get("diner")
+    local frosted = require("looks").get("frosted")
     local real_get = Widgets.get
     local real_bar_height = NavBar.height
 

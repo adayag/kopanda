@@ -756,7 +756,7 @@ describe("library tiles", function()
         end)
 
         -- Diner sets text on its mustard and pink in on_accent, the dark text it keeps by night
-        -- (looks/diner.lua:34, :53).
+        -- (looks/diner.lua:29, :46).
         it("keeps Diner's text on pink dark by night", function()
             harness.at_colorsoft(function()
                 local ctx = ctx_for("diner", "night")

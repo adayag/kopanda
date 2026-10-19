@@ -334,7 +334,7 @@ describe("the library window", function()
         end
 
         -- The status chip sits on pink and the next arrow on mustard, so by night their marks stay
-        -- on_accent, dark (looks/diner.lua:53), while the sort chip's label on paper is the light ink.
+        -- on_accent, dark (looks/diner.lua:46), while the sort chip's label on paper is the light ink.
         it("keeps Diner's status picker and next arrow dark on their fills by night", function()
             Looks.variant = function()
                 return "night"
