@@ -163,21 +163,23 @@ end
 
 -- text in the type part named part_name, wrapped at width in at most max_lines lines, the last
 -- ending in an ellipsis when it runs over; a single line is one line high
--- (frontend/ui/widget/textboxwidget.lua:54, :256-260).
+-- (frontend/ui/widget/textboxwidget.lua:54, :256-260). Printed as Typeset prints a line, so a
+-- misregistered look prints its display type twice.
 local function text_box(part_name, text, width, max_lines, ctx)
     local part, face, line_px = face_of(part_name, ctx)
-    local color = colorer(ctx)
-    return TextBoxWidget:new{
-        text = part.uppercase and text:upper() or text,
-        face = face,
-        width = width,
-        line_height = part.line_height,
-        fgcolor = color(part.color),
-        bgcolor = color("paper"),
-        height = max_lines * line_px,
-        height_adjust = true,
-        height_overflow_show_ellipsis = true,
-    }
+    return Typeset.printed(part, width, ctx, function(box_w, fgcolor, bgcolor)
+        return TextBoxWidget:new{
+            text = part.uppercase and text:upper() or text,
+            face = face,
+            width = box_w,
+            line_height = part.line_height,
+            fgcolor = fgcolor,
+            bgcolor = bgcolor,
+            height = max_lines * line_px,
+            height_adjust = true,
+            height_overflow_show_ellipsis = true,
+        }
+    end)
 end
 
 -- The label at most width wide, worded by home.featured_label: a plain label with no

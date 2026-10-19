@@ -952,6 +952,23 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
   height from `face.ftsize:getHeightAndAscender()` (`base/ffi/freetype.lua:154-159`, the call
   textboxwidget.lua:153-158 makes) in it. `Typeset.baseline` gives the home row the line's
   baseline.
+- Colour: `TextWidget:paintTo` blits each glyph through `colorblitFrom`
+  (`frontend/ui/widget/textwidget.lua:369`), which reduces the colour to `getColor8A`
+  (`base/ffi/blitbuffer.lua:1405-1407`), a luminance grey for an RGB colour (`:489-491`). So every
+  TextWidget a `Typeset.line` holds gets its own `paintTo`, `Typeset.paint_glyphs`, which draws as
+  `TextWidget:paintTo` does (`textwidget.lua:338-378`) but through `colorblitFromRGB32`
+  (`base/ffi/blitbuffer.lua:1422-1437`) for a colour: it reads `text._is_empty`, `text._xshaping`
+  (shaped from `text._xtext:shapeLine` with `text._shape_start`, `text._shape_end` and
+  `text._shape_idx_to_substitute_with_ellipsis`, `textwidget.lua:349-353`) and `text._baseline_h`
+  (`:362`), and gets each glyph from `RenderText:getGlyphByIndex` (`ui/rendertext`,
+  `frontend/ui/rendertext.lua:294`).
+  A TextWidget without xtext is left to `TextWidget:paintTo` (`textwidget.lua:344-347`). A paint
+  that raises (a KOReader whose TextWidget internals differ, as the device's may) is logged once
+  and falls back to `TextWidget:paintTo` in the colour's grey; a tracked line whose offset pass
+  raises clears the offset colour from its glyphs and prints them once. A misregistered line
+  paints its glyphs twice, the offset copy first; a misregistered `TextBoxWidget` (the featured
+  title) is drawn black on white and painted twice through a mask, a `BB8` buffer filled white and
+  inverted (`fill`, `invertRect`, `base/ffi/blitbuffer.lua:1506`, `:1567`).
 
 ### The Statistics plugin's database and settings, the reading stats
 

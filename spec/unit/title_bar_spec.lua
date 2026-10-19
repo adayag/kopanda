@@ -439,7 +439,10 @@ describe("the title bar", function()
                         local look = Looks.get(look_id)
                         local palette = Looks.palette(look, mode[3])
                         local fill = Looks.color(palette[look.title_bar.fill_color]):getColorRGB32()
-                        local edge_color = Looks.color(palette[look.title_bar.edge_color]):getColorRGB32()
+                        -- A bar with no edge (Riso's) is its fill to its foot.
+                        local edge_role = look.title_bar.edge_width > 0 and look.title_bar.edge_color
+                            or look.title_bar.fill_color
+                        local edge_color = Looks.color(palette[edge_role]):getColorRGB32()
                         local size = bar:getSize()
                         local edge = scale(look.title_bar.edge_width)
                         local strays = 0
@@ -530,11 +533,10 @@ describe("the title bar", function()
                     assert.is_true(near, ("%s %s %s: %s at %d,%d is %d,%d,%d"):format(
                         id, variant, what, role, x, y, got[1], got[2], got[3]))
                 end
-                -- How many pixels of the box at (x, y), w by h, hold role's colour as KOReader blits
-                -- text in it: its grey (base/ffi/blitbuffer.lua:1405-1407).
+                -- How many pixels of the box at (x, y), w by h, hold role's colour: Typeset paints a
+                -- line in the colour itself, not KOReader's grey of it (typeset.lua).
                 local function count(role, x, y, w, h)
-                    local grey = Looks.color(palette[role]):getColor8().a
-                    local want, n = { grey, grey, grey }, 0
+                    local want, n = rgb(palette[role]), 0
                     for py = y, y + h - 1 do
                         for px = x, x + w - 1 do
                             local c = bb:getPixel(px, py):getColorRGB32()

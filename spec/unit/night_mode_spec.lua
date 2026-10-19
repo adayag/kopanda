@@ -194,22 +194,11 @@ describe("night mode", function()
 
         -- Diner: its clock is on_band on the band, its quote ink in a paper tile. Editorial can't
         -- tell the two apart, as its day ink inverted lands within 8 of its night ink. The clock
-        -- is a TextWidget, which KOReader draws in its colour's grey (colorblitFrom,
-        -- frontend/ui/widget/textwidget.lua:369, takes getColor8A, base/ffi/blitbuffer.lua:1407),
-        -- by day as at night, so its night role is looked for as that grey, and the day role as
-        -- the grey the day palette would leave inverted; the quote is a TextBoxWidget, drawn in
-        -- the colour itself.
+        -- is a TextWidget that Typeset paints in its colour itself (typeset.lua), and the quote a
+        -- TextBoxWidget, drawn in the colour itself.
         it("draws the clock and the quote in the night roles, not the day ones inverted", function()
-            local function grey(hex)
-                local v = Blitbuffer.colorFromString(hex):getColor8().a
-                return { v, v, v }
-            end
-            local function inverse_grey(hex)
-                local v = 255 - Blitbuffer.colorFromString(hex):getColor8().a
-                return { v, v, v }
-            end
             local drawn = {
-                clock = { night = grey, day = inverse_grey },
+                clock = { night = rgb, day = inverse_rgb },
                 quote = { night = rgb, day = inverse_rgb },
             }
             Settings.set("look", "diner")

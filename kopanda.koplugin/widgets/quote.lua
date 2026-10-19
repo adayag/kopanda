@@ -1,6 +1,7 @@
 -- The quote of the day: one entry of the quote source a day, changing at local midnight, drawn
 -- in curly quotes with no attribution in at most four lines, a longer text ending in an
--- ellipsis. Editorial draws it between hairline rules (Main.dc.html:56), Diner in its tile.
+-- ellipsis. A look with a quote rule colour draws it between rules (Editorial's hairlines,
+-- Main.dc.html:56; Riso's pink), one without in its tile (Diner).
 -- Module state: the memo of the text box last composed, which every build of the day draws.
 local Device = require("device")
 local Font = require("ui/font")
@@ -17,8 +18,6 @@ local Widget = require("ui/widget/widget")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 local LINES = 4
--- Between the chrome and the text, board pixels (Main.dc.html:56).
-local PADDING = 18
 
 local Quote = {
     id = "quote",
@@ -146,10 +145,11 @@ local function compose(width, ctx)
     local style = look.type.quote
     local size = Layout.font_size(style.size, ctx.text_size)
     local face = Fonts.face(look.faces[style.face].file, size) or Font:getFace("cfont", size)
-    local padding = scale(PADDING)
+    local tokens = look.quote
+    local padding = scale(tokens.padding)
 
     local chrome, text_x, text_y, text_w, extra_h
-    if look.tile.box then
+    if not tokens.rule_color then
         local shadow = look.shadow.tile
         local outline = scale(look.stroke.outline)
         chrome = {
@@ -164,8 +164,8 @@ local function compose(width, ctx)
         text_w = width - chrome.shadow_x - 2 * (outline + padding)
         extra_h = 2 * (outline + padding) + chrome.shadow_y
     else
-        local rule = scale(look.stroke.hairline)
-        chrome = { rule = rule, rule_color = color("hairline") }
+        local rule = scale(tokens.rule_width)
+        chrome = { rule = rule, rule_color = color(tokens.rule_color) }
         text_x, text_y = 0, rule + padding
         text_w = width
         extra_h = 2 * (rule + padding)

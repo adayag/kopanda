@@ -32,12 +32,18 @@ function Paint.border(bb, x, y, w, h, width, color, radius)
 end
 
 -- A w by h box at x, y has a shadow (shadow_color, offset by shadow_x and shadow_y below and
--- right of it, rounded by radius), a fill (fill_color, rounded by fill_radius) and an outline
--- (outline wide in outline_color, rounded by radius). A box without a colour paints no shadow
--- or fill. The widget paints backing, then its content, then outline.
+-- right of it, rounded by radius; filled, or with a shadow_outline above 0 a border that wide, as
+-- Riso's cover), a fill (fill_color, rounded by fill_radius) and an outline (outline wide in
+-- outline_color, rounded by radius). A box without a colour paints no shadow or fill. The widget
+-- paints backing, then its content, then outline.
 function Paint.backing(bb, x, y, w, h, box)
     if box.shadow_color then
-        Paint.fill(bb, x + box.shadow_x, y + box.shadow_y, w, h, box.shadow_color, box.radius)
+        local sx, sy = x + box.shadow_x, y + box.shadow_y
+        if box.shadow_outline and box.shadow_outline > 0 then
+            Paint.border(bb, sx, sy, w, h, box.shadow_outline, box.shadow_color, box.radius)
+        else
+            Paint.fill(bb, sx, sy, w, h, box.shadow_color, box.radius)
+        end
     end
     if box.fill_color then
         Paint.fill(bb, x, y, w, h, box.fill_color, box.fill_radius)

@@ -413,8 +413,9 @@ describe("the swatch screen", function()
             end
         end)
 
-        -- Where the line goes is the "where the lacks text goes" cases'.
-        it("names the roles a palette lacks, in role order, on one line", function()
+        -- Where the line goes is the "where the lacks text goes" cases'. On its own line under three
+        -- looks' narrow panels it may take two lines (Editorial lacks seven roles).
+        it("names the roles a palette lacks, in role order, in one text of at most two lines", function()
             for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
                 local where = panel.look .. " " .. panel.variant
                 local palette = Looks.get(panel.look).palettes[panel.variant]
@@ -431,7 +432,7 @@ describe("the swatch screen", function()
                 assert.equals("lacks: " .. table.concat(missing, ", "), line.text)
                 assert.is_true(same_color(Looks.color(palette.ink), line.fgcolor))
                 assert.is_true(same_color(Looks.color(palette.paper), line.bgcolor))
-                assert.equals(1, #line.vertical_string_list, where .. " lacks line wraps")
+                assert.truthy(#line.vertical_string_list <= 2, where .. " lacks text wraps past two lines")
             end
         end)
 
@@ -724,7 +725,7 @@ describe("the swatch screen", function()
             assert.equals(placed.panel.dimen.x + placed.panel.inset, lacks.dimen.x)
             assert.is_true(lacks.dimen.y >= bottom, "lacks y " .. lacks.dimen.y .. " above " .. bottom)
             assert.is_true(lacks.dimen.y + lacks:getSize().h <= placed.faces[1].dimen.y)
-            assert.equals(1, #lacks.vertical_string_list)
+            assert.truthy(#lacks.vertical_string_list <= 2)
         end
 
         it("goes in the empty last cell, from its chip x, for an odd chip count when it fits", function()
@@ -732,11 +733,20 @@ describe("the swatch screen", function()
             assert.equals(1, placed.chips % 2)
             local col = columns(placed.labels)
             local lacks = placed.lacks
-            assert.equals("lacks: teal", lacks.text)
+            assert.equals("lacks: teal, tint", lacks.text)
             -- The cell's left edge: the right column's chip x, and the whole cell's width.
             local chip_x = math.max(unpack(placed.chip_xs))
             assert.equals(chip_x, lacks.dimen.x)
-            assert.equals(col.last_left.dimen.y, lacks.dimen.y)
+            -- On the last left chip's row: its top, the chip's or its label's, whichever is higher
+            -- (the row centres them).
+            local row_top = col.last_left.dimen.y
+            for _, chip in ipairs(collect(placed.panel, named("kopanda_swatch_chip"))) do
+                if chip.dimen.y <= col.last_left.dimen.y + col.last_left:getSize().h
+                        and chip.dimen.y + chip.dimen.h >= col.last_left.dimen.y then
+                    row_top = math.min(row_top, chip.dimen.y)
+                end
+            end
+            assert.equals(row_top, lacks.dimen.y)
             assert.is_true(lacks.dimen.y > col.last_right.dimen.y)
             assert.equals(col.right_x - chip_x + col.right_w, lacks.width)
             assert.equals(1, #lacks.vertical_string_list)
@@ -748,7 +758,7 @@ describe("the swatch screen", function()
             assert.equals(0, placed.chips % 2)
             local col = columns(placed.labels)
             local lacks = placed.lacks
-            assert.equals("lacks: pink, teal", lacks.text)
+            assert.equals("lacks: pink, teal, tint", lacks.text)
             local chip_x = math.max(unpack(placed.chip_xs))
             assert.equals(chip_x, lacks.dimen.x)
             assert.equals(col.right_x - chip_x + col.right_w, lacks.width)

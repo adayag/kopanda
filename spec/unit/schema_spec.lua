@@ -44,6 +44,7 @@ describe("schema.lua", function()
                 choices = {
                     { value = "diner", label = "Diner" },
                     { value = "editorial", label = "Editorial" },
+                    { value = "riso", label = "Riso" },
                 },
                 default = "diner",
                 label = "Look",

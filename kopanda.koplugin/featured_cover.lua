@@ -155,7 +155,7 @@ end
 
 -- The framed cover box for record ({ path, title, authors list }) in a w by h box under ctx, in
 -- frame's tokens (board pixels and palette roles): { outline_color, outline_width, radius,
--- shadow = { x, y, color }, padding = { x, y }, title, authors }, title and authors type parts,
+-- shadow = { x, y, color, outline_width }, padding = { x, y }, title, authors }, title and authors type parts,
 -- authors nil for none. The outline is drawn only where the variant has outline_color. The widget
 -- is the box plus the shadow's offset, so the shadow is never cut. Reads the cover cache through
 -- BookCovers.read, the bitmap freed with the widget; never asks for an extraction.
@@ -179,6 +179,7 @@ function FeaturedCover.framed(record, w, h, ctx, frame)
         shadow_color = color(shadow.color),
         shadow_x = shadow_x,
         shadow_y = shadow_y,
+        shadow_outline = shadow.outline_width and scale(shadow.outline_width) or nil,
         outline = outline,
         outline_color = outline_color,
         radius = radius,
@@ -211,12 +212,12 @@ function FeaturedCover.framed(record, w, h, ctx, frame)
     return box
 end
 
--- The featured cover's frame in look, as FeaturedCover.framed takes it: the look's cover stroke,
--- radius and shadow and the featured placeholder's padding and parts. The book sheet frames a
--- library record's cover in it too.
+-- The featured cover's frame in look, as FeaturedCover.framed takes it: the featured cover's
+-- outline colour at the look's stroke, its radius and shadow and the featured placeholder's padding
+-- and parts. The book sheet frames a library record's cover in it too.
 function FeaturedCover.frame(look)
     return {
-        outline_color = "outline",
+        outline_color = look.featured.cover_outline_color,
         outline_width = look.stroke.outline,
         radius = look.radius.cover,
         shadow = look.shadow.cover,

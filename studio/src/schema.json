@@ -9,6 +9,10 @@
                 {
                     "label": "Editorial",
                     "value": "editorial"
+                },
+                {
+                    "label": "Riso",
+                    "value": "riso"
                 }
             ],
             "default": "diner",

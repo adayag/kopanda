@@ -32,6 +32,7 @@ return {
             teal = false,
             pink = false,
             mustard = false,
+            tint = false, -- Riso's pink tint; Editorial has none
             band = false,
             outline = false, -- implied: by day the cover takes a shadow, not an outline
             shadow = "#c9c5b8", -- the doc: shadow in the hairline colour
@@ -50,6 +51,7 @@ return {
             teal = false,
             pink = false,
             mustard = false,
+            tint = false,
             band = false,
             outline = "#3a3b40", -- the doc: the cover gets a hairline outline instead of a shadow
             shadow = false, -- the doc: at night the outline replaces the shadow
@@ -69,6 +71,7 @@ return {
             teal = false,
             pink = false,
             mustard = false,
+            tint = false,
             band = false,
             outline = "#8c8c8c", -- implied: the Paperwhite cover gains an outline, Editorial's is a hairline
             shadow = "#8c8c8c", -- implied: the shadow is the hairline colour
@@ -87,11 +90,16 @@ return {
         band = false,
     },
 
+    -- A shadow is a fill at its offset, or with an outline_width an outline that wide; Editorial's
+    -- are fills.
     shadow = {
-        cover = { x = 2, y = 3, color = "shadow" },
-        tile = { x = 0, y = 0, color = false },
-        sheet = { x = 0, y = 0, color = false },
+        cover = { x = 2, y = 3, color = "shadow", outline_width = false },
+        tile = { x = 0, y = 0, color = false, outline_width = false },
+        sheet = { x = 0, y = 0, color = false, outline_width = false },
     },
+
+    -- Display type printed twice, an offset copy in color under the part's own: Editorial prints once.
+    misregister = { x = 0, y = 0, color = false },
 
     radius = {
         cover = 3,
@@ -122,6 +130,7 @@ return {
         rule_color = "ink", -- the canvas's sheet rule (HoldBook.dc.html)
         rule_width = 2,
         outline_color = false,
+        outline_width = 1, -- stroke.outline; unused, the sheet has no outline colour
         header_band = false,
         inset = { side = 0, bottom = 0 }, -- full width, on the bottom edge (HoldBook.dc.html:34)
         padding = { top = 0, side = 40, bottom = 28 }, -- HoldBook.dc.html:34
@@ -553,11 +562,20 @@ return {
         suffix_below = false, -- the suffix sits on the label's line (EmptyStates.dc.html:65)
     },
 
+    -- The quote between hairline rules (Main.dc.html:56).
+    quote = {
+        padding = 18, -- Main.dc.html:56
+        rule_width = 1, -- stroke.hairline (Main.dc.html:56)
+        rule_color = "hairline", -- Main.dc.html:56
+    },
+
     -- The featured book's cover box.
     featured = {
         cover_w = 150, -- Main.dc.html:33
         cover_h = 225, -- Main.dc.html:33
         cover_padding = { x = 14, y = 18 }, -- the placeholder's padding (Main.dc.html:33)
+        -- The doc: by day none (the role is false), a hairline at night and in grey, stroke.outline wide.
+        cover_outline_color = "outline",
         dash = 4, -- the first run's dashed frame: KOReader has no dashed border, so 4 px dashes
         dash_gap = 4, -- with 4 px gaps (EmptyStates.dc.html:33)
         gap = 24, -- between the cover and the text column (Main.dc.html:32)
@@ -677,7 +695,7 @@ return {
             outline_width = 1,
             outline_color = "outline",
             radius = 3, -- GridA.dc.html:43
-            shadow = { x = 2, y = 3, color = "shadow" }, -- GridA.dc.html:43
+            shadow = { x = 2, y = 3, color = "shadow", outline_width = false }, -- GridA.dc.html:43
             padding = { x = 12, y = 16 }, -- the placeholder's (GridA.dc.html:43)
         },
         strip = {

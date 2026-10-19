@@ -42,8 +42,9 @@ local ICON_ROW_GAP = 1
 local TITLE_SIZE = 11
 local NOTE_SIZE = 9
 local HEADER_SIZE = 10
-local LABEL_SIZE = 9
-local FACE_SIZE = 11
+-- The chip labels and face lines, small enough that three looks' panels across hold their content.
+local LABEL_SIZE = 7
+local FACE_SIZE = 9
 local ICON_LABEL_SIZE = 7
 
 local VARIANTS = { "day", "night", "grey" }

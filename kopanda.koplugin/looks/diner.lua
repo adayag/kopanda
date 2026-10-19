@@ -33,6 +33,7 @@ return {
             teal = "#6fb3ab",
             pink = "#e8a59d",
             mustard = "#e0bd6a",
+            tint = false, -- Riso's pink tint; Diner has none
             band = "#6fb3ab", -- the canvas's header band is teal (HomeRetro.dc.html)
             outline = "#2f2e2b", -- the doc: strokes are ink
             shadow = "#2f2e2b", -- the doc: hard shadows are ink
@@ -51,6 +52,7 @@ return {
             teal = "#2f6b65",
             pink = "#b86f68",
             mustard = "#b8923c",
+            tint = false,
             band = "#2f6b65", -- the canvas's night band is the night teal (NightC.dc.html)
             outline = "#f1ece0", -- the doc: outlines turn cream, the night ink
             shadow = "#f1ece0", -- the doc: hard shadows turn cream, the night ink
@@ -70,6 +72,7 @@ return {
             teal = "#b0b0b0", -- the doc's tiles in the canvas's tile order: teal (PWRetro.dc.html)
             pink = "#e0e0e0", -- pink
             mustard = "#c8c8c8", -- mustard
+            tint = false,
             band = "#9a9a9a",
             outline = "#111111", -- implied: strokes are ink
             shadow = "#111111", -- implied: hard shadows are ink
@@ -88,11 +91,17 @@ return {
         band = 4, -- band edges
     },
 
+    -- A shadow is a fill at its offset, or with an outline_width an outline that wide; Diner's
+    -- are fills.
     shadow = {
-        cover = { x = 6, y = 6, color = "pink" }, -- the doc: 4–8 px, pink under the cover; 6 from the canvas
-        tile = { x = 4, y = 4, color = "shadow" }, -- 4 from the canvas (HomeRetro.dc.html)
-        sheet = { x = 8, y = 8, color = "shadow" },
+        -- The doc: 4–8 px, pink under the cover; 6 from the canvas.
+        cover = { x = 6, y = 6, color = "pink", outline_width = false },
+        tile = { x = 4, y = 4, color = "shadow", outline_width = false }, -- 4 from the canvas (HomeRetro.dc.html)
+        sheet = { x = 8, y = 8, color = "shadow", outline_width = false },
     },
+
+    -- Display type printed twice, an offset copy in color under the part's own: Diner prints once.
+    misregister = { x = 0, y = 0, color = false },
 
     radius = {
         cover = 0,
@@ -124,6 +133,7 @@ return {
         rule_color = false,
         rule_width = 0,
         outline_color = "outline",
+        outline_width = 3, -- stroke.outline (HoldBookC.dc.html:30)
         header_band = true,
         inset = { side = 22, bottom = 22 }, -- HoldBookC.dc.html:30
         padding = { top = 0, side = 0, bottom = 0 }, -- HoldBookC.dc.html:30
@@ -588,11 +598,20 @@ return {
         suffix_below = true, -- no board: "Terminal PLUGIN MISSING" doesn't fit a third on one line
     },
 
+    -- The quote: in the tile (no rule colour) with the tile's outline and shadow, or between rules
+    -- rule_width wide; padding between the chrome and the text.
+    quote = {
+        padding = 18, -- no board draws Diner's quote; Editorial's (Main.dc.html:56)
+        rule_width = 0, -- in the tile, not ruled
+        rule_color = false,
+    },
+
     -- The featured book's cover box.
     featured = {
         cover_w = 140, -- HomeRetro.dc.html:28
         cover_h = 210, -- HomeRetro.dc.html:28
         cover_padding = { x = 12, y = 16 }, -- the placeholder's padding (HomeRetro.dc.html:28)
+        cover_outline_color = "outline", -- the doc: the cover is outlined in ink, stroke.outline wide
         dash = 4, -- the first run's dashed frame, as Editorial's: 4 px dashes
         dash_gap = 4, -- with 4 px gaps (EmptyStates.dc.html:33)
         gap = 20, -- between the cover and the text column (HomeRetro.dc.html:27)
@@ -711,7 +730,7 @@ return {
             outline_width = 3, -- Main.dc.html:43
             outline_color = "outline", -- Main.dc.html:43
             radius = 0, -- Main.dc.html:43
-            shadow = { x = 5, y = 5, color = "shadow" }, -- Main.dc.html:43
+            shadow = { x = 5, y = 5, color = "shadow", outline_width = false }, -- Main.dc.html:43
             padding = { x = 10, y = 14 }, -- the placeholder's (Main.dc.html:43)
         },
         strip = {

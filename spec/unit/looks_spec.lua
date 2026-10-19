@@ -172,7 +172,11 @@ describe("looks", function()
                     "quick_settings.cell_padding.bottom", "quick_settings.cell_gap", "quick_settings.cell_icon_size",
                     "quick_settings.cell_outline_width", "quick_settings.cell_outline_color",
                     "quick_settings.cell_fill_color", "quick_settings.on_fill_color", "quick_settings.on_text_color",
-                    "type.quick_label.face", "type.quick_button.size", "type.quick_cell.color" }) do
+                    "type.quick_label.face", "type.quick_button.size", "type.quick_cell.color",
+                    "palettes.day.tint", "misregister.x", "misregister.y", "misregister.color",
+                    "shadow.cover.outline_width", "shadow.tile.outline_width", "shadow.sheet.outline_width",
+                    "library.cover.shadow.outline_width", "featured.cover_outline_color", "sheet.outline_width",
+                    "quote.padding", "quote.rule_width", "quote.rule_color" }) do
                 local found = false
                 for _, path in ipairs(diner) do
                     found = found or path == wanted
@@ -221,7 +225,7 @@ describe("looks", function()
                 assert.same({ "day", "grey", "night" }, keys(palettes), id)
                 local roles = keys(palettes.day)
                 for _, role in ipairs({ "paper", "ink", "muted", "text", "hairline", "hairline_light",
-                        "teal", "pink", "mustard", "outline", "shadow", "on_band", "cover", "on_cover",
+                        "teal", "pink", "mustard", "tint", "outline", "shadow", "on_band", "cover", "on_cover",
                         "on_accent" }) do
                     assert.is_not_nil(palettes.day[role], id .. " has no " .. role)
                 end
@@ -653,7 +657,8 @@ describe("looks", function()
                 grid = { padding_top = 22, side = 40, row_gap = 22, column_gap = 22, cover_h = 200, strip_gap = 12,
                     title_gap = 8 },
                 cover = { outline_width = 3, outline_color = "outline", radius = 0,
-                    shadow = { x = 5, y = 5, color = "shadow" }, padding = { x = 10, y = 14 } },
+                    shadow = { x = 5, y = 5, color = "shadow", outline_width = false },
+                    padding = { x = 10, y = 14 } },
                 strip = { height = 14, outline_width = 2 },
                 folder = { fill_color = "pink", outline_width = 3, outline_color = "outline", icon_size = 44,
                     icon_color = "on_accent", padding = { x = 12, y = 14 }, count_gap = 4 },
@@ -677,7 +682,8 @@ describe("looks", function()
                 -- The owner's hairline, not GridA.dc.html:43's none: the outline role is false by day, so
                 -- the day cover still has no border.
                 cover = { outline_width = 1, outline_color = "outline", radius = 3,
-                    shadow = { x = 2, y = 3, color = "shadow" }, padding = { x = 12, y = 16 } },
+                    shadow = { x = 2, y = 3, color = "shadow", outline_width = false },
+                    padding = { x = 12, y = 16 } },
                 strip = { height = 4, outline_width = 0 },
                 folder = { fill_color = "paper", outline_width = 1, outline_color = "hairline", icon_size = 36,
                     icon_color = "ink", padding = { x = 14, y = 16 }, count_gap = 4 },
@@ -1138,6 +1144,187 @@ describe("looks", function()
             assert.is_false(looks.editorial.faces.accent.file)
             assert.is_string(looks.diner.faces.accent.file)
         end)
+
+        -- Display type printed twice, an offset copy under the part's own colour: { x, y } board
+        -- pixels and a palette role, or a colour of false for a look that prints once.
+        it("give every look a misregistration of an offset and a palette role, or a colour of false", function()
+            for _, id in ipairs(ids) do
+                local m = looks[id].misregister
+                assert.is_table(m, id)
+                assert.same({ "color", "x", "y" }, keys(m), id)
+                assert.is_number(m.x, id)
+                assert.is_number(m.y, id)
+                if m.color then
+                    assert.is_string(looks[id].palettes.day[m.color], id .. " misregister.color " .. m.color)
+                    assert.is_true(m.x > 0 or m.y > 0, id .. ": a misregistration with no offset")
+                end
+            end
+            assert.same({ x = 0, y = 0, color = false }, looks.diner.misregister)
+            assert.same({ x = 0, y = 0, color = false }, looks.editorial.misregister)
+        end)
+
+        -- A shadow is a fill, or with an outline width an outline of that width at the offset.
+        it("give every shadow an outline width of false or a positive number", function()
+            for _, id in ipairs(ids) do
+                local look = looks[id]
+                local shadows = { cover = look.shadow.cover, tile = look.shadow.tile, sheet = look.shadow.sheet,
+                    library_cover = look.library.cover.shadow }
+                for name, shadow in pairs(shadows) do
+                    local width = shadow.outline_width
+                    assert.is_true(width == false or (type(width) == "number" and width > 0),
+                        id .. " " .. name .. " outline_width = " .. tostring(width))
+                end
+            end
+            for _, id in ipairs({ "diner", "editorial" }) do
+                for _, name in ipairs({ "cover", "tile", "sheet" }) do
+                    assert.is_false(looks[id].shadow[name].outline_width, id .. " " .. name)
+                end
+            end
+        end)
+
+        -- Riso (.tiller/design/2026-10-19-kopanda-looks/riso.md, its token table and Lua export):
+        -- two inks on cream, the pink printed out of register.
+        describe("Riso", function()
+            local riso
+            setup(function()
+                riso = looks.riso
+            end)
+
+            it("sets display type in Big Shoulders Display Black and text in Work Sans, with no accent face", function()
+                local faces = riso.faces
+                assert.equals("fonts/big-shoulders-display/BigShouldersDisplay-Black.ttf", faces.display.file)
+                assert.equals("fonts/work-sans/WorkSans-Medium.ttf", faces.text.file)
+                assert.equals("fonts/work-sans/WorkSans-Bold.ttf", faces.strong.file)
+                assert.equals("fonts/work-sans/WorkSans-Medium.ttf", faces.quote.file)
+                assert.same({ file = false, label = false }, faces.accent)
+            end)
+
+            it("gives its day, night and grey palettes the design's values", function()
+                local wanted = {
+                    day = { paper = "#f3eee2", ink = "#22509f", text = "#22509f", muted = "#3d5b9a",
+                        hairline_light = "#f2a9c4", pink = "#e9508a", tint = "#f6c6d8" },
+                    night = { paper = "#141a2e", ink = "#f1ece0", text = "#f1ece0", muted = "#b8bfd8",
+                        hairline_light = "#6e3557", pink = "#f0729f", tint = "#4a2643" },
+                    grey = { paper = "#ffffff", ink = "#000000", text = "#000000", muted = "#333333",
+                        hairline_light = "#bbbbbb", pink = "#999999", tint = "#dddddd" },
+                }
+                for variant, roles in pairs(wanted) do
+                    local palette = riso.palettes[variant]
+                    for role, value in pairs(roles) do
+                        assert.equals(value, palette[role], variant .. " " .. role)
+                    end
+                    -- No black: structure is the ink, and the sheet's band is the tint.
+                    assert.equals(palette.ink, palette.outline, variant .. " outline")
+                    assert.equals(palette.tint, palette.band, variant .. " band")
+                    assert.is_false(palette.teal, variant)
+                    assert.is_false(palette.mustard, variant)
+                end
+                assert.equals("hatch_135", riso.progress.fill_grey)
+            end)
+
+            it("prints display type twice, the pink 3 right and 2 down", function()
+                assert.same({ x = 3, y = 2, color = "pink" }, riso.misregister)
+            end)
+
+            it("knocks its cover, tiles and sheet out of register rather than shadowing them", function()
+                assert.same({ x = 6, y = 6, color = "outline", outline_width = 2 }, riso.shadow.cover)
+                assert.same({ x = 5, y = 4, color = "tint", outline_width = false }, riso.shadow.tile)
+                assert.same({ x = 8, y = 8, color = "pink", outline_width = false }, riso.shadow.sheet)
+                assert.same({ x = 6, y = 6, color = "outline", outline_width = 2 }, riso.library.cover.shadow)
+                assert.is_false(riso.featured.cover_outline_color)
+                assert.same({ cover = 0, box = 0 }, riso.radius)
+            end)
+
+            it("draws Phosphor Fill icons", function()
+                assert.equals("phosphor-fill", riso.icons.set)
+            end)
+
+            it("chooses the home's shapes the design draws", function()
+                assert.same({ weather_order = "degrees_first", date_lines = 2, stats_line = "joined",
+                    stats_streak = "count_first", featured_label = "now_reading", featured_details = "joined" },
+                    home_choices(riso))
+            end)
+
+            it("sets the design's sizes, its clock on the right with no band and no rule", function()
+                local t = riso.type
+                assert.same({ "strong", 15, false, 0, 0.1, "ink" }, part_values(t.date))
+                assert.same({ "display", 124, false, -0.01, -0.2, "ink" }, part_values(t.clock))
+                assert.same({ "display", 46, "ink" }, { t.featured_title.face, t.featured_title.size,
+                    t.featured_title.color })
+                assert.same({ "quote", 18, "ink" }, { t.quote.face, t.quote.size, t.quote.color })
+                assert.same({ "strong", 19, "ink" }, { t.launcher_label.face, t.launcher_label.size,
+                    t.launcher_label.color })
+                assert.same({ "text", 19, "ink" }, { t.sheet_row.face, t.sheet_row.size, t.sheet_row.color })
+                assert.same({ "strong", 11, true, 0.12, 0, "muted" }, part_values(t.nav_label))
+                assert.same({ "strong", 11, true, 0.12, 0, "ink" }, part_values(t.nav_label_active))
+                assert.same({ size = 11, face = "strong", small_caps = false, uppercase = true, tracking = 0.12 },
+                    riso.label)
+                local header = riso.home.header
+                assert.same({ false, 0, false }, { header.band_color, header.edge_width, header.rule_color })
+            end)
+
+            it("rules its quote in 2 px pink and boxes its tiles in 2 px ink, three to a row, 84 tall", function()
+                -- The padding is the board's 14 tightened with the home to 65 %.
+                assert.same({ padding = 9, rule_width = 2, rule_color = "hairline_light" }, riso.quote)
+                assert.equals(2, riso.stroke.outline)
+                assert.same({ box = true, fill_color = false, outline_color = "outline", rule_color = false },
+                    riso.tile)
+                assert.same({ 3, 84, 24 }, { riso.launcher.columns, riso.launcher.tile_height,
+                    riso.launcher.icon_size })
+            end)
+
+            it("fills its progress pink on paper in a 2 px ink outline, 14 tall", function()
+                assert.same({ height = 14, fill_color = "pink", track_color = "paper", outline_color = "outline",
+                    outline_width = 2, fill_grey = "hatch_135" }, riso.progress)
+            end)
+
+            it("sets its chips ink on tint with no border", function()
+                assert.same({ "tint", "ink" }, { riso.chip.fill_color, riso.chip.text_color })
+                assert.equals(0, riso.featured.chip_outline)
+            end)
+
+            it("edges its nav in 3 px ink on paper and lights its tab with tint", function()
+                local nav = riso.nav
+                assert.same({ "paper", 3, "ink", "tint", 0, 0, 24, "muted", "ink" }, { nav.fill_color,
+                    nav.edge_width, nav.edge_color, nav.active_fill_color, nav.active_rule_width, nav.divider_width,
+                    nav.icon_size, nav.icon_color, nav.active_icon_color })
+            end)
+
+            it("insets its sheet 20, outlined 3 px in ink, under a tint band, its rows ruled pink", function()
+                local sheet = riso.sheet
+                assert.same({ side = 20, bottom = 20 }, sheet.inset)
+                assert.same({ "outline", 3, true }, { sheet.outline_color, sheet.outline_width, sheet.header_band })
+                assert.same({ "tint", "tint" }, { sheet.book_band_color, sheet.home_band_color })
+                assert.same({ "hairline_light", 2 }, { sheet.row_rule_color, sheet.row_rule_width })
+            end)
+
+            it("boxes its pickers in 2 px ink on tint", function()
+                for _, header in ipairs({ riso.title_bar, riso.library.header }) do
+                    assert.same({ 2, "outline", "tint", "tint" }, { header.picker_outline_width,
+                        header.picker_outline_color, header.sort_fill_color, header.status_fill_color })
+                end
+            end)
+
+            -- Every value is commented with its source, the design (riso.md or the design file) or
+            -- "no board" and the analogy, on its line or the line above it.
+            it("comments every value with its source", function()
+                local previous_commented, values = false, 0
+                for line in io.lines(harness.plugin_dir .. "/looks/riso.lua") do
+                    local code, comment = line:match("^(.-)%s*%-%-%s*(.*)$")
+                    local commented = comment ~= nil and comment ~= ""
+                    code = code or line
+                    if code:match("[%w_]+ = [^{%s]") then
+                        values = values + 1
+                        assert.is_true(commented or previous_commented, "uncommented: " .. line)
+                    end
+                    -- A line that only opens a table passes the comment above it to its first line.
+                    if commented or not code:match("^%s*[%w_]+ = {%s*$") then
+                        previous_commented = commented
+                    end
+                end
+                assert.truthy(values > 300, "too few values: " .. values)
+            end)
+        end)
     end)
 
     describe("Looks", function()
@@ -1164,9 +1351,9 @@ describe("looks", function()
             end
         end)
 
-        it("lists the looks in the swatch's column order, Editorial then Diner first", function()
+        it("lists the looks in the swatch's column order, Editorial, Diner then Riso first", function()
             local listed = Looks.ids()
-            assert.same({ "editorial", "diner" }, { listed[1], listed[2] })
+            assert.same({ "editorial", "diner", "riso" }, { listed[1], listed[2], listed[3] })
         end)
 
         it("lists a fresh copy each time", function()

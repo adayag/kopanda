@@ -8,7 +8,7 @@ local Settings = require("settings")
 local Looks = {}
 
 -- The look ids in the swatch's column order.
-local ids = { "editorial", "diner" }
+local ids = { "editorial", "diner", "riso" }
 
 local looks = {}
 for _, id in ipairs(ids) do

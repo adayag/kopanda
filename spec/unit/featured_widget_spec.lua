@@ -607,19 +607,21 @@ describe("the featured widget", function()
         end)
 
         -- The glyphs painted inside rect, joined, spaces left out.
+        -- Typeset paints a line's glyphs through Typeset.paint_glyphs (typeset.lua).
         local function painted_in(built, rect)
-            local paint_to = TextWidget.paintTo
+            local Typeset = package.loaded["typeset"]
+            local paint_glyphs = Typeset.paint_glyphs
             local found = {}
-            TextWidget.paintTo = function(self, bb, x, y)
+            Typeset.paint_glyphs = function(self, bb, x, y, color)
                 if x >= rect.x and x < rect.x + rect.w and y >= rect.y and y < rect.y + rect.h then
                     found[#found + 1] = self.text
                 end
-                return paint_to(self, bb, x, y)
+                return paint_glyphs(self, bb, x, y, color)
             end
             local ok, err = pcall(function()
                 paint(built):free()
             end)
-            TextWidget.paintTo = paint_to
+            Typeset.paint_glyphs = paint_glyphs
             assert(ok, err)
             return (table.concat(found):gsub(" ", ""))
         end

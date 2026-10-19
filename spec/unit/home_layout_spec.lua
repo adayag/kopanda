@@ -150,20 +150,21 @@ describe("the home's rows", function()
     -- align-items: flex-end), the clock's baseline level with the date's last line.
     it("sets the date's last line and the clock on one baseline at the header's bottom, other rows at their top",
             function()
-        local TextWidget = require("ui/widget/textwidget")
         local Blitbuffer = require("ffi/blitbuffer")
         local Settings = package.loaded["settings"]
         stubs.date = require("widgets/date")
         stubs.clock = require("widgets/clock")
         stubs.stats = stub("stats", 30)
-        local paint = TextWidget.paintTo
+        -- Typeset paints a line's glyphs through Typeset.paint_glyphs (typeset.lua).
+        local Typeset = package.loaded["typeset"]
+        local paint = Typeset.paint_glyphs
         local painted
-        TextWidget.paintTo = function(self, bb, x, y)
+        Typeset.paint_glyphs = function(self, bb, x, y, color)
             painted[#painted + 1] = { x = x, baseline = y + (self.forced_baseline or self:getBaseline()) }
-            return paint(self, bb, x, y)
+            return paint(self, bb, x, y, color)
         end
         finally(function()
-            TextWidget.paintTo = paint
+            Typeset.paint_glyphs = paint
         end)
         local bb = Blitbuffer.new(Screen:getWidth(), Screen:getHeight(), Blitbuffer.TYPE_BBRGB32)
         for _, case in ipairs({ { "editorial", "small" }, { "editorial", "large" }, { "diner", "small" },

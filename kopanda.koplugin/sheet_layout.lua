@@ -104,7 +104,7 @@ function SheetLayout.build(spec, ctx, variant)
     end
 
     local box_w = size.w - 2 * scale(tokens.inset.side)
-    local outline = tokens.outline_color and scale(look.stroke.outline) or 0
+    local outline = tokens.outline_color and scale(tokens.outline_width) or 0
     local rule = tokens.rule_color and scale(tokens.rule_width) or 0
     local content_x = outline + scale(tokens.padding.side)
     local content_w = box_w - 2 * content_x

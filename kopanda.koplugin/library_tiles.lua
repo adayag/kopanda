@@ -343,6 +343,7 @@ function LibraryTiles.folder(folder, counts, box, ctx)
         shadow_color = color(shadow.color),
         shadow_x = shadow_x,
         shadow_y = shadow_y,
+        shadow_outline = shadow.outline_width and scale(shadow.outline_width) or nil,
         fill_color = color(tokens.fill_color),
         fill_radius = radius,
         outline = outline,

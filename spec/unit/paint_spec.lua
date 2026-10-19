@@ -129,6 +129,35 @@ describe("paint", function()
             assert.same(WHITE, pixel(bb, 3, 13))
         end)
 
+        -- Riso's cover: its shadow an outline at the offset (riso.md: "2 px ink outline 6/6 behind
+        -- the cover").
+        it("paints an outline shadow as a border shadow_outline wide at its offset, unfilled", function()
+            bb = buffer(30, 30)
+            Paint.backing(bb, 2, 2, 10, 10, box{ shadow_color = rgb32(BLUE), shadow_outline = 2 })
+            -- The border's edges at the offset: (5, 4) to (14, 13), two pixels wide.
+            assert.same(BLUE, pixel(bb, 5, 4))
+            assert.same(BLUE, pixel(bb, 14, 13))
+            assert.same(BLUE, pixel(bb, 13, 12))
+            assert.same(BLUE, pixel(bb, 14, 8))
+            assert.same(BLUE, pixel(bb, 8, 13))
+            -- Inside the border, and outside it, nothing.
+            assert.same(WHITE, pixel(bb, 7, 6))
+            assert.same(WHITE, pixel(bb, 12, 11))
+            assert.same(WHITE, pixel(bb, 15, 13))
+            assert.same(WHITE, pixel(bb, 14, 14))
+            assert.same(WHITE, pixel(bb, 4, 4))
+        end)
+
+        it("paints its fill over an outline shadow", function()
+            bb = buffer(30, 30)
+            Paint.backing(bb, 2, 2, 10, 10, box{ shadow_color = rgb32(BLUE), shadow_outline = 2,
+                fill_color = rgb32(RED) })
+            assert.same(RED, pixel(bb, 5, 4))
+            assert.same(RED, pixel(bb, 11, 11))
+            assert.same(BLUE, pixel(bb, 13, 12))
+            assert.same(WHITE, pixel(bb, 12, 11))
+        end)
+
         it("paints no shadow without a shadow colour and no fill without a fill colour", function()
             bb = buffer(30, 30)
             Paint.backing(bb, 2, 2, 10, 10, box{ fill_color = rgb32(RED) })

@@ -28,11 +28,6 @@ describe("the editor frame", function()
         return { tonumber(r, 16), tonumber(g, 16), tonumber(b, 16) }
     end
 
-    -- The grey KOReader draws a TextWidget in for a #rrggbb (frontend/ui/widget/textwidget.lua:369).
-    local function grey(hex)
-        local v = Blitbuffer.colorFromString(hex):getColor8().a
-        return { v, v, v }
-    end
 
     local function near(a, b, tolerance)
         return math.abs(a[1] - b[1]) <= tolerance and math.abs(a[2] - b[2]) <= tolerance
@@ -220,7 +215,7 @@ describe("the editor frame", function()
             assert.is_true(near(rgb(palette.band), pixel(bb, 2, 2), 1))
             local header = editor.header
             assert.same({ 0, 0, Screen:getWidth(), editor.rule.y }, { header.x, header.y, header.w, header.h })
-            assert.truthy(count(bb, header, grey(palette.on_band), 8) > 0, "no on_band text")
+            assert.truthy(count(bb, header, rgb(palette.on_band), 8) > 0, "no on_band text")
             assert.is_true(near(rgb(palette.band), pixel(bb, 2, editor.rule.y - 1), 1), "band down to the rule")
         end)
 
@@ -234,7 +229,7 @@ describe("the editor frame", function()
         it("leaves Editorial's header on paper with ink text", function()
             local editor, _, palette = painted("editorial")
             assert.is_true(near(rgb(palette.paper), pixel(bb, 2, 2), 1))
-            assert.truthy(count(bb, editor.header, grey(palette.ink), 8) > 0, "no ink text")
+            assert.truthy(count(bb, editor.header, rgb(palette.ink), 8) > 0, "no ink text")
         end)
 
         it("lays the body out from body_gap below the rule and pins the foot above padding.bottom", function()

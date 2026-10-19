@@ -238,25 +238,27 @@ describe("the quote of the day", function()
                 assert.equals(4, box.line_with_ellipsis)
                 assert.is_true(box.vertical_string_list[4].ellipsis_added)
                 assert.equals(4 * box.line_height_px, box.height)
-                -- A line is 1.4 em, CSS line-height 1.4 (Main.dc.html:56), rounded as
-                -- TextBoxWidget rounds it (frontend/ui/widget/textboxwidget.lua:151).
-                assert.equals(require("optmath").round(1.4 * box.face.size), box.line_height_px, look_id)
+                -- A line is 1 + the quote part's line height em (Editorial's and Diner's 1.4, CSS
+                -- line-height 1.4, Main.dc.html:56; Riso's 1.35), rounded as TextBoxWidget rounds it
+                -- (frontend/ui/widget/textboxwidget.lua:151).
+                local line_height = 1 + ctx.look.type.quote.line_height
+                assert.equals(require("optmath").round(line_height * box.face.size), box.line_height_px, look_id)
                 built:free()
             end
         end)
 
         it("shrinks to one line for a short text, its height that line and the chrome", function()
             Quote.sources.builtin = { { text = "Read.", author = "A", work = "W" } }
-            local padding = Screen:scaleBySize(18)
             for _, look_id in ipairs(Looks.ids()) do
                 local ctx = ctx_for(look_id)
                 local look = ctx.look
+                local padding = Screen:scaleBySize(look.quote.padding)
                 local chrome
-                if look.tile.box then
+                if not look.quote.rule_color then
                     chrome = 2 * (Screen:scaleBySize(look.stroke.outline) + padding)
                         + Screen:scaleBySize(look.shadow.tile.y)
                 else
-                    chrome = 2 * (Screen:scaleBySize(look.stroke.hairline) + padding)
+                    chrome = 2 * (Screen:scaleBySize(look.quote.rule_width) + padding)
                 end
                 local height = Quote.height(400, ctx)
                 local built = Quote.build(400, ctx)
@@ -313,7 +315,7 @@ describe("the quote of the day", function()
             end
         end)
 
-        it("draws Editorial between hairline rules and Diner in its tile with a hard shadow", function()
+        it("draws Editorial and Riso between rules and Diner in its tile with a hard shadow", function()
             local function painted(look_id)
                 local ctx = ctx_for(look_id)
                 local built = Quote.build(400, ctx)
@@ -340,6 +342,16 @@ describe("the quote of the day", function()
             assert.equals(palette.shadow, rgb(bb, size.w - 1, size.h - 1))
             assert.equals("#ffffff", rgb(bb, size.w - 1, 0))
             assert.equals(palette.paper, rgb(bb, size.w - shadow - 10, size.h - shadow - 10))
+            bb:free()
+
+            -- Riso: 2 px pink rules above and below, though its tiles are boxes (riso.md).
+            bb, size, palette = painted("riso")
+            local rule = Screen:scaleBySize(2)
+            for _, y in ipairs({ 0, rule - 1, size.h - rule, size.h - 1 }) do
+                assert.equals(palette.hairline_light, rgb(bb, size.w - 1, y), "y " .. y)
+            end
+            assert.equals("#ffffff", rgb(bb, size.w - 1, rule))
+            assert.equals("#ffffff", rgb(bb, size.w - 1, size.h - rule - 1))
             bb:free()
         end)
 

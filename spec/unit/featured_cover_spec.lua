@@ -262,6 +262,28 @@ describe("the featured cover", function()
             built:free()
         end)
 
+        -- riso.md: no outline, a 2 px ink outline 6 right and 6 down behind the cover.
+        it("draws Riso's cover unoutlined, its shadow a 2 px ink outline at 6/6 behind it", function()
+            stub(manager{ info = function() return usable(red_bb(300, 450)) end })
+            local ctx = ctx_for("riso")
+            local built = FeaturedCover.build({ file = BOOK, title = "Piranesi" }, 150, 225, ctx)
+            assert.same({ 156, 231 }, { built:getSize().w, built:getSize().h })
+            local bb = paint(built, 200, 260)
+            local ink = rgb(ctx.look.palettes.day.ink)
+            assert.same(RED, pixel(bb, 0, 0))
+            assert.same(RED, pixel(bb, 149, 224))
+            -- The outline's right and bottom edges past the cover, two pixels wide.
+            assert.same(ink, pixel(bb, 154, 100))
+            assert.same(ink, pixel(bb, 155, 100))
+            assert.same(ink, pixel(bb, 100, 229))
+            assert.same(ink, pixel(bb, 100, 230))
+            -- Inside the outline, past the cover, and outside it: the ground.
+            assert.same({ 0, 255, 0 }, pixel(bb, 152, 100))
+            assert.same({ 0, 255, 0 }, pixel(bb, 100, 227))
+            assert.same({ 0, 255, 0 }, pixel(bb, 3, 228))
+            built:free()
+        end)
+
         it("frees an unusable cover bitmap and draws the placeholder", function()
             local freed = 0
             local stale = { free = function() freed = freed + 1 end }
