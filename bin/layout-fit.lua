@@ -1,13 +1,9 @@
--- bin/layout-fit's process: a headless KOReader (KOReader's spec/front/unit/commonrequire.lua: a
--- dummy screen and input, G_reader_settings under KO_HOME) whose screen is sized to the profile's,
--- then Layout.overflow for each row list read on stdin, under the ctx the home builds its rows
--- with (home_rows.lua:84-91) less home, which no widget's height reads.
---
+-- bin/layout-fit's process: a headless KOReader (KOReader's spec/front/unit/commonrequire.lua: a dummy screen and
+-- input, G_reader_settings under KO_HOME) whose screen is sized to the profile's, then Layout.overflow for each row
+-- list read on stdin, under the ctx the home builds its rows with (home_rows.lua:84-91) less home. The DPI arrives
+-- as EMULATE_READER_DPI, which ffi/framebuffer.lua:128 reads when it loads and fb:getDPI answers (:364-380);
+-- without a "screen_dpi" override it doesn't enter scaleBySize (:414-425). The answer is written to descriptor 3.
 --   luajit bin/layout-fit.lua <width> <height>    (run by bin/layout-fit, which sets the rest)
---
--- The DPI arrives as EMULATE_READER_DPI, which ffi/framebuffer.lua:128 reads when it loads and
--- fb:getDPI answers (:364-380). Without a "screen_dpi" override it doesn't enter scaleBySize
--- (:414-425), as on the emulator's captures. The answer is written to file descriptor 3.
 local width, height = tonumber(arg[1]), tonumber(arg[2])
 local out = assert(io.open("/dev/fd/3", "w"))
 
@@ -21,10 +17,9 @@ local ok, err = xpcall(function()
     require("commonrequire")
     local rapidjson = require("rapidjson")
 
-    -- commonrequire's dummy framebuffer is a 600x800 blitbuffer (ffi/framebuffer_SDL3.lua:18-20)
-    -- and the screen's width and height are its blitbuffer's (ffi/framebuffer.lua:344-354). It is
-    -- replaced before any plugin module or ui/size, which scales its lengths once when it loads
-    -- (frontend/ui/size.lua), is required.
+    -- commonrequire's dummy framebuffer is a 600x800 blitbuffer (ffi/framebuffer_SDL3.lua:18-20) and the screen's size
+    -- is its blitbuffer's (ffi/framebuffer.lua:344-354). It is replaced before any plugin module or ui/size, which
+    -- scales its lengths once when it loads (frontend/ui/size.lua), is required.
     local BB = require("ffi/blitbuffer")
     local Screen = require("device").screen
     Screen.bb:free()

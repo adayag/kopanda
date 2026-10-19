@@ -1,10 +1,8 @@
--- Tools › KoPanda › Studio (C7), through the plugin harness: in the normal and the refused menu
--- before Swatches; its address and profile kept in state.lua as studio_address and
--- studio_profile; Pull enabled once both are set, confirming, pulling behind a painted note and
--- offering the restart; Check for update comparing GitHub's latest release with the installed
--- version and installing a newer one the same way. socket.http's request,
--- NetworkMgr:runWhenConnected, PushPull.pull and ReleaseSource are stubbed; no test touches the
--- network or stages a pull.
+-- Tools › KoPanda › Studio, through the plugin harness: in the normal and the refused menu before Swatches; its
+-- address and profile kept in state.lua as studio_address and studio_profile; Pull enabled once both are set,
+-- confirming, pulling behind a painted note and offering the restart; Check for update comparing GitHub's latest
+-- release with the installed version and installing a newer one the same way. socket.http's request,
+-- NetworkMgr:runWhenConnected, PushPull.pull and ReleaseSource are stubbed; no test touches the network.
 describe("the Studio menu", function()
     local harness = require("plugin_harness")
     local ButtonDialog = require("ui/widget/buttondialog")

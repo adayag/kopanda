@@ -1,10 +1,8 @@
--- The quote of the day: one entry of the quote source a day, changing at local midnight, drawn
--- in curly quotes with no attribution in at most four lines, a longer text ending in an
--- ellipsis. A look with plates (Frosted) draws it plain, its plate drawn under it by the home
--- (home_rows.lua) and the text printed through its mask (Typeset.printed); otherwise a look with a
--- quote rule colour draws it between rules (Editorial's hairlines, Main.dc.html:56; Riso's pink),
--- one without in its tile (Diner).
--- Module state: the memo of the text box last composed, which every build of the day draws.
+-- The quote of the day: one entry of the quote source a day, changing at local midnight, drawn in curly quotes
+-- with no attribution in at most four lines, a longer text ending in an ellipsis. A look with plates draws it
+-- plain, its plate drawn under it by the home (home_rows.lua) and the text printed through its mask
+-- (Typeset.printed); otherwise a look with a quote rule colour draws it between rules, one without in its tile.
+-- State: the memo of the text box last composed, which every build of the day draws.
 local Device = require("device")
 local Font = require("ui/font")
 local Fonts = require("fonts")
@@ -26,7 +24,7 @@ local Quote = {
     settings_prefix = "quote",
 }
 
--- The entry lists by quote.source value; the spec puts lists of its own here.
+-- The entry lists by quote.source value; a spec puts lists of its own here.
 Quote.sources = {
     builtin = require("quotes"),
 }
@@ -51,13 +49,11 @@ function Quote.index(t)
     return local_days(t) % count + 1
 end
 
--- The text box last composed, as { key, box, holders }. key is what the box is drawn from, all
--- fixed for a day: the text; the face's hash, which holds its file and scaled size
--- (frontend/ui/font.lua:286-288); the text width; the look and variant, which fix the colours and
--- line height; and whether the screen renders colour, which picks the box's buffer type
--- (frontend/ui/widget/textboxwidget.lua:853-860). holders counts the quotes built on the box that
--- haven't let it go. A box the memo has moved on from is freed when its last holder lets go, so
--- the memo holds one box and a quote still shown never paints a freed one.
+-- The text box last composed, as { key, box, holders }. key is what the box is drawn from, all fixed for a day:
+-- the text; the face's hash (frontend/ui/font.lua:286-288); the text width; the look and variant; and whether
+-- the screen renders colour, which picks the box's buffer type (frontend/ui/widget/textboxwidget.lua:853-860).
+-- holders counts the quotes built on the box that haven't let it go; a box the memo has moved on from is freed
+-- when its last holder lets go, so a quote still shown never paints a freed one.
 local memo
 
 local function same(a, b)
@@ -90,12 +86,11 @@ local function release(entry)
     end
 end
 
--- The text box (self.text_box, the memo's) at self.text_x, self.text_y inside its chrome: rules
--- across the top and bottom, or a tile with a hard shadow. The box is shared by every quote drawn
--- from the memo's entry, so it is held outside the container's list, which WidgetContainer's free
--- and event propagation walk (frontend/ui/widget/container/widgetcontainer.lua:110-117, :80-89):
--- a TextBoxWidget frees itself on the CloseWidget that UIManager:close sends
--- (frontend/ui/widget/textboxwidget.lua:1280-1283, frontend/ui/uimanager.lua:300).
+-- The text box (self.text_box, the memo's) at self.text_x, self.text_y inside its chrome: rules across the top and
+-- bottom, or a tile with a hard shadow. The box is shared by every quote drawn from the memo's entry, so it is held
+-- outside the container's list, which WidgetContainer's free and event propagation walk
+-- (frontend/ui/widget/container/widgetcontainer.lua:110-117, :80-89): a TextBoxWidget frees itself on the CloseWidget
+-- that UIManager:close sends (frontend/ui/widget/textboxwidget.lua:1280-1283, frontend/ui/uimanager.lua:300).
 local QuoteBox = WidgetContainer:extend{
     name = "kopanda_quote",
 }

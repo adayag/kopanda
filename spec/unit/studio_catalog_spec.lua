@@ -1,6 +1,6 @@
 -- The studio's checked-in catalog is bin/catalog-json's output, byte for byte, and holds what the
 -- launcher editor offers: the file-browser action sections, the bundled plugins the file manager
--- loads, the icon registry and the screen tables (C11).
+-- loads, the icon registry and the screen tables.
 describe("studio/src/catalog.json", function()
     local rapidjson = require("rapidjson")
     local root = os.getenv("KOPANDA_ROOT")

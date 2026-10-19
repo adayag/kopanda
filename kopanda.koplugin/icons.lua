@@ -1,14 +1,9 @@
--- The icon registry: every icon the shell draws, by a stable id. Plugin code reaches an icon only
--- through Icons.path(id); this is the one module that names an icon file.
---
--- The default set is every distinct icon the design canvas draws, one stroke file each under
--- icons/, inked in black: NanoSVG renders a file's own colours (frontend/ui/renderimage.lua:338-393)
--- and turns an unknown colour name such as currentColor into mid-grey
--- (base/build/<target>/staging/include/nanosvg.h:1446-1457). `used_in` names the places the canvas
--- draws the icon.
---
--- A look may draw another set, named by its `icons.set` token: one file per registry id under the
--- set's folder, vendored from a pack and recoloured to black (icons/SOURCES.md).
+-- The icon registry: every icon the shell draws, by a stable id. Plugin code reaches an icon only through
+-- Icons.path(id). The default set is one stroke file each under icons/, inked in black: NanoSVG renders
+-- a file's own colours (frontend/ui/renderimage.lua:338-393) and turns an unknown colour name such as
+-- currentColor into mid-grey (base/build/<target>/staging/include/nanosvg.h:1446-1457). `used_in` names
+-- where each icon is drawn. A look may draw another set, named by its `icons.set` token: one file per
+-- registry id under the set's folder, recoloured to black (icons/SOURCES.md).
 local Fonts = require("fonts")
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
@@ -83,8 +78,7 @@ Icons.entries = {
     -- icons/LICENSE-lucide.txt).
     { id = "forward", label = "Forward", used_in = { "library", "series", "authors" },
       file = "icons/forward.svg" },
-    -- Lucide's `arrow-down-to-line` as the library boards draw it (Main.dc.html:67), not Lucide's
-    -- `download`, which has a tray (ISC; see icons/LICENSE-lucide.txt).
+    -- Lucide's `arrow-down-to-line`, not Lucide's `download`, which has a tray (ISC; see icons/LICENSE-lucide.txt).
     { id = "download", label = "Not downloaded", used_in = { "library", "series", "authors" },
       file = "icons/download.svg" },
     -- Lucide's `sliders-horizontal` icon (ISC; see icons/LICENSE-lucide.txt).
@@ -110,10 +104,10 @@ local function active_set()
     return look and look.icons and look.icons.set or false
 end
 
--- The path of the icon file for id, in the form Fonts.path gives a plugin file: set's file when
--- the set has one, otherwise the default Lucide file. set is a set id, false for the default
--- files, or nil for the active look's set. nil for an id the registry doesn't hold; a set it
--- doesn't hold gives the default file, logged once per set, so a look with a bad token still draws.
+-- The path of the icon file for id, in the form Fonts.path gives: set's file when the set has one,
+-- otherwise the default Lucide file. set is a set id, false for the default files, or nil for the active
+-- look's set. nil for an id the registry doesn't hold; a set it doesn't hold gives the default file,
+-- logged once per set.
 function Icons.path(id, set)
     local file
     for _, entry in ipairs(Icons.entries) do

@@ -1,7 +1,6 @@
--- The release source: GitHub's latest release of adayag/kopanda, and a pull's source
--- (PushPull.pull's opts.source) that downloads a release's plugin-only bundle into the pull's
--- download/ folder, unpacks its zip and verifies it against its manifest. Synchronous and
--- UI-free; each call returns its value, or nil and a message.
+-- The release source: GitHub's latest release of adayag/kopanda, and a pull's source (PushPull.pull's
+-- opts.source) that downloads a release's plugin-only bundle into download/, unpacks its zip and verifies it
+-- against its manifest. Synchronous and UI-free; each call returns its value, or nil and a message.
 local Archiver = require("ffi/archiver")
 local PushBundle = require("push_bundle")
 local PushPull = require("push_pull")
@@ -116,11 +115,10 @@ function ReleaseSource.latest()
     }
 end
 
--- Unpacks the zip at zip_path into download/plugin: every entry under kopanda.koplugin/ with a
--- safe path, each file one the manifest names, once, of the manifest's size. Folder entries are
--- only checked; the folders are made for the files. Each file is read into memory and written
--- here, never through libarchive's disk writer, which would follow a hard link out of download/.
--- Returns true, or nil and why.
+-- Unpacks the zip at zip_path into download/plugin: every entry under kopanda.koplugin/ with a safe path, each
+-- file one the manifest names, once, of the manifest's size. Each file is read into memory and written here,
+-- never through libarchive's disk writer, which would follow a hard link out of download/. Returns true, or
+-- nil and why.
 local function unzip(zip_path, download, manifest)
     local sizes = {}
     for _, file in ipairs(manifest.files) do

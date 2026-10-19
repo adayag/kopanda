@@ -64,10 +64,9 @@ local function log_tail(path)
     return table.concat(lines, "", first)
 end
 
--- The screen a run uses: device when given, else the named profile from profiles.lua, so a device
--- given under a known name (colorsoft) still wins. device holds positive integer width, height and
--- dpi and a boolean color; with it the name only names the scratch's files (profile-<name>,
--- <name>.png, <name>.log), so it must match ^[a-z0-9-]+$. Errors start with who.
+-- The screen a run uses: device when given, else the named profile from profiles.lua, so a device given under a
+-- known name still wins. device holds positive integer width, height and dpi and a boolean color; the name then only
+-- names the scratch's files, so it must match ^[a-z0-9-]+$. Errors start with who.
 local function resolve_screen(who, profile_name, device)
     if device == nil then
         local profile = profiles[profile_name]
@@ -94,35 +93,25 @@ local function resolve_screen(who, profile_name, device)
     return device
 end
 
--- Writes a scratch KO_HOME at dir for the named profile, or for opts.device under that name
--- (see resolve_screen): settings.reader.lua, the plugin copied under plugins/, and the capture
--- patch under patches/ with each extra patch (a list of paths) beside it. With
--- opts.settings_file, that file is copied to settings/kopanda/settings.lua, where the plugin
--- reads its settings; a path that is not a file is an error naming it. An extra patch's name
--- must start with "2-", KOReader's late priority (frontend/userpatch.lua:13), which
--- reader.lua:190 applies before any plugin code runs, in natural-sort order of the names
--- (frontend/userpatch.lua:82).
---
--- settings.reader.lua is what LuaSettings:open dofile()s (frontend/luasettings.lua:30-33).
--- color_rendering present suppresses the first-run colour notice (reader.lua:195-203); it
--- must be false on a grey profile or reader.lua:206-223 blocks on a ConfirmBox. The file
--- must not carry extra_plugin_paths: absent, KOReader adds <KO_HOME>/plugins/ itself
--- (frontend/pluginloader.lua:193-199); present, only the listed paths join KOReader's own
--- plugins/ (frontend/pluginloader.lua:177-188). The quickstart guide needs no setting: the
--- directory argument capture() passes bypasses it (reader.lua:248-251, 257-261).
--- emulator_fake_wifi_connected false makes the emulator's NetworkMgr:isConnected() false
--- (frontend/device/sdl/device.lua:478-500), so no capture fetches the weather. With
--- opts.night_mode the file also sets night_mode, which the device turns on before any UI
--- exists (frontend/device/generic/device.lua:344-347); without it the file is unchanged.
---
--- The third first-run prompt is coverbrowser's: on a profile without
--- settings/bookinfo_cache.sqlite3 its createDB finds user_version 0, below
--- BOOKINFO_DB_VERSION, and shows "Book info cache database updated." for 3 s over the
--- screen (plugins/coverbrowser.koplugin/bookinfomanager.lua:166-195). Seeding the file
--- with the current user_version is enough: createDB applies its schema to an existing
--- file as a no-op and only compares the version (bookinfomanager.lua:166-169). The seed
--- runs in the emulator's own luajit: its sqlite binding ffi.cdef()s on load, so a Busted
--- process can require it once at most, and spec files are insulated from each other.
+-- Writes a scratch KO_HOME at dir for the named profile, or for opts.device under that name: settings.reader.lua,
+-- the plugin copied under plugins/, and the capture patch under patches/ with each extra patch (a list of paths)
+-- beside it; an extra patch's name must start with "2-", KOReader's late priority (frontend/userpatch.lua:13),
+-- which reader.lua:190 applies before any plugin code runs, in natural-sort order (frontend/userpatch.lua:82).
+-- opts.settings_file is copied to settings/kopanda/settings.lua; a path that is not a file is an error naming it.
+-- settings.reader.lua is what LuaSettings:open dofile()s (frontend/luasettings.lua:30-33). color_rendering present
+-- suppresses the first-run colour notice (reader.lua:195-203); it must be false on a grey profile or
+-- reader.lua:206-223 blocks on a ConfirmBox. The file must not carry extra_plugin_paths: absent, KOReader adds
+-- <KO_HOME>/plugins/ itself (frontend/pluginloader.lua:193-199); present, only the listed paths join KOReader's own
+-- plugins/ (frontend/pluginloader.lua:177-188). The quickstart guide needs no setting: the directory argument
+-- capture() passes bypasses it (reader.lua:248-251, 257-261). emulator_fake_wifi_connected false makes the
+-- emulator's NetworkMgr:isConnected() false (frontend/device/sdl/device.lua:478-500), so no capture fetches the
+-- weather. opts.night_mode also sets night_mode, which the device turns on before any UI exists
+-- (frontend/device/generic/device.lua:344-347). The third first-run prompt is coverbrowser's: on a profile without
+-- settings/bookinfo_cache.sqlite3 its createDB finds user_version 0, below BOOKINFO_DB_VERSION, and shows "Book info
+-- cache database updated." for 3 s (plugins/coverbrowser.koplugin/bookinfomanager.lua:166-195). Seeding the file
+-- with the current user_version is enough: createDB applies its schema to an existing file as a no-op and only
+-- compares the version (bookinfomanager.lua:166-169). The seed runs in the emulator's own luajit: its sqlite
+-- binding ffi.cdef()s on load, so a Busted process can require it once at most.
 function M.write_profile(dir, profile_name, plugin_dir, emulator, patches, opts)
     opts = opts or {}
     local profile = resolve_screen("capture", profile_name, opts.device)
@@ -231,13 +220,10 @@ local function env_assignments(vars)
     return table.concat(parts, " ")
 end
 
--- Runs the emulator in the background, killing it after timeout_s. The wrapper's last
--- output line is the emulator's exit status; a "timeout" marker file records a kill.
--- SIGTERM alone cannot stop a hung emulator: SDL3 turns it into SDL_EVENT_QUIT
--- (base/ffi/SDL3.lua:719-723), serviced only by the input loop, so the killer follows
--- it with SIGKILL 5 s later. When the emulator exits first, the killer is stopped
--- (so it cannot fork another sleep), its sleep is reaped with pkill, and it is killed.
--- The wrapper's own stderr (the shell's "Terminated"/"Killed" lines) goes to the log.
+-- Runs the emulator in the background, killing it after timeout_s. The wrapper's last output line is the emulator's
+-- exit status; a "timeout" marker file records a kill. SIGTERM alone cannot stop a hung emulator: SDL3 turns it into
+-- SDL_EVENT_QUIT (base/ffi/SDL3.lua:719-723), serviced only by the input loop, so the killer follows it with SIGKILL
+-- 5 s later. When the emulator exits first, the killer is stopped, its sleep reaped with pkill, and it is killed.
 local function run_emulator(emulator, vars, library_dir, log, timeout_s, marker)
     local script = table.concat({
         "cd " .. quote(emulator) .. " || exit 127",
@@ -259,10 +245,9 @@ local function run_emulator(emulator, vars, library_dir, log, timeout_s, marker)
     return tonumber(output:match("(%d+)\n$"))
 end
 
--- The checks capture and run_starts make before writing anything: the screen (a known profile,
--- or opts.device under a name, see resolve_screen), the plugin folder, the library and the
--- emulator's luajit, and no copy of KoPanda in the emulator's own plugins/. Errors start with who.
--- Returns emulator, profile_name, profile (the screen) and library_dir.
+-- The checks capture and run_starts make before writing anything: the screen, the plugin folder, the library and the
+-- emulator's luajit, and no copy of KoPanda in the emulator's own plugins/. Errors start with who. Returns emulator,
+-- profile_name, profile (the screen) and library_dir.
 local function preflight(who, opts)
     local emulator = opts.emulator_dir or os.getenv("KOPANDA_EMULATOR")
     local profile_name = opts.profile
@@ -332,18 +317,13 @@ local function read_shot(png, fail)
     return sidecar
 end
 
--- opts: profile (name), plugin_dir, library_dir (default: the fixture library,
--- spec/fixtures/library/; pass an empty dir for no books), out_dir (default: a fresh dir
--- under KO_HOME), cap_s (default 20), timeout_s (default 120), emulator_dir (default
--- KOPANDA_EMULATOR), patches (extra userpatches, see write_profile), shot_screen (the
--- KoPandaSettled screen the capture is taken on, default "home"), env (a table of extra
--- environment variables for the emulator, name to value, passed after the driver's own in
--- name order, so a scenario patch can read its options), night_mode (start the emulator with
--- night mode on, see write_profile), device ({ width, height, dpi, color }: the screen in place
--- of profiles[profile], which then only names the scratch's files; see resolve_screen),
--- settings_file (copied as the plugin's settings, see write_profile). Returns { png, width,
--- height, sidecar, log, scratch }; the scratch profile is removed on success and left in place
--- on failure.
+-- opts: profile (name), plugin_dir, library_dir (default: the fixture library; pass an empty dir for no books),
+-- out_dir (default: a fresh dir under KO_HOME), cap_s (default 20), timeout_s (default 120), emulator_dir (default
+-- KOPANDA_EMULATOR), patches (extra userpatches, see write_profile), shot_screen (the KoPandaSettled screen the
+-- capture is taken on, default "home"), env (extra environment variables for the emulator, name to value, passed in
+-- name order so a scenario patch can read its options), night_mode (see write_profile), device ({ width, height, dpi,
+-- color }: the screen in place of profiles[profile]; see resolve_screen), settings_file (see write_profile).
+-- Returns { png, width, height, sidecar, log, scratch }; the scratch profile is removed on success and left on failure.
 function M.capture(opts)
     local emulator, profile_name, profile, library_dir = preflight("capture", opts)
 
@@ -363,10 +343,9 @@ function M.capture(opts)
         error(string.format("capture %s: %s\nscratch profile: %s\nlog %s, last lines:\n%s",
             profile_name, message, scratch, log, log_tail(log)))
     end
-    -- The marker is the only evidence of a kill: a responsive KOReader exits 0 on SIGTERM, so
-    -- the exit status cannot tell a kill from a clean quit, and an emulator that exits
-    -- normally in the sub-millisecond window between the timer firing and `wait` reaping it
-    -- is reported as timed out.
+    -- The marker is the only evidence of a kill: a responsive KOReader exits 0 on SIGTERM, so the exit status cannot
+    -- tell a kill from a clean quit, and an emulator that exits normally between the timer firing and `wait` reaping
+    -- it is reported as timed out.
     if lfs.attributes(marker, "mode") then
         fail("timed out after " .. timeout_s .. " s")
     end
@@ -391,21 +370,15 @@ local function listed(list, value)
     return false
 end
 
--- Several starts of the emulator on one scratch profile, written once, as a device restarts
--- KOReader: what one start leaves in KO_HOME (settings, patches, a moved plugin folder) is
--- what the next one starts from. opts: capture's profile, device, plugin_dir, library_dir, out_dir,
--- timeout_s (per start), emulator_dir and patches; extra_plugins, folders copied into the
--- scratch's plugins/ beside the plugin, refused before anything is written when the emulator's
--- own plugins/ holds a folder of the same name (KOReader would load both); and starts, a list
--- of { env, shot, cap_s, accept, after }: env as capture's, for that start only; shot runs
--- the capture patch (KOPANDA_SHOT set, the settle cap cap_s, default 20, on the home's signal),
--- and a shot start that exits 0 must leave its PNG and sidecar; accept lists the exit statuses
--- the start may end with (default { 0 }); after(result, scratch), when given, runs once the
--- start has passed and before the next, so a spec can look at what that start left. A
--- timed-out start or a status outside accept raises, naming the start. Returns
--- { scratch, starts = { { status, log, png, sidecar } } } (png when the start wrote one,
--- sidecar for a shot start that exited 0) and leaves the scratch, on success too, for the spec
--- to inspect and remove.
+-- Several starts of the emulator on one scratch profile, written once, as a device restarts KOReader: what one
+-- start leaves in KO_HOME is what the next one starts from. opts: capture's profile, device, plugin_dir,
+-- library_dir, out_dir, timeout_s (per start), emulator_dir and patches; extra_plugins, folders copied into the
+-- scratch's plugins/ beside the plugin (refused when the emulator's own plugins/ holds one of the same name, which
+-- KOReader would load both of); and starts, a list of { env, shot, cap_s, accept, after }: env as capture's for that
+-- start only; shot runs the capture patch (KOPANDA_SHOT set, settle cap cap_s, default 20) and a shot start that
+-- exits 0 must leave its PNG and sidecar; accept lists the exit statuses the start may end with (default { 0 });
+-- after(result, scratch) runs once the start has passed. A timed-out start or a status outside accept raises.
+-- Returns { scratch, starts = { { status, log, png, sidecar } } }; the scratch is left, on success too.
 function M.run_starts(opts)
     local emulator, profile_name, profile, library_dir = preflight("run_starts", opts)
     for _, extra in ipairs(opts.extra_plugins or {}) do

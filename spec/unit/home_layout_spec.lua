@@ -1,4 +1,4 @@
--- The home built from layout.rows (C4, the engine part): one slot per entry at its column width,
+-- The home built from layout.rows: one slot per entry at its column width,
 -- blank slots for a missing or failing widget, taps routed to a slot's widget, rebuilds on
 -- Resume and TimeFormatChanged and on a network change a widget's stale reports, and nothing
 -- left in UIManager's task queue. The widgets are stubs registered for the spec.
@@ -146,8 +146,7 @@ describe("the home's rows", function()
         assert.same(before, entry.default)
     end)
 
-    -- The header row aligns its slots to the bottom (Main.dc.html:19, HomeRetro.dc.html:19
-    -- align-items: flex-end), the clock's baseline level with the date's last line.
+    -- The header row aligns its slots to the bottom: the clock's baseline level with the date's last line.
     it("sets the date's last line and the clock on one baseline at the header's bottom, other rows at their top",
             function()
         local Blitbuffer = require("ffi/blitbuffer")
@@ -552,7 +551,7 @@ describe("the home's rows", function()
         end
     end)
 
-    -- The nav bar (the nav bar's C3): built with Home active in the band under the rows, the rows'
+    -- The nav bar: built with Home active in the band under the rows, the rows'
     -- last child so it paints over them, and left out, logged, when its build raises.
     describe("the nav bar", function()
         local Blitbuffer = require("ffi/blitbuffer")

@@ -1,9 +1,7 @@
--- KoPanda's settings, in settings/kopanda/settings.lua, held to schema.lua: a read returns the
--- stored value when the key's type allows it and the schema default otherwise; a write outside
--- the schema is refused. The file carries schema_version beside the keys: an older file is
--- migrated on open (migrations.lua), a newer one is read but never written.
--- Every call catches its own errors: a failure is logged and reads as the default.
--- Module state: the opened file and whether it is read-only, on first use.
+-- KoPanda's settings, in settings/kopanda/settings.lua, held to schema.lua: a read returns the stored value
+-- when the key's type allows it and the schema default otherwise; a write outside the schema is refused. The
+-- file carries schema_version: an older file is migrated on open (migrations.lua), a newer one is read but
+-- never written. Every call catches its own errors: a failure is logged and reads as the default.
 local DataStorage = require("datastorage")
 local LuaSettings = require("luasettings")
 local Migrations = require("migrations")
@@ -249,10 +247,10 @@ local function migrate(data, steps, target)
     return data
 end
 
--- The opened file. LuaSettings:open never raises: a missing file reads as {}, a corrupt one
--- falls back to .old then {} (frontend/luasettings.lua:21-48), but a file returning a non-table
--- is taken as the data (:32-33), so that reads as {} here. Not cached until the version is
--- handled, so a failed migration leaves the file alone and is retried on the next call.
+-- The opened file. LuaSettings:open never raises: a missing file reads as {}, a corrupt one falls back to
+-- .old then {} (frontend/luasettings.lua:21-48), but a file returning a non-table is taken as the data
+-- (:32-33), so that reads as {} here. Not cached until the version is handled, so a failed migration leaves
+-- the file alone and is retried on the next call.
 local function open()
     if settings then
         return settings
@@ -298,12 +296,11 @@ function Settings.get(key)
     return value
 end
 
--- Stores value under key, stamps schema_version and writes the file at once. Returns true when
--- written; false and the reason, writing nothing, for a key the schema doesn't define, a value
--- its type doesn't allow or a file from a newer schema; false and the error when the write
--- fails. LuaSettings:flush neither creates the directory nor reports a failed write
--- (frontend/luasettings.lua:270-275, frontend/util.lua:1124-1143), so the directory is made
--- and checked first, and the file is read back after.
+-- Stores value under key, stamps schema_version and writes the file at once. Returns true when written; false
+-- and the reason for a key the schema doesn't define, a value its type doesn't allow or a file from a newer
+-- schema; false and the error when the write fails. LuaSettings:flush neither creates the directory nor
+-- reports a failed write (frontend/luasettings.lua:270-275, frontend/util.lua:1124-1143), so the directory
+-- is made and checked first, and the file is read back after.
 function Settings.set(key, value)
     local entry = entries[key]
     if not entry then

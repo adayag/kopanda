@@ -1,15 +1,8 @@
--- The Authors window (series-and-authors "Authors"): a window on the chrome (library_chrome.lua)
--- showing the library's authors, the list or one author, a page at a time. The list (AuthorsC.dc.html)
--- heads D10's count over "Authors" with "By surname" at the right, then a page of letter groups in
--- D13's order, a group split by the page break before starting the page with its letter again (D14);
--- one author (AuthorBooksA.dc.html) heads the back control "Authors" over D10's count and the name,
--- then a page of the library's book tiles, three columns and two rows, in D16's order, each series'
--- next unread carrying the Up next chip (D5, D19). The nav bar lights Authors. Who the authors are,
--- in what order, and which books are up next is shelf_order.lua's; the groups are shelf_rows.lua's
--- and the tiles library_tiles.lua's.
--- Module state: AuthorsScreen.shown, the chrome's slot.
--- AuthorsScreen.on_open(view, page), run when a tap's book open goes ahead, records the return in
--- the chrome's LibraryChrome.return_to.
+-- The Authors window: a window on the chrome (library_chrome.lua) showing the library's authors, the
+-- list of letter groups or one author's books, a page at a time. Who the authors are, in what order
+-- and which books are up next is shelf_order.lua's; the groups are shelf_rows.lua's, the tiles
+-- library_tiles.lua's. AuthorsScreen.shown is the chrome's slot; on_open records the return in
+-- LibraryChrome.return_to.
 local Books = require("books")
 local Geom = require("ui/geometry")
 local Helpers = require("helpers")
@@ -32,12 +25,12 @@ local AuthorsScreen = LibraryChrome.Window:extend{
 
 local LIST = { kind = "list" }
 
--- Run when a tap's book open goes ahead: the book closes back to view at page (D7).
+-- Run when a tap's book open goes ahead: the book closes back to view at page.
 function AuthorsScreen.on_open(view, page)
     LibraryChrome.return_to = { screen = "authors", view = view, page = page }
 end
 
--- The books are read once per show (D8), and again when the metadata events re-list.
+-- The books are read once per show, and again when the metadata events re-list.
 function AuthorsScreen:init()
     self.records = Books.all()
     LibraryChrome.Window.init(self)
@@ -64,11 +57,9 @@ local function progress_once()
     end
 end
 
--- The window's authors in D13's order, kept on the window as { records, entries (ShelfOrder.authors
--- of records), progress, series (ShelfOrder.series of records, sorted at the first one-author view,
--- the list reading no progress) }: a page turn, a view change or a repaint in another variant or
--- size sorts nothing; a show (a new window), refresh() and a cover arrival's re-read records
--- (window.records replaced) sort again.
+-- The window's authors in order, kept on the window as { records, entries (ShelfOrder.authors of
+-- records), progress, series (ShelfOrder.series of records, sorted at the first one-author view) }: a
+-- page turn or repaint sorts nothing; a show, refresh() and a cover arrival's re-read sort again.
 local function sorted(self)
     local kept = self.kept
     if not kept or kept.records ~= self.records then
@@ -78,9 +69,9 @@ local function sorted(self)
     return kept
 end
 
--- One author's part of the plan: the author's books in D16's order and the up-next set, from the
--- whole library's series (D16); the finished count; the grid at the one-author cover height; and
--- view's page of six (LibraryOrder.page, the library's slicing).
+-- One author's part of the plan: their books in order and the up-next set from the whole library's
+-- series, the finished count, the grid at the one-author cover height and view's page of six
+-- (LibraryOrder.page).
 local function plan_author(self, p, page, w, ctx)
     local kept = sorted(self)
     local progress = kept.progress
@@ -100,9 +91,8 @@ local function plan_author(self, p, page, w, ctx)
     p.slice, p.pages, p.page = LibraryOrder.page(p.books, page)
 end
 
--- The list's part of the plan: a row per author, each a letter group's member with that group's
--- cost (ShelfRows.group_cost, the gap between groups in it), paged by whole rows between the header
--- and ShelfRows.pager_reserve above the pager (D14).
+-- The list's part of the plan: a row per author, each a letter group's member with that group's cost
+-- (ShelfRows.group_cost), paged by whole rows between the header and ShelfRows.pager_reserve.
 local function plan_list(p, page, w, h, ctx)
     local shelf = ctx.look.shelf
     p.width = w - 2 * scale(shelf.list.side)
@@ -123,10 +113,7 @@ local function plan_list(p, page, w, h, ctx)
 end
 
 -- What view at page shows from the window's records on a screen w by h under ctx, before any widget
--- is built: { view, the list instead for an author no entry has any more (D23); entry, the author
--- shown or nil; entries, the kept sort's; header_h; top, the page's first y; pages and page,
--- clamped }, and the list's paging and run (its page of rows) or one author's books, up_next,
--- finished, progress, box and slice.
+-- is built. Falls back to the list for an author no entry has any more.
 local function plan(self, view, page, w, h, ctx)
     local entries = sorted(self).entries
     local entry
@@ -149,9 +136,8 @@ local function plan(self, view, page, w, h, ctx)
     return p
 end
 
--- The keys of p's page in order, the view, the page count and the header's count first (an
--- author row's letter, name and count; a tile's id and its up-next mark), and the ids of the records
--- the page draws anything of: each tile's. The list draws no book.
+-- The keys of p's page in order (the view, page count, header count, each row's or tile's identity)
+-- and the ids of the records the page draws anything of. The list draws no book.
 local function page_keys(p)
     local keys, drawn = {}, {}
     if p.entry then
@@ -174,9 +160,8 @@ function AuthorsScreen:page_keys(view, page)
     return page_keys(plan(self, view, page, self.dimen.w, self.dimen.h, self.ctx))
 end
 
--- D10's count: the authors, "on the shelf" after them in a look whose title bar says so; or one
--- author's books and those finished, joined in each look's words as the library's count is worded
--- (title_bar.count_on_shelf).
+-- The count: the authors, "on the shelf" after them in a look whose title bar says so; or one
+-- author's books and those finished, worded as the library's count is (title_bar.count_on_shelf).
 local function count_text(p, look)
     local on_shelf = look.title_bar.count_on_shelf
     if p.entry then
@@ -191,9 +176,8 @@ local function count_text(p, look)
     return on_shelf and text .. " on the shelf" or text
 end
 
--- The header, w wide, on the authors band: for the list, the count over "Authors" with the inert
--- "By surname" (D11) at the right, its parts' label; for one author, the back control over the
--- count and the author's name (LibraryChrome.header's detail form).
+-- The header, w wide: for the list, the count over "Authors" with the inert "By surname" at the right;
+-- for one author, the back control over the count and the name (LibraryChrome.header's detail form).
 local function header(p, w, ctx)
     local look = ctx.look
     local spec = {
@@ -215,10 +199,8 @@ local function header(p, w, ctx)
     return box, parts
 end
 
--- The list's page: each run of the page's rows under one letter as one group, the first continued
--- from the page before when the page repeats it, the groups the groups' gap apart. Fills
--- built.groups ({ letter, repeats, widget, rect }) and built.rows ({ rect, entry, group, band }, each
--- author row's band of its group across the group's width).
+-- The list's page: each run of rows under one letter as one group, the first continued from the page
+-- before when the page repeats it. Fills built.groups and built.rows.
 local function fill_list(p, built, frame, ctx)
     local x, y = scale(ctx.look.shelf.list.side), p.top
     local gap = scale(ctx.look.shelf.groups.gap)
@@ -244,8 +226,7 @@ local function fill_list(p, built, frame, ctx)
     end
 end
 
--- One author's page: its slice's tiles at the grid's boxes, two rows of three. Fills built.tiles
--- ({ rect, record, up_next, widget }).
+-- One author's page: its slice's tiles at the grid's boxes. Fills built.tiles.
 local function fill_author(p, built, frame, ctx)
     local box, row_gap = p.box, scale(ctx.look.library.grid.row_gap)
     for i, record in ipairs(p.slice) do
@@ -259,9 +240,8 @@ local function fill_author(p, built, frame, ctx)
     end
 end
 
--- Fills built (showing, page, ctx) from the window's records: the frame (the header, the page's
--- groups or tiles or the empty note, the chrome's foot) and what gestures and the covers read:
--- showing, page and pages, header, groups, rows, tiles, note, keys and drawn (page_keys).
+-- Fills built from the window's records: the frame and what gestures and the covers read (showing,
+-- page, pages, header, groups, rows, tiles, note, keys and drawn).
 local function fill(self, built, frame, w, h)
     local ctx = built.ctx
     local look = ctx.look
@@ -293,7 +273,7 @@ function AuthorsScreen:build(view, page)
     end)
 end
 
--- The back control, on one author: the list at the page holding that author (D17).
+-- The back control, on one author: the list at the page holding that author.
 function AuthorsScreen:back()
     local name = self.showing.name
     local p = plan(self, LIST, 1, self.dimen.w, self.dimen.h, self.ctx)
@@ -324,8 +304,8 @@ function AuthorsScreen:action_at(pos)
     return nil
 end
 
--- What lies at (x, y) on the shown window (D9): { kind = "author", entry }, { kind = "book",
--- record } or { kind = "empty" }; nil with no Authors window shown.
+-- What lies at (x, y) on the shown window: { kind = "author", entry }, { kind = "book", record } or
+-- { kind = "empty" }; nil with no Authors window shown.
 function AuthorsScreen.hit(x, y)
     local screen = AuthorsScreen.shown
     if not screen then
@@ -345,14 +325,14 @@ function AuthorsScreen.hit(x, y)
     return { kind = "empty" }
 end
 
--- The covers of every book of the library, once per show (series-and-authors D2).
+-- The covers of every book of the library, once per show.
 function AuthorsScreen:request_covers()
     LibraryChrome.request_records(self)
 end
 
--- The metadata events and the sheets re-list: the kept sort dropped, the books read again (a book
--- just downloaded kept in its place, LibraryChrome.keep_downloaded), then the view rebuilt. A
--- failed read is logged and the view rebuilt from the books as they were.
+-- The metadata events and the sheets re-list: the kept sort dropped, the books read again (a book just
+-- downloaded kept in its place, LibraryChrome.keep_downloaded), then the view rebuilt. A failed read
+-- is logged and the view rebuilt from the books as they were.
 function AuthorsScreen:refresh()
     if AuthorsScreen.shown ~= self then
         return

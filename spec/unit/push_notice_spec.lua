@@ -1,4 +1,4 @@
--- Probation and the pull's notices (C10): Home.show tells its finished callback whether the home
+-- Probation and the pull's notices: Home.show tells its finished callback whether the home
 -- painted; the first painted home of a process ends probation and shows the apply patch's result;
 -- a refused plugin shows the result only when nothing is on probation; each kind has its wording.
 describe("the pull's probation and notices", function()

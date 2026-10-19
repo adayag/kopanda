@@ -1,8 +1,7 @@
--- The capture inputs a studio profile needs (C1): the driver's device, a screen given in place of
--- a profiles.lua entry, and settings_file, copied into the scratch KO_HOME as the plugin's
--- settings; the home fixture's KOPANDA_HOME_WEATHER_* variables, which write its weather reading
--- for the location and units a profile's settings store; and a copied settings file whose chunk
--- returns a non-table, which renders as every key at its default.
+-- The capture inputs a studio profile needs: the driver's device, a screen given in place of a profiles.lua entry,
+-- and settings_file, copied into the scratch KO_HOME as the plugin's settings; the home fixture's
+-- KOPANDA_HOME_WEATHER_* variables, which write its weather reading for the location and units a profile's settings
+-- store; and a copied settings file whose chunk returns a non-table, which renders as every key at its default.
 describe("the capture inputs", function()
     require("commonrequire")
     local lfs = require("libs/libkoreader-lfs")

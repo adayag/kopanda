@@ -1,10 +1,8 @@
--- The hold's dispatch (context-menu C7, "Holds", D3, D16): LibrarySheets.hold opens the book sheet
--- for a book held on the library, on one series and on one author, over that window as the screen
--- beneath, its paint_ms from the hold, and opens nothing for a series row, an author row or empty
--- space on the Series and Authors windows. The held books are files under KO_HOME, so the sheet's
--- check that the file is still there passes. The folder sheet (C5, "The folder sheet", D6, D11,
--- D12) opens for a folder tile on the library alone, and the empty-space sheet (C6, "The empty-space
--- sheet", D9, D10, D15) for any other hold there, its Refresh covers against the real CoverBrowser.
+-- The hold's dispatch: LibrarySheets.hold opens the book sheet for a book held on the library, on one series and on
+-- one author, over that window as the screen beneath, its paint_ms from the hold, and opens nothing for a series row,
+-- an author row or empty space on the Series and Authors windows. The held books are files under KO_HOME, so the
+-- sheet's check that the file is still there passes. The folder sheet opens for a folder tile on the library alone,
+-- and the empty-space sheet for any other hold there, its Refresh covers against the real CoverBrowser.
 -- luacheck: read globals load_plugin
 
 -- As books_coverbrowser_spec.lua: KOReader's sqlite binding can be loaded once per process, and
@@ -97,9 +95,8 @@ describe("LibrarySheets.hold", function()
         assert_book_sheet(library, hit, record)
     end)
 
-    -- The Series and Authors windows: a book held on one series or one author opens its sheet; their
-    -- own rows, empty space, no hit and a folder hit (D3: the folder sheet is the library's) open
-    -- nothing.
+    -- The Series and Authors windows: a book held on one series or one author opens its sheet; their own rows, empty
+    -- space, no hit and a folder hit open nothing.
     local SHELVES = {
         {
             name = "Series",
@@ -436,7 +433,7 @@ describe("LibrarySheets.hold", function()
             assert.equals(library, harness.top())
         end)
 
-        -- With the kept listing (TW-cypagc): the Hide lists the folder once, and the listing it keeps
+        -- With the kept listing: the Hide lists the folder once, and the listing it keeps
         -- leaves the folder out on every page turned to after, without listing again.
         it("hides a folder after page turns that did not list, and no turn after brings it back", function()
             local folders = {}
@@ -549,7 +546,7 @@ describe("LibrarySheets.hold", function()
                 library:go(ROOT, 1)
                 harness.tick(2)
                 settled = {}
-                -- The grid's space, the header and the pager (D15).
+                -- The grid's space, the header and the pager.
                 local points = { { grid_space(library) }, { 5, 5 }, { centre(library.pager.prev.rect) } }
                 for i, point in ipairs(points) do
                     local sheet = hold_empty(library, point[1], point[2])

@@ -1,5 +1,5 @@
--- The sheet's layout: its spec laid out under a ctx in a variant into a panel widget, with the
--- rectangles sheet.lua matches taps against. sheet.lua's header comment gives the spec.
+-- The sheet's layout: its spec laid out under a ctx in a variant into a panel widget, with the rectangles
+-- sheet.lua matches taps against. sheet.lua's header comment gives the spec.
 local Geom = require("ui/geometry")
 local Icons = require("icons")
 local Looks = require("looks")
@@ -48,12 +48,10 @@ local function part_of(look, name, muted)
     return copy
 end
 
--- Lays out the sheet's spec under ctx in variant into a Panel, and returns it with the panel's
--- rectangle, the rectangle with its shadow, the header's rectangle (or nil), the hint's (or nil),
--- a heading header's parts' rectangles ({ heading, aside, hint, label }, each nil without it) and
--- the rows' places ({ row, rect, label, sublabel, detail, check }) or the body's areas ({ rect,
--- tap, hold, close_first }), all in screen coordinates, how many rows it left out and whether its body is
--- too tall for the screen. A missing icon is logged once per build.
+-- Lays out the sheet's spec under ctx in variant into a Panel, and returns it with the panel's rectangle, the
+-- rectangle with its shadow, the header's and hint's rectangles, a heading header's parts' rectangles, the
+-- rows' places ({ row, rect, label, sublabel, detail, check }) or the body's areas, how many rows it left
+-- out and whether its body is too tall for the screen. A missing icon is logged once per build.
 function SheetLayout.build(spec, ctx, variant)
     local look = ctx.look
     local tokens = look.sheet
@@ -141,8 +139,7 @@ function SheetLayout.build(spec, ctx, variant)
             end
         else
             local gap = scale(tokens.aside_gap)
-            -- The label at the header's right (SortC.dc.html:43), built first so the heading's
-            -- column leaves room for it.
+            -- The label at the header's right, built first so the heading's column leaves room for it.
             local label, column_w = nil, inner_w
             if header.label then
                 label = Typeset.line(look.type.sheet_label, header.label, inner_w, bctx)
@@ -156,7 +153,7 @@ function SheetLayout.build(spec, ctx, variant)
             end
             -- What the heading, and an aside beside it, leave on the header's left.
             local left_w = heading_w
-            -- The aside stacked above the heading (SortC.dc.html:39-41), its own line.
+            -- The aside stacked above the heading, its own line.
             local above_h = 0
             if header.aside and header.aside_above then
                 local above = Typeset.line(look.type.sheet_aside, header.aside, column_w, bctx)
@@ -174,7 +171,7 @@ function SheetLayout.build(spec, ctx, variant)
                     left_w = heading_w + gap + aside_w
                 end
             end
-            -- The hint at the header's right (FolderOpen.dc.html:40).
+            -- The hint at the header's right.
             if header.hint then
                 local hint = Typeset.line(look.type.sheet_aside, header.hint,
                     math.max(1, inner_w - left_w - gap), bctx)
@@ -183,7 +180,7 @@ function SheetLayout.build(spec, ctx, variant)
                 parts[#parts + 1] = part
                 hint_rect = part
             end
-            -- On one baseline, as the boards align them (HoldHome:35-37), under an aside above.
+            -- On one baseline, under an aside above.
             local ascent, descent = 0, 0
             for _, part in ipairs(parts) do
                 part.baseline = Typeset.baseline(part.widget)
@@ -255,7 +252,7 @@ function SheetLayout.build(spec, ctx, variant)
             logger.warn("KoPanda: the sheet", spec.name, "has no icon", icon_id, "; its place is left blank")
         end
         local room = row_w - indent
-        -- The selected row's check at its right (SortC.dc.html:50).
+        -- The selected row's check at its right.
         if row.selected then
             b.check = TintedIcon:new{ file = Icons.path("check"), size = icon_size, color = color("ink") }
             room = room - icon_size - row_gap
@@ -265,8 +262,7 @@ function SheetLayout.build(spec, ctx, variant)
             if chip_role then
                 local chip_outline = scale(tokens.chip_outline_width)
                 local cx, cy = scale(tokens.chip_padding.x) + chip_outline, scale(tokens.chip_padding.y) + chip_outline
-                -- A chip on paper sets its text in ink (HoldEmptyC.dc.html:47): sheet_chip's
-                -- on_accent is the night paper itself by night.
+                -- A chip on paper sets its text in ink: sheet_chip's on_accent is the night paper itself by night.
                 local chip_part = chip_role == "paper" and "sheet_chip_plain" or "sheet_chip"
                 b.detail = Typeset.line(part_of(look, chip_part, row.muted), row.detail,
                     math.max(1, room - 2 * cx), bctx)
@@ -283,7 +279,7 @@ function SheetLayout.build(spec, ctx, variant)
         end
         b.label = Typeset.line(part_of(look, "sheet_row", row.muted), row.label or "", math.max(1, room), bctx)
         b.text_h = b.label:getSize().h
-        -- The second line under the label (SortC.dc.html:46-48).
+        -- The second line under the label.
         if row.sublabel then
             b.sublabel = Typeset.line(part_of(look, "sheet_sublabel", row.muted), row.sublabel, math.max(1, room), bctx)
             b.text_h = b.text_h + scale(tokens.sublabel_gap) + b.sublabel:getSize().h
@@ -320,10 +316,9 @@ function SheetLayout.build(spec, ctx, variant)
             widget:free()
         end
     end
-    -- With spec.more, rows left out after at least one that fits are paged: the last slot that
-    -- fits beside one or more rows takes a More row, whose run hands spec.more.run the rows
-    -- after the ones kept, in order. Without a row beside it, it would page nothing, so the rows
-    -- are left out as without more.
+    -- With spec.more, rows left out after at least one that fits are paged: the last slot that fits beside a row
+    -- takes a More row, whose run hands spec.more.run the rows after the ones kept. Without a row beside it, it
+    -- would page nothing, so the rows are left out as without more.
     local more
     if spec.more and kept > 0 and kept < #built then
         local has_icons = false

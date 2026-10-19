@@ -12,10 +12,9 @@ describe("golden comparison", function()
     local lodepng = ffi.loadlib("lodepng")
     local colortypes = { [1] = lodepng.LCT_GREY, [3] = lodepng.LCT_RGB, [4] = lodepng.LCT_RGBA }
 
-    -- Writes a w×h image with ncomp components per pixel to path. pixel(x, y) returns the
-    -- component values for that pixel. Png.encodeToFile leaves lodepng's auto_convert on
-    -- (base/ffi/png.lua:35), which stores an opaque grey RGBA image as grey; this encoder
-    -- turns it off so each file keeps the colour type it is written with.
+    -- Writes a w×h image with ncomp components per pixel to path; pixel(x, y) returns that pixel's components.
+    -- Png.encodeToFile leaves lodepng's auto_convert on (base/ffi/png.lua:35), which stores an opaque grey RGBA image
+    -- as grey; this encoder turns it off so each file keeps the colour type it is written with.
     local function write_png(path, w, h, ncomp, pixel)
         local mem = ffi.new("unsigned char[?]", w * h * ncomp)
         for y = 0, h - 1 do

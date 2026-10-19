@@ -1,9 +1,7 @@
--- Paths to files shipped in the plugin folder, and KOReader faces for its font files.
---
--- Font:getFace treats a name starting with / or ./ as a path and anything else as a name under
--- KOReader's own fonts folder (frontend/ui/font.lua:307-312). On a device the plugin folder is
--- relative to the KOReader directory, plugins/kopanda.koplugin (frontend/pluginloader.lua:24,
--- :204), so a plugin path is given a ./ prefix when it has neither.
+-- Paths to files shipped in the plugin folder, and KOReader faces for its font files. Font:getFace
+-- treats a name starting with / or ./ as a path, else as a name under KOReader's fonts folder
+-- (frontend/ui/font.lua:307-312). The plugin folder is relative to the KOReader directory on a device
+-- (frontend/pluginloader.lua:24, :204), so a plugin path is given a ./ prefix when it has neither.
 local Font = require("ui/font")
 local FontList = require("fontlist")
 local ffiUtil = require("ffi/util")
@@ -32,11 +30,10 @@ function Fonts.path(rel)
 end
 
 -- The name Fonts.face hands Font:getFace for the font file at rel. Stable KOReader (v2026.07.x,
--- frontend/ui/font.lua:306) joins every name onto FontList.fontdir, a path included; the pinned
--- build takes a name starting with / or ./ as a path (font.lua:307-312, since c4f1127) and joins
--- the rest the same way. One name works under both: a relative path that climbs out of the fonts
--- folder to the file's absolute path. A file realpath can't resolve gets the plain plugin path,
--- so getFace fails on it as before.
+-- frontend/ui/font.lua:306) joins every name onto FontList.fontdir, a path included; the pinned build
+-- takes a name starting with / or ./ as a path (font.lua:307-312). One name works under both: a
+-- relative path that climbs out of the fonts folder to the file's absolute path. A file realpath
+-- can't resolve gets the plain plugin path.
 function Fonts.face_name(rel)
     local path = Fonts.path(rel)
     local absolute = ffiUtil.realpath(path)

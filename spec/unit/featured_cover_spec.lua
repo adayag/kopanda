@@ -1,4 +1,4 @@
--- The featured book's cover box (C5): a cached cover fitted and centred on paper, the typographic
+-- The featured book's cover box: a cached cover fitted and centred on paper, the typographic
 -- placeholder, the first run's dashed frame, the 40 % cap, and the one bounded extraction path.
 -- bookinfomanager is stubbed in package.loaded and UIManager's scheduleIn and unschedule record
 -- their calls; each case restores them in finally.
@@ -100,10 +100,9 @@ describe("the featured cover", function()
         return n
     end
 
-    -- A bookinfomanager stub. opts.info(file, get_cover) gives getBookInfo's result; extracting
-    -- is a list of isExtractingInBackground's answers, its last repeated. isCachedCoverInvalid is
-    -- the real one's rule: true for a row with no cover_w (bookinfomanager.lua:1014-1015), and
-    -- true when the thumbnail is smaller than the box.
+    -- A bookinfomanager stub. opts.info(file, get_cover) gives getBookInfo's result; extracting is a list of
+    -- isExtractingInBackground's answers, its last repeated. isCachedCoverInvalid is the real one's rule: true for a
+    -- row with no cover_w (bookinfomanager.lua:1014-1015), and true when the thumbnail is smaller than the box.
     local function manager(opts)
         local m = { extracted = {}, extracting_calls = 0 }
         function m:getBookInfo(file, get_cover)

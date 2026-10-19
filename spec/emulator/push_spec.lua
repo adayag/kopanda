@@ -1,8 +1,8 @@
--- A pull end to end on the emulator, over several starts of one scratch KO_HOME: the first
--- start pulls a bundle from push_server.lua through the plugin's own pull code (the push-pull
--- scenario) and restarts; the next applies it before any plugin loads (patches/1-kopanda-apply.lua),
--- and a home that never draws is rolled back at the start after. The notices scenario writes
--- each InfoMessage shown to a file, so the spec reads what the owner would have seen.
+-- A pull end to end on the emulator, over several starts of one scratch KO_HOME: the first start pulls a bundle from
+-- push_server.lua through the plugin's own pull code (the push-pull scenario) and restarts; the next applies it
+-- before any plugin loads (patches/1-kopanda-apply.lua), and a home that never draws is rolled back at the start
+-- after. The notices scenario writes each InfoMessage shown to a file, so the spec reads what the owner would have
+-- seen.
 describe("pulling from the studio on the emulator", function()
     require("commonrequire")
     local lfs = require("libs/libkoreader-lfs")

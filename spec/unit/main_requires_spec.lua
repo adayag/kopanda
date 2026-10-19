@@ -1,8 +1,7 @@
--- main.lua requires every KoPanda module at load time: KOReader puts the plugin root on
--- package.path only while it dofile()s main.lua (frontend/pluginloader.lua:242, :269-270). The
--- unit harness keeps the root on package.path throughout, so a module main.lua forgets still
--- loads under every other spec. This one reads main.lua's text for a top-level require of each
--- module, and loads the plugin once to see every module required by loading main.lua alone.
+-- main.lua requires every KoPanda module at load time: KOReader puts the plugin root on package.path only while it
+-- dofile()s main.lua (frontend/pluginloader.lua:242, :269-270). The unit harness keeps the root on package.path
+-- throughout, so a module main.lua forgets still loads under every other spec; this one reads main.lua's text for a
+-- top-level require of each module, and loads the plugin once to see every module required by loading main.lua alone.
 describe("kopanda.koplugin/main.lua", function()
     local harness = require("plugin_harness")
 

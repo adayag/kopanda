@@ -1,9 +1,7 @@
--- Helpers shared by the Series and Authors windows' specs (spec/unit/series_screen_spec.lua,
--- authors_screen_spec.lua, shelf_gestures_spec.lua, shelf_lifecycle_spec.lua and the series and
--- authors cases of failsafe_spec.lua and nav_bar_spec.lua): records given to Books.all in place of
--- the disk, under a root that exists nowhere, and the window shown over a file manager. Each reads
--- the plugin's modules at call time, so it sees the ones the spec's harness.load() left loaded.
--- Busted gives a spec file its assert; a module required from one takes luassert, the same table.
+-- Helpers shared by the Series and Authors windows' specs: records given to Books.all in place of the disk, under a
+-- root that exists nowhere, and the window shown over a file manager. Each reads the plugin's modules at call time,
+-- so it sees the ones the spec's harness.load() left loaded. Busted gives a spec file its assert; a module required
+-- from one takes luassert, the same table.
 local assert = require("luassert")
 local harness = require("plugin_harness")
 
@@ -43,10 +41,9 @@ function M.series(name, n, author)
     return list
 end
 
--- Books.all gives a copy of records, read at each call so a spec can add to it; Books.progress
--- progress[id] (default: new); Books.get the record of records with id, or nil. Returns the calls:
--- all, the count of Books.all's, and progress, the ids Books.progress was asked for. Undone by the
--- next harness.load().
+-- Books.all gives a copy of records, read at each call so a spec can add to it; Books.progress progress[id]
+-- (default: new); Books.get the record with id, or nil. Returns the calls: all, the count of Books.all's, and
+-- progress, the ids Books.progress was asked for. Undone by the next harness.load().
 function M.install(records, progress)
     local Books = package.loaded["books"]
     local calls = { all = 0, progress = {} }

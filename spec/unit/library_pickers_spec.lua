@@ -1,7 +1,6 @@
--- The library's sort and status pickers (cover-grid C10, "The pickers"): a tap on a picker in the
--- header opens its sheet over the library, the current choice selected; a tap on a row stores the
--- choice for this folder alone, closes the sheet and shows the folder's first page under it; a
--- sheet's failure closes the library, not the home; the sheet goes with the library.
+-- The library's sort and status pickers: a tap on a picker in the header opens its sheet over the library, the
+-- current choice selected; a tap on a row stores the choice for this folder alone, closes the sheet and shows the
+-- folder's first page under it; a sheet's failure closes the library, not the home; the sheet goes with the library.
 describe("the library's pickers", function()
     local harness = require("plugin_harness")
     local fixture = require("library_fixture")
@@ -227,8 +226,8 @@ describe("the library's pickers", function()
         assert.equals(0, sheets_on_stack())
     end)
 
-    -- Editorial draws its pickers with no padding (GridA.dc.html:25), so each one's tap target
-    -- reaches into the header's bottom padding and halfway across the gap between them.
+    -- Editorial draws its pickers with no padding, so each one's tap target reaches into the header's bottom padding
+    -- and halfway across the gap between them.
     it("open a picker's sheet on a tap in the header's padding under it, in Editorial", function()
         assert.is_true(Settings.set("look", "editorial"))
         local library = fixture.show()

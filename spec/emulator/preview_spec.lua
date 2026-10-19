@@ -1,7 +1,6 @@
--- bin/preview renders a profile's home in one look, day or night (C2, C3): the default settings
--- render what the capture driver takes of the populated home, night renders the look's night
--- paper, and a settings change renders differently. Each case runs the script as the studio's
--- server does, with TMPDIR under this run's KO_HOME, which bin/check removes.
+-- bin/preview renders a profile's home in one look, day or night: the default settings render what the capture
+-- driver takes of the populated home, night renders the look's night paper, and a settings change renders
+-- differently. Each case runs the script as the studio's server does, with TMPDIR under this run's KO_HOME.
 describe("bin/preview", function()
     require("commonrequire")
     local lfs = require("libs/libkoreader-lfs")

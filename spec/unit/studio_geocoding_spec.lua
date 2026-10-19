@@ -1,5 +1,5 @@
 -- The plugin's place search gives every URL and every parse of the corpus the studio's server is
--- held to (studio/test/server/geocoding.test.ts), so the two can't drift (C6).
+-- held to (studio/test/server/geocoding.test.ts), so the two can't drift.
 describe("LocationSearch on the shared geocoding corpus", function()
     local harness = require("plugin_harness")
     local cases = dofile(harness.root .. "/spec/fixtures/studio/geocoding_cases.lua")

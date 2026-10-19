@@ -1,13 +1,9 @@
--- The cover reads and the batched extraction (book-model C6): a usable cached bitmap returned and an
--- unusable one freed; one extractInBackground per request for every wanted file with the specs
--- given, never for a file already asked, a path-less record or a cover that fits; a check once a
--- second while extraction runs, at most 30, each calling on_arrival once with exactly the records
--- that arrived; the last check's cover read; alive(), cancel, a replacing request (one made from
--- on_arrival too, raising or not), files given up by the last check asked again later and a failed
--- fork; forget (context-menu C6).
--- bookinfomanager is stubbed in package.loaded, since this file sorts before
--- books_coverbrowser_spec.lua, which loads the real one; UIManager's scheduleIn and unschedule
--- record their calls; each case restores them in finally.
+-- The cover reads and the batched extraction: a usable cached bitmap returned and an unusable one freed; one
+-- extractInBackground per request for every wanted file, never for one already asked, a path-less record or a cover
+-- that fits; a check once a second while extraction runs, at most 30, each calling on_arrival once with the records
+-- that arrived; alive(), cancel, a replacing request, files given up by the last check asked again later, a failed
+-- fork; forget. bookinfomanager is stubbed in package.loaded, since this file sorts before
+-- books_coverbrowser_spec.lua, which loads the real one; UIManager's scheduleIn and unschedule record their calls.
 describe("BookCovers", function()
     require("plugin_harness")
     local UIManager = require("ui/uimanager")
@@ -30,10 +26,10 @@ describe("BookCovers", function()
         return { free = function() counter[1] = counter[1] + 1 end }
     end
 
-    -- A bookinfomanager stub. opts.info(file, get_cover) gives getBookInfo's result; extracting
-    -- is a list of isExtractingInBackground's answers, its last repeated. isCachedCoverInvalid is
-    -- the real one's rule (bookinfomanager.lua:1013-1030): true for a row with no cover_w, and true
-    -- when the thumbnail is smaller than the box both ways.
+    -- A bookinfomanager stub. opts.info(file, get_cover) gives getBookInfo's result; extracting is a list of
+    -- isExtractingInBackground's answers, its last repeated. isCachedCoverInvalid is the real one's rule
+    -- (bookinfomanager.lua:1013-1030): true for a row with no cover_w, and true when the thumbnail is smaller than
+    -- the box.
     local function manager(opts)
         local m = { extracted = {}, extracting_calls = 0, reads = {} }
         function m:getBookInfo(file, get_cover)
@@ -427,7 +423,7 @@ describe("BookCovers", function()
         end)
     end)
 
-    -- context-menu D9, C6: Refresh covers forgets a folder's books. forget deletes each path's
+    -- Refresh covers forgets a folder's books. forget deletes each path's
     -- CoverBrowser row and BookList's cache entry and drops it from the files asked and the request
     -- in flight, as CoverBrowser's own refresh does (plugins/coverbrowser.koplugin/main.lua:533-546).
     describe("forget", function()
@@ -611,9 +607,8 @@ describe("BookCovers", function()
             assert.same({ files(A, B), files(B, C) }, bim.extracted)
         end)
 
-        -- series-and-authors "Extraction", the cap: after 30 checks with the extraction still running,
-        -- the last check forgets the files that did not arrive, as a replacing request forgets its
-        -- pending ones, so a later request asks for them again; a file that arrived is not asked.
+        -- The cap: after 30 checks with the extraction still running, the last check forgets the files that did not
+        -- arrive, as a replacing request forgets its pending ones, so a later request asks for them again.
         it("asks again, at a later request, for a file the last check gave up on, and not for one that arrived",
             function()
             local arrived = {}

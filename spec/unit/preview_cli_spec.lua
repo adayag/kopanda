@@ -1,4 +1,4 @@
--- bin/preview's refusals and plumbing (C4), against a fake emulator directory whose luajit is a
+-- bin/preview's refusals and plumbing, against a fake emulator directory whose luajit is a
 -- shell script: it records the KO_HOME it was given, prints chatter on stdout as KOReader's
 -- library loader does, and either writes the PNG and the JSON line or fails with a message and
 -- two log lines. No real emulator runs; spec/emulator/preview_spec.lua renders for real.
@@ -58,9 +58,8 @@ describe("bin/preview", function()
         return dir
     end
 
-    -- Runs bin/preview with args from the repo root, TMPDIR a directory of this spec's own (so
-    -- the scratch KO_HOME the script makes lands there), and env (NAME=value words) before it.
-    -- Returns stdout, stderr and the exit status.
+    -- Runs bin/preview with args from the repo root, TMPDIR a directory of this spec's own (so the scratch KO_HOME the
+    -- script makes lands there), and env (NAME=value words) before it. Returns stdout, stderr and the exit status.
     local function run(args, env)
         local stdout, stderr = scratch .. "/stdout", scratch .. "/stderr"
         local command = string.format("cd '%s' && TMPDIR='%s' FAKE_RECORD='%s' %s bin/preview %s > '%s' 2> '%s'",

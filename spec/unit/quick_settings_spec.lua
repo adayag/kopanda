@@ -1,10 +1,8 @@
--- The quick-settings sheet's panel (bars/quick-settings C4): QuickSettings.open shows one sheet
--- named quick_settings over the home or the bare file browser; its header, its brightness and
--- warmth bars read from the power device in native steps, its six cells read from the radio,
--- the settings and the launcher's entries, greyed where they can't run; its paint in both looks
--- by day, at night and in grey; its fit on the Colorsoft at every text size; and its ten areas.
--- Every stub of Device, its power device, NetworkMgr, the plugin list, the dispatcher and
--- G_reader_settings is put back after the test that makes it.
+-- The quick-settings sheet's panel: QuickSettings.open shows one sheet named quick_settings over the home or the bare
+-- file browser; its header, its brightness and warmth bars read from the power device in native steps, its six cells
+-- read from the radio, the settings and the launcher's entries, greyed where they can't run; its paint in both looks
+-- by day, at night and in grey; its fit on the Colorsoft at every text size; and its ten areas. Every stub is put back
+-- after the test that makes it.
 describe("the quick-settings sheet", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")

@@ -1,8 +1,6 @@
--- The book sheet (sheets' C5), its read status sub-sheet (C6) and the featured-book picker (C7),
--- opened by a hold on the featured slot of a shown home over a real file manager. Books are
--- copies of the fixture library's EPUBs under KO_HOME, in KOReader's history (ReadHistory.hist,
--- realpaths) and with sidecars in the "dir" location, as featured_book_spec.lua writes them;
--- status writes and pins land in the real sidecars and settings file there.
+-- The book sheet, its read status sub-sheet and the featured-book picker, opened by a hold on the featured slot of a
+-- shown home over a real file manager. Books are copies of the fixture library's EPUBs under KO_HOME, in KOReader's
+-- history (realpaths) and with sidecars in the "dir" location, as featured_book_spec.lua writes them.
 describe("the book sheet", function()
     local harness = require("plugin_harness")
     local BookList = require("ui/widget/booklist")
@@ -422,9 +420,8 @@ describe("the book sheet", function()
             assert.is_nil(Sheet.shown)
         end)
 
-        -- series-and-authors C8, D6: the first-listed author's own books, read from the book's
-        -- record on the tap, or the Authors list for a book with no author. The library is
-        -- books_dir, so the Authors window lists these books.
+        -- The first-listed author's own books, read from the book's record on the tap, or the Authors list for a book
+        -- with no author. The library is books_dir, so the Authors window lists these books.
         describe("on More by this author", function()
             local AuthorsScreen, Books
 
@@ -438,10 +435,9 @@ describe("the book sheet", function()
                 end)
             end)
 
-            -- Taps More by this author on a's sheet, running before_tap (if given) between the hold
-            -- and the tap; returns the Authors window shown, checking it went up over the file
-            -- manager with the sheet and the home closed, and that the book's record was read on
-            -- the tap alone.
+            -- Taps More by this author on a's sheet, running before_tap (if given) between the hold and the tap;
+            -- returns the Authors window shown, checking it went up over the file manager and that the book's record
+            -- was read on the tap alone.
             local function more_by(before_tap)
                 local fm = fm_with_home()
                 hold_book()
@@ -928,10 +924,9 @@ describe("the book sheet", function()
         end)
     end)
 
-    -- context-menu C3, D2, D5, D13: the sheet over a book record from the library or a shelf screen,
-    -- shown over a window that stands for the one held on: its own open and re-list are recorded,
-    -- its close is the sheet's screen beneath. The file manager's home stays up beneath the window,
-    -- so a callback reaching the home would show.
+    -- The sheet over a book record from the library or a shelf screen, shown over a window that stands for the one held
+    -- on: its own open and re-list are recorded, its close is the sheet's screen beneath. The home stays up beneath the
+    -- window, so a callback reaching the home would show.
     describe("over a library record", function()
         local BookSheet, Books, Looks
         local a
@@ -1083,7 +1078,7 @@ describe("the book sheet", function()
             end)
         end)
 
-        -- context-menu C4: Add to the home after More by this author, unticked with no pin; Delete last.
+        -- Add to the home after More by this author, unticked with no pin; Delete last.
         it("lists Open, Book details, Read status, More by this author, Add to the home and Delete with their "
             .. "icons", function()
             open(Books.for_path(a))
@@ -1187,7 +1182,7 @@ describe("the book sheet", function()
             end)
         end)
 
-        -- context-menu C4, D8: Add to the home pins the book as the home's picker does, by its
+        -- Add to the home pins the book as the home's picker does, by its
         -- realpath, with the window left as it was and no home refresh.
         describe("on Add to the home", function()
             local function settings_table()
@@ -1263,7 +1258,7 @@ describe("the book sheet", function()
             end)
         end)
 
-        -- context-menu C4, D7: Delete is KOReader's own delete confirm, whose post-delete callback
+        -- Delete is KOReader's own delete confirm, whose post-delete callback
         -- re-lists the window.
         describe("on Delete", function()
             local ConfirmBox = require("ui/widget/confirmbox")

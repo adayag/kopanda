@@ -1,6 +1,5 @@
--- The settings menu's rows, generated from the schema (device-menus' C1 and C3's menu part): one
--- row per key in schema order, cut to a group, each type's row text and tap, and what a write
--- does after it, against a real settings file under the scratch KO_HOME.
+-- The settings menu's rows, generated from the schema: one row per key in schema order, cut to a group, each type's row
+-- text and tap, and what a write does after it, against a real settings file under the scratch KO_HOME.
 describe("the settings menu's rows", function()
     local harness = require("plugin_harness")
     -- spec/home_gestures.lua, required before harness.load() puts the plugin's own home_gestures in

@@ -1,8 +1,6 @@
--- The add-an-entry picker: EntryPicker.pick(kind, ctx, on_entry) turns one of the five kinds of
--- launcher entry into an entry the settings validator takes and calls on_entry with it, or shows
--- a note and calls nothing. It writes nothing; launcher management stores what it gets. Every
--- step runs guarded: an error is logged, the picker's dialog or menu still up closes, and
--- on_entry isn't called.
+-- The add-an-entry picker: EntryPicker.pick(kind, ctx, on_entry) turns one of the five kinds of launcher
+-- entry into an entry the settings validator takes and calls on_entry with it, or shows a note. It
+-- writes nothing. Every step runs guarded: an error is logged, the open dialog closes, on_entry isn't called.
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Dispatcher = require("dispatcher")
 local Helpers = require("helpers")

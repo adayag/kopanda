@@ -1,7 +1,6 @@
--- The library window's covers (cover-grid "Covers"): the request for a shown page's covers and the
--- tiles an arrival rebuilds.
--- It works on a library (library.lua) it is handed and asks alive() whether that one is still the
--- library shown, so it needs no module state of its own.
+-- The library window's covers: the request for a shown page's covers and the tiles an arrival rebuilds. It
+-- works on a library (library.lua) it is handed and asks alive() whether that one is still the library
+-- shown, so it needs no module state.
 local BookCovers = require("book_covers")
 local Books = require("books")
 local Geom = require("ui/geometry")
@@ -26,11 +25,10 @@ local function read_again(shown)
     return record, progress or Books.progress(record)
 end
 
--- Rebuilds in place the tiles of the books whose ids are keys of ids, from their records read again
--- (a title that came with an extraction replaces the file name) and their progress read now,
--- keeping the page's order; the library's kept listing takes each record (LibraryView.renew), so
--- the next build filters and sorts with it. A failure is logged with what and leaves every tile
--- as it was. Returns how many tiles it rebuilt, and those tiles.
+-- Rebuilds in place the tiles of the books whose ids are keys of ids, from their records read again (a
+-- title that came with an extraction replaces the file name) and their progress, keeping the page's order;
+-- the library's kept listing takes each record (LibraryView.renew). A failure is logged and leaves every
+-- tile as it was. Returns how many tiles it rebuilt, and those tiles.
 function LibraryCovers.rebuild_tiles(library, ids, what)
     local fresh = {}
     local ok, err = pcall(function()
@@ -78,9 +76,8 @@ local function painted(library, tiles)
 end
 
 -- Puts each arrived record the page shows no tile of in the library's kept listing, read again
--- (LibraryView.renew), so a page turned to shows the title that came with its extraction: Refresh
--- covers (context-menu D9) asks for the whole folder's covers at once. One that can't be read again
--- is left as kept; a failure is logged and leaves the rest as kept.
+-- (LibraryView.renew), so a page turned to shows the title that came with its extraction. One that can't
+-- be read again is left as kept.
 local function renew_off_page(library, arrived)
     if not library.kept then
         return
@@ -106,10 +103,9 @@ local function renew_off_page(library, arrived)
     end
 end
 
--- Rebuilds the arrived records' tiles the page shows and repaints, while the library is alive,
--- refreshing "ui" over just those tiles with the dither hint, as CoverBrowser refreshes an item
--- whose cover came (plugins/coverbrowser.koplugin/covermenu.lua:144-157); the others' records are
--- kept for a page turned to (renew_off_page).
+-- Rebuilds the arrived records' tiles the page shows and repaints, while the library is alive, refreshing
+-- "ui" over just those tiles with the dither hint, as CoverBrowser does for an item whose cover came
+-- (plugins/coverbrowser.koplugin/covermenu.lua:144-157); the others' records are kept for a page turned to.
 local function on_arrival(library, arrived, alive)
     if not alive() then
         return
@@ -129,10 +125,9 @@ local function on_arrival(library, arrived, alive)
 end
 
 -- Asks for the covers of records (default: the library's page's books) at the cover box's size
--- (BookCovers.request), each arrival rebuilding the tiles the page shows of them while alive() says
--- the library is the one shown; an arrival off the page rebuilds none and stays in CoverBrowser's
--- cache for a later page, its record read again into the kept listing. A failure is logged; the
--- tiles keep their placeholders.
+-- (BookCovers.request), each arrival rebuilding the tiles the page shows of them while alive(); an arrival
+-- off the page stays in CoverBrowser's cache and its record is read again into the kept listing. A
+-- failure is logged; the tiles keep their placeholders.
 function LibraryCovers.request(library, alive, records)
     if not alive() then
         return

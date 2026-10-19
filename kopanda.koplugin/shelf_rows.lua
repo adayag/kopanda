@@ -1,14 +1,7 @@
--- The series and authors screens' rows: a series row (its stacked covers, name, sub-line and state
--- chip), a one-series book row (its index, cover, title, bar or note, and chip) and an author letter
--- group (the letter column beside its authors' rows), from the look's shelf tokens (SeriesC.dc.html,
--- SeriesBooksC.dc.html, AuthorsC.dc.html under .tiller/design/2026-10-16-kopanda-library-screens/;
--- series-and-authors D3, D15, D19 to D22). Lengths are board pixels, scaled by ctx.screen. The rows'
--- text does not follow text_size (D22), so every line is set in a ctx without one, as the library's
--- tiles are.
---
--- Each widget is its width and a fixed height for its kind, whatever it holds, so the screens page
--- by ShelfRows.height without building a page. What reaches past a row's box, its shadow and
--- Diner's overhanging badge, is painted past it into the gaps.
+-- The series and authors screens' rows: a series row (stacked covers, name, sub-line, state chip),
+-- a one-series book row (index, cover, title, bar or note, chip) and an author letter group, from the
+-- look's shelf tokens. Lengths are scaled by ctx.screen and the text ignores text_size, as the library's
+-- tiles do. Each widget has a fixed height for its kind, so the screens page by ShelfRows.height.
 local BookCovers = require("book_covers")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Featured = require("widgets/featured")
@@ -24,7 +17,7 @@ local Typeset = require("typeset")
 
 local ShelfRows = {}
 
--- A series row stacks the first three books' covers (D21).
+-- A series row stacks the first three books' covers.
 local STACK = 3
 
 -- A row, a group or a stack: its children painted at their places from its top left, in order,
@@ -39,7 +32,7 @@ local function add(box, child, x, y)
     return child
 end
 
--- ctx without its text size (D22).
+-- ctx without its text size.
 local function fixed(ctx)
     return { look = ctx.look, variant = ctx.variant, screen = ctx.screen }
 end
@@ -108,11 +101,8 @@ local function add_rule(box, w, h, rule, role, ctx)
     end
 end
 
--- A small cover w by h for record (D21): its cached cover fitted inside the outline, or a plain
--- cover-role fill with no lettering, outlined at outline_width in outline_role, the library's
--- cover radius. outside draws the outline outside w by h, as the board's CSS draws a book row's
--- cover (SeriesBooksC.dc.html:35); else inside it, as the stack keeps its room. Reads the cover
--- through BookCovers.read, the bitmap freed with the widget.
+-- A small cover w by h for record: its cached cover (BookCovers.read, freed with the widget) fitted
+-- inside the outline, or a plain cover-role fill. outside draws the outline outside w by h, else inside.
 local function small_cover(record, w, h, outline_width, outline_role, outside, ctx)
     local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local radius = scale(ctx.look.library.cover.radius)
@@ -137,8 +127,7 @@ local function small_cover(record, w, h, outline_width, outline_role, outside, c
     return box
 end
 
--- The chips by kind: the fill token and the part, shelf_chip_plain for the chips on paper
--- (SeriesC.dc.html:88, SeriesBooksC.dc.html:49) and shelf_chip for those on a fill.
+-- The chips by kind: shelf_chip_plain for chips on paper, shelf_chip for those on a fill.
 local CHIPS = {
     under_way = { fill = "under_way_fill_color", part = "shelf_chip" },
     finished = { fill = "finished_fill_color", part = "shelf_chip" },
@@ -189,9 +178,7 @@ local function stack_metrics(ctx)
     return w, h, ox, oy, w + (STACK - 1) * ox, h + (STACK - 1) * oy
 end
 
--- The first covers of books, at most three, the first in front: each one offset_x right of and
--- offset_y above the one before it, so the first is left-most and lowest (SeriesC.dc.html:29-33).
--- Returns the stack and its covers, first first.
+-- The first covers of books, at most three, the first in front, left-most and lowest.
 local function stack(books, ctx)
     local tokens = ctx.look.shelf.stack
     local w, h, ox, oy, stack_w, stack_h = stack_metrics(ctx)
@@ -204,7 +191,7 @@ local function stack(books, ctx)
     return box, covers
 end
 
--- D15's sub-line: the author, " and others" when another first author is in the series, then
+-- The sub-line: the author, " and others" when another first author is in the series, then
 -- "next: <title>" while under way with a next unread, else the series' book count.
 local function sub_line(entry)
     local parts = {}
@@ -232,10 +219,8 @@ local function series_content_h(ctx)
     return math.max(stack_h, text, chip_height(ctx))
 end
 
--- The series list's row for entry (ShelfOrder.series's { name, books, state, complete, total, next,
--- author, others }), width wide (SeriesC.dc.html:28-40): the stack, the name and D15's sub-line each
--- in one line cut with an ellipsis, and the state's chip, "N of M" under way (D3). The row keeps
--- stack, covers (first first), name, sub and chip.
+-- The series list's row for entry (ShelfOrder.series's entries), width wide: the stack, the name and
+-- sub-line each cut to one line, and the state's chip. Keeps stack, covers, name, sub and chip.
 function ShelfRows.series(entry, width, ctx)
     ctx = fixed(ctx)
     local look = ctx.look
@@ -298,7 +283,7 @@ local function book_content_h(ctx)
     return math.max(Typeset.line_height(types.book_index, ctx), cover_h, text, chip_height(ctx))
 end
 
--- D20's index: a whole series_index without decimals, any other as Lua writes it.
+-- A whole series_index without decimals, any other as Lua writes it.
 local function index_text(index)
     if index == math.floor(index) then
         return string.format("%d", index)
@@ -331,14 +316,13 @@ local function badge(ctx)
     return box
 end
 
--- Whether record is drawn as not on the Kindle: no path, or cwngsync's placeholder
--- (cwng-placeholders D1).
+-- Whether record is drawn as not on the Kindle: no path, or cwngsync's placeholder.
 local function not_downloaded(record)
     return not record.path or record.placeholder == true
 end
 
--- D20's chip for a book: Finished, else Up next. A book not downloaded takes no chip of its own: the
--- cover's badge is its one sign (tweaks/badge-only-not-downloaded).
+-- The chip for a book: Finished, else Up next. A book not downloaded takes none: the cover's badge is
+-- its one sign.
 local function book_chip(progress, marked)
     if progress.status == "complete" then
         return "finished", "Finished"
@@ -348,13 +332,9 @@ local function book_chip(progress, marked)
     return nil
 end
 
--- The one-series list's row for record at progress (Books.progress's { status, percent }), marked
--- when mark says it is the series' next unread, width wide (SeriesBooksC.dc.html:33-63, D20): the
--- index column (blank for a book with no series_index), the cover with the download badge on a
--- not downloaded book's, the title in one line, then the bar (full for complete, at its percent for
--- reading or abandoned), "read this one next" for the marked book, "Not on the Kindle yet" for a
--- not downloaded one, or nothing, and the chip. The marked row takes shelf.next's fill, shadow and text
--- colour. The row keeps index, cover, badge, title, bar, note, chip (nil where not drawn) and marked.
+-- The one-series list's row for record at progress (Books.progress's { status, percent }), marked when
+-- mark says it is the series' next unread, width wide. Keeps index, cover, badge, title, bar, note,
+-- chip (nil where not drawn) and marked.
 function ShelfRows.book(record, progress, mark, width, ctx)
     ctx = fixed(ctx)
     local scale = Paint.scaler(ctx)
@@ -444,8 +424,7 @@ function ShelfRows.book(record, progress, mark, width, ctx)
     return row
 end
 
--- An author group's lengths in device pixels: its outline, letter column and rule, its rows' padding,
--- the rule between rows and the group's rule.
+-- An author group's lengths in device pixels.
 local function group_frame(ctx)
     local scale = Paint.scaler(ctx)
     local look = ctx.look
@@ -469,12 +448,9 @@ local function author_row_h(ctx)
         + g.author_rule
 end
 
--- The authors list's letter group, width wide (AuthorsC.dc.html:28-75): the letter column (its fill
--- and rule) beside one row per author of authors (ShelfOrder.authors's entries { name, count }), the
--- name in one line cut with an ellipsis and "N books ›" or "1 book ›" at the right, a rule between
--- rows, inside the group's outline and shadow or over its rule. repeats marks a group continued from
--- the page before, drawn with its letter again (D14). The group keeps letter, repeats and rows, each
--- { entry, name, count, y, h }: its band from the group's top, the last without the rule below it.
+-- The authors list's letter group, width wide: the letter column beside one row per author of authors
+-- (ShelfOrder.authors's entries). repeats draws the letter again for a group continued from the page
+-- before. Keeps letter, repeats and rows, each { entry, name, count, y, h }.
 function ShelfRows.group(letter, authors, repeats, width, ctx)
     ctx = fixed(ctx)
     local look = ctx.look
@@ -549,9 +525,8 @@ function ShelfRows.group_cost(width, ctx)
     return 2 * g.outline - g.author_rule + g.group_rule + Paint.scaler(ctx)(ctx.look.shelf.groups.gap)
 end
 
--- What a list keeps clear between its page's last row of kind ("series", "book" or "author") and the
--- pager, in device pixels: shelf.list.pager_gap, and below it the deepest shadow a row of that kind
--- paints past its box (a book row's the marked one's where deeper, an author's its group's).
+-- What a list keeps clear between its page's last row of kind and the pager: shelf.list.pager_gap and
+-- the deepest shadow a row of that kind paints past its box.
 function ShelfRows.pager_reserve(kind, ctx)
     local shelf = ctx.look.shelf
     local shadow = shelf.row.shadow.y

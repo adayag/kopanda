@@ -1,10 +1,7 @@
--- The book records (book-model C1, C2, C3): the library listing from KOReader's home folder with
--- the file browser's filters, one record per file from CoverBrowser, then the sidecar, then the
--- file name, and the read status and progress from the sidecar. Run on a scratch library under
--- the data directory with home_dir pointed at it and sidecars in the "dir" location, so nothing
--- lands beside a fixture. CoverBrowser is stubbed in package.loaded where a case needs a row, and
--- unrequirable otherwise. Nothing is written: not a sidecar, not a settings file, not CoverBrowser's
--- database.
+-- The book records: the library listing from KOReader's home folder with the file browser's filters, one record per
+-- file from CoverBrowser, then the sidecar, then the file name, and the read status and progress from the sidecar.
+-- Run on a scratch library with home_dir pointed at it and sidecars in the "dir" location; nothing is written.
+-- CoverBrowser is stubbed in package.loaded where a case needs a row, and unrequirable otherwise.
 describe("Books", function()
     local harness = require("plugin_harness")
     local DataStorage = require("datastorage")

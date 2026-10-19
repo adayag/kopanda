@@ -1,5 +1,5 @@
 -- The settings store: reads fall back to the schema default, writes outside the schema are
--- refused (C3), and the file's schema_version drives migration and protects newer files (C4).
+-- refused, and the file's schema_version drives migration and protects newer files.
 describe("Settings", function()
     local harness = require("plugin_harness")
     local lfs = require("libs/libkoreader-lfs")

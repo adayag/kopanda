@@ -1,11 +1,8 @@
 -- The book records: every book KoPanda knows, by an id rather than a path. Books with a file are
 -- listed from KOReader's home folder with the file browser's own filters, their metadata from
 -- CoverBrowser's cache, then the sidecar, then the file name, and flagged placeholder when cwngsync
--- records the file as a book not downloaded yet (cloud_books.lua); books without one come from the
--- sources added here. Read status and progress are read on request, from the sidecar or the
--- source. Only reads: no extraction is asked, and no sidecar, settings file or CoverBrowser row
--- is written. Every read is caught; a failure is logged and that source reads as absent.
--- Module state: the sources, and the progress memo of the sidecars read.
+-- records the file as not downloaded (cloud_books.lua); books without one come from the sources added
+-- here. Only reads; a failed read is logged and reads as absent. State: the sources, the progress memo.
 local CloudBooks = require("cloud_books")
 local DocSettings = require("docsettings")
 local ffiutil = require("ffi/util")
@@ -19,14 +16,10 @@ local STATUSES = { reading = true, abandoned = true, complete = true }
 
 local sources = {}
 
--- The progress memo: a book's path to { file, modification, size, progress, props }, the sidecar
--- file findSidecarFile gave for it, that file's mtime and size, and what one open of it read: the
--- progress, { status, percent, pages, md5 } only, and of its doc_props the title and authors
--- record() reads, never the rest (a description is unbounded). An entry serves while its file's
--- path, mtime and size hold; one whose book has no sidecar now is dropped when asked. One entry
--- per book path read with a sidecar in the session, a few hundred bytes each, so it isn't pruned:
--- a book moved or removed leaves one entry no path reaches for the rest of the session
--- (Books.reset is for specs).
+-- The progress memo: a book's path to { file, modification, size, progress, props }, the sidecar file
+-- findSidecarFile gave, its mtime and size, and what one open of it read (progress, and the title and
+-- authors of its doc_props). An entry serves while path, mtime and size hold. Not pruned: a few
+-- hundred bytes per book path read (Books.reset is for specs).
 local reads = {}
 
 -- f(...) caught: its result, or nil with the failure logged as what.
@@ -84,10 +77,9 @@ local function row(path)
     return try("CoverBrowser's book info for " .. path, bim.getBookInfo, bim, path, false), true
 end
 
--- path's sidecar, opened light so nothing is written or removed: DocSettings:open removes
--- candidates it finds invalid (frontend/docsettings.lua:282-284). Returns the settings, nil when
--- there is none or it can't be read, and whether a sidecar file was found (hasSidecarFile's test,
--- :151-153), true for one found that can't be read.
+-- path's sidecar, opened light so nothing is written or removed: DocSettings:open removes candidates it
+-- finds invalid (frontend/docsettings.lua:282-284). Returns the settings (nil when none or unreadable)
+-- and whether a sidecar file was found (hasSidecarFile's test, :151-153).
 local function sidecar(path)
     local file = try("the sidecar of " .. path, DocSettings.findSidecarFile, DocSettings, path)
     if not file then
@@ -119,11 +111,9 @@ local function sidecar_props(path)
     return doc and doc:readSetting("doc_props")
 end
 
--- The record of the file at path, from one getBookInfo call, then the sidecar, then the file name.
--- The sidecar's doc_props are read always with always_sidecar, else only when the row gives no
--- title or no authors, by props_of(path), sidecar_props when not given; CoverBrowser's fields come
--- first either way, so the record is the same. placeholder = true when CloudBooks.is(index, path),
--- index being CloudBooks.index()'s, and left out otherwise.
+-- The record of the file at path, from one getBookInfo call, then the sidecar, then the file name. The
+-- sidecar's doc_props are read always with always_sidecar, else only when the row gives no title or
+-- no authors, by props_of(path); CoverBrowser's fields come first either way.
 local function record(path, always_sidecar, props_of, index)
     local info, enabled = row(path)
     local title = info and text(info.title)
@@ -209,12 +199,10 @@ local function same_dir(a, b)
     return real_a ~= nil and real_a == ffiutil.realpath(b)
 end
 
--- dir's entries the file browser would list (frontend/ui/widget/filechooser.lua:114-143), as two
--- lists of { name, path } in byte order of name: the folders show_dir keeps, and the files no
--- exclude_files pattern or "._" rule drops that DocumentRegistry:hasProvider accepts, asked with
--- the name as the file manager's filter asks (frontend/apps/filemanager/filemanager.lua:143).
--- Dot names only with FileChooser.show_hidden, read now so the toggle is followed. A folder that
--- can't be read gives nothing, logged.
+-- dir's entries the file browser would list (frontend/ui/widget/filechooser.lua:114-143): the folders
+-- show_dir keeps, and the files no exclude_files pattern or "._" rule drops that
+-- DocumentRegistry:hasProvider accepts, asked as the file manager's filter asks
+-- (frontend/apps/filemanager/filemanager.lua:143). Dot names only with FileChooser.show_hidden.
 local function scan(dir)
     local FileChooser = require("ui/widget/filechooser")
     local DocumentRegistry = require("document/documentregistry")
@@ -436,10 +424,8 @@ local function sidecar_read(path)
     return read
 end
 
--- { status, percent, pages, md5 }. status is new, reading, abandoned or complete; percent 0 to 1
--- or nil; pages and md5 may be nil. For a book with a file, from its sidecar, through the progress
--- memo: opened again only once the sidecar file's path, mtime or size changed, a copy each call so
--- the caller may change it; for a source's book, its source's progress, or new.
+-- { status, percent, pages, md5 }: status is new, reading, abandoned or complete; percent 0 to 1 or
+-- nil. From the sidecar through the progress memo (a copy each call) for a file, else the source's.
 function Books.progress(book)
     if book.path then
         local read = try("the progress of " .. book.path, sidecar_read, book.path)

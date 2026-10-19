@@ -9,10 +9,9 @@ local M = {}
 
 M.defaults = { tolerance = 16, max_fraction = 0.0005 }
 
--- Png.decodeFromFile with 3 components converts every colour type to RGB
--- (base/ffi/png.lua:97-98) and hands back lodepng's malloc'd buffer (png.lua:110-115).
--- Wrapping it in a blitbuffer marked allocated lets free() release it, as
--- Pic.openPNGDocument does (base/ffi/pic.lua:341-345).
+-- Png.decodeFromFile with 3 components converts every colour type to RGB (base/ffi/png.lua:97-98) and hands back
+-- lodepng's malloc'd buffer (png.lua:110-115); wrapping it in a blitbuffer marked allocated lets free() release it,
+-- as Pic.openPNGDocument does (base/ffi/pic.lua:341-345).
 local function load(path)
     local ok, image = Png.decodeFromFile(path, 3)
     if not ok then
@@ -79,12 +78,10 @@ function M.pixel(path, x, y)
     return rgb
 end
 
--- opts: masks ({ {x=, y=, w=, h=}, ... } in pixels), tolerance (largest per-channel
--- difference still counted as equal), max_fraction (of compared pixels allowed to differ),
--- diff_png (path written when the compare fails on pixels), invert (compare against the golden
--- with each channel inverted, 255 - v, as a night capture on a grey screen is its day golden).
--- Returns { ok, differing, compared, fraction, diff_png }, or on a size mismatch
--- { ok = false, reason = "size", actual = {w, h}, golden = {w, h} }.
+-- opts: masks ({ {x=, y=, w=, h=}, ... } in pixels), tolerance (largest per-channel difference still counted as
+-- equal), max_fraction (of compared pixels allowed to differ), diff_png (path written when the compare fails on
+-- pixels), invert (compare against the golden with each channel inverted, 255 - v). Returns { ok, differing,
+-- compared, fraction, diff_png }, or on a size mismatch { ok = false, reason = "size", actual, golden }.
 function M.compare(actual_png, golden_png, opts)
     opts = opts or {}
     local tolerance = opts.tolerance or M.defaults.tolerance

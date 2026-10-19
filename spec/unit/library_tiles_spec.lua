@@ -1,4 +1,4 @@
--- LibraryTiles (cover-grid C4, C5): the grid's geometry and the two-row fit at the Colorsoft and
+-- LibraryTiles: the grid's geometry and the two-row fit at the Colorsoft and
 -- the Paperwhite, and one tile of each kind: a book's cover or placeholder, its progress strip, its
 -- one-line title, the not-downloaded badge, and a folder's art and counts. Every case runs
 -- at a device profile's size, as the screen will.
@@ -173,8 +173,7 @@ describe("library tiles", function()
             end)
         end)
 
-        -- The one-author grid's own cover box (series-and-authors "The fit"): only the cover's height
-        -- and what hangs from it change.
+        -- The one-author grid's own cover box: only the cover's height and what hangs from it change.
         it("takes an optional cover height in board pixels, as the one-author grid's", function()
             each_profile(function(where)
                 for _, id in ipairs({ "diner", "editorial" }) do
@@ -213,7 +212,7 @@ describe("library tiles", function()
             end)
         end)
 
-        -- D13: cover, the strip's gap, the strip, the title's gap and one title line.
+        -- Cover, the strip's gap, the strip, the title's gap and one title line.
         it("is a tile of the cover, the strip's slot and one title line", function()
             harness.at_colorsoft(function()
                 for _, id in ipairs({ "diner", "editorial" }) do
@@ -229,7 +228,7 @@ describe("library tiles", function()
             end)
         end)
 
-        -- D12: the library's text does not follow text_size.
+        -- The library's text does not follow text_size.
         it("keeps the tile, the header and the pager whatever the text size", function()
             harness.at_colorsoft(function()
                 for _, id in ipairs({ "diner", "editorial" }) do
@@ -533,8 +532,7 @@ describe("library tiles", function()
             end)
         end)
 
-        -- The badge is a book not downloaded's one sign: no Not downloaded chip on the cover's foot
-        -- (tweaks/badge-only-not-downloaded).
+        -- The badge is a book not downloaded's one sign: no Not downloaded chip on the cover's foot.
         it("puts the badge on a path-less record's cover only, and no chip", function()
             covers()
             harness.at_colorsoft(function()
@@ -555,11 +553,11 @@ describe("library tiles", function()
                     assert.is_false(has_text(built, "NOT DOWNLOADED"), id)
                     local badge = built:place(built.badge)
                     if id == "diner" then
-                        -- Overhanging the cover's top right corner (Main.dc.html:66).
+                        -- Overhanging the cover's top right corner.
                         assert.is_true(badge.x + size > box.cover_w, id .. " badge not past the right edge")
                         assert.is_true(badge.y < 0, id .. " badge not above the top")
                     else
-                        -- Inside the bottom right corner (GridA.dc.html:66).
+                        -- Inside the bottom right corner.
                         local inset = scale(tokens.inset)
                         assert.equals(box.cover_w - inset - size, badge.x, id)
                         assert.equals(box.cover_h - inset - size, badge.y, id)
@@ -587,7 +585,7 @@ describe("library tiles", function()
             end)
         end)
 
-        -- D5, D19: "Up next" on the cover's foot, at the same place on a path-less record, whose badge
+        -- "Up next" on the cover's foot, at the same place on a path-less record, whose badge
         -- stays. The tile keeps its height.
         it("puts the Up next chip on the cover's foot, on a path-less record too, the badge kept", function()
             covers()

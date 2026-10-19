@@ -1,9 +1,7 @@
--- The looks: the base look (looks/base.lua), every token path with its default; each look's file
--- (looks/<id>.lua, one per id Looks.ids() lists), which declares only what differs from it; and
--- looks.lua, which lays each file over the base, picks the active look, the palette variant (C5)
--- and the palette to draw with, night inverted (night mode's C1, C2). The token tables' tests are
--- rules every look keeps, run over every id; no test pins a look's own values, which the owner
--- judges by eye.
+-- The looks: the base look (looks/base.lua), every token path with its default; each look's file (looks/<id>.lua, one
+-- per id Looks.ids() lists), which declares only what differs from it; and looks.lua, which lays each file over the
+-- base, picks the active look, the palette variant and the palette to draw with, night inverted. The tests are rules
+-- every look keeps, run over every id; none pins a look's own values.
 describe("looks", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
@@ -13,11 +11,9 @@ describe("looks", function()
     -- Each look's tokens as Looks.get gives them, the base with its file laid over (setup).
     local looks = {}
 
-    -- The home widgets' shapes a look chooses, each token under home with its values: the
-    -- weather line's order, the date's line count, the stats joined on one right-aligned line or
-    -- spread, the streak worded "4-day streak" (count first) or "Streak 4 days" (word first), the
-    -- featured label "Now reading" or "Continue reading", and the featured authors and chapter,
-    -- and the caption's parts, joined on one line each or split.
+    -- The home widgets' shapes a look chooses, each token under home with its values: the weather line's order, the
+    -- date's line count, the stats joined or spread, the streak word-first or count-first, the featured label, and
+    -- the featured authors and chapter and the caption's parts, joined on one line each or split.
     local HOME_CHOICES = {
         weather_order = { "degrees_first", "condition_first" },
         date_lines = { 1, 2 },
@@ -198,8 +194,8 @@ describe("looks", function()
             end
         end)
 
-        -- on_band is exempt: it is chosen for contrast against the band, not to tell roles apart,
-        -- and equals ink in grey on purpose (PWRetro.dc.html:19).
+        -- on_band is exempt: it is chosen for contrast against the band, not to tell roles apart, and equals ink in
+        -- grey on purpose.
         it("keep roles that differ by day distinct in grey", function()
             for _, id in ipairs(ids) do
                 local day, grey = looks[id].palettes.day, looks[id].palettes.grey

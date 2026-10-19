@@ -1,8 +1,7 @@
--- Launcher management (device menus' C9): launcher.entries as a list in the editor frame over a
--- shown home, its rows, arrows and remove, a folder's own list, adding by kind, a list too long
--- for another entry and a refused write. Each case stores the board's six (Library, Series,
--- Authors, History, a Tools folder of three actions, Settings) in a real settings file first;
--- EntryPicker.pick is stubbed where a case adds.
+-- Launcher management: launcher.entries as a list in the editor frame over a shown home, its rows, arrows and remove,
+-- a folder's own list, adding by kind, a list too long for another entry and a refused write. Each case stores six
+-- entries (Library, Series, Authors, History, a Tools folder of three actions, Settings) in a real settings file
+-- first; EntryPicker.pick is stubbed where a case adds.
 describe("launcher management", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")

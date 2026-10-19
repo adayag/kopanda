@@ -1,8 +1,5 @@
--- The author and series index over a list of records (book-model C5), on hand-built records:
--- one entry per distinct name as written, a two-author book in both entries and counted in each,
--- series books in series-index order with the unindexed last, entries by lowercase name, ties by
--- id, and nothing kept between calls. A record field of the wrong type is skipped for that part,
--- logged once per call.
+-- The author and series index over hand-built records: one entry per distinct name as written, a two-author book in
+-- both entries, series books in series-index order with the unindexed last, ties by id, and nothing kept between calls.
 describe("BookIndex", function()
     local BookIndex = require("book_index")
     local logger = require("logger")
@@ -285,7 +282,7 @@ describe("BookIndex", function()
         end)
     end)
 
-    -- cover-grid C1, D10: the last word, lowercased, with the particles before it kept.
+    -- The last word, lowercased, with the particles before it kept.
     describe("surname", function()
         it("keys a two-word name by its last word, lowercased", function()
             assert.equals("shelley", BookIndex.surname("Mary Shelley"))

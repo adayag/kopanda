@@ -1,9 +1,7 @@
--- The Series window (series-and-authors C4): the list's header (D10's count, "Series", "Under way
--- first"), its rows in D12's order a page at a time and the pager gap; one series' header (the back
--- control, D10's aside, the name), its rows in series order with the next unread marked. The cases
--- it shares with the Authors window (spec/shelf_screen_cases.lua) run here for the Series window,
--- SERIES carrying what differs. Books.all and Books.progress are stubbed with records under a root
--- that exists nowhere (spec/shelf_fixture.lua).
+-- The Series window: the list's header and rows a page at a time with the pager gap; one series' header and its rows
+-- in series order with the next unread marked. The cases it shares with the Authors window
+-- (spec/shelf_screen_cases.lua) run here, SERIES carrying what differs. Books.all and Books.progress are stubbed with
+-- records under a root that exists nowhere (spec/shelf_fixture.lua).
 describe("the Series window", function()
     local cases = require("shelf_screen_cases")
     local harness = require("plugin_harness")
@@ -266,7 +264,7 @@ describe("the Series window", function()
                     end
                 end
                 assert.same({ "The Fifth Season", "The Obelisk Gate", "The Stone Sky", "Untold" }, got, id)
-                -- The abandoned Obelisk Gate is skipped (D3).
+                -- The abandoned Obelisk Gate is skipped.
                 assert.same({ false, false, true, false }, marked, id)
                 harness.teardown()
             end)

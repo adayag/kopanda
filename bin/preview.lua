@@ -1,16 +1,9 @@
--- bin/preview's process: a headless KOReader (KOReader's spec/front/unit/commonrequire.lua, its
--- DataStorage under the scratch KO_HOME bin/preview sets), where the plugin's own Settings reads
--- the copied settings file at $KO_HOME/settings/kopanda/settings.lua for the weather location and
--- units, then the dev loop's driver.capture of the home with the populated home fixture, its
--- weather reading written for that location and those units.
---
---   luajit bin/preview.lua <width> <height> <dpi> <color|grey> <look> <day|night>
---       <out.png> [the settings file's copy]    (run by bin/preview, which sets the rest)
---
--- On success the PNG is copied to <out.png> and the answer's JSON line written to
--- $KO_HOME/result.json; on failure the message alone goes to stderr and the exit status is 1. A
--- look no look table holds is a failure before the capture: the fixture would store it and the
--- plugin's Settings read it as the default look.
+-- bin/preview's process: a headless KOReader (KOReader's spec/front/unit/commonrequire.lua, its DataStorage under
+-- the scratch KO_HOME) where the plugin's own Settings reads the copied settings file for the weather location and
+-- units, then the dev loop's driver.capture of the home with the populated home fixture. On success the PNG is
+-- copied to <out.png> and the answer's JSON line written to $KO_HOME/result.json; on failure the message alone
+-- goes to stderr and the exit status is 1. A look no look table holds fails before the capture.
+--   luajit bin/preview.lua <width> <height> <dpi> <color|grey> <look> <day|night> <out.png> [settings copy]
 local width, height, dpi = tonumber(arg[1]), tonumber(arg[2]), tonumber(arg[3])
 local color, look, variant, out_png, settings_file = arg[4] == "color", arg[5], arg[6], arg[7], arg[8]
 local ko_home = os.getenv("KO_HOME")

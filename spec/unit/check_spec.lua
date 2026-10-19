@@ -52,11 +52,9 @@ describe("bin/check", function()
         assert.equals(0, setup)
     end
 
-    -- Environment assignments for a PATH of /usr/bin:/bin plus a directory
-    -- holding only a link to luacheck, so it finds luacheck but no node; and the
-    -- directory, for removal. Homebrew's bin/ holds a node, so instead of brew
-    -- on PATH, KO_DYLD_PREFIX gives KOReader's ffi/loadlib.lua:150-152 the
-    -- prefix it otherwise asks `brew --prefix` for.
+    -- Environment assignments for a PATH of /usr/bin:/bin plus a directory holding only a link to luacheck, so it finds
+    -- luacheck but no node; and the directory, for removal. Homebrew's bin/ holds a node, so KO_DYLD_PREFIX gives
+    -- KOReader's ffi/loadlib.lua:150-152 the prefix it otherwise asks `brew --prefix` for.
     local function nodeless_env()
         local dir = run("mktemp -d"):gsub("\n$", "")
         local luacheck = run("command -v luacheck"):gsub("\n$", "")

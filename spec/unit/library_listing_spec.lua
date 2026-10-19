@@ -1,9 +1,7 @@
--- The library's kept listing (TW-cypagc): the folder's listing and its history times are kept
--- from the build that listed the folder, so a page turn only slices them and a picker
--- choice only filters and sorts them again, while a show, a folder change and refresh() list the
--- folder again. Run on a scratch library under the data directory, the real Books.folder over it,
--- CoverBrowser stubbed with a row per file that counts the reads without a cover, and the cover
--- request stubbed.
+-- The library's kept listing: the folder's listing and its history times are kept from the build that listed the
+-- folder, so a page turn only slices them and a picker choice only filters and sorts them again, while a show, a
+-- folder change and refresh() list the folder again. Run on a scratch library with the real Books.folder over it,
+-- CoverBrowser stubbed with a row per file that counts the reads without a cover, and the cover request stubbed.
 describe("the library's kept listing", function()
     local Blitbuffer = require("ffi/blitbuffer")
     local harness = require("plugin_harness")
@@ -317,7 +315,7 @@ describe("the library's kept listing", function()
         assert.equals(50, calls)
     end)
 
-    -- The kept listing beside the context menu's sheets (library/context-menu).
+    -- The kept listing beside the library's sheets.
     describe("with the context menu", function()
         local BookCovers
 

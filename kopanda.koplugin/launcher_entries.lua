@@ -1,7 +1,6 @@
--- What a launcher entry (schema.lua's launcher.entries) is and does: resolve reads what it
--- shows when the home is built, run is what a tap on it does. No widget code: the launcher
--- widget draws from resolve, and the folder sheet (folder_sheet.lua) reuses both, resolving a
--- folder's entries when it opens and running them through run. Nothing here writes a setting.
+-- What a launcher entry (schema.lua's launcher.entries) is and does: resolve reads what it shows when
+-- the home is built, run is what a tap does. No widget code: the launcher widget draws from resolve, and
+-- the folder sheet reuses both. Nothing here writes a setting.
 local Dispatcher = require("dispatcher")
 local Helpers = require("helpers")
 local Home = require("home")
@@ -115,10 +114,9 @@ local function file_manager()
 end
 
 local KOPANDA_RUN = {
-    -- The library (cover-grid D6): on the library, its root's first page, in place; from anywhere
-    -- else, the home closed and the library shown at the folder and page it was last left at, or
-    -- its root's first page the first time. library and library_view are required now: through
-    -- library_tiles they reach widgets/featured, which requires this module.
+    -- The library: on the library, its root's first page, in place; from anywhere else, the home closed and
+    -- the library shown at the folder and page it was last left at. library and library_view are required
+    -- now: through library_tiles they reach widgets/featured, which requires this module.
     library = function()
         local Library = require("library")
         if Library.shown then
@@ -132,7 +130,7 @@ local KOPANDA_RUN = {
             fm.kopanda:showLibrary(left and { dir = left.dir, page = left.page } or {})
         end
     end,
-    -- The Series window's list at its first page (series-and-authors D17), the home closed.
+    -- The Series window's list at its first page, the home closed.
     series = function()
         Home.close()
         local fm = file_manager()
@@ -140,9 +138,8 @@ local KOPANDA_RUN = {
             fm.kopanda:showSeries{}
         end
     end,
-    -- The Authors window's list at its first page (D17): on the Authors window, in place; from
-    -- anywhere else, the home closed and the window shown. authors_screen is required now, as
-    -- library is.
+    -- The Authors window's list at its first page: on the Authors window, in place; from anywhere else, the
+    -- home closed and the window shown. authors_screen is required now, as library is.
     authors = function()
         local AuthorsScreen = require("authors_screen")
         if AuthorsScreen.shown then
@@ -178,11 +175,9 @@ local function unavailable_note(entry, suffix)
     end
 end
 
--- What a tap on the entry does under ctx, the home's: a folder opens its sheet, which passes
--- ctx on to its rows' runs. Availability is checked again now, so what has gone since the home
--- was built gives its note; a check that raises is logged and reads as not available. Any other
--- error raises to the caller, so a tap reaches Home:onGesture's pcall, which logs it and closes
--- the home onto the file browser.
+-- What a tap on the entry does under ctx: a folder opens its sheet. Availability is checked again now,
+-- so what has gone since the home was built gives its note; a check that raises reads as not
+-- available. Any other error raises to the caller, so Home:onGesture's pcall logs it and closes the home.
 function LauncherEntries.run(entry, ctx)
     local kind = entry.kind
     if kind == "kopanda" then

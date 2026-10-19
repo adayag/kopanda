@@ -29,12 +29,10 @@ local function fill(bb, x, y, rect, color)
     end
 end
 
--- The home's content: the paper, the wallpaper (wallpaper.lua's image held by the key
--- self.wallpaper_key, or nil; asked for at each paint, since another get frees it, and left as
--- paper once it has), the header and footer chrome, the plates (self.plates, each { x, y, w, h,
--- radius }, in self.plate's tokens), then each slot's widget at its place, then the nav bar. The
--- slot widgets and the bar are the array part, so free() and events reach them; the wallpaper is
--- wallpaper.lua's, freed there.
+-- The home's content: the paper, the wallpaper (wallpaper.lua's image held by self.wallpaper_key, asked
+-- for at each paint since another get frees it), the chrome, the plates (self.plates), each slot's
+-- widget, then the nav bar. The slot widgets and the bar are the array part, so free() and events reach
+-- them; the wallpaper is wallpaper.lua's, freed there.
 local Rows = WidgetContainer:extend{
     name = "kopanda_home_rows",
 }
@@ -101,14 +99,10 @@ local function wallpaper_of(home, look, variant)
     return image and key
 end
 
--- Builds home's rows at home.dimen and returns them, the slots (each { widget, rect, module,
--- built }), the context every widget got and the nav bar, Home active, in the band layout.lua
--- leaves below the rows, or nil. A widget is drawn its slot's offset below the slot's top
--- (bottom-aligned in the header row, layout.lua), inside its plate's padding where it has one,
--- at the width inside it. A slot whose widget has no module, or whose height or build raises, is
--- left blank at its column width and logged; the rest of the home still builds. A bar whose build
--- raises is logged and its band left as paper; a band of no height (the bar's height raised) gets
--- no bar. ctx.plate is the look's plate tokens for the variant (Plate.spec, nil without plates),
+-- Builds home's rows at home.dimen and returns them, the slots (each { widget, rect, module, built }),
+-- the context every widget got and the nav bar, in the band layout.lua leaves below the rows, or nil.
+-- A slot whose widget has no module, or whose height or build raises, is left blank and logged; a bar
+-- whose build raises leaves its band as paper. ctx.plate is the look's plate tokens for the variant,
 -- lightening only over a wallpaper, for the launcher's tiles.
 function HomeRows.build(home)
     local look = Looks.active()

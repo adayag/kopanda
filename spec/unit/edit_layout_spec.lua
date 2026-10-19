@@ -1,9 +1,7 @@
--- Edit layout (device menus' C7), over a shown home with a real settings file: a card per row
--- with its caption, boxes and arrows; a tap selects a row and shows its buttons; each change
--- writes layout.rows once and repaints the screen once, and the home is built once when the
--- editor closes; refusals show their note and leave the file's bytes alone; the widget pickers
--- list only unused widgets.
--- Every control is tapped where the editor placed it.
+-- Edit layout, over a shown home with a real settings file: a card per row with its caption, boxes and arrows; a tap
+-- selects a row and shows its buttons; each change writes layout.rows once and repaints the screen once, and the home
+-- is built once when the editor closes; refusals show their note and leave the file's bytes alone; the widget pickers
+-- list only unused widgets. Every control is tapped where the editor placed it.
 describe("edit layout", function()
     local harness = require("plugin_harness")
     local Event = require("ui/event")

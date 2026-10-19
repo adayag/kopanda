@@ -7,7 +7,7 @@
 -- library scenario opens the library from the next tick, it writes one reading history entry for
 -- the-time-machine.epub at its root, three calendar days before the fixture's frozen now, as the
 -- home fixture writes its own (2-scenario-home-fixture.lua), so the book sheet's meta reads both
--- its percent and when it was opened (HoldBookC.dc.html:40).
+-- its percent and when it was opened.
 -- On the first library's settled signal, from the next tick, it sends one hold where
 -- KOPANDA_LIBRARY_HOLD says, at the centre of:
 --   - book: the tile of the-time-machine.epub, the reading book, which opens the book sheet;

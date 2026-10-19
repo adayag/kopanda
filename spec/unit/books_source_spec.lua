@@ -1,8 +1,6 @@
--- A source of path-less books (book-model C4): its records listed at the library root after the
--- local books and in no sub-folder, found by id, never by path, and their progress from the
--- source or new. A source that raises is logged and leaves the local books listed; a record
--- without an id or title is dropped and logged. The source is a table this spec registers and
--- removes. CoverBrowser is unrequirable throughout.
+-- A source of path-less books: its records listed at the library root after the local books and in no sub-folder,
+-- found by id, never by path, their progress from the source or new. A source that raises is logged and leaves the
+-- local books listed; a record without an id or title is dropped and logged. CoverBrowser is unrequirable throughout.
 describe("Books with a source", function()
     local harness = require("plugin_harness")
     local DataStorage = require("datastorage")

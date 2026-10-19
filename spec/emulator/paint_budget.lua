@@ -1,13 +1,10 @@
--- The paint budget the capture specs hold each capture's settled signal to (featured-book C9,
--- home-layout C10): a screen paints within M.MS of its open, in the emulator on this Mac. A
--- regression tripwire, not a device figure.
---
--- The signal's cpu_ms, the process's CPU time over the paint, is judged on every run. Its paint_ms,
--- wall time, is judged only when the host's 1-minute load average is at or below its core count,
--- or when either can't be read: a loaded host stretches wall time while the paint does no more
--- work (TW-8wduca: at load 74-152 on 12 cores, wall 32-372 ms for CPU 26-37 ms). The wall check
--- still catches a paint that waits rather than works, on an idle host.
--- Busted's assertions, which a required module doesn't get as its global assert.
+-- The paint budget the capture specs hold each capture's settled signal to: a screen paints within M.MS of its
+-- open, in the emulator on this Mac. A regression tripwire, not a device figure. The signal's cpu_ms, the process's
+-- CPU time over the paint, is judged on every run. Its paint_ms, wall time, is judged only when the host's 1-minute
+-- load average is at or below its core count, or when either can't be read: a loaded host stretches wall time while
+-- the paint does no more work (at load 74-152 on 12 cores, wall 32-372 ms for CPU 26-37 ms). The wall check still
+-- catches a paint that waits rather than works, on an idle host. Busted's assertions, which a required module
+-- doesn't get as its global assert.
 local assert = require("luassert")
 
 local M = {}

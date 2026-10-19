@@ -1,12 +1,8 @@
--- What a library folder shows, in what order, on which page, and what the library remembers.
--- The orders (cover-grid D3, D8, D9): folders first by the title order of their names, then the
--- books the status keeps, in the sort's order; every order ends on id, so it is total. Pages
--- hold six items. The memory (D11): the sort and status per folder, by its realpath, and the
--- folder and page the library was left at, and the folders hidden from the grid (context-menu
--- D1), under the runtime state file's one key `library` = { folders = { [realpath] = { sort,
--- status } }, at = { dir, page }, hidden = { [realpath] = true } }; never a setting.
--- Module state: this session's choices, folder left and hides and unhides, read before the file,
--- so one whose write failed still holds until the plugin reloads.
+-- What a library folder shows, in what order, on which page, and what the library remembers. Folders first
+-- by the title order of their names, then the books the status keeps in the sort's order; every order ends
+-- on id, so it is total. Pages hold six items. The memory is the runtime state file's one key `library` =
+-- { folders = { [realpath] = { sort, status } }, at = { dir, page }, hidden = { [realpath] = true } };
+-- never a setting. State: this session's choices, read before the file, so one whose write failed still holds.
 local BookIndex = require("book_index")
 local State = require("state")
 local ffiutil = require("ffi/util")
@@ -27,8 +23,7 @@ local session = { folders = {}, hidden = {} }
 -- can say that, both holding a write that failed.
 local written
 
--- The title order's key: lowercase, one leading "the ", "a " or "an " dropped. Exported for the
--- series list's order (series-and-authors D12).
+-- The title order's key: lowercase, one leading "the ", "a " or "an " dropped. Exported for the series list.
 local function title_key(text)
     local key = text:lower()
     for _, article in ipairs({ "the ", "a ", "an " }) do
@@ -116,11 +111,10 @@ local function by_folder_name(a, b)
     return a.path < b.path
 end
 
--- The items a folder shows: listing's folders ({ books, folders }, as Books.folder gives it) by
--- the title order of their names, then the books status keeps, in sort's order; the listing's
--- own tables. progress_of(record) is Books.progress, called at most once per book, and only
--- under a status that filters. history_times maps a book id to its history time. An unknown sort
--- or status reads as the default.
+-- The items a folder shows: listing's folders ({ books, folders }, as Books.folder gives it) by the title
+-- order of their names, then the books status keeps, in sort's order. progress_of(record) is
+-- Books.progress, called at most once per book and only under a status that filters; history_times maps a
+-- book id to its history time. An unknown sort or status reads as the default.
 function LibraryOrder.view(listing, sort, status, progress_of, history_times)
     local order = ORDERS[sort] or ORDERS[DEFAULT_SORT]
     local wanted = STATUSES[status] or STATUSES[DEFAULT_STATUS]
@@ -153,10 +147,9 @@ function LibraryOrder.view(listing, sort, status, progress_of, history_times)
     return items
 end
 
--- { [book id] = time }: each reading history entry's file realpathed to the id Books gives it,
--- its newest time kept (history is most recent first, frontend/readhistory.lua:332-333). An
--- entry whose file is gone, or with no file or time, is skipped. The history is required now, so
--- it is the one KOReader holds.
+-- { [book id] = time }: each reading history entry's file realpathed to the id Books gives it, its newest
+-- time kept (history is most recent first, frontend/readhistory.lua:332-333). An entry whose file is gone,
+-- or with no file or time, is skipped. The history is required now, so it is the one KOReader holds.
 function LibraryOrder.history_times()
     local times = {}
     for _, entry in ipairs(require("readhistory").hist) do
@@ -299,10 +292,9 @@ function LibraryOrder.left()
     return at and { dir = at.dir, page = at.page }
 end
 
--- Stores dir and page as where the library was left. A dir that is not a string or a page that
--- is not a whole number from 1 is refused, logged, and nothing is stored. Nothing is written
--- when the file already holds it, the memory unchanged since the last write. Returns whether the
--- state file holds it; either way a well-formed one holds for the session.
+-- Stores dir and page as where the library was left. A dir that is not a string or a page that is not a
+-- whole number from 1 is refused and logged. Nothing is written when the file already holds it. Returns
+-- whether the state file holds it; either way a well-formed one holds for the session.
 function LibraryOrder.leave(dir, page)
     if type(dir) ~= "string" or not is_page(page) then
         logger.warn("KoPanda: no library folder", dir, "or page", page, "to leave at")
@@ -323,7 +315,7 @@ local function hidden_in(hidden, path)
     return flag
 end
 
--- Whether the folder at path is hidden (context-menu D1), by its realpath, so its other names are too.
+-- Whether the folder at path is hidden, by its realpath, so its other names are too.
 function LibraryOrder.is_hidden(path)
     return hidden_in(stored().hidden, path)
 end

@@ -1,4 +1,4 @@
--- Open-Meteo weather (C8): the request URL, the cache in settings/kopanda/weather.lua, the line
+-- Open-Meteo weather: the request URL, the cache in settings/kopanda/weather.lua, the line
 -- per look with its age, the session's fetch triggers (after the show, NetworkConnected, a tap),
 -- failures leaving the cache as it was, and the widget's icon and text. socket.http's request
 -- and NetworkMgr are stubbed in every test; no test touches the network.
@@ -432,7 +432,7 @@ describe("weather", function()
         end)
     end)
 
-    -- The home sheet's Refresh weather detail (sheets' C4).
+    -- The home sheet's Refresh weather detail.
     describe("age", function()
         local now = 1000000
 

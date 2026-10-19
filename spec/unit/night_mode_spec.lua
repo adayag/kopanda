@@ -1,11 +1,8 @@
--- Night mode under KOReader's software inversion (night mode's C3 to C5): only looks.lua and
--- swatch.lua read a look's palettes; the home paints the inverse of the night palette onto a
--- buffer whose inverse flag is set, as Screen:toggleNightMode leaves the screen's buffer on a
--- device that can't invert in hardware (base/ffi/framebuffer.lua:476-488), so the stored pixels,
--- which that panel shows, are the designed night colours; it rebuilds inside the paint that
--- follows a variant change; and the featured cover keeps its own colours. Every stub of
--- night_mode, color_rendering, the look, bookinfomanager and FeaturedBook.current is restored
--- in after_each.
+-- Night mode under KOReader's software inversion: only looks.lua and swatch.lua read a look's palettes; the home
+-- paints the inverse of the night palette onto a buffer whose inverse flag is set, as Screen:toggleNightMode leaves the
+-- screen's buffer on a device that can't invert in hardware (base/ffi/framebuffer.lua:476-488), so the stored pixels,
+-- which that panel shows, are the designed night colours; it rebuilds inside the paint that follows a variant change;
+-- and the featured cover keeps its own colours.
 describe("night mode", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")

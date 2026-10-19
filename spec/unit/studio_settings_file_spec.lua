@@ -1,6 +1,6 @@
--- The studio writes the settings file as the plugin would and the plugin reads it key for key
--- (C1): spec/fixtures/studio/settings_written.lua is the studio's writer's output, held to it byte
--- for byte by studio/test/core/settings-written.test.ts.
+-- The studio writes the settings file as the plugin would and the plugin reads it key for key:
+-- spec/fixtures/studio/settings_written.lua is the studio's writer's output, held to it byte for byte by
+-- studio/test/core/settings-written.test.ts.
 describe("a studio-written settings file", function()
     local harness = require("plugin_harness")
     local LuaSettings = require("luasettings")

@@ -1,7 +1,6 @@
--- The home's date, from KOReader's translation tables so it follows its language
--- (frontend/datetime.lua:29-42 month names, :54-62 long day names), with no leading zero on the
--- day and no year. The look's home.date_lines chooses: 2 draws the weekday as a label over the
--- month and day (Editorial, Main.dc.html:20-22); 1 draws one line (Diner, HomeRetro.dc.html:22).
+-- The home's date, from KOReader's translation tables so it follows its language (frontend/datetime.lua:29-42
+-- month names, :54-62 long day names), with no leading zero on the day and no year. The look's
+-- home.date_lines chooses: 2 draws the weekday as a label over the month and day, 1 draws one line.
 -- Left-aligned.
 local Geom = require("ui/geometry")
 local LeftContainer = require("ui/widget/container/leftcontainer")
@@ -10,7 +9,7 @@ local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
 local datetime = require("datetime")
 
-local LABEL_GAP = 2 -- between the weekday and the date (Main.dc.html:20)
+local LABEL_GAP = 2 -- between the weekday and the date
 
 local Date = {
     id = "date",

@@ -56,10 +56,9 @@ describe("the fixture library", function()
         end
     end)
 
-    -- The EPUB container rule: the first entry of the zip is an uncompressed file named
-    -- mimetype holding application/epub+zip. A zip local file header is 30 bytes: the
-    -- signature PK\3\4, the compression method at bytes 9-10, the compressed size at
-    -- 19-22, the name length at 27-28, the extra field length at 29-30, then the name.
+    -- The EPUB container rule: the first entry of the zip is an uncompressed file named mimetype holding
+    -- application/epub+zip. A zip local file header is 30 bytes: the signature PK\3\4, the compression method at bytes
+    -- 9-10, the compressed size at 19-22, the name length at 27-28, the extra field length at 29-30, then the name.
     it("stores each EPUB's mimetype first, as application/epub+zip", function()
         for _, entry in ipairs(manifest) do
             local data = read(dir .. "/" .. entry.file)

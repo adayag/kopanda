@@ -1,4 +1,4 @@
--- The studio's seed profiles agree with the profiles the emulator specs capture at (C2).
+-- The studio's seed profiles agree with the profiles the emulator specs capture at.
 describe("the studio's seed profiles", function()
     local rapidjson = require("rapidjson")
     local root = os.getenv("KOPANDA_ROOT")

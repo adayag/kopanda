@@ -1,4 +1,4 @@
--- The settings schema is pure data in the shape the device menus and the studio read (C1).
+-- The settings schema is pure data in the shape the device menus and the studio read.
 describe("schema.lua", function()
     local harness = require("plugin_harness")
     local path = harness.plugin_dir .. "/schema.lua"

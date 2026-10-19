@@ -1,15 +1,12 @@
--- The home on the emulator, every look's smoke gate: for each id Looks.ids() lists, the populated
--- fixture (2026-10-13 08:42 in Chicago, a known weather cache, reading statistics and a featured
--- book with its real cover) on the Colorsoft by day and with night mode on from the start, and on
--- the Paperwhite by day. Each is taken on the plugin's own settled signal, within the paint
--- budget, with no row dropped, its paper, read in the left margin at mid-height, the paper of the
--- palette it is drawn in (Looks.variant): the PNG is what the panel shows
--- (base/ffi/framebuffer.lua:566-581), so a night capture's paper is the look's designed night
--- paper. Beside them, in Diner on the Colorsoft, the fixture's two other states: none of it (the
--- featured slot in its first-run state, the launcher's last entry a plugin that isn't there) and
--- the featured book with CoverBrowser disabled, its typographic cover; and Frosted with a wallpaper,
--- by day, at night and on the Paperwhite. The look is always passed
--- (empty for Diner's two) so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
+-- The home on the emulator, every look's smoke gate: for each id Looks.ids() lists, the populated fixture
+-- (2026-10-13 08:42 in Chicago, a known weather cache, reading statistics and a featured book with its real cover) on
+-- the Colorsoft by day and with night mode on from the start, and on the Paperwhite by day. Each is taken on the
+-- plugin's own settled signal, within the paint budget, with no row dropped, its paper (read in the left margin at
+-- mid-height) the paper of the palette it is drawn in (Looks.variant): the PNG is what the panel shows
+-- (base/ffi/framebuffer.lua:566-581). Beside them, in Diner on the Colorsoft, the fixture's two other states: none of
+-- it (the featured slot in its first-run state, the launcher's last entry a plugin that isn't there) and the
+-- featured book with CoverBrowser disabled; and Frosted with a wallpaper, by day, at night and on the Paperwhite. The
+-- look is always passed (empty for Diner's two) so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
 describe("capturing the KoPanda home on the emulator", function()
     require("commonrequire")
     local driver = require("emulator.driver")
@@ -59,10 +56,9 @@ describe("capturing the KoPanda home on the emulator", function()
         }
     end
 
-    -- The checks every home capture keeps: its size, the settled home signal from a run with the
-    -- plugin loaded, shot once and before the settle cap, within the paint budget, and every row
-    -- of the layout placed: the row engine logs each row it drops (kopanda.koplugin/layout.lua,
-    -- Layout.place).
+    -- The checks every home capture keeps: its size, the settled home signal from a run with the plugin loaded, shot
+    -- once and before the settle cap, within the paint budget, and every row placed (Layout.place logs each row it
+    -- drops).
     local function assert_settled(label, profile_name, result)
         local profile = driver.profiles[profile_name]
         assert.equals(profile.width, result.width)
@@ -105,10 +101,9 @@ describe("capturing the KoPanda home on the emulator", function()
         end
     end
 
-    -- Frosted with the fixture wallpaper (spec/fixtures/wallpaper.png, written by
-    -- spec/fixtures/wallpaper_png.lua) in a settings file the driver copies in: the wallpaper
-    -- shows in the left margin, where the other captures read paper, and the nav bar stays opaque
-    -- paper, read at its right end, under the last tab, which is unlit.
+    -- Frosted with the fixture wallpaper (spec/fixtures/wallpaper.png, written by spec/fixtures/wallpaper_png.lua) in
+    -- a settings file the driver copies in: the wallpaper shows in the left margin, where the other captures read
+    -- paper, and the nav bar stays opaque paper, read at its right end, under the last tab, which is unlit.
     local function wallpaper_settings()
         local dir = os.getenv("KO_HOME") .. "/home-capture-spec"
         require("util").makePath(dir)

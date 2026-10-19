@@ -1,7 +1,6 @@
--- Fills and borders that keep a colour's hue, the box a widget paints around its content, a plain
--- fill widget, and board pixels scaled to the screen's.
--- A colour goes through the RGB32 variants, since the plain ones grey it
--- (base/ffi/blitbuffer.lua:1704-1724, :1827, :2096, :2118-2126, :2169-2197).
+-- Fills and borders that keep a colour's hue, the box a widget paints around its content, a plain fill
+-- widget, and board pixels scaled to the screen's. A colour goes through the RGB32 variants, since the plain
+-- ones grey it (base/ffi/blitbuffer.lua:1704-1724, :1827, :2096, :2118-2126, :2169-2197).
 local Blitbuffer = require("ffi/blitbuffer")
 local Widget = require("ui/widget/widget")
 
@@ -33,11 +32,10 @@ function Paint.border(bb, x, y, w, h, width, color, radius)
     end
 end
 
--- A w by h box at x, y has a shadow (shadow_color, offset by shadow_x and shadow_y below and
--- right of it, rounded by radius; filled, or with a shadow_outline above 0 a border that wide, as
--- Riso's cover), a fill (fill_color, rounded by fill_radius) and an outline (outline wide in
--- outline_color, rounded by radius). A box without a colour paints no shadow or fill. The widget
--- paints backing, then its content, then outline.
+-- A w by h box at x, y has a shadow (shadow_color offset by shadow_x and shadow_y, rounded by radius; with a
+-- shadow_outline above 0 a border that wide), a fill (fill_color, rounded by fill_radius) and an outline
+-- (outline wide in outline_color, rounded by radius). A box without a colour paints no shadow or fill. The
+-- widget paints backing, then its content, then outline.
 function Paint.backing(bb, x, y, w, h, box)
     if box.shadow_color then
         local sx, sy = x + box.shadow_x, y + box.shadow_y

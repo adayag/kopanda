@@ -1,8 +1,7 @@
--- The screens' paint budget (device-menus C12): edit layout with row 2 selected, and launcher
--- management over a launcher with a Tools folder, each opened over the populated home in Diner on
--- the Colorsoft, at 2026-10-13 08:42 in Chicago. The home fixture patch freezes the clock and
--- writes the scenario; the screens patch opens the screen KOPANDA_SCREEN names once the home
--- settles; the capture is taken on the screen's own settled signal. The look is passed empty so a
+-- The screens' paint budget: edit layout with row 2 selected, and launcher management over a launcher with a Tools
+-- folder, each opened over the populated home in Diner on the Colorsoft, at 2026-10-13 08:42 in Chicago. The home
+-- fixture patch freezes the clock and writes the scenario; the screens patch opens the screen KOPANDA_SCREEN names
+-- once the home settles; the capture is taken on the screen's own settled signal. The look is passed empty so a
 -- KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
 describe("the device-menu screens", function()
     require("commonrequire")

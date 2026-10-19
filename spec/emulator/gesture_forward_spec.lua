@@ -1,7 +1,6 @@
--- A Gestures-plugin binding performed on the home runs its action, and the History list it
--- dispatches is shown by the file manager's History module over the home (C10). The
--- gesture-forward scenario patch binds the file manager's bottom-right corner tap to History,
--- taps it on the first home and reports what it saw on the "scenario" screen.
+-- A Gestures-plugin binding performed on the home runs its action, and the History list it dispatches is shown by
+-- the file manager's History module over the home. The gesture-forward scenario patch binds the file manager's
+-- bottom-right corner tap to History, taps it on the first home and reports what it saw on the "scenario" screen.
 describe("forwarding a Gestures binding from the home on the emulator", function()
     require("commonrequire")
     local driver = require("emulator.driver")

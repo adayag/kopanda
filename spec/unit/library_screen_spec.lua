@@ -1,4 +1,4 @@
--- The library window (cover-grid C6): its header (the count in each look's words under the status,
+-- The library window: its header (the count in each look's words under the status,
 -- the title or the back mark and the folder's name, the pickers' labels), the page's tiles in three
 -- columns and two rows, the pager and its dead arrows, the empty note, the nav bar with Library
 -- active, its rebuild on a variant or size change, its re-listing on the metadata events, and its
@@ -499,7 +499,7 @@ describe("the library window", function()
         end)
     end)
 
-    -- context-menu C1, D1 ("Hidden folders"): on a real folder, so Books.folder and Books.all read the disk.
+    -- On a real folder, so Books.folder and Books.all read the disk.
     describe("hidden folders", function()
         local lfs = require("libs/libkoreader-lfs")
         local dir = os.getenv("KO_HOME") .. "/library-hidden"
@@ -563,7 +563,7 @@ describe("the library window", function()
         end)
     end)
 
-    -- context-menu C1, C5, D6: KOReader's home folder changed under the shown library (Set as library
+    -- KOReader's home folder changed under the shown library (Set as library
     -- root's OK, whose ConfirmBox close marks the library dirty, frontend/ui/uimanager.lua:349-353).
     describe("the root", function()
         local sub

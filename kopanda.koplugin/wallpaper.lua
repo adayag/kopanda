@@ -1,21 +1,15 @@
--- The wallpaper behind the home's rows: the wallpaper.file setting's image, drawn only by a look
--- whose wallpaper.enabled token is true (Frosted), scaled to cover the screen (the smaller scale
--- that fills it), centred and cropped. Rendered once per path, screen size, palette variant and
--- night mode and kept for its holder, the home, until that home closes or a build asks for another
--- of those, or for none; the buffer it replaces is freed then, so a painter asks for it by key at
--- each paint (Wallpaper.current). A file that is missing, too large to decode or won't render is
--- logged once (until it changes on disk) and draws nothing, so the home draws paper.
---
--- KOReader decodes the whole file at its own size before it scales it (TurboJPEG and MuPDF both,
--- frontend/ui/renderimage.lua:115-134), and a process the device kills for memory can't be caught.
--- So a file over 12 MB, or whose PNG or JPEG header claims more than 4000 px on a side, is refused
--- before it is read; a header that is neither, or can't be read, leaves the byte cap alone.
---
--- KOReader's night mode inverts the whole screen, grey or colour, so in night mode the image is
--- kept inverted, as ImageWidget inverts a cover at night (frontend/ui/widget/imagewidget.lua:583-593),
--- and the panel shows the picture. In grey it is kept as an 8-bit grey buffer, the screen's own
--- type there, which blitFrom converts it to (base/ffi/blitbuffer.lua:1281).
--- Module state: the image held, { key, bb, holder }, or nil; and the files that failed, by key.
+-- The wallpaper behind the home's rows: the wallpaper.file setting's image, drawn only by a look whose
+-- wallpaper.enabled token is true, scaled to cover the screen, centred and cropped. Rendered once per path,
+-- screen size, palette variant and night mode and kept for its holder, the home, until that home closes or a
+-- build asks for another; a painter asks for it by key at each paint (Wallpaper.current). A file that is
+-- missing, too large or won't render is logged once and draws nothing. KOReader decodes the whole file at its
+-- own size before it scales it (frontend/ui/renderimage.lua:115-134) and a process the device kills for memory
+-- can't be caught, so a file over 12 MB, or whose PNG or JPEG header claims more than 4000 px on a side, is
+-- refused before it is read; a header that is neither, or can't be read, leaves the byte cap alone.
+-- Night mode inverts the whole screen, so the image is kept inverted, as ImageWidget
+-- inverts a cover at night (frontend/ui/widget/imagewidget.lua:583-593); in grey it is an 8-bit grey buffer, the
+-- screen's own type, which blitFrom converts it to (base/ffi/blitbuffer.lua:1281). State: the image held, { key,
+-- bb, holder }, and the files that failed, by key.
 local Blitbuffer = require("ffi/blitbuffer")
 local Device = require("device")
 local RenderImage = require("ui/renderimage")
@@ -100,10 +94,9 @@ local function refuse_large(path)
     end
 end
 
--- The file at path rendered for a w by h screen in variant: RenderImage:renderImageFile at the
--- file's own size (frontend/ui/renderimage.lua:28-37), scaled to cover by
--- RenderImage:scaleBlitBuffer (:303-328, which frees the render it scales), centred and cropped
--- into a new buffer, inverted in night mode. Raises when the file won't render.
+-- The file at path rendered for a w by h screen in variant: RenderImage:renderImageFile at the file's own size
+-- (frontend/ui/renderimage.lua:28-37), scaled to cover by RenderImage:scaleBlitBuffer (:303-328, which frees
+-- the render it scales), centred and cropped into a new buffer, inverted at night. Raises when it won't render.
 local function render(path, w, h, variant, night)
     local image = RenderImage:renderImageFile(path, false)
     if not image then
@@ -132,10 +125,9 @@ local function stamp(path)
     return tostring(attributes.size) .. "@" .. tostring(attributes.modification)
 end
 
--- The image to draw behind the home's rows for look in variant on a w by h screen, held for
--- holder, and the key it is held by (for Wallpaper.current), or nil: with a look that draws none
--- or no file set (dropping any image held), or when the file is missing or won't render (logged
--- once per file state).
+-- The image to draw behind the home's rows for look in variant on a w by h screen, held for holder, and the key
+-- it is held by (for Wallpaper.current), or nil: with a look that draws none or no file set (dropping any image
+-- held), or when the file is missing or won't render (logged once per file state).
 function Wallpaper.get(look, variant, w, h, holder)
     local path = look.wallpaper.enabled and Settings.get("wallpaper.file")
     if not path then
@@ -186,10 +178,9 @@ function Wallpaper.release(holder)
     end
 end
 
--- Paints image at x, y on bb. A buffer that stores its writes inverted (night mode on a panel that
--- can't invert, base/ffi/framebuffer.lua:476-488) has its flag lifted for the copy, so the C
--- blitter takes it (base/ffi/blitbuffer.lua:733-740), and the copy is inverted back in place: the
--- stored pixels, which that panel shows, are the picture.
+-- Paints image at x, y on bb. A buffer that stores its writes inverted (night mode on a panel that can't invert,
+-- base/ffi/framebuffer.lua:476-488) has its flag lifted for the copy, so the C blitter takes it
+-- (base/ffi/blitbuffer.lua:733-740), and the copy is inverted back in place.
 function Wallpaper.paint(bb, x, y, image)
     local w, h = image:getWidth(), image:getHeight()
     if bb:getInverse() ~= 1 then
@@ -207,7 +198,7 @@ function Wallpaper.paint(bb, x, y, image)
     end
 end
 
--- For the specs: free the image held and forget the failures, as in a new process.
+-- For specs: free the image held and forget the failures, as in a new process.
 function Wallpaper._reset()
     drop()
     failed = {}

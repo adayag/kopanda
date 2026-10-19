@@ -1,6 +1,6 @@
--- The device's side of the bundle format (C5): over the shared vectors in spec/fixtures/push/ it
--- computes every sha256 and the bundle hash the studio's manifest names, accepts that manifest
--- for its own profile, and refuses every manifest and path the feature lists.
+-- The device's side of the bundle format: over the shared vectors in spec/fixtures/push/ it computes every sha256 and
+-- the bundle hash the studio's manifest names, accepts that manifest for its own profile, and refuses every
+-- manifest and path the format forbids.
 describe("the push bundle", function()
     local PushBundle = require("push_bundle")
     local lfs = require("libs/libkoreader-lfs")

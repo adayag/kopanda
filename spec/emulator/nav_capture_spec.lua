@@ -1,9 +1,8 @@
--- The file browser's paint budget (nav-bar C11): KOReader's file browser on the populated
--- fixture's library with the nav bar in its band and Library active, in Diner on the Colorsoft,
--- at 2026-10-13 08:42 in Chicago. The home fixture patch freezes the clock and writes the
--- scenario; the file-browser scenario closes the home once it settles, leaving the file browser on
--- top; the capture is taken on the file browser's own settled signal. The look is passed empty so
--- a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
+-- The file browser's paint budget: KOReader's file browser on the populated fixture's library with the nav bar in
+-- its band and Library active, in Diner on the Colorsoft, at 2026-10-13 08:42 in Chicago. The home fixture patch
+-- freezes the clock and writes the scenario; the file-browser scenario closes the home once it settles; the capture
+-- is taken on the file browser's own settled signal. The look is passed empty so a KOPANDA_HOME_LOOK in the
+-- caller's environment cannot leak in.
 describe("the file browser under the nav bar", function()
     require("commonrequire")
     local driver = require("emulator.driver")

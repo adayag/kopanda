@@ -22,11 +22,10 @@ describe("the emulator capture driver", function()
         end
     end
 
-    -- A fake emulator dir: ./luajit answers the driver's seeding one-liner (-e) with exit 0
-    -- (seed_fails: prints "no sqlite here" and exits 1) and, run as the emulator, records
-    -- its pid and sleeps (exit_now: exits 0 at once; ignore_term: ignores SIGTERM first,
-    -- which survives the exec; record_args: writes its arguments one per line to <emu>/args
-    -- and exits 0; record_env: writes its environment to <emu>/env and exits 0).
+    -- A fake emulator dir: ./luajit answers the driver's seeding one-liner (-e) with exit 0 (seed_fails: prints "no
+    -- sqlite here" and exits 1) and, run as the emulator, records its pid and sleeps (exit_now exits 0 at once;
+    -- ignore_term ignores SIGTERM first; record_args writes its arguments one per line to <emu>/args; record_env writes
+    -- its environment to <emu>/env).
     local function fake_emulator(opts)
         opts = opts or {}
         local dir = fresh_dir("emu")
@@ -292,10 +291,9 @@ describe("the emulator capture driver", function()
             return found
         end
 
-        -- A fake emulator run as each start: appends KO_HOME's start count (kept in KO_HOME, so
-        -- it counts only while one profile serves every start) and the start's own variables to
-        -- <emu>/starts, writes a tiny PNG and a sidecar where KOPANDA_SHOT says, and exits with
-        -- KOPANDA_FAKE_STATUS (default 0).
+        -- A fake emulator run as each start: appends KO_HOME's start count and the start's own variables to
+        -- <emu>/starts, writes a tiny PNG and a sidecar where KOPANDA_SHOT says, and exits with KOPANDA_FAKE_STATUS
+        -- (default 0).
         local function counting_emulator()
             local dir = fresh_dir("emu")
             assert(lfs.mkdir(dir .. "/plugins"))

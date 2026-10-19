@@ -1,4 +1,4 @@
--- The library's covers (cover-grid C9): after a page's first paint it asks for that page's covers at
+-- The library's covers: after a page's first paint it asks for that page's covers at
 -- the cover box's size, an arrival rebuilds only the arrived tiles from their re-read records without
 -- re-sorting, a new page replaces the request, a page turn leaves the extraction in flight checked,
 -- closing the library cancels the check, and the frames and tiles it replaces are freed.
@@ -335,7 +335,7 @@ describe("the library's lifecycle", function()
         end)
     end)
 
-    -- cover-grid C8, D6: the ways in. The library target is what the launcher's entry, the Library
+    -- The ways in. The library target is what the launcher's entry, the Library
     -- tab everywhere and the featured widget's first-run button run.
     describe("entry points", function()
         local Home, LauncherEntries, NavBar
@@ -429,11 +429,10 @@ describe("the library's lifecycle", function()
         end)
     end)
 
-    -- cover-grid C8, D4: a book opened from the library closes back to it. KOReader's open is
-    -- stubbed at filemanagerutil.openFile; the test then does what an open that goes ahead does:
-    -- the pre-callback (filemanagerutil.lua:500-502), the file manager closing for the reader
-    -- (filemanager.lua:842-849), a real reader closed (readerui.lua:870-893) and a new file manager
-    -- shown (readerui.lua:581-596), as prebuild_spec.lua drives the home's.
+    -- A book opened from the library closes back to it. KOReader's open is stubbed at filemanagerutil.openFile; the
+    -- test then does what an open that goes ahead does: the pre-callback (filemanagerutil.lua:500-502), the file
+    -- manager closing for the reader (filemanager.lua:842-849), a real reader closed (readerui.lua:870-893) and a new
+    -- file manager shown (readerui.lua:581-596), as prebuild_spec.lua drives the home's.
     describe("after a book opened from it closes", function()
         local Event = require("ui/event")
         local ffiutil = require("ffi/util")

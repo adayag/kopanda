@@ -1,4 +1,4 @@
--- The settings menu on its own (device-menus' C2): KOReader's TouchMenu with one tab, the
+-- The settings menu on its own: KOReader's TouchMenu with one tab, the
 -- appbar.settings icon, over the home, closed by a tap outside it or the Back key; a raising open
 -- shows nothing and is logged.
 describe("the settings menu", function()
@@ -39,7 +39,7 @@ describe("the settings menu", function()
     end
 
     it("builds, paints and closes a TouchMenu with one tab", function()
-        -- The open fact of task.md step 1, settled against KOReader's own TouchMenu.
+        -- Behaviour settled against KOReader's own TouchMenu.
         local container = CenterContainer:new{ dimen = Screen:getSize(), ignore = "height" }
         local tapped = 0
         local items = {

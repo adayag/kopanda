@@ -290,10 +290,9 @@ local function hash_of(record)
     end
 end
 
--- Puts back the install rollback/record.lua describes. Idempotent: a restore cut short is
--- finished by the next start. The shells come back first, and every step after that is tried
--- even when an earlier one failed. Writes kind and message as the result when every step
--- worked, restore_failed otherwise.
+-- Puts back the install rollback/record.lua describes. Idempotent: a restore cut short is finished by the next
+-- start. The shells come back first and every later step is tried even when an earlier one failed. Writes kind
+-- and message as the result when every step worked, restore_failed otherwise.
 local function restore(paths, kind, message)
     local record, err = read_record(paths.rollback .. "/record.lua")
     if record and not valid_plugin_dir(record.plugin_dir) then

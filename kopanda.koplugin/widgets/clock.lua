@@ -10,9 +10,8 @@ local Clock = {
     settings_prefix = "clock",
 }
 
--- The time t as the clock reads it: "8:42" with the 12-hour clock, with no leading zero and no
--- AM/PM, as both boards draw it (Main.dc.html:26, HomeRetro.dc.html:24); otherwise "8:42" or
--- "20:42", the %-H:%M form KOReader gives the 24-hour time on Linux and Kindle
+-- The time t as the clock reads it: "8:42" with the 12-hour clock, no leading zero and no AM/PM; otherwise
+-- "8:42" or "20:42", the %-H:%M form KOReader gives the 24-hour time on Linux and Kindle
 -- (frontend/datetime.lua:262-264).
 function Clock.text(t)
     if G_reader_settings:isTrue("twelve_hour_clock") then

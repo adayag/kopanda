@@ -1,4 +1,4 @@
--- A hold on the KoPanda home (sheets' C3 and C11): the held widget's hold, its settings or the
+-- A hold on the KoPanda home: the held widget's hold, its settings or the
 -- home's sheet, after the zones registered on the file manager. The home's other gestures are in
 -- gesture_routing_spec.lua.
 describe("gestures on the KoPanda home", function()
@@ -24,7 +24,7 @@ describe("gestures on the KoPanda home", function()
         harness.teardown()
     end)
 
-    -- A hold on the home (sheets' C3): the held slot's widget's hold, its settings when it has
+    -- A hold on the home: the held slot's widget's hold, its settings when it has
     -- none, or the home's sheet, after the zones registered on the file manager.
     describe("holds", function()
         local Geom = require("ui/geometry")
@@ -247,8 +247,7 @@ describe("gestures on the KoPanda home", function()
                 bar.dimen.y + math.floor(bar.dimen.h / 2)
         end
 
-        -- D3, and bars/quick-settings' C9: a hold on the nav bar outside its Settings column is
-        -- consumed and runs nothing.
+        -- A hold on the nav bar outside its Settings column is consumed and runs nothing.
         it("opens no sheet and runs no slot's hold on a hold in the nav bar's band", function()
             local held, calls = recording(nil)
             stubs_with({ date = held, clock = held, quote = held, weather = held, stats = held })
@@ -268,7 +267,7 @@ describe("gestures on the KoPanda home", function()
             assert.equals(home, harness.top())
         end)
 
-        -- bars/quick-settings' C8: the Settings hold opens the quick-settings sheet over the home.
+        -- The Settings hold opens the quick-settings sheet over the home.
         it("opens the quick-settings sheet over the home and no home sheet on a hold on Settings", function()
             local held, calls = recording(nil)
             stubs_with({ date = held, clock = held, quote = held, weather = held, stats = held })

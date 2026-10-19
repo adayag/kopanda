@@ -1,12 +1,7 @@
--- The Series window (series-and-authors "Series"): a window on the chrome (library_chrome.lua)
--- showing the library's series, the list or one series, a page at a time. The list (SeriesC.dc.html)
--- heads D10's count over "Series" with "Under way first" at the right, then a page of series rows in
--- D12's order; one series (SeriesBooksC.dc.html) heads the back control "Series" over D10's aside and
--- the series' name, then a page of its book rows in series order with the next unread marked. Each
--- view pages by whole rows between its header and the pager (D14); the nav bar lights no tab. What
+-- The Series window: a window on the chrome (library_chrome.lua) showing the library's series, the
+-- list or one series' book rows, a page at a time by whole rows between the header and the pager. What
 -- the series are, in what order and state, is shelf_order.lua's; the rows are shelf_rows.lua's.
--- Module state: SeriesScreen.shown, the chrome's slot. SeriesScreen.on_open(view, page), run when a
--- tap's book open goes ahead, records the return in the chrome's LibraryChrome.return_to.
+-- SeriesScreen.shown is the chrome's slot; on_open records the return in LibraryChrome.return_to.
 local Books = require("books")
 local Geom = require("ui/geometry")
 local Helpers = require("helpers")
@@ -28,12 +23,12 @@ local SeriesScreen = LibraryChrome.Window:extend{
 
 local LIST = { kind = "list" }
 
--- Run when a tap's book open goes ahead: the book closes back to view at page (D7).
+-- Run when a tap's book open goes ahead: the book closes back to view at page.
 function SeriesScreen.on_open(view, page)
     LibraryChrome.return_to = { screen = "series", view = view, page = page }
 end
 
--- The books are read once per show (D8), and again when the metadata events re-list.
+-- The books are read once per show, and again when the metadata events re-list.
 function SeriesScreen:init()
     self.records = Books.all()
     LibraryChrome.Window.init(self)
@@ -48,7 +43,7 @@ local function scale(px)
     return Screen:scaleBySize(px)
 end
 
--- Books.progress, each record read once per sort: D3's states and the book rows share it.
+-- Books.progress, each record read once per sort: the states and the book rows share it.
 local function progress_once()
     local seen = {}
     return function(record)
@@ -59,10 +54,9 @@ local function progress_once()
     end
 end
 
--- The window's series in D12's order and their progress, kept on the window as { records, entries
--- (ShelfOrder.series of records), progress }: a page turn, a view change or a repaint in another
--- variant or size sorts nothing; a show (a new window), refresh() and a cover arrival's re-read
--- records (window.records replaced) sort again.
+-- The window's series in order and their progress, kept on the window as { records, entries
+-- (ShelfOrder.series of records), progress }: a page turn or repaint sorts nothing; a show, refresh()
+-- and a cover arrival's re-read sort again.
 local function sorted(self)
     local kept = self.kept
     if not kept or kept.records ~= self.records then
@@ -74,10 +68,8 @@ local function sorted(self)
 end
 
 -- What view at page shows from the window's records on a screen w by h under ctx, before any widget
--- is built: { view, the list instead for a series no entry has any more (D23); entry, the series
--- shown or nil; entries and progress, the kept sort's; header_h; top, the rows' first y; gap; width;
--- rows, each { h, entry or record }; pages, ShelfOrder.pages of them between the header and
--- ShelfRows.pager_reserve above the pager; page, clamped }.
+-- is built. Falls back to the list for a series no entry has any more; pages are ShelfOrder.pages
+-- between the header and ShelfRows.pager_reserve.
 local function plan(self, view, page, w, h, ctx)
     local kept = sorted(self)
     local entries, progress = kept.entries, kept.progress
@@ -118,7 +110,7 @@ local function plan(self, view, page, w, h, ctx)
     return p
 end
 
--- The number of entries under way, D10's second count.
+-- The number of entries under way.
 local function under_way_count(entries)
     local n = 0
     for _, candidate in ipairs(entries) do
@@ -129,10 +121,8 @@ local function under_way_count(entries)
     return n
 end
 
--- The keys of p's page in order, the view, the page count and the header's counts first (the
--- list's series and under-way counts; one series' author part and book count), then a series row's
--- name and its books' ids, a book row's id; and the ids of the records the page draws anything of:
--- every book of a series row, each book row's.
+-- The keys of p's page in order (the view, page count, header counts, each row's identity) and the ids
+-- of the records the page draws anything of.
 local function page_keys(p)
     local head = { p.view.kind, p.view.name or "", #p.pages }
     if p.entry then
@@ -162,8 +152,8 @@ function SeriesScreen:page_keys(view, page)
     return page_keys(plan(self, view, page, self.dimen.w, self.dimen.h, self.ctx))
 end
 
--- D10's count: the series and those under way, or one series' author part (D15) and its books,
--- joined in each look's words as the library's count is worded (title_bar.count_on_shelf).
+-- The count: the series and those under way, or one series' author part and its books, worded as the
+-- library's count is (title_bar.count_on_shelf).
 local function count_text(p, look)
     local join = look.title_bar.count_on_shelf and ", " or " · "
     local entry = p.entry
@@ -182,9 +172,8 @@ local function count_text(p, look)
     return under_way > 0 and text .. join .. under_way .. " under way" or text
 end
 
--- The header, w wide, on the series band: for the list, the count over "Series" with the inert
--- "Under way first" (D11) at the right, its parts' label; for one series, the back control over
--- the aside and the series' name (LibraryChrome.header's detail form).
+-- The header, w wide: for the list, the count over "Series" with the inert "Under way first" at the
+-- right; for one series, the back control over the aside and the name (LibraryChrome.header's detail form).
 local function header(p, w, ctx)
     local look = ctx.look
     local spec = {
@@ -206,9 +195,8 @@ local function header(p, w, ctx)
     return box, parts
 end
 
--- Fills built (showing, page, ctx) from the window's records: the frame (the header, the page's
--- rows or the empty note, the chrome's foot) and what gestures and the covers read: showing, page
--- and pages, header, rows ({ rect, entry or record, widget }), note, keys and drawn (page_keys).
+-- Fills built from the window's records: the frame and what gestures and the covers read (showing,
+-- page, pages, header, rows, note, keys and drawn).
 local function fill(self, built, frame, w, h)
     local ctx = built.ctx
     local look = ctx.look
@@ -250,7 +238,7 @@ function SeriesScreen:build(view, page)
     end)
 end
 
--- The back control, on one series: the list at the page holding that series (D17).
+-- The back control, on one series: the list at the page holding that series.
 function SeriesScreen:back()
     local name = self.showing.name
     local p = plan(self, LIST, 1, self.dimen.w, self.dimen.h, self.ctx)
@@ -279,8 +267,8 @@ function SeriesScreen:action_at(pos)
     return nil
 end
 
--- What lies at (x, y) on the shown window (D9): { kind = "series", entry }, { kind = "book",
--- record } or { kind = "empty" }; nil with no Series window shown.
+-- What lies at (x, y) on the shown window: { kind = "series", entry }, { kind = "book", record } or
+-- { kind = "empty" }; nil with no Series window shown.
 function SeriesScreen.hit(x, y)
     local screen = SeriesScreen.shown
     if not screen then
@@ -298,7 +286,7 @@ function SeriesScreen.hit(x, y)
     return { kind = "empty" }
 end
 
--- The covers of every book of the library, once per show (series-and-authors D2).
+-- The covers of every book of the library, once per show.
 function SeriesScreen:request_covers()
     LibraryChrome.request_records(self)
 end

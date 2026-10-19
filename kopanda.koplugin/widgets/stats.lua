@@ -1,10 +1,8 @@
--- The reading stats widget: the streak, minutes today and books this month from reading_stats.lua,
--- on one line in the look's type.stats. The look's home.stats_line chooses the line: spread
--- across the column (Editorial, Main.dc.html:87) or joined with " · ", right-aligned (Diner,
--- HomeRetro.dc.html:52); its home.stats_streak the streak's wording, word_first ("Streak 4 days")
--- or count_first ("4-day streak"). Parts drop from the end while the line is wider than the
--- column; the first always shows, ending in an ellipsis if it must. stats.show false draws
--- nothing at height 0.
+-- The reading stats widget: the streak, minutes today and books this month from reading_stats.lua, on one line
+-- in the look's type.stats. home.stats_line chooses the line: spread across the column, or joined with " · ",
+-- right-aligned; home.stats_streak the streak's wording, word_first ("Streak 4 days") or count_first ("4-day
+-- streak"). Parts drop from the end while the line is wider than the column; the first always shows, ending in
+-- an ellipsis if it must. stats.show false draws nothing at height 0.
 local Geom = require("ui/geometry")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")

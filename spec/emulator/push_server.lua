@@ -1,18 +1,16 @@
--- The studio's push routes, served from files for spec/emulator/push_spec.lua. Run with the
--- emulator's luajit from its koreader directory, LUA_PATH '?.lua;common/?.lua;frontend/?.lua'
--- and LUA_CPATH '?.so;common/?.so' (common/socket.lua is Lua over common/socket/score.so):
+-- The studio's push routes, served from files for push_spec.lua. Run with the emulator's luajit from its koreader
+-- directory, LUA_PATH '?.lua;common/?.lua;frontend/?.lua' and LUA_CPATH '?.so;common/?.so' (common/socket.lua is Lua
+-- over common/socket/score.so):
 --
 --   ./luajit push_server.lua <root> <port_file> <lifetime_s>
 --
--- Binds 127.0.0.1 on a port the system picks (common/socket.lua:27-40), writes the port to
--- port_file once it listens, and answers one connection at a time, GET only, from what
--- spec/emulator/push_bundles.lua wrote under root:
+-- Binds 127.0.0.1 on a port the system picks (common/socket.lua:27-40), writes the port to port_file once it
+-- listens, and answers one connection at a time, GET only, from what push_bundles.lua wrote under root:
 --   /api/push/profiles                   <root>/profiles.json
 --   /api/push/<id>/manifest              <root>/<id>/manifest.json
 --   /api/push/<id>/files/<hash>/<path>   <root>/<id>/tree/<path>, for a path the manifest lists;
 --                                        409 { error, hash } when <hash> is not the manifest's
--- and 404 { error } for anything else. Every answer has Content-Length and Connection: close.
--- It exits after lifetime_s with no connection, so a spec that dies leaves no server behind.
+-- and 404 { error } for anything else. Every answer has Content-Length and Connection: close. It
 local rapidjson = require("rapidjson")
 local socket = require("socket")
 

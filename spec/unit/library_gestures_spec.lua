@@ -1,8 +1,7 @@
--- The library's gestures (cover-grid C7), in the feature's order: the nav bar's band; a tap on a
--- book, a folder, the title, a picker or a pager arrow; a west or east swipe, but not one in the top
--- or bottom edge band; the page keys; a hold; and everything else to the file manager's menu zones
--- and the zones on the file manager, the rest consumed. Library.hit names what lies under a point.
--- KOReader's touch lock filters the library's own zones.
+-- The library's gestures: the nav bar's band; a tap on a book, a folder, the title, a picker or a pager arrow; a west
+-- or east swipe, but not one in the top or bottom edge band; the page keys; a hold; and everything else to the file
+-- manager's menu zones and the zones on the file manager, the rest consumed. Library.hit names what lies under a
+-- point. KOReader's touch lock filters the library's own zones.
 describe("gestures on the library", function()
     local harness = require("plugin_harness")
     local fixture = require("library_fixture")
@@ -352,7 +351,7 @@ describe("gestures on the library", function()
     end)
 
     describe("a hold", function()
-        -- context-menu C7: a hold the nav bar's band and the file manager's zones leave goes to
+        -- A hold the nav bar's band and the file manager's zones leave goes to
         -- LibrarySheets.hold. The fixture's books are no files, so their sheet re-lists instead.
         it("runs no open and no picker, and is consumed", function()
             install()
@@ -364,7 +363,7 @@ describe("gestures on the library", function()
             assert.same({}, opened)
             assert.same({}, picked)
             assert.same({ ROOT, 1 }, { library.dir, library.page })
-            -- context-menu D15: a hold on the header opens the empty-space sheet over the library.
+            -- A hold on the header opens the empty-space sheet over the library.
             local Sheet = package.loaded["sheet"]
             assert.equals("library_empty", Sheet.shown.spec.name)
             assert.equals(library, harness.top(2))

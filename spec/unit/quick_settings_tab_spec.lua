@@ -1,6 +1,5 @@
--- The quick-settings tab in KOReader's top menus (design: docs/plans/2026-10-18-menu-quick-
--- settings-design.md): just before Main in the file browser's and the reader's tab bar, opening
--- the sheet.
+-- The quick-settings tab in KOReader's top menus: just before Main in the file browser's and the reader's tab bar,
+-- opening the sheet.
 describe("the quick-settings tab", function()
     local harness = require("plugin_harness")
     local DataStorage = require("datastorage")

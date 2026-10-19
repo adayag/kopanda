@@ -1,5 +1,5 @@
 -- The plugin's validators give every verdict of the corpus the studio's validators are held to
--- (studio/test/core/validators.test.ts), so the two can't drift (C2).
+-- (studio/test/core/validators.test.ts), so the two can't drift.
 describe("Settings.validators on the shared corpus", function()
     require("plugin_harness")
     local Schema = require("schema")

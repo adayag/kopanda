@@ -1,19 +1,7 @@
--- The quick-settings sheet: a sheet whose body is the device's light and toggles, opened over the
--- home or the bare file browser. Under the header "Quick settings" and the battery's capacity, a
--- Brightness bar and a Warmth bar, each a label row over a minus button, a level bar and a plus
--- button, in native steps; then a grid of six cells, Wi-Fi, Night, Rotation lock, Sync books,
--- Screenshot and Sleep, the on ones filled, the ones that can't run greyed. Everything is read
--- from the device when the sheet lays out. Each area acts as KOReader's own menus act
--- (bars/quick-settings, "Routing"): the buttons step the light through broadcast events and
--- Night, Rotation lock and Wi-Fi toggle, all with the sheet left open; Sync books, Screenshot,
--- Sleep and a cell greyed because its entry can't run close it first and run their launcher
--- entry; a bar or cell greyed because its read raised is inert, its touch consumed.
---
--- The minus and plus are the text "−" (U+2212) and "+" in the quick_button part (open fact F1,
--- outcome a): set by Typeset.line at the Colorsoft and painted, each differs in both looks from
--- U+0378, a code point Unicode leaves unassigned, which both draw as the missing-glyph box
--- (Editorial's text face: a 23 by 60 cell, a bar of 51 inked pixels and a cross of 98; Diner's
--- strong face: a 20 by 56 cell, 64 and 108; U+0378 an outlined box in both).
+-- The quick-settings sheet: the device's light and toggles, opened over the home or the bare file browser, read
+-- from the device when the sheet lays out; each area acts as KOReader's own menus do, and one that can't run or
+-- whose read raised is inert. The minus and plus are "−" (U+2212) and "+" in the quick_button part: U+2212 draws
+-- in both looks' faces, where U+0378, an unassigned code point, draws the missing-glyph box.
 local Device = require("device")
 local Event = require("ui/event")
 local Geom = require("ui/geometry")
@@ -98,11 +86,10 @@ local function reading(what, f)
     return value or nil
 end
 
--- The device's state as the sheet shows it: { battery, brightness, warmth, cells }. battery is a
--- percent or nil; brightness and warmth are nil when hidden (warmth needs the frontlight too),
--- { greyed = true } when their read raised, else { value, min, max } in native steps; cells are
--- the six in the grid's order, each { id, label, icon, on, greyed, failed }, failed when its read
--- raised. Each read is guarded: one that raises is logged and greys its control.
+-- The device's state as the sheet shows it: { battery, brightness, warmth, cells }. battery is a percent or
+-- nil; brightness and warmth are nil when hidden, { greyed = true } when their read raised, else { value, min,
+-- max } in native steps; cells are the six in order, each { id, label, icon, on, greyed, failed }. Each read
+-- is guarded: one that raises is logged and greys its control.
 function QuickSettings.state()
     local powerd = Device:getPowerDevice()
     local brightness = reading("the frontlight", function()
@@ -142,10 +129,9 @@ function QuickSettings.state()
     }
 end
 
--- The light at n native steps, clamped to [0, fl_max]; DeviceListener:onSetFlIntensity turns
--- it off at 0 (frontend/device/devicelistener.lua:116-125). Broadcast, as KOReader's own menus
--- reach the file manager's DeviceListener: under the sheet it is no active widget
--- (frontend/ui/uimanager.lua:962-1035, :1042-1061).
+-- The light at n native steps, clamped to [0, fl_max]; DeviceListener:onSetFlIntensity turns it off at 0
+-- (frontend/device/devicelistener.lua:116-125). Broadcast, as KOReader's own menus reach the file manager's
+-- DeviceListener: under the sheet it is no active widget (frontend/ui/uimanager.lua:962-1035, :1042-1061).
 local function set_brightness(n)
     local powerd = Device:getPowerDevice()
     UIManager:broadcastEvent(Event:new("SetFlIntensity", math.max(0, math.min(n, powerd.fl_max))))
@@ -190,11 +176,10 @@ local BUTTONS = {
     },
 }
 
--- KOReader's Wi-Fi menu item's toggle, interactive (frontend/ui/network/manager.lua:899-915):
--- off when fully connected, its prompt when on and not connected, else on. It passes no callback:
--- NetworkMgr runs one only just after broadcasting NetworkConnected (:109, :116) or
--- NetworkDisconnected (:408-410), on which the sheet redraws if the radio changed (stale). The
--- tap's own redraw shows a toggle that broadcasts nothing: a dismissed prompt, a failed connection.
+-- KOReader's Wi-Fi menu item's toggle, interactive (frontend/ui/network/manager.lua:899-915): off when fully
+-- connected, its prompt when on and not connected, else on. It passes no callback: NetworkMgr runs one only
+-- just after broadcasting NetworkConnected (:109, :116) or NetworkDisconnected (:408-410), on which the
+-- sheet redraws if the radio changed. The tap's own redraw shows a toggle that broadcasts nothing.
 local function toggle_wifi()
     NetworkMgr:queryNetworkState()
     if NetworkMgr.is_wifi_on and NetworkMgr.is_connected then
@@ -281,10 +266,9 @@ local function in_role(part, role)
     return copy
 end
 
--- The sheet's body under bctx (the sheet's build ctx) content_w wide: { widget, areas }, areas
--- { id, rect, tap, hold, close_first } with rect from the widget's top-left, the bars' minus and
--- plus then the cells, in order.
--- The layout is the quick-settings feature's ("The panel"), from look.quick_settings.
+-- The sheet's body under bctx (the sheet's build ctx) content_w wide, from look.quick_settings: { widget,
+-- areas }, areas { id, rect, tap, hold, close_first } with rect from the widget's top-left, the bars' minus
+-- and plus then the cells, in order.
 function QuickSettings.body(bctx, content_w)
     local look = bctx.look
     local qs = look.quick_settings

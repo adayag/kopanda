@@ -1,4 +1,4 @@
--- The sheet component (sheets' C2): a panel drawn in the look over a shown home, its taps, keys
+-- The sheet component: a panel drawn in the look over a shown home, its taps, keys
 -- and Back, one sheet at a time, one paint per change, its settled signal, night mode and a
 -- sheet too tall for the screen. Every stub of Device.hasKeys, night_mode and color_rendering is
 -- restored where it is made.
@@ -364,7 +364,7 @@ describe("the sheet", function()
         end)
     end)
 
-    -- The boxes four sheets had before the pickers' additions (cover-grid C10), at the Colorsoft's
+    -- The boxes four sheets had before the pickers' additions, at the Colorsoft's
     -- size: panel, header, hint, then each row's rect, label and detail, "-" for none. The
     -- iconless rows are the editor's picker sheets (edit_layout.lua:153-212), which keep the indent.
     describe("a sheet with none of the pickers' additions", function()
@@ -424,8 +424,8 @@ describe("the sheet", function()
         end
     end)
 
-    -- The sort sheet's shape (SortC.dc.html:38-69): the aside over the heading, a label at the
-    -- header's right, iconless rows set flush, each with a second line, the first selected.
+    -- The sort sheet's shape: the aside over the heading, a label at the header's right, iconless rows set flush,
+    -- each with a second line, the first selected.
     describe("the pickers' additions", function()
         local bb
 
@@ -516,9 +516,8 @@ describe("the sheet", function()
         end
     end)
 
-    -- context-menu "Tokens": a chip filled in paper sets its text in sheet_chip_plain, since
-    -- sheet_chip's on_accent is the night paper itself by night; a chip on a colour keeps sheet_chip,
-    -- and a look without the chip its plain detail.
+    -- A chip filled in paper sets its text in sheet_chip_plain, since sheet_chip's on_accent is the night paper
+    -- itself by night; a chip on a colour keeps sheet_chip, and a look without the chip its plain detail.
     describe("a chip on paper", function()
         -- The part each detail's text was set in, by its text, for the empty-space sheet's chips and
         -- the book sheet's status chip shown in look id.
@@ -1212,12 +1211,11 @@ describe("the sheet", function()
             return count
         end
 
-        -- A sheet spec with a body in place of rows. Each call of body makes a new widget of the
-        -- content's width and heights[n] tall at its nth call (default 200), counting its paints
-        -- (where) and frees, and three areas: stay (tap and hold spies), closer (close_first, a
-        -- tap spy) and inert (no handlers). log keeps the calls, each call's variant, the widgets,
-        -- and for each spy its runs and whether the sheet was shown when it ran. raise names a
-        -- spy (or "body", from the body's second call) that raises after it records.
+        -- A sheet spec with a body in place of rows. Each call of body makes a new widget of the content's width and
+        -- heights[n] tall at its nth call (default 200), counting its paints (where) and frees, and three areas: stay
+        -- (tap and hold spies), closer (close_first, a tap spy) and inert (no handlers). log keeps the calls, each
+        -- call's variant, the widgets, and for each spy its runs and whether the sheet was shown when it ran. raise
+        -- names a spy (or "body", from the body's second call) that raises after it records.
         local function body_spec(log, heights, raise)
             log.calls, log.variants, log.widgets = 0, {}, {}
             log.stay_tap, log.stay_hold, log.closer = {}, {}, {}

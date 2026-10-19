@@ -1,15 +1,7 @@
--- KoPanda's title bar for KOReader's file manager, drawn from the look as the library boards draw
--- their header: a count over the folder's title on the left, the sort and status pickers and the
--- plus (or check) icon on the right. It is a TitleBar, so the file manager and its chooser call it
--- as they call KOReader's (frontend/ui/widget/titlebar.lua:395-494), and it reads what it shows
--- from the file chooser each time it paints.
---
--- The down mark after each picker's label is the text " ▾" (U+25BE). Open fact F1, settled at the
--- Colorsoft: "▾" set by Typeset.line in Editorial's strong part and in Diner's display part paints
--- a down-pointing triangle 12 px wide in both looks. It differs from U+E000 (which KOReader's
--- fallback fonts turn out to cover with a glyph of their own) and from the missing-glyph box an
--- unassigned code point paints (U+0378, a 14 px outlined box), so it renders (outcome a) and no
--- icon is needed.
+-- KoPanda's title bar for KOReader's file manager, drawn from the look: a count over the folder's title on
+-- the left, the sort and status pickers and the plus (or check) icon on the right. It is a TitleBar, so the
+-- file manager and its chooser call it as they call KOReader's (frontend/ui/widget/titlebar.lua:395-494), and
+-- it reads what it shows from the file chooser each time it paints.
 local BookList = require("ui/widget/booklist")
 local FileChooser = require("ui/widget/filechooser")
 local Geom = require("ui/geometry")
@@ -61,10 +53,12 @@ KoTitleBar.SORT_LABELS = {
 -- (frontend/apps/filemanager/filemanagermenu.lua:875).
 local STATUSES = { "new", "reading", "abandoned", "complete" }
 
+-- The down mark after each picker's label: U+E000 draws a fallback-font glyph of its own and an unassigned code
+-- point (U+0378) draws a missing-glyph box, so " ▾" (U+25BE) is the mark.
 local DOWN_MARK = " \u{25BE}"
 
--- The height of part's line under look with no text size (D8): a line's height is its face's or
--- its forced height, whatever the text (typeset.lua:31-45). The variant only colours it.
+-- The height of part's line under look with no text size: a line's height is its face's or its forced
+-- height, whatever the text (typeset.lua:31-45). The variant only colours it.
 local function line_height(look, part, sample, screen)
     local line = Typeset.line(part, sample, screen:getWidth(), { look = look, variant = "day" })
     local h = line:getSize().h
@@ -104,10 +98,9 @@ function KoTitleBar.height(look, screen)
     return metrics(look, screen).height
 end
 
--- Replaces TitleBar:init (titlebar.lua:86-393) whole: no title, subtitle or buttons of KOReader's,
--- one listener for the bar's taps and holds, and OverlapGroup's init so its size and dimen agree
--- (frontend/ui/widget/overlapgroup.lua:42-56): getSize, OverlapGroup's (:22-39), is then the
--- bar's width by its height.
+-- Replaces TitleBar:init (titlebar.lua:86-393) whole: no title, subtitle or buttons of KOReader's, one
+-- listener for the bar's taps and holds, and OverlapGroup's init so its size and dimen agree
+-- (frontend/ui/widget/overlapgroup.lua:42-56): getSize, OverlapGroup's (:22-39), is then the bar's size.
 function KoTitleBar:init()
     if not self.width then
         self.width = Screen:getWidth()
@@ -241,10 +234,9 @@ local function free_build(built)
     built.icon:free()
 end
 
--- Sets state's lines into lines and returns their boxes and the icon's, in bar-relative pixels.
--- The right group ends at the side padding with its bottom on the content's bottom: the sort
--- picker, the status picker, then the icon centred on the pickers' row; the count and title take
--- the width left of it, the title's bottom on the content's bottom.
+-- Sets state's lines into lines and returns their boxes and the icon's, in bar-relative pixels. The right
+-- group ends at the side padding: the sort picker, the status picker, then the icon centred on their row;
+-- the count and title take the width left of it.
 local function lay_out(bar, state, lines)
     local look, m, width = bar.look, bar.metrics, bar.width
     local parts = look.type
@@ -423,10 +415,9 @@ local function dispatch(bar, ges)
     return false
 end
 
--- Whether the bar consumes ges: a tap on a picker or the plus runs its callback; a hold on the
--- title column runs the folder menu's callback, and its release is taken with it. A tap on the
--- title, a hold elsewhere and anything off the bar pass on. A callback that raises is logged and
--- the gesture passes on.
+-- Whether the bar consumes ges: a tap on a picker or the plus runs its callback; a hold on the title column
+-- runs the folder menu's callback, and its release is taken with it. Anything else passes on, as does a
+-- gesture whose callback raised (logged).
 function KoTitleBar:handle(ges)
     local ok, taken = pcall(dispatch, self, ges)
     if not ok then

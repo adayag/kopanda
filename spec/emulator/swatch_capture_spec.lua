@@ -1,5 +1,5 @@
--- The swatch screen (C11): the swatch scenario patch opens Tools › KoPanda › Swatches once the
--- home has settled, and the capture is taken on the swatch's own settled signal.
+-- The swatch screen: the swatch scenario patch opens Tools › KoPanda › Swatches once the home has settled, and the
+-- capture is taken on the swatch's own settled signal.
 describe("the swatch screen", function()
     require("commonrequire")
     local driver = require("emulator.driver")

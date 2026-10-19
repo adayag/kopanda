@@ -92,10 +92,10 @@ function BookCovers.read(record, w, h)
     return read_cover(record.path, w, h)
 end
 
--- Whether to ask CoverBrowser to extract a cover for info, its getBookInfo row or nil, in a box
--- of specs ({ max_cover_w, max_cover_h }). Never without CoverBrowser. Otherwise in
--- mosaicmenu.lua:471-488's order: the never-ask rows come before the size test, since
--- isCachedCoverInvalid is true for any row without cover_w (bookinfomanager.lua:1014-1015).
+-- Whether to ask CoverBrowser to extract a cover for info (its getBookInfo row or nil) in a box of
+-- specs. Never without CoverBrowser; otherwise in mosaicmenu.lua:471-488's order, the never-ask rows
+-- before the size test, since isCachedCoverInvalid is true for any row without cover_w
+-- (bookinfomanager.lua:1014-1015).
 function BookCovers.wants(info, specs)
     local bim = manager()
     if not bim then
@@ -121,11 +121,9 @@ function BookCovers.cancel()
     end
 end
 
--- The records of records CoverBrowser should extract a cover for in a box of specs, or an empty
--- list when none is new: each with a path not asked for in this process, or still pending, whose
--- row wants says yes to. A pending file is asked again because a new batch ends its extraction;
--- with no new file there is no new batch and it goes on. A failing test is logged and its record
--- left out.
+-- The records CoverBrowser should extract a cover for in a box of specs: each with a path not asked
+-- for in this process, or still pending, whose row wants says yes to. A failing test is logged and
+-- its record left out.
 local function wanted(bim, records, specs)
     local in_flight = {}
     for _, record in ipairs(pending) do
@@ -147,17 +145,13 @@ local function wanted(bim, records, specs)
     return new and list or {}
 end
 
--- Asks CoverBrowser to extract, in one batch, the covers of the records that want one for a box
--- of specs, once per file per process, then checks each second while the extraction runs, at most
--- 30 times. CoverBrowser has no completion event, and polls the same way itself
--- (covermenu.lua:164-175). Each check calls on_arrival(records) once with the records whose cover
--- arrived since the last, and stops at once when alive() is false. One request is in flight at a
--- time: extractInBackground terminates the one before (bookinfomanager.lua:695), so a new request
--- drops its check, forgets its files that hadn't arrived and asks again for those it repeats. The
--- 30th check, the cap, forgets in the same way the files that had not arrived, which the extraction
--- going on may not have reached, so a later request asks for them again; once the extraction has
--- ended, a file that did not arrive stays asked. The home's featured cover, the library (its page,
--- or its folder after Refresh covers) and the Series and Authors windows ask through here.
+-- Asks CoverBrowser to extract, in one batch, the covers of the records that want one, once per file
+-- per process, then checks each second while the extraction runs, at most 30 times (CoverBrowser has
+-- no completion event and polls the same way, covermenu.lua:164-175). Each check calls
+-- on_arrival(records) with those that arrived since the last, and stops when alive() is false. One
+-- request is in flight at a time: extractInBackground terminates the one before
+-- (bookinfomanager.lua:695), so a new request, or the 30th check, forgets the files that hadn't
+-- arrived and a later request asks for them again.
 function BookCovers.request(records, specs, on_arrival, alive)
     local bim = manager()
     if not bim then
@@ -247,12 +241,9 @@ function BookCovers.request(records, specs, on_arrival, alive)
     UIManager:scheduleIn(1, this_check)
 end
 
--- Forgets each of paths' cover (Refresh covers, context-menu D9), as CoverBrowser's own refresh
--- pairs the two (plugins/coverbrowser.koplugin/main.lua:533-546, :596-606): its row deleted, which
--- drops its ignore_cover and ignore_meta flags with it, and BookList's cached entry reset; then it
--- is no longer asked, and no longer in the request in flight, so that check doesn't report the row
--- a later request has to ask for again. A delete that raises is logged and its path left as it
--- was. Without CoverBrowser, nothing.
+-- Forgets each of paths' cover as CoverBrowser's own refresh does (plugins/coverbrowser.koplugin/main.lua:533-546,
+-- :596-606): its row deleted, which drops its ignore flags, and BookList's cached entry reset; then
+-- it is no longer asked or pending. A delete that raises is logged and its path left as it was.
 function BookCovers.forget(paths)
     local bim = manager()
     if not bim then

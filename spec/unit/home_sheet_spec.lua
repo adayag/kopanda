@@ -1,4 +1,4 @@
--- The home sheet (sheets' C4), on a shown home over a real file manager: its header, its six
+-- The home sheet, on a shown home over a real file manager: its header, its six
 -- rows in order with their icons and details, and what a tap on each does, never writing the
 -- settings file. Each row is tapped where the sheet laid it out.
 describe("the home sheet", function()

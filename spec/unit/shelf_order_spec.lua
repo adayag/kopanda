@@ -1,8 +1,7 @@
--- What the Series and Authors screens list, in what order, in what state and on which page
--- (series-and-authors D3, D12 to D17), on hand-built records: a series' state, chip counts and
--- next unread; the series list's order, under way first; a series' author line; the authors'
--- order and letters; one author's books in cover-grid's Series order with their up-next marks;
--- and the pagings by rows that fit whole.
+-- What the Series and Authors screens list, in what order, in what state and on which page, on hand-built records: a
+-- series' state, chip counts and next unread; the series list's order, under way first; a series' author line; the
+-- authors' order and letters; one author's books in the library grid's series order with their up-next marks; and
+-- the pagings by rows that fit whole.
 describe("ShelfOrder", function()
     local harness = require("plugin_harness")
     local ShelfOrder

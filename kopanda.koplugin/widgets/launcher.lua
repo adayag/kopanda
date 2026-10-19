@@ -1,12 +1,8 @@
--- The launcher: launcher.entries as a grid on the home, in list order, left to right then top to
--- bottom, each entry drawn from LauncherEntries.resolve. Editorial draws text rows, each its
--- icon, its label and a hairline under it (Main.dc.html:60-62); Diner draws outlined tiles with
--- the hard tile shadow, the first three on the look's accents, the icon at the top and the label
--- at the foot (HomeRetro.dc.html:55-64); Toybox draws rounded blocks, each its icon in a ringed
--- round badge of the next of six fills and its label beside it (toybox.md); a look with plates
--- (Frosted) draws each of those tiles as a plate, its ground the wallpaper lightened (plate.lua).
--- A tap on an entry runs it; a tap between entries falls through to the home. A hold anywhere on
--- it opens launcher management.
+-- The launcher: launcher.entries as a grid on the home, in list order, each entry drawn from
+-- LauncherEntries.resolve. Editorial draws text rows (icon, label, a hairline); Diner outlined tiles with the
+-- hard tile shadow, the first three on the look's accents; Toybox rounded blocks, each its icon in a ringed
+-- round badge of the next of six fills; a look with plates draws each tile as a plate (plate.lua). A tap on
+-- an entry runs it; a tap between entries falls through to the home; a hold anywhere opens launcher management.
 local Geom = require("ui/geometry")
 local Icons = require("icons")
 local LauncherEntries = require("launcher_entries")
@@ -26,10 +22,9 @@ local Launcher = {
     settings_prefix = "launcher",
 }
 
--- One entry, dimen its rectangle: its shadow, fill and rule, its children (icon and lines) at
--- self.places, then its outline, as widgets/quote.lua paints its tile. The shadow, fill and
--- outline are rounded by radius, square without one (paint.lua). With a plate (the tokens
--- Plate.spec gives), it paints the plate, then its children.
+-- One entry, dimen its rectangle: its shadow, fill and rule, its children (icon and lines) at self.places, then
+-- its outline, as widgets/quote.lua paints its tile. The shadow, fill and outline are rounded by radius, square
+-- without one (paint.lua). With a plate (Plate.spec's tokens), it paints the plate, then its children.
 local Entry = WidgetContainer:extend{
     name = "kopanda_launcher_entry",
     fill_color = nil,
@@ -70,7 +65,7 @@ function Entry:paintTo(bb, x, y)
 end
 
 -- A tile's badge, dimen a square: a disc of fill_color, its icon (self[1]) at icon_place, then a
--- ring wide in ring_color round its edge (toybox.md: a 42 px round badge, a 2.5 px ink ring).
+-- ring wide in ring_color round its edge.
 local Badge = WidgetContainer:extend{
     name = "kopanda_launcher_badge",
     fill_color = nil,

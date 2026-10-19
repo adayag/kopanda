@@ -1,4 +1,4 @@
--- The add-an-entry picker (device-menus' C10): each of the five kinds turned into a launcher
+-- The add-an-entry picker: each of the five kinds turned into a launcher
 -- entry the settings validator takes, or a note and no entry, over a real file manager with its
 -- home up. on_entry records what it gets; no case writes the settings file. The plugin cases stub
 -- PluginLoader, so the emulator's own plugins/ stays out of them.

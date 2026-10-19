@@ -1,4 +1,4 @@
--- The pull (C6, C7): on scratch data folders under the run's KO_HOME, with socket.http's request
+-- The pull: on scratch data folders under the run's KO_HOME, with socket.http's request
 -- stubbed to answer from a table of URL -> status and body (the bodies read from a scratch copy
 -- of the shared vectors' tree), a verified bundle is staged and the apply patch armed, and every
 -- refusal leaves download/ purged, no staged.lua and an earlier stage byte-identical. No test

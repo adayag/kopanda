@@ -1,4 +1,4 @@
--- The swatch screen (C8): Tools › KoPanda › Swatches in the file manager and the reader shows
+-- The swatch screen: Tools › KoPanda › Swatches in the file manager and the reader shows
 -- every look's palettes, faces and the icon registry full screen; a tap closes it, and a failure
 -- in its build, paint or gestures leaves the app it was opened from on top and usable.
 describe("the swatch screen", function()
@@ -589,9 +589,8 @@ describe("the swatch screen", function()
         end)
     end
 
-    -- The capture profiles' sizes (spec/emulator/profiles.lua), with five looks, a page each: every
-    -- panel's content, Diner's 14 chips and Toybox's 16 among them, ends inside its panel, and the
-    -- page on the screen.
+    -- The capture profiles' sizes (spec/emulator/profiles.lua), with five looks, a page each: every panel's content,
+    -- Diner's 14 chips and Toybox's 16 among them, ends inside its panel, and the page on the screen.
     it("fits every panel's content inside its panel on each of five looks' pages at both devices' sizes", function()
         local roles = 0
         for _, hex in pairs(Looks.get("toybox").palettes.day) do

@@ -1,10 +1,8 @@
--- What a library folder shows, in what order, on which page, and what the library remembers
--- (cover-grid C1, C2; D3, D8, D9, D11), on hand-built listings: folders first by the title
--- order of their names; Recent by the history's time, never-opened books after by title; Title
--- ignoring one leading article; Author by the first author's surname key, then title, no author
--- last; Series by name, then index, no index after, no series last; the statuses; pages of six;
--- and the per-folder sort and status, the folder and page left, under the state file's
--- `library` key.
+-- What a library folder shows, in what order, on which page, and what the library remembers, on hand-built listings:
+-- folders first by the title order of their names; Recent by the history's time, never-opened books after by title;
+-- Title ignoring one leading article; Author by the first author's surname key, then title, no author last; Series by
+-- name, then index, no index after, no series last; the statuses; pages of six; and the per-folder sort and status,
+-- the folder and page left, under the state file's `library` key.
 describe("LibraryOrder", function()
     local harness = require("plugin_harness")
     local LuaSettings = require("luasettings")
@@ -618,7 +616,7 @@ describe("LibraryOrder", function()
                     stored())
             end)
 
-            -- context-menu C1, D1: a hidden entry that is not a realpath string to true.
+            -- A hidden entry that is not a realpath string to true.
             it("drops a malformed hidden entry, logged, keeping the well-formed ones and the other parts", function()
                 local real_one, real_two = ffiutil.realpath(one), ffiutil.realpath(two)
                 store({
@@ -648,7 +646,7 @@ describe("LibraryOrder", function()
             end)
         end)
 
-        -- context-menu C1, D1 ("Hidden folders"): the hidden set, by realpath, beside the choices and
+        -- The hidden set, by realpath, beside the choices and
         -- the folder left.
         describe("the hidden set", function()
             it("reads a hidden folder back after the plugin reloads", function()

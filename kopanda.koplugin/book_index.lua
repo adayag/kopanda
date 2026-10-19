@@ -1,9 +1,6 @@
--- The author and series index over a list of book records (books.lua). Both lists are derived
--- from the records given, on each call, so they are as current as the listing they came from;
--- nothing is kept between calls. The orders here only make the output deterministic: the
--- screens apply their own (surname order, letter dividers, series under way first).
--- A record field of the wrong type, from a source's record that passed books.lua's id and title
--- check, is skipped for that part alone, logged once per call.
+-- The author and series index over a list of book records (books.lua), derived from the records
+-- given on each call, nothing kept. The orders here only make the output deterministic; the screens
+-- apply their own. A record field of the wrong type is skipped for that part alone, logged once per call.
 local logger = require("logger")
 
 local BookIndex = {}

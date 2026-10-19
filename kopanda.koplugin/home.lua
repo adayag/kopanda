@@ -121,10 +121,9 @@ local function refresh_if_stale(home)
     end
 end
 
--- Broadcast when Wi-Fi connects, and at start when it is already up
--- (frontend/ui/network/manager.lua:109, :152-154): the weather fetches if none has succeeded
--- yet, then a widget showing the network's state is redrawn. Returns nothing, so the event
--- reaches the other windows.
+-- Broadcast when Wi-Fi connects, and at start when it is already up (frontend/ui/network/manager.lua:109,
+-- :152-154): the weather fetches if none has succeeded yet, then a widget showing the network's state is
+-- redrawn. Returns nothing, so the event reaches the other windows.
 function Home:onNetworkConnected()
     local ok, err = pcall(Weather.on_connected, self)
     if not ok then
@@ -169,11 +168,9 @@ local function finish(opts, painted)
     end
 end
 
--- Signals the home's first paint on the dev loop's settled hook, once per home, then runs the
--- finished callback. A home whose paint failed sends no signal: the screen shows the file
--- browser, not the home. paint_ms runs from opts.started to the first paint, and cpu_ms on the
--- CPU clock; settle_ms runs on to this signal, which lands behind whatever other tasks came due
--- after the paint.
+-- Signals the home's first paint on the dev loop's settled hook, once per home, then runs the finished
+-- callback. A home whose paint failed sends none. paint_ms runs from opts.started to the first paint,
+-- cpu_ms on the CPU clock; settle_ms on to this signal, which lands behind tasks that came due after the paint.
 local function settle(home, opts)
     if home.settled then
         return
@@ -217,13 +214,10 @@ local function settle(home, opts)
     finish(opts, home.painted_at ~= nil and not home.paint_failed)
 end
 
--- Builds a home and shows it, closing the chrome window shown first (the library, Series or
--- Authors), as a window's show closes the home (LibraryChrome.show): one of them is up at a time,
--- so no home hides a window that a target run from it would act on in place. opts: started (a
--- PaintClock stamp at the start of the show path), finished (called once: with true after the
--- home's first paint, or with false when the home closes before painting or its build, show or
--- paint fails). On any error the home is taken off the stack and the file browser beneath is left
--- as it is.
+-- Builds a home and shows it, closing the chrome window shown first (the library, Series or Authors), as
+-- a window's show closes the home: one of them is up at a time. opts: started (a PaintClock stamp),
+-- finished (called once: true after the first paint, false when the home closes before painting or
+-- fails). On any error the home is taken off the stack and the file browser beneath is left as it is.
 function Home.show(opts)
     local home
     local ok, err = pcall(function()
@@ -232,10 +226,9 @@ function Home.show(opts)
         home = Home:new{}
         Home.shown = home
         UIManager:show(home, "full")
-        -- The home settles from its first paint, or from its close if that comes first; nothing
-        -- is scheduled until then. A tickAfterNext here would land before the paint whenever the
-        -- clock hasn't moved since the UI loop's pass began, since UIManager runs its inner
-        -- nextTick in that same pass (frontend/ui/uimanager.lua:447-456, 1081-1104, 1537-1564).
+        -- The home settles from its first paint, or from its close if that comes first. A tickAfterNext here
+        -- would land before the paint whenever the clock hasn't moved since the UI loop's pass began, since
+        -- UIManager runs its inner nextTick in that pass (frontend/ui/uimanager.lua:447-456, 1081-1104, 1537-1564).
         home.settle_opts = opts
     end)
     if not ok then
@@ -254,10 +247,9 @@ function Home.close()
     end
 end
 
--- Paints the home, rebuilt first when the variant changed since its build. Night mode toggled
--- from the menu or Dispatcher reaches the home before DeviceListener flips the screen, which then
--- asks for this repaint (frontend/device/devicelistener.lua:14-27), so the paint is where the
--- home sees the new variant, and it asks for no repaint of its own.
+-- Paints the home, rebuilt first when the variant changed since its build. Night mode toggled from the
+-- menu or Dispatcher reaches the home before DeviceListener flips the screen, which then asks for this
+-- repaint (frontend/device/devicelistener.lua:14-27), so it asks for none of its own.
 local function paint(home, bb, x, y)
     if home.ctx.variant ~= Looks.variant() then
         rebuild(home)

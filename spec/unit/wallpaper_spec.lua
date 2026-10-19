@@ -1,8 +1,7 @@
--- wallpaper.lua: the wallpaper.file setting's image behind a look that draws one (Frosted), scaled
--- to cover the screen and centred, rendered once per path, size and palette variant and kept until
--- its holder lets go or the setting, size or variant changes; pre-inverted at night; a missing or
--- unrenderable file logged once and drawn as nothing. Rendered from PNGs this spec writes under
--- the scratch KO_HOME, and spec/fixtures/wallpaper.png (written by spec/fixtures/wallpaper_png.lua).
+-- wallpaper.lua: the wallpaper.file setting's image behind a look that draws one, scaled to cover the screen and
+-- centred, rendered once per path, size and palette variant and kept until its holder lets go or the setting, size or
+-- variant changes; pre-inverted at night; a missing or unrenderable file logged once and drawn as nothing. Rendered
+-- from PNGs this spec writes under the scratch KO_HOME, and spec/fixtures/wallpaper.png.
 describe("wallpaper", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")

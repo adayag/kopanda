@@ -1,4 +1,4 @@
--- bin/schema-json prints the schema as sorted-key JSON for the studio (C2).
+-- bin/schema-json prints the schema as sorted-key JSON for the studio.
 describe("bin/schema-json", function()
     local rapidjson = require("rapidjson")
     local root = os.getenv("KOPANDA_ROOT")

@@ -1,14 +1,8 @@
--- The base look: every token path a look has, each with its default. A look's file
--- (looks/<id>.lua) declares only what differs from it, and Looks.get lays that file over this
--- table (looks.lua): every look has every path here, and a look file sets no other. Pure data.
---
--- A default is the value most looks share; on a tie, false where a look has none of the thing,
--- then Editorial's. The palettes hold only the colours most looks share; each look declares its
--- own. Where a look's value comes from is noted in that look's file.
---
--- Sizes are board pixels (the canvas's half size), scaled at draw time by Screen:scaleBySize;
--- font sizes go to Font:getFace unscaled. Colours are #rrggbb in the palettes only; every other
--- token names a colour by its palette role. false is a token a look doesn't have.
+-- The base look: every token path a look has, each with its default; a look's file (looks/<id>.lua) declares
+-- only what differs, and Looks.get lays it over this table (looks.lua). A default is the value most looks
+-- share; on a tie, false where a look has none of the thing, then Editorial's. Sizes are board pixels, scaled
+-- at draw time by Screen:scaleBySize; font sizes go to Font:getFace unscaled. Colours are #rrggbb in the
+-- palettes only; every other token names a palette role. false is a token a look doesn't have.
 return {
     -- The faces type is set in, by role: a font file under fonts/ and its label, or false for none.
     faces = {

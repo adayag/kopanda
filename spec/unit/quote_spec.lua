@@ -1,4 +1,4 @@
--- The quote of the day (C6): quotes.lua as pure data held to its limits, the day's entry by
+-- The quote of the day: quotes.lua as pure data held to its limits, the day's entry by
 -- local calendar day, and the widget's text in curly quotes, at most four lines, with an
 -- ellipsis past them, fitting the longest entry in a full-width row at large on both profiles.
 describe("the quote of the day", function()
@@ -244,9 +244,8 @@ describe("the quote of the day", function()
                 assert.equals(4, box.line_with_ellipsis)
                 assert.is_true(box.vertical_string_list[4].ellipsis_added)
                 assert.equals(4 * box.line_height_px, box.height)
-                -- A line is 1 + the quote part's line height em (Editorial's and Diner's 1.4, CSS
-                -- line-height 1.4, Main.dc.html:56; Riso's 1.35), rounded as TextBoxWidget rounds it
-                -- (frontend/ui/widget/textboxwidget.lua:151).
+                -- A line is 1 + the quote part's line height em (Editorial's and Diner's 1.4, Riso's 1.35), rounded
+                -- as TextBoxWidget rounds it (frontend/ui/widget/textboxwidget.lua:151).
                 local line_height = 1 + ctx.look.type.quote.line_height
                 assert.equals(require("optmath").round(line_height * box.face.size), box.line_height_px, look_id)
                 built:free()

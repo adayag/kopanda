@@ -1,9 +1,7 @@
--- The Series and Authors windows' covers (series-and-authors C7, D2, "Extraction"): after its first
--- paint each asks, once per show, for every record of the library at the library grid's cover box; an
--- arrival re-reads the arrived records and rebuilds the index, and repaints only when the page shown
--- changes (its items, their order or a cover on it); closing cancels the check. These are the
--- chrome's extraction helper's cases (LibraryChrome.request_records), which both windows share.
--- BookCovers.request and cancel are stubbed; Books.all and progress are the fixture's.
+-- The Series and Authors windows' covers: after its first paint each asks, once per show, for every record of the
+-- library at the library grid's cover box; an arrival re-reads the arrived records and rebuilds the index, and
+-- repaints only when the page shown changes; closing cancels the check. These are the chrome's extraction helper's
+-- cases (LibraryChrome.request_records), which both windows share. BookCovers.request and cancel are stubbed.
 local harness = require("plugin_harness")
 local fixture = require("shelf_fixture")
 local UIManager = require("ui/uimanager")
@@ -467,12 +465,11 @@ describe("the Authors window's lifecycle", function()
     end)
 end)
 
--- series-and-authors C8, D6, D7, D17, D18, D23: the ways into the two windows and the return after a
--- book opened from one closes. KOReader's open is stubbed at filemanagerutil.openFile; a case then
--- does what an open that goes ahead does: the pre-callback (filemanagerutil.lua:500-502), the file
--- manager closing for the reader (filemanager.lua:842-849), a real reader closed
--- (readerui.lua:870-893) and a new file manager shown (readerui.lua:581-596), as
--- library_lifecycle_spec.lua drives the library's and prebuild_spec.lua the home's.
+-- The ways into the two windows and the return after a book opened from one closes. KOReader's open is stubbed at
+-- filemanagerutil.openFile; a case then does what an open that goes ahead does: the pre-callback
+-- (filemanagerutil.lua:500-502), the file manager closing for the reader (filemanager.lua:842-849), a real reader
+-- closed (readerui.lua:870-893) and a new file manager shown (readerui.lua:581-596), as library_lifecycle_spec.lua
+-- drives the library's and prebuild_spec.lua the home's.
 describe("the Series and Authors windows' routing", function()
     local Event = require("ui/event")
     local ffiutil = require("ffi/util")

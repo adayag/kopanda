@@ -1,18 +1,15 @@
--- The library's sort and status pickers (cover-grid "The pickers", D8, D9, D11): a tap on a picker
--- in the library's header shows its sheet over the library (SortC.dc.html), "for this folder"
--- above the heading and "Library" at its right, a row for each choice with its second line, the
--- folder's current one selected. A tap on a row stores that choice for the folder (the one already
--- chosen stores nothing new), and the sheet, closed by the tap, leaves the folder's first page
--- under the new choice. A sheet's failure closes the library, its screen beneath. Loading this
--- module fills Library.on_picker.
+-- The library's sort and status pickers: a tap on a picker in the library's header shows its sheet over the
+-- library, a row for each choice with its second line, the folder's current one selected. A tap on a row
+-- stores that choice for the folder (the one already chosen stores nothing) and the closed sheet leaves
+-- the folder's first page under it. A sheet's failure closes the library. Loading this module fills
+-- Library.on_picker.
 local Library = require("library")
 local LibraryOrder = require("library_order")
 local Sheet = require("sheet")
 
 local LibraryPickers = {}
 
--- Each picker's heading and its rows, { value, label, sublabel } (SortC.dc.html:40-69; the
--- feature's status rows).
+-- Each picker's heading and its rows, { value, label, sublabel }.
 local PICKERS = {
     sort = {
         heading = "Sort",

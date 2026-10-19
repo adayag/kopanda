@@ -1,9 +1,8 @@
--- Tools › KoPanda › Studio: the studio's address and the profile to pull, kept in the runtime
--- state file as studio_address and studio_profile (device-only, never in the schema), Pull,
--- which confirms, pulls the profile's bundle behind a painted note (push_pull.lua) and offers
--- the restart that applies it, and Check for update, which installs GitHub's latest release
--- (release_source.lua) the same way when it is newer than the installed version. A pull blocks
--- the UI for its duration; nothing redraws until it ends. Every callback catches its own errors.
+-- Tools › KoPanda › Studio: the studio's address and the profile to pull, kept in the runtime state file as
+-- studio_address and studio_profile (never in the schema), Pull, which confirms, pulls the profile's bundle
+-- behind a painted note (push_pull.lua) and offers the restart that applies it, and Check for update, which
+-- installs GitHub's latest release (release_source.lua) the same way when it is newer. A pull blocks the UI;
+-- nothing redraws until it ends. Every callback catches its own errors.
 local ButtonDialog = require("ui/widget/buttondialog")
 local ConfirmBox = require("ui/widget/confirmbox")
 local DataStorage = require("datastorage")

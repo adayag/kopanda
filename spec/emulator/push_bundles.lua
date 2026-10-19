@@ -1,11 +1,8 @@
--- Served bundles for push_server.lua, written by a spec under a root:
---   <root>/profiles.json             { profiles = { { id, name, device } } }
---   <root>/<id>/tree/plugin/...      the plugin folder, with the spec's own files over it
---   <root>/<id>/tree/settings.lua    the settings bytes
---   <root>/<id>/manifest.json        { format, profile, hash, files = { { path, size, sha256 } } }
--- The manifest's hashes come from the plugin's own push_bundle.lua. The format is pinned against
--- the studio by the shared vectors (spec/fixtures/push/, push_bundle_spec.lua and the studio's
--- bundle test), so hashing here with the device's code only drives the flow.
+-- Served bundles for push_server.lua, written by a spec under a root: <root>/profiles.json, <root>/<id>/tree/plugin/...
+-- (the plugin folder, with the spec's own files over it), <root>/<id>/tree/settings.lua and <root>/<id>/manifest.json
+-- ({ format, profile, hash, files = { { path, size, sha256 } } }). The manifest's hashes come from the plugin's own
+-- push_bundle.lua. The format is pinned against the studio by the shared vectors (spec/fixtures/push/,
+-- push_bundle_spec.lua and the studio's bundle test), so hashing here with the device's code only drives the flow.
 local PushBundle = require("push_bundle")
 local lfs = require("libs/libkoreader-lfs")
 local rapidjson = require("rapidjson")

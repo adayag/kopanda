@@ -1,6 +1,5 @@
--- The launcher's list operations (device menus' C8): move and remove within the top level or a
--- folder, add by decision D3, the count and the kind line. Every result passes the launcher
--- validator and no input is changed.
+-- The launcher's list operations: move and remove within the top level or a folder, add, the count and the kind line.
+-- Every result passes the launcher validator and no input is changed.
 describe("EntriesEdit", function()
     require("plugin_harness")
     local util = require("util")
@@ -30,7 +29,7 @@ describe("EntriesEdit", function()
         return { kind = "folder", label = label, entries = entries }
     end
 
-    -- The board's six: Library, Series, Authors, History, a Tools folder of three, Settings.
+    -- Six entries: Library, Series, Authors, History, a Tools folder of three, Settings.
     local function board()
         return { LIBRARY, SERIES, AUTHORS, HISTORY, folder("Tools", { action("a"), action("b"), action("c") }),
             SETTINGS }

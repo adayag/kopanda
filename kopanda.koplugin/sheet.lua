@@ -1,31 +1,18 @@
--- The sheet: a panel of rows drawn in the look over the home or the library, opened by a hold or
--- a tap and closed by a tap outside it, a tap on a row, KOReader's Back or the Back key. It knows
--- nothing about books or the home: its opener hands it a spec,
---   { name, band, header, rows, body, refresh_on, stale, hold, flush, more }
--- name: what the settled signal reports; band: which <band>_band_color token Diner's header
--- takes; header: { heading, aside, aside_beside, aside_above, hint, label } or a book's { cover,
--- title, author, meta } (cover a built widget, the sheet's to free), or nil; aside_above stacks
--- the aside over the heading, label is set at the header's right (a label takes the header's
--- right, so a sheet with one has no hint and its aside beside or above); rows: { icon, label,
--- sublabel, detail, chip, muted, tick, selected, run } each, sublabel a second line under the
--- label, selected filling the row and setting a check at its right, run called with no
--- arguments; hold, optional, called with no arguments on a hold inside the panel, after the sheet
--- has closed. A sheet without hold ignores holds, but for its body's; flush, for a sheet whose
--- rows have no icons, sets their labels without the icon's indent. body, in place of rows (a spec
--- with both keeps its rows), is called at every layout as body(bctx, content_w) and returns
--- { widget, areas }: widget (getSize, paintTo, free) is drawn under the header and freed with the
--- panel; areas are { rect, tap, hold, close_first }, rect from the widget's top-left. A tap or
--- hold in an area runs its tap or hold with the sheet left open, then redraws it, or closes it
--- first with close_first. refresh_on, optional, lists events on each of which the sheet redraws;
--- with stale, only when stale(), called with no arguments, says what the sheet shows has
--- changed since its last layout (a stale that raises is logged and the sheet redraws).
--- more, { label, run }, for a list that may not fit: when rows are left out, the last slot that
--- fits beside a row is a More row (label, default "More…", with the list icon when any row has
--- an icon), and a tap on it closes the sheet and calls run with the rows not shown, in order.
--- A sheet without more leaves those rows out, logged once.
--- Every field but name and rows or body is optional.
--- Module state: Sheet.shown, the sheet on screen or nil. One sheet at a time: showing one
--- closes the one shown.
+-- The sheet: a panel of rows drawn in the look over the home or the library, opened by a hold or a tap and
+-- closed by a tap outside it, a tap on a row, KOReader's Back or the Back key. Its opener hands it a spec:
+--   name        what the settled signal reports
+--   band        picks the <band>_band_color token Diner's header takes
+--   header      { heading, aside, aside_beside, aside_above, hint, label } or a book's { cover, title, author, meta }
+--               (cover a built widget, the sheet's to free)
+--   rows        { icon, label, sublabel, detail, chip, muted, tick, selected, run } (selected fills the row)
+--   body        in place of rows: body(bctx, content_w) returns { widget, areas }
+--   refresh_on  events on which the sheet redraws
+--   stale       tells whether the sheet changed
+--   hold        called on a hold inside the panel, after the sheet has closed
+--   flush       sets labels without the icon's indent
+--   more        { label, run } for rows left out
+-- Every field but name and rows or body is optional. Sheet.shown is the one sheet on screen; showing one closes
+-- the other.
 local Device = require("device")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
@@ -73,6 +60,8 @@ end
 local redraw
 
 function Sheet:init()
+    -- A body is called at every layout; its widget (getSize, paintTo, free) is drawn under the header and freed
+    -- with the panel.
     if self.spec.rows and self.spec.body then
         logger.warn("KoPanda: the sheet", self.spec.name, "has both rows and a body; it shows its rows")
     end
@@ -82,8 +71,8 @@ function Sheet:init()
     self.ges_events.TapSheet = {
         GestureRange:new{ ges = "tap", range = Geom:new{ x = 0, y = 0, w = size.w, h = size.h } },
     }
-    -- A hold inside the panel, only for a spec with one or a body; the range is a function, so a
-    -- rebuild's panel is the one matched (frontend/ui/gesturerange.lua:25-37).
+    -- A hold inside the panel, only for a spec with one or a body; the range is a function, so a rebuild's panel
+    -- is the one matched (frontend/ui/gesturerange.lua:25-37).
     if self.spec.hold or self.spec.body then
         self.ges_events.HoldSheet = {
             GestureRange:new{ ges = "hold", range = function() return self.panel end },
@@ -97,6 +86,7 @@ function Sheet:init()
     -- return (frontend/ui/uimanager.lua:1042-1061), so the windows beneath hear it too.
     for _, event in ipairs(self.spec.refresh_on or {}) do
         self["on" .. event] = function()
+            -- A stale that raises is logged and the sheet redraws.
             local stale = self.spec.stale
             if stale then
                 local ok, changed = pcall(stale)
@@ -163,11 +153,9 @@ local function fail(sheet, what, err)
     close_all(sheet)
 end
 
--- Re-lays a shown sheet out in its variant and asks for one ui refresh of its old and new
--- rectangles together, so a panel that changed height leaves nothing stale; a sheet no longer
--- shown is left alone. When the variant changed since the build (night mode toggled), the paint
--- lays it out again in the new one (paint, below), so this only marks it dirty. A failure is the
--- sheet's.
+-- Re-lays a shown sheet out in its variant and asks for one ui refresh of its old and new rectangles together,
+-- so a panel that changed height leaves nothing stale. When the variant changed since the build (night mode
+-- toggled), the paint lays it out again in the new one, so this only marks it dirty.
 redraw = function(sheet)
     if not UIManager:isWidgetShown(sheet) then
         return
@@ -186,8 +174,8 @@ redraw = function(sheet)
     end
 end
 
--- The settled signal, once, from the tick after the first paint, which schedules it; a sheet
--- never painted, or whose paint failed, sends none.
+-- The settled signal, once, from the tick after the first paint; a sheet never painted, or whose paint failed,
+-- sends none.
 local function settle(sheet)
     if sheet.settled or sheet.paint_failed then
         return
@@ -196,11 +184,9 @@ local function settle(sheet)
     PaintClock.settled("the sheet's", sheet.started, sheet.painted_at, { screen = "sheet", name = sheet.spec.name })
 end
 
--- Shows the sheet of spec under ctx (the screen's beneath), closing the one shown. opts.started is
--- the PaintClock stamp its opener took on the hold or tap, which paint_ms and cpu_ms run from;
--- without it, the start of the show. opts.beneath is the screen the sheet is shown over, a table
--- whose close() closes it; without it, the home. A failure is logged, takes the sheet off the
--- stack and closes that screen.
+-- Shows the sheet of spec under ctx, closing the one shown. opts.started is the PaintClock stamp its opener
+-- took, else the start of the show. opts.beneath is the screen the sheet is shown over, a table whose close()
+-- closes it; without it, the home. A failure is logged, takes the sheet off the stack and closes that screen.
 function Sheet.show(spec, ctx, opts)
     local started = opts and opts.started or PaintClock.now()
     local beneath = opts and opts.beneath
@@ -250,9 +236,8 @@ local function paint(sheet, bb, x, y)
     sheet.panel_widget:paintTo(bb, x, y)
 end
 
--- A widget can't be closed from inside the repaint, so a failed paint closes the sheet and the
--- screen beneath from the next tick. The first good paint schedules the settled signal for the next tick,
--- which runs past this repaint.
+-- A widget can't be closed from inside the repaint, so a failed paint closes the sheet and the screen beneath
+-- from the next tick. The first good paint schedules the settled signal for the next tick.
 function Sheet:paintTo(bb, x, y)
     local ok, err = pcall(paint, self, bb, x, y)
     if ok and not self.painted_at then
@@ -279,8 +264,9 @@ local function area_at(sheet, pos)
     end
 end
 
--- Runs an area's tap or hold (what) with the sheet open, then redraws it; with close_first,
--- closes it first. One that raises is logged and leaves the sheet as it was otherwise.
+-- Runs a body area's { rect, tap, hold, close_first } tap or hold (what) with the sheet open, then redraws it;
+-- with close_first, closes it
+-- first. One that raises is logged and leaves the sheet as it was otherwise.
 local function act(sheet, area, what)
     if area.close_first then
         close_sheet(sheet)

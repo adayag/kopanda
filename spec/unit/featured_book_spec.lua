@@ -1,4 +1,4 @@
--- The featured book from KOReader's own records (C3): which file, from the pin or the reading
+-- The featured book from KOReader's own records: which file, from the pin or the reading
 -- history; its title, authors, progress, status and pages from CoverBrowser and the sidecar; its
 -- time left from the Statistics reading speed; its chapter from KoPanda's state. Nothing is
 -- written: not the settings file, not a sidecar, not the history.
@@ -445,7 +445,7 @@ describe("FeaturedBook", function()
         end)
     end)
 
-    -- The picker's books (sheets' C7): the recent history entries the featured book would take,
+    -- The picker's books: the recent history entries the featured book would take,
     -- each read as current() reads its title and authors, raising nothing and writing nothing.
     describe("recent and describe", function()
         local DS = require("docsettings")

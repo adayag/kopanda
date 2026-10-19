@@ -1,9 +1,8 @@
--- Reading stats from KOReader's Statistics plugin: its database, read-only, for the streak,
--- minutes today and books this month and for a book's reading speed, and its settings, for
--- whether it records at all and its cap on one page's time.
--- Days are local calendar days, bounded by os.time, which follows the process TZ.
--- Module state: the last numbers read, which a busy database reads as, and the memo of both
--- reads, which a home build reads instead of the database while Statistics hasn't written.
+-- Reading stats from KOReader's Statistics plugin: its database, read-only, for the streak, minutes today and
+-- books this month and for a book's reading speed, and its settings, for whether it records at all and its
+-- cap on one page's time. Days are local calendar days, bounded by os.time. State: the last numbers read,
+-- which a busy database reads as, and the memo of both reads, which a home build reads instead of the
+-- database while Statistics hasn't written.
 local DataStorage = require("datastorage")
 local datetime = require("datetime")
 local lfs = require("libs/libkoreader-lfs")
@@ -32,13 +31,12 @@ local last
 -- date read; rate, seconds_per_page's for md5 under the cap (nil when none is found).
 local memo = {}
 
--- The size and modification time of the database and of its WAL file, the two files Statistics
--- writes, as one string; nil when either is dated within the last two seconds, since a later
--- write could leave both unchanged: lfs's mtimes are whole seconds, and the Kindle's userstore is
--- vfat under a fuse overlay (platform/kindle/koreader.sh:13, :151-152), which dates files in
--- two-second steps, rounded down (an assumption until mount on the device confirms the vfat). An
--- empty file reads as none, whatever its date: it holds nothing, and a read-only open of a WAL
--- database leaves an empty WAL file behind, which a reader can't delete.
+-- The size and modification time of the database and of its WAL file, the two files Statistics writes, as one
+-- string; nil when either is dated within the last two seconds, since a later write could leave both
+-- unchanged: lfs's mtimes are whole seconds, and the Kindle's userstore is vfat under a fuse overlay
+-- (platform/kindle/koreader.sh:13, :151-152), which dates files in two-second steps (an assumption until
+-- mount on the device confirms the vfat). An empty file reads as none: a read-only open of a WAL database
+-- leaves an empty WAL file behind.
 local function stamp(path)
     local now = os.time()
     local parts = {}
@@ -109,9 +107,8 @@ end
 local function with_db(path, f)
     local conn
     local ok, result = pcall(function()
-        -- Required here, once a database exists, rather than at load: the binding ffi.cdef()s
-        -- when it loads, which a process can do once (spec/emulator/driver.lua:87-88), and
-        -- Busted unloads it after each spec file. On a device the require cache holds it.
+        -- Required here, once a database exists: the binding ffi.cdef()s when it loads, which a process can do once
+        -- (spec/emulator/driver.lua:87-88), and Busted unloads it after each spec file.
         local SQ3 = require("lua-ljsqlite3/init")
         conn = SQ3.open(path, "ro")
         return f(conn)
@@ -163,12 +160,11 @@ local function finish(numbers, now)
     return numbers
 end
 
--- The numbers again, on a connection opened for a book's rate, when the memo holds them for an
--- older stamp or none: a home build after a Statistics write then opens the database once when
--- the files are settled. With no stamp, as in the build right after a book closes, nothing is
--- refreshed, and read and seconds_per_page each open it. They
--- are read for the latest date read, so the last numbers a busy database reads as stay that
--- date's. A failure leaves them stale, for read to open again.
+-- The numbers again, on a connection opened for a book's rate, when the memo holds them for an older stamp or
+-- none: a home build after a Statistics write opens the database once when the files are settled. With no
+-- stamp, as right after a book closes, nothing is refreshed and read and seconds_per_page each open it. They
+-- are read for the latest date read, so a busy database's last numbers stay that date's. A failure leaves
+-- them stale.
 local function refresh_numbers(conn, key)
     local held = memo.numbers
     if key and held and held.key ~= key then
@@ -190,10 +186,10 @@ local function max_sec()
     return 120
 end
 
--- The book row's id and pages for md5, the most recently opened row winning: md5 alone isn't
--- unique (main.lua:462-484). Then the plugin's capped average over the pages read
--- (main.lua:40-49), from the page_stat view, which rescales every row to the book row's pages
--- (main.lua:422-452), each page's time capped at cap seconds.
+-- The book row's id and pages for md5, the most recently opened row winning: md5 alone isn't unique
+-- (main.lua:462-484). Then the plugin's capped average over the pages read (main.lua:40-49), from the
+-- page_stat view, which rescales every row to the book row's pages (main.lua:422-452), each page's time
+-- capped at cap seconds.
 local function rate(conn, md5, cap)
     local stmt = conn:prepare("SELECT id, pages FROM book WHERE md5 = ? ORDER BY last_open DESC LIMIT 1")
     local book = stmt:bind(md5):step()
@@ -226,14 +222,12 @@ local function refresh_rate(conn, key)
     end
 end
 
--- The reading stats at now (epoch seconds): { state, streak, minutes_today, books_month,
--- month_name }. state is "off" when Statistics doesn't record, "empty" with no database or
--- nothing read (no streak and no minutes today), "ok" otherwise. The database is opened
--- read-only and only when it exists, since an open that creates it would leave an empty file
--- the plugin then fails to open (main.lua:292-317). A failed read is logged and reads as empty,
--- or, when the database is busy (Statistics writing), as the last numbers read. The result is
--- kept for now's local date while the files' stamp holds, and a miss reads the memo's book rate
--- again on the same connection. Never raises.
+-- The reading stats at now (epoch seconds): { state, streak, minutes_today, books_month, month_name }. state
+-- is "off" when Statistics doesn't record, "empty" with no database or nothing read, "ok" otherwise. The
+-- database is opened read-only and only when it exists, since an open that creates it would leave an empty
+-- file the plugin then fails to open (main.lua:292-317). A failed read is logged and reads as empty, or, when
+-- the database is busy, as the last numbers read. Kept for now's local date while the files' stamp holds.
+-- Never raises.
 function ReadingStats.read(now)
     local ok, result = pcall(function()
         if off() then
@@ -271,12 +265,10 @@ function ReadingStats.read(now)
     return result
 end
 
--- The Statistics plugin's reading speed for the book whose partial md5 is md5, as seconds per
--- page, and the pages its book row holds; nil when Statistics doesn't record, there is no
--- database, the book has no row or no page read, or the read fails (logged). The database is
--- opened read-only and only when it exists, as ReadingStats.read opens it. The result is kept
--- for md5 and the cap while the files' stamp holds, and a miss reads the memo's numbers again on
--- the same connection. Never raises.
+-- The Statistics plugin's reading speed for the book whose partial md5 is md5, as seconds per page, and the
+-- pages its book row holds; nil when Statistics doesn't record, there is no database, the book has no row or
+-- no page read, or the read fails (logged). Opened read-only and only when the database exists. Kept for md5
+-- and the cap while the files' stamp holds. Never raises.
 function ReadingStats.seconds_per_page(md5)
     local ok, result = pcall(function()
         if off() then

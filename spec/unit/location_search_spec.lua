@@ -1,4 +1,4 @@
--- The place search (C3): the geocoding URL from a typed query, the candidates read from a
+-- The place search: the geocoding URL from a typed query, the candidates read from a
 -- recorded Open-Meteo response, and the flow from the query dialog to on_pick. socket.http's
 -- request and NetworkMgr are stubbed in every test; no test touches the network. The
 -- responses under spec/fixtures/geocoding/ were read from the live endpoint on 2026-10-15.

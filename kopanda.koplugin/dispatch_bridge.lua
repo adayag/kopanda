@@ -1,11 +1,8 @@
--- Lets the actions a gesture dispatches from the home reach the file manager's modules.
--- Dispatcher:execute sends its events with UIManager:sendEvent (frontend/dispatcher.lua:1549,
--- :1586), which offers them to the topmost widget, the home, and then only to active and
--- is_always_active widgets (frontend/ui/uimanager.lua:988, :1006-1031), so the History or
--- Collections a Gestures binding asks for would be lost under the home. While a home is shown
--- the wrapper marks the file manager is_always_active for the call, the flag sendEvent honours
--- for "widgets that ... listen to Dispatcher events" (uimanager.lua:1021-1027).
--- Module state: whether the wrapper is installed in this process.
+-- Lets the actions a gesture dispatches from the home reach the file manager's modules. Dispatcher:execute
+-- sends its events with UIManager:sendEvent (frontend/dispatcher.lua:1549, :1586), which offers them
+-- to the topmost widget, the home, and then only to is_always_active widgets
+-- (frontend/ui/uimanager.lua:988, :1006-1031); so while a home is shown the wrapper marks the file
+-- manager is_always_active for the call (uimanager.lua:1021-1027). State: whether the wrapper is installed.
 local Dispatcher = require("dispatcher")
 local Home = require("home")
 local logger = require("logger")

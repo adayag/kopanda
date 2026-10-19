@@ -1,8 +1,7 @@
--- The featured book: its cover box (featured_cover.lua), then a text column with the label or
--- chip, the title, authors and chapter, and at its foot the progress bar and its caption, per
--- look (Main.dc.html:32-52, HomeRetro.dc.html:27-43). With no book, the first run: the dashed
--- frame and a column pointing at the Library (EmptyStates.dc.html:32-40). Lengths are board
--- pixels, scaled by ctx.screen.
+-- The featured book: its cover box (featured_cover.lua), then a text column with the label or chip, the
+-- title, authors and chapter, and at its foot the progress bar and its caption, per look. With no book, the
+-- first run: the dashed frame and a column pointing at the Library. Lengths are board pixels scaled by
+-- ctx.screen.
 local FeaturedBook = require("featured_book")
 local FeaturedCover = require("featured_cover")
 local Fonts = require("fonts")
@@ -29,18 +28,17 @@ local Featured = {
     settings_prefix = "featured",
 }
 
--- The column's gap between items (Main.dc.html:38, HomeRetro.dc.html:33).
+-- The column's gap between items.
 local ITEM_GAP = 6
--- Above Editorial's chapter: the gap and its 8 px margin (Main.dc.html:38, :42).
+-- Above Editorial's chapter: the gap and its 8 px margin.
 local CHAPTER_GAP = 14
--- Between the bar and its caption (Main.dc.html:43, HomeRetro.dc.html:39).
+-- Between the bar and its caption.
 local BAR_GAP = 8
--- Between the first run's lines (EmptyStates.dc.html:35), and above its button, the gap and
--- the button's 6 px margin (:38).
+-- Between the first run's lines, and above its button, the gap and the button's 6 px margin.
 local EMPTY_GAP = 10
 local BUTTON_GAP = 16
--- The grey hatch's stripe: hatchRect makes on and off equal, measured along x
--- (base/ffi/blitbuffer.lua:2223), so 5 px matches the board's 7 px period (PWRetro.dc.html:40).
+-- The grey hatch's stripe: hatchRect makes on and off equal, measured along x (base/ffi/blitbuffer.lua:2223),
+-- so 5 px matches a 7 px period along the diagonal.
 local STRIPE_WIDTH = 5
 local TITLE_LINES = 2
 local JOIN = " · "
@@ -97,8 +95,7 @@ function Featured.shown_percent(book)
     return math.floor(book.percent * 100 + EPSILON)
 end
 
--- "N min left" under an hour, else "H h left" or "H h M min left", rounded to the minute
--- (Main.dc.html:50).
+-- "N min left" under an hour, else "H h left" or "H h M min left", rounded to the minute.
 local function time_left(seconds)
     local minutes = Math.round(seconds / 60)
     if minutes < 60 then
@@ -138,10 +135,9 @@ local function face_of(part_name, ctx)
     return part, face, Math.round((1 + part.line_height) * face.size)
 end
 
--- text in the type part named part_name, wrapped at width in at most max_lines lines, the last
--- ending in an ellipsis when it runs over; a single line is one line high
--- (frontend/ui/widget/textboxwidget.lua:54, :256-260). Printed as Typeset prints a line, so a
--- misregistered look prints its display type twice.
+-- text in the type part named part_name, wrapped at width in at most max_lines lines, the last ending in an
+-- ellipsis when it runs over; a single line is one line high (frontend/ui/widget/textboxwidget.lua:54,
+-- :256-260). Printed as Typeset prints a line, so a misregistered look prints its display type twice.
 local function text_box(part_name, text, width, max_lines, ctx)
     local part, face, line_px = face_of(part_name, ctx)
     return Typeset.printed(part, width, ctx, function(box_w, fgcolor, bgcolor)
@@ -159,9 +155,8 @@ local function text_box(part_name, text, width, max_lines, ctx)
     end)
 end
 
--- The label at most width wide, worded by home.featured_label: a plain label with no
--- featured.chip_outline (Editorial), or a chip, a Box of chip.fill_color with an outline of
--- featured.chip_outline in chip.outline_color (Diner, HomeRetro.dc.html:34).
+-- The label at most width wide, worded by home.featured_label: a plain label with no featured.chip_outline,
+-- or a chip, a Box of chip.fill_color with an outline of featured.chip_outline in chip.outline_color.
 local function label(width, ctx)
     local look = ctx.look
     local tokens = look.featured
@@ -226,14 +221,12 @@ local function button(width, ctx)
     }
 end
 
--- A progress bar width wide at percent shown, its track inner_h high (device pixels) inside an
--- outline of outline_width (board pixels) where the look's progress.outline_color is set, filled
--- to floor(inner width × shown / 100) in the look's progress colours: the featured book's bar and
--- the library tiles' strip, its ends rounded by progress.radius where the look has one (Toybox's
--- pill; the fill rounded inside the outline). Where fill_grey is hatch_135 in the grey variant, the fill is a
--- FrameContainer striped ink over paper, whose hatchRect draws along x + y = constant, the board's
--- 135° (frontend/ui/widget/container/framecontainer.lua:48-50, :128-132;
--- base/ffi/blitbuffer.lua:2209-2235).
+-- A progress bar width wide at percent shown, its track inner_h high (device pixels) inside an outline of
+-- outline_width (board pixels) where the look's progress.outline_color is set, filled to floor(inner width ×
+-- shown / 100) in the look's progress colours; used by the featured book and the library tiles' strip. Ends
+-- are rounded by progress.radius where the look has one. Where fill_grey is hatch_135 in the grey variant, the
+-- fill is a FrameContainer striped ink over paper, whose hatchRect draws along x + y = constant
+-- (frontend/ui/widget/container/framecontainer.lua:48-50, :128-132; base/ffi/blitbuffer.lua:2209-2235).
 function Featured.bar(shown, width, inner_h, outline_width, ctx)
     local tokens = ctx.look.progress
     local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
@@ -270,8 +263,8 @@ function Featured.bar(shown, width, inner_h, outline_width, ctx)
     }
 end
 
--- The caption width wide: the percent on the left and the rest on the right when the details
--- split (Editorial, Main.dc.html:47-50), the parts joined when they join (Diner, HomeRetro.dc.html:41).
+-- The caption width wide: the percent on the left and the rest on the right when the details split, the
+-- parts joined when they join.
 local function caption(book, width, ctx)
     local part = ctx.look.type.featured_caption
     local parts = Featured.caption(book)
@@ -369,10 +362,9 @@ local function book_column(book, w, h, ctx)
     }, w, h)
 end
 
--- The first run's column, w by h, centred vertically (EmptyStates.dc.html:34-38): the label,
--- "Nothing open yet.", the body in the lines that fit, and the button. In a column too short
--- for them the title takes one line and the body is left out. Returns the column and the
--- button.
+-- The first run's column, w by h, centred vertically: the label, "Nothing open yet.", the body in the lines
+-- that fit, and the button. In a column too short for them the title takes one line and the body is left out.
+-- Returns the column and the button.
 local function empty_column(w, h, ctx)
     local scale = Paint.scaler(ctx)
     local pad = scale(ctx.look.featured.column_padding_y)
@@ -441,12 +433,10 @@ function Featured.build(width, ctx)
     }
 end
 
--- A tap in the slot (ges the gesture, built what build returned): opens the book through
--- KOReader's own path to the reader (frontend/apps/filemanager/filemanager.lua:1616-1639),
--- which closes the file manager and the home with it; refreshes the home when the book's file
--- has gone, so the next book is featured. On the first run a tap on the button runs the
--- launcher's library entry, which closes the home and shows the library; a tap elsewhere returns
--- false, so the home's own tap rule applies.
+-- A tap in the slot (ges the gesture, built what build returned): opens the book through KOReader's own path
+-- to the reader (frontend/apps/filemanager/filemanager.lua:1616-1639), which closes the file manager and the
+-- home with it; refreshes the home when the book's file has gone. On the first run a tap on the button runs
+-- the launcher's library entry; a tap elsewhere returns false, so the home's own tap rule applies.
 function Featured.tap(ctx, ges, built)
     local FileManager = package.loaded["apps/filemanager/filemanager"]
     local fm = FileManager and FileManager.instance

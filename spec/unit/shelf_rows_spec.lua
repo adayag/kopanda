@@ -1,7 +1,6 @@
--- ShelfRows (series-and-authors C3): the series list's row, the one-series list's book row and the
--- authors list's letter group, each of a fixed height for its kind, in both looks; the one-author
--- grid's fit and the three lists' counts on the device profiles (feature "The fit"). Every case runs
--- at a device profile's size, as the screens will.
+-- ShelfRows: the series list's row, the one-series list's book row and the authors list's letter group, each of a
+-- fixed height for its kind, in both looks; the one-author grid's fit and the three lists' counts on the device
+-- profiles. Every case runs at a device profile's size, as the screens will.
 describe("shelf rows", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
@@ -170,9 +169,9 @@ describe("shelf rows", function()
         return h
     end
 
-    -- The one-series and one-author header (SeriesBooksC.dc.html:19-30, AuthorBooksA.dc.html:19-28): the
-    -- detail padding, the back control (its label or icon, the taller, inside its padding and outline),
-    -- the back gap, the library's count over the detail title at the header's line gap, and the edge.
+    -- The one-series and one-author header: the detail padding, the back control (its label or icon, the taller,
+    -- inside its padding and outline), the back gap, the library's count over the detail title at the header's line
+    -- gap, and the edge.
     local function detail_header_height(ctx)
         local look = ctx.look
         local shelf, header = look.shelf, look.library.header
@@ -197,7 +196,7 @@ describe("shelf rows", function()
                 for _, id in ipairs(IDS) do
                     local ctx = ctx_for(id)
                     local width = row_width(ctx)
-                    -- D15: under way with no next unread, the book count (the owner, 2026-10-17).
+                    -- Under way with no next unread, the book count (the owner, 2026-10-17).
                     local no_next = entry()
                     no_next.next = nil
                     local cases = {
@@ -225,8 +224,8 @@ describe("shelf rows", function()
             end)
         end)
 
-        -- D21: up to three covers, the first in series order in front, left-most and lowest
-        -- (SeriesC.dc.html:29-33); a series of one has one cover and no offset.
+        -- Up to three covers, the first in series order in front, left-most and lowest; a series of one has one cover
+        -- and no offset.
         it("stacks one, two or three covers with the first in front", function()
             local colours = {
                 ["The Fifth Season"] = Blitbuffer.ColorRGB32(255, 0, 0, 255),
@@ -354,8 +353,7 @@ describe("shelf rows", function()
                     end
                     built:free()
 
-                    -- A book not downloaded: the badge is its one sign, so no chip of its own
-                    -- (tweaks/badge-only-not-downloaded).
+                    -- A book not downloaded: the badge is its one sign, so no chip of its own.
                     local stone = remote("The Stone Sky", { series_index = 3 })
                     built = row(stone, NEW, false)
                     assert.is_table(built.badge, id .. " badge")
@@ -369,7 +367,7 @@ describe("shelf rows", function()
                     assert.same({ "FINISHED" }, texts(built.chip), id)
                     built:free()
 
-                    -- D19: marked, its note, and the chip says Up next.
+                    -- Marked, its note, and the chip says Up next.
                     built = row(stone, NEW, true)
                     assert.is_table(built.badge, id .. " up-next badge")
                     assert.same({ next_note }, texts(built.note), id)
@@ -386,9 +384,8 @@ describe("shelf rows", function()
             end)
         end)
 
-        -- SeriesBooksC.dc.html:33-35: the row inside shelf.book.padding, the cover cover_w by cover_h with
-        -- its outline outside (the owner, 2026-10-17): Diner's 68 by 100, Editorial's 64 by 96. The cover is
-        -- the row's tallest item, so it fills the row inside the padding.
+        -- The row inside shelf.book.padding, the cover cover_w by cover_h with its outline outside: Diner's 68 by 100,
+        -- Editorial's 64 by 96. The cover is the row's tallest item, so it fills the row inside the padding.
         it("pads the row by shelf.book.padding and draws the cover's outline outside its size", function()
             covers()
             each_profile(function(where)
@@ -494,7 +491,7 @@ describe("shelf rows", function()
             end)
         end)
 
-        -- D14: a group split by a page break starts the next page with its letter again.
+        -- A group split by a page break starts the next page with its letter again.
         it("draws a repeated group with its letter", function()
             harness.at_colorsoft(function()
                 for _, id in ipairs(IDS) do
@@ -558,7 +555,7 @@ describe("shelf rows", function()
             end)
         end)
 
-        -- D22: the rows' text does not follow text_size.
+        -- The rows' text does not follow text_size.
         it("keeps every height whatever the text size", function()
             harness.at_colorsoft(function()
                 for _, id in ipairs(IDS) do
@@ -615,8 +612,7 @@ describe("shelf rows", function()
                 end
             end)
         end)
-        -- Diner's chip text: ink on the paper chips, on_accent on the filled ones (SeriesC.dc.html:39, :76,
-        -- :88; SeriesBooksC.dc.html:49); by night the two roles part.
+        -- Diner's chip text: ink on the paper chips, on_accent on the filled ones; by night the two roles part.
         it("sets Diner's chip text by kind at night, ink on paper and on_accent on a fill", function()
             covers()
             harness.at_colorsoft(function()
@@ -657,8 +653,7 @@ describe("shelf rows", function()
             end)
         end)
 
-        -- The fit measures the one-series and one-author header by the boards' sum above; the chrome
-        -- draws it at that height.
+        -- The fit measures the one-series and one-author header by the sum above; the chrome draws it at that height.
         it("measures the header the chrome draws for one series or one author", function()
             local LibraryChrome = package.loaded["library_chrome"]
             each_profile(function(where)
@@ -670,10 +665,9 @@ describe("shelf rows", function()
             end)
         end)
 
-        -- The boards' counts per page at the Colorsoft: five series rows (SeriesC), three book rows
-        -- (SeriesBooksC), seven author rows in five groups (AuthorsC), each group's cost counted whole,
-        -- each list's page ending shelf.list.pager_gap above the pager, the last row's shadow inside it (the
-        -- marked book's the deeper where a book row's is).
+        -- The counts per page at the Colorsoft: five series rows, three book rows, seven author rows in five groups,
+        -- each group's cost counted whole, each list's page ending shelf.list.pager_gap above the pager, the last
+        -- row's shadow inside it (the marked book's the deeper where a book row's is).
         it("holds the boards' rows per page at the Colorsoft, the pager gap and the last shadow kept", function()
             harness.at_colorsoft(function()
                 for _, id in ipairs(IDS) do

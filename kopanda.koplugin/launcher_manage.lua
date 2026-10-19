@@ -1,11 +1,8 @@
--- Launcher management: launcher.entries as a list in the editor frame (editor.lua), its top level
--- headed "N of 6 on the home screen" over "Launcher" (LauncherManage.dc.html:17-106), or one
--- folder's own list headed "Folder · N" over its label (FolderOpen.dc.html:35-38). The body is a
--- row per entry: its icon, label and kind line, then up, down and remove; a tap on a folder's row
--- opens its list. The foot adds an entry by kind through the entry picker, pinned to the bottom
--- so it stays in reach when a long folder's rows don't all fit. Every change writes
--- launcher.entries once through Settings.set and repaints the screen once, and a shown home
--- refreshes once when the editor closes; a refused write shows a note and changes nothing.
+-- Launcher management: launcher.entries as a list in the editor frame (editor.lua), its top level headed
+-- "N of 6 on the home screen" over "Launcher", or one folder's own list headed "Folder · N". The body is
+-- a row per entry (icon, label, kind line, up, down, remove); the foot adds an entry by kind through the
+-- entry picker. Every change writes launcher.entries once through Settings.set and repaints once; a
+-- refused write shows a note and changes nothing.
 local ConfirmBox = require("ui/widget/confirmbox")
 local Editor = require("editor")
 local EntriesEdit = require("entries_edit")
@@ -107,11 +104,10 @@ local function show_folder(screen, f)
     screen.editor:refresh()
 end
 
--- Stores new (an operation's result; nil, a refused one, does nothing): on a refused write a
--- note and no change; otherwise the screen takes it, a shown home's refresh is deferred to the
--- editor's close, a removed folder's list gives way to the top level, and the screen repaints
--- once. home and launcher_entries are required at call time: launcher_entries requires home,
--- whose gestures reach the settings menu, which may open this screen.
+-- Stores new (an operation's result; nil does nothing): on a refused write a note and no change; else the
+-- screen takes it, a shown home's refresh is deferred to the editor's close and a removed folder's list
+-- gives way to the top level. home and launcher_entries are required at call time: launcher_entries
+-- requires home, whose gestures reach the settings menu, which may open this screen.
 local function apply(screen, new, folder_removed)
     if new == nil then
         return
@@ -178,8 +174,8 @@ local function row_metrics(ctx)
     return m
 end
 
--- A square control at x, y in its row (LauncherManage.dc.html:35-37): an outlined button around
--- the icon, outline and icon in disabled_color when disabled. Its widgets go into made.
+-- A square control at x, y in its row: an outlined button around the icon, both in disabled_color when
+-- disabled. Its widgets go into made.
 local function icon_control(ctx, made, spec)
     local tokens = ctx.look.editor
     local size = scale(ctx, tokens.control_size)
@@ -215,8 +211,8 @@ local function icon_control(ctx, made, spec)
     }
 end
 
--- The body: a row per entry of the shown list (LauncherManage.dc.html:29-38), each its controls
--- first, so a tap on one runs it, then the row itself, which on a folder opens its list.
+-- The body: a row per entry of the shown list, each its controls first so a tap on one runs it, then the
+-- row itself, which on a folder opens its list.
 local function body(screen, ctx, width)
     free_all(screen.made_body)
     local made = {}
@@ -297,9 +293,8 @@ end
 
 local add_kind
 
--- The foot (LauncherManage.dc.html:95-104): body_gap above "Add an entry" (the board's 18), the
--- kinds as buttons kind_columns to a row, and on the top level the folder note; kind_gap between
--- them. Its widgets go into made.
+-- The foot: body_gap above "Add an entry", the kinds as buttons kind_columns to a row, and on the top
+-- level the folder note. Its widgets go into made.
 local function foot_rows(screen, ctx, width, made, in_folder)
     local look, tokens = ctx.look, ctx.look.editor
     local gap = scale(ctx, tokens.kind_gap)
@@ -386,9 +381,8 @@ local function has_room(screen, n, in_folder)
     return n + 1 <= math.floor((foot_top - body_top) / row_metrics(ctx).row)
 end
 
--- A kind button: the list the entry would go into (decision D3: the shown folder; the top level
--- under max_entries; else its first folder; else a new More of two) checked for room, then the
--- picker, whose entry is added.
+-- A kind button: the list the entry would go into (the shown folder; the top level under max_entries; else
+-- its first folder; else a new More of two) checked for room, then the picker, whose entry is added.
 add_kind = function(screen, kind)
     local entries = screen.entries
     local n, in_folder
@@ -414,10 +408,9 @@ add_kind = function(screen, kind)
     end)
 end
 
--- Opens launcher management on a copy of the stored launcher: opts.folder, a top-level index,
--- opens that folder's list, whose Done then closes; an index past the list or not a folder opens
--- the top level. opts.started is the PaintClock stamp the opener took, which paint_ms runs from.
--- A failure is logged and leaves no screen.
+-- Opens launcher management on a copy of the stored launcher: opts.folder, a top-level index, opens that
+-- folder's list, whose Done then closes; an index past the list or not a folder opens the top level.
+-- opts.started is the PaintClock stamp the opener took. A failure is logged and leaves no screen.
 function LauncherManage.open(opts)
     opts = opts or {}
     local ok, err = pcall(function()

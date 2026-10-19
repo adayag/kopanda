@@ -1,8 +1,7 @@
--- The pull: fetches a profile's bundle from the studio over the LAN, or a bundle from another
--- source (release_source.lua's), verifies it, stages it in settings/kopanda/push/ and arms the
--- apply patch (push_apply.lua) for the next start.
--- Synchronous and UI-free; each call returns its value or true, or nil, a message and, for a
--- request the studio answered with another status, that status.
+-- The pull: fetches a profile's bundle from the studio over the LAN, or a bundle from another source
+-- (release_source.lua's), verifies it, stages it in settings/kopanda/push/ and arms the apply patch
+-- (push_apply.lua) for the next start. Synchronous and UI-free; each call returns its value or true, or nil,
+-- a message and, for a request the studio answered with another status, that status.
 local PushApply = require("push_apply")
 local PushBundle = require("push_bundle")
 local lfs = require("libs/libkoreader-lfs")
@@ -44,12 +43,11 @@ function PushPull.host_matches(host, names)
     return false
 end
 
--- A create function for socket.http that connects through LuaSec (common/ssl/https.lua:74-102)
--- verifying the server: its chain against KOReader's CA bundle (certifi's, installed as
--- data/ca-bundle.crt under KOReader's folder, its working directory, by
--- base/thirdparty/certifi/CMakeLists.txt:4), then its certificate's DNS names against the host.
--- LuaSec's own default is verify = "none" (:29-33). A connect that fails returns nil and why, so
--- socket.http closes the connection and the request returns them (common/socket/http.lua:130).
+-- A create function for socket.http that connects through LuaSec (common/ssl/https.lua:74-102) verifying the
+-- server: its chain against KOReader's CA bundle (certifi's, data/ca-bundle.crt under KOReader's folder,
+-- installed by base/thirdparty/certifi/CMakeLists.txt:4), then its certificate's DNS names against the host.
+-- LuaSec's own default is verify = "none" (:29-33). A failed connect returns nil and why, so socket.http
+-- closes the connection (common/socket/http.lua:130).
 local function verified_tcp()
     local make = require("ssl.https").tcp{
         protocol = "any",
@@ -74,14 +72,13 @@ local function verified_tcp()
     end
 end
 
--- GETs url into the sink make_sink returns, which is made once the timeouts are set: socketutil's
--- sinks read the total timeout when they are made (frontend/socketutil.lua:98-140). socket.http
--- is looked up here, not at load, so a spec can stub it, and the timeouts are reset on every
--- path, a raising request included. extra holds headers sent beside Accept-Encoding. An https://
--- URL connects through verified_tcp. A redirect keeps a create only when the request's own scheme
--- field is the new URL's (common/socket/http.lua:336-338, :349), and the next hop's table has
--- none, so an https request follows one redirect at most (:317-319): a second would connect
--- unverified. Returns true, or nil, why and the status.
+-- GETs url into the sink make_sink returns, made once the timeouts are set: socketutil's sinks read the total
+-- timeout when they are made (frontend/socketutil.lua:98-140). socket.http is looked up here so a spec can
+-- stub it, and the timeouts are reset on every path. extra holds headers sent beside Accept-Encoding. An
+-- https:// URL connects through verified_tcp. A redirect keeps a create only when the request's own scheme
+-- field is the new URL's (common/socket/http.lua:336-338, :349) and the next hop's table has none, so an
+-- https request follows one redirect at most (:317-319): a second would connect unverified. Returns true,
+-- or nil, why and the status.
 local function request(url, make_sink, extra)
     local http = require("socket.http")
     local headers = { ["Accept-Encoding"] = "identity" }
@@ -289,13 +286,11 @@ local function stage(paths, manifest, opts)
     })
 end
 
--- Pulls opts.profile from the studio at opts.address into opts.data_dir for the plugin running
--- from opts.plugin_dir, recording opts.disable (runtime plugin names) to be disabled at the
--- apply. opts.source, when given, replaces the studio: a function(paths) that fills
--- paths.download (PushApply.paths) with a bundle it has verified and returns its manifest
--- (PushBundle.check_manifest's, for opts.profile), or nil, why and maybe a status. Returns true
--- once staged and armed; nil, a message and maybe a status otherwise, with download/ purged and
--- an earlier stage as it was unless staging itself failed.
+-- Pulls opts.profile from the studio at opts.address into opts.data_dir for the plugin running from
+-- opts.plugin_dir, recording opts.disable (runtime plugin names) to be disabled at the apply. opts.source,
+-- when given, replaces the studio: a function(paths) that fills paths.download with a bundle it has
+-- verified and returns its manifest, or nil, why and maybe a status. Returns true once staged and armed; nil,
+-- a message and maybe a status otherwise, with download/ purged and an earlier stage as it was.
 function PushPull.pull(opts)
     local refused = PushPull.refusal(opts)
     if refused then

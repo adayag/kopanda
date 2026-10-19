@@ -1,7 +1,6 @@
--- The home's weather widget: the cached reading's line, left-aligned and cut with an ellipsis
--- to the column, set in the look's type.weather part. Diner puts the sun or the moon before it
--- (HomeRetro.dc.html:48-51, NightC.dc.html:48-50); Editorial draws the line alone
--- (Main.dc.html:25). A tap fetches the weather.
+-- The home's weather widget: the cached reading's line, left-aligned and cut with an ellipsis to the column, set
+-- in the look's type.weather part. Diner puts the sun or the moon before it; Editorial draws the line alone. A
+-- tap fetches the weather.
 local Geom = require("ui/geometry")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")

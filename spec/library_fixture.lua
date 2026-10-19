@@ -1,9 +1,7 @@
--- Helpers shared by the library window's specs (spec/unit/library_screen_spec.lua,
--- library_gestures_spec.lua, library_lifecycle_spec.lua and the library cases of failsafe_spec.lua):
--- listings given to Books.folder in place of the disk, under a library root that exists nowhere,
--- and the library shown over a file manager. Each reads the plugin's modules at call time, so it
--- sees the ones the spec's harness.load() left loaded.
--- Busted gives a spec file its assert; a module required from one takes luassert, the same table.
+-- Helpers shared by the library window's specs: listings given to Books.folder in place of the disk, under a
+-- library root that exists nowhere, and the library shown over a file manager. Each reads the plugin's modules at
+-- call time, so it sees the ones the spec's harness.load() left loaded. Busted gives a spec file its assert; a
+-- module required from one takes luassert, the same table.
 local assert = require("luassert")
 local harness = require("plugin_harness")
 local HorizontalSpan = require("ui/widget/horizontalspan")
@@ -29,10 +27,9 @@ function M.folder(name, dir)
     return { name = name, path = (dir or M.ROOT) .. "/" .. name }
 end
 
--- Books.folder gives listings[dir] (default: nothing), Books.files that listing's books, and
--- Books.progress progress[id] (default: new), each a copy so the library can't change the spec's
--- tables; the root is KOReader's home folder. Returns the calls Books.folder had, by dir. Undone by
--- the next harness.load() and M.restore().
+-- Books.folder gives listings[dir] (default: nothing), Books.files that listing's books, and Books.progress
+-- progress[id] (default: new), each a copy so the library can't change the spec's tables. Returns the calls
+-- Books.folder had, by dir. Undone by the next harness.load() and M.restore().
 function M.install(listings, progress)
     local Books = package.loaded["books"]
     local calls = {}

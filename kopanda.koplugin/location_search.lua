@@ -1,7 +1,6 @@
--- The place search the settings menu's location row runs: a typed city or ZIP code, Open-Meteo's
--- geocoding endpoint, and a choice among the places it returns. It writes nothing itself; the
--- caller's on_pick gets the chosen { name, latitude, longitude }. The fetch blocks the UI for
--- its duration, at most the timeouts Weather.get sets, so a note says so while it runs.
+-- The place search the settings menu's location row runs: a typed city or ZIP code, Open-Meteo's geocoding
+-- endpoint, and a choice among the places it returns. It writes nothing; the caller's on_pick gets the
+-- chosen { name, latitude, longitude }. The fetch blocks the UI, at most the timeouts Weather.get sets.
 local ButtonDialog = require("ui/widget/buttondialog")
 local Helpers = require("helpers")
 local InfoMessage = require("ui/widget/infomessage")
@@ -30,11 +29,10 @@ local function text(value)
     return type(value) == "string" and value ~= ""
 end
 
--- The candidates in a geocoding response, in the order returned: { name, latitude, longitude,
--- shown }, name as stored ("Chicago, Illinois") and shown as the chooser's button reads
--- ("Chicago, Illinois, United States"). A result without a name or with a coordinate that is
--- not a number is skipped; a response with no results is none. Nil and why for a body that is
--- not a JSON object.
+-- The candidates in a geocoding response, in the order returned: { name, latitude, longitude, shown },
+-- name as stored ("Chicago, Illinois") and shown as the chooser reads ("Chicago, Illinois, United States").
+-- A result without a name or with a non-number coordinate is skipped. Nil and why for a body that is not
+-- a JSON object.
 function LocationSearch.parse(body)
     local ok, data = pcall(rapidjson.decode, body)
     if not ok then
@@ -81,10 +79,9 @@ local function network()
     return require("ui/network/manager")
 end
 
--- Asks for a place and calls on_pick with the chosen { name, latitude, longitude }: the query
--- dialog, then offline a note, else a searching note over the blocking fetch, then a note for
--- no result or a failure, or a chooser with one row per candidate. Every step is guarded: an
--- error is logged, the flow's open dialogs close, and on_pick isn't called.
+-- Asks for a place and calls on_pick with the chosen { name, latitude, longitude }: the query dialog, then
+-- offline a note, else a searching note over the blocking fetch, then a note for no result or a failure, or
+-- a chooser with one row per candidate. Every step is guarded: an error is logged and on_pick isn't called.
 function LocationSearch.ask(on_pick)
     -- The dialogs this flow has shown and not yet closed.
     local open = {}
@@ -133,7 +130,7 @@ function LocationSearch.ask(on_pick)
 
     local function run(query)
         if not network():isConnected() then
-            -- A plain hyphen, though the spec writes U+2011: no plugin source holds one (fonts_spec.lua).
+            -- A plain hyphen, not U+2011: no plugin source holds one (fonts_spec.lua).
             Helpers.note("Finding a place needs Wi-Fi.")
             return
         end

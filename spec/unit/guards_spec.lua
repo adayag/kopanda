@@ -1,7 +1,5 @@
--- The two safety nets around the shell: KoPanda refuses its home while another shell plugin is
--- enabled (C11), keeping only Tools › KoPanda › Studio (device-push C7) and Swatches
--- (looks-and-schema C9, C10), and a home that did not finish drawing last time is skipped once
--- (C12).
+-- The two safety nets around the shell: KoPanda refuses its home while another shell plugin is enabled, keeping only
+-- Tools › KoPanda › Studio and Swatches, and a home that did not finish drawing last time is skipped once.
 describe("KoPanda's guards", function()
     local harness = require("plugin_harness")
     local Event = require("ui/event")
@@ -372,7 +370,7 @@ describe("KoPanda's guards", function()
         end)
     end)
 
-    -- cover-grid C2, D11: the library's memory is a table, which the read-back must take.
+    -- The library's memory is a table, which the read-back must take.
     describe("State.set", function()
         local value = {
             folders = { ["/books/sci-fi"] = { sort = "title", status = "reading" } },
@@ -416,7 +414,7 @@ describe("KoPanda's guards", function()
         end)
     end)
 
-    -- tweaks/state-set-many: several keys in one flush and one read-back.
+    -- Several keys in one flush and one read-back.
     describe("State.set_many", function()
         local util = require("util")
         local value = { at = { dir = "/books/sci-fi", page = 2 } }

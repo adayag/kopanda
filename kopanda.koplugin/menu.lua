@@ -1,9 +1,8 @@
--- The settings menu's rows, generated from schema.lua: one TouchMenu item per key, in schema
--- order, for KOReader's own menu (Tools › KoPanda › Settings) and for settings_menu.lua. Each
--- type has one row builder; a row's text is read on every redraw, so it follows the stored value.
--- A tap that changes a value writes it through Settings.set, then refreshes a shown home once,
--- after one weather fetch when the write makes the cached reading stale. Every function TouchMenu
--- calls is guarded: an error is logged and gives a safe answer, and nothing is written after it.
+-- The settings menu's rows, generated from schema.lua: one TouchMenu item per key, in schema order, for
+-- KOReader's own menu (Tools › KoPanda › Settings) and settings_menu.lua. Each type has one row builder; a
+-- row's text is read on every redraw. A tap that changes a value writes it through Settings.set, then
+-- refreshes a shown home once, after one weather fetch when the write makes the cached reading stale. Every
+-- function TouchMenu calls is guarded: an error is logged and nothing is written after it.
 -- Module state: the types already logged as having no row builder, so each is logged once.
 local FeaturedBook = require("featured_book")
 local Helpers = require("helpers")
@@ -39,11 +38,10 @@ local function network()
     return require("ui/network/manager")
 end
 
--- Stores value under entry's key unless it is already stored. A refused write is logged and
--- noted; a done one re-lays the file browser out for a new look, then refreshes a shown home
--- once, after one weather fetch when it changed the weather's place or units while connected.
--- home is required here, not at load: it reaches home_gestures, which requires settings_menu,
--- which requires this module; fm_nav is required here as home is.
+-- Stores value under entry's key unless it is already stored. A refused write is logged and noted; a done
+-- one re-lays the file browser out for a new look, then refreshes a shown home once, after one weather
+-- fetch when the weather's place or units changed while connected. home and fm_nav are required here: home
+-- reaches home_gestures, which requires settings_menu, which requires this module.
 local function write(entry, value)
     if util.tableEquals(Settings.get(entry.id), value) then
         return
@@ -75,9 +73,8 @@ local function text_func(entry, value_text)
 end
 
 -- A callback for a row that opens a screen: TouchMenu closes itself after the callback
--- (frontend/ui/widget/touchmenu.lua:920-926), so the screen opens from the next tick, as
--- main.lua's after_menu defers. The module is required then, not at load: edit_layout requires
--- home, which reaches this module.
+-- (frontend/ui/widget/touchmenu.lua:920-926), so the screen opens from the next tick, as main.lua's
+-- after_menu defers. The module is required then: edit_layout requires home, which reaches this module.
 local function open_screen(entry, module)
     local open = guarded(entry.id .. " screen", nil, function()
         require(module).open{}
@@ -156,12 +153,11 @@ local function has_extension(name, extensions)
     return false
 end
 
--- A path key with extensions (the wallpaper): the stored file's name, or None. Its submenu opens
--- KOReader's PathChooser from the home folder, showing folders and the files of those extensions
--- and choosing a file only (frontend/ui/widget/pathchooser.lua:13-19, :36-41; its home folder,
--- frontend/ui/widget/filechooser.lua:101-103, frontend/apps/filemanager/filemanagerutil.lua:25-27),
--- whose onConfirm (pathchooser.lua:137-153) writes the chosen path and redraws the menu; None
--- writes false. The menu stays open under the chooser.
+-- A path key with extensions (the wallpaper): the stored file's name, or None. Its submenu opens KOReader's
+-- PathChooser from the home folder, showing those extensions and choosing a file only
+-- (frontend/ui/widget/pathchooser.lua:13-19, :36-41; home folder, frontend/ui/widget/filechooser.lua:101-103,
+-- frontend/apps/filemanager/filemanagerutil.lua:25-27), whose onConfirm (pathchooser.lua:137-153) writes the
+-- chosen path and redraws the menu; None writes false.
 local function file_row(entry)
     return {
         text_func = text_func(entry, function()
@@ -206,10 +202,9 @@ local function file_row(entry)
     }
 end
 
--- The featured book's pin: "Most recent" unless it names a file that is there, which
--- FeaturedBook reads as unpinned (featured_book.lua:65-78). Its submenu unpins, and offers the
--- pinned book while it is there; pinning stays on the book sheet. A path key with extensions is
--- a file row instead.
+-- The featured book's pin: "Most recent" unless it names a file that is there, which FeaturedBook reads as
+-- unpinned (featured_book.lua:65-78). Its submenu unpins, and offers the pinned book while it is there. A
+-- path key with extensions is a file row instead.
 function BUILDERS.path(entry)
     if entry.extensions then
         return file_row(entry)

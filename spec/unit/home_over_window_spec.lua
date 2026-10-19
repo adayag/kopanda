@@ -1,8 +1,7 @@
--- The home brought up while a chrome window is shown (bugs/launcher-target-under-home): the file
--- manager's top menu, opened by a tap at the top centre that the window forwards
--- (HomeGestures.forward), and its Home tab tapped, which runs the plugin's goHome. The home closes
--- the window, as a window's show closes the home, so it never hides one, and a target run from it
--- shows its window on top at its first page, as from anywhere else.
+-- The home brought up while a chrome window is shown: the file manager's top menu, opened by a tap at the top centre
+-- that the window forwards (HomeGestures.forward), and its Home tab tapped, which runs the plugin's goHome. The home
+-- closes the window, as a window's show closes the home, so it never hides one, and a target run from it shows its
+-- window on top at its first page.
 describe("the home brought up over a chrome window", function()
     local harness = require("plugin_harness")
     local fixture = require("shelf_fixture")

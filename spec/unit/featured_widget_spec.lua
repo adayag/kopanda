@@ -1,5 +1,5 @@
--- The featured widget (C6): the cover box and the text column in each look, its size, the
--- caption's wording, the progress bar, the first run, the tap and the hold (sheets' C5).
+-- The featured widget: the cover box and the text column in each look, its size, the
+-- caption's wording, the progress bar, the first run, the tap and the hold.
 -- FeaturedBook.current is stubbed per case; bookinfomanager is unrequirable, so the cover box
 -- draws its placeholder; FileManager.instance and Home.close are replaced by recorders. Each
 -- case restores them.
@@ -455,10 +455,9 @@ describe("the featured widget", function()
             built:free()
         end)
 
-        -- The column's states as its height falls a pixel at a time from 600 to 20, the cover
-        -- box's height replaced so the column's height is free while its width is the real one:
-        -- each state names the lines under the title the column draws, by the text they hold
-        -- however cut, and the title's lines; repeats are folded.
+        -- The column's states as its height falls a pixel at a time from 600 to 20, the cover box's height replaced
+        -- so the column's height is free: each state names the lines under the title the column draws and the title's
+        -- lines; repeats are folded.
         local function overflow(id, width, book)
             local column_h
             FeaturedCover.box = function(w, ctx)
@@ -687,7 +686,7 @@ describe("the featured widget", function()
             return (table.concat(found):gsub(" ", ""))
         end
 
-        -- cover-grid C8: the button runs the launcher's library entry.
+        -- The button runs the launcher's library entry.
         it("closes the home and shows the library on a tap on the button", function()
             calls.book = nil
             for _, id in ipairs({ "editorial", "diner" }) do
@@ -771,7 +770,7 @@ describe("the featured widget", function()
         end)
     end)
 
-    -- A hold in the slot (sheets' C5): the book's sheet with a book, false on the first run.
+    -- A hold in the slot: the book's sheet with a book, false on the first run.
     describe("hold", function()
         local Sheet
 
@@ -807,7 +806,7 @@ describe("the featured widget", function()
     end)
 end)
 
--- A hold on the featured slot of a shown home over a real file manager (sheets' C5): the book's
+-- A hold on the featured slot of a shown home over a real file manager: the book's
 -- sheet with a book in the history, the home's own sheet on the first run.
 describe("a hold on the home's featured slot", function()
     local harness = require("plugin_harness")

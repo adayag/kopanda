@@ -1,6 +1,5 @@
--- The date and clock widgets (C5, the date and clock part): their strings from KOReader's
--- translation tables and its 12-hour clock setting, drawn in each look's type tokens, at most
--- their column wide, with height the built widget's height.
+-- The date and clock widgets: their strings from KOReader's translation tables and its 12-hour clock setting, drawn
+-- in each look's type tokens, at most their column wide, with height the built widget's height.
 describe("the date and clock widgets", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")

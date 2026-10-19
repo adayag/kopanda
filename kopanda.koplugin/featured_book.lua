@@ -1,10 +1,7 @@
--- The featured book: the one module that knows where it comes from. The pinned book when it
--- still exists, else the most recent book in KOReader's reading history that does; its title,
--- authors, progress, status and pages from the book model (books.lua), its time left from the
--- Statistics reading speed, and its chapter as KoPanda recorded it when the book closed. Only
--- reads: never the settings file, a sidecar or the history is written. Every KOReader read is
--- caught; a failure is logged and that part reads as absent.
--- Module state: the pinned paths already logged as gone, so each is logged once per process.
+-- The featured book: the one module that knows where it comes from. The pinned book when it still
+-- exists, else the most recent in KOReader's reading history that does; its fields from the book model
+-- (books.lua), its time left from the Statistics reading speed, and its chapter as KoPanda recorded it
+-- when the book closed. Only reads; a failed KOReader read is logged and that part reads as absent.
 local Books = require("books")
 local ReadingStats = require("reading_stats")
 local Settings = require("settings")
@@ -31,11 +28,10 @@ local function try(what, f, ...)
     return result
 end
 
--- The reading history's files, most recent first (frontend/readhistory.lua:332-333), that are
--- still files, skipping entries KOReader marks unselectable and the QuickStart guide, as
--- ReaderUI:getLastDirFile skips it (frontend/apps/reader/readerui.lua:571-577), each passed to
--- each(file) until it returns true. Required on each call, not at load, so the history read is
--- the one KOReader holds now.
+-- The reading history's files, most recent first (frontend/readhistory.lua:332-333), that are still
+-- files, skipping entries KOReader marks unselectable and the QuickStart guide, as
+-- ReaderUI:getLastDirFile does (frontend/apps/reader/readerui.lua:571-577), each passed to each(file)
+-- until it returns true. Required on each call, so the history read is the one KOReader holds now.
 local function each_book(each)
     local quickstart = require("ui/quickstart").quickstart_filename
     for _, entry in ipairs(require("readhistory").hist) do

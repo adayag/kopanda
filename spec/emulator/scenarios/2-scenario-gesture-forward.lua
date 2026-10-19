@@ -2,7 +2,7 @@
 -- by spec/emulator/gesture_forward_spec.lua. At patch time, before any plugin loads
 -- (reader.lua:190), it writes the Gestures plugin's settings file with the file manager's
 -- bottom-right corner tap bound to History. On the first home it taps that corner just above the
--- nav bar, which takes every tap in its band (KoPanda's nav bar, D4), waits two ticks, and
+-- nav bar, which takes every tap in its band, waits two ticks, and
 -- reports, as a "scenario" KoPandaSettled signal, whether the file manager's History list is
 -- shown and whether the home is still on the stack. Any failure is reported as a "scenario"
 -- signal with error, so the spec fails with the message.

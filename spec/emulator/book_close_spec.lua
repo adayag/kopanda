@@ -1,8 +1,7 @@
--- Closing a book in the emulator lands on the home, built at the file manager's Show, without
--- the file browser ever being painted, and the home's share of the close (its build and first
--- paint, from the file manager's Show) holds to 100 ms on this Mac, judged as the paint budget
--- judges its 250 ms. The book-close scenario patch opens the one book in the library, closes it
--- from a scheduled task, and reports what it counted on the "scenario" screen.
+-- Closing a book in the emulator lands on the home, built at the file manager's Show, without the file browser
+-- ever being painted, and the home's share of the close holds to 100 ms on this Mac, judged as the paint budget
+-- judges its 250 ms. The book-close scenario patch opens the one book in the library, closes it from a scheduled
+-- task, and reports what it counted on the "scenario" screen.
 describe("closing a book on the emulator", function()
     require("commonrequire")
     local lfs = require("libs/libkoreader-lfs")

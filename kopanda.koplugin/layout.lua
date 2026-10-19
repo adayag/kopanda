@@ -1,24 +1,21 @@
--- The home's layout maths: rows of slots placed on the screen from the look's home tokens. No
--- KOReader UI: the widgets are reached through the registry only to measure them.
---
--- Look tokens arrive in board pixels and are scaled once here by Screen:scaleBySize
--- (base/ffi/framebuffer.lua:414-425); widths and heights measured on the screen are device
--- pixels. Font sizes are not scaled here: Font:getFace scales them itself (frontend/ui/font.lua:276).
+-- The home's layout maths: rows of slots placed on the screen from the look's home tokens. No KOReader UI:
+-- the widgets are reached through the registry only to measure them. Look tokens arrive in board pixels
+-- and are scaled once here by Screen:scaleBySize (base/ffi/framebuffer.lua:414-425); measured widths and
+-- heights are device pixels. Font sizes are not scaled here: Font:getFace does (frontend/ui/font.lua:276).
 local Widgets = require("widgets")
 local logger = require("logger")
 
 local Layout = {}
 
--- The screen lengths are scaled for; the spec puts a screen of another size here.
+-- The screen lengths are scaled for; a spec puts a screen of another size here.
 Layout.screen = require("device").screen
 
 local function scale(px)
     return Layout.screen:scaleBySize(px)
 end
 
--- Each slot's { x, w } across content_w, x from the content's left edge: the width less the
--- gaps between columns, shared by share, each column floor(available × share / total) and the
--- last the remainder, so columns and gaps fill content_w exactly. gap is in board pixels.
+-- Each slot's { x, w } across content_w, x from the content's left edge: the width less the gaps
+-- between columns, shared by share, the last column taking the remainder. gap is in board pixels.
 function Layout.columns(content_w, slots, gap)
     local gap_px = scale(gap)
     local available = content_w - (#slots - 1) * gap_px
@@ -101,14 +98,11 @@ local function place(row_heights, avail_h, margins, row_gap, free_space, footer_
     return ys, dropped
 end
 
--- The y of each row that fits and the indexes of those that don't. Rows stack from the top
--- margin with row_gap between rows that have a height; a row of height 0 takes no gap. When
--- the rows overflow avail_h less the margins and footer_h, rows are dropped from the end until
--- the rest fit, each drop logged. free_space "before_last_row" moves the last row down onto
--- the bottom margin when two or more rows have a height; "before_footer" leaves the rows
--- together at the top. first_gap, when given, is the gap below row 1 in place of row_gap.
--- row_heights and avail_h are device pixels; margins ({ top, bottom }), row_gap, footer_h and
--- first_gap are board pixels.
+-- The y of each row that fits and the indexes of those that don't. Rows stack from the top margin with
+-- row_gap between rows that have a height; when they overflow avail_h less the margins and footer_h,
+-- rows are dropped from the end, each logged. free_space "before_last_row" moves the last row down onto
+-- the bottom margin; "before_footer" leaves the rows at the top. first_gap, when given, replaces row_gap
+-- below row 1. row_heights and avail_h are device pixels, the rest board pixels.
 function Layout.place(row_heights, avail_h, margins, row_gap, free_space, footer_h, first_gap)
     local ys, dropped = place(row_heights, avail_h, margins, row_gap, free_space, footer_h, first_gap)
     for _, i in ipairs(dropped) do
@@ -117,7 +111,7 @@ function Layout.place(row_heights, avail_h, margins, row_gap, free_space, footer
     return ys, dropped
 end
 
--- The footer's height in board pixels: its stripe and its edge, or 0 for a look without one.
+-- The footer's height in board pixels, 0 for a look without one.
 local function footer_height(home)
     if home.footer.height > 0 then
         return home.footer.height + home.footer.edge_width
@@ -138,12 +132,10 @@ local function bar_height(look)
     return 0
 end
 
--- Bottom-aligns slots measured at their heights in a row content_h tall: sets each slot's
--- offset, the drop of its widget from the row's top, and returns the row's height. A slot whose
--- module gives a baseline (its last line's, from its top) for column width w under ctx sits with
--- it on the row's one baseline, which lies as low as the deepest drop below a baseline allows,
--- and the row grows to hold the tallest rise above it; any other slot with a height sits on the
--- row's bottom.
+-- Bottom-aligns slots measured at their heights in a row content_h tall: sets each slot's offset (the drop
+-- of its widget from the row's top) and returns the row's height. Slots whose module gives a baseline sit
+-- on the row's one baseline and the row grows to hold the tallest rise above it; any other slot sits on
+-- the row's bottom.
 local function align_bottom(slots, content_h, ctx)
     local above, below = 0, 0
     for _, slot in ipairs(slots) do
@@ -167,25 +159,10 @@ local function align_bottom(slots, content_h, ctx)
     return content_h
 end
 
--- The whole home for layout rows under ctx ({ look, screen, ... }, passed on to each widget's
--- height): every row's height, the rows that fit with their slots measured and placed, the
--- dropped row indexes, and the header and footer chrome, in device pixels. Row 1 carries the
--- header: a band (full width) or a box between the side margins, its padding around the slots,
--- then its bottom edge, or its rule with rule_space above and below and no row gap after; with
--- the header's align "bottom", its slots are bottom-aligned on one baseline (align_bottom). A
--- slot is { widget, module, x, y, w, h, offset, error, pad_x, pad_y, plate }, h its row's content
--- height and offset the drop of its widget from y (0 but in an aligned row). A slot whose widget
--- has no module, or whose height raises, measures 0; slot.error is the height's error. rows is
--- not changed. The home is sized by Layout.screen, the screen its lengths are scaled for. The
--- rows, the footer and the free height take the screen's height less the nav bar's, whose band
--- across the bottom is nav.
---
--- A look with plates (its plate.fill_color, looks/frosted.lua) puts row 1 on one header plate,
--- header.plate, between the side margins, its slots inside the plate's keyline and the header's
--- padding; and every other widget whose plate.slots entry is a table on a plate of its own, the
--- slot's rectangle with that entry's radius, slot.plate, the widget drawn pad_x and pad_y inside it
--- (the keyline and the entry's padding) and measured at the width inside. A widget that measures
--- 0 gets no plate. Each plate is { x, y, w, h, radius }; pad_x and pad_y are 0 without one.
+-- The whole home for layout rows under ctx ({ look, screen, ... }): every row's height, the rows that fit with their
+-- slots measured and placed, the dropped row indexes, and the header and footer chrome, in device pixels. A slot
+-- whose widget has no module or whose height raises measures 0 (slot.error); a look with plates puts row 1 and
+-- each widget whose plate.slots entry is a table on a plate, the widget drawn pad_x and pad_y inside it.
 local function arrange(rows, ctx, placer)
     local home = ctx.look.home
     local header = home.header

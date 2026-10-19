@@ -1,5 +1,5 @@
 -- The plugin's EntriesEdit gives every result of the corpus the studio's port is held to
--- (studio/test/core/entries-edit.test.ts), so the two can't drift (C12).
+-- (studio/test/core/entries-edit.test.ts), so the two can't drift.
 describe("EntriesEdit on the shared corpus", function()
     require("plugin_harness")
     local EntriesEdit = require("entries_edit")

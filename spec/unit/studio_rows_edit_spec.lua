@@ -1,5 +1,5 @@
 -- The plugin's row operations give every result and refusal of the corpus the studio's port is held
--- to (studio/test/core/rows-edit.test.ts), so the two can't drift (C9).
+-- to (studio/test/core/rows-edit.test.ts), so the two can't drift.
 describe("RowsEdit on the shared corpus", function()
     require("plugin_harness")
     local RowsEdit = require("rows_edit")

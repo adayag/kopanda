@@ -1,4 +1,4 @@
--- NavBar (the nav bar's C2): its five tabs, its height per look whatever the text size, its five
+-- NavBar: its five tabs, its height per look whatever the text size, its five
 -- columns, its paint in each look and variant, and what a tap, a hold and anything else on it do.
 -- Nothing here places the bar on a screen; each case sets the bar's dimen as a screen would.
 describe("the nav bar", function()
@@ -35,7 +35,7 @@ describe("the nav bar", function()
         return Screen:scaleBySize(px)
     end
 
-    -- The feature's height: edge, the active rule's overhang, the tab's padding, icon and gap and
+    -- The bar's height: edge, the active rule's overhang, the tab's padding, icon and gap and
     -- the taller of the two label lines, each length scaled, the lines set with no text size. A
     -- floating pill adds its outline at its foot and its margin below it.
     local function formula(look)
@@ -311,9 +311,8 @@ describe("the nav bar", function()
             return n
         end
 
-        -- toybox.md: a pill 22 in from the sides and 20 up from the bottom, filled die and outlined
-        -- 3 px in ink on a 6 px ink edge, the lit tab a sun pill in a 2 px ink outline, the page's
-        -- paper round it (Looks.dc.html:608, :620).
+        -- A pill 22 in from the sides and 20 up from the bottom, filled die and outlined 3 px in ink on a 6 px ink
+        -- edge, the lit tab a sun pill in a 2 px ink outline, the page's paper round it.
         it("floats Toybox's pill on the page with its edge below and lights the active tab in a ringed sun pill",
                 function()
             harness.at_colorsoft(function()
@@ -520,7 +519,7 @@ describe("the nav bar", function()
             assert.equals(fm.kopanda, home_calls[1][1])
             assert.same({}, entry_calls)
         end)
-        -- series-and-authors C8, D17.
+        -- Authors shows the Authors list at its first page.
         it("Authors from the home and from the file browser shows the Authors list at its first page", function()
             local fixture = require("shelf_fixture")
             fixture.install({ fixture.book("Earthsea", { authors = { "Ursula K. Le Guin" } }) })
@@ -542,7 +541,7 @@ describe("the nav bar", function()
         end)
     end)
 
-    -- cover-grid C6: the library window carries the bar with Library lit.
+    -- The library window carries the bar with Library lit.
     describe("on the library", function()
         it("lights Library, as in the file browser", function()
             for _, id in ipairs(Looks.ids()) do
@@ -565,7 +564,7 @@ describe("the nav bar", function()
             assert.equals(Home.shown, harness.top())
         end)
 
-        -- cover-grid C8, D6.
+        -- Library goes to the root's first page in place.
         it("runs Library by going to the root's first page in place", function()
             local fixture = require("library_fixture")
             local sub = fixture.folder("Sci-fi")
@@ -582,7 +581,7 @@ describe("the nav bar", function()
         end)
     end)
 
-    -- series-and-authors C4: the Series window carries the bar with no tab lit.
+    -- The Series window carries the bar with no tab lit.
     describe("on the Series window", function()
         it("lights no tab", function()
             for _, id in ipairs(Looks.ids()) do
@@ -605,7 +604,7 @@ describe("the nav bar", function()
         end)
     end)
 
-    -- series-and-authors C5: the Authors window carries the bar with Authors lit.
+    -- The Authors window carries the bar with Authors lit.
     describe("on the Authors window", function()
         it("lights Authors", function()
             for _, id in ipairs(Looks.ids()) do
@@ -631,7 +630,7 @@ describe("the nav bar", function()
     describe("a hold and other gestures", function()
         local time = require("ui/time")
 
-        -- bars/quick-settings' C8: the Settings hold opens the sheet, its start taken at the hold.
+        -- The Settings hold opens the sheet, its start taken at the hold.
         it("a hold in the Settings column opens the quick-settings sheet once and is consumed", function()
             local QuickSettings = require("quick_settings")
             for _, id in ipairs(Looks.ids()) do
@@ -653,7 +652,7 @@ describe("the nav bar", function()
             end
         end)
 
-        -- bars/quick-settings' C9: every other hold on the bar is consumed and runs nothing.
+        -- Every other hold on the bar is consumed and runs nothing.
         it("a hold on Home, Library, Authors or History, or in Editorial's side padding, runs nothing", function()
             local QuickSettings = require("quick_settings")
             for _, id in ipairs(Looks.ids()) do

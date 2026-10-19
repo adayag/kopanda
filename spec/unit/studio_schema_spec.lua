@@ -1,4 +1,4 @@
--- The studio's checked-in schema JSON is bin/schema-json's output, byte for byte (C1).
+-- The studio's checked-in schema JSON is bin/schema-json's output, byte for byte.
 describe("studio/src/schema.json", function()
     local rapidjson = require("rapidjson")
     local root = os.getenv("KOPANDA_ROOT")

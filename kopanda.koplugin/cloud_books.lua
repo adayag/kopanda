@@ -1,9 +1,7 @@
--- cwngsync's placeholders (cwng-placeholders D12, D13, D19): the books cwngsync knows but the
--- Kindle doesn't hold yet, each a small EPUB at the book's real path. Read from the cwngsync plugin
--- instance the file manager registers under its name, through its own isConfigured and
--- getLibraryState, never by requiring its modules (HOOKS.md "cwngsync's placeholders"). Only reads,
--- and holds no state: each index is made from the state as it stands, so a download, a sync or a
--- reconfigure shows at the next one.
+-- cwngsync's placeholders: the books cwngsync knows but the Kindle doesn't hold yet, each a small EPUB
+-- at the book's real path. Read from the cwngsync plugin instance the file manager registers, through
+-- its own isConfigured and getLibraryState, never by requiring its modules (HOOKS.md "cwngsync's
+-- placeholders"). Only reads; each index is made from the state as it stands.
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
 

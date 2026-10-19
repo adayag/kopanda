@@ -1,6 +1,6 @@
--- Every way into the home (C7): the Home tab in the file manager's menu, KoPanda in both Tools
+-- Every way into the home: the Home tab in the file manager's menu, KoPanda in both Tools
 -- menus, and the "KoPanda: home" dispatcher action. A user's own menu order and the saved tab
--- index (C8).
+-- index.
 describe("KoPanda's entry points", function()
     local harness = require("plugin_harness")
     local DataStorage = require("datastorage")

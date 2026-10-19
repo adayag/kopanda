@@ -1,8 +1,7 @@
--- KoPanda's runtime state: flags the plugin keeps between starts (the boot guard), in
--- settings/kopanda/state.lua. Not a setting: no schema entry, and the studio never sees it.
--- A missing or corrupt file reads as empty. Every call catches its own errors, and callers
--- treat a failure as the flag being absent.
--- Module state: the opened file, on first use, and whether the last write failed.
+-- KoPanda's runtime state: flags the plugin keeps between starts (the boot guard), in settings/kopanda/state.lua.
+-- Not a setting: no schema entry, and the studio never sees it. A missing or corrupt file reads as empty. Every
+-- call catches its own errors and callers treat a failure as the flag being absent. State: the opened file,
+-- and whether the last write failed.
 local DataStorage = require("datastorage")
 local LuaSettings = require("luasettings")
 local lfs = require("libs/libkoreader-lfs")
@@ -55,13 +54,11 @@ function State.same(a, b)
     return true
 end
 
--- Stores each { key, value } of list and writes the file once, so the values survive a crash.
--- Returns true when written, false otherwise. LuaSettings:flush neither creates the directory
--- nor reports a failed write (frontend/luasettings.lua:270-275, frontend/util.lua:1131-1133),
--- so the directory is made and checked first, and the file is read back after, a table value
--- compared key by key. A failed write sets unsaved, since it can leave the in-memory copy ahead
--- of the file; a successful one clears it, since a flush writes the whole copy
--- (frontend/luasettings.lua:273).
+-- Stores each { key, value } of list and writes the file once, so the values survive a crash. Returns true when
+-- written. LuaSettings:flush neither creates the directory nor reports a failed write
+-- (frontend/luasettings.lua:270-275, frontend/util.lua:1131-1133), so the directory is made and checked first
+-- and the file is read back after. A failed write sets unsaved, since it can leave the in-memory copy ahead of
+-- the file; a successful one clears it, since a flush writes the whole copy (frontend/luasettings.lua:273).
 local function write(list)
     local ok, err = pcall(function()
         if lfs.attributes(dir(), "mode") ~= "directory" then

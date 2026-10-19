@@ -1,7 +1,6 @@
--- The launcher's list operations on a launcher.entries value (schema.lua's launcher.entries):
--- pure, each working on a deep copy and returning it, the input left unchanged. A position is
--- { i } at the top level or { f, i } inside the folder at top-level index f. Nothing here
--- writes a setting; launcher management stores what it gets.
+-- The launcher's list operations on a launcher.entries value: pure, each working on a deep copy and
+-- returning it. A position is { i } at the top level or { f, i } inside the folder at top-level index
+-- f. Nothing here writes a setting.
 local Schema = require("schema")
 local T = require("ffi/util").template
 local util = require("util")
@@ -49,10 +48,9 @@ function EntriesEdit.remove(entries, pos)
     return copy, false
 end
 
--- entries with entry added (decision D3): into the folder at top-level index f, at its end;
--- else at the end of a top level under max_entries; else at the end of the first top-level
--- folder; else the last entry and the new one become a folder labelled More in its place.
--- Folders don't nest, so a folder entry is never added: nil.
+-- entries with entry added: into the folder at top-level index f, at its end; else at the end of a top
+-- level under max_entries; else at the end of the first top-level folder; else the last entry and the
+-- new one become a folder labelled More in its place. A folder entry is never added (nil).
 function EntriesEdit.add(entries, entry, f)
     if entry.kind == "folder" then
         return nil

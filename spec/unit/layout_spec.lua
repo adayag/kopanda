@@ -1,4 +1,4 @@
--- The row engine's maths (C3): column widths by share, rows stacked from the top margin with the
+-- The row engine's maths: column widths by share, rows stacked from the top margin with the
 -- free height where the look puts it, rows dropped from the end when they overflow, Layout.fits
 -- in agreement with the placement, and the text size scale.
 describe("Layout", function()
@@ -253,7 +253,7 @@ describe("Layout", function()
             assert.is_nil(arranged.header.band)
             assert.same({ x = s(40), y = s(33) + 60 + s(17), w = 1264 - 2 * s(40), h = s(2) },
                 arranged.header.rule)
-            -- 17 px below the rule as above it (Main.dc.html:30's 22, tightened), no row gap after.
+            -- 17 px below the rule as above it, no row gap after.
             assert.equals(arranged.header.rule.y + s(2) + s(17), arranged.rows[2].y)
         end)
 
@@ -350,10 +350,9 @@ describe("Layout", function()
             assert.is_nil(arranged.rows[2].slots[1].module)
         end)
 
-        -- Frosted's plates (looks/frosted.lua plate): row 1 one header plate between the side
-        -- margins, its slots inside its keyline and header padding; every other widget on a plate
-        -- of its own, padded inside its keyline, measured at the width inside it; the gutters
-        -- between plates the row and column gaps.
+        -- Frosted's plates (looks/frosted.lua plate): row 1 one header plate between the side margins, its slots
+        -- inside its keyline and header padding; every other widget on a plate of its own, padded inside its keyline,
+        -- measured at the width inside it; the gutters between plates the row and column gaps.
         describe("with plates", function()
             local s = function(px)
                 return Layout.screen:scaleBySize(px)
@@ -555,13 +554,12 @@ describe("Layout", function()
         end)
     end)
 
-    -- Open fact F1 (feature.md, "Fitting the default home above the bar"): the schema's default
-    -- rows with the real widgets and the real bar, in both looks at each text size, on the
-    -- Colorsoft and the Paperwhite, with the home fixture's content (2-scenario-home-fixture.lua):
-    -- populated, a featured book with its chapter, a weather reading and the quote of their day;
-    -- empty, none of them and the fixture's six launcher entries. Text is measured by Font:getFace
-    -- at the device screen's scale (frontend/ui/font.lua:276), so the device screen itself answers
-    -- as each profile's, as harness.at_colorsoft makes it the Colorsoft's.
+    -- The schema's default rows with the real widgets and the real bar, in both looks at each text size, on the
+    -- Colorsoft and the Paperwhite, with the home fixture's content (2-scenario-home-fixture.lua): populated (a
+    -- featured book with its chapter, a weather reading, the quote of the day) and empty (none of them, the fixture's
+    -- six launcher entries). Text is measured by Font:getFace at the device screen's scale
+    -- (frontend/ui/font.lua:276), so the device screen itself answers as each profile's, as harness.at_colorsoft
+    -- makes it the Colorsoft's.
     describe("the default home above the bar", function()
         local harness = require("plugin_harness")
         local Geom = require("ui/geometry")

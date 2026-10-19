@@ -1,4 +1,4 @@
--- TintedIcon (C5): a registry icon's ink painted in a given colour, grey or RGB32, every pixel a
+-- TintedIcon: a registry icon's ink painted in a given colour, grey or RGB32, every pixel a
 -- blend from the white ground to that colour and the ground left white; its mask rendered once per
 -- file and size and kept when the widget is freed; a file that won't render gives a blank widget of
 -- its size, logged, and is tried again by the next icon of it.

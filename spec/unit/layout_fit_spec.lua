@@ -1,10 +1,7 @@
--- bin/layout-fit runs the plugin's own fit rule, Layout.overflow, for a profile's screen and
--- settings file, and prints one count per row list (C7).
---
--- The date, the clock and the quote of the day change the home's heights with the day
--- (widgets/date.lua:40, widgets/quote.lua:75), so a comparison between this process and the
--- script's could straddle midnight and fail once; both run within the same few seconds and that
--- risk is accepted.
+-- bin/layout-fit runs the plugin's own fit rule, Layout.overflow, for a profile's screen and settings file, and prints
+-- one count per row list. The date, the clock and the quote of the day change the home's heights with the day
+-- (widgets/date.lua:40, widgets/quote.lua:75), so a comparison between this process and the script's could straddle
+-- midnight and fail once; both run within the same few seconds and that risk is accepted.
 describe("bin/layout-fit", function()
     local harness = require("plugin_harness")
     local rapidjson = require("rapidjson")

@@ -154,7 +154,7 @@ describe("KoPanda failing safe", function()
         assert.is_true(logged_error("kopanda-test: rebuild failed"))
     end)
 
-    -- The rebuild a variant change brings runs inside the paint (night mode's C10).
+    -- The rebuild a variant change brings runs inside the paint.
     it("closes the home on the next tick when its rebuild for night mode throws in the paint", function()
         local had = G_reader_settings:has("color_rendering")
         local previous = G_reader_settings:readSetting("color_rendering")
@@ -687,7 +687,7 @@ describe("KoPanda failing safe", function()
                 end,
             } }
             local size = Screen:getSize()
-            -- Just above the nav bar, which wins in its band (D4), and still in the corner eighth.
+            -- Just above the nav bar, which wins in its band, and still in the corner eighth.
             local y = Home.shown.nav.dimen.y - 5
             assert.truthy(y >= size.h * 7 / 8)
             local ok = pcall(UIManager.sendEvent, UIManager,
@@ -1078,7 +1078,7 @@ describe("KoPanda failing safe", function()
         assert.is_false(require("luasettings"):open(harness.state_file):readSetting("boot_pending"))
     end)
 
-    -- cover-grid C11, D11: a failed write of the library's memory keeps it for the session.
+    -- A failed write of the library's memory keeps it for the session.
     it("keeps a library choice and the folder left for the session when the state write fails", function()
         local State = require("state")
         local LibraryOrder = require("library_order")
@@ -1106,7 +1106,7 @@ describe("KoPanda failing safe", function()
         assert.same({ dir = harness.library, page = 2 }, LibraryOrder.left())
     end)
 
-    -- cover-grid C11: the library window fails safe, as the home does.
+    -- The library window fails safe, as the home does.
     describe("the library", function()
         local fixture = require("library_fixture")
         local Library
@@ -1296,9 +1296,8 @@ describe("KoPanda failing safe", function()
             end
         end)
 
-        -- context-menu C8 ("Failure behaviour"): the hold and the sheets it opens.
-        -- Holds rect's centre on library, as the UI loop hands the top window a gesture; returns
-        -- whether the library consumed it.
+        -- The hold and the sheets it opens. Holds rect's centre on library, as the UI loop hands the top window a
+        -- gesture; returns whether the library consumed it.
         local function hold_on(library, rect)
             local ok, consumed = pcall(library.handleEvent, library,
                 Event:new("Gesture", harness.gesture("hold", fixture.centre(rect))))
@@ -1427,7 +1426,7 @@ describe("KoPanda failing safe", function()
             assert.equals("file", require("libs/libkoreader-lfs").attributes(path, "mode"))
         end)
 
-        -- The folder sheet's rows and the root check ("The folder sheet", D6).
+        -- The folder sheet's rows and the root check.
         describe("with a folder tile", function()
             local Sheet
 
@@ -1492,7 +1491,7 @@ describe("KoPanda failing safe", function()
             end)
         end)
 
-        -- The empty-space sheet's rows (context-menu C8, "Failure behaviour"): Refresh covers whose
+        -- The empty-space sheet's rows: Refresh covers whose
         -- delete, request or re-list raises, and a Hidden folders tap whose unhide raises.
         describe("with the empty-space sheet", function()
             local Sheet, sub
@@ -1631,7 +1630,7 @@ describe("KoPanda failing safe", function()
         end)
     end)
 
-    -- series-and-authors C9, C11 ("Failure behaviour"): as the library's, through the chrome. The Series
+    -- As the library's, through the chrome. The Series
     -- and Authors windows fail safe the same way; each row carries what differs between them.
     local shelf_fixture = require("shelf_fixture")
     local GRID = { kind = "author", name = "Jo Grid" }

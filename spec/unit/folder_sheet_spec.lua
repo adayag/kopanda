@@ -1,4 +1,4 @@
--- The folder sheet (sheets' C8): a launcher folder's entries as a sheet's rows over a shown home,
+-- The folder sheet: a launcher folder's entries as a sheet's rows over a shown home,
 -- each with its resolved icon and label and its kind or its suffix, a tap on a row running that
 -- entry as the home does, the sheet reached through the real launcher, a folder too long for the
 -- Colorsoft and where paint_ms starts. No case writes the settings file.

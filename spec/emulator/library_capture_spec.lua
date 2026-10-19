@@ -1,14 +1,10 @@
--- The library's paint budget (cover-grid C14): the library window over a capture library this spec
--- builds in its scratch space, in Diner on the Colorsoft, at its root, in its sub-folder and with
--- the sort sheet over its root; and, beside them, a book opened from the library closing back to
--- the library, built at the file manager's Show. The capture library (capture_library.lua) holds
--- copies of the three fixture books at its root and a sub-folder holding one more copy, so
--- spec/fixtures/library/ (counted by fixtures_spec.lua) is not changed. The home fixture patch (at
--- empty, which sets up no featured book) freezes the clock and stores the look; the library
--- scenario patch stores the capture library as the home folder, writes one book's reading
--- position, adds one path-less book, extracts every cover before the library shows, and opens the
--- library once the home settles. The look is passed empty so a KOPANDA_HOME_LOOK in the caller's
--- environment cannot leak in.
+-- The library's paint budget: the library window over a capture library this spec builds in its scratch space, in
+-- Diner on the Colorsoft, at its root, in its sub-folder and with the sort sheet over its root; and a book opened
+-- from the library closing back to the library, built at the file manager's Show. The capture library
+-- (capture_library.lua) is copies of the fixture books, so spec/fixtures/library/ is not changed. The home fixture
+-- patch freezes the clock and stores the look; the library scenario patch stores the capture library as the home
+-- folder, writes one book's reading position, adds one path-less book, extracts every cover and opens the library
+-- once the home settles. The look is passed empty so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
 describe("the library on the emulator", function()
     require("commonrequire")
     local capture_library = require("emulator.capture_library")
@@ -87,11 +83,10 @@ describe("the library on the emulator", function()
         end)
     end
 
-    -- Left by the routing task (cover-grid D4): its book-close scenario opens its book with
-    -- ReaderUI:showReader on the home's settle, not from the library.
-    -- The book opens from the sub-folder, so same_dir fails on a library that came back at the
-    -- root. The capture library holds one page per folder, so same_page is trivially true here;
-    -- the page kept across a close is the unit specs' to prove.
+    -- The book-close scenario opens its book with ReaderUI:showReader on the home's settle, not from the library. The
+    -- book opens from the sub-folder, so same_dir fails on a library that came back at the root. The capture library
+    -- holds one page per folder, so same_page is trivially true here; the unit specs prove the page kept across a
+    -- close.
     it("closes a book opened from a sub-folder onto the library built at the file manager's Show at "
             .. "that folder, the file browser never painted", function()
         local result = capture{ step = "book", screen = "scenario" }

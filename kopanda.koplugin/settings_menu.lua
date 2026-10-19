@@ -1,9 +1,8 @@
--- KoPanda's settings on their own, for every caller outside KOReader's menu (the home's swipe up
--- and holds, the sheets, the launcher): menu.lua's rows in KOReader's TouchMenu with one tab,
--- inside a full-screen container as FileManagerMenu:onShowMenu builds its own
--- (frontend/apps/filemanager/filemanagermenu.lua:1006-1047). TouchMenu closes itself: a tap
--- outside it, the Back key or the up arrow at the top level, each through its default
--- close_callback, which closes the container (frontend/ui/widget/touchmenu.lua:499-504).
+-- KoPanda's settings on their own, for every caller outside KOReader's menu: menu.lua's rows in KOReader's
+-- TouchMenu with one tab, inside a full-screen container as FileManagerMenu:onShowMenu builds its own
+-- (frontend/apps/filemanager/filemanagermenu.lua:1006-1047). TouchMenu closes itself: a tap outside it, the
+-- Back key or the up arrow at the top level, each through its default close_callback, which closes the
+-- container (frontend/ui/widget/touchmenu.lua:499-504).
 local CenterContainer = require("ui/widget/container/centercontainer")
 local SchemaMenu = require("menu")
 local TouchMenu = require("ui/widget/touchmenu")

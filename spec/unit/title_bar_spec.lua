@@ -1,4 +1,4 @@
--- KoTitleBar (the title bar's C3): its height per look whatever the text size, what it reads from
+-- KoTitleBar: its height per look whatever the text size, what it reads from
 -- a real file chooser (the title, the count, the sort and status labels), its rebuilds at paint,
 -- its paint in each look and variant, its taps and holds, and the interface KOReader's file
 -- manager and chooser call. Nothing here puts the bar into the file manager; each case builds one
@@ -170,7 +170,7 @@ describe("the title bar", function()
     end)
 
     describe("height", function()
-        -- The feature's formula: edge, top padding, the taller of the count-over-title column and
+        -- The formula: edge, top padding, the taller of the count-over-title column and
         -- the picker row, bottom padding, each length scaled and each line set with no text size.
         local function formula(look)
             local tokens, parts = look.title_bar, look.type
@@ -581,7 +581,7 @@ describe("the title bar", function()
             end
         end)
 
-        -- No board draws Toybox's file browser: the library's pickers, 2 px ink pills on paper.
+        -- Toybox's file browser takes the library's pickers: 2 px ink pills on paper.
         it("draws Toybox's pickers as ink pills on paper, their corners the bar's paper", function()
             for _, variant in ipairs({ "day", "grey" }) do
                 painted("toybox", variant, function(bar, holds)

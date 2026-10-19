@@ -1,11 +1,9 @@
--- The cases the Series and Authors windows share (series-and-authors C4, C5), which
--- spec/unit/series_screen_spec.lua and authors_screen_spec.lua run for their window inside their own
--- describe blocks, each passing its window's row (w) of what the cases differ in: shown full-screen
--- one window at a time, the pager in each look's words with its dead arrows, the nav bar, the empty
--- note, the list for a gone view (D23), the rebuild on a variant or size change, the re-listing on
--- the metadata events, the sort kept between page turns, and the settled signal.
--- A module required from a spec file doesn't see the spec's globals: it and after_each come from
--- Busted's API, assert from luassert, the same table.
+-- The cases the Series and Authors windows share, which series_screen_spec.lua and authors_screen_spec.lua run for
+-- their window inside their own describe blocks, each passing its window's row (w) of what the cases differ in:
+-- shown full-screen one window at a time, the pager in each look's words with its dead arrows, the nav bar, the
+-- empty note, the list for a gone view, the rebuild on a variant or size change, the re-listing on the metadata
+-- events, the sort kept between page turns, and the settled signal. A module required from a spec file doesn't see
+-- the spec's globals: it and after_each come from Busted's API, assert from luassert, the same table.
 local assert = require("luassert")
 local busted = require("busted")
 local fixture = require("shelf_fixture")

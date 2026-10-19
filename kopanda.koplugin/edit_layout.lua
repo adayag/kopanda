@@ -1,9 +1,6 @@
--- Edit layout: the screen that edits layout.rows (EditLayout.dc.html), in the editor frame
--- (editor.lua). A card per row with its arrows, caption and a box per column; a tap selects a
--- row, a tap on a selected card's box selects that column, and the selected card shows its
--- buttons. The foot adds a row or resets. Each change is a rows_edit operation, checked
--- against the home's fit, written once through Settings.set, then the screen is refreshed once
--- and the shown home once the editor closes. The selection is the screen's, never stored.
+-- Edit layout: the screen that edits layout.rows, in the editor frame (editor.lua): a card per row
+-- with its arrows, caption and a box per column. Each change is a rows_edit operation, checked against
+-- the home's fit, written once through Settings.set; the shown home refreshes once the editor closes.
 local Editor = require("editor")
 local Helpers = require("helpers")
 local Home = require("home")
@@ -71,9 +68,8 @@ local function box_paint(k, bb, x, y, w, h, fill_role, outline_role, outline)
     end
 end
 
--- A button labelled label at most max_w wide: { w, h, draw(bb, x, y) }. opts.disabled draws
--- it in the disabled colour; opts.muted draws its label muted inside a disabled-colour outline,
--- as the board draws Remove row; opts.bare draws its label muted with no outline or fill.
+-- A button labelled label at most max_w wide: { w, h, draw(bb, x, y) }. opts.disabled, opts.muted
+-- and opts.bare pick its colours.
 local function button(k, label, opts, max_w)
     local t, s = k.tokens, k.scale
     local outline = opts.bare and 0 or s(t.button_outline_width)
@@ -100,11 +96,9 @@ local function picker(state, heading, rows)
     Sheet.show({ name = "picker", band = "home", header = { heading = heading }, rows = rows }, state.editor.ctx)
 end
 
--- What Layout.overflow's count depends on beyond the rows that can change through the editor:
--- the look, the text size and the size of the screen it measures on. A row whose data changes
--- under the editor (a weather reading arriving, the quote of the day turning over) changes the
--- count without changing the key; apply catches that by measuring the rows shown again before
--- it refuses an edit.
+-- What Layout.overflow's count depends on beyond the rows: the look, text size and screen size. A row
+-- whose data changes under the editor (a weather reading, the quote of the day) changes the count
+-- without the key; apply measures the shown rows again before it refuses an edit.
 local function fit_key(ctx)
     return { look = ctx.look, text_size = ctx.text_size, w = Layout.screen:getWidth(),
         h = Layout.screen:getHeight() }
@@ -114,12 +108,10 @@ local function same_key(a, b)
     return a.look == b.look and a.text_size == b.text_size and a.w == b.w and a.h == b.h
 end
 
--- Applies an operation's result: its note when refused; "That won't fit on the home." when it
--- leaves out more home rows than the rows shown; otherwise writes it, takes it, its overflow and
--- selection, defers the shown home's refresh to the editor's close and refreshes the screen. The
--- shown rows' overflow is kept in state.fit while its key holds, so an edit measures only its
--- new rows, and the shown rows are measured again only when the edit would be refused. A failed
--- write is logged and changes nothing.
+-- Applies an operation's result: its note when refused; "That won't fit on the home." when it leaves
+-- out more rows than are shown; otherwise writes it and refreshes the screen, deferring the home's
+-- refresh to the editor's close. The shown rows' overflow is kept in state.fit while its key holds. A
+-- failed write is logged and changes nothing.
 local function apply(state, new, why, selection)
     if not new then
         if why then
@@ -254,9 +246,8 @@ local function card_buttons(state, i, j)
     return buttons
 end
 
--- Row i's card, width wide, card_gap below the card above it: its controls, arrows, boxes and
--- the selected card's buttons first, so a tap on one runs it, then the card, which draws them
--- all (EditLayout.dc.html:29-58).
+-- Row i's card, width wide, card_gap below the card above: its controls first, so a tap on one runs it,
+-- then the card, which draws them all.
 local function card(state, k, i, width)
     local t, s = k.tokens, k.scale
     local rows = state.rows
@@ -282,8 +273,7 @@ local function card(state, k, i, width)
     paints[#paints + 1] = { widget = caption_line, x = inner_x, y = y }
     y = y + caption_line:getSize().h + gap
 
-    -- A box per column, sharing the width evenly, its label at the left and its share at the
-    -- right; on paper, the selected column's outline one board px heavier.
+    -- A box per column, sharing the width evenly; on paper the selected column's outline is one px heavier.
     local box_out, box_pad_x, box_pad_y = s(t.button_outline_width), s(t.box_padding.x), s(t.box_padding.y)
     local box_w = math.floor((inner_w - (#row - 1) * gap) / #row)
     local box_h = 0
@@ -398,7 +388,7 @@ local function card(state, k, i, width)
     return controls
 end
 
--- The screen's spec over state: { rows, selected, editor, body_widgets, foot_widgets }.
+-- The screen's spec over state.
 local function spec(state)
     return {
         screen = "edit_layout",
@@ -413,8 +403,7 @@ local function spec(state)
             end
             return rows
         end,
-        -- Add row at the left, greyed when every widget is on the home; Reset at the right, bare
-        -- and muted (EditLayout.dc.html:101-104).
+        -- Add row at the left, greyed when every widget is on the home; Reset at the right, bare and muted.
         foot = function(ctx, width)
             release(state.foot_widgets)
             local k = kit(ctx, state.foot_widgets)
@@ -450,9 +439,8 @@ local function spec(state)
     }
 end
 
--- Opens edit layout on the stored layout.rows. opts.started is the PaintClock stamp the tap
--- that opened it took, which the settled signal's paint_ms runs from; opts.selected, a row to
--- start selected. A failure is logged and leaves no screen.
+-- Opens edit layout on the stored layout.rows. opts.started is the PaintClock stamp the opening tap
+-- took; opts.selected a row to start selected. A failure is logged and leaves no screen.
 function EditLayout.open(opts)
     opts = opts or {}
     local ok, err = pcall(function()

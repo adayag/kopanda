@@ -1,9 +1,8 @@
--- Reading stats from KOReader's Statistics database (C7): the three numbers read from fixture
--- databases under a fixed TZ, the off and empty states, the wording per look, the fit to the
--- column and stats.show.
--- The lj-sqlite3 binding ffi.cdef()s on load (spec/emulator/driver.lua:87-88), so a Busted process
--- loads it once: spec/unit/books_coverbrowser_spec.lua's expose block requires it and keeps it
--- loaded, and runs before this file in bin/check's sorted files; the require here gets that one.
+-- Reading stats from KOReader's Statistics database: the three numbers read from fixture databases under a fixed TZ,
+-- the off and empty states, the wording per look, the fit to the column and stats.show. The lj-sqlite3 binding
+-- ffi.cdef()s on load (spec/emulator/driver.lua:87-88), so a Busted process loads it once:
+-- books_coverbrowser_spec.lua's expose block requires it and keeps it loaded, and runs before this file in
+-- bin/check's sorted files.
 describe("reading stats", function()
     local harness = require("plugin_harness")
     local ffi = require("ffi")
@@ -337,7 +336,7 @@ describe("reading stats", function()
         end)
 
         -- About a year of heavy reading: 100 page turns a day for 400 days. The streak is read
-        -- once per book close, at the show, inside the home's share of the budget (C13).
+        -- once per book close, at the show, inside the home's share of the budget.
         it("reads a year of page turns quickly", function()
             local t = os.date("*t", NOW)
             local rows = {}

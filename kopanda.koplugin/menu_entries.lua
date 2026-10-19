@@ -1,8 +1,7 @@
--- The plugin's tabs in KOReader's top menus. KOReader sorts each menu against a require-cached
--- order table, the file manager's at frontend/apps/filemanager/filemanagermenu.lua:858-862 and
--- the reader's (frontend/ui/elements/reader_menu_order.lua) at
--- frontend/apps/reader/modules/readermenu.lua:348-351, and overlays the user's own
--- settings/<menu>_menu_order.lua on it (frontend/ui/menusorter.lua:34-43).
+-- The plugin's tabs in KOReader's top menus. KOReader sorts each menu against a require-cached order table,
+-- the file manager's at frontend/apps/filemanager/filemanagermenu.lua:858-862 and the reader's
+-- (frontend/ui/elements/reader_menu_order.lua) at frontend/apps/reader/modules/readermenu.lua:348-351, and
+-- overlays the user's own settings/<menu>_menu_order.lua on it (frontend/ui/menusorter.lua:34-43).
 local MenuSorter = require("ui/menusorter")
 local State = require("state")
 local logger = require("logger")
@@ -11,10 +10,9 @@ local MenuEntries = {}
 
 local BUTTONS = "KOMenu:menu_buttons"
 
--- The tabs the plugin adds to KOReader's top menus. order is the require-cached order module
--- the menu is sorted against; menu is the MenuSorter name whose user file may override it; at
--- is the index the tab is inserted at, or "before_main", just before the main tab. Only an
--- index shifts a saved tab index.
+-- The tabs the plugin adds. order is the require-cached order module the menu is sorted against; menu is the
+-- MenuSorter name whose user file may override it; at is the index the tab is inserted at, or "before_main".
+-- Only an index shifts a saved tab index.
 local TABS = {
     home = {
         id = "kopanda_home", what = "the Home tab",
@@ -62,11 +60,11 @@ local function tab_allowed(order, user_buttons, id)
     return true
 end
 
--- The Home tab goes at index 2, which keeps filemanager_settings at 1, where orphans land, and
--- keeps the far-left and far-right tabs the top menu's swipe opens (filemanagermenu.lua:1083-1100,
--- readermenu.lua:466-482). A before_main tab goes just before main, or last without one, so the
--- far-right tab stays main: a swipe from the right third opens the last index, which on a
--- remember = false tab becomes tab 1 (touchmenu.lua:458-462, from :668).
+-- The Home tab goes at index 2, which keeps filemanager_settings at 1, where orphans land, and keeps the
+-- far-left and far-right tabs the top menu's swipe opens (filemanagermenu.lua:1083-1100, readermenu.lua:466-482).
+-- A before_main tab goes just before main, or last without one, so the far-right tab stays main: a swipe from
+-- the right third opens the last index, which on a remember = false tab becomes tab 1 (touchmenu.lua:458-462,
+-- from :668).
 local function insert_tab(order, tab)
     ensure_order_entry(order, tab.id)
     local buttons = order[BUTTONS]
@@ -96,11 +94,10 @@ local function shift_saved_tab_index()
     end
 end
 
--- Readies the cached order for the named tab and returns true when the menu gets it. Runs from
--- addToMainMenu, inside setUpdateItemTable, before either reader of the file manager's saved
--- index uses it (filemanagermenu.lua:1007-1009, :1084-1086). The user's file is read at every
--- build: after one merge the cached list is the user's (menusorter.lua:35-40). On any error,
--- an unknown name included, no tab.
+-- Readies the cached order for the named tab and returns true when the menu gets it. Runs from addToMainMenu,
+-- inside setUpdateItemTable, before either reader of the file manager's saved index uses it
+-- (filemanagermenu.lua:1007-1009, :1084-1086). The user's file is read at every build: after one merge the
+-- cached list is the user's (menusorter.lua:35-40). On any error, no tab.
 function MenuEntries.tab(name)
     local ok, result = pcall(function()
         local tab = assert(TABS[name], "no such tab: " .. tostring(name))

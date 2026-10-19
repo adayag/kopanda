@@ -1,13 +1,11 @@
--- The Series and Authors views' paint budget (series-and-authors C13): each of the four views (the
--- Series list, one series, the Authors list, one author) in Diner on the Colorsoft, over a capture
--- library this spec builds in its scratch space: the three fixture books under their own names and
--- copies of one of them under the names the scenario's catalogue lists, so spec/fixtures/library/
--- (counted by fixtures_spec.lua) is not changed. The home fixture patch (at empty, which sets up no
--- featured book) freezes the clock and stores the look; the scenario patch stores the capture
--- library as the home folder, writes the sidecars, adds one path-less book, extracts every book's
--- row and gives each copy its scripted metadata before any window shows, and shows the view's
--- window directly once the home settles, so the window's one settled signal is the shot. The look
--- is passed empty so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
+-- The Series and Authors views' paint budget: each of the four views (Series list, one series, Authors list, one
+-- author) in Diner on the Colorsoft, over a capture library this spec builds in its scratch space: the three fixture
+-- books under their own names and copies of one of them under the names the scenario's catalogue lists, so
+-- spec/fixtures/library/ is not changed. The home fixture patch (at empty) freezes the clock and stores the look; the
+-- scenario patch stores the capture library as the home folder, writes the sidecars, adds one path-less book,
+-- extracts every book's row and gives each copy its scripted metadata before any window shows, and shows the view's
+-- window directly once the home settles, so the window's one settled signal is the shot. The look is passed empty so
+-- a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
 describe("the series and authors views", function()
     require("commonrequire")
     local lfs = require("libs/libkoreader-lfs")
@@ -16,10 +14,8 @@ describe("the series and authors views", function()
     local plugin = root .. "/kopanda.koplugin"
     local fixture = root .. "/spec/emulator/scenarios/2-scenario-home-fixture.lua"
     local scenario = root .. "/spec/emulator/scenarios/2-scenario-series-authors.lua"
-    -- The windows' paint budget: each paints within this many ms of its show, in the emulator on
-    -- this Mac, the home's tripwire (paint_budget.lua). A regression tripwire, not a device
-    -- figure. The chrome's settled signal carries paint_ms alone, as the library's
-    -- (library_capture_spec.lua).
+    -- The windows' paint budget: each paints within this many ms of its show, in the emulator on this Mac, as the
+    -- home's tripwire (paint_budget.lua). The chrome's settled signal carries paint_ms alone, as the library's.
     local PAINT_BUDGET_MS = 250
     local ORIGINALS = { "a-christmas-carol.epub", "frankenstein.epub", "the-time-machine.epub" }
     -- The copies, each of COPIED, under the names the scenario's catalogue gives metadata to

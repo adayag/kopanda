@@ -1,4 +1,4 @@
--- The launcher widget (C4): its grid per look at both profiles' full-width columns, its tiles and
+-- The launcher widget: its grid per look at both profiles' full-width columns, its tiles and
 -- rows, its states, its taps through the real home and its stale check. LauncherEntries.resolve
 -- and run are stubbed per case and restored by the harness's reload.
 describe("the launcher widget", function()

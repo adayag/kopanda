@@ -1,9 +1,7 @@
--- The home in a look with plates (Frosted) at the Colorsoft's size, its real widgets in the default
--- layout: the wallpaper (spec/fixtures/wallpaper.png, written by spec/fixtures/wallpaper_png.lua)
--- in the margins and gutters, each plate the wallpaper lightened toward paper under a solid ink
--- keyline, the text solid on top, the launcher's tiles plates too, the nav bar opaque paper; plain
--- paper with no wallpaper; the panel showing the picture at night; the wallpaper freed when the
--- home closes. Painted into a buffer and read back.
+-- The home in a look with plates at the Colorsoft's size, its real widgets in the default layout: the wallpaper
+-- (spec/fixtures/wallpaper.png) in the margins and gutters, each plate the wallpaper lightened toward paper under a
+-- solid ink keyline, the launcher's tiles plates too, the nav bar opaque paper; plain paper with no wallpaper; the
+-- panel showing the picture at night; the wallpaper freed when the home closes. Painted into a buffer and read back.
 describe("the home on plates", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")

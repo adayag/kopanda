@@ -1,28 +1,14 @@
--- One line of home text set in a look's type part ({ face, size, uppercase, tracking,
--- line_height, color } from look.type): its face at the text size, its palette colour, its case,
--- its tracking and its line height. And the height-then-build pairing the text widgets share, so a
--- widget is built once per show.
---
--- KOReader's TextWidget has no letter spacing, so a tracked line is set glyph by glyph, a
--- TextWidget per character with the tracking between them. Built and painted on the emulator's
--- LuaJIT, a label costs at most 0.3 ms that way at twice the boards' sizes, against 0.1-0.7 ms as
--- one TextWidget, well under the 5 ms the task allowed. A tracked line too wide for its width is
--- set as one TextWidget instead, untracked and cut with KOReader's ellipsis.
---
+-- One line of home text set in a look's type part ({ face, size, uppercase, tracking, line_height, color } from
+-- look.type), and the height-then-build pairing the text widgets share, so a widget is built once per show.
+-- KOReader's TextWidget has no letter spacing, so a tracked line is set glyph by glyph, a TextWidget per
+-- character; one too wide for its width is set as one untracked TextWidget cut with KOReader's ellipsis.
 -- Every line keeps its colour: TextWidget:paintTo blits its glyphs through colorblitFrom
 -- (frontend/ui/widget/textwidget.lua:369), which reduces a colour to getColor8A, a luminance grey
--- (base/ffi/blitbuffer.lua:1405-1407, :489-491). So each TextWidget a line holds paints its
--- shaped glyphs itself, as TextWidget:paintTo does (textwidget.lua:338-378), through
--- colorblitFromRGB32 (base/ffi/blitbuffer.lua:1422-1437) for a colour. The widgets stay
--- TextWidgets; only their paintTo is their own.
--- A paint that raises (a KOReader whose TextWidget internals differ) is logged once and falls back
--- to TextWidget:paintTo in the colour's grey; a tracked line whose offset pass raises prints its
--- glyphs once, without the offset colour.
---
--- A look with a misregistration (its misregister token's colour) prints a part set in its display
--- face twice, as a two-drum Risograph does: the glyphs offset by misregister.x and .y in that
--- colour first, then in the part's own colour on top (riso.md), the line's size grown by the
--- offset so nothing is cut.
+-- (base/ffi/blitbuffer.lua:1405-1407, :489-491). So each TextWidget a line holds paints its shaped glyphs
+-- itself, as TextWidget:paintTo does (textwidget.lua:338-378), through colorblitFromRGB32
+-- (base/ffi/blitbuffer.lua:1422-1437). A paint that raises is logged once and falls back to TextWidget:paintTo
+-- in the colour's grey. A look with a misregister token prints a display-face part twice, offset by
+-- misregister.x and .y in that colour first, then in its own colour on top, the size grown by the offset.
 local Blitbuffer = require("ffi/blitbuffer")
 local Fonts = require("fonts")
 local Geom = require("ui/geometry")
@@ -48,13 +34,11 @@ local function face_of(part, ctx)
     return face
 end
 
--- The forced height and baseline that set a line at part's line height in face. At line height
--- 0, none: the face's own height and baseline (frontend/ui/widget/textwidget.lua:112-114).
--- Otherwise (1 + line_height) em, rounded, as TextBoxWidget sizes its lines
--- (frontend/ui/widget/textboxwidget.lua:151), with the face's height centred in it, as CSS shares
--- out the leading whether the line is taller or shorter than the face (TextBoxWidget centres it
--- only when taller, :153-158). TextWidget reports a forced height and paints at a forced
--- baseline (textwidget.lua:43-44, :298, :362).
+-- The forced height and baseline that set a line at part's line height in face. At line height 0, none: the
+-- face's own (frontend/ui/widget/textwidget.lua:112-114). Otherwise (1 + line_height) em, rounded, as
+-- TextBoxWidget sizes its lines (frontend/ui/widget/textboxwidget.lua:151), the face's height centred in it
+-- as CSS shares out the leading (TextBoxWidget centres only when taller, :153-158). TextWidget reports a
+-- forced height and paints at a forced baseline (textwidget.lua:43-44, :298, :362).
 local function forced(part, face)
     if part.line_height == 0 then
         return nil, nil
@@ -147,10 +131,9 @@ local function warn_once(err)
     end
 end
 
--- A TextWidget's paintTo: its glyphs in its print_color (set for a misregistered pass) or its
--- fgcolor, and first, when it has a misregistration of its own, in that offset and colour. When
--- Typeset.paint_glyphs fails (a KOReader whose TextWidget internals differ), TextWidget:paintTo
--- paints the line once, in that colour's grey.
+-- A TextWidget's paintTo: its glyphs in its print_color or fgcolor, and first, when it has a misregistration
+-- of its own, in that offset and colour. When Typeset.paint_glyphs fails, TextWidget:paintTo paints the line
+-- once, in that colour's grey.
 local function paint_text(self, bb, x, y)
     local ok, err = pcall(function()
         local offset = self.misregistration
@@ -202,12 +185,11 @@ local function grown_group_size(self)
     return { w = size.w + self.misregistration.x, h = size.h + self.misregistration.y }
 end
 
--- The text widget self[1], made black on white, printed through its mask: in self.offset.color
--- at its x and y first when it has an offset, then in self.color at its place; dimen is the
--- text's size plus the offset. The mask is the text painted on white and inverted, so its ink is
--- white (base/ffi/blitbuffer.lua:1506, :1567), made at the first paint and freed with the widget.
--- A misregistered TextBoxWidget is printed so, and one on a plate (Typeset.printed), whose ground
--- must show between its glyphs.
+-- The text widget self[1], made black on white, printed through its mask: in self.offset.color at its x and y
+-- first when it has an offset, then in self.color; dimen is the text's size plus the offset. The mask is the
+-- text painted on white and inverted, so its ink is white (base/ffi/blitbuffer.lua:1506, :1567), made at the
+-- first paint and freed with the widget. Used for a misregistered TextBoxWidget and one on a plate
+-- (Typeset.printed), whose ground must show between its glyphs.
 local Misregistered = WidgetContainer:extend{
     name = "kopanda_misregistered",
 }
@@ -245,12 +227,10 @@ function Typeset.on_plate(ctx)
     return ctx.look.plate.fill_color and true or false
 end
 
--- The widget make(width, fgcolor, bgcolor) builds for part under ctx, at most max_width wide: a
--- TextBoxWidget, which keeps a colour itself and fills its box with bgcolor
--- (frontend/ui/widget/textboxwidget.lua:854-906), made in part's colour on paper; for a
--- misregistered part made black on white at max_width less the offset and printed twice by
--- Misregistered; on a plate made black on white and printed once through its mask by
--- Misregistered, so the plate's ground shows between its glyphs.
+-- The widget make(width, fgcolor, bgcolor) builds for part under ctx, at most max_width wide: a TextBoxWidget,
+-- which keeps a colour itself and fills its box with bgcolor (frontend/ui/widget/textboxwidget.lua:854-906),
+-- made in part's colour on paper; a misregistered part or one on a plate is made black on white and printed
+-- through Misregistered, so a plate's ground shows between its glyphs.
 function Typeset.printed(part, max_width, ctx, make)
     local palette = Looks.palette(ctx.look, ctx.variant)
     local color = Looks.color(palette[part.color])
@@ -362,10 +342,9 @@ function Typeset.baseline(line)
     return HorizontalGroup.getSize(line).h - glyph:getSize().h + Typeset.baseline(glyph)
 end
 
--- A widget module's height, build and baseline for make(width, ctx), which returns its widget
--- and the y of its last line's baseline from the widget's top: height and baseline build the
--- widget and keep it, and the build for the same width and ctx that follows hands that one over,
--- so the home builds each widget once.
+-- A widget module's height, build and baseline for make(width, ctx), which returns its widget and the y of its
+-- last line's baseline: height and baseline build the widget and keep it, and the build that follows for the
+-- same width and ctx hands that one over, so the home builds each widget once.
 function Typeset.measured(make)
     local kept
     local function keeps(width, ctx)

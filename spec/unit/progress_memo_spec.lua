@@ -1,9 +1,7 @@
--- The library-wide progress memo (TW-3tfybs): a book's sidecar is opened once while its file's
--- path, mtime and size hold, across library builds, and a folder tile counts its books from the
--- folder's scan without a CoverBrowser row per book. Run on a scratch library under the data
--- directory with KOReader's home folder pointed at it and sidecars in the "dir" location, through
--- the real Books and LibraryView, DocSettings.openSettingsFile and CoverBrowser's getBookInfo
--- counted.
+-- The library-wide progress memo: a book's sidecar is opened once while its file's path, mtime and size hold, across
+-- library builds, and a folder tile counts its books from the folder's scan without a CoverBrowser row per book. Run on
+-- a scratch library with KOReader's home folder pointed at it and sidecars in the "dir" location, through the real
+-- Books and LibraryView, DocSettings.openSettingsFile and CoverBrowser's getBookInfo counted.
 describe("the progress memo", function()
     local harness = require("plugin_harness")
     local DataStorage = require("datastorage")

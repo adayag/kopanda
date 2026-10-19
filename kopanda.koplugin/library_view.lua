@@ -1,11 +1,8 @@
--- The library window's view: what it draws for a folder at a page (cover-grid "The window", "The
--- header", "The page"), built on the chrome's frame (library_chrome.lua) that the window
--- (library.lua) puts in place, with the parts its gestures and covers read. The header holds the
--- count, "Library" or the back mark and the folder's name, and the sort and status pickers in its
--- right-hand slot; then two rows of three tiles (library_tiles.lua) or the empty note, and the
--- chrome's pager and nav bar with Library active. What a folder shows, in what order, is
--- library_order.lua's. Lengths are board pixels scaled by the screen, and the text ignores
--- text_size (D12), as the tiles'.
+-- The library window's view: what it draws for a folder at a page, built on the chrome's frame
+-- (library_chrome.lua) with the parts its gestures and covers read. The header holds the count, "Library"
+-- or the back mark and the folder's name, and the sort and status pickers; then two rows of three tiles
+-- (library_tiles.lua) or the empty note, and the chrome's pager and nav bar. What a folder shows, in what
+-- order, is library_order.lua's. Lengths are board pixels; the text ignores text_size, as the tiles'.
 local Books = require("books")
 local Geom = require("ui/geometry")
 local Helpers = require("helpers")
@@ -22,10 +19,10 @@ local LibraryView = {}
 
 local SORT_LABELS = { recent = "Recent", title = "Title", author = "Author", series = "Series" }
 local STATUS_LABELS = { reading = "Reading", finished = "Finished", all = "All" }
--- D17's notes for a folder with nothing to show under each status.
+-- The notes for a folder with nothing to show under each status.
 local EMPTY_NOTES = { all = "No books here", finished = "No finished books here", reading = "No books being read here" }
 
--- KOReader's home folder, the library's root (D7), as Books.folder reads it (books.lua:171-173).
+-- KOReader's home folder, the library's root, as Books.folder reads it (books.lua:171-173).
 function LibraryView.root()
     return require("apps/filemanager/filemanagerutil").getHomeFolder()
 end
@@ -74,12 +71,11 @@ local function picker(part, text, fill, ctx)
     return chip, { label = label, mark = mark }
 end
 
--- The header, w wide, LibraryTiles.header_height tall: the chrome's header frame (LibraryChrome.header)
--- on the header's band, the count over the title in its left column, the back mark before the
--- folder's name inside a sub-folder, and the status and sort pickers in its right-hand slot.
--- Returns the header and its parts: the frame's (title_rect where a tap goes up, nil at the root),
--- count, sort and status ({ rect, hit, label, mark }), and text, the words it draws ({ count, title,
--- sort, status }), which the empty-space sheet's header and chips repeat (context-menu D10).
+-- The header, w wide, LibraryTiles.header_height tall: the chrome's header frame (LibraryChrome.header),
+-- the count over the title in its left column, the back mark before the folder's name inside a sub-folder,
+-- and the status and sort pickers at the right. Returns the header and its parts: the frame's, count,
+-- sort and status ({ rect, hit, label, mark }), and text ({ count, title, sort, status }), which the
+-- empty-space sheet's header and chips repeat.
 local function header(built, w, books, choice)
     local ctx = built.ctx
     local scale = tools(ctx)
@@ -101,9 +97,8 @@ local function header(built, w, books, choice)
     })
     parts.text = text
     status.rect, sort.rect = parts.right[1], parts.right[2]
-    -- Where a tap opens each picker: its chip, reaching down through the padding to the edge, as
-    -- far up, and halfway across the gap at each side, so Editorial's unpadded label line
-    -- (GridA.dc.html:25) is not the whole target. The drawing is the chip's.
+    -- Where a tap opens each picker: its chip, reaching down through the padding to the edge, as far up, and
+    -- halfway across the gap at each side, so Editorial's unpadded label line is not the whole target.
     local gap, reach = scale(tokens.picker_gap), scale(tokens.padding.bottom)
     for _, part in ipairs({ sort, status }) do
         part.hit = Geom:new{ x = part.rect.x - math.floor(gap / 2), y = part.rect.y - reach,
@@ -113,9 +108,8 @@ local function header(built, w, books, choice)
     return box, parts
 end
 
--- The counts a folder's tile shows, and its sheet's meta (context-menu D12): the books directly
--- in it and how many are reading and finished, from the folder's scan and each book's progress,
--- with no record read.
+-- The counts a folder's tile shows, and its sheet's meta: the books directly in it and how many are
+-- reading and finished, from the folder's scan and each book's progress, with no record read.
 local function folder_counts(folder)
     local books = Books.files(folder.path)
     local reading, finished = 0, 0
@@ -130,14 +124,11 @@ local function folder_counts(folder)
     return { books = #books, reading = reading, finished = finished }
 end
 
--- The folder's listing as built keeps it for the builds after: { dir, listing (Books.folder(dir),
--- its hidden sub-folders left out: LibraryOrder.visible, context-menu D1), history
--- (LibraryOrder.history_times() then), sort, status, items (LibraryOrder.view of the listing under
--- that sort and status, or nil when it must be made again) }. kept, the one an earlier build gave,
--- is used when it is of dir; otherwise the folder is listed now. Its items are made again when nil
--- or of another sort or status than choice, with each book's progress as Books.progress reads it
--- then (its memo opens only a changed sidecar). Returns a new table, so kept's own fields are left
--- as they were (its listing is shared).
+-- The folder's listing as built keeps it for the builds after: { dir, listing (Books.folder(dir), hidden
+-- sub-folders left out), history, sort, status, items (LibraryOrder.view under that sort and status, or nil
+-- when it must be made again) }. kept, the one an earlier build gave, is used when it is of dir; otherwise
+-- the folder is listed now. items are made again when nil or of another sort or status than choice. Returns
+-- a new table, so kept's own fields are left as they were (its listing is shared).
 local function keep(kept, dir, choice)
     local now = {}
     if kept and kept.dir == dir then
@@ -180,13 +171,10 @@ function LibraryView.renew(kept, record)
     end
 end
 
--- Fills built (dir, page, ctx) from the folder's listing, its hidden sub-folders left out, under the
--- folder's sort and status, the listing kept (built.kept on entry, as keep takes it) or listed now:
--- the frame (the header, the page's tiles at the geometry's boxes or the empty note, and the
--- chrome's foot), and what gestures and covers read: page and pages, header, tiles ({ rect, kind,
--- record or folder and its counts, widget, index in the frame }), box (LibraryTiles.geometry), note;
--- and kept, the listing for the next build. A hide or unhide shows once the listing is made again
--- (Library:refresh drops it).
+-- Fills built (dir, page, ctx) from the folder's listing under its sort and status, the listing kept or
+-- listed now: the frame (header, the page's tiles or the empty note, the chrome's foot), and what gestures
+-- and covers read: page and pages, header, tiles ({ rect, kind, record or folder and counts, widget, index }),
+-- box, note, and kept for the next build. A hide or unhide shows once the listing is made again.
 local function fill(built, frame, w)
     local ctx = built.ctx
     local scale = tools(ctx)
@@ -230,12 +218,10 @@ local function fill(built, frame, w)
     end
 end
 
--- What the library shows at dir and page now, at the screen's size in the active look and
--- variant: { frame, dir, page (clamped), pages, dimen, ctx, header, tiles, box, pager, note, nav,
--- kept }, as fill and the chrome (LibraryChrome.build) give them. kept is the kept listing an
--- earlier build gave (built.kept): one of dir is sliced, or filtered and sorted again under a
--- changed choice, without listing the folder; nil or one of another folder lists it now. A failure
--- frees what was built and raises.
+-- What the library shows at dir and page now, at the screen's size in the active look and variant: { frame,
+-- dir, page (clamped), pages, dimen, ctx, header, tiles, box, pager, note, nav, kept }. kept is the listing
+-- an earlier build gave: one of dir is sliced, or filtered and sorted again under a changed choice, without
+-- listing the folder. A failure frees what was built and raises.
 function LibraryView.build(dir, page, kept)
     return LibraryChrome.build({ dir = dir, page = page, kept = kept }, fill)
 end

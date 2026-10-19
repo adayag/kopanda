@@ -87,8 +87,7 @@ describe("fonts", function()
         "fonts/newsreader/Newsreader16pt-MediumItalic.ttf",
     }
 
-    -- The faces for the looks in docs/plans/2026-10-19-new-looks-design.md, which no look names
-    -- yet, each with the family and style its name table gives FreeType.
+    -- The faces for looks that no look names yet, each with the family and style its name table gives FreeType.
     local new_look_faces = {
         { file = "fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Bold.ttf",
           family = "Atkinson Hyperlegible", style = "Bold" },

@@ -180,10 +180,9 @@ function PushBundle.bundle_hash(dir, files)
     return update()
 end
 
--- true when every file of the manifest under dir is a regular file with one link, of its size
--- and sha256, and the files recompute the manifest's hash; nil and why otherwise. Reads each file
--- once, feeding its blocks to its own sha256 and to the bundle hash, so the manifest's files must
--- be in the byte order check_manifest requires, the order the bundle hash takes them in.
+-- true when every file of the manifest under dir is a regular file with one link, of its size and sha256, and
+-- the files recompute the manifest's hash; nil and why otherwise. Reads each file once, feeding its blocks to
+-- its own sha256 and to the bundle hash, so the manifest's files must be in check_manifest's byte order.
 function PushBundle.verify_files(dir, manifest)
     local bundle, previous = sha2.sha256(), nil
     for _, file in ipairs(manifest.files) do

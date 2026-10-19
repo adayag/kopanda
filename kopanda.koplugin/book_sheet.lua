@@ -1,13 +1,9 @@
--- A book's sheet: a header of its small cover, title, author and meta line, then Open, Book
--- details, Read status and More by this author. The featured book's (BookSheet.open), opened by a
--- hold on it (widgets/featured.lua), adds Feature a different book and This widget's settings; a
--- library record's (BookSheet.open_record), opened by a hold on a book in the library or on a shelf
--- screen (library_sheets.lua), runs the window's own open and re-list (context-menu D13) and adds
--- Add to the home and Delete, and Download under Open for cwngsync's placeholder, which asks
--- cwngsync to fetch the book without opening it (cwng-placeholders D2). Read status opens a
--- sub-sheet of KOReader's own three status buttons, which write the sidecar themselves; Feature a
--- different book opens the picker and Add to the home pins the book, both writing featured.pinned;
--- Delete is KOReader's own delete confirm. Nothing else here writes.
+-- A book's sheet: a header of its small cover, title, author and meta line, then Open, Book details,
+-- Read status and More by this author. The featured book's (BookSheet.open, held on the home) adds
+-- Feature a different book and This widget's settings; a library record's (BookSheet.open_record) adds
+-- Add to the home, Delete, and Download for cwngsync's placeholder. Read status opens KOReader's own
+-- status buttons, which write the sidecar themselves; only the picker and Add to the home write
+-- (featured.pinned).
 local BookCovers = require("book_covers")
 local BookList = require("ui/widget/booklist")
 local Books = require("books")
@@ -90,11 +86,9 @@ local function meta(book, now)
     return table.concat(parts, JOIN)
 end
 
--- A record's meta line (HoldBookC.dc.html:40): the percent when Books.progress has one or the
--- book is finished, as the tiles read it (library_tiles.lua), then when it was last opened; each
--- left out when unknown, nil when both are, so the header has no meta line. No chapter: a record
--- has none. "Not downloaded" for a book not downloaded: a record with no path (D2), or cwngsync's
--- placeholder (cwng-placeholders D6).
+-- A record's meta line: the percent when Books.progress has one or the book is finished, then when it
+-- was last opened; nil when both are unknown. "Not downloaded" for a record with no path or
+-- cwngsync's placeholder.
 local function record_meta(record, now)
     if not record.path or record.placeholder == true then
         return "Not downloaded"
@@ -118,13 +112,11 @@ local function show_details(file)
     fm.bookinfo:show(file)
 end
 
--- The read status sub-sheet: KOReader's own status buttons for the book, with the sidecar when
--- the book has one on disk, so its other summary fields survive the write, else with the path.
--- The file dialog asks BookList.hasBookBeenOpened (filemanager.lua:255-270), which a stale
--- cache can answer false while a sidecar exists, and a bare path's write starts from an empty
--- summary (filemanagerutil.lua:124-127), wiping the note and rating; so the disk is asked here,
--- through DocSettings:hasSidecarFile (frontend/docsettings.lua:151-153). Each button writes the
--- status itself, then runs refresh (the home's refresh, or the window's re-list).
+-- The read status sub-sheet: KOReader's own status buttons for the book, with the sidecar when the
+-- book has one on disk. The file dialog's check (filemanager.lua:255-270) can answer false from a stale
+-- cache while a sidecar exists, and a bare path's write starts from an empty summary
+-- (filemanagerutil.lua:124-127), wiping the note and rating; so the disk is asked here
+-- (frontend/docsettings.lua:151-153). Each button writes the status, then runs refresh.
 local function open_status(ctx, file, title, refresh, opts)
     local doc = DocSettings:hasSidecarFile(file) and BookList.getDocSettings(file) or file
     local buttons = filemanagerutil.genStatusButtonsRow(doc, function()
@@ -147,9 +139,8 @@ local function open_status(ctx, file, title, refresh, opts)
     }, ctx, opts)
 end
 
--- Stores value as featured.pinned, then refreshes the home and runs the featured slot's
--- after_show, which the home runs only after a show, so a newly featured book's cover is asked
--- for. A refused write is logged and changes nothing.
+-- Stores value as featured.pinned, then refreshes the home and runs the featured slot's after_show (the
+-- home runs it only after a show), so a newly featured book's cover is asked for.
 local function pin(ctx, value)
     local ok, err = Settings.set("featured.pinned", value)
     if not ok then
@@ -183,10 +174,9 @@ local function book_row(entry, tick, ctx)
     }
 end
 
--- The picker: The last one opened, then the history's six most recent books, then the pinned
--- book when it is older than those, so the current choice is always listed unless reading it
--- raises, which is logged and leaves its row out. The tick follows featured.pinned, compared by
--- realpath; a pin to a file that has gone reads as no pin, as FeaturedBook reads it.
+-- The picker: the last one opened, the history's six most recent books, then the pinned book when it
+-- is older, so the current choice is listed unless reading it raises (logged, row left out). The tick
+-- follows featured.pinned by realpath; a pin to a gone file reads as no pin, as FeaturedBook reads it.
 local function open_picker(ctx, opts)
     local pinned = Settings.get("featured.pinned")
     local pinned_real = pinned and (ffiutil.realpath(pinned) or pinned)
@@ -222,8 +212,7 @@ local function open_picker(ctx, opts)
     }, ctx, opts)
 end
 
--- The named author's own books (series-and-authors D6), or the Authors list for nil. The show
--- closes the screen the sheet was over.
+-- The named author's own books, or the Authors list for nil; closes the screen the sheet was over.
 local function show_authors(name)
     local fm = file_manager()
     if fm then
@@ -231,13 +220,10 @@ local function show_authors(name)
     end
 end
 
--- The rows every book's sheet starts with, each with its board icon (HoldBookC.dc.html:43-63):
--- Open, Book details, Read status and More by this author, for the book at file titled title
--- under ctx. on holds the caller's callbacks: open(), Open's; refresh(), run after the status
--- sub-sheet writes; author(), read on the tap, the name More by this author shows (nil for the
--- Authors list). beneath is the screen the sub-sheet is shown over (nil for the home). With no file
--- (a book not downloaded, D2), Open, Book details and Read status are greyed with no run, so a tap
--- closes the sheet and runs nothing (D14), and Read status has no detail.
+-- The rows every book's sheet starts with: Open, Book details, Read status and More by this author,
+-- for the book at file under ctx. on holds the caller's callbacks (open, refresh, author); beneath is
+-- the screen the sub-sheet is shown over. With no file (a book not downloaded), Open, Book details
+-- and Read status are greyed and a tap closes the sheet.
 local function book_rows(file, title, on, ctx, beneath)
     local rows = {
         { icon = "open_book", label = "Open" },
@@ -271,14 +257,10 @@ local function book_rows(file, title, on, ctx, beneath)
     return rows
 end
 
--- Add to the home (context-menu D8): pins the book at file by its realpath, as the picker pins
--- one, history holding realpaths (readhistory.lua:26). The window stays shown and the home, closed
--- while a library window is up, builds afresh on its next show, so nothing is refreshed. When
--- featured.pinned already names the book, by realpath, and is a file, as the picker reads the pin,
--- the row reads On the home, ticked, so a tap runs nothing. A refused write is logged and changes
--- nothing. Greyed with no file (D2). Its run, as the delete's and the download's below, goes through
--- Guards.guarded, so a row's failure leaves the window it was shown over as it was rather than
--- closing it, as the sheet's own failure would (context-menu "Failure behaviour").
+-- Add to the home: pins the book at file by its realpath (history holds realpaths, readhistory.lua:26).
+-- The home, closed while a library window is up, builds afresh on its next show. Ticked as On the home
+-- when featured.pinned already names the book. Its run, like the delete's and download's, goes through
+-- Guards.guarded, so a failure leaves the window it was shown over as it was.
 local function home_row(file)
     local row = { icon = "home_plus", label = "Add to the home" }
     if not file then
@@ -301,12 +283,10 @@ local function home_row(file)
     return row
 end
 
--- Delete… (context-menu D7): KOReader's own delete confirm for the book at file, called on the
--- file manager's instance as the file browser's Delete calls it
--- (frontend/apps/filemanager/filemanager.lua:228-233, :1121-1153), with its wording, its archive
--- check and its notices. Its post-delete callback, run only once the delete succeeded (:1141-1142),
--- re-lists window. Without a file manager, logged and nothing shown. Greyed with no file (D2), and
--- for cwngsync's placeholder, which its next sync would put back (cwng-placeholders D5).
+-- Delete…: KOReader's own delete confirm for the book at file, called on the file manager's instance as
+-- the file browser's Delete calls it (frontend/apps/filemanager/filemanager.lua:228-233, :1121-1153),
+-- with its post-delete callback (:1141-1142) re-listing window. Greyed with no file, and for cwngsync's
+-- placeholder, which its next sync would put back.
 local function delete_row(file, placeholder, window)
     local row = { icon = "trash", label = "Delete…" }
     if not file or placeholder then
@@ -326,7 +306,7 @@ local function delete_row(file, placeholder, window)
     return row
 end
 
--- cwngsync's plugin instance on the file manager (cwng-placeholders D13), or nil.
+-- cwngsync's plugin instance on the file manager, or nil.
 local function cwngsync()
     local fm = file_manager()
     return fm and fm.cwngsync
@@ -336,10 +316,8 @@ local function can_download(plugin)
     return plugin ~= nil and type(plugin.openLibraryPlaceholder) == "function"
 end
 
--- cwngsync's call once the book has arrived at file, in place of its open (cwng-placeholders D17):
--- the book's cover forgotten, so it is asked for afresh, then window's re-list with that request
--- (window:downloaded), which does nothing once another window is shown. Never opens the book. A
--- failure is logged.
+-- cwngsync's call once the book has arrived at file, in place of its open: the cover forgotten so it is
+-- asked for afresh, then window's re-list (window:downloaded). Never opens the book.
 local function arrived(file, record, window)
     local ok, err = pcall(function()
         BookCovers.forget({ file })
@@ -350,12 +328,9 @@ local function arrived(file, record, window)
     end
 end
 
--- Download (cwng-placeholders D16, D17, D18), for cwngsync's placeholder: hands cwngsync record's
--- path and arrived in place of the open (cwng_library_runtime.lua:999-1030), which waits for
--- Wi-Fi, downloads and calls arrived; a false return (the file was replaced, or its record went)
--- re-lists window. Greyed with no run when cwngsync has no openLibraryPlaceholder. cwngsync is read
--- again on the tap, since it can go between the build and the tap: then the tap is logged and
--- does nothing.
+-- Download, for cwngsync's placeholder: hands cwngsync record's path and arrived in place of the open
+-- (cwng_library_runtime.lua:999-1030), which waits for Wi-Fi, downloads and calls arrived; a false
+-- return re-lists window. cwngsync is read again on the tap, since it can go between build and tap.
 local function download_row(record, window)
     local row = { icon = "download", label = "Download" }
     if not can_download(cwngsync()) then
@@ -384,9 +359,8 @@ local function cover_size(ctx)
     return ctx.screen:scaleBySize(tokens.cover_w), ctx.screen:scaleBySize(tokens.cover_h)
 end
 
--- Shows the sheet of built's book (the featured widget's built widget) under ctx, the home's,
--- with opts passed on to Sheet.show. A book whose file has gone since the build refreshes the
--- home instead, as a tap does, so the next book is featured.
+-- Shows the sheet of built's book (the featured widget's) under ctx, with opts passed on to Sheet.show.
+-- A book whose file has gone since the build refreshes the home instead.
 function BookSheet.open(ctx, built, opts)
     local book = built.book
     if lfs.attributes(book.file, "mode") ~= "file" then
@@ -429,14 +403,10 @@ function BookSheet.open(ctx, built, opts)
     Sheet.show({ name = "book", band = "book", header = header, rows = rows }, ctx, opts)
 end
 
--- Shows the sheet of record (a Books record, books.lua) held on window (the library or a shelf
--- screen) under ctx, the window's, with opts passed on to Sheet.show (its beneath the window).
--- Open runs window:open(record), the open its tap on the book runs; a status write re-lists the
--- window (window:refresh()); More by this author shows the record's first author; then Add to the
--- home and Delete; for cwngsync's placeholder, Download under Open. A record whose file has gone
--- since the window was built re-lists the window instead and shows no sheet. The cover is the
--- featured cover's frame round the record's cached cover (FeaturedCover.framed), never asking for
--- an extraction.
+-- Shows the sheet of record (a Books record) held on window (the library or a shelf screen) under ctx,
+-- with opts passed on to Sheet.show. Open runs window:open(record); a status write re-lists the window.
+-- A record whose file has gone re-lists the window and shows no sheet. The cover is the featured
+-- cover's frame round the record's cached cover (FeaturedCover.framed), never asking for an extraction.
 function BookSheet.open_record(record, window, ctx, opts)
     local file = record.path
     if file and lfs.attributes(file, "mode") ~= "file" then

@@ -1,9 +1,7 @@
--- The folder sheet: a launcher folder's entries as a sheet over the home, opened by a tap on the
--- folder. Each row is its entry as LauncherEntries.resolve reads it now, with its kind at the
--- right, or its suffix when it is off or can't run; a tap on one runs it as the home does. Its
--- header says "Hold to edit" at the right, and a hold in it opens the folder's own list in
--- launcher management (FolderOpen.dc.html:35-40). Folders don't nest, so a folder sheet never
--- opens another. Nothing here writes a setting.
+-- The folder sheet: a launcher folder's entries as a sheet over the home, opened by a tap on the folder.
+-- Each row is its entry as LauncherEntries.resolve reads it now, with its kind at the right, or its
+-- suffix when it is off or can't run; a tap runs it as the home does, a hold in the header opens the
+-- folder's list in launcher management. Nothing here writes a setting.
 local LauncherEntries = require("launcher_entries")
 local PaintClock = require("paint_clock")
 local Settings = require("settings")

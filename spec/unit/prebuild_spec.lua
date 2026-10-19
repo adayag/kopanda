@@ -1,4 +1,4 @@
--- Closing a book builds no home: it records the book's chapter for the featured book (C3) and
+-- Closing a book builds no home: it records the book's chapter for the featured book and
 -- marks the close, and the file manager's Show that follows builds the home and puts it up at
 -- once, after the reader saved its sidecar and Statistics flushed its session. A close with the
 -- reader tearing down (reload, switch) marks nothing.
@@ -146,11 +146,10 @@ describe("closing a book shows the home at the file manager's Show", function()
         assert.equals(saved, shown[1].percent)
     end)
 
-    -- The settled signal lands a tick after the paint, behind tasks already due then, such as
-    -- coverbrowser's background extraction (covermenu.lua:119), queued before the show. With the
-    -- close run from a task, as the end-of-book action runs it (readerstatus.lua:144-148), that
-    -- task runs after the paint and before the signal. paint_ms stops at the paint, and cpu_ms,
-    -- on the CPU clock, with it.
+    -- The settled signal lands a tick after the paint, behind tasks already due then, such as coverbrowser's background
+    -- extraction (covermenu.lua:119), queued before the show. With the close run from a task, as the end-of-book action
+    -- runs it (readerstatus.lua:144-148), that task runs after the paint and before the signal; paint_ms stops at the
+    -- paint, and cpu_ms, on the CPU clock, with it.
     it("times the home shown after a close to its paint, not to the settled signal", function()
         local InputContainer = require("ui/widget/container/inputcontainer")
         local time = require("ui/time")
@@ -294,7 +293,7 @@ describe("closing a book shows the home at the file manager's Show", function()
             assert.is_true(Home.just_closed)
         end)
 
-        -- C3: a raising lookup on a re-close leaves no chapter, not the one recorded before.
+        -- A raising lookup on a re-close leaves no chapter, not the one recorded before.
         it("clears the chapter of a re-closed book whose TOC raises, logs it and marks the close", function()
             local FeaturedBook = package.loaded["featured_book"]
             local saved_history = package.loaded["readhistory"]
@@ -335,13 +334,11 @@ describe("closing a book shows the home at the file manager's Show", function()
             assert.is_true(Home.just_closed)
         end)
 
-        -- B-e2tfz0: a failed write leaves the state's in-memory copy ahead of the disk (write
-        -- saves each key before its flush), so the retry can't compare against that copy. The
-        -- failure here is a write that can't open the file: util.writeToFile, which
-        -- LuaSettings:flush calls (frontend/luasettings.lua:270-275), writes nothing, and State's
-        -- read-back catches it. (A full disk would truncate the file instead; see B-e2tfz0.)
-        -- The failed close's clearing write leaves "" in that copy, so a retry at a page with no
-        -- TOC title is the one the old skip missed; a titled chapter is the other case.
+        -- A failed write leaves the state's in-memory copy ahead of the disk (write saves each key before its flush),
+        -- so the retry can't compare against that copy. The failure here is a write that can't open the file:
+        -- util.writeToFile, which LuaSettings:flush calls (frontend/luasettings.lua:270-275), writes nothing, and
+        -- State's read-back catches it. The failed close's clearing write leaves "" in that copy, so a retry at a
+        -- page with no TOC title is the one the old skip missed; a titled chapter is the other case.
         for _, failed in ipairs({ "", "Letter V" }) do
             local at = failed == "" and "a page with no TOC title" or failed
             it("writes again on the next close at " .. at .. " after a failed write there", function()
@@ -375,10 +372,9 @@ describe("closing a book shows the home at the file manager's Show", function()
             end)
         end
 
-        -- B-25sffy: another key's failed write leaves the disk behind State's in-memory copy too.
-        -- util.writeToFile opens the file "wb" before writing (frontend/util.lua:1130), so a full
-        -- disk truncates it: the chapter is gone from the file but still in that copy. The next
-        -- close at the same chapter must write it again.
+        -- Another key's failed write leaves the disk behind State's in-memory copy too: util.writeToFile opens the
+        -- file "wb" before writing (frontend/util.lua:1130), so a full disk truncates it, the chapter gone from the
+        -- file but still in that copy. The next close at the same chapter must write it again.
         it("writes again on the next close at the same chapter after another key's failed write", function()
             local util = require("util")
             local write = util.writeToFile

@@ -1,16 +1,9 @@
--- The editor frame: the full-screen screen edit layout and launcher management draw in, over
--- whatever is shown (the home, the file browser or a book), in the active look. Its opener hands
--- it a spec,
---   { screen, aside, title, body, foot, done }
--- screen: what the settled signal reports ("edit_layout" or "launcher"); aside over title on
--- the header's left, Done on its right; done, optional, what Done runs in place of closing the
--- editor, read at the tap; body and foot: functions (ctx, width) returning rows,
--- each row a list of controls { kind, rect, draw, run, disabled }. kind is one of card, button,
--- arrow, box, kind_button, caption, note or row; rect { x, y, w, h } is the control's place in
--- its row, the row as tall as its lowest control; draw(bb, x, y) paints it at its screen place;
--- run is called with no arguments on a tap, unless disabled. A card casts the editor's card shadow.
--- Module state: Editor.shown, the editor on screen or nil. One at a time: showing one closes the
--- one shown.
+-- The editor frame: the full-screen screen edit layout and launcher management draw in, over whatever
+-- is shown, in the active look. Its opener hands Editor.show a spec { screen, aside, title, body, foot,
+-- done }: screen is what the settled signal reports; body and foot are functions (ctx, width) returning
+-- rows, each a list of controls { kind, rect, draw, run, disabled } (kind: card, button, arrow, box,
+-- kind_button, caption, note or row); run is called on a tap unless disabled. Editor.shown is the one
+-- editor on screen; showing one closes the other.
 local Device = require("device")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
@@ -91,9 +84,8 @@ local function row_height(row)
     return h
 end
 
--- Lays out the editor's spec under ctx into a Frame, and returns it with the places of its
--- controls ({ control, rect } in screen coordinates, Done first, then the body's and the foot's
--- in order), the header's, the rule's and Done's rectangles, and how many body rows it left out.
+-- Lays out the editor's spec under ctx into a Frame, and returns it with the controls' places (Done
+-- first), the header's, rule's and Done's rectangles, and how many body rows it left out.
 local function lay_out(editor, ctx)
     local spec, look = editor.spec, ctx.look
     local tokens = look.editor
@@ -135,7 +127,7 @@ local function lay_out(editor, ctx)
     local title = Typeset.line(look.type.editor_title, spec.title or "", column_w, ctx)
     local aside_h = aside and aside:getSize().h or 0
     local column_h = aside_h + title:getSize().h
-    -- Done's foot level with the title's (EditLayout.dc.html:19, align-items: flex-end).
+    -- Done's foot level with the title's.
     local header_h = math.max(column_h, done_h)
     local foot_y = top + header_h
     if aside then
@@ -233,9 +225,8 @@ local function lay_out(editor, ctx)
     }
 end
 
--- Builds the frame from the spec into the editor under a fresh ctx, built as the home builds its
--- own (HomeRows.build) with no home, freeing the frame it replaces. The rows left out are logged
--- once per editor.
+-- Builds the frame from the spec into the editor under a fresh ctx, as the home builds its own
+-- (HomeRows.build) with no home, freeing the frame it replaces. Rows left out are logged once.
 local function build(editor)
     local ctx = {
         look = Looks.active(),
@@ -275,9 +266,8 @@ function Editor:init()
     build(self)
 end
 
--- The settled signal, once, after the first paint: from tickAfterNext after the show, or, when
--- that finds no paint yet (a full-screen window over the editor), from the tick after the first
--- paint. A failed paint sends none.
+-- The settled signal, once, after the first paint: from tickAfterNext after the show, or, when that
+-- finds no paint yet, from the tick after the first paint. A failed paint sends none.
 local function settle(editor)
     if editor.settled or editor.paint_failed then
         return
@@ -290,10 +280,8 @@ local function settle(editor)
     PaintClock.settled("the editor's", editor.started, editor.painted_at, { screen = editor.spec.screen })
 end
 
--- Shows the editor of spec, closing the one shown, and returns it. opts.started is the
--- PaintClock stamp its opener took, which paint_ms and cpu_ms run from; without it, the start of
--- the show.
--- A failure is logged, takes the editor off the stack and returns nil.
+-- Shows the editor of spec, closing the one shown, and returns it. opts.started is the PaintClock stamp
+-- its opener took, else the start of the show. A failure is logged and returns nil.
 function Editor.show(spec, opts)
     local started = opts and opts.started or PaintClock.now()
     local editor
@@ -339,11 +327,11 @@ function Editor:refresh()
     end
 end
 
--- The home under the editor is never painted (covers_fullscreen), so an editor's change defers
--- the home's refresh (Home:defer_refresh) and the close runs it, once. CloseWidget comes before
--- UIManager:close takes the editor off the stack and queues its "full" refresh
--- (frontend/ui/uimanager.lua:300, :308-354), which the home's "ui" one, queued by its setDirty
--- (:740), merges into (:1266-1281). home is required here: its gestures reach the menus that open the editor.
+-- The home under the editor is never painted (covers_fullscreen), so an editor's change defers the
+-- home's refresh (Home:defer_refresh) and the close runs it once. CloseWidget comes before
+-- UIManager:close queues its "full" refresh (frontend/ui/uimanager.lua:300, :308-354), which the
+-- home's "ui" one, queued by its setDirty (:740), merges into (:1266-1281). home is required here:
+-- its gestures reach the menus that open the editor.
 local function run_deferred_home_refresh()
     local Home = require("home")
     if Home.shown then

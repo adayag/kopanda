@@ -1,8 +1,8 @@
--- The sheet's paint budget (sheets C10): the book sheet and the home sheet a hold opens over the
--- populated home, in Diner on the Colorsoft, at 2026-10-13 08:42 in Chicago. The home fixture
--- patch freezes the clock and writes the scenario; the sheet-hold patch holds the featured slot or
--- the side margin once the home settles; the capture is taken on the sheet's own settled signal.
--- The look is passed empty so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
+-- The sheet's paint budget: the book sheet and the home sheet a hold opens over the populated home, in Diner on the
+-- Colorsoft, at 2026-10-13 08:42 in Chicago. The home fixture patch freezes the clock and writes the scenario; the
+-- sheet-hold patch holds the featured slot or the side margin once the home settles; the capture is taken on the
+-- sheet's own settled signal. The look is passed empty so a KOPANDA_HOME_LOOK in the caller's environment cannot leak
+-- in.
 describe("the sheets a hold opens over the home", function()
     require("commonrequire")
     local driver = require("emulator.driver")

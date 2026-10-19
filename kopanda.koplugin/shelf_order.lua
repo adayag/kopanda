@@ -1,8 +1,7 @@
--- What the Series and Authors screens list, in what order, in what state and on which page
--- (series-and-authors D3, D12 to D17): the series with their state, chip counts, next unread and
--- author line; the authors by surname under their letters; one author's books with their up-next
--- marks; and the pagings by rows that fit whole. Pure: records in, tables out, nothing kept
--- between calls. The count wordings are the screens' (D10).
+-- What the Series and Authors screens list, in what order, in what state and on which page: the series
+-- with their state, chip counts, next unread and author line; the authors by surname under their
+-- letters; one author's books with their up-next marks; and the pagings by whole rows. Pure: records
+-- in, tables out.
 local BookIndex = require("book_index")
 local LibraryOrder = require("library_order")
 
@@ -18,7 +17,7 @@ local function status_of(progress)
     return type(progress) == "table" and progress.status or nil
 end
 
--- D15: the first author of the first book that has one, and whether any book's first author differs.
+-- The first author of the first book that has one, and whether any book's first author differs.
 local function author_line(books)
     local author, others = nil, false
     for _, record in ipairs(books) do
@@ -34,8 +33,8 @@ local function author_line(books)
     return author, others
 end
 
--- D3: the state, the complete count and the next unread of books in series order, each book's
--- progress asked once.
+-- The state, the complete count and the next unread of books in series order, each book's progress
+-- asked once.
 local function series_state(books, progress_of)
     local complete, started, next_unread = 0, false, nil
     for _, record in ipairs(books) do
@@ -63,8 +62,7 @@ local function series_state(books, progress_of)
     return state, complete, next_unread
 end
 
--- D12: the under-way series first, then the rest, each part by the title order of the name, then
--- the name.
+-- The under-way series first, then the rest, each part by the title order of the name, then the name.
 local function by_series(a, b)
     local wa, wb = a.state == "under_way", b.state == "under_way"
     if wa ~= wb then
@@ -76,11 +74,10 @@ local function by_series(a, b)
     return a.name < b.name
 end
 
--- One entry { name, books, state, complete, total, next, author, others } per series of records:
--- books in BookIndex.series' order; state "under_way", "finished" or "not_started" (D3); complete
--- and total the chip's N of M; next the next unread record or nil (D3); author the series' author
--- or nil and others whether any book's first author differs from it (D15). Entries in D12's
--- order. progress_of(record) is Books.progress, called once per book per call.
+-- One entry { name, books, state, complete, total, next, author, others } per series of records: books
+-- in BookIndex.series' order; state "under_way", "finished" or "not_started"; complete and total the
+-- chip's N of M; next the next unread record or nil; author the series' author or nil and others
+-- whether any book's first author differs. progress_of(record) is Books.progress, called once per book.
 function ShelfOrder.series(records, progress_of)
     local entries = {}
     for _, group in ipairs(BookIndex.series(records)) do
@@ -105,13 +102,13 @@ function ShelfOrder.series(records, progress_of)
     return entries
 end
 
--- D13's letter of a surname key: its first byte uppercased when an ASCII letter, else "#".
+-- The letter of a surname key: its first byte uppercased when an ASCII letter, else "#".
 local function letter_of(key)
     local first = key:sub(1, 1)
     return first:match("^%a$") and first:upper() or "#"
 end
 
--- D13: by letter, "#" after Z, then surname key, then lowercase name, then name.
+-- By letter, "#" after Z, then surname key, then lowercase name, then name.
 local function by_author(a, b)
     if a.letter ~= b.letter then
         if a.letter == "#" or b.letter == "#" then
@@ -129,8 +126,8 @@ local function by_author(a, b)
     return a.name < b.name
 end
 
--- BookIndex.authors' entries { name, books, letter, count } in D13's order: letter the group the
--- author is under (A to Z, then "#"), count the number of their books.
+-- BookIndex.authors' entries { name, books, letter, count } in that order: letter the group the author
+-- is under, count the number of their books.
 function ShelfOrder.authors(records)
     local entries = {}
     for _, group in ipairs(BookIndex.authors(records)) do
@@ -150,9 +147,9 @@ function ShelfOrder.authors(records)
     return entries
 end
 
--- An author entry's books in cover-grid's Series order (D16), and { [id] = true } for those of
--- them that are their series' next in series_entries (ShelfOrder.series over the whole library),
--- so a series' next by another author marks none of this author's books.
+-- An author entry's books in the library grid's series order, and { [id] = true } for those that are their
+-- series' next in series_entries (ShelfOrder.series over the whole library), so a series' next by another author
+-- marks none of this author's books.
 function ShelfOrder.author_books(entry, series_entries, progress_of)
     local books = LibraryOrder.view({ books = entry.books, folders = {} }, "series", "all", progress_of, {})
     local mine = {}
@@ -168,11 +165,10 @@ function ShelfOrder.author_books(entry, series_entries, progress_of)
     return books, up_next
 end
 
--- D14: rows ({ h, group, group_cost }) as pages { first, last, rows, repeats } of runs that fit
--- whole in available, at least one row a page. A page's cost is its rows' heights, gap between
--- each two of them, and once per group started or continued on it that group's group_cost (none
--- for a row with no group). repeats is true when the page's first group continues from the page
--- before. No rows give one empty page.
+-- rows ({ h, group, group_cost }) as pages { first, last, rows, repeats } of runs that fit whole in
+-- available, at least one row a page. A page's cost is its rows' heights, gap between rows, and each
+-- group's group_cost once; repeats is true when the first group continues from the page before. No rows
+-- give one empty page.
 function ShelfOrder.pages(rows, available, gap)
     gap = gap or 0
     local pages = {}

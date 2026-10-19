@@ -1,7 +1,6 @@
--- The home's own sheet, opened by a hold on empty space (home_gestures.lua): Edit layout, Open
--- the file browser, Refresh weather with its age, Wi-Fi with its state, KoPanda settings and
--- Sleep. Wi-Fi and Sleep are launcher entries, resolved and run as the launcher runs them. Each
--- row's detail is read when the sheet opens. Nothing here writes a setting.
+-- The home's own sheet, opened by a hold on empty space (home_gestures.lua): Edit layout, Open the file
+-- browser, Refresh weather, Wi-Fi, KoPanda settings and Sleep. Wi-Fi and Sleep are launcher entries,
+-- resolved and run as the launcher runs them. Each row's detail is read when the sheet opens.
 local EditLayout = require("edit_layout")
 local Home = require("home")
 local LauncherEntries = require("launcher_entries")

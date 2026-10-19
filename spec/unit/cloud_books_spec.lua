@@ -1,10 +1,7 @@
--- cwngsync's placeholders (cwng-placeholders C1, C2): CloudBooks' detection through the cwngsync
--- module the file manager registers (D12, D13), the record's placeholder flag from every public
--- Books entry (D14), and the surfaces that draw a flagged record as not downloaded (D1, D5, D6). Run
--- on a scratch library under the data directory, by its realpath, with home_dir pointed at it and
--- sidecars in the "dir" location, under a real file manager. cwngsync is never loaded: a stub
--- stands for it, registered on the file manager as cwngsync and removed after each case, with only
--- isConfigured and getLibraryState, its state naming files the case wrote. CoverBrowser is
+-- cwngsync's placeholders: CloudBooks' detection through the cwngsync module the file manager registers, the
+-- record's placeholder flag from every public Books entry, and the surfaces that draw a flagged record as not
+-- downloaded. Run on a scratch library by its realpath under a real file manager. cwngsync is never loaded: a stub
+-- registered on the file manager stands for it, with only isConfigured and getLibraryState. CoverBrowser is
 -- unrequirable, so every record's cover is none.
 describe("cwngsync's placeholders", function()
     local harness = require("plugin_harness")

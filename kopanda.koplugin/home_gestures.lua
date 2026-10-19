@@ -35,23 +35,20 @@ local function is_swipe_up_from_bottom(ges)
         and not in_zone("DSWIPE_ZONE_RIGHT_EDGE", ges.pos)
 end
 
--- A one-finger west or east swipe outside the top and bottom edge bands. Passed on, it would page
--- the hidden file chooser through the file manager's full-screen swipe zone (filemanager.lua:81-98,
--- :474-482); Gestures binds these swipes only inside those bands (gestures main.lua:1168-1195).
--- The library pages on these swipes and leaves the bands' ones to the forward step as well.
+-- A one-finger west or east swipe outside the top and bottom edge bands. Passed on, it would page the
+-- hidden file chooser through the file manager's full-screen swipe zone (filemanager.lua:81-98, :474-482);
+-- Gestures binds these swipes only inside those bands (gestures main.lua:1168-1195).
 function HomeGestures.is_page_swipe(ges)
     return ges.ges == "swipe" and (ges.direction == "west" or ges.direction == "east")
         and not in_zone("DSWIPE_ZONE_TOP_EDGE", ges.pos)
         and not in_zone("DSWIPE_ZONE_BOTTOM_EDGE", ges.pos)
 end
 
--- The home's own steps are touch zones on the home, matched through InputContainer.onGesture
--- rather than tested directly: KOReader's touch lock (InputContainer:setIgnoreTouchInput swaps
--- InputContainer.onGesture for _onGestureFiltered, which runs only the zones isGestureAlwaysActive
--- approves, frontend/ui/widget/container/inputcontainer.lua:297-350) then filters them as it does
--- every widget's, though the home overrides onGesture. A zone's handler only names its step, which
--- route runs in its place in the order. The zones cover the whole screen; their handlers
--- test the bands against the screen's size now.
+-- The home's own steps are touch zones on the home, matched through InputContainer.onGesture: KOReader's
+-- touch lock swaps it for _onGestureFiltered, which runs only the zones isGestureAlwaysActive approves
+-- (frontend/ui/widget/container/inputcontainer.lua:297-350). A zone's handler only names its step, which
+-- route runs in order. The zones cover the whole screen; their handlers test the bands against the
+-- screen's size now.
 local FULL_SCREEN = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = 1 }
 
 -- The zones the home registers on itself at init.
@@ -93,11 +90,9 @@ function HomeGestures.own_zones(home)
     }
 end
 
--- A hold on the home: inside a slot whose widget has hold, that hold, unless it returns false;
--- inside a slot whose widget has none, the settings of its group, its settings_prefix; otherwise,
--- outside every slot, in a blank slot with no module or after a false, the home's sheet, whose
--- paint_ms runs from this step's entry. home_sheet is required here, not at load: it reaches
--- launcher_entries, which requires home (launcher_entries.lua:5), which requires this module.
+-- A hold on the home: inside a slot whose widget has hold, that hold, unless it returns false; else the
+-- settings of its group; outside every slot or in a blank one, the home's sheet. home_sheet is required
+-- here: it reaches launcher_entries, which requires home (launcher_entries.lua:5), which requires this.
 local function hold(home, ges)
     local started = PaintClock.now()
     local slot = home:slotAt(ges.pos)
@@ -115,12 +110,11 @@ local function hold(home, ges)
     return true
 end
 
--- The forward step, shared by the home and the library (library_chrome.lua): the file manager's
--- menu zones (top-zone tap and swipe down, by KOReader's own rules, filemanagermenu.lua:71-124,
--- :1102-1114); a page swipe, consumed since nothing beneath should page; then the zones registered
--- on the file manager itself, the Gestures plugin's among them (gestures main.lua:1287-1288). With
--- a KoPanda window on top, UIManager:sendEvent offers the file manager nothing but its screenshot
--- module (frontend/ui/uimanager.lua:962-1034), hence the forwarding. Whether one consumed ges.
+-- The forward step, shared by the home and the library (library_chrome.lua): the file manager's menu
+-- zones (filemanagermenu.lua:71-124, :1102-1114); a page swipe, consumed; then the zones on the file
+-- manager itself, the Gestures plugin's among them (gestures main.lua:1287-1288). With a KoPanda window
+-- on top, UIManager:sendEvent offers the file manager nothing but its screenshot module
+-- (frontend/ui/uimanager.lua:962-1034), hence the forwarding. Whether one consumed ges.
 function HomeGestures.forward(ges)
     local FileManager = package.loaded["apps/filemanager/filemanager"]
     local fm = FileManager and FileManager.instance
@@ -136,14 +130,10 @@ function HomeGestures.forward(ges)
     return false
 end
 
--- The home's gestures, in order, each step stopping at the first that consumes: its own swipe
--- up; a tap or a hold in the nav bar's band, which the bar takes (it runs the tapped tab; a hold
--- on Settings opens the quick-settings sheet, any other hold runs nothing), before anything
--- beneath can, Gestures' bottom corners included; the forward step above, so a hold corner bound
--- on the file manager wins over the hold (gestures main.lua:1124-1139); a hold runs the hold step
--- above; a tap outside the top menu zones runs the tapped slot's widget when it acts on taps, and
--- otherwise, or when that tap returns false, closes the home onto the file browser through
--- close(home).
+-- The home's gestures, in order, each step stopping at the first that consumes: its own swipe up; a
+-- tap or hold in the nav bar's band; the forward step, so a hold corner bound on the file manager wins
+-- over the hold (gestures main.lua:1124-1139); the hold step; a tap outside the top menu zones runs the
+-- tapped slot's widget, and otherwise, or on false, closes the home onto the file browser via close(home).
 function HomeGestures.route(home, ges, close)
     home.own_step = nil
     -- The home's own zones, under KOReader's touch lock (see own_zones).

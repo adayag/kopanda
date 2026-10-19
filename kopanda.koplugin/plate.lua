@@ -1,30 +1,19 @@
--- The plates a look with plates (Frosted) sets its home rows and launcher tiles on: a keyline
--- round a ground that is the wallpaper beneath lightened toward paper, by an amount per palette
--- variant, or paper itself when no wallpaper is drawn. The ground is painted first and the
--- keyline after it, so both are solid, and the plate's widgets paint on top of both.
---
--- The lighten is KOReader's BlitBuffer:lightenRect, which blends white at that opacity over a
--- rectangle (base/ffi/blitbuffer.lua:2273-2283), here row by row inside a rounded keyline so the
--- corners outside it keep the wallpaper. Under KOReader's night mode on a panel that can't invert,
--- the screen's buffer stores every write inverted (base/ffi/framebuffer.lua:476-488), and the C
--- blitter skips a buffer so flagged (base/ffi/blitbuffer.lua:733-740) for a per-pixel Lua path. So
--- on a flagged buffer the flag is lifted for the plate and the stored pixels are darkened toward
--- black by the same amount with darkenRect (:2295-2306): lightening the inverse is darkening what
--- is stored, which is what the panel shows.
---
--- A named deviation from frosted.md, which washes the plate toward the paper: lightenRect and
--- darkenRect blend toward white and black, not toward a colour, so the day's plates go toward
--- white rather than the paper #fbfaf6 (a few levels lighter), and the night's toward black rather
--- than the night paper #1d1c22 (about 24 levels darker than it at 0.84). Grey's paper is white,
--- so there it is exact.
+-- The plates a look with plates sets its home rows and launcher tiles on: a keyline round a ground that is the
+-- wallpaper beneath lightened toward paper, by an amount per palette variant, or paper itself when no
+-- wallpaper is drawn. The lighten is BlitBuffer:lightenRect (base/ffi/blitbuffer.lua:2273-2283), here row by
+-- row inside a rounded keyline so the corners outside it keep the wallpaper. Under night mode on a panel that
+-- can't invert, the screen's buffer stores every write inverted (base/ffi/framebuffer.lua:476-488) and the C
+-- blitter skips a buffer so flagged (base/ffi/blitbuffer.lua:733-740), so the flag is lifted for the plate and
+-- the stored pixels darkened with darkenRect (:2295-2306): lightening the inverse is darkening what is stored.
+-- Both blend toward white and black, not toward a colour, so day's plates go toward white rather than the paper
+-- #fbfaf6 and night's toward black rather than the night paper #1d1c22; grey's paper is white, so exact.
 local Paint = require("paint")
 
 local Plate = {}
 
--- The plate tokens of look for variant, in device pixels and KOReader colours: { lighten,
--- fill_color, keyline, keyline_color, radius }, lighten the variant's amount when wallpaper is
--- drawn (and fill_color nil), fill_color the plate's fill otherwise; nil for a look without
--- plates. color(role) gives a role's colour, scale(px) a board length's device pixels.
+-- The plate tokens of look for variant, in device pixels and KOReader colours: { lighten, fill_color, keyline,
+-- keyline_color, radius }; lighten is the amount when wallpaper is drawn (and fill_color nil), else fill_color
+-- is the plate's fill; nil for a look without plates. color(role) gives a role's colour, scale(px) a length.
 function Plate.spec(look, variant, wallpaper, color, scale)
     local tokens = look.plate
     if not tokens.fill_color then
@@ -79,10 +68,9 @@ local function lighten(bb, x, y, w, h, r, by)
     end
 end
 
--- Paints a w by h plate at x, y in spec (Plate.spec), rounded by radius, or spec.radius when
--- radius is nil, at most half its shorter side (a pill): the ground, then the keyline. A lightened
--- ground stops inside the keyline, rounded by the radius less its width, so none of it shows past
--- the keyline's outer arc.
+-- Paints a w by h plate at x, y in spec (Plate.spec), rounded by radius or spec.radius, at most half its
+-- shorter side: the ground, then the keyline. A lightened ground stops inside the keyline, so none of it shows
+-- past the keyline's outer arc.
 function Plate.paint(bb, x, y, w, h, spec, radius)
     if w <= 0 or h <= 0 then
         return

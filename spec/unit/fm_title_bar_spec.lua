@@ -1,7 +1,6 @@
--- The title bar in the file browser (the title bar's C4 to C6): the upgrade tripwire on KOReader's
--- unwrapped FileManager.setupLayout, then KoPanda's bar built in place of KOReader's for that one
--- call, what it shows as the chooser changes, its pickers, plus, select mode and folder menu, its
--- re-layouts and refusal, and every other title bar left KOReader's.
+-- The title bar in the file browser: the upgrade tripwire on KOReader's unwrapped FileManager.setupLayout, then
+-- KoPanda's bar built in place of KOReader's for that one call, what it shows as the chooser changes, its pickers,
+-- plus, select mode and folder menu, its re-layouts and refusal, and every other title bar left KOReader's.
 describe("the file browser's title bar", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")

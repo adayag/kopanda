@@ -1,10 +1,8 @@
--- The Series and Authors windows' gestures (series-and-authors C6, D9, D11, D17), in the chrome's
--- order: the nav bar's band; a tap on a series or author row, a book row or tile, the back control
--- or a pager arrow; "Under way first" and "By surname" inert, so their taps reach the file manager's
--- menu zones; a west or east swipe, but not one in the top or bottom edge band; the page keys; a
--- hold consumed; and everything else to the zones on the file manager. SeriesScreen.hit and
--- AuthorsScreen.hit name what lies under a point. KOReader's touch lock filters the windows' own
--- zones.
+-- The Series and Authors windows' gestures, in the chrome's order: the nav bar's band; a tap on a series or author row,
+-- a book row or tile, the back control or a pager arrow; "Under way first" and "By surname" inert, so their taps reach
+-- the file manager's menu zones; a west or east swipe, but not one in the top or bottom edge band; the page keys; a
+-- hold consumed; and everything else to the zones on the file manager. SeriesScreen.hit and AuthorsScreen.hit name
+-- what lies under a point. KOReader's touch lock filters the windows' own zones.
 local harness = require("plugin_harness")
 local fixture = require("shelf_fixture")
 local centre = require("library_fixture").centre
@@ -66,7 +64,7 @@ end
 
 local FULL = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = 1 }
 
--- context-menu C7: the calls LibrarySheets.hold, the hold's dispatch, gets.
+-- The calls LibrarySheets.hold, the hold's dispatch, gets.
 local function dispatched()
     return spy(package.loaded["library_sheets"], "hold")
 end
@@ -154,8 +152,8 @@ local SHELVES = {
         module = "authors_screen",
         Module = "AuthorsScreen",
         show = fixture.show_authors,
-        -- Thirty authors of one book each, "Ann A01" to "Ann D30" by their letters, two pages or more;
-        -- and Jo Grid's seven books, the first not downloaded (in a series, so first in D16's order).
+        -- Thirty authors of one book each, named Ann with a letter and a number, two pages or more; and Jo Grid's seven
+        -- books, the first not downloaded (in a series, so first in its order).
         install = function()
             local records = {}
             for i = 1, 30 do

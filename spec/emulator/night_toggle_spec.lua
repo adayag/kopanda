@@ -1,8 +1,8 @@
--- Toggling night mode under a settled day home (C8): through the menu's ToggleNightMode
--- broadcast and, in a second run, through Dispatcher's night_mode action. The night-toggle
--- scenario patch counts the home's paints from the toggle to the next settled signal; the
--- capture taken on that signal is what the panel shows (base/ffi/framebuffer.lua:566-581), so its
--- paper, read in the left margin at mid-height, must be Diner's designed night paper.
+-- Toggling night mode under a settled day home: through the menu's ToggleNightMode broadcast and, in a second run,
+-- through Dispatcher's night_mode action. The night-toggle scenario patch counts the home's paints from the toggle
+-- to the next settled signal; the capture taken on that signal is what the panel shows
+-- (base/ffi/framebuffer.lua:566-581), so its paper, read in the left margin at mid-height, must be Diner's designed
+-- night paper.
 describe("toggling night mode under the home", function()
     require("commonrequire")
     local driver = require("emulator.driver")

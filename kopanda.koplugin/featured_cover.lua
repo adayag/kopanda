@@ -1,7 +1,6 @@
--- The featured book's cover box: the cover from CoverBrowser's cache fitted on paper, a
--- typographic placeholder when there is none, and the first run's dashed frame. The cover read,
--- the extraction ask and its bounded check are book_covers.lua's; this module's functions for
--- them delegate there.
+-- The featured book's cover box: the cover from CoverBrowser's cache fitted on paper, a typographic
+-- placeholder when there is none, and the first run's dashed frame. The cover read, the extraction ask
+-- and its bounded check are book_covers.lua's; this module's functions for them delegate there.
 local BookCovers = require("book_covers")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Fonts = require("fonts")
@@ -86,10 +85,9 @@ function FeaturedCover.box(width, ctx)
     return w, h
 end
 
--- Whether box split a word on a line it shows. TextBoxWidget sets has_split_inside_word for a
--- split on any line, shown or past its lines_per_page (frontend/ui/widget/textboxwidget.lua:421-424,
--- :478-480); with xtext each line keeps its own no_allowed_break_met (:420-421), so the shown lines
--- are read. Without xtext only the box's flag is there.
+-- Whether box split a word on a line it shows. TextBoxWidget sets has_split_inside_word for a split on
+-- any line, shown or not (frontend/ui/widget/textboxwidget.lua:421-424, :478-480); with xtext each line
+-- keeps its own no_allowed_break_met (:420-421), so the shown lines are read.
 local function split_shown(box)
     if not box.has_split_inside_word then
         return false
@@ -105,10 +103,8 @@ local function split_shown(box)
     return false
 end
 
--- The placeholder's title and authors in a box inner_w wide and inner_h high: the title in
--- frame.title at the top in at most four lines, the authors, joined, in frame.authors on one line
--- at the foot, or none without that part. Returns the widgets and their places from the inner
--- box's top left.
+-- The placeholder's title (at most four lines, at the top) and authors (one line, at the foot, or none)
+-- in a box inner_w by inner_h; returns the widgets and their places from the inner box's top left.
 local function placeholder_text(record, inner_w, inner_h, ctx, background, frame)
     local look = ctx.look
     local palette = Looks.palette(look, ctx.variant)
@@ -163,12 +159,10 @@ local function placeholder_text(record, inner_w, inner_h, ctx, background, frame
     return widgets, places
 end
 
--- The framed cover box for record ({ path, title, authors list }) in a w by h box under ctx, in
--- frame's tokens (board pixels and palette roles): { outline_color, outline_width, radius,
--- shadow = { x, y, color, outline_width }, padding = { x, y }, title, authors }, title and authors type parts,
--- authors nil for none. The outline is drawn only where the variant has outline_color. The widget
--- is the box plus the shadow's offset, so the shadow is never cut. Reads the cover cache through
--- BookCovers.read, the bitmap freed with the widget; never asks for an extraction.
+-- The framed cover box for record ({ path, title, authors list }) in a w by h box under ctx, in frame's
+-- tokens ({ outline_color, outline_width, radius, shadow, padding, title, authors }; authors nil for
+-- none). The widget is the box plus the shadow's offset. Reads the cover cache through BookCovers.read,
+-- the bitmap freed with the widget; never asks for an extraction.
 function FeaturedCover.framed(record, w, h, ctx, frame)
     local color, scale = Looks.colorer(ctx), Paint.scaler(ctx)
     local shadow = frame.shadow

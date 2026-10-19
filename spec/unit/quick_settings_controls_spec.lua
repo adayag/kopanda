@@ -1,11 +1,8 @@
--- The quick-settings sheet's controls (bars/quick-settings C5, C6): taps and holds on the
--- brightness and warmth buttons step the power device on the Kindle's 0-24 scales through
--- broadcast events the file manager's DeviceListener handles; Night, Rotation lock and Wi-Fi act
--- with the sheet open and redraw it; Sync books, Sleep and Screenshot close it first; a greyed
--- cell closes it and shows the launcher's note; an action that raises is logged and the sheet
--- stays. Each case reaching KOReader runs over the home and over the bare file browser. Every
--- stub of the power device, NetworkMgr, the plugin list, the dispatcher, the file manager's
--- modules, Screen, UIManager and G_reader_settings is put back after the test that makes it.
+-- The quick-settings sheet's controls: taps and holds on the brightness and warmth buttons step the power device on
+-- the Kindle's 0-24 scales through broadcast events the file manager's DeviceListener handles; Night, Rotation lock
+-- and Wi-Fi act with the sheet open and redraw it; Sync books, Sleep and Screenshot close it first; a greyed cell
+-- closes it and shows the launcher's note; an action that raises is logged and the sheet stays. Each case reaching
+-- KOReader runs over the home and over the bare file browser. Every stub is put back after the test that makes it.
 describe("the quick-settings controls", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
@@ -68,10 +65,9 @@ describe("the quick-settings controls", function()
         return s
     end
 
-    -- The power device on the Kindle's 0-24 scales (frontend/device/kindle/powerd.lua:8-11), with
-    -- the warmth scale its new sets (frontend/device/generic/powerd.lua:38), the light on at
-    -- intensity and the warmth at native; the emulator's hardware intensity and resume state,
-    -- which the setters write, are put back too.
+    -- The power device on the Kindle's 0-24 scales (frontend/device/kindle/powerd.lua:8-11), with the warmth scale its
+    -- new sets (frontend/device/generic/powerd.lua:38), the light on at intensity and the warmth at native; the
+    -- emulator's hardware intensity and resume state, which the setters write, are put back too.
     local function kindle_light(intensity, native)
         set(powerd, "fl_max", 24)
         set(powerd, "fl_warmth_max", 24)
@@ -437,9 +433,9 @@ describe("the quick-settings controls", function()
             end)
 
             -- The emulator's fake broadcasts each event twice for one toggle: once from its own
-            -- connectionChangedEvent (frontend/device/sdl/device.lua:479-487), then from the
-            -- callback NetworkMgr hands it, the connectivity check's NetworkConnected
-            -- (frontend/ui/network/manager.lua:109) or disableWifi's NetworkDisconnected (:408).
+            -- connectionChangedEvent (frontend/device/sdl/device.lua:479-487), then from the callback NetworkMgr
+            -- hands it, the connectivity check's NetworkConnected (frontend/ui/network/manager.lua:109) or
+            -- disableWifi's NetworkDisconnected (:408).
             it("lays the sheet out once for a Wi-Fi-on tap, its NetworkConnected broadcasts and the check", function()
                 setting("emulator_fake_wifi_connected", false)
                 local checked = watch(NetworkMgr, "connectivityCheck")

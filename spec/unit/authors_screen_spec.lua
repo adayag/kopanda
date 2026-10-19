@@ -1,10 +1,7 @@
--- The Authors window (series-and-authors C5): the list's header (D10's count, "Authors", "By
--- surname"), its letter groups in D13's order a page at a time, a group split by a page break
--- repeating its letter, "#" after Z and the pager gap; one author's header (the back control, D10's
--- count, the name), six tiles in three columns and two rows in D16's order with the Up next chip (D5,
--- D19). The cases it shares with the Series window (spec/shelf_screen_cases.lua) run here for the
--- Authors window, AUTHORS carrying what differs. Books.all and Books.progress are stubbed with
--- records under a root that exists nowhere (spec/shelf_fixture.lua).
+-- The Authors window: the list's header and letter groups a page at a time (a group split by a page break repeats
+-- its letter, "#" after Z, the pager gap); one author's header and six tiles with the Up next chip. The cases it
+-- shares with the Series window (spec/shelf_screen_cases.lua) run here, AUTHORS carrying what differs. Books.all and
+-- Books.progress are stubbed with records under a root that exists nowhere (spec/shelf_fixture.lua).
 describe("the Authors window", function()
     local cases = require("shelf_screen_cases")
     local harness = require("plugin_harness")
@@ -125,7 +122,7 @@ describe("the Authors window", function()
         },
         relisted = { "Ann A01", "Bo B02", "Cy C03" },
         -- Each view and the sorts one of its builds runs: the list the authors alone, one author the
-        -- authors and the whole library's series (D16). The list reads no progress.
+        -- authors and the whole library's series. The list reads no progress.
         sorted = {
             install = sorted_shelf,
             cases = {
@@ -157,7 +154,7 @@ describe("the Authors window", function()
                 assert.is_nil(seen[id], id .. " read twice")
                 seen[id] = true
             end
-            -- The author's books, and the whole library's series books for the up-next marks (D16).
+            -- The author's books, and the whole library's series books for the up-next marks.
             assert.is_true(seen[records[1].id])
             assert.is_true(seen[records[4].id])
             assert.is_true(seen[records[5].id])

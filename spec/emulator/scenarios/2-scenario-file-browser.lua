@@ -10,14 +10,14 @@
 --     home folder is the scratch profile (XDG_DOCUMENTS_DIR, frontend/device/sdl/device.lua:70),
 --     so the subtitle showed the library's absolute path, cut on the left only where it ran out of
 --     width (".../<the checkout's last folders>/spec/fixtures/library"): a capture that depends on
---     where the repo is checked out (open fact F3, candidate a). With the library as home, the
+--     where the repo is checked out. With the library as home, the
 --     subtitle read "Home" in every checkout, as it does on the device. Since bars/title-bar,
 --     KoPanda's title bar replaces KOReader's and draws no path: with the library as home its
---     title reads "Library" (title-bar D1), and the stored home_dir is what makes it so.
+--     title reads "Library", and the stored home_dir is what makes it so.
 --   - On the first home's settled signal, from the next tick, it closes the home
 --     (kopanda.koplugin/home.lua, Home.close), which leaves KOReader's file browser on top on the
 --     library the driver started KOReader in; the file browser then sends its own settled signal.
--- CoverBrowser's list (open fact F4) needs nothing: the home fixture extracts only the featured
+-- CoverBrowser's list needs nothing: the home fixture extracts only the featured
 -- book's cover, the other two books show as file names, and three captures per profile matched
 -- to the pixel with no masks.
 -- Any failure is reported as a KoPandaSettled signal with error on the file_browser screen, the

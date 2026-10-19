@@ -1,14 +1,9 @@
--- The nav bar: five tabs across a screen's bottom, Home, Library, Authors, History and Settings,
--- drawn from the look's nav tokens: a band across the bottom, or with nav.float a pill on the
--- page inset by nav.margin (Toybox). The home, the file browser and the library each build one with
--- their own tab active and set its dimen's x and y where they place it. A tap in a tab's column runs
--- the tab, a hold on Settings opens the quick-settings sheet, any other hold on the bar is consumed
--- and runs nothing, and every other gesture passes through.
---
--- launcher_entries, quick_settings, library, series_screen and authors_screen are required at call
--- time: launcher_entries requires home (launcher_entries.lua:6), which reaches this module through
--- home_rows, so a load-time require would loop, quick_settings requires launcher_entries, and the
--- chrome windows reach this module through library_chrome.
+-- The nav bar: five tabs across a screen's bottom, Home, Library, Authors, History and Settings, from the
+-- look's nav tokens: a band across the bottom, or with nav.float a pill inset by nav.margin. The home, the
+-- file browser and the library each build one with their own tab active. A tap runs the tab, a hold on
+-- Settings opens the quick-settings sheet, any other hold is consumed, and every other gesture passes
+-- through. launcher_entries, quick_settings, library, series_screen and authors_screen are required at call
+-- time: launcher_entries requires home (launcher_entries.lua:6), which reaches this module through home_rows.
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local Helpers = require("helpers")
@@ -79,10 +74,9 @@ local WINDOWS = { library = "library", series = "series_screen", authors = "auth
 function NavBar.run(id, where)
     local ok, err = pcall(function()
         if id == "home" then
-            -- On the home, Home is the screen already. From the file browser, KoPanda's instance,
-            -- registered under its name (frontend/apps/filemanager/filemanager.lua:379-389, :424);
-            -- from a chrome window, the same once the window has closed onto the file browser. The
-            -- window's module is required now: it requires this module.
+            -- On the home, Home is the screen already. From the file browser, KoPanda's instance, registered under its
+            -- name (frontend/apps/filemanager/filemanager.lua:379-389, :424); from a chrome window, the same once the
+            -- window has closed onto the file browser. The window's module is required now: it requires this module.
             if WINDOWS[where] then
                 require(WINDOWS[where]).close()
             end
@@ -273,10 +267,8 @@ local function open_quick_settings(where)
     end
 end
 
--- Whether the bar consumes ges: a tap on it runs the tab under it, if any; a hold on Settings
--- opens the quick-settings sheet (bars/quick-settings, "The Settings-tab hold"), and a hold
--- anywhere else on it runs nothing; anything else, or anything off the bar, is left to what lies
--- beneath.
+-- Whether the bar consumes ges: a tap on it runs the tab under it; a hold on Settings opens the
+-- quick-settings sheet, any other hold runs nothing; anything else is left to what lies beneath.
 function Bar:handle(ges)
     if not Helpers.inside(self.dimen, ges.pos) then
         return false

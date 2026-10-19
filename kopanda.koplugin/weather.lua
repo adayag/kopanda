@@ -1,9 +1,8 @@
--- The weather: Open-Meteo's current conditions for the weather.location setting in its units,
--- kept in settings/kopanda/weather.lua, and the line the weather widget draws from it.
--- The cache is runtime state like state.lua: not a setting, no schema entry, never read by the
--- studio. A fetch blocks the UI for its duration, so it runs only after the home's first paint,
--- once per process when connected, on NetworkConnected until one succeeds, and on a tap.
--- Module state: whether a fetch was attempted in this process, and how many have succeeded.
+-- The weather: Open-Meteo's current conditions for the weather.location setting in its units, kept in
+-- settings/kopanda/weather.lua, and the line the weather widget draws from it. The cache is runtime state like
+-- state.lua: not a setting, never read by the studio. A fetch blocks the UI, so it runs only after the home's
+-- first paint, once per process when connected, on NetworkConnected until one succeeds, and on a tap. State:
+-- whether a fetch was attempted in this process, and how many have succeeded.
 local DataStorage = require("datastorage")
 local InfoMessage = require("ui/widget/infomessage")
 local LuaSettings = require("luasettings")
@@ -19,7 +18,7 @@ local Weather = {}
 local attempted = false
 local successes = 0
 
--- A plain hyphen, though the board writes U+2011 (EmptyStates.dc.html:25): the look faces have no U+2011.
+-- A plain hyphen, not U+2011: the look faces have no U+2011.
 local NO_READING = "Weather needs Wi-Fi"
 
 -- WMO weather interpretation codes (open-meteo.com/en/docs) to plain words.
@@ -67,9 +66,9 @@ local function current_of(data)
     return current
 end
 
--- The response body for url, or nil and why not. socket.http is looked up here, not at load,
--- so a spec can stub it. socketutil's timeouts are reset on every path, a raising request
--- included (frontend/socketutil.lua:52-70; the pattern of frontend/ui/wikipedia.lua:146-215).
+-- The response body for url, or nil and why not. socket.http is looked up here so a spec can stub it.
+-- socketutil's timeouts are reset on every path (frontend/socketutil.lua:52-70; the pattern of
+-- frontend/ui/wikipedia.lua:146-215).
 function Weather.get(url)
     local chunks = {}
     local http = require("socket.http")
@@ -152,11 +151,10 @@ function Weather.reading()
     return data
 end
 
--- The line the widget draws for reading at now in the look whose tokens are look, in its
--- home.weather_order: "Partly cloudy, 61°" condition first (Editorial, Main.dc.html:25), "61°
--- partly cloudy" degrees first (Diner, HomeRetro.dc.html:48-51), the temperature alone for an
--- unknown code, then " · 3 h ago" once the reading is an hour old (" · 2 d ago" from two days);
--- with no reading, "Weather needs Wi-Fi".
+-- The line the widget draws for reading at now in the look whose tokens are look, in its home.weather_order:
+-- "Partly cloudy, 61°" condition first, "61° partly cloudy" degrees first, the temperature alone for an unknown
+-- code, then " · 3 h ago" once the reading is an hour old (" · 2 d ago" from two days); with no reading,
+-- "Weather needs Wi-Fi".
 function Weather.line(reading, now, look)
     if not reading then
         return NO_READING
@@ -232,11 +230,10 @@ function Weather.on_connected(home)
     run(home)
 end
 
--- A tap on the weather: a fetch now when connected; otherwise once online, which may ask to
--- turn Wi-Fi on as the user's wifi_enable_action says (frontend/ui/network/manager.lua:605-618,
--- :698-709). NetworkMgr broadcasts NetworkConnected before it runs the callback (:109, :116),
--- so the callback skips its fetch when one has succeeded since the tap. A failed fetch says so
--- for 3 s.
+-- A tap on the weather: a fetch now when connected; otherwise once online, which may ask to turn Wi-Fi on as
+-- wifi_enable_action says (frontend/ui/network/manager.lua:605-618, :698-709). NetworkMgr broadcasts
+-- NetworkConnected before it runs the callback (:109, :116), so the callback skips its fetch when one has
+-- succeeded since the tap. A failed fetch says so for 3 s.
 function Weather.tap(home)
     local successes_at_tap = successes
     local function fetch_now()

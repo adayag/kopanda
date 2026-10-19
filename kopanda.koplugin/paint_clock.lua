@@ -1,9 +1,7 @@
--- The two clocks a settled signal's times run on. A stamp is { wall, cpu }: wall is
--- time.monotonic()'s fts time, from which paint_ms has always run; cpu is os.clock()'s seconds of
--- the process's CPU time, C clock(), which a loaded host doesn't stretch as it does wall time.
--- KOReader's ui/time reads only the system's wall clocks (frontend/ui/time.lua:234-300), so the
--- CPU clock is Lua's own. A span, from one stamp to a later one, has the same shape. And the
--- settled signal a screen sends on the dev loop's hook from its times.
+-- The two clocks a settled signal's times run on, and the signal itself. A stamp is { wall, cpu }: wall is
+-- time.monotonic()'s fts time, cpu is os.clock()'s seconds of CPU time, which a loaded host doesn't stretch.
+-- KOReader's ui/time reads only the system's wall clocks (frontend/ui/time.lua:234-300), so the CPU clock is
+-- Lua's own. A span, from one stamp to a later one, has the same shape.
 local UIManager = require("ui/uimanager")
 local logger = require("logger")
 local time = require("ui/time")

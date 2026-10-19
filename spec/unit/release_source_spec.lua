@@ -269,11 +269,10 @@ describe("the release source", function()
                 hash = PushBundle.bundle_hash(root, files), files = files }
         end
 
-        -- A zip of entries ({ path, bytes } pairs, in order) built with ffi/archiver's Writer.
-        -- Each entry is added from a file on disk, so it keeps the file's permissions:
-        -- addFileFromMemory's are the decimal 644 (ffi/archiver.lua:264), which no zip has.
-        -- addPath returns false even when it worked, its loop ending at ARCHIVE_EOF
-        -- (ffi/archiver.lua:305-355), so its err is checked instead.
+        -- A zip of entries ({ path, bytes } pairs, in order) built with ffi/archiver's Writer. Each entry is added
+        -- from a file on disk, so it keeps the file's permissions: addFileFromMemory's are the decimal 644
+        -- (ffi/archiver.lua:264), which no zip has. addPath returns false even when it worked, its loop ending at
+        -- ARCHIVE_EOF (ffi/archiver.lua:305-355), so its err is checked instead.
         local function zip_of(entries)
             zips = zips + 1
             local path = dir .. "/built-" .. zips .. ".zip"

@@ -1,15 +1,10 @@
--- Download on a placeholder's book sheet (cwng-placeholders C3; D2, D7, D16, D17, D18): the row
--- under Open on the library, on one series and on one author, its tap handing cwngsync the path and
--- a callback in place of the open, and that callback's re-list of the window it was held on, with
--- the book's cover asked for again. Run on a scratch library under the data directory, by its
--- realpath, with home_dir pointed at it, under a real file manager. cwngsync is never loaded: a stub
--- stands for it, registered on the file manager as cwngsync and removed after each case, its
--- openLibraryPlaceholder recording its calls and returning what the case sets; a case calls the
--- recorded callback itself, after making the stub's state and the file say downloaded, as
--- cwngsync's download does before it calls back (cwng_library_runtime.lua:957-977, :1017).
--- CoverBrowser's bookinfomanager is a stub too: a row with a cached cover that fits for every book,
--- in the series Held by Ann Author, deleteBookInfo dropping a row and extractInBackground recording
--- what it was asked for and putting the row back, as an extraction would.
+-- Download on a placeholder's book sheet: the row under Open on the library, on one series and on one author, its tap
+-- handing cwngsync the path and a callback in place of the open, and that callback's re-list of the window it was
+-- held on, with the book's cover asked for again. cwngsync is never loaded: a stub registered on the file manager
+-- stands for it, its openLibraryPlaceholder recording its calls; a case calls the recorded callback itself, after
+-- making the stub's state and the file say downloaded, as cwngsync's download does (cwng_library_runtime.lua:957-977,
+-- :1017). CoverBrowser's bookinfomanager is a stub too: deleteBookInfo drops a row and extractInBackground records
+-- what it was asked for and puts the row back, as an extraction would.
 describe("Download on a placeholder's sheet", function()
     local harness = require("plugin_harness")
     local DataStorage = require("datastorage")
@@ -491,10 +486,10 @@ describe("Download on a placeholder's sheet", function()
             end)
         end
 
-        -- cwngsync's download as it runs once connected (cwng_library_runtime.lua:1010-1017): its
-        -- notice shown and painted, the book renamed over the placeholder, the broadcasts of
-        -- refreshLibraryViews (main.lua:1612-1630), CoverBrowser's row deleted on the first
-        -- (plugins/coverbrowser.koplugin/main.lua:800-803), the notice closed, then the callback.
+        -- cwngsync's download as it runs once connected (cwng_library_runtime.lua:1010-1017): its notice shown and
+        -- painted, the book renamed over the placeholder, the broadcasts of refreshLibraryViews (main.lua:1612-1630),
+        -- CoverBrowser's row deleted on the first (plugins/coverbrowser.koplugin/main.lua:800-803), the notice
+        -- closed, then the callback.
         local function cwngsync_download(stub, file, on_done)
             local InfoMessage = require("ui/widget/infomessage")
             local message = InfoMessage:new{ text = "Downloading…" }

@@ -1,10 +1,8 @@
--- The swatch screen: a test pattern of every look's palettes and faces and of the icon registry,
--- full screen over the file manager or the reader, for settling the token values on a real
--- panel. One look a page, in Looks.ids() order: its day, night and grey panels across, each
--- filled with its paper and holding a chip per colour role, the roles the look lacks named on one
--- line, and a line per face; the icons below. A tap turns to the next look's page, and on the
--- last page closes it. It is not part of the shell, so it opens while another shell plugin is
--- enabled.
+-- The swatch screen: a test pattern of every look's palettes and faces and of the icon registry, full screen
+-- over the file manager or the reader, for settling the token values on a real panel. One look a page, in
+-- Looks.ids() order: its day, night and grey panels across, each filled with its paper and holding a chip per
+-- colour role and a line per face; the icons below. A tap turns to the next page, and on the last closes it.
+-- It is not part of the shell, so it opens while another shell plugin is enabled.
 local Blitbuffer = require("ffi/blitbuffer")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Font = require("ui/font")
@@ -27,8 +25,8 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
 local Screen = require("device").screen
 
--- Lengths in board pixels, scaled by Screen:scaleBySize; font sizes unscaled, since
--- Font:getFace scales them itself (frontend/ui/font.lua:276).
+-- Lengths in board pixels, scaled by Screen:scaleBySize; font sizes unscaled, since Font:getFace scales them
+-- itself (frontend/ui/font.lua:276).
 local MARGIN = 8
 local GAP = 4
 local ROW_GAP = 2 -- between chip rows, tighter than GAP so every role and face fits a panel
@@ -56,10 +54,9 @@ local TAP_NEXT = "Tap for the next look."
 local TAP_CLOSE = "Tap to close."
 local NIGHT_NOTE = "Night mode is on: KOReader inverts these colours. Turn it off to judge them."
 
--- A rectangle of one colour, optionally outlined, with an optional child at an inset. KOReader's
--- paintRect greys any colour by luminance (base/ffi/blitbuffer.lua:1704-1724), so a colour fill
--- and outline go through the RGB32 variants (:1827, :2118-2126); a grey through the plain ones
--- (:2096).
+-- A rectangle of one colour, optionally outlined, with an optional child at an inset. KOReader's paintRect
+-- greys any colour by luminance (base/ffi/blitbuffer.lua:1704-1724), so a colour fill and outline go through
+-- the RGB32 variants (:1827, :2118-2126); a grey through the plain ones (:2096).
 local ColorBox = WidgetContainer:extend{
     color = nil,
     border = 0,
@@ -87,10 +84,9 @@ function ColorBox:paintTo(bb, x, y)
     end
 end
 
--- The colour a palette token is drawn in: its own on a colour screen, KOReader's luminance grey
--- of it otherwise (base/ffi/blitbuffer.lua:464-467). A grey panel's 8-bit framebuffer greys an
--- RGB32 paint the same way, but the emulator's grey profile keeps an RGB32 framebuffer
--- (base/ffi/framebuffer_SDL3.lua:20-23, :85-86) where it would keep its hue.
+-- The colour a palette token is drawn in: its own on a colour screen, KOReader's luminance grey of it
+-- otherwise (base/ffi/blitbuffer.lua:464-467). A grey panel's 8-bit framebuffer greys an RGB32 paint the same
+-- way, but the emulator's grey profile keeps an RGB32 framebuffer (base/ffi/framebuffer_SDL3.lua:20-23, :85-86).
 local function drawn(hex)
     local color = Looks.color(hex)
     if Screen:isColorEnabled() then
@@ -123,8 +119,8 @@ end
 
 -- Text in a palette's ink on its paper. TextBoxWidget keeps an RGB foreground on a colour screen
 -- (frontend/ui/widget/textboxwidget.lua:854-906), where TextWidget greys it
--- (frontend/ui/widget/textwidget.lua:345-375); its buffer is filled with bgcolor, white by
--- default (textboxwidget.lua:50, :861-864), hence the paper.
+-- (frontend/ui/widget/textwidget.lua:345-375); its buffer is filled with bgcolor, white by default
+-- (textboxwidget.lua:50, :861-864), hence the paper.
 local function ink_text(text, face, width, ink, paper, name)
     return TextBoxWidget:new{
         name = name,
@@ -168,11 +164,8 @@ local function panel(id, variant, w, h)
     local name = id:gsub("^%l", string.upper)
     local heading = name .. " · " .. variant
 
-    -- The chips of the roles the look has in two columns, in role order down the first and then
-    -- the second. The roles it lacks (false) are named on one line, in a cell as wide as the
-    -- second column, from its chip x, when the line fits that width: the column's empty last
-    -- cell when the chip count is odd, the heading's line when it is even; otherwise full width
-    -- after the chips. The heading's line keeps the chips' rows when there is no empty cell.
+    -- The chips of the roles the look has in two columns, in role order; the roles it lacks (false) are named on
+    -- one line, beside the chips when it fits the second column's width, else full width after them.
     local roles, lacks = {}, {}
     for _, role in ipairs(sorted_keys(palette)) do
         if palette[role] then
@@ -378,8 +371,8 @@ function Swatch:page_widget(page)
         header[#header + 1] = VerticalSpan:new{ width = gap }
     end
     local icons = icon_rows(inner_w)
-    -- The panels take what the header and the icons leave; getSize fixes a group's layout, so
-    -- each is measured once complete (frontend/ui/widget/verticalgroup.lua:15-31).
+    -- The panels take what the header and the icons leave; getSize fixes a group's layout, so each is measured
+    -- once complete (frontend/ui/widget/verticalgroup.lua:15-31).
     local used = header:getSize().h + gap + icons:getSize().h
     local column = VerticalGroup:new{ align = "left", header }
     local panel_h = self.dimen.h - 2 * margin - used
@@ -416,8 +409,8 @@ function Swatch:close()
     close_swatch(self)
 end
 
--- The dev loop's settled signal after the first paint, unless that paint failed. paint_ms runs
--- from the show to the end of that paint, and cpu_ms on the CPU clock.
+-- The dev loop's settled signal after the first paint, unless that paint failed. paint_ms runs from the show
+-- to the end of that paint, cpu_ms on the CPU clock.
 local function settle(swatch)
     if not swatch.paint_failed then
         PaintClock.settled("the swatch", swatch.started, swatch.painted_at, { screen = "swatch" })
@@ -431,9 +424,8 @@ function Swatch.show()
     local ok, err = pcall(function()
         swatch = Swatch:new{ started = PaintClock.now(), settle_pending = true }
         UIManager:show(swatch, "full")
-        -- The swatch settles from its first paint; nothing is scheduled until then. A
-        -- tickAfterNext here would land before the paint whenever the clock hasn't moved since
-        -- the UI loop's pass began, since UIManager runs its inner nextTick in that same pass
+        -- The swatch settles from its first paint. A tickAfterNext here would land before the paint whenever the
+        -- clock hasn't moved since the UI loop's pass began, since UIManager runs its inner nextTick in that pass
         -- (frontend/ui/uimanager.lua:447-456, 1081-1104, 1537-1564).
     end)
     if not ok then

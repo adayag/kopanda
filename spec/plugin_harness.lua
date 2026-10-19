@@ -58,16 +58,12 @@ M.dispatcher_execute = require("dispatcher").execute
 -- FileManager.setupLayout as KOReader defines it, before fm_nav.lua wraps it.
 M.fm_setup_layout = require("apps/filemanager/filemanager").setupLayout
 
--- Loads the plugin as the only enabled one, with its modules' state, runtime state file and
--- settings file fresh (no boot flag or setting left by an earlier spec), KOReader's
--- require-cached file manager and reader menu orders fresh (no tab inserted and no user order
--- merged by an earlier spec), and
--- Dispatcher.execute and FileManager.setupLayout unwrapped, as in a new process, and returns
--- the plugin module (the class KOReader makes an instance of per file manager and reader).
--- PluginLoader:_load reads main, meta, path and name (frontend/pluginloader.lua:231-271).
--- The emulator's fake Wi-Fi is off, so NetworkMgr:isConnected() is false
--- (frontend/device/sdl/device.lua:478-500) and no home shown by a spec fetches the weather; a
--- spec that wants a connection stubs isConnected.
+-- Loads the plugin as the only enabled one, with its modules' state, runtime state file and settings file fresh,
+-- KOReader's require-cached file manager and reader menu orders fresh, and Dispatcher.execute and
+-- FileManager.setupLayout unwrapped, as in a new process; returns the plugin module. PluginLoader:_load reads
+-- main, meta, path and name (frontend/pluginloader.lua:231-271). The emulator's fake Wi-Fi is off, so
+-- NetworkMgr:isConnected() is false (frontend/device/sdl/device.lua:478-500); a spec that wants a connection
+-- stubs isConnected.
 function M.load()
     disable_plugins()
     G_reader_settings:saveSetting("emulator_fake_wifi_connected", false)
@@ -145,13 +141,11 @@ function M.gesture(ges, x, y)
     return { ges = ges, pos = Geom:new{ x = x, y = y, w = 0, h = 0 }, time = time.now() }
 end
 
--- Runs fn with the device screen answering as an emulator profile w by h with no DPI override
--- does, so scaleBySize is ceil(px × w / 600), the shorter side over 600 (ffi/framebuffer.lua:414-426),
--- and Font:getFace scales by it (frontend/ui/font.lua:276). TextWidget's vertical padding is
--- Size.padding.small, scaled once when the class loads (frontend/ui/widget/textwidget.lua:34,
--- frontend/ui/size.lua:52), so it is set to that screen's value too. The unit screen's own values
--- come back afterwards, even when fn raises, so nothing built under fn should be painted into the
--- unit screen's 600×800 buffer before the caller is done with it.
+-- Runs fn with the device screen answering as an emulator profile w by h with no DPI override does, so
+-- scaleBySize is ceil(px × w / 600) (ffi/framebuffer.lua:414-426) and Font:getFace scales by it
+-- (frontend/ui/font.lua:276). TextWidget's vertical padding is Size.padding.small, scaled once when the class
+-- loads (frontend/ui/widget/textwidget.lua:34, frontend/ui/size.lua:52), so it is set to that screen's value
+-- too. The unit screen's own values come back afterwards, even when fn raises.
 function M.at_screen(W, H, fn)
     local Geom = require("ui/geometry")
     local Screen = require("device").screen

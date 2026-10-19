@@ -1,7 +1,6 @@
--- Coexistence: KoPanda refuses its shell while another shell plugin is enabled, and says which.
--- And the wrap that keeps a callback's error from KOReader's menus and UI loop.
--- Module state: the conflicts, computed on the first call of the process, and whether the
--- message has been raised.
+-- Coexistence: KoPanda refuses its shell while another shell plugin is enabled, and says which; and the
+-- wrap that keeps a callback's error from KOReader's menus and UI loop. State: the conflicts, computed
+-- on the first call, and whether the message has been raised.
 local InfoMessage = require("ui/widget/infomessage")
 local PluginLoader = require("pluginloader")
 local UIManager = require("ui/uimanager")

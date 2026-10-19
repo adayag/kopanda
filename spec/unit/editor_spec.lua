@@ -1,4 +1,4 @@
--- The editor frame (device menus' C5): the full-screen frame edit layout and launcher management
+-- The editor frame: the full-screen frame edit layout and launcher management
 -- draw in, over a shown home. Its header, body and foot in each look, its taps, keys and Back,
 -- one paint per show or refresh, its settled signal and a body too tall for the screen. Every
 -- stub of Device.hasKeys, the screen and night_mode is restored where it is made.

@@ -1,23 +1,7 @@
--- The chrome the library's windows share (series-and-authors D1, "The chrome"): a full-screen
--- KoPanda window over the file manager (cover-grid "The window"), its show and close, its paint
--- and settled signal, the header frame, the pager and the nav bar in its band, the gesture route
--- (cover-grid "Gestures") and the events that keep it current. A window module extends
--- LibraryChrome.Window and supplies what is its own (library.lua):
---   screen, its name in the settled signal and the log; fields, the keys of its build it keeps;
---   build(view, page), a LibraryChrome.build of view at page; view(), the view it shows;
---   action_at(pos), the action a tap on its own parts runs, or nil; back(), the back control's tap;
---   hit(x, y), what lies at a point on the window of its class shown, which a hold's sheet is for;
---   on_open(view, page), run as Window:open's book open goes ahead; refresh(), its re-list;
---   request_covers(), after a page's first paint; downloaded(record), once cwngsync downloaded that
---   book over its placeholder (default: the re-list, every record's cover asked for again);
---   closing(), its part of the close. A window listing the whole library asks for its covers
---   through LibraryChrome.request_records, and passes its re-list's records through
---   LibraryChrome.keep_downloaded.
--- Module state: LibraryChrome.shown, the window on screen or nil. A window's class mirrors it in a
--- slot of the same name (Library.shown) while the window shown is one of its own.
--- LibraryChrome.return_to, { screen = "series" | "authors", view, page } a book was opened from the
--- Series or Authors window (series-and-authors D7), which the next file manager's show returns to,
--- or nil, in memory only; the library records its own (Library.return_to).
+-- The chrome the library's windows share: a full-screen KoPanda window over the file manager, its paint and settled
+-- signal, the header frame, the pager, the nav bar and the gesture route. A window module extends
+-- LibraryChrome.Window and supplies the fields and functions library.lua shows; LibraryChrome.shown is the
+-- window on screen.
 local BD = require("ui/bidi")
 local BookCovers = require("book_covers")
 local Books = require("books")
@@ -46,6 +30,8 @@ local Screen = Device.screen
 local LibraryChrome = {}
 
 LibraryChrome.shown = nil
+-- { screen, view, page }: where the next file manager's show returns to after a book opened from the Series or
+-- Authors window; in memory only.
 LibraryChrome.return_to = nil
 
 -- A box w by h in fill (a colour or nil) with an outline wide in outline_color, its children
@@ -86,8 +72,8 @@ end
 
 local tools = LibraryChrome.tools
 
--- The detail header's back control under ctx: its outline and its height, the taller of its icon
--- and its label inside its padding and outline (SeriesBooksC.dc.html:20-21, AuthorBooksA.dc.html:20-21).
+-- The detail header's back control under ctx: its outline and its height, the taller of its icon and its
+-- label inside its padding and outline.
 local function back_metrics(ctx)
     local scale, _, line_height = tools(ctx)
     local back = ctx.look.shelf.back
@@ -126,16 +112,11 @@ local function back_control(ctx, text)
     return box, label
 end
 
--- The header frame under ctx, w wide and spec.height tall (Main.dc.html:19-27, GridA.dc.html:19-27):
--- the band in spec.band's colour; the right-hand slot, spec.right's widgets laid right to left
--- from the side padding the picker gap apart; the left column, spec.aside over spec.title (each
--- { part, text }) with the back mark before the title when spec.back; all resting on the padding's
--- bottom, then the edge. With spec.back_label, the detail header (SeriesBooksC.dc.html:19-30,
--- AuthorBooksA.dc.html:19-28) in the detail padding, LibraryChrome.detail_header_height tall: the back
--- control on its own row at the top, labelled spec.back_label. Returns the header and its parts:
--- rect, aside, title, back (nil without spec.back), back_place, title_place, title_rect (the back
--- control, nil without spec.back), back_rect and back_label (the detail back control and its label,
--- nil without spec.back_label) and right (each widget's rect, in spec.right's order).
+-- The header frame under ctx, w wide and spec.height tall: the band in spec.band's colour; spec.right's
+-- widgets laid right to left; the left column, spec.aside over spec.title, with the back mark before the
+-- title when spec.back; then the edge. With spec.back_label, the detail header (LibraryChrome.detail_header_height
+-- tall) puts the back control on its own row at the top. Returns the header and its parts: rect, aside,
+-- title, back, back_place, title_place, title_rect, back_rect, back_label and right (each widget's rect).
 function LibraryChrome.header(ctx, w, spec)
     local scale, color, line_height = tools(ctx)
     local tokens = ctx.look.library.header
@@ -191,9 +172,9 @@ function LibraryChrome.header(ctx, w, spec)
     return box, parts
 end
 
--- One pager button, which ("prev" or "next"): its box in the pager's fill and outline and, when
--- live, its arrow in the look's arrow colour for it, or when dead, in dead_color, or none where the
--- look has no dead colour (cover-grid D16). Returns the box and { live, arrow }.
+-- One pager button, which ("prev" or "next"): its box in the pager's fill and outline and its arrow in the
+-- look's arrow colour when live, dead_color when dead, none where the look has no dead colour. Returns the
+-- box and { live, arrow }.
 local function button(which, live, arrow_size, ctx)
     local scale, color = tools(ctx)
     local tokens = ctx.look.library.pager
@@ -211,10 +192,8 @@ local function button(which, live, arrow_size, ctx)
     return box, parts
 end
 
--- The pager, centred across w with its foot bottom above y (Main.dc.html:85-88, GridA.dc.html:85-88):
--- the previous button, the page label, the next button, each centred in the pager's band. The
--- arrows are the label's line tall. Adds them to frame and returns { prev, next, label }, each
--- button with its rect.
+-- The pager, centred across w with its foot bottom above y: the previous button, the page label, the next
+-- button. Adds them to frame and returns { prev, next, label }, each button with its rect.
 local function pager(built, frame, w, y)
     local ctx = built.ctx
     local scale = tools(ctx)
@@ -253,10 +232,8 @@ function LibraryChrome.foot(built, frame, where)
     built.pager = pager(built, frame, w, nav.dimen.y)
 end
 
--- Fills built (the window's view and page) at the screen's size in the active look and variant:
--- dimen, ctx and frame, the paper, then fill(built, frame, w, h), which adds the window's header
--- and page and calls LibraryChrome.foot, then the nav bar. Returns built; a failure frees what was
--- built and raises.
+-- Fills built (the window's view and page) at the screen's size in the active look and variant: dimen, ctx,
+-- frame, the paper, then fill(built, frame, w, h), then the nav bar. A failure frees what was built and raises.
 function LibraryChrome.build(built, fill)
     local size = Screen:getSize()
     built.dimen = Geom:new{ x = 0, y = 0, w = size.w, h = size.h }
@@ -326,8 +303,7 @@ end
 
 -- As the home's (home_gestures.lua): the window's own steps are touch zones on it, matched through
 -- InputContainer.onGesture, so KOReader's touch lock filters them
--- (frontend/ui/widget/container/inputcontainer.lua:297-350). A zone's handler only names its step,
--- which route runs in its place in the order.
+-- (frontend/ui/widget/container/inputcontainer.lua:297-350). A handler only names its step, which route runs.
 local FULL_SCREEN = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = 1 }
 
 local function own_zones(window)
@@ -409,13 +385,10 @@ local function arrive(window, arrived, alive)
     end
 end
 
--- Asks once per window, while it is the one shown, for the covers of every one of window.records at
--- the library grid's cover box, the largest these windows and the library draw (series-and-authors
--- D2, "Extraction"). An arrival re-reads each arrived record (Books.get) in window.records, then
--- rebuilds the view in place, and so repaints, only when the page shown changes: when
--- window:page_keys(view, page), the keys of its items in order under window.records now, differ from
--- window.keys, the build's, or the page draws an arrived record (a key of window.drawn). A failure is
--- logged with the page as it was.
+-- Asks once per window, while it is the one shown, for the covers of every one of window.records at the
+-- library grid's cover box, the largest these windows draw. An arrival re-reads each arrived record
+-- (Books.get) and rebuilds the view, repainting, only when window:page_keys(view, page) differs from
+-- window.keys or the page draws an arrived record (window.drawn). A failure is logged with the page as it was.
 function LibraryChrome.request_records(window)
     if window.records_asked or LibraryChrome.shown ~= window then
         return
@@ -483,10 +456,9 @@ function Window:tap(pos)
     return true
 end
 
--- Opens record's file as the file browser's own tap does (cover-grid D15; filemanager.lua:160-169),
--- which asks first when the owner set "ask before opening", running the window's on_open with the
--- view and page it shows once the open goes ahead (filemanagerutil.lua:498-502). Without a file
--- manager it opens nothing.
+-- Opens record's file as the file browser's own tap does (filemanager.lua:160-169), which asks first when
+-- "ask before opening" is set, running the window's on_open with the view and page once the open goes ahead
+-- (filemanagerutil.lua:498-502). Without a file manager it opens nothing.
 function Window:open(record)
     local FileManager = package.loaded["apps/filemanager/filemanager"]
     local fm = FileManager and FileManager.instance
@@ -500,8 +472,7 @@ function Window:open(record)
 end
 
 -- Signals the window's first paint on the dev loop's settled hook, once per show, as the home's
--- (home.lua:156-200); paint_ms runs from opts.started to that paint. A window whose paint failed
--- sends none.
+-- (home.lua:156-200); paint_ms runs from opts.started. A window whose paint failed sends none.
 local function settle(window, opts)
     if window.paint_failed then
         return
@@ -515,10 +486,9 @@ local function settle(window, opts)
     end
 end
 
--- Shows a window of cls, built now as cls:new(fields). opts.started is time.monotonic() at the start
--- of the show path, which paint_ms runs from (default: now), so paint_ms includes the build. Closes
--- the home and the window shown, then shows this one and returns it. On any error it is taken off
--- the stack and nil returned, logged, the screen beneath left as it is.
+-- Shows a window of cls, built now as cls:new(fields). opts.started is time.monotonic() at the start of the
+-- show path (default: now), so paint_ms includes the build. Closes the home and the window shown, shows this
+-- one and returns it; on any error it is taken off the stack, nil returned and the screen beneath left alone.
 function LibraryChrome.show(cls, opts, fields)
     local started = opts.started or time.monotonic()
     local window
@@ -601,14 +571,11 @@ function Window:refresh()
     end
 end
 
--- records, a re-list of window's books, each book window:downloaded was given whose CoverBrowser row
--- hasn't come back (its record's cover "missing") keeping the title, authors, series and
--- series_index it was listed by: cwngsync's broadcast had CoverBrowser delete the row
--- (plugins/coverbrowser.koplugin/main.lua:800-803), and the series and authors come only from it
--- (books.lua record()), so the book stays in its place and the page with it until the row's
--- arrival re-reads it (LibraryChrome.request_records); a book whose row is back is listed by it and
--- forgotten, as the arrival forgets it, so a later deletion of the row doesn't list it as it was.
--- Returns records.
+-- A re-list of window's books, keeping the title, authors, series and series_index of each book
+-- window:downloaded was given whose CoverBrowser row hasn't come back (cover "missing"): cwngsync's
+-- broadcast had CoverBrowser delete the row (plugins/coverbrowser.koplugin/main.lua:800-803), and the series
+-- and authors come only from it, so the book stays in its place until the arrival re-reads it. A book whose
+-- row is back is listed by it and forgotten. Returns records.
 function LibraryChrome.keep_downloaded(window, records)
     local downloads = window.downloads or {}
     for _, record in ipairs(records) do
@@ -623,14 +590,11 @@ function LibraryChrome.keep_downloaded(window, records)
     return records
 end
 
--- After cwngsync downloaded record's book over its placeholder (cwng-placeholders D17): the view
--- re-listed (window:refresh()), record kept in its place until its row is back
--- (LibraryChrome.keep_downloaded), then every one of window.records' covers asked for again after
--- the paint (LibraryChrome.request_records), the once-per-window mark dropped. BookCovers asks only
--- for a file not asked in this process whose row wants a cover, so on a page of cached covers that
--- is the downloaded book alone, its cover just forgotten. The re-list stands for the one cwngsync's
--- broadcasts left due (refresh_soon), which is dropped. Nothing while the window isn't the one
--- shown.
+-- After cwngsync downloaded record's book over its placeholder: the view re-listed (window:refresh()),
+-- record kept in its place until its row is back (LibraryChrome.keep_downloaded), then every one of
+-- window.records' covers asked for again after the paint (BookCovers asks only for a file not yet asked,
+-- so on a page of cached covers that is the downloaded book alone). The re-list stands for the one
+-- cwngsync's broadcasts left due (refresh_soon), which is dropped. Nothing while the window isn't shown.
 function Window:downloaded(record)
     if LibraryChrome.shown ~= self then
         return
@@ -643,14 +607,12 @@ function Window:downloaded(record)
     self.covers_due = true
 end
 
--- Marks the window stale and refreshes it once from the next tick, however many events marked it
--- before: one change broadcasts InvalidateMetadataCache and BookMetadataChanged, and a second
--- BookMetadataChanged when the summary changed too (filemanagerbookinfo.lua:276-280, :556-557). The
--- book-info page broadcasts from its close callback after UIManager:close
--- (frontend/ui/widget/keyvaluepage.lua:841-846), inside the input dispatch at the end of
--- handleInput (frontend/ui/uimanager.lua:1607-1620), so the tick runs at the next pass's
--- _checkTasks, before that pass's _repaint paints the close (:431-433, :1537-1564, :1663). A
--- window closed by then is not refreshed (refresh's check that it is the one shown).
+-- Marks the window stale and refreshes it once from the next tick, however many events marked it: one
+-- change broadcasts InvalidateMetadataCache and BookMetadataChanged, and a second BookMetadataChanged when
+-- the summary changed too (filemanagerbookinfo.lua:276-280, :556-557). The book-info page broadcasts after
+-- UIManager:close (frontend/ui/widget/keyvaluepage.lua:841-846), inside the input dispatch
+-- (frontend/ui/uimanager.lua:1607-1620), so the tick runs at the next pass's _checkTasks, before that
+-- pass's _repaint paints the close (:431-433, :1537-1564, :1663). A window closed by then is not refreshed.
 local function refresh_soon(window)
     if window.stale then
         return
@@ -713,9 +675,8 @@ function Window:onCloseWidget()
     end
 end
 
--- The hold step (context-menu "Holds"): what lies at pos (window.hit) handed to LibrarySheets.hold,
--- which opens its sheet over the window, paint_ms from this step's entry. A hit or dispatch that
--- raises is logged and the hold consumed, the window left as it was.
+-- The hold step: what lies at pos (window.hit) handed to LibrarySheets.hold, which opens its sheet over
+-- the window. A hit or dispatch that raises is logged and the hold consumed.
 local function hold_step(window, pos)
     local started = PaintClock.now()
     local ok, err = pcall(function()
@@ -728,13 +689,11 @@ local function hold_step(window, pos)
     return true
 end
 
--- The window's gestures, in order, each step stopping at the first that consumes: a tap or a hold
--- in the nav bar's band, which the bar takes; a tap on a part of the window that acts on taps
--- (window:tap); a west or east swipe outside the top and bottom edge bands turns the page,
--- mirrored as Menu:onSwipe reads it (frontend/ui/widget/menu.lua:1518-1523); then the home's
--- forward step (HomeGestures.forward), so the top menu, Gestures' corner zones and its edge-band
--- swipes still work, and a hold corner bound on the file manager wins over the hold, as on the home
--- (home_gestures.lua); then a hold runs the hold step. Whatever none of them takes is consumed.
+-- The window's gestures, in order, each step stopping at the first that consumes: a tap or hold in the nav
+-- bar's band; a tap on a part of the window that acts on taps (window:tap); a west or east swipe outside the
+-- edge bands turns the page, mirrored as Menu:onSwipe reads it (frontend/ui/widget/menu.lua:1518-1523);
+-- the home's forward step (HomeGestures.forward), so a hold corner bound on the file manager wins over the
+-- hold, as on the home; then the hold step. Whatever none of them takes is consumed.
 function Window:routeGesture(ges)
     self.own_step = nil
     InputContainer.onGesture(self, ges)

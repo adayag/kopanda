@@ -1,10 +1,8 @@
--- An icon file drawn in a colour: TintedIcon:new{ file, size, color }, size × size. The icons are
--- black stroke files and ImageWidget's dim only lightens on a white ground
--- (frontend/ui/widget/imagewidget.lua:570-579), so this takes the method that note proposes: the
--- rendered icon blended onto white and inverted is an alpha mask whose ink is white, built once per
--- file and size and kept for the process (the widget's free lets go of it without freeing it),
--- and each paint colours the target through it. A render that fails is not cached, and the icon
--- then draws nothing.
+-- An icon file drawn in a colour: TintedIcon:new{ file, size, color }, size × size. The icons are black stroke
+-- files and ImageWidget's dim only lightens on a white ground (frontend/ui/widget/imagewidget.lua:570-579), so
+-- the rendered icon blended onto white and inverted is an alpha mask whose ink is white, built once per file
+-- and size and kept for the process (the widget's free lets go of it without freeing it); each paint colours
+-- the target through it. A render that fails is not cached, and the icon then draws nothing.
 local Blitbuffer = require("ffi/blitbuffer")
 local Geom = require("ui/geometry")
 local RenderImage = require("ui/renderimage")
@@ -18,17 +16,13 @@ local TintedIcon = Widget:extend{
     color = nil,
 }
 
--- Masks by file and size: the colour is applied at paint, so one mask serves every icon of that
--- file at that size for the process, as ImageWidget keeps its renders in ImageCache by file and
--- size (frontend/ui/widget/imagewidget.lua:147-160). Bounded by the icon registry times the few
--- sizes the plugin draws at.
+-- Masks by file and size: the colour is applied at paint, so one mask serves every icon of that file at that
+-- size, as ImageWidget keeps its renders in ImageCache by file and size (frontend/ui/widget/imagewidget.lua:147-160).
 local masks = {}
 
--- Renders the file (an RGB32 buffer with straight alpha, frontend/ui/renderimage.lua:338-344,
--- :390-393) into the mask: white filled, the render alpha-blitted on, then inverted
--- (base/ffi/blitbuffer.lua:1506, :1318, :1567), or takes it from the cache. A file that won't
--- render leaves no mask and nothing cached, so the widget paints nothing and the next icon of the
--- file tries again.
+-- Renders the file (an RGB32 buffer with straight alpha, frontend/ui/renderimage.lua:338-344, :390-393) into
+-- the mask: white filled, the render alpha-blitted on, then inverted (base/ffi/blitbuffer.lua:1506, :1318,
+-- :1567), or takes it from the cache. A file that won't render leaves no mask and nothing cached.
 function TintedIcon:init()
     local size = self.size
     self.dimen = Geom:new{ w = size, h = size }

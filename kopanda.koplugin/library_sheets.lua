@@ -1,9 +1,8 @@
--- The hold's dispatch on the library's windows (context-menu "Holds"): the chrome's hold step
--- (library_chrome.lua) hands it the window held on and what lies under the hold, the window's
--- hit(x, y), and it opens that thing's sheet over the window. A book, on the library and on the
--- one-series and one-author screens, opens the book sheet (D3, D13); a folder tile, on the
--- library alone, the folder sheet ("The folder sheet"); anywhere else on the library, the header
--- and the pager included, the empty-space sheet (D10, D15); every other kind opens nothing.
+-- The hold's dispatch on the library's windows: the chrome's hold step (library_chrome.lua) hands it the
+-- window held on and what lies under the hold (the window's hit(x, y)), and it opens that thing's sheet
+-- over the window. A book opens the book sheet; a folder tile, on the library alone, the folder sheet;
+-- anywhere else on the library, the header and pager included, the empty-space sheet; every other kind
+-- opens nothing.
 local BookCovers = require("book_covers")
 local BookSheet = require("book_sheet")
 local Books = require("books")
@@ -22,10 +21,9 @@ local LibrarySheets = {}
 
 local JOIN = " · "
 
--- The folder sheet's header cover under ctx (HoldFolderC.dc.html:36-37): a sheet.folder_box box
--- in its fill and outline with the registry's folder icon centred, tinted in its icon colour, as
--- the folder tile tints its own, since the registry's files are inked black (icons.lua) and night's
--- paper would hide them. The sheet frees it.
+-- The folder sheet's header cover under ctx: a sheet.folder_box box in its fill and outline with the
+-- registry's folder icon centred, tinted in its icon colour as the folder tile tints its own, since the
+-- registry's files are inked black (icons.lua) and night's paper would hide them. The sheet frees it.
 local function folder_box(ctx)
     local tokens = ctx.look.sheet.folder_box
     local color, scale = Looks.colorer(ctx), Paint.scaler(ctx)
@@ -48,8 +46,8 @@ local function folder_box(ctx)
     return box
 end
 
--- The folder sheet's meta (D12, HoldFolderC.dc.html:41): the book count as the tile words it,
--- then the reading and finished counts, each only when not zero.
+-- The folder sheet's meta: the book count as the tile words it, then the reading and finished counts,
+-- each only when not zero.
 local function folder_meta(counts)
     local parts = { Helpers.count_text(counts.books or 0) }
     if (counts.reading or 0) > 0 then
@@ -61,8 +59,8 @@ local function folder_meta(counts)
     return table.concat(parts, JOIN)
 end
 
--- A row's run, its failure logged with the window as it was (C8): the sheet's own tap would
--- otherwise close the window beneath.
+-- A row's run, its failure logged with the window as it was: the sheet's own tap would otherwise close
+-- the window beneath.
 local function guarded(what, fn)
     return function()
         local ok, err = pcall(fn)
@@ -72,11 +70,10 @@ local function guarded(what, fn)
     end
 end
 
--- Shows the sheet of folder ({ name, path }, a tile's) held on window, the library, with counts
--- ({ books, reading, finished }, the tile's) and opts passed on to Sheet.show (its beneath the
--- library): Open, the folder at its remembered page, as a tap on its tile; Set as library root,
--- KOReader's own confirm (FileManager:setHome, D6), whose OK the library's root check follows on
--- its next paint; Hide, the folder stored as hidden (D1) and the library re-listed at its page.
+-- Shows the sheet of folder ({ name, path }, a tile's) held on window, the library, with counts and opts
+-- passed on to Sheet.show: Open, the folder at its remembered page; Set as library root, KOReader's own
+-- confirm (FileManager:setHome), whose OK the library's root check follows on its next paint; Hide, the
+-- folder stored as hidden and the library re-listed at its page.
 function LibrarySheets.folder(window, folder, counts, opts)
     local rows = {
         {
@@ -117,7 +114,7 @@ function LibrarySheets.folder(window, folder, counts, opts)
     Sheet.show({ name = "library_folder", band = "library_folder", header = header, rows = rows }, ctx, opts)
 end
 
--- The sub-folders of library's folder hidden from its grid (D1), in the grid's folder order.
+-- The sub-folders of library's folder hidden from its grid, in the grid's folder order.
 local function hidden_folders(library)
     local folders = Books.folder(library:view()).folders
     local shown = {}
@@ -133,10 +130,8 @@ local function hidden_folders(library)
     return LibraryOrder.view({ books = {}, folders = hidden }, nil, nil, nil, {})
 end
 
--- Shows the hidden-folders sheet of library's folder (D1, D17), opts passed on to Sheet.show: on the
--- empty-space sheet's band, "tap one to show it again" above the heading and the folder's name at
--- the right, a flush row for each hidden sub-folder by name, whose tap unhides it and re-lists the
--- library at its page.
+-- Shows the hidden-folders sheet of library's folder, opts passed on to Sheet.show: a flush row for each
+-- hidden sub-folder by name, whose tap unhides it and re-lists the library at its page.
 function LibrarySheets.hidden(library, opts)
     local rows = {}
     for i, folder in ipairs(hidden_folders(library)) do
@@ -169,11 +164,10 @@ local function folder_files(library)
     return records
 end
 
--- Shows the empty-space sheet of library's folder (HoldEmptyC.dc.html, D10), opts passed on to
--- Sheet.show (its beneath the library): "this folder" above the folder's name, as the library's
--- header titles it, and the header's own count at the right; Sort and Show, the folder's choices
--- as the header's pickers word them, opening the pickers' own sheets; Refresh covers (D9), greyed
--- with CoverBrowser disabled; Hidden folders, only when a sub-folder of this one is hidden.
+-- Shows the empty-space sheet of library's folder, opts passed on to Sheet.show: "this folder" above the
+-- folder's name and the header's own count at the right; Sort and Show, the folder's choices, opening the
+-- pickers' own sheets; Refresh covers, greyed with CoverBrowser disabled; Hidden folders, only when a
+-- sub-folder of this one is hidden.
 function LibrarySheets.empty(library, opts)
     local text = library.header.text
     local rows = {
@@ -248,8 +242,7 @@ local SHEETS = {
     end,
 }
 
--- The sheets only the library's own holds open (D3: on the Series and Authors windows only a
--- book's opens).
+-- The sheets only the library's own holds open (on the Series and Authors windows only a book's opens).
 local LIBRARY_SHEETS = {
     folder = function(window, hit, opts)
         LibrarySheets.folder(window, hit.folder, tile_counts(window, hit.folder), opts)
@@ -263,10 +256,9 @@ local function sheet_for(window, kind)
     return SHEETS[kind] or window.screen == "library" and LIBRARY_SHEETS[kind] or nil
 end
 
--- Opens the sheet of hit ({ kind, ... } from the window's hit, or nil) over window, with window as
--- its screen beneath, so a sheet's failure closes that window and not the home, and its paint_ms
--- from started (a PaintClock stamp the hold took). A kind with no sheet on that window, or no hit,
--- opens nothing. A sheet that raises before it shows is logged, the window left as it was.
+-- Opens the sheet of hit ({ kind, ... } from the window's hit, or nil) over window, with window as its
+-- screen beneath, so a sheet's failure closes that window and not the home; paint_ms runs from started. A
+-- kind with no sheet on that window, or no hit, opens nothing. A sheet that raises is logged.
 function LibrarySheets.hold(window, hit, started)
     local open = hit and sheet_for(window, hit.kind)
     if not open then

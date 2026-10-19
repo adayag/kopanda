@@ -34,11 +34,10 @@ require("apps/filemanager/filemanager"):showFiles(empty)
 -- The action tree's file-browser sections, after "Nothing" (frontend/dispatcher.lua:1109-1140).
 local SECTIONS = { "General", "Device", "Screen and lights", "File browser" }
 
--- Which action a section item ticks, read as the device's entry picker reads it: run the item's
--- callback with the scratch empty and take the one key it stores. A `none` or `arg` item has a
--- plain text and a callback that stores true (frontend/dispatcher.lua:931-940); the others carry
--- a text_func or no callback, or store a value (:941-1067). Returns the id, or nil for an item a
--- launcher can't run.
+-- Which action a section item ticks, read as the device's entry picker reads it: run the item's callback with
+-- the scratch empty and take the one key it stores. A `none` or `arg` item has a plain text and a callback that
+-- stores true (frontend/dispatcher.lua:931-940); the others carry a text_func or no callback, or store a value
+-- (:941-1067). Returns the id, or nil for an item a launcher can't run.
 local function ticked_action(item, scratch)
     if type(item.text) ~= "string" or type(item.callback) ~= "function" then
         return nil

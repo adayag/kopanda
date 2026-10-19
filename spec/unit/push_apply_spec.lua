@@ -1,4 +1,4 @@
--- The apply patch (C8, C9): on scratch data folders under the run's KO_HOME, a stage written by
+-- The apply patch: on scratch data folders under the run's KO_HOME, a stage written by
 -- hand is applied, a failed apply undoes itself, an install left on probation is rolled back,
 -- and a start cut short at each apply step is restored. The patch's own seams (_move, _purge,
 -- _write_record, _set_reader_key) inject the failures; a seam that yields freezes the run as a

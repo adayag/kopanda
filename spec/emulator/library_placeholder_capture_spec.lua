@@ -1,12 +1,10 @@
--- The library over a cwngsync placeholder (cwng-placeholders C7, D20) and its paint budget: the
--- library window over cover-grid's capture library (capture_library.lua) at its root, in Diner on
--- the Colorsoft, at 2026-10-13 08:42 in Chicago, with a stub cwngsync naming a-christmas-carol.epub
--- a placeholder. The home fixture patch (at empty) freezes the clock and stores the look; the
--- library scenario patch (at its root step) stores the capture library as the home folder, writes
--- the reading book's position, adds the path-less book, extracts every cover and opens the library
--- once the home settles; the cwngsync patch registers the stub on the file manager. The capture is
--- taken on the library's own settled signal. The look is passed empty so a KOPANDA_HOME_LOOK in
--- the caller's environment cannot leak in.
+-- The library over a cwngsync placeholder and its paint budget: the library window over the capture library
+-- (capture_library.lua) at its root, in Diner on the Colorsoft, at 2026-10-13 08:42 in Chicago, with a stub cwngsync
+-- naming a-christmas-carol.epub a placeholder. The home fixture patch (at empty) freezes the clock and stores the
+-- look; the library scenario patch stores the capture library as the home folder, writes the reading book's
+-- position, adds the path-less book, extracts every cover and opens the library once the home settles; the
+-- cwngsync patch registers the stub on the file manager. The capture is taken on the library's own settled signal.
+-- The look is passed empty so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
 describe("the library over a placeholder", function()
     require("commonrequire")
     local capture_library = require("emulator.capture_library")

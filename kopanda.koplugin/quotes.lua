@@ -1,8 +1,7 @@
--- The built-in quotes, one a day in this order (widgets/quote.lua). Pure data (no require, no
--- functions). Each text is copied verbatim, line breaks aside, from the public-domain edition its
--- source names: gutenberg:<n> is Project Gutenberg ebook n, wikisource:<page> a Wikisource page.
--- Every work was published before 1931. A text is at most 160 characters, without the quote
--- marks the widget adds. The owner curates this list.
+-- The built-in quotes, one a day in this order (widgets/quote.lua). Pure data. Each text is copied verbatim,
+-- line breaks aside, from the public-domain edition its source names: gutenberg:<n> is Project Gutenberg
+-- ebook n, wikisource:<page> a Wikisource page. Every work was published before 1931. A text is at most 160
+-- characters, without the quote marks the widget adds. The owner curates this list.
 -- luacheck: no max line length
 return {
     { text = "Read the best books first, or you may not have a chance to read them at all.",

@@ -3,7 +3,7 @@
 -- library scenario patch (2-scenario-library.lua, at its root step). It sorts before both
 -- (frontend/userpatch.lua:60-61, natsort), which does not matter: it reads only the capture
 -- library's files, and acts only once a file manager is made.
--- cwngsync is never loaded. A stub stands for it (cwng-placeholders D20): registered on every file
+-- cwngsync is never loaded. A stub stands for it: registered on every file
 -- manager as cwngsync, as FileManager:init registers a plugin instance under its plugin's name
 -- (frontend/apps/filemanager/filemanager.lua:379-384, :424), right after that init returns, so it
 -- is on FileManager.instance (:447) before the home or the library lists a book. It has:

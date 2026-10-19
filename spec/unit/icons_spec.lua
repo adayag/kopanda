@@ -91,10 +91,9 @@ describe("icons", function()
         }, ids)
     end)
 
-    -- The library's three hold sheets draw seven new icons and library (context-menu feature, D4): the
-    -- book sheet's Add to the home and Delete (HoldBookC:66, :70), the folder sheet's Open, Set as
-    -- library root and Hide (HoldFolderC:45, :49, :56), and the library sheet's Sort, Show and Refresh
-    -- (HoldEmptyC:44, :51, :57) and Hidden folders (eye_off, feature.md:245).
+    -- The library's three hold sheets draw seven new icons and library: the book sheet's Add to the home and Delete,
+    -- the folder sheet's Open, Set as library root and Hide, and the library sheet's Sort, Show and Refresh and
+    -- Hidden folders (eye_off).
     it("uses the context menu's icons in the book, library folder and library sheets", function()
         local places = {}
         for _, entry in ipairs(Icons.entries) do
@@ -115,7 +114,7 @@ describe("icons", function()
         end
     end)
 
-    -- The title bar draws plus, or check in select mode (title-bar feature, D10).
+    -- The title bar draws plus, or check in select mode.
     it("uses plus and check in the title bar", function()
         local places = {}
         for _, entry in ipairs(Icons.entries) do
@@ -128,8 +127,8 @@ describe("icons", function()
         assert.is_true(places.check["title bar"])
     end)
 
-    -- The launcher draws quick_settings as the quick-settings sheet's entry, and the sheet's Wi-Fi
-    -- cell draws wifi_off when the radio is off (quick-settings feature, D9).
+    -- The launcher draws quick_settings as the quick-settings sheet's entry, and the sheet's Wi-Fi cell draws wifi_off
+    -- when the radio is off.
     it("uses quick_settings in the launcher and wifi_off in quick settings", function()
         local places = {}
         for _, entry in ipairs(Icons.entries) do
@@ -142,8 +141,8 @@ describe("icons", function()
         assert.is_true(places.wifi_off["quick settings"])
     end)
 
-    -- The library draws forward and back as the pager's arrows and back as the folder's back mark,
-    -- chevron_down after each picker and download on a book not downloaded (cover-grid feature, D14).
+    -- The library draws forward and back as the pager's arrows and back as the folder's back mark, chevron_down after
+    -- each picker and download on a book not downloaded.
     it("uses forward, back, chevron_down and download in the library", function()
         local places = {}
         for _, entry in ipairs(Icons.entries) do
@@ -157,8 +156,8 @@ describe("icons", function()
         end
     end)
 
-    -- The series and authors screens draw back as their back control and the pager's arrow, forward
-    -- as the pager's other arrow and download on a path-less book (series-and-authors "Tokens").
+    -- The series and authors screens draw back as their back control and the pager's arrow, forward as the pager's
+    -- other arrow and download on a path-less book.
     it("uses back, forward and download in the series and authors screens", function()
         local places = {}
         for _, entry in ipairs(Icons.entries) do
@@ -173,8 +172,8 @@ describe("icons", function()
         end
     end)
 
-    -- forward is back mirrored, so the pager's two arrows match (back.svg's M15 5l-7 7 7 7); download
-    -- is the boards' arrow to a line (Main.dc.html:67, GridA.dc.html:67).
+    -- forward is back mirrored, so the pager's two arrows match (back.svg's M15 5l-7 7 7 7); download is an arrow to
+    -- a line.
     it("draws forward as back's mirror and download as the boards' arrow to a line", function()
         local function path_of(id)
             return read(Icons.path(id)):match('<path d="([^"]+)"')
@@ -227,7 +226,7 @@ describe("icons", function()
         end
     end)
 
-    -- The owner's weight, chosen from a render at launcher and nav sizes: 1.6 went faint at 40 px.
+    -- The stroke weight, chosen at launcher and nav sizes: 1.6 went faint at 40 px.
     -- The Lucide files at the top of icons/ only: a vendored set keeps its pack's own drawing.
     it("strokes every Lucide icon at width 2, the check mark at 3", function()
         for _, file in ipairs(icon_files()) do

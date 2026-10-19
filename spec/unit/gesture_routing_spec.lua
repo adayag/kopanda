@@ -1,6 +1,6 @@
--- The home's gestures (C9): its own swipe up from the bottom edge, the file manager's menu from
+-- The home's gestures: its own swipe up from the bottom edge, the file manager's menu from
 -- the top zone, nothing paged under it and every other gesture passed to the zones registered on
--- the file manager; none of it in the file browser or the reader. Holds (sheets' C3 and C11) are
+-- the file manager; none of it in the file browser or the reader. Holds are
 -- in hold_routing_spec.lua.
 describe("gestures on the KoPanda home", function()
     local harness = require("plugin_harness")
@@ -243,7 +243,7 @@ describe("gestures on the KoPanda home", function()
         } }
         local home = Home.shown
         local size = Screen:getSize()
-        -- Just above the nav bar, which wins in its band (D4), and still in the corner eighth
+        -- Just above the nav bar, which wins in its band, and still in the corner eighth
         -- (DTAP_ZONE_BOTTOM_RIGHT, defaults.lua:69).
         local y = home.nav.dimen.y - 5
         assert.truthy(y >= size.h * 7 / 8)
@@ -257,7 +257,7 @@ describe("gestures on the KoPanda home", function()
         assert.equals(fm, harness.top())
     end)
 
-    -- The nav bar's band (the nav bar's C3, D4): a tap or a hold there goes to the bar before the
+    -- The nav bar's band: a tap or a hold there goes to the bar before the
     -- zones on the file manager; anything else passes through as before.
     describe("in the nav bar's band", function()
         -- A zone on the file manager over the corner eighth at ratio_x, as the Gestures plugin
@@ -310,7 +310,7 @@ describe("gestures on the KoPanda home", function()
             assert.equals(home, harness.top())
         end)
 
-        -- cover-grid C8: the Library tab's run is now the library, not the home folder.
+        -- The Library tab's run is now the library, not the home folder.
         it("closes the home and shows the library on a tap on the Library tab", function()
             local fixture = require("library_fixture")
             fixture.install({ [fixture.ROOT] = { books = fixture.books(2) } })
@@ -423,7 +423,7 @@ describe("gestures on the KoPanda home", function()
         local tall = { quote = 20, weather = 20, stats = 20 }
         local taps = tappable_stubs(tall)
         local fm = fm_with_home()
-        -- The last row grown to end on the nav bar's band, which takes its own taps first (D4),
+        -- The last row grown to end on the nav bar's band, which takes its own taps first,
         -- so its bottom-right corner lies in the corner eighth just above the bar.
         local stats = slot_of("stats").rect
         tall.weather = Home.shown.nav.dimen.y - stats.y
@@ -444,7 +444,7 @@ describe("gestures on the KoPanda home", function()
         local x, y = rect.x + rect.w - 5, rect.y + rect.h - 5
         assert.is_true(rect:contains(point(x, y)))
         assert.truthy(x >= size.w * 7 / 8 and y >= size.h * 7 / 8)
-        -- The last row ends above the nav bar, which takes its band first (D4).
+        -- The last row ends above the nav bar, which takes its band first.
         assert.truthy(rect.y + rect.h <= home.nav.dimen.y)
         local ges = harness.gesture("tap", x, y)
         send(ges)

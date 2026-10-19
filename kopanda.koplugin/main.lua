@@ -1,10 +1,8 @@
--- KoPanda: the owner's own interface for KOReader. KOReader makes an instance of this plugin
--- in every file manager and every reader; in a file manager it puts the home over the file
--- browser when the file browser is shown, and closes it when the file browser closes.
---
--- Every KoPanda module is required here, at load time: KOReader prepends the plugin root to
--- package.path only while it dofile()s this file (frontend/pluginloader.lua:242, :269-270),
--- so a later require could resolve to another plugin's same-named file (:283-286).
+-- KoPanda: the owner's own interface for KOReader. KOReader makes an instance of this plugin in every file
+-- manager and every reader; in a file manager it puts the home over the file browser when it is shown, and
+-- closes it when the file browser closes. Every KoPanda module is required here, at load time: KOReader
+-- prepends the plugin root to package.path only while it dofile()s this file (frontend/pluginloader.lua:242,
+-- :269-270), so a later require could resolve to another plugin's same-named file (:283-286).
 local AuthorsScreen = require("authors_screen")
 local DispatchBridge = require("dispatch_bridge")
 local Dispatcher = require("dispatcher")
@@ -193,10 +191,9 @@ function KoPanda:showHome(started)
     Home.show(opts)
 end
 
--- Shows the library with opts (Library.show's) unless the file manager has gone since the show
--- was asked for; the caller has closed the home. The library takes no part in the boot guard,
--- which only the process's first show, the home's, arms. A library that fails to build is logged
--- by Library.show and the file browser left at the folder (opts.dir, else the library's root).
+-- Shows the library with opts (Library.show's) unless the file manager has gone since the show was asked
+-- for; the caller has closed the home. The library takes no part in the boot guard, which only the home's
+-- first show arms. A library that fails to build is logged and the file browser left at the folder.
 function KoPanda:showLibrary(opts)
     local FileManager = package.loaded["apps/filemanager/filemanager"]
     local fm = FileManager and FileManager.instance
@@ -212,10 +209,9 @@ end
 -- The Series and Authors windows, by the screen a return names.
 local SHELVES = { series = SeriesScreen, authors = AuthorsScreen }
 
--- Shows a window of cls (SeriesScreen or AuthorsScreen) with opts (its show's) unless the file
--- manager has gone since the show was asked for; the window's show closes the home. As the
--- library's, it takes no part in the boot guard; one that fails to build is logged by the chrome
--- and the file browser left up.
+-- Shows a window of cls (SeriesScreen or AuthorsScreen) with opts unless the file manager has gone since
+-- the show was asked for; the window's show closes the home. Like the library's, it takes no part in the
+-- boot guard; one that fails to build is logged by the chrome and the file browser left up.
 local function show_shelf(cls, opts)
     local FileManager = package.loaded["apps/filemanager/filemanager"]
     if FileManager and FileManager.instance then
@@ -233,9 +229,8 @@ function KoPanda:showAuthors(opts)
     show_shelf(AuthorsScreen, opts)
 end
 
--- The window a book's close returns to and the fields it is built with: the library at the folder
--- and page a book was opened from (cover-grid D4), or the Series or Authors window at the view and
--- page (series-and-authors D7); nil with no return recorded.
+-- The window a book's close returns to and the fields it is built with: the library at the folder and page
+-- a book was opened from, or the Series or Authors window at the view and page; nil with no return recorded.
 local function return_window()
     local back = Library.return_to
     if back then
@@ -248,12 +243,11 @@ local function return_window()
     return nil
 end
 
--- The return after a book opened from a chrome window, cleared as it is taken: the window built and
--- shown now, inside the file manager's Show, so it reads the progress, status and counts the reader
--- saved on its close (frontend/apps/reader/readerui.lua:893, UIManager:close's FlushSettings,
--- frontend/ui/uimanager.lua:298), at the screen's size after showFiles reset the rotation
--- (frontend/apps/filemanager/filemanager.lua:1322). A view gone by then shows the list
--- (series-and-authors D23), which the window's build does itself.
+-- The return after a book opened from a chrome window, cleared as it is taken: the window built and shown
+-- now, inside the file manager's Show, so it reads the progress, status and counts the reader saved on its
+-- close (frontend/apps/reader/readerui.lua:893, UIManager:close's FlushSettings, frontend/ui/uimanager.lua:298),
+-- at the screen's size after showFiles reset the rotation (frontend/apps/filemanager/filemanager.lua:1322).
+-- A view gone by then shows the list, which the window's build does itself.
 local function show_return(kopanda)
     local cls, fields = return_window()
     Library.return_to, LibraryChrome.return_to = nil, nil
@@ -265,18 +259,14 @@ local function show_return(kopanda)
     end
 end
 
--- The file manager's Show. With a return to a chrome window recorded, that window is built and goes
--- up at once, as the home does after a close.
--- Otherwise, right after a book closed, the home is built and goes up at once, inside Show, so
--- it is on the stack before the next repaint even when the close ran from a scheduled task, and
--- nothing of start_with follows a book close. The UI loop runs due tasks and then repaints
--- (frontend/ui/uimanager.lua:1537-1564); a nextTick from inside a task, as when the end-of-book
--- action closes the book (frontend/apps/reader/modules/readerstatus.lua:144-148), is due at a
--- fresh time.now() (uimanager.lua:416), later than the _now that pass runs tasks to (:1082,
--- :1090), so it would land after that repaint and the file browser would be painted first.
--- Otherwise the home goes up from the next tick, so it lands over whatever KOReader shows
--- synchronously after showFiles (history, favorites, folder shortcuts). Returns nothing: a true
--- return would stop Show reaching later modules.
+-- The file manager's Show. With a return to a chrome window recorded, that window goes up at once. Otherwise,
+-- right after a book closed, the home goes up at once, inside Show, so it is on the stack before the next
+-- repaint: the UI loop runs due tasks and then repaints (frontend/ui/uimanager.lua:1537-1564), and a nextTick
+-- from inside a task, as when the end-of-book action closes the book
+-- (frontend/apps/reader/modules/readerstatus.lua:144-148), is due at a fresh time.now() (uimanager.lua:416),
+-- later than the _now that pass runs tasks to (:1082, :1090), so it would land after the repaint. Otherwise
+-- the home goes up from the next tick, over whatever KOReader shows synchronously after showFiles. Returns
+-- nothing: a true return would stop Show reaching later modules.
 function KoPanda:onShow()
     if self.refused then
         return
@@ -310,17 +300,13 @@ function KoPanda:onShow()
     end
 end
 
--- The closing book's file and the TOC title of its current page, into the state for the
--- featured book. The document is still open: CloseDocument is broadcast before closeDocument()
--- (frontend/apps/reader/readerui.lua:887, :891). The lookup fills an unfilled TOC itself and is
--- "" when no entry covers the page (frontend/apps/reader/modules/readertoc.lua:383-384,
--- :446-453, :476-480). A failed lookup is logged and records the chapter as "", so the book
--- keeps no chapter from an earlier close. Both keys go in one write, skipped when they hold
--- these values already, since each write fsyncs on the way to the home. A failed write is logged
--- and the chapter cleared, so an old chapter never pairs with a new file. A failed state write,
--- this one or any other key's, can leave State's in-memory copy ahead of the file, so
--- State.unsaved() holds off the skip until a write succeeds: the skip compares against the last
--- successful state write.
+-- The closing book's file and the TOC title of its current page, into the state for the featured book. The
+-- document is still open: CloseDocument is broadcast before closeDocument() (frontend/apps/reader/readerui.lua:887,
+-- :891). The lookup fills an unfilled TOC itself and is "" when no entry covers the page
+-- (frontend/apps/reader/modules/readertoc.lua:383-384, :446-453, :476-480). A failed lookup or write is
+-- logged and the chapter cleared, so an old chapter never pairs with a new file. Both keys go in one write,
+-- skipped when they hold these values already (each write fsyncs); State.unsaved() holds the skip off after
+-- a failed state write, which can leave State's copy ahead of the file.
 local function record_chapter(ui)
     if not (ui and ui.document and ui.toc) then
         return
@@ -346,14 +332,12 @@ local function record_chapter(ui)
     end
 end
 
--- A reader closing its book: record its chapter for the featured book, then, unless the book was
--- opened from a chrome window (the library, Series or Authors), whose return the open recorded and
--- the file manager's Show takes, mark the close, so that Show builds the home at once. Neither is
--- built here: the window or the home is built at that Show, after the reader saved its sidecar
--- (UIManager:close's FlushSettings, frontend/apps/reader/readerui.lua:893) and Statistics, whose
--- handler runs after this one, flushed the closing session. A reload or switch sets tearing_down
--- before closing (readerui.lua:952, :973; reader to reader, :600, :609) and marks nothing; exit
--- marks the close, but no Show follows. Returns nothing, so the event reaches later modules.
+-- A reader closing its book: record its chapter for the featured book, then, unless the book was opened from
+-- a chrome window whose return the open recorded, mark the close, so Show builds the home at once. Neither
+-- is built here: the window or the home is built at Show, after the reader saved its sidecar (UIManager:close's
+-- FlushSettings, frontend/apps/reader/readerui.lua:893) and Statistics flushed the closing session. A reload
+-- or switch sets tearing_down before closing (readerui.lua:952, :973; reader to reader, :600, :609) and marks
+-- nothing. Returns nothing, so the event reaches later modules.
 function KoPanda:onCloseDocument()
     if self.refused then
         return
@@ -371,10 +355,9 @@ function KoPanda:onCloseDocument()
     Home.just_closed = true
 end
 
--- The file manager closing (quit, or a book opening) takes the home and the chrome window with it;
--- a window left on the stack would keep KOReader from quitting. A return recorded by an open that
--- never closed the file manager (a refused file) is dropped once the window it names has closed,
--- so a book opened from anywhere else closes to the home.
+-- The file manager closing (quit, or a book opening) takes the home and the chrome window with it; a window
+-- left on the stack would keep KOReader from quitting. A return recorded by an open that never closed the
+-- file manager is dropped once the window it names has closed.
 function KoPanda:onCloseWidget()
     if self.refused then
         return
@@ -451,10 +434,9 @@ function KoPanda:addToMainMenu(menu_items)
             end),
         }
     end
-    -- The quick-settings tab, just before Main in both menus (docs/plans/2026-10-18-menu-quick-
-    -- settings-design.md): the shape of the reader's file-browser tab (readermenu.lua:65-74). Its
-    -- callback closes the menu, then opens the sheet; in the reader nothing lies beneath the
-    -- sheet to close on failure, so the page stays.
+    -- The quick-settings tab, just before Main in both menus: the shape of the reader's file-browser tab
+    -- (readermenu.lua:65-74). Its callback closes the menu, then opens the sheet; in the reader nothing lies
+    -- beneath the sheet to close on failure, so the page stays.
     local app = self.in_fm and "filemanager" or "reader"
     if MenuEntries.tab(app .. "_quick_settings") then
         menu_items.kopanda_quick_settings = {

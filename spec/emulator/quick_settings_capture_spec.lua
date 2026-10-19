@@ -1,8 +1,7 @@
--- The quick-settings sheet's paint budget (quick-settings C12): the sheet opened over the populated
--- home, in Diner on the Colorsoft, at 2026-10-13 08:42 in Chicago, with the battery stubbed at 84.
--- The home fixture patch freezes the clock and writes the scenario; the quick-settings patch opens
--- the sheet once the home settles; the capture is taken on the sheet's own settled signal. The look
--- is passed empty so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
+-- The quick-settings sheet's paint budget: the sheet opened over the populated home, in Diner on the Colorsoft, at
+-- 2026-10-13 08:42 in Chicago, with the battery stubbed at 84. The home fixture patch freezes the clock and writes
+-- the scenario; the quick-settings patch opens the sheet once the home settles; the capture is taken on the sheet's
+-- own settled signal. The look is passed empty so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
 describe("the quick-settings sheet", function()
     require("commonrequire")
     local driver = require("emulator.driver")

@@ -1,13 +1,9 @@
--- The library: a window on the chrome (library_chrome.lua) showing one folder a page at a time
--- (cover-grid "The window"). The chrome holds its show and close, its paint and settled signal, its
--- pager, nav bar and gesture route and the events that keep it current; what it draws is
--- library_view.lua's, what a folder shows and the memory library_order.lua's, and its covers
--- library_covers.lua's. Here are what a tap on each of its own parts does, where it was left, the
--- return a book's open records and the root check its paint runs (context-menu D6).
--- Module state: Library.shown, the library on screen or nil, the chrome's slot; Library.return_to,
--- { dir, page } a book was opened from, which the next file manager's show returns to (D4), or nil,
--- in memory only; Library.on_picker(kind), run on a tap on the "sort" or "status" picker, a hook
--- library_pickers.lua fills (here a no-op).
+-- The library: a window on the chrome (library_chrome.lua) showing one folder a page at a time. What it
+-- draws is library_view.lua's, what a folder shows and the memory library_order.lua's, its covers
+-- library_covers.lua's. Here: what a tap on each of its own parts does, where it was left, the return a
+-- book's open records and the root check its paint runs. State: Library.shown, the chrome's slot;
+-- Library.return_to, { dir, page } a book was opened from, which the next file manager's show returns to,
+-- in memory only; Library.on_picker(kind), a hook library_pickers.lua fills (here a no-op).
 local Helpers = require("helpers")
 local LibraryChrome = require("library_chrome")
 local LibraryCovers = require("library_covers")
@@ -45,10 +41,9 @@ function Library:view()
     return self.dir or LibraryView.root()
 end
 
--- dir at page, from the library's kept listing (LibraryView.build's): the folder shown is not listed
--- again on a page turn, a picker choice or a repaint in another variant or size; its kept listing
--- is sliced, or filtered and sorted again under a choice made since; another folder is listed. The
--- build keeps root, KOReader's home folder it was built under, for the root check.
+-- dir at page, from the library's kept listing (LibraryView.build's): the folder shown is not listed again
+-- on a page turn, a picker choice or a repaint in another variant or size. The build keeps root, the home
+-- folder it was built under, for the root check.
 function Library:build(dir, page)
     local root = LibraryView.root()
     local built = LibraryView.build(dir, page, self.kept)
@@ -137,10 +132,9 @@ function Library:refresh()
     LibraryChrome.Window.refresh(self)
 end
 
--- The page's covers, while this is the library shown. The check in flight goes on: a request that
--- starts a new batch replaces it, and its arrivals rebuild only the tiles the page shows. After
--- Library:refresh_covers, the folder's books in its place, so the re-list's paint makes the one
--- request, whatever the order of the ticks.
+-- The page's covers, while this is the library shown. The check in flight goes on: a request that starts a
+-- new batch replaces it. After Library:refresh_covers, the folder's books in its place, so the re-list's
+-- paint makes the one request.
 function Library:request_covers()
     local records = self.covers_records
     self.covers_records = nil
@@ -149,10 +143,9 @@ function Library:request_covers()
     end, records)
 end
 
--- Refresh covers (context-menu D9): re-lists the folder at its page, the kept listing dropped, and,
--- from the tick after that paint, asks for the covers of records (the folder's books with a file,
--- their covers forgotten) in one request in place of the page's. A build that fails leaves the page
--- and asks nothing.
+-- Refresh covers: re-lists the folder at its page, the kept listing dropped, and from the tick after that
+-- paint asks for the covers of records (the folder's books with a file, their covers forgotten) in one
+-- request in place of the page's. A build that fails leaves the page and asks nothing.
 function Library:refresh_covers(records)
     self.covers_records = records
     self.kept = nil
@@ -162,11 +155,9 @@ function Library:refresh_covers(records)
     end
 end
 
--- After cwngsync downloaded record's book over its placeholder (cwng-placeholders D17): Refresh
--- covers' re-list for that book alone, so the page is rebuilt where it is with the book read again
--- and its cover asked for after the paint; the re-list stands for the one cwngsync's broadcasts
--- left due (the chrome's refresh_soon), which is dropped. Nothing while the library isn't the
--- window shown.
+-- After cwngsync downloaded record's book over its placeholder: Refresh covers' re-list for that book
+-- alone, so the page is rebuilt with the book read again and its cover asked for after the paint; the
+-- re-list stands for the one cwngsync's broadcasts left due (the chrome's refresh_soon), which is dropped.
 function Library:downloaded(record)
     if Library.shown ~= self then
         return
@@ -175,10 +166,9 @@ function Library:downloaded(record)
     self.stale = nil
 end
 
--- The root check (context-menu D6): when KOReader's home folder is no longer the one the library
--- was built under (Set as library root's OK, whose ConfirmBox's close marks the library dirty),
--- the library shows the new root at page 1, recorded as where it was left. A build that fails
--- leaves the library where it was, and where it was left unchanged.
+-- The root check: when KOReader's home folder is no longer the one the library was built under (Set as
+-- library root's OK, whose ConfirmBox's close marks the library dirty), the library shows the new root at
+-- page 1, recorded as where it was left. A build that fails leaves the library where it was.
 local function check_root(library)
     local root = LibraryView.root()
     if LibraryView.same_dir(root, library.root) then
@@ -200,7 +190,7 @@ function Library:paintTo(bb, x, y)
     LibraryChrome.Window.paintTo(self, bb, x, y)
 end
 
--- The folder and page the library was left at are stored (D11).
+-- The folder and page the library was left at are stored.
 function Library:closing()
     local ok, err = pcall(LibraryOrder.leave, self.dir, self.page)
     if not ok then

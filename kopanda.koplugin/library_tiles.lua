@@ -1,13 +1,8 @@
--- The library grid's tiles: the grid's geometry (three columns inside the side padding, the cover
--- box, a tile's height), the header's and the pager's heights the two-row fit adds up, and one
--- widget per book or folder, from the look's library tokens (Main.dc.html:30-83, GridA.dc.html:30-83
--- under .tiller/design/2026-10-16-kopanda-library-screens/). Lengths are board pixels, scaled by
--- ctx.screen. The library's text does not follow text_size (cover-grid D12), so every line here
--- is set in a ctx without one, as NavBar.height sets its labels.
---
--- A tile is the cover box's width and the geometry's height whatever it holds (D13): the cover,
--- the strip's slot, one title line. What reaches past the box, the cover's shadow and Diner's
--- overhanging badge, is painted past it into the gaps.
+-- The library grid's tiles: the grid's geometry (three columns inside the side padding, the cover box, a
+-- tile's height), the header's and the pager's heights the two-row fit adds up, and one widget per book or
+-- folder, from the look's library tokens. Lengths are board pixels scaled by ctx.screen; the text ignores
+-- text_size, as NavBar.height's labels do. A tile is the cover box's width and the geometry's height
+-- whatever it holds; what reaches past the box (the cover's shadow, Diner's badge) is painted into the gaps.
 local FeaturedCover = require("featured_cover")
 local Featured = require("widgets/featured")
 local Geom = require("ui/geometry")
@@ -35,17 +30,15 @@ local function add(box, child, x, y)
     return child
 end
 
--- ctx without its text size (D12).
+-- ctx without its text size.
 local function fixed(ctx)
     return { look = ctx.look, variant = ctx.variant, screen = ctx.screen }
 end
 
--- The grid across a screen screen_w wide under ctx, in device pixels: columns, three { x, w } from
--- the screen's left edge inside grid.side at grid.column_gap (Layout.columns), the cover box's
--- cover_w (the narrowest column's width) and cover_h, the strip's strip_y and strip_h and the
--- title's title_y from a tile's top, and height, the tile's: cover, strip gap, strip, title gap
--- and one tile_title line. cover_h, in board pixels, is the cover box's height where it is not the
--- grid's, as the one-author grid's (shelf.author_grid.cover_h). Raises when the title's face won't load.
+-- The grid across a screen screen_w wide under ctx, in device pixels: columns (three { x, w } inside
+-- grid.side at grid.column_gap, Layout.columns), cover_w (the narrowest column's), cover_h, the strip's
+-- strip_y and strip_h, the title's title_y from a tile's top, and the tile's height. cover_h, in board
+-- pixels, overrides the grid's (shelf.author_grid.cover_h). Raises when the title's face won't load.
 function LibraryTiles.geometry(screen_w, ctx, cover_h)
     ctx = fixed(ctx)
     local scale = Paint.scaler(ctx)
@@ -155,9 +148,8 @@ local function badge(ctx)
     }
 end
 
--- A chip on the cover's foot, at most max_w wide: text in part inside the library's not_downloaded
--- padding and outline colour at outline_width (board pixels), on fill_color. "Up next" takes the
--- shelf's up_next fill and outline width (series-and-authors D5).
+-- A chip on the cover's foot, at most max_w wide: text in part inside the library's not_downloaded padding
+-- and outline colour at outline_width (board pixels), on fill_color. "Up next" takes the shelf's fill.
 local function chip(text, part, fill_color, outline_width, max_w, ctx)
     local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local tokens = ctx.look.library.not_downloaded
@@ -200,10 +192,9 @@ local function badge_place(box, ctx)
     }
 end
 
--- Adds the caller's label, "Up next" (series-and-authors D19), as a chip on the cover's foot when
--- given, and for a book not downloaded (badged) the badge at its place (badge_place), its one sign
--- (tweaks/badge-only-not-downloaded). The chip sits left of the badge's place: beside it where both
--- are on the foot, at the placeholder's padding where the badge is on top.
+-- Adds the caller's label, "Up next", as a chip on the cover's foot when given, and for a book not
+-- downloaded (badged) the badge at its place, its one sign. The chip sits left of the badge's place:
+-- beside it where both are on the foot, at the placeholder's padding where the badge is on top.
 local function foot(tile, box, ctx, badged, label)
     local scale = Paint.scaler(ctx)
     local look = ctx.look
@@ -242,14 +233,11 @@ function LibraryTiles.overhang(box, ctx)
     }
 end
 
--- A book's tile for record ({ path, title, authors }) at progress (Books.progress's { status,
--- percent }) in box, a LibraryTiles.geometry: its cover or placeholder, the strip when the book
--- has a file and a percent and is neither new nor complete, its title in one line, and for a book
--- not downloaded (a record with no path, or cwngsync's placeholder, cwng-placeholders D1) the
--- download badge on the cover, its one sign (tweaks/badge-only-not-downloaded). chip, optional, is
--- { label }, a chip drawn on the cover's foot, beside the badge on a book not downloaded (the
--- one-author grid's "Up next", series-and-authors D5, D19). The tile keeps cover, strip, title,
--- badge and chip, the last three nil where not drawn.
+-- A book's tile for record ({ path, title, authors }) at progress (Books.progress's result) in box, a
+-- LibraryTiles.geometry: its cover or placeholder, the strip when the book has a file and a percent and is
+-- neither new nor complete, its title in one line, and the download badge for a book not downloaded (no
+-- path, or cwngsync's placeholder). chip, optional { label }, is drawn beside the badge. The tile keeps
+-- cover, strip, title, badge and chip, the last three nil where not drawn.
 function LibraryTiles.book(record, progress, box, ctx, chip_spec)
     ctx = fixed(ctx)
     local look = ctx.look
@@ -270,11 +258,10 @@ function LibraryTiles.book(record, progress, box, ctx, chip_spec)
 end
 
 
--- A folder's tile for folder ({ name, path }) with counts ({ books, reading }, the books directly
--- in it and how many of them are reading) in box: the cover box filled in folder.fill_color with
--- its edge and the cover's shadow and radius, the folder icon at its top, the book count and the
--- reading count, when not zero, at its foot, then the strip's empty slot and the folder's name in
--- the title's place. The tile keeps cover and title.
+-- A folder's tile for folder ({ name, path }) with counts ({ books, reading }) in box: the cover box filled
+-- in folder.fill_color with its edge and the cover's shadow and radius, the folder icon at its top, the
+-- book count and the reading count (when not zero) at its foot, and the folder's name in the title's
+-- place. The tile keeps cover and title.
 function LibraryTiles.folder(folder, counts, box, ctx)
     ctx = fixed(ctx)
     local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)

@@ -1,17 +1,13 @@
--- The records against the real CoverBrowser (book-model C7, the record parts): its
--- bookinfomanager loaded through PluginLoader as on a device, its real database under the
--- scratch KO_HOME, and the three fixture EPUBs as the library root. Before extraction each record
--- is its file name with its cover missing; after extractBookInfo each has the manifest's title
--- and author with its cover cached; setBookInfoProperties' authors, series and fractional index
--- reach the record; deleteBookInfo makes its cover missing again. This is the check that the
--- stubs the other book specs use answer as CoverBrowser does.
+-- The records against the real CoverBrowser: its bookinfomanager loaded through PluginLoader as on a device, its real
+-- database under the scratch KO_HOME, and the three fixture EPUBs as the library root. Before extraction each record
+-- is its file name with its cover missing; after extractBookInfo each has the manifest's title and author with its
+-- cover cached; deleteBookInfo makes its cover missing again. This checks that the stubs the other book specs use
+-- answer as CoverBrowser does.
 -- luacheck: read globals disable_plugins load_plugin
 
--- bookinfomanager requires KOReader's sqlite binding, which ffi.cdef()s its constants when it
--- loads (common/lua-ljsqlite3/init.lua:109), so a Busted process can load it once at most
--- (spec/emulator/driver.lua:90-92). Busted insulates each spec file and drops what it required;
--- expose keeps the binding loaded for the files after this one, which bin/check runs in sorted
--- order (--sort-files), spec/unit/reading_stats_spec.lua among them.
+-- bookinfomanager requires KOReader's sqlite binding, which ffi.cdef()s its constants when it loads
+-- (common/lua-ljsqlite3/init.lua:109), so a Busted process can load it once at most (spec/emulator/driver.lua:90-92).
+-- expose keeps the binding loaded for the files after this one, which bin/check runs in sorted order (--sort-files).
 expose("KOReader's sqlite binding, loaded once for the process", function()
     require("lua-ljsqlite3/init")
 end)

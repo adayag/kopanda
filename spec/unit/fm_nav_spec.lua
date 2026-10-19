@@ -1,6 +1,5 @@
--- FmNav (the nav bar's C4 and C5): the upgrade tripwire on KOReader's unwrapped
--- FileManager.setupLayout, then the wrapper's layout, taps, re-layouts, night mode, refusal,
--- single install, settled signal and failure paths on a real file manager.
+-- FmNav: the upgrade tripwire on KOReader's unwrapped FileManager.setupLayout, then the wrapper's layout, taps,
+-- re-layouts, night mode, refusal, single install, settled signal and failure paths on a real file manager.
 describe("the file browser's nav bar", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
@@ -209,7 +208,7 @@ describe("the file browser's nav bar", function()
     end)
 
     describe("a tap or hold in the bar", function()
-        -- cover-grid C8: Library's entry shows the library over the file browser.
+        -- Library's entry shows the library over the file browser.
         it("runs Library's entry, which shows the library over the file browser", function()
             local fixture = require("library_fixture")
             fixture.install({ [fixture.ROOT] = { books = fixture.books(2) } })
@@ -254,7 +253,7 @@ describe("the file browser's nav bar", function()
             }, runs)
         end)
 
-        -- series-and-authors C8, D17.
+        -- Authors' entry shows the Authors list over the file browser.
         it("shows the Authors list over the file browser from Authors", function()
             local fixture = require("shelf_fixture")
             fixture.install({ fixture.book("Earthsea", { authors = { "Ursula K. Le Guin" } }) })
@@ -295,9 +294,8 @@ describe("the file browser's nav bar", function()
             assert.same({}, zone)
         end)
 
-        -- bars/quick-settings' C8: over the bare file browser, the Settings hold opens the
-        -- quick-settings sheet, whose Night cell (its sixth area, quick_settings_spec.lua, "the
-        -- areas") then toggles night mode.
+        -- Over the bare file browser, the Settings hold opens the quick-settings sheet, whose Night cell (its sixth
+        -- area, quick_settings_spec.lua, "the areas") then toggles night mode.
         it("opens the quick-settings sheet over the file manager on a hold on Settings", function()
             local night_mode = rawget(Screen, "night_mode")
             local had, setting = G_reader_settings:has("night_mode"), G_reader_settings:readSetting("night_mode")

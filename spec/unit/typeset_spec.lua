@@ -18,11 +18,10 @@ describe("typeset", function()
         return { look = Looks.get(look_id), variant = "day", text_size = "medium", screen = Screen }
     end
 
-    -- TextWidget:paintTo measures first (frontend/ui/widget/textwidget.lua:339), but a patch that
-    -- replaces it may not: Bookends' bookends_textwidget_patch.lua draws a colour fgcolor's
-    -- glyphs from _xtext straight away, so a line painted before it was ever measured has
-    -- nothing to shape. A line from Typeset.line is measured when it is made.
-    -- Every TextWidget a line holds: the line itself, or each character of a tracked group.
+    -- TextWidget:paintTo measures first (frontend/ui/widget/textwidget.lua:339), but a patch that replaces it may
+    -- not: Bookends' bookends_textwidget_patch.lua draws a colour fgcolor's glyphs from _xtext straight away, so a
+    -- line painted before it was ever measured has nothing to shape. A line from Typeset.line is measured when it is
+    -- made. Every TextWidget a line holds: the line itself, or each character of a tracked group.
     local function text_widgets(line)
         if getmetatable(line) == TextWidget then
             return { line }

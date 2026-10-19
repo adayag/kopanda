@@ -1,4 +1,4 @@
--- The row operations edit layout applies (device menus' C6): each returns new rows the rows
+-- The row operations edit layout applies: each returns new rows the rows
 -- validator takes and leaves its input unchanged, or nil and the note it refuses with; the
 -- unused widgets, the reset, the labels, the shares and the captions.
 describe("RowsEdit", function()

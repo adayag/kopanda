@@ -1,4 +1,4 @@
--- What a launcher entry resolves to and what a tap on it runs (C3): the fixed tables match the
+-- What a launcher entry resolves to and what a tap on it runs: the fixed tables match the
 -- schema's targets, each kind resolves ready, off or unavailable by what the device holds, and
 -- run opens the screen, dispatches the action or shows a note, never writing the settings file.
 describe("LauncherEntries", function()
@@ -317,7 +317,7 @@ describe("LauncherEntries", function()
             assert.matches("spec: execute failed", err)
         end)
 
-        -- cover-grid C8: the library, no longer the file browser's home folder.
+        -- The library, no longer the file browser's home folder.
         it("opens the Library: closes the home and shows the library at its root's first page", function()
             local fixture = require("library_fixture")
             fixture.install({ [fixture.ROOT] = { books = fixture.books(2) } })
@@ -406,7 +406,7 @@ describe("LauncherEntries", function()
             return shown
         end
 
-        -- series-and-authors C8, D17: the screens in place of the notes.
+        -- The screens in place of the notes.
         it("give Series and Authors none: each shows its window", function()
             require("shelf_fixture").install({})
             fm_with_home()
