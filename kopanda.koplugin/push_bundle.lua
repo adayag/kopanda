@@ -8,7 +8,8 @@ local PushBundle = {}
 
 local FORMAT = 1
 local READ_BYTES = 65536
-local REQUIRED = { "settings.lua", "plugin/main.lua", "plugin/_meta.lua" }
+local REQUIRED = { "plugin/main.lua", "plugin/_meta.lua" }
+local SETTINGS = "settings.lua"
 
 -- A path the device writes under download/: relative, with / separators, every segment made
 -- of letters, digits, '.', '_' and '-', and none empty, '.' or '..'.
@@ -49,7 +50,9 @@ local function is_size(value)
     return type(value) == "number" and value >= 0 and value < math.huge and value == math.floor(value)
 end
 
--- The manifest as plain tables when doc is a valid manifest for profile_id, or nil and why.
+-- The manifest as plain tables when doc is a valid manifest for profile_id, or nil and why. A
+-- manifest whose settings is false is plugin-only (a release's): it names no settings.lua, and
+-- the result's settings is false. Any other value, or none (the studio's), carries settings.lua.
 function PushBundle.check_manifest(doc, profile_id)
     if not is_object(doc) then
         return nil, "the manifest is not a JSON object"
@@ -81,7 +84,7 @@ function PushBundle.check_manifest(doc, profile_id)
         if not PushBundle.safe_path(path) then
             return nil, "the manifest names an unsafe path: " .. path
         end
-        if path ~= "settings.lua" and path:sub(1, 7) ~= "plugin/" then
+        if path ~= SETTINGS and path:sub(1, 7) ~= "plugin/" then
             return nil, "the manifest names " .. path .. ", neither settings.lua nor under plugin/"
         end
         -- The Kindle's storage is FAT, where names that differ only in case are one file.
@@ -96,12 +99,19 @@ function PushBundle.check_manifest(doc, profile_id)
         previous = path
         files[#files + 1] = { path = path, size = file.size, sha256 = file.sha256 }
     end
+    local settings = doc.settings ~= false
+    if not settings and seen[SETTINGS] then
+        return nil, "a plugin-only manifest names " .. SETTINGS
+    end
     for _, path in ipairs(REQUIRED) do
         if not seen[path] or seen[path] ~= path then
             return nil, "the manifest has no " .. path
         end
     end
-    return { format = FORMAT, profile = doc.profile, hash = doc.hash, files = files }
+    if settings and seen[SETTINGS] ~= SETTINGS then
+        return nil, "the manifest has no " .. SETTINGS
+    end
+    return { format = FORMAT, profile = doc.profile, hash = doc.hash, settings = settings, files = files }
 end
 
 -- Feeds the file at path to update in blocks; false when it can't be opened.

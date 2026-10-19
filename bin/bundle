@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Writes a release's assets: <out_dir>/manifest.json and <out_dir>/kopanda.koplugin.zip, the
+# plugin with _meta.lua's version set to <X.Y.Z> in the bundled copy only. The release workflow
+# runs it; plugin_dir defaults to the repo's kopanda.koplugin.
+#
+#   bin/bundle <X.Y.Z> <out_dir> [plugin_dir]
+#
+# Exit 0 on success, 1 when the bundle cannot be built or written, 2 for bad arguments or when the
+# script refuses to run.
+set -euo pipefail
+
+KOPANDA_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
+
+if [[ ! -d "$KOPANDA_ROOT/studio/node_modules" ]]; then
+    printf '%s\n' "bin/bundle: no studio/node_modules" "    npm ci --prefix studio" >&2
+    exit 2
+fi
+if ! command -v zip >/dev/null 2>&1; then
+    printf '%s\n' "bin/bundle: zip is not on PATH" >&2
+    exit 2
+fi
+if ! command -v npm >/dev/null 2>&1; then
+    printf '%s\n' "bin/bundle: npm is not on PATH" >&2
+    exit 2
+fi
+
+# npm runs the script in studio/, so a path given relative to the caller's directory is made absolute.
+args=()
+for arg in "$@"; do
+    if [[ ${#args[@]} -gt 0 && -n "$arg" && "$arg" != /* ]]; then
+        arg="$PWD/$arg"
+    fi
+    args+=("$arg")
+done
+
+exec npm --prefix "$KOPANDA_ROOT/studio" run --silent bundle -- ${args[@]+"${args[@]}"}

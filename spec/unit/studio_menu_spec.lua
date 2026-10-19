@@ -1,8 +1,10 @@
 -- Tools › KoPanda › Studio (C7), through the plugin harness: in the normal and the refused menu
 -- before Swatches; its address and profile kept in state.lua as studio_address and
 -- studio_profile; Pull enabled once both are set, confirming, pulling behind a painted note and
--- offering the restart. socket.http's request, NetworkMgr:runWhenConnected and PushPull.pull are
--- stubbed; no test touches the network or stages a pull.
+-- offering the restart; Check for update comparing GitHub's latest release with the installed
+-- version and installing a newer one the same way. socket.http's request,
+-- NetworkMgr:runWhenConnected, PushPull.pull and ReleaseSource are stubbed; no test touches the
+-- network or stages a pull.
 describe("the Studio menu", function()
     local harness = require("plugin_harness")
     local ButtonDialog = require("ui/widget/buttondialog")
@@ -14,7 +16,7 @@ describe("the Studio menu", function()
     local PluginLoader = require("pluginloader")
     local UIManager = require("ui/uimanager")
     local http = require("socket.http")
-    local State, PushPull
+    local State, PushPull, ReleaseSource
     -- What the UI did, in order; the requests made; the stubs, reverted after each test.
     local events, requests, stubs
 
@@ -56,13 +58,13 @@ describe("the Studio menu", function()
         error("no Tools › KoPanda › Studio")
     end
 
-    -- The Address, Profile and Pull items of the file manager's menu.
+    -- The Address, Profile, Pull and Check for update items of the file manager's menu.
     local function studio_items()
         local fm = harness.show_fm()
         fm.menu:onShowMenu()
         local items = studio_of(fm.menu).sub_item_table
         fm.menu:onCloseFileManagerMenu()
-        return items[1], items[2], items[3]
+        return items[1], items[2], items[3], items[4]
     end
 
     -- A stand-in for the TouchMenu a callback gets.
@@ -128,6 +130,7 @@ describe("the Studio menu", function()
         harness.load()
         State = require("state")
         PushPull = require("push_pull")
+        ReleaseSource = require("release_source")
         events, requests = {}, {}
         local show, close, repaint = UIManager.show, UIManager.close, UIManager.forceRePaint
         stubs = {
@@ -191,6 +194,15 @@ describe("the Studio menu", function()
             local fm = harness.show_fm()
             fm.menu:onShowMenu()
             assert.same({ "Studio", "Swatches" }, texts(kopanda_item(fm.menu.tab_item_table).sub_item_table))
+        end)
+
+        it("ends with Check for update", function()
+            local fm = harness.show_fm()
+            fm.menu:onShowMenu()
+            local items = studio_of(fm.menu).sub_item_table
+            assert.equals(4, #items)
+            assert.equals("Check for update", items[4].text)
+            assert.is_falsy(items[4].keep_menu_open)
         end)
 
         it("holds Address, Profile and Pull, read afresh each time the menu draws", function()
@@ -407,6 +419,150 @@ describe("the Studio menu", function()
             confirm.ok_callback()
             assert.same({ "simpleui" }, pulls[1].disable)
             assert.is_true(has(events, "pull"))
+        end)
+    end)
+
+    describe("Check for update", function()
+        local pulls, sources, installed_from
+        local RELEASE = {
+            version = "0.2.0",
+            notes = "- home: a quieter clock",
+            manifest_url = "https://github.com/adayag/kopanda/releases/download/v0.2.0/manifest.json",
+            zip_url = "https://github.com/adayag/kopanda/releases/download/v0.2.0/kopanda.koplugin.zip",
+        }
+        local function source_of() end
+
+        -- ReleaseSource answers latest with latest and why, and installed with installed;
+        -- PushPull.pull answers ok and message.
+        local function stub_release(latest, why, installed, ok, message)
+            pulls, sources, installed_from = {}, {}, {}
+            stubs.latest = stub(ReleaseSource, "latest", function()
+                events[#events + 1] = "latest"
+                return latest, why
+            end)
+            stubs.installed = stub(ReleaseSource, "installed_version", function(plugin_dir)
+                installed_from[#installed_from + 1] = plugin_dir
+                return installed or "0.1.3"
+            end)
+            stubs.source = stub(ReleaseSource, "source", function(release)
+                sources[#sources + 1] = release
+                return source_of
+            end)
+            stubs.pull = stub(PushPull, "pull", function(opts)
+                pulls[#pulls + 1] = opts
+                events[#events + 1] = "pull"
+                return ok, message
+            end)
+        end
+
+        local function check()
+            local _, _, _, update = studio_items()
+            tap(update)
+        end
+
+        -- The events of a check: connected, then latest behind its painted note, then rest.
+        local function checked(...)
+            return { "connected", "show Checking for an update…", "paint", "latest", "close Checking for an update…",
+                ... }
+        end
+
+        it("says the installed version is the latest when no release is newer", function()
+            for _, latest in ipairs{ "0.1.3", "0.1.2" } do
+                stub_release({ version = latest, notes = "", manifest_url = "m", zip_url = "z" }, nil, "0.1.3")
+                events = {}
+                check()
+                assert.same(checked("show KoPanda 0.1.3 is the latest."), events)
+                assert.same({ harness.plugin_dir }, installed_from)
+                assert.is_nil(shown(ConfirmBox))
+                assert.same({}, pulls)
+                UIManager:close(harness.top())
+                for _, name in ipairs{ "latest", "installed", "source", "pull" } do
+                    stubs[name]:revert()
+                end
+            end
+        end)
+
+        it("shows why when the latest release can't be read, installing nothing", function()
+            stub_release(nil, "kopanda-test: No release yet.")
+            check()
+            assert.same(checked("show kopanda-test: No release yet."), events)
+            assert.is_nil(shown(ConfirmBox))
+            assert.same({}, pulls)
+        end)
+
+        it("offers a newer release with its notes, installs it behind a painted note and offers the restart",
+            function()
+            stub_release(RELEASE, nil, "0.1.3", true)
+            check()
+            local confirm = assert(shown(ConfirmBox), "no install confirm")
+            assert.truthy(confirm.text:find("0.2.0", 1, true))
+            assert.truthy(confirm.text:find("0.1.3", 1, true))
+            assert.truthy(confirm.text:find("- home: a quieter clock", 1, true))
+            assert.equals("Install", confirm.ok_text)
+            assert.same({}, pulls)
+            confirm.ok_callback()
+            UIManager:close(confirm)
+            assert.same(checked("connected", "show Installing v0.2.0…", "paint", "pull", "close Installing v0.2.0…"),
+                events)
+            assert.same({ RELEASE }, sources)
+            assert.same({ {
+                profile = "release",
+                source = source_of,
+                data_dir = DataStorage:getDataDir(),
+                plugin_dir = harness.plugin_dir,
+            } }, pulls)
+            local restart = assert(shown(ConfirmBox), "no restart offer")
+            assert.equals("Restart to apply v0.2.0?", restart.text)
+            assert.equals("Restart", restart.ok_text)
+            assert.equals("Later", restart.cancel_text)
+            restart.ok_callback()
+            assert.equals("broadcast onRestart", events[#events])
+        end)
+
+        it("installs a release over a version that isn't one", function()
+            stub_release(RELEASE, nil, "0.0.0-dev", true)
+            check()
+            assert.truthy(assert(shown(ConfirmBox)).text:find("0.2.0", 1, true))
+        end)
+
+        it("installs nothing when the confirm is cancelled", function()
+            stub_release(RELEASE, nil, "0.1.3", true)
+            check()
+            assert(shown(ConfirmBox)).cancel_callback()
+            assert.same({}, pulls)
+            assert.same(checked(), events)
+        end)
+
+        it("shows a failed install's message", function()
+            stub_release(RELEASE, nil, "0.1.3", nil, "kopanda-test: The release is refused.")
+            check()
+            local confirm = assert(shown(ConfirmBox))
+            confirm.ok_callback()
+            UIManager:close(confirm)
+            assert.equals("show kopanda-test: The release is refused.", events[#events])
+            assert.is_nil(shown(ConfirmBox))
+        end)
+
+        it("shows a refusal before the confirm, installing nothing", function()
+            stub_release(RELEASE, nil, "0.1.3", true)
+            local lfs = require("libs/libkoreader-lfs")
+            local push = DataStorage:getSettingsDir() .. "/kopanda/push"
+            local made = lfs.mkdir(DataStorage:getSettingsDir() .. "/kopanda")
+            lfs.mkdir(push)
+            local f = assert(io.open(push .. "/probation.lua", "wb"))
+            f:write("return {}\n")
+            f:close()
+            finally(function()
+                os.remove(push .. "/probation.lua")
+                lfs.rmdir(push)
+                if made then
+                    lfs.rmdir(DataStorage:getSettingsDir() .. "/kopanda")
+                end
+            end)
+            check()
+            assert.is_nil(shown(ConfirmBox))
+            assert.same({}, pulls)
+            assert.truthy(events[#events]:find("probation", 1, true))
         end)
     end)
 end)

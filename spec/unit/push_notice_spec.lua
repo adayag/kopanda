@@ -345,5 +345,57 @@ describe("the pull's probation and notices", function()
                 assert.same({ case[2] }, notices())
             end)
         end
+
+        -- A release is the plugin only, from GitHub: the running plugin's version is named, and
+        -- the settings are never mentioned.
+        local releases = {
+            {
+                { ok = true, kind = "applied", profile = "release", hash = HASH },
+                "KoPanda updated to 0.2.0 from GitHub.",
+            },
+            {
+                { ok = false, kind = "rolled_back", profile = "release", hash = HASH },
+                "KoPanda's home didn't draw after the update from GitHub, so the previous KoPanda is back.",
+            },
+            {
+                { ok = false, kind = "failed", profile = "release", message = "the stage has no plugin/main.lua" },
+                "KoPanda couldn't apply the update from GitHub: the stage has no plugin/main.lua. Nothing changed.",
+            },
+        }
+        for _, case in ipairs(releases) do
+            it("says " .. case[1].kind .. " for a release", function()
+                local ReleaseSource = require("release_source")
+                local asked = {}
+                local installed = stub(ReleaseSource, "installed_version", function(plugin_dir)
+                    asked[#asked + 1] = plugin_dir
+                    return "0.2.0"
+                end)
+                finally(function()
+                    installed:revert()
+                end)
+                put_result(case[1])
+                harness.show_fm()
+                harness.tick(4)
+                assert.same({ case[2] }, notices())
+                if case[1].kind == "applied" then
+                    assert.same({ harness.plugin_dir }, asked)
+                end
+            end)
+        end
+
+        it("names the running plugin's version for a release a refused plugin reports", function()
+            local ReleaseSource = require("release_source")
+            local installed = stub(ReleaseSource, "installed_version", function()
+                return "0.2.0"
+            end)
+            finally(function()
+                installed:revert()
+            end)
+            table.insert(PluginLoader.enabled_plugins, { name = "simpleui" })
+            put_result{ ok = true, kind = "applied", profile = "release", hash = HASH }
+            harness.show_fm()
+            harness.tick(2)
+            assert.truthy(table.concat(notices(), "\n"):find("KoPanda updated to 0.2.0 from GitHub.", 1, true))
+        end)
     end)
 end)

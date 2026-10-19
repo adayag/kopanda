@@ -1,0 +1,78 @@
+name: release
+
+# A push to main that changes the plugin is a release: the patch after the highest vX.Y.Z tag
+# (v0.1.0 when there is none), built by bin/bundle and published with its two assets. The tag is
+# created by `gh release create`, so it appears only once the bundle is built.
+on:
+  push:
+    branches: [main]
+    paths: ["kopanda.koplugin/**"]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: studio/package-lock.json
+
+      - run: npm ci --prefix studio
+
+      # luacheck 1.2.0 (the image v1 pins) runs `luacheck .` at the repo's root, so .luacheckrc applies.
+      - name: luacheck
+        uses: lunarmodules/luacheck@v1
+
+      - name: Typecheck and lint the studio
+        run: npm --prefix studio run typecheck && npm --prefix studio run lint
+
+      - name: Next version
+        id: version
+        run: |
+          tags="$(git tag --list 'v*' --sort=-version:refname)"
+          last="$(grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' <<< "$tags" | head -n 1 || true)"
+          if [[ -z "$last" ]]; then
+            next=v0.1.0
+          else
+            IFS=. read -r major minor patch <<< "${last#v}"
+            next="v$major.$minor.$((patch + 1))"
+          fi
+          echo "last=$last" >> "$GITHUB_OUTPUT"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+
+      - name: Build the bundle
+        run: bin/bundle "${NEXT#v}" release
+        env:
+          NEXT: ${{ steps.version.outputs.next }}
+
+      - name: Publish the release
+        run: |
+          # The device shows the notes in a confirm box: one line for the first release, else at most
+          # 30 plugin commits since the last tag and a count of the rest.
+          if [[ -z "$LAST" ]]; then
+            echo "First release." > notes.md
+          else
+            git log --format='- %s' --max-count=30 "$LAST..HEAD" -- kopanda.koplugin > notes.md
+            total="$(git rev-list --count "$LAST..HEAD" -- kopanda.koplugin)"
+            if (( total > 30 )); then
+              echo "… and $((total - 30)) more" >> notes.md
+            fi
+          fi
+          gh release create "$NEXT" --target "$GITHUB_SHA" --title "$NEXT" --notes-file notes.md \
+            release/manifest.json release/kopanda.koplugin.zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LAST: ${{ steps.version.outputs.last }}
+          NEXT: ${{ steps.version.outputs.next }}

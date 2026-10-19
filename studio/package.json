@@ -15,6 +15,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "check": "npm run typecheck && npm run lint && npm test",
+    "bundle": "tsx src/server/release-bundle.ts",
     "schema": "../bin/schema-json > src/schema.json.tmp && mv src/schema.json.tmp src/schema.json || { s=$?; rm -f src/schema.json.tmp; exit $s; }",
     "catalog": "../bin/catalog-json > src/catalog.json.tmp && mv src/catalog.json.tmp src/catalog.json || { s=$?; rm -f src/catalog.json.tmp; exit $s; }"
   },

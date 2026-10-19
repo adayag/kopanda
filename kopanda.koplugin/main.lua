@@ -67,6 +67,7 @@ require("push_pull")
 require("quick_settings")
 require("quotes")
 require("reading_stats")
+require("release_source")
 require("rows_edit")
 require("schema")
 require("settings")
@@ -107,7 +108,7 @@ function KoPanda:init()
             if in_fm then
                 Guards.notify_once()
                 -- A pull's result shows here in place of the home, unless it is on probation.
-                PushNotice.on_refused()
+                PushNotice.on_refused(self.path)
             end
             self.ui.menu:registerToMainMenu(self)
             return
@@ -178,7 +179,7 @@ function KoPanda:showHome(started)
         opts.finished = function(painted)
             State.set("boot_pending", false)
             if painted then
-                PushNotice.on_painted()
+                PushNotice.on_painted(self.path)
             end
         end
     end

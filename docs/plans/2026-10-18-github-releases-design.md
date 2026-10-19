@@ -34,6 +34,10 @@ Decisions taken with the owner:
 - A release is plugin-only. It carries no settings; the device's `settings/kopanda/settings.lua`
   is left alone. The bundle manifest gains `settings = false` for this; the studio's bundles
   keep carrying settings.
+- Decided 2026-10-19 alongside: no device profiles or registration. Code reaches the device
+  through releases; settings live on the device and are edited in its menus; the studio is a
+  development tool (form, preview, fit check, catalog). Its profile list and LAN pull remain only
+  as the way to try a working-tree build on the device.
 - Manual check only. Out of scope: automatic checks, pre-release channels, downgrade, signing
   beyond the manifest's sha256 per file.
 - No emulator in CI. The goldens stay local and run before a push, as now. CI runs luacheck and
@@ -69,7 +73,12 @@ version; the device treats an unparsable version as older than any release.
   nil and why. `compare(a, b)` orders dotted versions; an unparsable one is older than any.
   `download(release, paths)` fetches the manifest and the zip into the pull's download folder,
   following GitHub's redirect to its download host, unpacks the zip with `ffi/archiver`, and
-  returns the manifest. `push_pull.lua`'s verify and stage then run unchanged.
+  returns the manifest. `push_pull.lua`'s verify and stage then run unchanged. Every `https://`
+  request verifies the server: its chain against KOReader's CA bundle (`data/ca-bundle.crt`)
+  and its certificate's DNS names against the host, following one redirect at most; each file
+  is then checked by size and sha256 against the manifest fetched that way, and the zip's files
+  are read into memory and written by the plugin, never extracted through libarchive's disk
+  writer.
 - **`push_bundle.lua`**: `check_manifest` accepts `settings = false`, under which `settings.lua`
   is not required; `verify_files` is unchanged.
 - **`push_apply.lua`**: a stage whose manifest has `settings = false` leaves the settings file

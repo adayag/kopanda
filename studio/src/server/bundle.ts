@@ -27,6 +27,12 @@ export interface Manifest {
   files: ManifestFile[];
 }
 
+/** A release's manifest: the plugin's files only, so the device leaves its settings file alone. */
+export interface ReleaseManifest extends Manifest {
+  profile: "release";
+  settings: false;
+}
+
 export interface Bundle {
   manifestFor(profileId: string): Manifest;
   files: Tree;
@@ -35,6 +41,9 @@ export interface Bundle {
 
 /** What a plugin entry's name, and so each segment of a bundle path, must match; the device refuses the rest. */
 const SEGMENT = /^[A-Za-z0-9._-]+$/;
+
+/** `_meta.lua`'s version line: the key at the start of its line, then its quoted value. */
+const VERSION_LINE = /^([ \t]*version[ \t]*=[ \t]*)"[^"\n]*"/gm;
 
 /** A settings file's header naming an absolute path ending in the settings file's name. */
 const ABSOLUTE_HEADER = /^-- \/.+\/settings\/kopanda\/settings\.lua$/;
@@ -100,6 +109,14 @@ async function readFolder(dir: string, prefix: string, tree: Tree): Promise<void
   }
 }
 
+/** The tree's files as a manifest lists them, in the hash's order. */
+function listFiles(tree: Tree): ManifestFile[] {
+  return sortedPaths(tree).map((rel) => {
+    const bytes = tree.get(rel) as Uint8Array;
+    return { path: rel, size: bytes.length, sha256: sha256Hex(bytes) };
+  });
+}
+
 /**
  * The settings file as served: a first line naming an absolute path ending in the settings file's
  * name becomes HEADER, so no Mac path leaves the machine; any other first line is kept.
@@ -133,13 +150,47 @@ export async function buildBundle({
   await readFolder(pluginDir, "plugin/", files);
   files.set("settings.lua", await readSettings(settingsPath));
   const hash = hashTree(files);
-  const listed = sortedPaths(files).map((rel) => {
-    const bytes = files.get(rel) as Uint8Array;
-    return { path: rel, size: bytes.length, sha256: sha256Hex(bytes) };
-  });
+  const listed = listFiles(files);
   return {
     files,
     hash,
     manifestFor: (profile) => ({ format: 1, profile, hash, files: listed.map((file) => ({ ...file })) }),
+  };
+}
+
+/**
+ * A release's bundle: every regular file under the plugin folder as `plugin/<rel>`, no settings
+ * file, and `plugin/_meta.lua`'s one version line set to `version`. The repo's file is not touched.
+ */
+export async function buildReleaseBundle({
+  pluginDir = DEFAULT_PLUGIN_DIR,
+  version,
+}: {
+  pluginDir?: string;
+  version: string;
+}): Promise<{ files: Tree; hash: string; manifest(): ReleaseManifest }> {
+  const files: Tree = new Map();
+  await readFolder(pluginDir, "plugin/", files);
+  const meta = files.get("plugin/_meta.lua");
+  if (meta === undefined) throw new Error("cannot build a release: the plugin has no plugin/_meta.lua");
+  const source = Buffer.from(meta).toString("utf8");
+  const lines = source.match(VERSION_LINE) ?? [];
+  if (lines.length !== 1) {
+    throw new Error(`cannot build a release: plugin/_meta.lua has ${lines.length} version lines, not one`);
+  }
+  const rewritten = source.replace(VERSION_LINE, (_line, key: string) => `${key}"${version}"`);
+  files.set("plugin/_meta.lua", Buffer.from(rewritten, "utf8"));
+  const hash = hashTree(files);
+  const listed = listFiles(files);
+  return {
+    files,
+    hash,
+    manifest: () => ({
+      format: 1,
+      profile: "release",
+      hash,
+      settings: false,
+      files: listed.map((file) => ({ ...file })),
+    }),
   };
 }

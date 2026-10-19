@@ -1,5 +1,6 @@
--- The pull: fetches a profile's bundle from the studio over the LAN, verifies it, stages it in
--- settings/kopanda/push/ and arms the apply patch (push_apply.lua) for the next start.
+-- The pull: fetches a profile's bundle from the studio over the LAN, or a bundle from another
+-- source (release_source.lua's), verifies it, stages it in settings/kopanda/push/ and arms the
+-- apply patch (push_apply.lua) for the next start.
 -- Synchronous and UI-free; each call returns its value or true, or nil, a message and, for a
 -- request the studio answered with another status, that status.
 local PushApply = require("push_apply")
@@ -25,20 +26,82 @@ function PushPull.base_url(address)
     return base
 end
 
+-- True when host is one of names, a certificate's subjectAltName DNS names, ignoring case: equal,
+-- or a wildcard *.<two or more labels> standing for exactly one label of host.
+function PushPull.host_matches(host, names)
+    host = tostring(host):lower()
+    for _, name in ipairs(names or {}) do
+        name = tostring(name):lower()
+        if name == host then
+            return true
+        end
+        local suffix = name:match("^%*(%.[^*]+%.[^*]+)$")
+        if suffix and #host > #suffix and host:sub(-#suffix) == suffix
+                and not host:sub(1, -#suffix - 1):find(".", 1, true) then
+            return true
+        end
+    end
+    return false
+end
+
+-- A create function for socket.http that connects through LuaSec (common/ssl/https.lua:74-102)
+-- verifying the server: its chain against KOReader's CA bundle (certifi's, installed as
+-- data/ca-bundle.crt under KOReader's folder, its working directory, by
+-- base/thirdparty/certifi/CMakeLists.txt:4), then its certificate's DNS names against the host.
+-- LuaSec's own default is verify = "none" (:29-33). A connect that fails returns nil and why, so
+-- socket.http closes the connection and the request returns them (common/socket/http.lua:130).
+local function verified_tcp()
+    local make = require("ssl.https").tcp{
+        protocol = "any",
+        options = { "all", "no_sslv2", "no_sslv3", "no_tlsv1" },
+        verify = "peer",
+        cafile = "data/ca-bundle.crt",
+    }
+    return function()
+        local conn = make()
+        local connect = conn.connect
+        function conn.connect(self, host, port)
+            connect(self, host, port)
+            local cert = self.sock:getpeercertificate()
+            local extensions = cert and cert:extensions()
+            local alt_names = extensions and extensions["2.5.29.17"]
+            if not PushPull.host_matches(host, alt_names and alt_names.dNSName) then
+                return nil, "the server's certificate is not for " .. tostring(host)
+            end
+            return 1
+        end
+        return conn
+    end
+end
+
 -- GETs url into the sink make_sink returns, which is made once the timeouts are set: socketutil's
 -- sinks read the total timeout when they are made (frontend/socketutil.lua:98-140). socket.http
 -- is looked up here, not at load, so a spec can stub it, and the timeouts are reset on every
--- path, a raising request included. Returns true, or nil, why and the status.
-local function request(url, make_sink)
+-- path, a raising request included. extra holds headers sent beside Accept-Encoding. An https://
+-- URL connects through verified_tcp. A redirect keeps a create only when the request's own scheme
+-- field is the new URL's (common/socket/http.lua:336-338, :349), and the next hop's table has
+-- none, so an https request follows one redirect at most (:317-319): a second would connect
+-- unverified. Returns true, or nil, why and the status.
+local function request(url, make_sink, extra)
     local http = require("socket.http")
+    local headers = { ["Accept-Encoding"] = "identity" }
+    for name, value in pairs(extra or {}) do
+        headers[name] = value
+    end
     socketutil:set_timeout(socketutil.FILE_BLOCK_TIMEOUT, socketutil.FILE_TOTAL_TIMEOUT)
-    local ok, result, code, headers = pcall(function()
-        return http.request{
+    local ok, result, code, reply_headers = pcall(function()
+        local request_table = {
             url = url,
             method = "GET",
-            headers = { ["Accept-Encoding"] = "identity" },
+            headers = headers,
             sink = make_sink(),
         }
+        if url:match("^https://") then
+            request_table.scheme = "https"
+            request_table.create = verified_tcp()
+            request_table.maxredirects = 1
+        end
+        return http.request(request_table)
     end)
     socketutil:reset_timeout()
     if not ok then
@@ -47,7 +110,7 @@ local function request(url, make_sink)
     if result == nil then
         return nil, tostring(code)
     end
-    if headers == nil then
+    if reply_headers == nil then
         return nil, "no response: " .. tostring(code)
     end
     if code ~= 200 then
@@ -56,13 +119,13 @@ local function request(url, make_sink)
     return true
 end
 
--- The decoded JSON body of url, or nil, why and the status. A refusal's own { error } is added
--- to why.
-local function fetch_json(url)
+-- The decoded JSON body of url, requested with the extra headers in headers, or nil, why and the
+-- status. A refusal's own { error } is added to why.
+function PushPull.fetch_json(url, headers)
     local chunks = {}
     local ok, why, code = request(url, function()
         return socketutil.table_sink(chunks)
-    end)
+    end, headers)
     local decoded_ok, decoded = pcall(rapidjson.decode, table.concat(chunks))
     if not decoded_ok then
         decoded = nil
@@ -80,7 +143,7 @@ local function fetch_json(url)
 end
 
 -- GETs url into the file at path. Returns true, or nil, why and the status.
-local function fetch_file(url, path)
+function PushPull.fetch_file(url, path)
     local handle, open_err = io.open(path, "wb")
     if not handle then
         return nil, "could not write it: " .. tostring(open_err)
@@ -97,7 +160,7 @@ end
 
 -- The studio's profiles as { id, name } in its order, or nil and why.
 function PushPull.fetch_profiles(address)
-    local doc, why = fetch_json(PushPull.base_url(address) .. "/api/push/profiles")
+    local doc, why = PushPull.fetch_json(PushPull.base_url(address) .. "/api/push/profiles")
     if not doc then
         return nil, "Couldn't get the studio's profiles: " .. why
     end
@@ -132,9 +195,10 @@ local function present(value)
     return type(value) == "string" and util.trim(value) ~= ""
 end
 
--- Why a pull with opts can't start, before anything is fetched or written; nil when it can.
+-- Why a pull with opts can't start, before anything is fetched or written; nil when it can. A
+-- pull from opts.source needs no address.
 function PushPull.refusal(opts)
-    if not present(opts.address) then
+    if opts.source == nil and not present(opts.address) then
         return "Set the studio's address first."
     end
     if not present(opts.profile) then
@@ -168,7 +232,7 @@ end
 -- Fetches the manifest and every file into download/ and verifies them. Returns the manifest,
 -- or nil, why and the status.
 local function download(paths, base, profile)
-    local doc, why, code = fetch_json(base .. "/api/push/" .. profile .. "/manifest")
+    local doc, why, code = PushPull.fetch_json(base .. "/api/push/" .. profile .. "/manifest")
     if doc == nil then
         return nil, "Couldn't get " .. profile .. "'s manifest from the studio: " .. why .. ".", code
     end
@@ -184,7 +248,7 @@ local function download(paths, base, profile)
             return nil, "Couldn't download " .. file.path .. ": " .. tostring(make_err) .. "."
         end
         local url = base .. "/api/push/" .. profile .. "/files/" .. manifest.hash .. "/" .. file.path
-        local ok, file_why, file_code = fetch_file(url, target)
+        local ok, file_why, file_code = PushPull.fetch_file(url, target)
         if file_code == 409 then
             return nil, profile .. " changed in the studio during the pull; pull again.", 409
         end
@@ -199,6 +263,13 @@ local function download(paths, base, profile)
     return manifest
 end
 
+-- The studio at base as a pull's source for profile.
+local function studio_source(base, profile)
+    return function(paths)
+        return download(paths, base, profile)
+    end
+end
+
 -- Replaces any earlier stage with download/: the record removed first, written last.
 local function stage(paths, manifest, opts)
     must(PushApply._purge(paths.staged_record))
@@ -211,6 +282,7 @@ local function stage(paths, manifest, opts)
         format = FORMAT,
         profile = manifest.profile,
         hash = manifest.hash,
+        settings = manifest.settings,
         plugin_dir = PushPull.absolute_plugin_dir(opts.plugin_dir),
         disable = opts.disable or {},
         at = os.date("!%Y-%m-%dT%H:%M:%SZ"),
@@ -219,19 +291,22 @@ end
 
 -- Pulls opts.profile from the studio at opts.address into opts.data_dir for the plugin running
 -- from opts.plugin_dir, recording opts.disable (runtime plugin names) to be disabled at the
--- apply. Returns true once staged and armed; nil, a message and maybe a status otherwise, with
--- download/ purged and an earlier stage as it was unless staging itself failed.
+-- apply. opts.source, when given, replaces the studio: a function(paths) that fills
+-- paths.download (PushApply.paths) with a bundle it has verified and returns its manifest
+-- (PushBundle.check_manifest's, for opts.profile), or nil, why and maybe a status. Returns true
+-- once staged and armed; nil, a message and maybe a status otherwise, with download/ purged and
+-- an earlier stage as it was unless staging itself failed.
 function PushPull.pull(opts)
     local refused = PushPull.refusal(opts)
     if refused then
         return nil, refused
     end
     local paths = PushApply.paths(opts.data_dir)
-    local profile = opts.profile
+    local source = opts.source or studio_source(PushPull.base_url(opts.address), opts.profile)
     local ok, result, why, code = pcall(function()
         must(PushApply._purge(paths.download))
         must(util.makePath(paths.download))
-        local manifest, download_why, download_code = download(paths, PushPull.base_url(opts.address), profile)
+        local manifest, download_why, download_code = source(paths)
         if not manifest then
             return nil, download_why, download_code
         end

@@ -134,7 +134,9 @@ describe("the push bundle", function()
     describe("check_manifest", function()
         it("accepts a minimal manifest and returns plain tables", function()
             local checked = assert(PushBundle.check_manifest(manifest(), "vector"))
-            assert.same(manifest(), checked)
+            local expected = manifest()
+            expected.settings = true
+            assert.same(expected, checked)
         end)
 
         it("refuses JSON that is not an object", function()
@@ -220,6 +222,44 @@ describe("the push bundle", function()
                 local doc = manifest()
                 local missing = table.remove(doc.files, i)
                 assert.truthy(refused(doc):find(missing.path, 1, true))
+            end
+        end)
+
+        -- A release's manifest: the plugin's files only.
+        local function plugin_only(fields)
+            local doc = manifest(fields)
+            table.remove(doc.files, 3)
+            doc.settings = false
+            return doc
+        end
+
+        it("accepts a plugin-only manifest without settings.lua and says so", function()
+            local checked = assert(PushBundle.check_manifest(plugin_only(), "vector"))
+            assert.is_false(checked.settings)
+            assert.same({ "plugin/_meta.lua", "plugin/main.lua" }, { checked.files[1].path, checked.files[2].path })
+            assert.equals(2, #checked.files)
+        end)
+
+        it("refuses a plugin-only manifest that names settings.lua", function()
+            local doc = manifest{ settings = false }
+            assert.equals("a plugin-only manifest names settings.lua", refused(doc))
+        end)
+
+        it("still requires plugin/main.lua and plugin/_meta.lua in a plugin-only manifest", function()
+            for i = 1, 2 do
+                local doc = plugin_only()
+                local missing = table.remove(doc.files, i)
+                assert.truthy(refused(doc):find(missing.path, 1, true))
+            end
+        end)
+
+        it("takes any settings value but false for a manifest that carries settings", function()
+            for _, value in ipairs{ true, 0, "false", {} } do
+                local checked = assert(PushBundle.check_manifest(manifest{ settings = value }, "vector"))
+                assert.is_true(checked.settings)
+                local doc = plugin_only()
+                doc.settings = value
+                assert.truthy(refused(doc):find("settings.lua", 1, true))
             end
         end)
 

@@ -8,8 +8,9 @@ reader.lua:25-27, :39-40), and it runs `run` on the data folder. `require` calls
 the module name and `dofile` with nothing, which is how the two uses are told apart.
 
 `run` applies a stage the pull left in settings/kopanda/push/ (the plugin folder swapped, the
-settings file replaced, the other shells disabled), puts the install on probation until its home
-paints, and restores the previous install at the next start when it never did. Every outcome
+settings file replaced unless the stage is plugin-only, a release's, whose record's settings is
+false, the other shells disabled), puts the install on probation until its home paints, and
+restores the previous install at the next start when it never did. Every outcome
 goes to push/result.lua, which the plugin shows; an early patch's error is only logged by
 KOReader (frontend/userpatch.lua:89-100), so none escapes this file.
 
@@ -232,6 +233,12 @@ local function valid_plugin_dir(plugin_dir)
         and plugin_dir:sub(-#PLUGIN_SUFFIX) == PLUGIN_SUFFIX
 end
 
+-- Whether the stage's record carries the settings file: true unless its settings is false. A
+-- record from before plugin-only stages has no settings and carries it.
+local function carries_settings(record)
+    return record.settings ~= false
+end
+
 -- The stage's record when the stage is complete, or nil, why and whatever record loaded.
 local function check_stage(paths)
     local record, err = read_record(paths.staged_record)
@@ -256,7 +263,14 @@ local function check_stage(paths)
             return nil, "the stage's disable list holds a non-name", record
         end
     end
-    for _, rel in ipairs{ "plugin/main.lua", "plugin/_meta.lua", "settings.lua" } do
+    if record.settings ~= nil and type(record.settings) ~= "boolean" then
+        return nil, "the stage's settings is not true or false", record
+    end
+    local required = { "plugin/main.lua", "plugin/_meta.lua" }
+    if carries_settings(record) then
+        required[#required + 1] = "settings.lua"
+    end
+    for _, rel in ipairs(required) do
         if mode(paths.staged .. "/" .. rel) ~= "file" then
             return nil, "the stage has no " .. rel, record
         end
@@ -328,6 +342,10 @@ local function restore(paths, kind, message)
         end
     end)
     try("the settings file", function()
+        -- A plugin-only apply never touched it, nor its .old.
+        if record.settings_untouched then
+            return
+        end
         if exists(rollback_settings) then
             remove_if_present(paths.settings)
             PushApply._move(rollback_settings, paths.settings)
@@ -388,6 +406,7 @@ local function apply(paths)
     local rollback_settings = paths.rollback .. "/settings.lua"
     local staged_settings = paths.staged .. "/settings.lua"
     local had_settings = exists(paths.settings)
+    local settings = carries_settings(record)
 
     -- 2-4. The rollback set and probation; nothing has moved yet.
     local prepared, prepare_err = pcall(function()
@@ -400,6 +419,7 @@ local function apply(paths)
             plugin_dir = plugin_dir,
             had_settings = had_settings,
             had_settings_old = exists(paths.settings .. ".old"),
+            settings_untouched = not settings,
             had_plugins_disabled = plugins_disabled ~= nil,
             plugins_disabled = plugins_disabled,
         })
@@ -428,6 +448,9 @@ local function apply(paths)
             PushApply._move(paths.staged .. "/plugin", plugin_dir)
         end)
         step("could not replace the settings file", function()
+            if not settings then
+                return
+            end
             if had_settings then
                 PushApply._move(paths.settings, rollback_settings)
             end

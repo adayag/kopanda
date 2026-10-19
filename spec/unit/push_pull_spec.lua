@@ -102,6 +102,9 @@ describe("the pull", function()
                 url = request.url,
                 method = request.method,
                 headers = request.headers,
+                scheme = request.scheme,
+                create = request.create,
+                maxredirects = request.maxredirects,
                 block = socketutil.block_timeout,
                 total = socketutil.total_timeout,
             }
@@ -506,6 +509,194 @@ describe("the pull", function()
             assert.is_nil(mode(p.staged_record))
             assert.is_nil(mode(p.download))
             assert.is_nil(mode(p.patches .. "/1-kopanda-apply.lua"))
+        end)
+    end)
+
+    describe("from a source", function()
+        local PushBundle = require("push_bundle")
+
+        -- A source that writes a plugin-only bundle into download/ and returns its checked
+        -- manifest, recording the paths it was given.
+        local given
+        local function plugin_only_source(paths)
+            given = paths
+            sh("mkdir -p '" .. paths.download .. "/plugin'")
+            write(paths.download .. "/plugin/_meta.lua", "return { version = \"0.2.0\" }\n")
+            write(paths.download .. "/plugin/main.lua", "-- released\n")
+            local files = {}
+            for _, rel in ipairs{ "plugin/_meta.lua", "plugin/main.lua" } do
+                local path = paths.download .. "/" .. rel
+                files[#files + 1] = { path = rel, size = lfs.attributes(path, "size"),
+                    sha256 = PushBundle.sha256_file(path) }
+            end
+            return assert(PushBundle.check_manifest({ format = 1, profile = "release", settings = false,
+                hash = PushBundle.bundle_hash(paths.download, files), files = files }, "release"))
+        end
+
+        it("stages what the source downloaded, with no address and no request", function()
+            given = nil
+            assert.is_true(pull{ address = false, profile = "release", source = plugin_only_source })
+            assert.same(p, given)
+            assert.same({}, requests)
+            assert.same({
+                plugin = "<dir>",
+                ["plugin/_meta.lua"] = "return { version = \"0.2.0\" }\n",
+                ["plugin/main.lua"] = "-- released\n",
+            }, tree(p.staged))
+            assert.is_nil(mode(p.download))
+            local record = dofile(p.staged_record)
+            assert.equals("release", record.profile)
+            assert.is_false(record.settings)
+            assert.equals(read(apply_source), read(p.patches .. "/1-kopanda-apply.lua"))
+        end)
+
+        it("records that a studio bundle carries its settings", function()
+            assert.is_true(pull())
+            assert.is_true(dofile(p.staged_record).settings)
+        end)
+
+        it("still needs a profile", function()
+            local ok, message = pull{ address = false, profile = false, source = plugin_only_source }
+            assert.is_nil(ok)
+            assert.equals("Choose a profile first.", message)
+        end)
+
+        it("returns the source's refusal, download/ purged and an earlier stage untouched", function()
+            local before = good_stage()
+            local ok, message, code = pull{ profile = "release", source = function(paths)
+                write(paths.download .. "/partial", "x")
+                return nil, "kopanda-test: no release yet", 404
+            end }
+            assert.is_nil(ok)
+            assert.equals("kopanda-test: no release yet", message)
+            assert.equals(404, code)
+            assert.is_nil(mode(p.download))
+            assert.same(before, stage_snapshot())
+        end)
+
+        it("says the pull failed when the source raises, download/ purged", function()
+            local ok, message = pull{ profile = "release", source = function()
+                error("kopanda-test: source raised", 0)
+            end }
+            assert.is_nil(ok)
+            assert.equals("The pull failed: kopanda-test: source raised.", message)
+            assert.is_nil(mode(p.download))
+            assert.is_nil(mode(p.staged_record))
+        end)
+    end)
+
+    describe("fetch_json and fetch_file", function()
+        it("decode an answer and send extra headers beside Accept-Encoding", function()
+            routes["https://example.test/doc"] = { 200, '{"a":1}' }
+            assert.same({ a = 1 }, PushPull.fetch_json("https://example.test/doc", { ["User-Agent"] = "ua" }))
+            assert.equals("ua", requests[1].headers["User-Agent"])
+            assert.equals("identity", requests[1].headers["Accept-Encoding"])
+        end)
+
+        it("write an answer to a file, or say why with the status", function()
+            routes["https://example.test/file"] = { 200, "bytes" }
+            routes["https://example.test/gone"] = { 404, "{}" }
+            sh("mkdir -p '" .. dir .. "/out'")
+            assert.is_true(PushPull.fetch_file("https://example.test/file", dir .. "/out/f"))
+            assert.equals("bytes", read(dir .. "/out/f"))
+            local ok, why, code = PushPull.fetch_file("https://example.test/gone", dir .. "/out/g")
+            assert.is_nil(ok)
+            assert.equals("HTTP status 404", why)
+            assert.equals(404, code)
+        end)
+    end)
+
+    describe("an https request", function()
+        local https = require("ssl.https")
+
+        it("connects through a verifying connection, kept across one redirect at most", function()
+            routes["https://example.test/doc"] = { 200, '{"a":1}' }
+            assert.same({ a = 1 }, PushPull.fetch_json("https://example.test/doc"))
+            assert.equals("https", requests[1].scheme)
+            assert.is_function(requests[1].create)
+            assert.equals(1, requests[1].maxredirects)
+        end)
+
+        it("is not made for an http URL, which LuaSocket connects as before", function()
+            assert.truthy(PushPull.fetch_json(BASE .. "/api/push/vector/manifest"))
+            assert.is_nil(requests[1].scheme)
+            assert.is_nil(requests[1].create)
+            assert.is_nil(requests[1].maxredirects)
+        end)
+
+        -- LuaSec's tcp stubbed: the parameters it gets, and a connection whose handshake gives a
+        -- certificate naming names.
+        local function connection(names)
+            local params
+            local tcp_stub = stub(https, "tcp", function(given)
+                params = given
+                return function()
+                    local conn = { sock = {} }
+                    function conn.sock.getpeercertificate()
+                        return { extensions = function()
+                            return { ["2.5.29.17"] = { dNSName = names } }
+                        end }
+                    end
+                    function conn.connect(_, host, port)
+                        conn.connected = { host, port }
+                        return 1
+                    end
+                    return conn
+                end
+            end)
+            routes["https://example.test/doc"] = { 200, "{}" }
+            PushPull.fetch_json("https://example.test/doc")
+            tcp_stub:revert()
+            return requests[#requests].create(), params
+        end
+
+        it("checks the chain against KOReader's CA bundle, TLS 1.1 and up", function()
+            local _, params = connection{ "github.com" }
+            assert.equals("peer", params.verify)
+            assert.equals("data/ca-bundle.crt", params.cafile)
+            assert.equals("any", params.protocol)
+            assert.same({ "all", "no_sslv2", "no_sslv3", "no_tlsv1" }, params.options)
+        end)
+
+        it("takes a certificate that names the host", function()
+            local conn = connection{ "www.github.com", "*.github.com" }
+            assert.equals(1, conn:connect("api.github.com", 443))
+            assert.same({ "api.github.com", 443 }, conn.connected)
+        end)
+
+        it("refuses a certificate that doesn't name the host", function()
+            local conn = connection{ "github.com", "www.github.com" }
+            local ok, why = conn:connect("api.github.com", 443)
+            assert.is_nil(ok)
+            assert.truthy(why:find("api.github.com", 1, true))
+            assert.is_nil(connection{}:connect("github.com", 443))
+            assert.is_nil(connection(nil):connect("github.com", 443))
+        end)
+    end)
+
+    describe("host_matches", function()
+        it("takes a name equal to the host, ignoring case", function()
+            assert.is_true(PushPull.host_matches("github.com", { "github.com" }))
+            assert.is_true(PushPull.host_matches("GitHub.com", { "github.COM" }))
+            assert.is_true(PushPull.host_matches("api.github.com", { "github.com", "api.github.com" }))
+        end)
+
+        it("takes a wildcard for exactly one label", function()
+            assert.is_true(PushPull.host_matches("api.github.com", { "*.github.com" }))
+            assert.is_true(PushPull.host_matches("release-assets.githubusercontent.com",
+                { "*.githubusercontent.com" }))
+            assert.is_true(PushPull.host_matches("API.GitHub.com", { "*.github.COM" }))
+        end)
+
+        it("refuses every other host", function()
+            assert.is_false(PushPull.host_matches("github.com", { "*.github.com" }))
+            assert.is_false(PushPull.host_matches("evilgithub.com", { "github.com", "*.github.com" }))
+            assert.is_false(PushPull.host_matches("a.b.github.com", { "*.github.com" }))
+            assert.is_false(PushPull.host_matches("github.com.evil", { "github.com", "*.github.com" }))
+            assert.is_false(PushPull.host_matches("github.com", { "*.com" }))
+            assert.is_false(PushPull.host_matches("github.com", { "*" }))
+            assert.is_false(PushPull.host_matches("api.github.com", { "a*.github.com" }))
+            assert.is_false(PushPull.host_matches("github.com", {}))
         end)
     end)
 

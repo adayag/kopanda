@@ -384,6 +384,96 @@ Upgrading KOReader walks this list.
   and the stage without following links, and write `staged.lua` as the patch's records are
   written; KoPanda's own seams, not KOReader internals.
 
+### Check for update: GitHub's releases, `ssl.https` through `socket.http`, `ffi/archiver`
+
+The LuaSocket, LuaSec and archiver files below are the emulator build's own copies, cited under
+`koreader-emulator-arm64-apple-darwin23.5.0-debug/koreader/`.
+
+- Tools › KoPanda › Studio › Check for update, after Pull: an item acting from `nextTick` as the
+  others do (the Studio menu entry above). Inside `runWhenConnected` (the same entry), behind the
+  painted "Checking for an update…" note (`frontend/ui/uimanager.lua:1404`), it asks
+  `release_source.lua` for the latest release, compares it with the installed `_meta.lua`'s
+  `version`, and for a newer one shows a `ConfirmBox` with the version and the release notes,
+  `ok_text` Install (`frontend/ui/widget/confirmbox.lua:45-51`). Install runs `PushPull.pull` with
+  the release as its source, behind the painted "Installing v<version>…" note
+  (`frontend/ui/uimanager.lua:1404`), and then the restart offer the pull makes, naming
+  `v<version>`. No check at start and no timer. After the restart the pull's notice (the apply
+  patch entry above) words a `release` result as an update from GitHub, naming the running
+  plugin's `_meta.lua` version once applied (`PushNotice.on_painted` and `on_refused` get the
+  plugin's `path`, `frontend/pluginloader.lua:248`), and never mentions settings.
+- `ssl.https`, required by `push_pull.lua` for an `https://` URL only (the studio's `http://` pull
+  is untouched). Left to `socket.http`'s scheme table (`common/socket/http.lua:30-41`), LuaSec's
+  `tcp` gets the request table (`:278`), fills only its missing keys from its client config
+  (`common/ssl/https.lua:74-79`), which is `verify = "none"` (`:29-33`), so the server would go
+  unchecked. The request instead carries its own `create`: `https.tcp` called with `verify =
+  "peer"`, `cafile = "data/ca-bundle.crt"` and LuaSec's own `protocol` and `options`
+  (`:74-102`; the connect wraps the socket, `:93`, sends SNI, `:94`, and raises from a failed
+  handshake, `:96`). The CA bundle is certifi's, installed as `data/ca-bundle.crt` in KOReader's
+  folder (`base/thirdparty/certifi/CMakeLists.txt:4`), which is the working directory
+  (`platform/kindle/koreader.sh:25`, `:130`); a missing bundle fails the handshake, never
+  connects unverified. LuaSec 1.3.2 checks no host name, so after the handshake the connect
+  reads the peer's certificate (`getpeercertificate`, the peer's own at index 1,
+  `base/build/arm64-apple-darwin23.5.0-debug/thirdparty/luasec/source/src/ssl.c:486-530`, `:996`)
+  and its `extensions()` (`x509.c:278-376`, `:702`): the subjectAltName under its OID
+  `2.5.29.17` (`:301-302`), its `dNSName` list (`:324-330`). `PushPull.host_matches` takes the
+  host when a name equals it ignoring case, or is `*.` plus two or more labels standing for
+  exactly one label of it; otherwise the connect returns nil and "the server's certificate is
+  not for <host>", and `socket.http` closes the connection and returns that
+  (`common/socket/http.lua:122-133`, `:130`). Live from the emulator's luajit on 2026-10-19:
+  api.github.com and github.com → codeload.github.com verify; wrong.host.badssl.com and an IP
+  are refused by the name check, self-signed.badssl.com and expired.badssl.com by the chain.
+  `socketutil`'s patched `socket.tcp` (`frontend/socketutil.lua:80-88`), which LuaSec's `tcp`
+  calls (`common/ssl/https.lua:85`), keeps the timeouts. So a release is trusted through TLS to
+  certifi's roots and the host name, for the API answer, the manifest and the zip alike, then
+  each file by its sha256 against the manifest fetched that way.
+- Redirects: GitHub answers an asset URL with a 302 to its download host. `socket.http` follows a
+  301, 302, 303 or 307 for a GET (`common/socket/http.lua:303-319`), never from `https` to
+  another scheme (`:312-313`), through `tredirect` (`:333-355`, called at `:386-389`), which
+  re-sends the request's own headers and sink. It keeps `create` only when the request's own
+  `scheme` field is the new URL's (`:336-338`, `:349`): so the https request sets `scheme =
+  "https"`, and since the next hop's table has no `scheme` (`:340-350`), a second redirect would
+  connect through LuaSec's unverified default; `maxredirects = 1` (`:317-319`, carried at `:346`)
+  stops there, and a second 3xx is returned as its status. Live on 2026-10-19: a GitHub release
+  asset's 302 and github.com's archive redirect are each one hop, both hosts verified.
+- `socketutil.USER_AGENT`: `frontend/socketutil.lua:21-24` (KOReader's user agent, also patched
+  into `http.USERAGENT`, which LuaSocket sends by default, `common/socket/http.lua:237`). The
+  release check sends it as `User-Agent` too, which overrides the default by its lower-cased name
+  (`:257-260`); GitHub's API refuses a request without one. The timeouts, sinks and
+  `Accept-Encoding: identity` are the pull's (`PushPull.fetch_json` and `PushPull.fetch_file`,
+  the Studio menu entry above).
+- GitHub's API, an assumption from GitHub's documentation, not KOReader: `GET
+  https://api.github.com/repos/adayag/kopanda/releases/latest` answers the newest published release
+  as JSON, or 404 while there is none. Read from it: `tag_name` (taken only as `vX.Y.Z`), `body`
+  (the notes; a missing one is none) and `assets[]`'s `name` and `browser_download_url`. Only the
+  assets named `manifest.json` and `kopanda.koplugin.zip` are used, and only when their URL starts
+  `https://github.com/adayag/kopanda/releases/download/`.
+- `ffi/archiver`, KOReader's libarchive binding (`ffi/archiver.lua:6`, the `archive` library):
+  `Reader:new` (`:29-38`), `open` (`:40-57`, nil with `err` set for a file it can't read as an
+  archive), `iterate` (`:93-99`) and `next` (`:59-91`: each entry's `path`, `mode` from
+  `ENTRY_MODE`, `:17-25`, so `file`, `directory`, `link` and others, `size` and `index`; nil at
+  the end and also on a read error, with `err` set, which the unpack checks after the loop),
+  `extractToMemory` (`:116-133`: a `file` entry's bytes, nil with `err` set on a short read) and
+  `close` (`:158-170`). `extractToPath` (`:135-156`) is not used: it extracts through
+  `archive_write_disk` (`:141-149`), which makes a hard-link entry (a tar served as the zip;
+  `open` reads any format, `:46`, and a pax hard link carries data, its `mode` `file`) a link to
+  any path and writes its data through it. The unpack checks every entry first: under
+  `kopanda.koplugin/` with a `PushBundle.safe_path`, a folder (only checked) or a `file` the
+  manifest names, once ignoring case, whose `size` (`:81`) is the manifest's; anything else
+  refuses the release. Each file's bytes are then written with `io.open` into `download/plugin/`.
+  `spec/unit/release_source_spec.lua` builds its zips with the `Writer`: `new` (`:197-204`),
+  `open` (`:206-231`), `setZipCompression` (`:233-253`), `addPath` (`:275-356`; it returns false
+  even when it worked, its loop ending at `ARCHIVE_EOF`, `:350-355`, so the spec checks `err`)
+  and `close` (`:358-365`). `addFileFromMemory` (`:255-273`) is not used: its permission is the
+  decimal `0644` (`:264`), mode 01204, which no real zip carries.
+- The bundle: `PushBundle.check_manifest` for profile `release` with `settings = false` (a
+  plugin-only manifest, no `settings.lua`), then `PushBundle.verify_files` over `download/`, and
+  the pull's stage and arm unchanged; the stage's record carries `settings = false`, under which
+  the apply patch swaps only the plugin folder, and its rollback record's `settings_untouched`
+  keeps the restore off the settings file and its `.old` (the apply patch entry above).
+- The installed version: the running plugin's `_meta.lua` (`frontend/pluginloader.lua:248`, the
+  plugin's `path`), loaded with an empty environment; one that is missing, doesn't load or has no
+  string `version` is `0.0.0-dev`, as the repo's own is, older than any release.
+
 ### `InputContainer` gesture and paint dispatch
 
 - `frontend/ui/widget/container/inputcontainer.lua:52` (`InputContainer`), `:73-99`

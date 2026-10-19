@@ -159,6 +159,16 @@ describe("the apply patch", function()
         write(p.staged_record, "return " .. require("dump")(fields, nil, true) .. "\n")
     end
 
+    -- A release's stage: the plugin only, no staged settings.lua, the record's settings false.
+    local function plugin_only_stage(record)
+        local fields = { settings = false }
+        for k, v in pairs(record or {}) do
+            fields[k] = v
+        end
+        stage(fields)
+        os.remove(p.staged .. "/settings.lua")
+    end
+
     local function no_stage()
         assert.is_nil(mode(p.staged_record))
         assert.is_nil(mode(p.staged))
@@ -248,6 +258,40 @@ describe("the apply patch", function()
             assert.same({ simpleui = true, ennUI = true }, reader_value("plugins_disabled"))
         end)
 
+        it("swaps only the plugin for a plugin-only stage, the settings file byte-identical", function()
+            device_fixture()
+            write(p.settings .. ".old", "return { marker = \"older\" }\n")
+            local settings = read(p.settings)
+            plugin_only_stage()
+            PushApply.run(dir)
+            assert.equals("new\n", plugin_marker())
+            assert.equals("old\n", read(p.rollback .. "/plugin/marker.txt"))
+            assert.equals(settings, read(p.settings))
+            assert.equals("return { marker = \"older\" }\n", read(p.settings .. ".old"))
+            assert.is_nil(mode(p.rollback .. "/settings.lua"))
+            assert.is_true(load_lua(p.rollback .. "/record.lua").settings_untouched)
+            assert.same({ hello = true, simpleui = true, ennUI = true }, reader_value("plugins_disabled"))
+            assert.same({ ok = true, kind = "applied", profile = "vector", hash = HASH }, result())
+            no_stage()
+        end)
+
+        it("creates no settings file for a plugin-only stage when there was none", function()
+            device_fixture{ no_settings = true }
+            plugin_only_stage()
+            PushApply.run(dir)
+            assert.equals("new\n", plugin_marker())
+            assert.is_nil(mode(p.settings))
+            assert.equals("applied", result().kind)
+        end)
+
+        it("marks the settings touched for a stage that carries them", function()
+            device_fixture()
+            stage{ settings = true }
+            PushApply.run(dir)
+            assert.equals("new", settings_marker())
+            assert.is_falsy(load_lua(p.rollback .. "/record.lua").settings_untouched)
+        end)
+
         it("changes nothing when nothing is staged and nothing is on probation", function()
             device_fixture()
             local long_ago = os.time() - 3600
@@ -288,6 +332,18 @@ describe("the apply patch", function()
             { "a missing staged/settings.lua", function()
                 stage()
                 os.remove(p.staged .. "/settings.lua")
+            end },
+            { "a missing staged/settings.lua with settings true", function()
+                plugin_only_stage{ settings = true }
+            end },
+            { "a settings that isn't a boolean", function() stage{ settings = "no" } end },
+            { "a plugin-only stage missing staged/plugin/main.lua", function()
+                plugin_only_stage()
+                os.remove(p.staged .. "/plugin/main.lua")
+            end },
+            { "a plugin-only stage missing staged/plugin/_meta.lua", function()
+                plugin_only_stage()
+                os.remove(p.staged .. "/plugin/_meta.lua")
             end },
         }
         for _, case in ipairs(bad_stages) do
@@ -483,6 +539,44 @@ describe("the apply patch", function()
             assert.equals("old", settings_marker())
         end)
 
+        it("restores the plugin of a plugin-only apply and leaves the settings file as it is", function()
+            device_fixture()
+            local before = device()
+            plugin_only_stage()
+            PushApply.run(dir)
+            assert.equals("applied", result().kind)
+            PushApply.run(dir)
+            assert.same(before, device())
+            assert.equals("old\n", plugin_marker())
+            assert.equals("rolled_back", result().kind)
+            assert.is_nil(mode(p.rollback))
+        end)
+
+        it("leaves the settings file the new install wrote, and its .old, after a plugin-only apply", function()
+            device_fixture{ no_settings = true }
+            plugin_only_stage()
+            PushApply.run(dir)
+            write(p.settings, "return { marker = \"kept\" }\n")
+            write(p.settings .. ".old", "return {}\n")
+            PushApply.run(dir)
+            assert.equals("old\n", plugin_marker())
+            assert.equals("return { marker = \"kept\" }\n", read(p.settings))
+            assert.equals("return {}\n", read(p.settings .. ".old"))
+            assert.equals("rolled_back", result().kind)
+        end)
+
+        it("creates and removes no settings file rolling back a plugin-only apply when there was none", function()
+            device_fixture{ no_settings = true }
+            local before = device()
+            plugin_only_stage()
+            PushApply.run(dir)
+            assert.is_nil(mode(p.settings))
+            PushApply.run(dir)
+            assert.same(before, device())
+            assert.is_nil(mode(p.settings))
+            assert.equals("rolled_back", result().kind)
+        end)
+
         it("purges a stage left while on probation", function()
             device_fixture()
             stage()
@@ -542,6 +636,22 @@ describe("the apply patch", function()
                 assert.equals("rolled_back", result().kind)
                 assert.is_nil(mode(p.probation))
                 assert.is_nil(mode(p.rollback))
+                no_stage()
+            end)
+        end
+
+        -- The crash points a plugin-only apply reaches: no settings move is made.
+        for _, crash in ipairs{ crashes[1], crashes[2], crashes[5], crashes[6] } do
+            it("returns a plugin-only apply to before it when a start was cut short " .. crash[1], function()
+                device_fixture()
+                local before = device()
+                plugin_only_stage()
+                crash_at(crash[2], crash[3])
+                assert.equals("file", mode(p.probation))
+                PushApply.run(dir)
+                assert.same(before, device())
+                assert.equals("rolled_back", result().kind)
+                assert.is_nil(mode(p.probation))
                 no_stage()
             end)
         end
