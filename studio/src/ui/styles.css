@@ -428,6 +428,7 @@ a.editor-link[href]:hover {
   color: var(--muted);
 }
 
+.editor-aside {
   margin: 0;
   font-size: 0.85rem;
   color: var(--muted);
