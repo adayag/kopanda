@@ -33,6 +33,8 @@ return {
             teal = "#6fb3ab",
             pink = "#e8a59d",
             mustard = "#e0bd6a",
+            violet = false, -- Frosted's accent; Diner has none
+            yellow = false, -- Frosted's accent; Diner has none
             tint = false, -- Riso's pink tint; Diner has none
             sun = false, -- Toybox's accents and its nav pill's white; Diner has none
             coral = false, -- as sun
@@ -56,6 +58,8 @@ return {
             teal = "#2f6b65",
             pink = "#b86f68",
             mustard = "#b8923c",
+            violet = false, -- Frosted's accent; Diner has none
+            yellow = false, -- Frosted's accent; Diner has none
             tint = false,
             sun = false, -- as by day
             coral = false, -- as sun
@@ -80,6 +84,8 @@ return {
             teal = "#b0b0b0", -- the doc's tiles in the canvas's tile order: teal (PWRetro.dc.html)
             pink = "#e0e0e0", -- pink
             mustard = "#c8c8c8", -- mustard
+            violet = false, -- Frosted's accent; Diner has none
+            yellow = false, -- Frosted's accent; Diner has none
             tint = false,
             sun = false, -- as by day
             coral = false, -- as sun
@@ -114,6 +120,31 @@ return {
 
     -- Display type printed twice, an offset copy in color under the part's own: Diner prints once.
     misregister = { x = 0, y = 0, color = false },
+
+    -- The plates Frosted sets its home rows on (looks/frosted.lua): Diner has none, so its rows
+    -- sit on the page as before plates (fill_color false skips them in layout.lua and
+    -- home_rows.lua), with no padding round a widget and nothing lightened.
+    plate = {
+        fill_color = false, -- no plates
+        keyline = 0, -- no plates
+        keyline_color = false, -- no plates
+        radius = 0, -- no plates
+        lighten = { day = false, night = false, grey = false }, -- no plates, nothing lightened
+        slots = {
+            date = { x = 0, y = 0, radius = 0 }, -- no plates: the widget at its slot's edge
+            clock = { x = 0, y = 0, radius = 0 }, -- no plates
+            weather = { x = 0, y = 0, radius = 0 }, -- no plates
+            stats = { x = 0, y = 0, radius = 0 }, -- no plates
+            quote = { x = 0, y = 0, radius = 0 }, -- no plates
+            featured = { x = 0, y = 0, radius = 0 }, -- no plates
+            launcher = false, -- the launcher's tiles are its own
+        },
+    },
+
+    -- The owner's image behind the home (wallpaper.file): Frosted's alone; Diner draws its paper.
+    wallpaper = {
+        enabled = false, -- the paper, as before the wallpaper setting
+    },
 
     radius = {
         cover = 0,

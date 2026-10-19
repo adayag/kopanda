@@ -113,7 +113,7 @@ describe("the settings menu's rows", function()
                 ids[i] = entry.id
             end
             assert.same(ids, keys)
-            assert.same({ "text_size", "layout.rows", "weather.units", "quote.source", "stats.show",
+            assert.same({ "wallpaper.file", "layout.rows", "weather.units", "quote.source", "stats.show",
                 "featured.pinned" }, separated)
         end)
 
@@ -166,16 +166,17 @@ describe("the settings menu's rows", function()
             local look = row(SchemaMenu.items(), "look")
             assert.equals("Look · Diner", look.text_func())
             local sub = look.sub_item_table_func()
-            assert.equals(4, #sub)
+            assert.equals(5, #sub)
             assert.equals("Diner", sub[1].text)
             assert.equals("Editorial", sub[2].text)
             assert.equals("Riso", sub[3].text)
             assert.equals("Toybox", sub[4].text)
-            for i = 1, 4 do
+            assert.equals("Frosted", sub[5].text)
+            for i = 1, 5 do
                 assert.is_true(sub[i].radio, sub[i].text)
             end
             assert.is_true(sub[1].checked_func())
-            for i = 2, 4 do
+            for i = 2, 5 do
                 assert.is_false(sub[i].checked_func(), sub[i].text)
             end
         end)
@@ -285,6 +286,75 @@ describe("the settings menu's rows", function()
             stats.callback()
             assert.is_true(stats.checked_func())
             assert.same({ { "stats.show", false }, { "stats.show", true } }, sets)
+        end)
+    end)
+
+    -- The wallpaper's row (a path key with extensions): the file's name or None; its submenu
+    -- chooses an image in KOReader's PathChooser from the home folder, or None, which stores false.
+    describe("the wallpaper row", function()
+        local PathChooser = require("ui/widget/pathchooser")
+
+        -- The PathChooser the choose item shows, taken off the stack, or nil.
+        local function chooser_shown()
+            for _, widget in ipairs(harness.stack()) do
+                if getmetatable(widget) == PathChooser then
+                    return widget
+                end
+            end
+        end
+
+        it("reads None with nothing stored, None checked", function()
+            local wallpaper = row(SchemaMenu.items(), "wallpaper.file")
+            assert.equals("Wallpaper · None", wallpaper.text_func())
+            local sub = wallpaper.sub_item_table_func()
+            assert.equals(2, #sub)
+            assert.equals("Choose an image…", sub[1].text)
+            assert.equals("None", sub[2].text)
+            assert.is_true(sub[2].radio)
+            assert.is_true(sub[2].checked_func())
+        end)
+
+        it("reads a stored image by its file name, and None writes false", function()
+            assert.is_true(Settings.set("wallpaper.file", "/mnt/us/images/flowers.png"))
+            local wallpaper = row(SchemaMenu.items(), "wallpaper.file")
+            assert.equals("Wallpaper · flowers.png", wallpaper.text_func())
+            local sub = wallpaper.sub_item_table_func()
+            assert.is_false(sub[2].checked_func())
+            local sets = record_sets()
+            sub[2].callback()
+            assert.same({ { "wallpaper.file", false } }, sets)
+            assert.equals("Wallpaper · None", wallpaper.text_func())
+        end)
+
+        it("chooses a png or jpg file, not a folder, from the home folder, and stores the chosen path", function()
+            harness.show_fm(harness.library)
+            local home = require("apps/filemanager/filemanagerutil").getHomeFolder()
+            local wallpaper = row(SchemaMenu.items(), "wallpaper.file")
+            local choose = wallpaper.sub_item_table_func()[1]
+            assert.is_true(choose.keep_menu_open)
+            local updated = 0
+            choose.callback({ updateItems = function()
+                updated = updated + 1
+            end })
+            local chooser = chooser_shown()
+            assert.is_table(chooser)
+            assert.is_true(chooser.select_file)
+            assert.is_false(chooser.select_directory)
+            assert.equals(home, chooser.path)
+            for name, shown in pairs({ ["a.png"] = true, ["B.JPG"] = true, ["c.jpeg"] = true, ["d.epub"] = false,
+                    ["e.webp"] = false, ["png"] = false }) do
+                assert.equals(shown, chooser.file_filter(name) == true, name)
+            end
+            local sets = record_sets()
+            chooser.onConfirm("/mnt/us/images/garden.jpg")
+            assert.same({ { "wallpaper.file", "/mnt/us/images/garden.jpg" } }, sets)
+            assert.equals(1, updated)
+            assert.equals("Wallpaper · garden.jpg", wallpaper.text_func())
+        end)
+
+        it("leaves the featured row its own", function()
+            local featured = row(SchemaMenu.items(), "featured.pinned")
+            assert.equals("Featured book · Most recent", featured.text_func())
         end)
     end)
 

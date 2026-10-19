@@ -53,9 +53,12 @@ const Key = z.discriminatedUnion("type", [
     default: z.strictObject({ name: z.string(), latitude: z.number(), longitude: z.number() }),
   }),
   z.strictObject({ ...common, type: z.literal("boolean"), default: z.boolean() }),
+  // extensions, when given, are the kinds of file the key takes (the wallpaper's images); a path
+  // key without them is the featured book's pin.
   z.strictObject({
     ...common,
     type: z.literal("path"),
+    extensions: z.array(z.string()).optional(),
     default: z.union([z.literal(false), z.string()]),
   }),
   z.strictObject({

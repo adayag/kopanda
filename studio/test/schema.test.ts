@@ -37,6 +37,16 @@ describe("the schema type", () => {
   });
 });
 
+describe("the path type", () => {
+  it("carries the extensions a file key offers, and none on the featured pin", () => {
+    const wallpaper = schema.keys.find((key) => key.id === "wallpaper.file");
+    const pinned = schema.keys.find((key) => key.id === "featured.pinned");
+
+    expect(wallpaper).toMatchObject({ type: "path", default: false, extensions: ["png", "jpg", "jpeg"] });
+    expect(pinned).not.toHaveProperty("extensions");
+  });
+});
+
 describe("schema", () => {
   it("is the checked-in schema.json, nothing dropped", () => {
     expect(schema).toEqual(readCheckedIn());

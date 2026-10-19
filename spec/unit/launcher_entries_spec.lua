@@ -142,7 +142,7 @@ describe("LauncherEntries", function()
 
     describe("fixed tables", function()
         it("hold exactly the schema's kopanda and koreader targets", function()
-            local entry = require("schema").keys[9]
+            local entry = require("schema").keys[10]
             assert.equals("launcher.entries", entry.id)
             assert.same(sorted(entry.targets.kopanda), sorted_keys(LauncherEntries.KOPANDA))
             assert.same(sorted(entry.targets.koreader), sorted_keys(LauncherEntries.KOREADER))
@@ -202,7 +202,7 @@ describe("LauncherEntries", function()
         it("reads the default six as Library, Series, Authors, History, Wi-Fi and Settings", function()
             set_wifi(true)
             local views = {}
-            for i, entry in ipairs(require("schema").keys[9].default) do
+            for i, entry in ipairs(require("schema").keys[10].default) do
                 views[i] = LauncherEntries.resolve(entry)
             end
             assert.same({

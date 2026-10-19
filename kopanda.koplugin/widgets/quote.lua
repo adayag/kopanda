@@ -1,7 +1,9 @@
 -- The quote of the day: one entry of the quote source a day, changing at local midnight, drawn
 -- in curly quotes with no attribution in at most four lines, a longer text ending in an
--- ellipsis. A look with a quote rule colour draws it between rules (Editorial's hairlines,
--- Main.dc.html:56; Riso's pink), one without in its tile (Diner).
+-- ellipsis. A look with plates (Frosted) draws it plain, its plate drawn under it by the home
+-- (home_rows.lua) and the text printed through its mask (Typeset.printed); otherwise a look with a
+-- quote rule colour draws it between rules (Editorial's hairlines, Main.dc.html:56; Riso's pink),
+-- one without in its tile (Diner).
 -- Module state: the memo of the text box last composed, which every build of the day draws.
 local Device = require("device")
 local Font = require("ui/font")
@@ -114,6 +116,10 @@ end
 function QuoteBox:paintTo(bb, x, y)
     local w, h = self.dimen.w, self.dimen.h
     local c = self.chrome
+    if c.plain then
+        self.text_box:paintTo(bb, x + self.text_x, y + self.text_y)
+        return
+    end
     if c.rule then
         Paint.fill(bb, x, y, w, c.rule, c.rule_color)
         Paint.fill(bb, x, y + h - c.rule, w, c.rule, c.rule_color)
@@ -149,7 +155,13 @@ local function compose(width, ctx)
     local padding = scale(tokens.padding)
 
     local chrome, text_x, text_y, text_w, extra_h
-    if not tokens.rule_color then
+    local on_plate = Typeset.on_plate(ctx)
+    if on_plate then
+        chrome = { plain = true }
+        text_x, text_y = 0, padding
+        text_w = width
+        extra_h = 2 * padding
+    elseif not tokens.rule_color then
         local shadow = look.shadow.tile
         local outline = scale(look.stroke.outline)
         chrome = {
@@ -182,18 +194,24 @@ local function compose(width, ctx)
         variant = ctx.variant,
         color = Device.screen:isColorEnabled(),
     }
-    local held = hold(key, function()
+    local function box(box_w, fgcolor, bgcolor)
         return TextBoxWidget:new{
             text = text,
             face = face,
-            width = text_w,
+            width = box_w,
             line_height = style.line_height,
-            fgcolor = color(style.color),
-            bgcolor = chrome.fill_color or color("paper"),
+            fgcolor = fgcolor,
+            bgcolor = bgcolor,
             height = LINES * line_px,
             height_adjust = true,
             height_overflow_show_ellipsis = true,
         }
+    end
+    local held = hold(key, function()
+        if on_plate then
+            return Typeset.printed(style, text_w, ctx, box)
+        end
+        return box(text_w, color(style.color), chrome.fill_color or color("paper"))
     end)
     return QuoteBox:new{
         dimen = Geom:new{ w = width, h = held.box:getSize().h + extra_h },

@@ -194,7 +194,7 @@ describe("Settings", function()
 
         it("never raises in its validator", function()
             local validate = Settings.validators.rows
-            local entry = Schema.keys[3]
+            local entry = Schema.keys[4]
             for what, value in pairs(refused) do
                 local ok, valid = pcall(validate, entry, value)
                 assert.is_true(ok, what .. ": " .. tostring(valid))
@@ -374,7 +374,7 @@ describe("Settings", function()
     end)
 
     describe("featured.pinned", function()
-        local entry = require("schema").keys[8]
+        local entry = require("schema").keys[9]
 
         it("is false by default", function()
             assert.equals("featured.pinned", entry.id)
@@ -432,8 +432,46 @@ describe("Settings", function()
         end)
     end)
 
+    -- The wallpaper, a path as featured.pinned is: false, or an absolute path to an image on the
+    -- device; the disk is not checked, so a gone file stays a valid value.
+    describe("wallpaper.file", function()
+        local entry = require("schema").keys[3]
+
+        it("is false by default", function()
+            assert.equals("wallpaper.file", entry.id)
+            assert.is_false(Settings.get("wallpaper.file"))
+        end)
+
+        it("refuses anything but false or an absolute path and leaves the file byte-identical", function()
+            local text = 'return { ["wallpaper.file"] = "/mnt/us/wallpaper.png" }'
+            store(text)
+            for what, value in pairs({ ["true"] = true, ["a number"] = 5, ["an empty string"] = "",
+                    ["the root alone"] = "/", ["a relative path"] = "wallpaper.png" }) do
+                local ok, reason = Settings.set("wallpaper.file", value)
+                assert.is_false(ok, what)
+                assert.is_string(reason, what)
+                assert.equals(text, read(file), what)
+            end
+        end)
+
+        it("stores an absolute path, there or not, and false, and reads each back", function()
+            for _, value in ipairs({ "/mnt/us/wallpaper.jpg", os.getenv("KO_HOME") .. "/gone.png", false }) do
+                assert.is_true(Settings.set("wallpaper.file", value), tostring(value))
+                Settings._reset()
+                assert.equals(value, Settings.get("wallpaper.file"), tostring(value))
+            end
+        end)
+
+        it("reads a stored relative path as false without raising", function()
+            store('return { ["wallpaper.file"] = "wallpaper.png" }')
+            local ok, value = pcall(Settings.get, "wallpaper.file")
+            assert.is_true(ok, tostring(value))
+            assert.is_false(value)
+        end)
+    end)
+
     describe("launcher.entries", function()
-        local entry = require("schema").keys[9]
+        local entry = require("schema").keys[10]
 
         local function kopanda(target)
             return { kind = "kopanda", target = target }

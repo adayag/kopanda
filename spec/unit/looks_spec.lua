@@ -1197,7 +1197,7 @@ describe("looks", function()
             end
         end)
 
-        -- The corner radii, in board pixels: 0 draws square, as every look but Toybox does; a
+        -- The corner radii, in board pixels: 0 draws square, as every look but Toybox and Frosted does; a
         -- radius above half a side draws that side's ends round (base/ffi/blitbuffer.lua:2169-2197).
         it("give every radius as a number of 0 or more, Diner's, Editorial's and Riso's 0 but a cover's", function()
             local function radii(look)
@@ -1239,7 +1239,7 @@ describe("looks", function()
                     assert.is_true(badge.size >= looks[id].launcher.icon_size, id .. ": the icon overruns its badge")
                 end
             end
-            for _, id in ipairs({ "diner", "editorial", "riso" }) do
+            for _, id in ipairs({ "diner", "editorial", "riso", "frosted" }) do
                 assert.equals(0, looks[id].launcher.badge.size, id)
             end
         end)
@@ -1266,9 +1266,217 @@ describe("looks", function()
                         active_outline_color = nav.active_outline_color }, id)
                 end
             end
-            for _, id in ipairs({ "diner", "editorial", "riso" }) do
+            for _, id in ipairs({ "diner", "editorial", "riso", "frosted" }) do
                 assert.is_false(looks[id].nav.float, id)
             end
+        end)
+
+        -- The wallpaper a look draws behind the home's rows: a switch alone, since wallpaper.lua
+        -- always scales to cover; only Frosted draws one.
+        it("give every look a wallpaper switch, on in Frosted alone", function()
+            for _, id in ipairs(ids) do
+                assert.same({ enabled = id == "frosted" }, looks[id].wallpaper, id)
+            end
+        end)
+
+        -- A plate is a row's backing: its fill role (false: no plates), keyline, radius, the
+        -- lighten toward paper per variant (a number in (0, 1] or false) and each widget's padding
+        -- and radius on it, or false for a widget that draws its own (the launcher's tiles).
+        it("give every look plates of a fill role or false, a keyline, a radius and a lighten per variant", function()
+            for _, id in ipairs(ids) do
+                local plate = looks[id].plate
+                assert.is_true(plate.fill_color == false or type(plate.fill_color) == "string", id)
+                assert.is_number(plate.keyline, id)
+                assert.is_number(plate.radius, id)
+                assert.same({ "day", "grey", "night" }, keys(plate.lighten), id)
+                for variant, by in pairs(plate.lighten) do
+                    assert.is_true(by == false or (type(by) == "number" and by > 0 and by <= 1),
+                        id .. " plate.lighten." .. variant .. " = " .. tostring(by))
+                end
+                assert.same({ "clock", "date", "featured", "launcher", "quote", "stats", "weather" },
+                    keys(plate.slots), id)
+                assert.is_false(plate.slots.launcher, id)
+                for widget, slot in pairs(plate.slots) do
+                    if slot then
+                        assert.same({ "radius", "x", "y" }, keys(slot), id .. " " .. widget)
+                    end
+                end
+            end
+            for _, id in ipairs({ "diner", "editorial", "riso", "toybox" }) do
+                local plate = looks[id].plate
+                assert.is_false(plate.fill_color, id)
+                assert.same({ day = false, night = false, grey = false }, plate.lighten, id)
+            end
+        end)
+
+        -- Frosted Plates (.tiller/design/2026-10-19-kopanda-looks/frosted.md and plates.md, which it
+        -- inherits): the owner's wallpaper behind every row, each row on a plate washed toward paper.
+        describe("Frosted", function()
+            local frosted
+            setup(function()
+                frosted = looks.frosted
+            end)
+
+            it("sets everything in Atkinson Hyperlegible, its quote italic, with no accent face", function()
+                local faces = frosted.faces
+                assert.equals("fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Bold.ttf", faces.display.file)
+                assert.equals("fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Regular.ttf", faces.text.file)
+                assert.equals("fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Bold.ttf", faces.strong.file)
+                assert.equals("fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Italic.ttf", faces.quote.file)
+                assert.same({ file = false, label = false }, faces.accent)
+            end)
+
+            it("gives its day, night and grey palettes the design's values, violet and yellow its accents", function()
+                local wanted = {
+                    day = { paper = "#fbfaf6", ink = "#1b1a1f", text = "#1b1a1f", muted = "#4d4b55",
+                        hairline_light = "#d9d6df", violet = "#6b55c8", yellow = "#f2c230" },
+                    night = { paper = "#1d1c22", ink = "#f3f1ec", text = "#f3f1ec", muted = "#b5b2bd",
+                        hairline_light = "#3a3842", violet = "#a593f2", yellow = "#8a6d10" },
+                    grey = { paper = "#ffffff", ink = "#000000", text = "#000000", muted = "#333333",
+                        hairline_light = "#bbbbbb", yellow = "#cccccc" },
+                }
+                for variant, roles in pairs(wanted) do
+                    local palette = frosted.palettes[variant]
+                    for role, value in pairs(roles) do
+                        assert.equals(value, palette[role], variant .. " " .. role)
+                    end
+                    assert.equals(palette.ink, palette.outline, variant .. " outline")
+                    for _, role in ipairs({ "teal", "pink", "mustard", "tint", "band" }) do
+                        assert.is_false(palette[role], variant .. " " .. role)
+                    end
+                end
+                assert.equals("hatch_135", frosted.progress.fill_grey)
+                -- The other looks have none of Frosted's accents.
+                for _, id in ipairs({ "diner", "editorial", "riso", "toybox" }) do
+                    for variant, palette in pairs(looks[id].palettes) do
+                        for _, role in ipairs({ "violet", "yellow" }) do
+                            assert.is_false(palette[role], id .. " " .. variant .. " " .. role)
+                        end
+                    end
+                end
+            end)
+
+            it("rounds its progress, chip and pickers to pills and its sheet 16, its cover and nav square", function()
+                assert.same({ 999, 999, 16, 999, 999 }, { frosted.progress.radius, frosted.chip.radius,
+                    frosted.sheet.radius, frosted.title_bar.picker_radius, frosted.library.header.picker_radius })
+                assert.same({ 0, 0, 0 }, { frosted.radius.cover, frosted.library.cover.radius, frosted.nav.radius })
+            end)
+
+            it("puts every row on a 2 px ink plate, radius 12, lightened 0.82 by day, 0.84 at night, 0.85 in grey",
+                function()
+                local plate = frosted.plate
+                assert.same({ "paper", 2, "ink", 12 }, { plate.fill_color, plate.keyline, plate.keyline_color,
+                    plate.radius })
+                assert.same({ day = 0.82, night = 0.84, grey = 0.85 }, plate.lighten)
+                assert.same({ x = 14, y = 14, radius = 12 }, plate.slots.featured)
+                assert.same({ x = 18, y = 12, radius = 12 }, plate.slots.quote)
+                assert.same({ x = 14, y = 8, radius = 999 }, plate.slots.stats)
+                assert.same({ top = 14, side = 18, bottom = 14 }, frosted.home.header.padding)
+            end)
+
+            it("draws the owner's wallpaper, scaled to cover", function()
+                assert.same({ enabled = true }, frosted.wallpaper)
+            end)
+
+            it("draws Phosphor Bold icons, and prints once", function()
+                assert.equals("phosphor-bold", frosted.icons.set)
+                assert.same({ x = 0, y = 0, color = false }, frosted.misregister)
+                for _, name in ipairs({ "cover", "tile", "sheet" }) do
+                    assert.is_false(frosted.shadow[name].outline_width, name)
+                end
+            end)
+
+            it("chooses the home's shapes the design draws", function()
+                assert.same({ weather_order = "degrees_first", date_lines = 2, stats_line = "joined",
+                    stats_streak = "count_first", featured_label = "now_reading", featured_details = "joined" },
+                    home_choices(frosted))
+            end)
+
+            it("sets the design's sizes, the clock on the right of the header plate", function()
+                local t = frosted.type
+                assert.same({ "strong", 18, false, 0, 0.1, "ink" }, part_values(t.date))
+                assert.same({ "display", 84, false, -0.03, -0.2, "ink" }, part_values(t.clock))
+                assert.same({ "display", 32, false, -0.015, 0.04, "ink" }, part_values(t.featured_title))
+                assert.same({ "text", 16, "text" }, { t.featured_authors.face, t.featured_authors.size,
+                    t.featured_authors.color })
+                assert.same({ "quote", 18, "ink" }, { t.quote.face, t.quote.size, t.quote.color })
+                assert.same({ "strong", 19, "ink" }, { t.launcher_label.face, t.launcher_label.size,
+                    t.launcher_label.color })
+                assert.same({ "text", 18, "ink" }, { t.sheet_row.face, t.sheet_row.size, t.sheet_row.color })
+                assert.same({ "strong", 11, true, 0.08, 0, "muted" }, part_values(t.nav_label))
+                assert.same({ size = 11, face = "strong", small_caps = false, uppercase = true, tracking = 0.08 },
+                    frosted.label)
+                local header = frosted.home.header
+                assert.same({ false, 0, false }, { header.band_color, header.edge_width, header.rule_color })
+            end)
+
+            it("sets its quote plain on its plate and its tiles as plates, three to a row, 74 tall", function()
+                assert.same({ padding = 0, rule_width = 0, rule_color = false }, frosted.quote)
+                assert.same({ 3, 74, 24, 12, 12 }, { frosted.launcher.columns, frosted.launcher.tile_height,
+                    frosted.launcher.icon_size, frosted.launcher.column_gap, frosted.launcher.row_gap })
+                assert.same({ 12, 12 }, { frosted.home.row_gap, frosted.home.column_gap })
+            end)
+
+            it("fills its progress violet on paper in a 2 px ink outline, 12 tall", function()
+                assert.same({ height = 12, fill_color = "violet", track_color = "paper", outline_color = "outline",
+                    outline_width = 2, fill_grey = "hatch_135", radius = 999 }, frosted.progress)
+            end)
+
+            it("sets its chip ink on yellow in a 2 px ink outline", function()
+                assert.same({ "yellow", "ink", "outline" }, { frosted.chip.fill_color, frosted.chip.text_color,
+                    frosted.chip.outline_color })
+                assert.equals(2, frosted.featured.chip_outline)
+            end)
+
+            it("outlines its cover in 2 px ink with no shadow", function()
+                assert.same({ 122, 183, "outline" }, { frosted.featured.cover_w, frosted.featured.cover_h,
+                    frosted.featured.cover_outline_color })
+                assert.is_false(frosted.shadow.cover.color)
+                assert.equals(0, frosted.radius.cover)
+            end)
+
+            it("keeps its nav opaque: paper under a 3 px ink edge, the lit tab filled yellow", function()
+                local nav = frosted.nav
+                assert.same({ "paper", 3, "ink", "yellow", 0, 0, 24, "muted", "ink" }, { nav.fill_color,
+                    nav.edge_width, nav.edge_color, nav.active_fill_color, nav.active_rule_width, nav.divider_width,
+                    nav.icon_size, nav.icon_color, nav.active_icon_color })
+            end)
+
+            it("keeps its sheet opaque: inset 16, a 2 px ink outline, an ink shadow 5 by 7, no band, rows ruled light",
+                function()
+                local sheet = frosted.sheet
+                assert.same({ side = 16, bottom = 16 }, sheet.inset)
+                assert.same({ "paper", "outline", 2, false }, { sheet.fill_color, sheet.outline_color,
+                    sheet.outline_width, sheet.header_band })
+                assert.same({ x = 5, y = 7, color = "shadow", outline_width = false }, frosted.shadow.sheet)
+                assert.same({ "hairline_light", 1 }, { sheet.row_rule_color, sheet.row_rule_width })
+            end)
+
+            it("outlines its pickers in 2 px ink on paper", function()
+                for _, header in ipairs({ frosted.title_bar, frosted.library.header }) do
+                    assert.same({ 2, "outline", "paper", "paper" }, { header.picker_outline_width,
+                        header.picker_outline_color, header.sort_fill_color, header.status_fill_color })
+                end
+            end)
+
+            -- Every value is commented with its source, the design (frosted.md, plates.md or the
+            -- design file) or "no board" and the analogy, on its line or the line above it.
+            it("comments every value with its source", function()
+                local previous_commented, values = false, 0
+                for line in io.lines(harness.plugin_dir .. "/looks/frosted.lua") do
+                    local code, comment = line:match("^(.-)%s*%-%-%s*(.*)$")
+                    local commented = comment ~= nil and comment ~= ""
+                    code = code or line
+                    if code:match("[%w_]+ = [^{%s]") then
+                        values = values + 1
+                        assert.is_true(commented or previous_commented, "uncommented: " .. line)
+                    end
+                    if commented or not code:match("^%s*[%w_]+ = {%s*$") then
+                        previous_commented = commented
+                    end
+                end
+                assert.truthy(values > 300, "too few values: " .. values)
+            end)
         end)
 
         -- Riso (.tiller/design/2026-10-19-kopanda-looks/riso.md, its token table and Lua export):
@@ -1461,7 +1669,7 @@ describe("looks", function()
                 end
                 assert.equals("hatch_135", toybox.progress.fill_grey)
                 -- The other looks have none of Toybox's accents.
-                for _, id in ipairs({ "diner", "editorial", "riso" }) do
+                for _, id in ipairs({ "diner", "editorial", "riso", "frosted" }) do
                     for variant, palette in pairs(looks[id].palettes) do
                         for _, role in ipairs({ "sun", "coral", "mint", "die" }) do
                             assert.is_false(palette[role], id .. " " .. variant .. " " .. role)
@@ -1632,9 +1840,10 @@ describe("looks", function()
             end
         end)
 
-        it("lists the looks in the swatch's order, Editorial, Diner, Riso then Toybox first", function()
+        it("lists the looks in the swatch's order, Editorial, Diner, Riso, Toybox then Frosted first", function()
             local listed = Looks.ids()
-            assert.same({ "editorial", "diner", "riso", "toybox" }, { listed[1], listed[2], listed[3], listed[4] })
+            assert.same({ "editorial", "diner", "riso", "toybox", "frosted" },
+                { listed[1], listed[2], listed[3], listed[4], listed[5] })
         end)
 
         it("lists a fresh copy each time", function()

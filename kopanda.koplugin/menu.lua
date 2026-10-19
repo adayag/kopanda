@@ -146,10 +146,79 @@ function BUILDERS.boolean(entry)
     }
 end
 
+-- Whether name ends in one of extensions, in any case.
+local function has_extension(name, extensions)
+    local ext = type(name) == "string" and name:match("%.([^./]+)$")
+    if not ext then
+        return false
+    end
+    ext = ext:lower()
+    for _, wanted in ipairs(extensions) do
+        if ext == wanted then
+            return true
+        end
+    end
+    return false
+end
+
+-- A path key with extensions (the wallpaper): the stored file's name, or None. Its submenu opens
+-- KOReader's PathChooser from the home folder, showing folders and the files of those extensions
+-- and choosing a file only (frontend/ui/widget/pathchooser.lua:13-19, :36-41; its home folder,
+-- frontend/ui/widget/filechooser.lua:101-103, frontend/apps/filemanager/filemanagerutil.lua:25-27),
+-- whose onConfirm (pathchooser.lua:137-153) writes the chosen path and redraws the menu; None
+-- writes false. The menu stays open under the chooser.
+local function file_row(entry)
+    return {
+        text_func = text_func(entry, function()
+            local path = Settings.get(entry.id)
+            return path and path:match("([^/]+)$") or "None"
+        end),
+        sub_item_table_func = guarded(entry.id .. " choices", {}, function()
+            return {
+                {
+                    text = "Choose an image…",
+                    keep_menu_open = true,
+                    callback = guarded(entry.id .. " choose", nil, function(touchmenu)
+                        local PathChooser = require("ui/widget/pathchooser")
+                        UIManager:show(PathChooser:new{
+                            path = require("apps/filemanager/filemanagerutil").getHomeFolder(),
+                            select_file = true,
+                            select_directory = false,
+                            file_filter = function(name)
+                                return has_extension(name, entry.extensions)
+                            end,
+                            onConfirm = guarded(entry.id .. " pick", nil, function(path)
+                                write(entry, path)
+                                if touchmenu then
+                                    touchmenu:updateItems()
+                                end
+                            end),
+                        })
+                    end),
+                },
+                {
+                    text = "None",
+                    radio = true,
+                    checked_func = guarded(entry.id .. " check", false, function()
+                        return Settings.get(entry.id) == false
+                    end),
+                    callback = guarded(entry.id .. " clear", nil, function()
+                        write(entry, false)
+                    end),
+                },
+            }
+        end),
+    }
+end
+
 -- The featured book's pin: "Most recent" unless it names a file that is there, which
 -- FeaturedBook reads as unpinned (featured_book.lua:65-78). Its submenu unpins, and offers the
--- pinned book while it is there; pinning stays on the book sheet.
+-- pinned book while it is there; pinning stays on the book sheet. A path key with extensions is
+-- a file row instead.
 function BUILDERS.path(entry)
+    if entry.extensions then
+        return file_row(entry)
+    end
     local function title(pin)
         return FeaturedBook.describe(pin).title
     end

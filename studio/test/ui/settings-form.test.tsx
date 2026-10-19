@@ -303,6 +303,45 @@ describe("writing a key", () => {
     expect(pin.queryByText(book)).not.toBeInTheDocument();
   });
 
+  it("sets the wallpaper from a typed device path with one PUT, and None clears it", async () => {
+    const image = "/mnt/us/images/flowers.png";
+    let answer = settings();
+    await open(answer, {
+      "PUT /api/profiles/colorsoft/settings/wallpaper.file": (body) => {
+        answer = settings({}, { "wallpaper.file": (body as { value: unknown }).value });
+        return json(answer);
+      },
+    });
+    const wallpaper = within(control("wallpaper.file"));
+    expect(wallpaper.getByRole("button", { name: "None" })).toHaveAttribute("aria-pressed", "true");
+    expect(wallpaper.queryByRole("button", { name: "Most recent book" })).not.toBeInTheDocument();
+
+    fireEvent.change(wallpaper.getByRole("textbox"), { target: { value: image } });
+    fireEvent.click(wallpaper.getByRole("button", { name: "Use" }));
+
+    expect(await wallpaper.findByText(image)).toBeInTheDocument();
+    expect(wallpaper.getByRole("button", { name: "None" })).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(wallpaper.getByRole("button", { name: "None" }));
+
+    await waitFor(() => expect(wallpaper.getByRole("button", { name: "None" })).toHaveAttribute("aria-pressed", "true"));
+    expect(puts()).toEqual([
+      ["/api/profiles/colorsoft/settings/wallpaper.file", { value: image }],
+      ["/api/profiles/colorsoft/settings/wallpaper.file", { value: false }],
+    ]);
+  });
+
+  it("refuses a relative wallpaper path with its own note and sends nothing", async () => {
+    await open(settings());
+    const wallpaper = within(control("wallpaper.file"));
+
+    fireEvent.change(wallpaper.getByRole("textbox"), { target: { value: "flowers.png" } });
+    fireEvent.click(wallpaper.getByRole("button", { name: "Use" }));
+
+    expect(await wallpaper.findByText("A wallpaper is an image's path on the device, starting with /.")).toBeInTheDocument();
+    expect(puts()).toEqual([]);
+  });
+
   it("shows a refused write beside the control, reads the file again and shows its value", async () => {
     let answer = settings();
     await open(answer, {

@@ -167,6 +167,12 @@ return {
     { key = "featured.pinned", value = "a/b", valid = false, why = "a relative path" },
     { key = "featured.pinned", value = "", valid = false, why = "an empty string" },
 
+    -- wallpaper.file
+    { key = "wallpaper.file", value = false, valid = true, why = "false, no wallpaper" },
+    { key = "wallpaper.file", value = "/mnt/us/flowers.png", valid = true, why = "an absolute path" },
+    { key = "wallpaper.file", value = "flowers.png", valid = false, why = "a relative path" },
+    { key = "wallpaper.file", value = "/", valid = false, why = "the root alone" },
+
     -- launcher.entries
     {
         key = "launcher.entries",

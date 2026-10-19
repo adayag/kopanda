@@ -11,6 +11,7 @@ local Looks = require("looks")
 local PaintClock = require("paint_clock")
 local Sheet = require("sheet")
 local UIManager = require("ui/uimanager")
+local Wallpaper = require("wallpaper")
 local Weather = require("weather")
 local logger = require("logger")
 local Screen = require("device").screen
@@ -289,7 +290,8 @@ function Home:paintTo(bb, x, y)
 end
 
 -- KOReader may close the home itself; Home.shown must not outlive it, nor the featured cover's
--- bounded check, nor a sheet shown over it, nor a show waiting on a paint that won't come.
+-- bounded check, nor a sheet shown over it, nor a show waiting on a paint that won't come, nor the
+-- wallpaper it holds.
 function Home:onCloseWidget()
     if Home.shown == self then
         Home.shown = nil
@@ -306,6 +308,10 @@ function Home:onCloseWidget()
     local sheet_ok, sheet_err = pcall(Sheet.close)
     if not sheet_ok then
         logger.err("KoPanda: could not close the sheet over the home:", sheet_err)
+    end
+    local wallpaper_ok, wallpaper_err = pcall(Wallpaper.release, self)
+    if not wallpaper_ok then
+        logger.err("KoPanda: could not free the wallpaper:", wallpaper_err)
     end
 end
 

@@ -173,12 +173,19 @@ end
 -- header: a band (full width) or a box between the side margins, its padding around the slots,
 -- then its bottom edge, or its rule with rule_space above and below and no row gap after; with
 -- the header's align "bottom", its slots are bottom-aligned on one baseline (align_bottom). A
--- slot is { widget, module, x, y, w, h, offset, error }, h its row's content height and offset
--- the drop of its widget from y (0 but in an aligned row). A slot whose widget has no module, or
--- whose height raises, measures 0; slot.error is the height's error. rows is not changed. The
--- home is sized by Layout.screen, the screen its lengths are scaled for. The rows, the footer
--- and the free height take the screen's height less the nav bar's, whose band across the
--- bottom is nav.
+-- slot is { widget, module, x, y, w, h, offset, error, pad_x, pad_y, plate }, h its row's content
+-- height and offset the drop of its widget from y (0 but in an aligned row). A slot whose widget
+-- has no module, or whose height raises, measures 0; slot.error is the height's error. rows is
+-- not changed. The home is sized by Layout.screen, the screen its lengths are scaled for. The
+-- rows, the footer and the free height take the screen's height less the nav bar's, whose band
+-- across the bottom is nav.
+--
+-- A look with plates (its plate.fill_color, looks/frosted.lua) puts row 1 on one header plate,
+-- header.plate, between the side margins, its slots inside the plate's keyline and the header's
+-- padding; and every other widget whose plate.slots entry is a table on a plate of its own, the
+-- slot's rectangle with that entry's radius, slot.plate, the widget drawn pad_x and pad_y inside it
+-- (the keyline and the entry's padding) and measured at the width inside. A widget that measures
+-- 0 gets no plate. Each plate is { x, y, w, h, radius }; pad_x and pad_y are 0 without one.
 local function arrange(rows, ctx, placer)
     local home = ctx.look.home
     local header = home.header
@@ -186,19 +193,28 @@ local function arrange(rows, ctx, placer)
     local side = scale(home.margin.side)
     local bar = bar_height(ctx.look)
     local above = height - bar
+    local plates = ctx.look.plate
+    local keyline = plates.fill_color and scale(plates.keyline) or 0
 
     local measured, heights = {}, {}
     for i, row in ipairs(rows) do
         local inset = side
         if i == 1 then
             inset = header.band_color and scale(header.padding.side) or side + scale(header.padding.side)
+            inset = inset + keyline
         end
         local slots, content_h = {}, 0
         for j, column in ipairs(Layout.columns(width - 2 * inset, row, home.column_gap)) do
-            local slot = { widget = row[j].widget, x = inset + column.x, w = column.w, h = 0, offset = 0 }
+            local slot = { widget = row[j].widget, x = inset + column.x, w = column.w, h = 0, offset = 0,
+                pad_x = 0, pad_y = 0 }
+            local plate = i > 1 and plates.fill_color and plates.slots[slot.widget]
+            if plate then
+                slot.pad_x, slot.pad_y = keyline + scale(plate.x), keyline + scale(plate.y)
+                slot.radius = scale(plate.radius)
+            end
             slot.module = Widgets.get(slot.widget)
             if slot.module then
-                local ok, h = pcall(slot.module.height, column.w, ctx)
+                local ok, h = pcall(slot.module.height, column.w - 2 * slot.pad_x, ctx)
                 if ok and type(h) == "number" then
                     slot.h = h
                 elseif ok then
@@ -206,6 +222,11 @@ local function arrange(rows, ctx, placer)
                 else
                     slot.error = h
                 end
+            end
+            -- A plate round a widget with a height; none round one that measures 0.
+            slot.plated = plate and slot.h > 0
+            if slot.plated then
+                slot.h = slot.h + 2 * slot.pad_y
             end
             content_h = math.max(content_h, slot.h)
             slots[j] = slot
@@ -215,8 +236,8 @@ local function arrange(rows, ctx, placer)
         end
         local chrome_top, chrome = 0, 0
         if i == 1 and content_h > 0 then
-            chrome_top = scale(header.padding.top)
-            chrome = chrome_top + scale(header.padding.bottom) + scale(header.edge_width)
+            chrome_top = scale(header.padding.top) + keyline
+            chrome = chrome_top + scale(header.padding.bottom) + keyline + scale(header.edge_width)
             if header.rule_color then
                 chrome = chrome + 2 * scale(header.rule_space) + scale(header.rule_width)
             end
@@ -243,6 +264,10 @@ local function arrange(rows, ctx, placer)
         for _, slot in ipairs(row.slots) do
             slot.y = y + row.content_top
             slot.h = row.content_h
+            if slot.plated then
+                slot.plate = { x = slot.x, y = slot.y, w = slot.w, h = slot.h, radius = slot.radius }
+            end
+            slot.plated, slot.radius = nil, nil
         end
         arranged.rows[i] = row
     end
@@ -250,6 +275,10 @@ local function arrange(rows, ctx, placer)
     local first = arranged.rows[1]
     if first and first.h > 0 then
         local bottom = first.y + first.h
+        if plates.fill_color then
+            arranged.header.plate = { x = side, y = first.y, w = width - 2 * side, h = first.h,
+                radius = scale(plates.radius) }
+        end
         local edge = scale(header.edge_width)
         if header.band_color then
             arranged.header.band = { x = 0, y = first.y, w = width, h = first.h }

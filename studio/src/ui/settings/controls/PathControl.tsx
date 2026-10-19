@@ -3,15 +3,35 @@ import { validators } from "../../../core/validators";
 import type { Key } from "../../../schema";
 import { Field, type ControlProps } from "./Field";
 
+/** The words a path key's control uses: a file key's (one with extensions, the wallpaper), or the featured pin's. */
+function wording(entry: Extract<Key, { type: "path" }>) {
+  if (entry.extensions) {
+    return {
+      none: "None",
+      set: "Use",
+      placeholder: "/mnt/us/images/…",
+      refused: `A ${entry.label.toLowerCase()} is an image's path on the device, starting with /.`,
+    };
+  }
+  return {
+    none: "Most recent book",
+    set: "Pin",
+    placeholder: "/mnt/us/books/…",
+    refused: "A pin is a path on the device, starting with /.",
+  };
+}
+
 /**
- * "Most recent book" when the value is false, else the pinned path; a typed device path pins, checked
- * by the plugin's own rule first, and Most recent book unpins.
+ * The none choice when the value is false, else the stored path; a typed device path is stored, checked
+ * by the plugin's own rule first, and the none choice stores false. The featured pin reads "Most recent
+ * book" and "Pin"; a file key (the wallpaper) "None" and "Use".
  */
 export function PathControl({ entry, value, disabled, write, notes }: ControlProps<Extract<Key, { type: "path" }>>) {
   const [typed, setTyped] = useState("");
   const [refused, setRefused] = useState(false);
+  const words = wording(entry);
 
-  function pin() {
+  function store() {
     if (!validators.path(entry, typed)) {
       setRefused(true);
       return;
@@ -35,7 +55,7 @@ export function PathControl({ entry, value, disabled, write, notes }: ControlPro
             if (value !== false) void write(false);
           }}
         >
-          Most recent book
+          {words.none}
         </button>
         {typeof value === "string" && <code className="choice current">{value}</code>}
       </div>
@@ -43,22 +63,22 @@ export function PathControl({ entry, value, disabled, write, notes }: ControlPro
         className="pin"
         onSubmit={(e) => {
           e.preventDefault();
-          pin();
+          store();
         }}
       >
         <input
           type="text"
           aria-label="Path on the device"
-          placeholder="/mnt/us/books/…"
+          placeholder={words.placeholder}
           value={typed}
           disabled={disabled}
           onChange={(e) => setTyped(e.target.value)}
         />
         <button type="submit" disabled={disabled}>
-          Pin
+          {words.set}
         </button>
       </form>
-      {refused && <p className="note">A pin is a path on the device, starting with /.</p>}
+      {refused && <p className="note">{words.refused}</p>}
     </Field>
   );
 }

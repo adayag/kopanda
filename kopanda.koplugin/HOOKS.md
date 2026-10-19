@@ -2119,6 +2119,57 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
   window is the one shown. It never opens the book. It runs in the same dispatch as cwngsync's
   broadcasts, so their re-lists and its own paint the window once.
 
+### Frosted's wallpaper and plates: `RenderImage`, `lightenRect`, `darkenRect` and the inverse flag
+
+- `ui/renderimage`, the wallpaper (`wallpaper.lua`): `RenderImage:renderImageFile(file, false)`
+  (`frontend/ui/renderimage.lua:28-37`) reads the file and renders it at its own size, PNG through
+  MuPDF and JPEG through TurboJPEG (`:48-77`); a file it can't open or render gives nothing,
+  logged by KOReader (`:31-33`, `:86-95`). `RenderImage:scaleBlitBuffer(bb, w, h)` (`:303-328`)
+  scales it to cover the screen with MuPDF and frees the render it scaled (`:325-327`), or hands
+  the same buffer back when the size already matches (`:311-314`). `wallpaper.lua` crops the
+  middle into a new buffer with `Blitbuffer.new` (`base/ffi/blitbuffer.lua:2591`, `TYPE_BB8` in
+  grey, the 8-bit screen's own type) and `blitFrom` (`:1281`), which converts between types,
+  frees the scaled one, and keeps the result, freed with `free` (`:1472-1478`; `getAllocated`,
+  `:696`, reads 0 after). Whenever `Screen.night_mode` is on (`base/ffi/framebuffer.lua:22`), in
+  grey as in colour, it is inverted with `invertRect` (`:1567`), as `ImageWidget` inverts a cover
+  at night (`frontend/ui/widget/imagewidget.lua:583-593`), and held apart from the day's image.
+- The decode before the scale: TurboJPEG decodes the whole JPEG into `jpeg.image_bb` and only
+  then hands it to `scaleBlitBuffer` (`frontend/ui/renderimage.lua:115-134`), and MuPDF decodes a
+  PNG at its own size likewise, so the peak is the full image (a 4000 × 3000 file near 60 MB, a
+  48 MP photo near 170 MB on the Colorsoft), and a kill for memory can't be caught. So
+  `wallpaper.lua` refuses, before reading, a file over 12 MB (`lfs.attributes(path, "size")`)
+  or one whose PNG IHDR (bytes 16-23) or JPEG frame header (SOFn) claims more than 4000 px on a
+  side; the formats' own headers, not a KOReader surface.
+- The plates (`plate.lua`): `lightenRect(x, y, w, h, by)` (`base/ffi/blitbuffer.lua:2273-2283`;
+  its note says it used to be called `dimRect`) blends white at `by` over the rectangle, through
+  the C blitter's `BB_blend_rect` when it can; `darkenRect` (`:2295-2306`) blends black the same
+  way. Rounded plates are lightened a row at a time inside the corners, under the keyline drawn
+  by `paintBorder` with a radius (`:2096-2113`, `paintRoundedCorner`, `:2016-2083`, which leaves
+  the pixels outside its arc alone).
+- The inverse flag: KOReader's software night mode sets the screen buffer's inverse flag
+  (`base/ffi/framebuffer.lua:481-488`), `getInverse` and `setInverse` (`base/ffi/blitbuffer.lua:686-691`).
+  The C blitter skips a flagged buffer, and a pair whose flags differ, for a per-pixel Lua path
+  (`canUseCbb` and `canUseCbbTogether`, `:733-740`). So the plate lifts the flag and darkens the
+  stored pixels by the same amount (lightening what is painted is darkening what is stored), and
+  the wallpaper lifts it, copies the night image and inverts the copy in place, then sets it
+  again; `spec/unit/plate_spec.lua` and `spec/unit/wallpaper_spec.lua` read the stored pixels back.
+- `Wallpaper._reset` is KoPanda's own seam for the specs, not a KOReader internal; named here
+  because the hooks check flags every underscore access.
+
+### The wallpaper's row: `PathChooser`, its file filter and the home folder
+
+- `ui/widget/pathchooser`: `frontend/ui/widget/pathchooser.lua:13-21` (`select_directory`,
+  `select_file`, `show_files`), `:36-41` (a `file_filter` is honoured, `show_unsupported` off),
+  `:104-155` (a hold on a file asks "Choose this file?"; Choose calls `onConfirm(path)` with the
+  `realpath`, `:109`, then closes its dialog and the chooser, `:151-155`). The file filter is
+  `FileChooser`'s (`frontend/ui/widget/filechooser.lua:26`, read at `:88-92`): the row keeps
+  `.png`, `.jpg` and `.jpeg`, in any case. Its `path` is the home folder,
+  `filemanagerutil.getHomeFolder()` (`frontend/apps/filemanager/filemanagerutil.lua:25-27`,
+  `apps/filemanager/filemanagerutil`), which `FileChooser:init` also falls back to for a path that
+  is no folder (`frontend/ui/widget/filechooser.lua:101-103`).
+- The row keeps the menu open (`keep_menu_open`, `frontend/ui/widget/touchmenu.lua:885`, `:924`)
+  and redraws it with `updateItems` (`:671`) once a file is chosen.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`

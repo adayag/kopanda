@@ -783,11 +783,11 @@ describe("the swatch screen", function()
         end
 
         it("goes in the empty last cell, from its chip x, for an odd chip count when it fits", function()
-            local placed = editorial_day(10)
+            local placed = editorial_day(12)
             assert.equals(1, placed.chips % 2)
             local col = columns(placed.labels)
             local lacks = placed.lacks
-            assert.equals("lacks: teal, tint", lacks.text)
+            assert.equals("lacks: violet, yellow", lacks.text)
             -- The cell's left edge: the right column's chip x, and the whole cell's width.
             local chip_x = math.max(unpack(placed.chip_xs))
             assert.equals(chip_x, lacks.dimen.x)
@@ -808,11 +808,11 @@ describe("the swatch screen", function()
         end)
 
         it("goes on the heading's line, from the right column's chip x, for an even chip count when it fits", function()
-            local placed = editorial_day(9)
+            local placed = editorial_day(11)
             assert.equals(0, placed.chips % 2)
             local col = columns(placed.labels)
             local lacks = placed.lacks
-            assert.equals("lacks: sun, teal, tint", lacks.text)
+            assert.equals("lacks: tint, violet, yellow", lacks.text)
             local chip_x = math.max(unpack(placed.chip_xs))
             assert.equals(chip_x, lacks.dimen.x)
             assert.equals(col.right_x - chip_x + col.right_w, lacks.width)

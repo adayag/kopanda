@@ -14,6 +14,7 @@ return {
                 { value = "editorial", label = "Editorial" },
                 { value = "riso", label = "Riso" },
                 { value = "toybox", label = "Toybox" },
+                { value = "frosted", label = "Frosted" },
             },
             default = "diner",
             label = "Look",
@@ -29,6 +30,17 @@ return {
             },
             default = "medium",
             label = "Text size",
+            group = "appearance",
+        },
+        {
+            -- An image on the device drawn behind the home's rows in a look that draws one
+            -- (Frosted); false draws none. extensions are the kinds of file the device menu's
+            -- chooser offers.
+            id = "wallpaper.file",
+            type = "path",
+            extensions = { "png", "jpg", "jpeg" },
+            default = false,
+            label = "Wallpaper",
             group = "appearance",
         },
         {

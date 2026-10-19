@@ -17,6 +17,10 @@
                 {
                     "label": "Toybox",
                     "value": "toybox"
+                },
+                {
+                    "label": "Frosted",
+                    "value": "frosted"
                 }
             ],
             "default": "diner",
@@ -45,6 +49,18 @@
             "id": "text_size",
             "label": "Text size",
             "type": "choice"
+        },
+        {
+            "default": false,
+            "extensions": [
+                "png",
+                "jpg",
+                "jpeg"
+            ],
+            "group": "appearance",
+            "id": "wallpaper.file",
+            "label": "Wallpaper",
+            "type": "path"
         },
         {
             "default": [

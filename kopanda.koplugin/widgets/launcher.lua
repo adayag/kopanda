@@ -3,9 +3,10 @@
 -- icon, its label and a hairline under it (Main.dc.html:60-62); Diner draws outlined tiles with
 -- the hard tile shadow, the first three on the look's accents, the icon at the top and the label
 -- at the foot (HomeRetro.dc.html:55-64); Toybox draws rounded blocks, each its icon in a ringed
--- round badge of the next of six fills and its label beside it (toybox.md). A tap on an entry
--- runs it; a tap between entries falls through to the home. A hold anywhere on it opens launcher
--- management.
+-- round badge of the next of six fills and its label beside it (toybox.md); a look with plates
+-- (Frosted) draws each of those tiles as a plate, its ground the wallpaper lightened (plate.lua).
+-- A tap on an entry runs it; a tap between entries falls through to the home. A hold anywhere on
+-- it opens launcher management.
 local Geom = require("ui/geometry")
 local Icons = require("icons")
 local LauncherEntries = require("launcher_entries")
@@ -13,6 +14,7 @@ local Layout = require("layout")
 local Looks = require("looks")
 local Paint = require("paint")
 local PaintClock = require("paint_clock")
+local Plate = require("plate")
 local Settings = require("settings")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
@@ -26,7 +28,8 @@ local Launcher = {
 
 -- One entry, dimen its rectangle: its shadow, fill and rule, its children (icon and lines) at
 -- self.places, then its outline, as widgets/quote.lua paints its tile. The shadow, fill and
--- outline are rounded by radius, square without one (paint.lua).
+-- outline are rounded by radius, square without one (paint.lua). With a plate (the tokens
+-- Plate.spec gives), it paints the plate, then its children.
 local Entry = WidgetContainer:extend{
     name = "kopanda_launcher_entry",
     fill_color = nil,
@@ -42,6 +45,13 @@ local Entry = WidgetContainer:extend{
 
 function Entry:paintTo(bb, x, y)
     local w, h = self.dimen.w, self.dimen.h
+    if self.plate then
+        Plate.paint(bb, x, y, w, h, self.plate)
+        for i, child in ipairs(self) do
+            child:paintTo(bb, x + self.places[i].x, y + self.places[i].y)
+        end
+        return
+    end
     if self.shadow_color then
         Paint.fill(bb, x + self.shadow_x, y + self.shadow_y, w, h, self.shadow_color, self.radius)
     end
@@ -193,7 +203,9 @@ local function make(width, ctx)
     if box and shadow.color then
         shadow_x, shadow_y = scale(shadow.x), scale(shadow.y)
     end
-    local outline = box and scale(look.stroke.outline) or 0
+    -- A plate's keyline stands for the tile's outline (ctx.plate, HomeRows.build).
+    local plate = box and ctx.plate or nil
+    local outline = box and (plate and plate.keyline or scale(look.stroke.outline)) or 0
     local rule = box and 0 or scale(look.stroke.hairline)
     local radius = box and look.radius.box > 0 and scale(look.radius.box) or nil
     -- A boxed tile with a badge sets its icon in the badge and its label beside it.
@@ -244,6 +256,7 @@ local function make(width, ctx)
             entry.places[#entry] = { x = x, y = y }
         end
         if box and badge_px > 0 then
+            entry.plate = plate
             entry.fill_color = color(look.tile.fill_color)
             entry.outline, entry.outline_color = outline, color(look.tile.outline_color)
             entry.shadow_color, entry.shadow_x, entry.shadow_y = color(shadow.color), shadow_x, shadow_y
@@ -265,6 +278,7 @@ local function make(width, ctx)
                 add(p.widget, text_x + p.x, text_y + p.y)
             end
         elseif box then
+            entry.plate = plate
             entry.fill_color = (i <= 3 and color(tokens["accent_" .. i .. "_color"])) or color(look.tile.fill_color)
             entry.outline, entry.outline_color = outline, color(look.tile.outline_color)
             entry.shadow_color, entry.shadow_x, entry.shadow_y = color(shadow.color), shadow_x, shadow_y

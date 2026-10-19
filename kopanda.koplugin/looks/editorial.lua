@@ -32,6 +32,8 @@ return {
             teal = false,
             pink = false,
             mustard = false,
+            violet = false, -- Frosted's accent; Editorial has none
+            yellow = false, -- Frosted's accent; Editorial has none
             tint = false, -- Riso's pink tint; Editorial has none
             sun = false, -- Toybox's accents and its nav pill's white; Editorial has none
             coral = false, -- as sun
@@ -55,6 +57,8 @@ return {
             teal = false,
             pink = false,
             mustard = false,
+            violet = false, -- Frosted's accent; Editorial has none
+            yellow = false, -- Frosted's accent; Editorial has none
             tint = false,
             sun = false, -- as by day
             coral = false, -- as sun
@@ -79,6 +83,8 @@ return {
             teal = false,
             pink = false,
             mustard = false,
+            violet = false, -- Frosted's accent; Editorial has none
+            yellow = false, -- Frosted's accent; Editorial has none
             tint = false,
             sun = false, -- as by day
             coral = false, -- as sun
@@ -112,6 +118,31 @@ return {
 
     -- Display type printed twice, an offset copy in color under the part's own: Editorial prints once.
     misregister = { x = 0, y = 0, color = false },
+
+    -- The plates Frosted sets its home rows on (looks/frosted.lua): Editorial has none, so its rows
+    -- sit on the page as before plates (fill_color false skips them in layout.lua and
+    -- home_rows.lua), with no padding round a widget and nothing lightened.
+    plate = {
+        fill_color = false, -- no plates
+        keyline = 0, -- no plates
+        keyline_color = false, -- no plates
+        radius = 0, -- no plates
+        lighten = { day = false, night = false, grey = false }, -- no plates, nothing lightened
+        slots = {
+            date = { x = 0, y = 0, radius = 0 }, -- no plates: the widget at its slot's edge
+            clock = { x = 0, y = 0, radius = 0 }, -- no plates
+            weather = { x = 0, y = 0, radius = 0 }, -- no plates
+            stats = { x = 0, y = 0, radius = 0 }, -- no plates
+            quote = { x = 0, y = 0, radius = 0 }, -- no plates
+            featured = { x = 0, y = 0, radius = 0 }, -- no plates
+            launcher = false, -- the launcher's tiles are its own
+        },
+    },
+
+    -- The owner's image behind the home (wallpaper.file): Frosted's alone; Editorial draws its paper.
+    wallpaper = {
+        enabled = false, -- the paper, as before the wallpaper setting
+    },
 
     radius = {
         cover = 3,

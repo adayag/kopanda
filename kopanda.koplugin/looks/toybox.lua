@@ -40,6 +40,8 @@ return {
             teal = false, -- Diner's accent; Toybox has none
             pink = false, -- Diner's and Riso's accent; Toybox has none
             mustard = false, -- Diner's accent; Toybox has none
+            violet = false, -- Frosted's accent; Toybox has none
+            yellow = false, -- Frosted's accent; Toybox has none
             tint = false, -- Riso's tint; Toybox has none
             sun = "#ffc94a", -- toybox.md: a1
             coral = "#ff8f75", -- toybox.md: a2
@@ -64,6 +66,8 @@ return {
             teal = false, -- as by day
             pink = false, -- as by day
             mustard = false, -- as by day
+            violet = false, -- Frosted's accent; Toybox has none
+            yellow = false, -- Frosted's accent; Toybox has none
             tint = false, -- as by day
             sun = "#8a6a12", -- toybox.md
             coral = "#a2493a", -- toybox.md
@@ -87,6 +91,8 @@ return {
             teal = false, -- as by day
             pink = false, -- as by day
             mustard = false, -- as by day
+            violet = false, -- Frosted's accent; Toybox has none
+            yellow = false, -- Frosted's accent; Toybox has none
             tint = false, -- as by day
             sun = "#dddddd", -- toybox.md
             coral = "#999999", -- toybox.md: a2, hatched where it fills a bar (progress.fill_grey)
@@ -123,6 +129,31 @@ return {
 
     -- toybox.md: misregister none, display type printed once.
     misregister = { x = 0, y = 0, color = false }, -- toybox.md: misregister none
+
+    -- The plates Frosted sets its home rows on (looks/frosted.lua): Toybox has none, so its rows
+    -- sit on the page as before plates (fill_color false skips them in layout.lua and
+    -- home_rows.lua), with no padding round a widget and nothing lightened.
+    plate = {
+        fill_color = false, -- no plates
+        keyline = 0, -- no plates
+        keyline_color = false, -- no plates
+        radius = 0, -- no plates
+        lighten = { day = false, night = false, grey = false }, -- no plates, nothing lightened
+        slots = {
+            date = { x = 0, y = 0, radius = 0 }, -- no plates: the widget at its slot's edge
+            clock = { x = 0, y = 0, radius = 0 }, -- no plates
+            weather = { x = 0, y = 0, radius = 0 }, -- no plates
+            stats = { x = 0, y = 0, radius = 0 }, -- no plates
+            quote = { x = 0, y = 0, radius = 0 }, -- no plates
+            featured = { x = 0, y = 0, radius = 0 }, -- no plates
+            launcher = false, -- the launcher's tiles are its own
+        },
+    },
+
+    -- The owner's image behind the home (wallpaper.file): Frosted's alone; Toybox draws its paper.
+    wallpaper = {
+        enabled = false, -- the paper, as before the wallpaper setting
+    },
 
     radius = {
         cover = 6, -- toybox.md: cover.radius

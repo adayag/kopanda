@@ -10,6 +10,7 @@ describe("Layout", function()
     local NavBar = require("nav_bar")
     local editorial = require("looks/editorial")
     local diner = require("looks/diner")
+    local frosted = require("looks/frosted")
     local real_get = Widgets.get
     local real_bar_height = NavBar.height
 
@@ -347,6 +348,95 @@ describe("Layout", function()
             end
             assert.equals(0, arranged.heights[2])
             assert.is_nil(arranged.rows[2].slots[1].module)
+        end)
+
+        -- Frosted's plates (looks/frosted.lua plate): row 1 one header plate between the side
+        -- margins, its slots inside its keyline and header padding; every other widget on a plate
+        -- of its own, padded inside its keyline, measured at the width inside it; the gutters
+        -- between plates the row and column gaps.
+        describe("with plates", function()
+            local s = function(px)
+                return Layout.screen:scaleBySize(px)
+            end
+
+            it("puts row 1 on one header plate between the side margins, its slots inside its keyline", function()
+                heights = { date = 60, clock = 50, quote = 100, weather = 20, stats = 30 }
+                local arranged = Layout.arrange(default, ctx(frosted, 1264, 1680))
+                local row = arranged.rows[1]
+                local inset = s(2) + s(14)
+                assert.equals(60 + 2 * inset, arranged.heights[1])
+                assert.same({ x = s(24), y = s(26), w = 1264 - 2 * s(24), h = 60 + 2 * inset, radius = s(12) },
+                    arranged.header.plate)
+                assert.equals(s(24) + s(2) + s(18), row.slots[1].x)
+                assert.equals(1264 - s(24) - s(2) - s(18), row.slots[2].x + row.slots[2].w)
+                assert.equals(s(26) + inset, row.slots[1].y)
+                assert.is_nil(row.slots[1].plate)
+            end)
+
+            it("puts every other widget on its own plate, padded inside its keyline", function()
+                local widths = {}
+                heights = { date = 60, clock = 50, quote = 100, weather = 20, stats = 30 }
+                local get = Widgets.get
+                Widgets.get = function(id)
+                    local stub = get(id)
+                    return { id = id, build = stub.build, height = function(width)
+                        widths[id] = width
+                        return stub.height(width)
+                    end }
+                end
+                local arranged = Layout.arrange(default, ctx(frosted, 1264, 1680))
+                local quote = arranged.rows[2].slots[1]
+                local pad_x, pad_y = s(2) + s(18), s(2) + s(12)
+                assert.same({ pad_x, pad_y }, { quote.pad_x, quote.pad_y })
+                assert.equals(100 + 2 * pad_y, arranged.heights[2])
+                assert.same({ x = s(24), y = quote.y, w = 1264 - 2 * s(24), h = 100 + 2 * pad_y, radius = s(12) },
+                    quote.plate)
+                assert.equals(1264 - 2 * s(24) - 2 * pad_x, widths.quote)
+                local stats = arranged.rows[3].slots[2]
+                assert.same({ s(2) + s(14), s(2) + s(8) }, { stats.pad_x, stats.pad_y })
+                assert.equals(s(999), stats.plate.radius)
+                -- The row's plates share its height, the taller widget's and its padding.
+                assert.equals(30 + 2 * (s(2) + s(8)), arranged.heights[3])
+                assert.equals(arranged.heights[3], arranged.rows[3].slots[1].plate.h)
+            end)
+
+            it("keeps the margins and gutters between plates", function()
+                heights = { date = 60, clock = 50, quote = 100, weather = 20, stats = 30 }
+                local arranged = Layout.arrange(default, ctx(frosted, 1264, 1680))
+                local header, quote = arranged.header.plate, arranged.rows[2].slots[1].plate
+                assert.equals(s(26), header.y)
+                assert.equals(s(12), quote.y - (header.y + header.h))
+                local weather, stats = arranged.rows[3].slots[1].plate, arranged.rows[3].slots[2].plate
+                assert.equals(s(24), weather.x)
+                assert.equals(s(12), stats.x - (weather.x + weather.w))
+                assert.equals(1264 - s(24), stats.x + stats.w)
+                -- The last row sits on the bottom margin above the bar.
+                assert.equals(1680 - BAR - s(14), stats.y + stats.h)
+            end)
+
+            it("puts no plate under a widget that measures 0", function()
+                heights = { date = 60, clock = 50, quote = 100, weather = 20 }
+                local arranged = Layout.arrange(default, ctx(frosted, 1264, 1680))
+                assert.is_table(arranged.rows[3].slots[1].plate)
+                assert.is_nil(arranged.rows[3].slots[2].plate)
+                heights = { quote = 100 }
+                arranged = Layout.arrange(default, ctx(frosted, 1264, 1680))
+                assert.is_nil(arranged.header.plate)
+            end)
+
+            it("gives a look without plates none, and no padding", function()
+                heights = { date = 60, clock = 50, quote = 100, weather = 20, stats = 30 }
+                for _, look in ipairs({ editorial, diner }) do
+                    local arranged = Layout.arrange(default, ctx(look, 1264, 1680))
+                    assert.is_nil(arranged.header.plate)
+                    for _, row in ipairs(arranged.rows) do
+                        for _, slot in ipairs(row.slots) do
+                            assert.is_nil(slot.plate)
+                            assert.same({ 0, 0 }, { slot.pad_x, slot.pad_y })
+                        end
+                    end
+                end
+            end)
         end)
 
         it("records a widget's height error and measures its slot as 0", function()

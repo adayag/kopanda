@@ -34,7 +34,7 @@ describe("schema.lua", function()
         assert.same({ "schema.keys.1.check" }, functions_in({ keys = { { check = print } } }, "schema"))
     end)
 
-    it("is version 1 with the nine keys of the Keys tables, in order", function()
+    it("is version 1 with the ten keys of the Keys tables, in order", function()
         local schema = load_bare()
         assert.equals(1, schema.version)
         assert.same({
@@ -46,6 +46,7 @@ describe("schema.lua", function()
                     { value = "editorial", label = "Editorial" },
                     { value = "riso", label = "Riso" },
                     { value = "toybox", label = "Toybox" },
+                    { value = "frosted", label = "Frosted" },
                 },
                 default = "diner",
                 label = "Look",
@@ -61,6 +62,14 @@ describe("schema.lua", function()
                 },
                 default = "medium",
                 label = "Text size",
+                group = "appearance",
+            },
+            {
+                id = "wallpaper.file",
+                type = "path",
+                extensions = { "png", "jpg", "jpeg" },
+                default = false,
+                label = "Wallpaper",
                 group = "appearance",
             },
             {
@@ -145,15 +154,30 @@ describe("schema.lua", function()
     it("validates the path type, whose default false is allowed", function()
         local Settings = require("settings")
         assert.is_function(Settings.validators.path)
-        local pinned = load_bare().keys[8]
+        local pinned = load_bare().keys[9]
         assert.equals("featured.pinned", pinned.id)
         assert.is_true(Settings.validators.path(pinned, pinned.default))
+    end)
+
+    -- The wallpaper is a path too: false (none) or an image on the device, of a kind its
+    -- extensions name, which the device menu's chooser offers.
+    it("gives the wallpaper a path key, false by default, offering png and jpg files", function()
+        local Settings = require("settings")
+        local wallpaper = load_bare().keys[3]
+        assert.equals("wallpaper.file", wallpaper.id)
+        assert.equals("path", wallpaper.type)
+        assert.equals("appearance", wallpaper.group)
+        assert.is_false(wallpaper.default)
+        assert.same({ "png", "jpg", "jpeg" }, wallpaper.extensions)
+        assert.is_true(Settings.validators.path(wallpaper, wallpaper.default))
+        assert.is_true(Settings.validators.path(wallpaper, "/mnt/us/wallpaper.png"))
+        assert.is_false(Settings.validators.path(wallpaper, "wallpaper.png"))
     end)
 
     it("validates the launcher type, whose default six are allowed", function()
         local Settings = require("settings")
         assert.is_function(Settings.validators.launcher)
-        local launcher = load_bare().keys[9]
+        local launcher = load_bare().keys[10]
         assert.equals("launcher.entries", launcher.id)
         assert.is_true(Settings.validators.launcher(launcher, launcher.default))
     end)

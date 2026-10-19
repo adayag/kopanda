@@ -92,6 +92,7 @@ then\9Café “quoted”",
         ["x"] = "y",
     },
     ["text_size"] = "large",
+    ["wallpaper.file"] = "/mnt/us/images/flowers.png",
     ["weather.location"] = {
         ["latitude"] = 47.60621,
         ["longitude"] = -122.33207,

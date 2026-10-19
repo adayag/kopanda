@@ -40,6 +40,8 @@ return {
             teal = false, -- Diner's accent; Riso has none
             pink = "#e9508a", -- riso.md: fluoro pink, a1
             mustard = false, -- Diner's accent; Riso has none
+            violet = false, -- Frosted's accent; Riso has none
+            yellow = false, -- Frosted's accent; Riso has none
             tint = "#f6c6d8", -- riso.md: pink tint
             sun = false, -- Toybox's accents and its nav pill's white; Riso has none
             coral = false, -- as sun
@@ -64,6 +66,8 @@ return {
             teal = false, -- as by day
             pink = "#f0729f", -- riso.md
             mustard = false, -- as by day
+            violet = false, -- Frosted's accent; Riso has none
+            yellow = false, -- Frosted's accent; Riso has none
             tint = "#4a2643", -- riso.md
             sun = false, -- as by day
             coral = false, -- as sun
@@ -87,6 +91,8 @@ return {
             teal = false, -- as by day
             pink = "#999999", -- riso.md: a1, hatched where it fills a bar (progress.fill_grey)
             mustard = false, -- as by day
+            violet = false, -- Frosted's accent; Riso has none
+            yellow = false, -- Frosted's accent; Riso has none
             tint = "#dddddd", -- riso.md
             sun = false, -- as by day
             coral = false, -- as sun
@@ -124,6 +130,31 @@ return {
     -- Display type printed twice, an offset copy in color under the part's own (riso.md: pink 3
     -- right 2 down under display type; in grey the pink's grey, a light ghost).
     misregister = { x = 3, y = 2, color = "pink" }, -- riso.md: misregister
+
+    -- The plates Frosted sets its home rows on (looks/frosted.lua): Riso has none, so its rows
+    -- sit on the page as before plates (fill_color false skips them in layout.lua and
+    -- home_rows.lua), with no padding round a widget and nothing lightened.
+    plate = {
+        fill_color = false, -- no plates
+        keyline = 0, -- no plates
+        keyline_color = false, -- no plates
+        radius = 0, -- no plates
+        lighten = { day = false, night = false, grey = false }, -- no plates, nothing lightened
+        slots = {
+            date = { x = 0, y = 0, radius = 0 }, -- no plates: the widget at its slot's edge
+            clock = { x = 0, y = 0, radius = 0 }, -- no plates
+            weather = { x = 0, y = 0, radius = 0 }, -- no plates
+            stats = { x = 0, y = 0, radius = 0 }, -- no plates
+            quote = { x = 0, y = 0, radius = 0 }, -- no plates
+            featured = { x = 0, y = 0, radius = 0 }, -- no plates
+            launcher = false, -- the launcher's tiles are its own
+        },
+    },
+
+    -- The owner's image behind the home (wallpaper.file): Frosted's alone; Riso draws its paper.
+    wallpaper = {
+        enabled = false, -- the paper, as before the wallpaper setting
+    },
 
     radius = {
         cover = 0, -- riso.md: radius 0

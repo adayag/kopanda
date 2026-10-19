@@ -46,7 +46,7 @@ describe("bin/layout-fit", function()
         return rapidjson.decode(out)
     end
 
-    local default = dofile(root .. "/kopanda.koplugin/schema.lua").keys[3].default
+    local default = dofile(root .. "/kopanda.koplugin/schema.lua").keys[4].default
     local every_widget = {
         { { widget = "date", share = 1 } },
         { { widget = "clock", share = 1 } },

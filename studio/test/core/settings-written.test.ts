@@ -14,6 +14,7 @@ const data = table([
   ["schema_version", 1],
   ["look", "editorial"],
   ["text_size", "large"],
+  ["wallpaper.file", "/mnt/us/images/flowers.png"],
   [
     "layout.rows",
     fromJson([

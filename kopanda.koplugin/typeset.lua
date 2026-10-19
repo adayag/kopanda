@@ -199,11 +199,12 @@ local function grown_group_size(self)
     return { w = size.w + self.misregistration.x, h = size.h + self.misregistration.y }
 end
 
--- The text widget self[1], made black on white, printed twice through its mask: in
--- self.offset.color at its x and y, then in self.color at its place; dimen is the text's size plus
--- the offset. The mask is the text painted on white and inverted, so its ink is white
--- (base/ffi/blitbuffer.lua:1506, :1567), made at the first paint and freed with the widget. A
--- misregistered TextBoxWidget is printed so (Typeset.printed).
+-- The text widget self[1], made black on white, printed through its mask: in self.offset.color
+-- at its x and y first when it has an offset, then in self.color at its place; dimen is the
+-- text's size plus the offset. The mask is the text painted on white and inverted, so its ink is
+-- white (base/ffi/blitbuffer.lua:1506, :1567), made at the first paint and freed with the widget.
+-- A misregistered TextBoxWidget is printed so, and one on a plate (Typeset.printed), whose ground
+-- must show between its glyphs.
 local Misregistered = WidgetContainer:extend{
     name = "kopanda_misregistered",
 }
@@ -221,7 +222,9 @@ function Misregistered:paintTo(bb, x, y)
         self.mask = mask
     end
     local w, h = self.mask:getWidth(), self.mask:getHeight()
-    blit(bb, self.mask, x + self.offset.x, y + self.offset.y, w, h, self.offset.color)
+    if self.offset then
+        blit(bb, self.mask, x + self.offset.x, y + self.offset.y, w, h, self.offset.color)
+    end
     blit(bb, self.mask, x, y, w, h, self.color)
 end
 
@@ -233,21 +236,30 @@ function Misregistered:free()
     WidgetContainer.free(self)
 end
 
+-- Whether text under ctx is printed on a plate (a look with plates, looks/frosted.lua), whose
+-- ground, the wallpaper lightened, shows between its glyphs.
+function Typeset.on_plate(ctx)
+    return ctx.look.plate.fill_color and true or false
+end
+
 -- The widget make(width, fgcolor, bgcolor) builds for part under ctx, at most max_width wide: a
--- TextBoxWidget, which keeps a colour itself (frontend/ui/widget/textboxwidget.lua:854-906), made
--- in part's colour on paper; for a misregistered part made black on white at max_width less the
--- offset and printed twice by Misregistered.
+-- TextBoxWidget, which keeps a colour itself and fills its box with bgcolor
+-- (frontend/ui/widget/textboxwidget.lua:854-906), made in part's colour on paper; for a
+-- misregistered part made black on white at max_width less the offset and printed twice by
+-- Misregistered; on a plate made black on white and printed once through its mask by
+-- Misregistered, so the plate's ground shows between its glyphs.
 function Typeset.printed(part, max_width, ctx, make)
     local palette = Looks.palette(ctx.look, ctx.variant)
     local color = Looks.color(palette[part.color])
     local offset = misregistration(part, ctx)
-    if not offset then
+    if not offset and not Typeset.on_plate(ctx) then
         return make(max_width, color, Looks.color(palette.paper))
     end
-    local text = make(math.max(1, max_width - offset.x), Blitbuffer.COLOR_BLACK, Blitbuffer.COLOR_WHITE)
+    local offset_x, offset_y = offset and offset.x or 0, offset and offset.y or 0
+    local text = make(math.max(1, max_width - offset_x), Blitbuffer.COLOR_BLACK, Blitbuffer.COLOR_WHITE)
     local size = text:getSize()
     return Misregistered:new{
-        dimen = Geom:new{ w = size.w + offset.x, h = size.h + offset.y },
+        dimen = Geom:new{ w = size.w + offset_x, h = size.h + offset_y },
         offset = offset,
         color = color,
         text,

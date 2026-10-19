@@ -176,6 +176,12 @@ describe("the quote of the day", function()
     end)
 
     describe("the widget", function()
+        -- The quote's TextBoxWidget: the text box itself, or, in a look with plates, the one
+        -- Typeset.printed prints through its mask.
+        local function box_of(built)
+            return built.text_box[1] or built.text_box
+        end
+
         it("reads quote.source and draws the day's builtin entry in curly quotes, with no author", function()
             local read = {}
             Settings.get = function(key)
@@ -186,7 +192,7 @@ describe("the quote of the day", function()
                 local ctx = ctx_for(look_id)
                 local entry = dofile(quotes_path)[Quote.index(ctx.now)]
                 local built = Quote.build(500, ctx)
-                local text = built.text_box.text
+                local text = box_of(built).text
                 assert.equals("“" .. entry.text .. "”", text)
                 assert.is_nil(text:find(entry.author, 1, true))
                 built:free()
@@ -210,7 +216,7 @@ describe("the quote of the day", function()
                         local width = full_row_width(ctx)
                         assert.truthy(width > 0)
                         local built = Quote.build(width, ctx)
-                        local box = built.text_box
+                        local box = box_of(built)
                         local where = name .. " " .. look_id .. ": " .. entry.text
                         assert.equals(Layout.font_size(18, "large"), box.face.orig_size, where)
                         assert.truthy(#box.vertical_string_list <= 4, where)
@@ -232,7 +238,7 @@ describe("the quote of the day", function()
             for _, look_id in ipairs(Looks.ids()) do
                 local ctx = ctx_for(look_id, "large")
                 local built = Quote.build(600, ctx)
-                local box = built.text_box
+                local box = box_of(built)
                 assert.truthy(#box.vertical_string_list > 4)
                 assert.equals(4, box.lines_per_page)
                 assert.equals(4, box.line_with_ellipsis)
@@ -256,7 +262,10 @@ describe("the quote of the day", function()
                 local look = ctx.look
                 local padding = Screen:scaleBySize(look.quote.padding)
                 local chrome
-                if not look.quote.rule_color then
+                if look.plate.fill_color then
+                    -- Plain on its plate: the padding alone, the plate's own the home's.
+                    chrome = 2 * padding
+                elseif not look.quote.rule_color then
                     chrome = 2 * (Screen:scaleBySize(look.stroke.outline) + padding)
                         + Screen:scaleBySize(look.shadow.tile.y)
                 else
@@ -264,7 +273,7 @@ describe("the quote of the day", function()
                 end
                 local height = Quote.height(400, ctx)
                 local built = Quote.build(400, ctx)
-                local box = built.text_box
+                local box = box_of(built)
                 assert.equals(1, #box.vertical_string_list, look_id)
                 local line = box.line_height_px + box.line_glyph_extra_height
                 assert.equals(line, box:getSize().h, look_id)
@@ -294,7 +303,7 @@ describe("the quote of the day", function()
                 for _, look_id in ipairs(Looks.ids()) do
                     local ctx = ctx_for(look_id, "large")
                     local built = Quote.build(500, ctx)
-                    local face = built.text_box.face
+                    local face = box_of(built).face
                     local size = Layout.font_size(18, ctx.text_size)
                     assert.equals(Font:getFace("cfont", size).hash, face.hash, look_id)
                     assert.equals(size, face.orig_size, look_id)
@@ -314,9 +323,12 @@ describe("the quote of the day", function()
                     local built = Quote.build(width, ctx)
                     assert.equals(width, built:getSize().w)
                     assert.equals(Quote.height(width, ctx), built:getSize().h)
-                    -- A quote with padding or rules is taller than its text; Toybox's plain quote
+                    -- A look with plates draws the quote plain, its plate's padding the home's;
+                    -- a quote with padding or rules is taller than its text; Toybox's plain quote
                     -- has no chrome to add.
-                    if quote.padding > 0 or quote.rule_width > 0 then
+                    if ctx.look.plate.fill_color then
+                        assert.equals(built.text_box:getSize().h, built:getSize().h, look_id)
+                    elseif quote.padding > 0 or quote.rule_width > 0 then
                         assert.truthy(built:getSize().h > built.text_box:getSize().h, look_id)
                         chromed[look_id] = true
                     else
