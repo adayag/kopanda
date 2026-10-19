@@ -2,7 +2,9 @@
 -- black stroke files and ImageWidget's dim only lightens on a white ground
 -- (frontend/ui/widget/imagewidget.lua:570-579), so this takes the method that note proposes: the
 -- rendered icon blended onto white and inverted is an alpha mask whose ink is white, built once per
--- file and size, and each paint colours the target through it.
+-- file and size and kept for the process (the widget's free lets go of it without freeing it),
+-- and each paint colours the target through it. A render that fails is not cached, and the icon
+-- then draws nothing.
 local Blitbuffer = require("ffi/blitbuffer")
 local Geom = require("ui/geometry")
 local RenderImage = require("ui/renderimage")

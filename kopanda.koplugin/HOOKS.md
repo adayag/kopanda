@@ -112,55 +112,39 @@ Upgrading KOReader walks this list.
 - The home or the chrome window after a book close is built inside the file manager's `Show`,
   after `showFiles` reset the rotation, so it is always built at the screen's size then, once.
 
-### `covers_fullscreen` in `UIManager:_repaint`
+### `UIManager`: `_repaint`, `nextTick`, `show` and `close`, the settled signal
 
-- `frontend/ui/uimanager.lua:1305-1316`.
-- `_repaint` skips `paintTo` on every widget beneath the topmost `covers_fullscreen` one, so
-  nothing of the file browser is painted under the home, and nothing of the home under the
-  editor: an editor's change defers the home's rebuild (`Home:defer_refresh`) to the editor's
-  close.
-
-### `UIManager:nextTick` and `tickAfterNext`
-
-- `frontend/ui/uimanager.lua:431-433`, `:447-456`.
-- Except right after a book close, the show runs from `nextTick`, landing over what
-  `reader.lua:291-300` shows synchronously after `showFiles` (after a close the home is shown at
-  once, see `CloseDocument` above); the settled signal and the show's `finished` run from a
-  `nextTick` that the home's first `paintTo` schedules, past that `_repaint`, or at once from
-  `onCloseWidget` for a home closed before it painted. Nothing is scheduled before the paint, so a home under a
-  `covers_fullscreen` window waits without a task. A `tickAfterNext` from the show could land
-  before the paint and tell `finished` the home hadn't painted (the harness entry for
-  `scheduleIn`, `nextTick` and `tickAfterNext` has the details). A failed paint closes the home
-  from `nextTick`.
-
-### `UIManager:show`, `close` and `isWidgetShown`
-
-- `frontend/ui/uimanager.lua:229` (`show`, which sends `Show` at `:259`), `:290-360`
-  (`close`, which sends `CloseWidget` at `:300`), `:881-888` (`isWidgetShown`).
-- The home is shown and closed with `"full"`; a home that reached the stack before failing
-  is taken off it.
-- The editor frame (`editor.lua`) is shown and closed the same way, with `"full"`, and is
-  `covers_fullscreen` as the home is, so nothing beneath it is painted while it is up; an editor
-  that reached the stack before failing is taken off it.
-- The editor's `onCloseWidget` runs a home refresh its changes deferred, once: `close` sends
-  `CloseWidget` (`:300`) before it takes the editor off the stack (`:312`) and queues its
-  `"full"` refresh (`:354`), and the home's `"ui"` refresh, queued by its `setDirty` (`:740`),
-  merges into that one (`_refresh`, `:1266-1281`).
-
-### `UIManager.event_hook`, the settled signal
-
-- `frontend/ui/uimanager.lua:53`; `frontend/ui/hook_container.lua:88-98` (`execute`, which
-  runs nothing with no listener).
-- After the home's first paint the plugin executes `KoPandaSettled` with `{ screen, paint_ms,
-  cpu_ms, settle_ms }`, once per home; the capture harness entry below is the listener.
-  The sheet, editor, swatch and file-browser signals carry `paint_ms` and `cpu_ms` too.
-  `cpu_ms` is `os.clock()` process CPU time over the same span as `paint_ms`, stamped through
+- `covers_fullscreen` in `UIManager:_repaint`: `frontend/ui/uimanager.lua:1305-1316`. `_repaint` skips
+  `paintTo` on every widget beneath the topmost `covers_fullscreen` one, so nothing of the file
+  browser is painted under the home, and nothing of the home under the editor: an editor's change
+  defers the home's rebuild (`Home:defer_refresh`) to the editor's close.
+- `nextTick` and `tickAfterNext`: `frontend/ui/uimanager.lua:431-433`, `:447-456`. Except right
+  after a book close, the show runs from `nextTick`, landing over what `reader.lua:291-300` shows
+  synchronously after `showFiles` (after a close the home is shown at once, see `CloseDocument`
+  above); the settled signal and the show's `finished` run from a `nextTick` that the home's first
+  `paintTo` schedules, past that `_repaint`, or at once from `onCloseWidget` for a home closed
+  before it painted. Nothing is scheduled before the paint, so a home under a `covers_fullscreen`
+  window waits without a task. A `tickAfterNext` from the show could land before the paint and tell
+  `finished` the home hadn't painted (the harness entry for `scheduleIn`, `nextTick` and
+  `tickAfterNext` has the details). A failed paint closes the home from `nextTick`.
+- `show`, `close` and `isWidgetShown`: `frontend/ui/uimanager.lua:229` (`show`, which sends `Show`
+  at `:259`), `:290-360` (`close`, which sends `CloseWidget` at `:300`), `:881-888`
+  (`isWidgetShown`). The home and the editor frame (`editor.lua`, also `covers_fullscreen`) are
+  shown and closed with `"full"`; one that reached the stack before failing is taken off it. The
+  editor's `onCloseWidget` runs a home refresh its changes deferred, once: `close` sends
+  `CloseWidget` (`:300`) before it takes the editor off the stack (`:312`) and queues its `"full"`
+  refresh (`:354`), and the home's `"ui"` refresh, queued by its `setDirty` (`:740`), merges into
+  that one (`_refresh`, `:1266-1281`).
+- `UIManager.event_hook`, the settled signal: `frontend/ui/uimanager.lua:53`;
+  `frontend/ui/hook_container.lua:88-98` (`execute`, which runs nothing with no listener). After
+  the home's first paint the plugin executes `KoPandaSettled` with `{ screen, paint_ms, cpu_ms,
+  settle_ms }`, once per home; the capture harness entry below is the listener. The sheet, editor,
+  swatch and file-browser signals carry `paint_ms` and `cpu_ms` too, stamped through
   `paint_clock.lua`, whose `PaintClock.settled` sends the sheet's, editor's and swatch's signals.
   `paint_ms` runs from the start of the show path to the end of the home's first `paintTo`;
   `settle_ms` runs on to the signal, which the first `paintTo`'s `nextTick`
-  (`uimanager.lua:431-433`) queues behind tasks already due on the tick after the paint, such
-  as coverbrowser's background extraction (`plugins/coverbrowser.koplugin/covermenu.lua:119`,
-  a fork).
+  (`uimanager.lua:431-433`) queues behind tasks already due on the tick after the paint, such as
+  coverbrowser's background extraction (`plugins/coverbrowser.koplugin/covermenu.lua:119`, a fork).
 
 ### The swatch screen
 
@@ -719,116 +703,91 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
   `:2096-2135` (`paintBorder` and `paintBorderRGB32` with a radius), the radius held to half the
   picker's height (`:2105-2106`, `:2127-2128`, `:2175-2176`, `:2191-2192`).
 
-### Main menu registration, both apps
+### The main menu: registration, the cached orders, `menusorter`, tab callbacks and the tab index
 
-- `frontend/apps/filemanager/filemanagermenu.lua:1136-1143` and
+- Registration. `frontend/apps/filemanager/filemanagermenu.lua:1136-1143` and
   `frontend/apps/reader/modules/readermenu.lua:560` (`registerToMainMenu`);
   `frontend/apps/filemanager/filemanagermenu.lua:851-856` and
   `frontend/apps/reader/modules/readermenu.lua:341` (each registered widget's `addToMainMenu` is
   pcalled with the `menu_items` table); the pattern of `plugins/hello.koplugin/main.lua:23-30`.
-- Every instance registers from `init`; `self.ui.menu` exists by then, since
-  both apps register their menu module before making plugin instances
+  Both apps register their menu module before making plugin instances
   (`frontend/apps/filemanager/filemanager.lua:404`, :418-429;
-  `frontend/apps/reader/readerui.lua:176`, :464-478). A refused instance registers too, and its
-  `addToMainMenu` gives Tools › KoPanda the items Studio and Swatches; the Home tab, the
-  quick-settings tab, Home and Settings are left out.
-
-### The cached menu orders, `ui/elements/filemanager_menu_order` and `ui/elements/reader_menu_order`
-
-- `frontend/apps/filemanager/filemanagermenu.lua:858-862` (`setUpdateItemTable` sorts the menu
+  `frontend/apps/reader/readerui.lua:176`, :464-478), so `self.ui.menu` exists in `init`. A
+  refused instance registers too, and its `addToMainMenu` gives Tools › KoPanda the items Studio
+  and Swatches; the Home tab, the quick-settings tab, Home and Settings are left out.
+- The cached orders, `ui/elements/filemanager_menu_order` and `ui/elements/reader_menu_order`.
+  `frontend/apps/filemanager/filemanagermenu.lua:858-862` (`setUpdateItemTable` sorts the menu
   against the require-cached table); `frontend/ui/plugin/insert_menu.lua:1-19` (cached for
   inserts like this one); `frontend/ui/elements/filemanager_menu_order.lua:4-11`
-  (`KOMenu:menu_buttons`).
-- `menu_entries.lua` inserts `kopanda_home` at index 2 of `KOMenu:menu_buttons` when absent and
-  sets `kopanda_home = {}` in the table, the empty order entry the reader's file-browser tab
-  has (`frontend/ui/elements/reader_menu_order.lua:228`). Bookshelf inserts its tab the same way
-  (`plugins/bookshelf.koplugin/main.lua:605-618` in the emulator's install; AGPL, read only).
-- The reader sorts its menu against `ui/elements/reader_menu_order`, required at
-  `frontend/apps/reader/modules/readermenu.lua:348` and merged at `:351`, after each registered
-  widget's `addToMainMenu` is pcalled (`:340-345`). The tab table is built when
-  `tab_item_table` is nil, by `onShowMenu` (`readermenu.lua:396-400`) or
-  `_getTabIndexFromLocation` (`:467-469`), and reset by `teardownMenu` (`:522-527`); the insert
-  is idempotent. The order's tabs are
+  (`KOMenu:menu_buttons`). `menu_entries.lua` inserts `kopanda_home` at index 2 of
+  `KOMenu:menu_buttons` when absent and sets `kopanda_home = {}` in the table, the empty order
+  entry the reader's file-browser tab has (`frontend/ui/elements/reader_menu_order.lua:228`).
+  Bookshelf inserts its tab the same way (`plugins/bookshelf.koplugin/main.lua:605-618` in the
+  emulator's install; AGPL, read only). The reader sorts against `ui/elements/reader_menu_order`,
+  required at `frontend/apps/reader/modules/readermenu.lua:348` and merged at `:351`, after each
+  widget's `addToMainMenu` is pcalled (`:340-345`); its tab table is built when `tab_item_table`
+  is nil, by `onShowMenu` (`readermenu.lua:396-400`) or `_getTabIndexFromLocation` (`:467-469`),
+  and reset by `teardownMenu` (`:522-527`), so the insert is idempotent. The order's tabs are
   `frontend/ui/elements/reader_menu_order.lua:4-12`; the reader's default tab buttons are
   `readermenu.lua:54-77` (`getDefaultMenuButtons`).
-- `menu_entries.lua` inserts `kopanda_quick_settings` just before `main` in `KOMenu:menu_buttons`
-  of both orders when absent (appended when `main` is missing) and sets
-  `kopanda_quick_settings = {}` in each. The far-right tab stays Main, so a menu swipe starting
-  in the right third of the screen, which opens the last tab (`readermenu.lua:466-482`,
-  `_getTabIndexFromLocation`; `filemanagermenu.lua:1083-1100`), still opens Main. A
-  `remember = false` tab can't be far right: TouchMenu's init switches to the opening index
-  (`frontend/ui/widget/touchmenu.lua:668`), and an index on such a tab becomes tab 1
+  `menu_entries.lua` inserts `kopanda_quick_settings` just before `main` in both orders when absent
+  (appended when `main` is missing) and sets `kopanda_quick_settings = {}`. The far-right tab stays
+  Main, so a menu swipe starting in the right third of the screen, which opens the last tab
+  (`readermenu.lua:466-482`, `_getTabIndexFromLocation`; `filemanagermenu.lua:1083-1100`), still
+  opens Main. A `remember = false` tab can't be far right: TouchMenu's init switches to the
+  opening index (`frontend/ui/widget/touchmenu.lua:668`), and an index on such a tab becomes tab 1
   (`:458-462`).
-
-### `ui/menusorter`: the user's order file and orphans
-
-- `frontend/ui/menusorter.lua:22-32` (`MenuSorter:readMSSettings`, which `dofile`s
-  `settings/filemanager_menu_order.lua`, or `settings/reader_menu_order.lua` for
-  `MenuSorter:readMSSettings("reader")`), `:34-43` (`mergeAndSort` copies the user's top-level
-  entries into the cached order, `:37-39`), `:60` and `:70-72` (an id with no order entry
-  becomes a plain item), `:139-146` (a top-level item without `sub_item_table` is dropped),
-  `:161-185` (orphans go to the end of their `sorting_hint` menu, or into tab 1 without one).
-- With a user list in that file, a tab is added only when the list names it (`kopanda_home`,
-  `kopanda_quick_settings`), and the user's list is left alone. The file is read at every menu
-  build.
-- `frontend/ui/elements/filemanager_menu_order.lua:122-136` and
+- `ui/menusorter`, the user's order file and orphans. `frontend/ui/menusorter.lua:22-32`
+  (`MenuSorter:readMSSettings`, which `dofile`s `settings/filemanager_menu_order.lua`, or
+  `settings/reader_menu_order.lua` for `MenuSorter:readMSSettings("reader")`), `:34-43`
+  (`mergeAndSort` copies the user's top-level entries into the cached order, `:37-39`), `:60` and
+  `:70-72` (an id with no order entry becomes a plain item), `:139-146` (a top-level item without
+  `sub_item_table` is dropped), `:161-185` (orphans go to the end of their `sorting_hint` menu, or
+  into tab 1 without one). With a user list in that file a tab is added only when the list names
+  it (`kopanda_home`, `kopanda_quick_settings`), and the list is left alone; the file is read at
+  every menu build. `frontend/ui/elements/filemanager_menu_order.lua:122-136` and
   `frontend/ui/elements/reader_menu_order.lua:176-191`: Tools ends with "More tools", so the
   KoPanda entry, with `sorting_hint = "tools"` and text, lands after it.
-
-### `filemanagermenu_tab_index`
-
-- `frontend/apps/filemanager/filemanagermenu.lua:1021` and `:1087` (read), `:1051-1052`
-  (saved on close); `:1007-1009` and `:1084-1086` (both readers build the item table first,
-  which runs `addToMainMenu`); `:1083-1100` (`_getTabIndexFromLocation`, far-left and
-  far-right tabs).
-- On the first insert in a profile a saved index of 2 or more is incremented, once, after
-  `menu_tab_shifted` is stored in `settings/kopanda/state.lua`. Not with a user's own order.
-  The quick-settings tab, inserted before `main`, shifts no index, so an index saved on Main
-  before the tab existed names the quick-settings tab, and that menu opens on tab 1 once
-  (`frontend/ui/widget/touchmenu.lua:458-462`); its close saves the tab then shown.
-- The reader's tab index is per book, `readermenu_tab_index` in the document's settings
-  (`frontend/apps/reader/modules/readermenu.lua:547-548`, read; `:551-553`, saved on close, from
-  `onCloseReaderMenu` at `:445-451`). KoPanda leaves it alone.
-
-### `TouchMenu` tab callbacks and `remember`
-
-- `frontend/ui/widget/touchmenu.lua:776-792` (`switchMenuTab` runs a tab's `callback`, then
-  shows its empty item table, which returns early at `:671-673`), `:452-464` and `:777-779`
-  (`remember = false`: the index is not kept, and a saved index on that tab opens tab 1);
-  `:913-926` (an item's callback runs before the menu closes).
-- The Home tab is `{ icon = "home", remember = false, callback }`, the shape of `plus_menu`
+- `filemanagermenu_tab_index`. `frontend/apps/filemanager/filemanagermenu.lua:1021` and `:1087`
+  (read), `:1051-1052` (saved on close); `:1007-1009` and `:1084-1086` (both readers build the
+  item table first, which runs `addToMainMenu`); `:1083-1100` (`_getTabIndexFromLocation`).
+  On the first insert in a profile a saved index of 2 or more is incremented, once, after
+  `menu_tab_shifted` is stored in `settings/kopanda/state.lua`; not with a user's own order. The
+  quick-settings tab, inserted before `main`, shifts no index, so an index saved on Main before
+  the tab existed names it, and that menu opens on tab 1 once
+  (`frontend/ui/widget/touchmenu.lua:458-462`). The reader's tab index is per book,
+  `readermenu_tab_index` in the document's settings (`frontend/apps/reader/modules/readermenu.lua:547-548`,
+  read; `:551-553`, saved on close, from `onCloseReaderMenu` at `:445-451`); KoPanda leaves it
+  alone.
+- `TouchMenu` tab callbacks and `remember`. `frontend/ui/widget/touchmenu.lua:776-792`
+  (`switchMenuTab` runs a tab's `callback`, then shows its empty item table, which returns early at
+  `:671-673`), `:452-464` and `:777-779` (`remember = false`: the index is not kept, and a saved
+  index on that tab opens tab 1); `:913-926` (an item's callback runs before the menu closes).
+  The Home tab is `{ icon = "home", remember = false, callback }`, the shape of `plus_menu`
   (`frontend/apps/filemanager/filemanagermenu.lua:838-849`) and the reader's file-browser tab
   (`frontend/apps/reader/modules/readermenu.lua:65-74`), with the icon
-  `resources/icons/mdlight/home.svg`. Its callback closes the menu with
+  `resources/icons/mdlight/home.svg`; its callback closes the menu with
   `FileManagerMenu:onCloseFileManagerMenu` (`frontend/apps/filemanager/filemanagermenu.lua:1049-1056`)
-  and goes home. The Tools items act from `UIManager:nextTick`. Each callback catches its own
-  errors.
-- The quick-settings tab, in both apps, is `{ icon = "appbar.contrast", remember = false,
-  callback }`, with KOReader's `resources/icons/mdlight/appbar.contrast.svg`, found by name in
-  `ICONS_DIRS` (`frontend/ui/widget/iconwidget.lua:20-29`: an `icons/` folder under the data
-  directory when it exists at launch, then KOReader's own) and cached (`:58-84`). Its callback
-  closes the menu, the reader's with `ReaderMenu:onTapCloseMenu`
+  and goes home. The quick-settings tab, in both apps, is `{ icon = "appbar.contrast",
+  remember = false, callback }`, with KOReader's `resources/icons/mdlight/appbar.contrast.svg`,
+  found by name in `ICONS_DIRS` (`frontend/ui/widget/iconwidget.lua:20-29`: an `icons/` folder
+  under the data directory when it exists at launch, then KOReader's own) and cached (`:58-84`).
+  Its callback closes the menu, the reader's with `ReaderMenu:onTapCloseMenu`
   (`frontend/apps/reader/modules/readermenu.lua:517-520`, which also closes the bottom config
-  menu) or the file browser's with `onCloseFileManagerMenu`, then opens the quick-settings
-  sheet; in the reader the sheet's `beneath` is a no-op, so a failed sheet leaves the page.
-
-### `dispatcher`: the KoPanda: home action
-
-- `frontend/dispatcher.lua:665-671` (`registerAction`, a no-op when the name exists), `:8-32`
-  (fields; `general = true` as the built-in actions at `:65-85` have), `:585-586` and `:645`
-  (`DispatcherRegisterActions` is broadcast once, from `Dispatcher:init`, which Gestures calls
-  from its `init`, `plugins/gestures.koplugin/main.lua:219`), `:751-756` (`getNameFromItem`),
-  `:1586` (a `none` action is sent with `UIManager:sendEvent`).
-- `kopanda_home` sends `KoPandaHome`; it is registered from `init` and from
+  menu) or the file browser's with `onCloseFileManagerMenu`, then opens the sheet; in the reader
+  the sheet's `beneath` is a no-op, so a failed sheet leaves the page. The Tools items act from
+  `UIManager:nextTick`, and each callback catches its own errors.
+- `dispatcher`, the KoPanda: home action. `frontend/dispatcher.lua:665-671` (`registerAction`, a
+  no-op when the name exists), `:8-32` (fields; `general = true` as the built-in actions at
+  `:65-85` have), `:585-586` and `:645` (`DispatcherRegisterActions` is broadcast once, from
+  `Dispatcher:init`, which Gestures calls from its `init`, `plugins/gestures.koplugin/main.lua:219`),
+  `:751-756` (`getNameFromItem`), `:1586` (a `none` action is sent with `UIManager:sendEvent`).
+  `kopanda_home` sends `KoPandaHome`; it is registered from `init` and from
   `onDispatcherRegisterActions`, never by a refused instance. `UIManager:sendEvent` offers the
-  event to the topmost widget first (`frontend/ui/uimanager.lua:962-1034`, `:988`), so a home
-  that is up consumes it.
-
-### `ReaderUI:onHome`
-
-- `frontend/apps/reader/readerui.lua:935-940`.
-- In the reader, the action and Tools › KoPanda › Home close the book and show the file
-  manager, whose `Show` brings the home.
+  event to the topmost widget first (`frontend/ui/uimanager.lua:962-1034`, `:988`), so a home that
+  is up consumes it.
+- `ReaderUI:onHome`, `frontend/apps/reader/readerui.lua:935-940`: in the reader, the action and
+  Tools › KoPanda › Home close the book and show the file manager, whose `Show` brings the home.
 
 ### `Font:getFace` by path, the shipped fonts
 
@@ -855,14 +814,12 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
 ### The looks: `Screen:isColorEnabled` and `Blitbuffer.colorFromString`
 
 - `frontend/device/generic/device.lua:265-271` (`isColorEnabled`: the user's `color_rendering`
-  setting when present, the panel's `isColorScreen` otherwise). `looks.lua` draws the grey palette
-  when it is false, so a colour panel with colour rendering off gets grey too; the plugin never
-  reads `color_rendering` itself.
+  setting when present, the panel's `isColorScreen` otherwise); `looks.lua` reads it, never
+  `color_rendering` itself.
 - `base/ffi/blitbuffer.lua:2653-2683` (`colorFromString`: `#rrggbbaa`, `#rrggbb` or `#vv`, nil
   for any other length; non-hex digits or a non-string raise), which `looks.lua` calls in a
-  `pcall`. The look files hold palette colours as `#rrggbb` only.
-- `base/ffi/blitbuffer.lua:464-467` (a colour greyed by luminance, `getColor8`): two hues can land
-  on the same grey, so each look's `grey` palette names an explicit grey per role.
+  `pcall`.
+- `base/ffi/blitbuffer.lua:464-467` (a colour greyed by luminance, `getColor8`).
 
 ### Night mode: `Screen.night_mode`, KOReader's inversion and the toggle
 
@@ -907,12 +864,10 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
   `frontend/optmath.lua:43-45`), `:173-181` (a given `height` holds `floor(height / line_height_px)`
   lines), `:253-260` (`height_overflow_show_ellipsis` marks the last shown line
   `line_with_ellipsis`; `height_adjust` shrinks `height` to the lines there are), `:870-887`
-  (that line drawn with the ellipsis, `ellipsis_added`). `widgets/quote.lua` sets `height` to
-  four of `line_height_px` so the quote takes at most four lines and a longer one ends in "…".
+  (that line drawn with the ellipsis, `ellipsis_added`).
 - `spec/unit/quote_spec.lua` reads `vertical_string_list`, `lines_per_page`, `line_with_ellipsis`,
   `line_height_px`, `height` and `face.orig_size` (`frontend/ui/font.lua:337-344`) on the built
-  text box to count its lines, and counts a quote's characters with `util`'s `splitToChars`
-  (`frontend/util.lua:469`), which `typeset.lua` also uses.
+  text box, and counts characters with `util`'s `splitToChars` (`frontend/util.lua:469`).
 - `base/ffi/blitbuffer.lua:2096` (`paintBorder`), `:2118-2126` (`paintBorderRGB32`): Diner's tile
   outline, a colour through the RGB32 variant as the fills.
 
@@ -922,16 +877,14 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
   `frontend/ui/elements/common_settings_menu_table.lua:87` (`TimeFormatChanged` broadcast when the
   12-hour clock setting flips), `frontend/ui/uimanager.lua:1042-1061` (`broadcastEvent` reaches
   every window-level widget whatever a handler returns). The home rebuilds its rows on both and
-  returns nothing; it schedules no task of its own for them.
+  returns nothing.
 - `frontend/ui/uimanager.lua:659` (`setDirty`): a rebuilt home is repainted with `"ui"`.
 - `frontend/ui/widget/container/widgetcontainer.lua:80-107` (`propagateEvent` offers an event to
   the children before the container's own handler, so a slot widget that consumed `Resume` would
   keep the home from rebuilding), `:110-117` (`free` frees the array part): the rows container
   holds the slot widgets in its array part, and the old one is freed after a rebuild.
 - `base/ffi/framebuffer.lua:414-425` (`scaleBySize`): `layout.lua` scales every look length
-  (margins, gaps, header, footer) once; `frontend/ui/font.lua:276` scales font sizes, so
-  `Layout.font_size` doesn't. `Layout.screen` is the screen it scales by, a seam the spec
-  replaces with one of another size.
+  once; `frontend/ui/font.lua:276` scales font sizes, so `Layout.font_size` doesn't.
 - `base/ffi/blitbuffer.lua:2712` (`isColor8`), `:1704-1724` (`paintRect`, which greys a colour),
   `:1827` (`paintRectRGB32`): the paper, header band, edge, rule and footer stripe are filled by
   `home_rows.lua` as the swatch screen fills its panels.
@@ -953,35 +906,26 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
   off (`frontend/ui/widget/horizontalgroup.lua:11`). A line too wide for its column falls back
   to one TextWidget with `max_width`, which KOReader cuts with an ellipsis
   (`frontend/ui/widget/textwidget.lua:36-37`, `:202-238`).
-- Measured on make: `TextWidget:paintTo` calls `updateSize` first
-  (`frontend/ui/widget/textwidget.lua:339`), which sets `_xtext` (`:190`) and `_updated` (`:94`,
-  once; `:91` returns early after), but a user patch that replaces `paintTo` may not: Bookends'
-  `bookends_textwidget_patch.lua` (AndyHazz/bookends.koplugin) shapes a colour `fgcolor`'s glyphs
-  from `_xtext` straight away. `typeset.lua` calls `updateSize` on the plain line it makes; a
-  tracked group is measured by its own `getSize`.
+- `TextWidget:paintTo` calls `updateSize` first (`frontend/ui/widget/textwidget.lua:339`), which
+  sets `_xtext` (`:190`) and `_updated` (`:94`, once; `:91` returns early after); a user patch
+  that replaces `paintTo` may not (Bookends' `bookends_textwidget_patch.lua`,
+  AndyHazz/bookends.koplugin, shapes a colour `fgcolor`'s glyphs from `_xtext` straight away).
 - Line height: TextWidget's `forced_height` and `forced_baseline`
   (`frontend/ui/widget/textwidget.lua:43-44`), which `getSize` reports (`:298`) and the xtext
   paint draws at (`:362`); `getBaseline` (`:312`) gives the face's baseline, not a forced one.
-  `typeset.lua` sets a part whose `line_height` isn't 0 at `(1 + line_height)` em, rounded, as
-  TextBoxWidget sizes a line (`frontend/ui/widget/textboxwidget.lua:151`), and centres the face's
-  height from `face.ftsize:getHeightAndAscender()` (`base/ffi/freetype.lua:154-159`, the call
-  textboxwidget.lua:153-158 makes) in it. `Typeset.baseline` gives the home row the line's
-  baseline.
+  TextBoxWidget sizes a line at `(1 + line_height)` em (`frontend/ui/widget/textboxwidget.lua:151`)
+  and centres the face's height from `face.ftsize:getHeightAndAscender()`
+  (`base/ffi/freetype.lua:154-159`, the call textboxwidget.lua:153-158 makes).
 - Colour: `TextWidget:paintTo` blits each glyph through `colorblitFrom`
   (`frontend/ui/widget/textwidget.lua:369`), which reduces the colour to `getColor8A`
-  (`base/ffi/blitbuffer.lua:1405-1407`), a luminance grey for an RGB colour (`:489-491`). So every
-  TextWidget a `Typeset.line` holds gets its own `paintTo`, `Typeset.paint_glyphs`, which draws as
-  `TextWidget:paintTo` does (`textwidget.lua:338-378`) but through `colorblitFromRGB32`
-  (`base/ffi/blitbuffer.lua:1422-1437`) for a colour: it reads `text._is_empty`, `text._xshaping`
-  (shaped from `text._xtext:shapeLine` with `text._shape_start`, `text._shape_end` and
-  `text._shape_idx_to_substitute_with_ellipsis`, `textwidget.lua:349-353`) and `text._baseline_h`
-  (`:362`), and gets each glyph from `RenderText:getGlyphByIndex` (`ui/rendertext`,
-  `frontend/ui/rendertext.lua:294`).
-  A TextWidget without xtext is left to `TextWidget:paintTo` (`textwidget.lua:344-347`). A paint
-  that raises (a KOReader whose TextWidget internals differ, as the device's may) is logged once
-  and falls back to `TextWidget:paintTo` in the colour's grey; a tracked line whose offset pass
-  raises clears the offset colour from its glyphs and prints them once. A misregistered line
-  paints its glyphs twice, the offset copy first; a misregistered `TextBoxWidget` (the featured
+  (`base/ffi/blitbuffer.lua:1405-1407`), a luminance grey for an RGB colour (`:489-491`).
+  `Typeset.paint_glyphs` draws as `TextWidget:paintTo` does (`textwidget.lua:338-378`) but through
+  `colorblitFromRGB32` (`base/ffi/blitbuffer.lua:1422-1437`) for a colour: it reads
+  `text._is_empty`, `text._xshaping` (shaped from `text._xtext:shapeLine` with `text._shape_start`,
+  `text._shape_end` and `text._shape_idx_to_substitute_with_ellipsis`, `textwidget.lua:349-353`)
+  and `text._baseline_h` (`:362`), and gets each glyph from `RenderText:getGlyphByIndex`
+  (`ui/rendertext`, `frontend/ui/rendertext.lua:294`). A TextWidget without xtext is left to
+  `TextWidget:paintTo` (`textwidget.lua:344-347`). A misregistered `TextBoxWidget` (the featured
   title) is drawn black on white and painted twice through a mask, a `BB8` buffer filled white and
   inverted (`fill`, `invertRect`, `base/ffi/blitbuffer.lua:1506`, `:1567`).
 
@@ -1415,35 +1359,27 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   silently to the nearest existing ancestor (`:342-346`), so a directory entry is checked with
   `lfs.attributes(path, "mode")` first and again at tap time; it fires `PathChanged`
   (`:367-369`), which updates the file manager's title bar (`filemanager.lua:108-114`).
-- The Library entry shows KoPanda's library through the file manager's KoPanda instance,
-  `FileManager.instance.kopanda` (the `FileManager.instance` entry above), and its
-  `showLibrary`; when that library fails to build, `changeToPath` leaves the file browser at the
-  folder it was to show (the library's return entry below).
+- The Library entry goes through `FileManager.instance.kopanda` (the `FileManager.instance` entry
+  above); when the library fails to build, `changeToPath` leaves the file browser at the folder.
 - `ffi/util`: `template` (`base/ffi/util.lua:785`), the unavailable notes.
-- A folder entry's tap opens the folder sheet (`folder_sheet.lua`) through `sheet.lua`, with
-  the `ui/time` `monotonic` it took on the tap as the sheet's start; `folder_sheet` is required
-  at call time, since it requires `launcher_entries`. Its rows run their entries through `run`.
 - `ui/widget/infomessage`: `timeout` defaults to nil (`frontend/ui/widget/infomessage.lua:53`)
   and only a set one schedules a close (`:283-290`); `dismissable` defaults to true (`:67`), a
-  full-screen `TapClose` (`:88-100`). The launcher's notes set neither, so no timer runs and a
-  tap anywhere dismisses them.
+  full-screen `TapClose` (`:88-100`). The launcher's notes set neither.
 
 ### The launcher widget: tinted icons, its taps and the network events
 
 - `ui/renderimage`: `RenderImage:renderSVGImageFile(file, size, size)`
   (`frontend/ui/renderimage.lua:338-344`) returns a `TYPE_BBRGB32` buffer with straight alpha
   (`:390-393`), or nothing for a file NanoSVG can't open, logged by KOReader (`:355-358`).
-  `tinted_icon.lua` calls it in `pcall` and draws nothing on either failure.
+
 - `ffi/blitbuffer`, the tinted icon's mask: `Blitbuffer.new(size, size, TYPE_BB8)`
   (`base/ffi/blitbuffer.lua:2591`), `fill(COLOR_WHITE)` (`:1506`), `alphablitFrom` the render
   onto it (`:1318`, straight alpha), then `invertRect` (`:1567`): the ink is white, the ground
   black. At paint, `colorblitFrom(mask, ..., color)` for a `Color8` (`:1405-1420`) and
   `colorblitFromRGB32` for a colour (`:1422-1437`), split by `Blitbuffer.isColor8` (`:2712`)
   as `home_rows.lua` fills; both take the mask's 8-bit value as the colour's alpha
-  (`setPixelColorize`, `:990-1006`; `setPixelColorizeRGB32`, `:1009-1027`). The mask is built
-  once per file and size and kept in the module's cache for the process, as `ImageWidget` keeps
-  its renders in `ImageCache` by file and size (`frontend/ui/widget/imagewidget.lua:147-160`);
-  the widget's `free` lets go of it without freeing it. A failed render is not cached.
+  (`setPixelColorize`, `:990-1006`; `setPixelColorizeRGB32`, `:1009-1027`). `ImageWidget` keeps
+  its renders in `ImageCache` by file and size (`frontend/ui/widget/imagewidget.lua:147-160`).
 - This replaces `ImageWidget`'s `dim`, which only lightens and assumes a white ground; the note at
   `frontend/ui/widget/imagewidget.lua:570-579` proposes the mask method used here.
 - The tiles and rows: `paintRect` and `paintRectRGB32`, `paintBorder` and `paintBorderRGB32`, as
@@ -1453,17 +1389,13 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `:2096-2135` (`paintBorder` and `paintBorderRGB32` with a radius); a badge's radius of half its
   size is what they clamp it to anyway (`:2105-2106`, `:2127-2128`, `:2175-2176`, `:2191-2192`), and
   `paintRoundedCorner` paints nothing when `2*r > h` (`:2016-2020`).
-- A tap reaches the widget as `tap(ctx, ges, built)` from `HomeGestures.route` (through `Home:routeGesture`), `ges.pos` in screen
-  coordinates; the grid keeps the origin it was last painted at and tests each entry's
-  rectangle with `Geom:contains` (`frontend/ui/geometry.lua:255-266`).
+- A tap is tested against each entry's rectangle with `Geom:contains`
+  (`frontend/ui/geometry.lua:255-266`).
 - `NetworkDisconnected`: broadcast from `disableWifi`'s callback
   (`frontend/ui/network/manager.lua:406-408`); `NetworkConnected` as the weather's entry above.
-  The home's handlers for both ask each slot's `stale` and rebuild once, and return nothing, so
-  the broadcast reaches every window. In the emulator both come 2 s after the fake toggle
+  The home's handlers return nothing, so the broadcast reaches every window. In the emulator both come 2 s after the fake toggle
   (`frontend/device/sdl/device.lua:477-501`: `turnOnWifi` and `turnOffWifi` flip
   `emulator_fake_wifi_connected` and schedule the broadcast, and `isWifiOn` reads it).
-- `ui/network/manager`: `NetworkMgr:isWifiOn()` (the launcher's entries above), read at call
-  time by the launcher's `stale`.
 
 ### The sheet: its refreshes, keys, Back and gestures
 
@@ -1622,13 +1554,9 @@ guard (`sheet.lua`).
   `NetworkConnecting` (`:74`) and, once the connectivity check passes, `NetworkConnected` before
   `cb` (`:96-116`). A failed connection broadcasts nothing (`:44-63`, comment `:56`): `enableWifi`'s
   abort (`:375-378`) or the check giving up (`:84-93`). So `cb` runs only in the same pass as, and
-  just after, a `NetworkConnected` (`:109`, `:116`) or `NetworkDisconnected` (`:408`, `:410`), and
-  the sheet passes `nil`: it redraws on those two events (`refresh_on`) when `stale` finds the
-  radio reading otherwise than at its last layout, returning nothing, so the home hears them too.
-  The tap's own redraw reads the radio just after the toggle, so a toggle that broadcasts nothing,
-  a dismissed prompt or `enableWifi`'s abort, still shows the radio as the tap's redraw reads it;
-  on a seamless-toggle device `enableWifi`'s abort turns the radio off (`:57-60`) with no event,
-  so the sheet may keep showing it on, as before. The emulator's fake flips
+  just after, a `NetworkConnected` (`:109`, `:116`) or `NetworkDisconnected` (`:408`, `:410`); the
+  sheet passes `nil` and redraws on those two events, returning nothing. On a seamless-toggle
+  device `enableWifi`'s abort turns the radio off (`:57-60`) with no event. The emulator's fake flips
   `emulator_fake_wifi_connected` at once and broadcasts after `scheduleIn(2)`, then runs the
   callback it was handed, which broadcasts again (`frontend/device/sdl/device.lua:478-500`); on
   the Kindle `turnOnWifi` may show the network list over the sheet
@@ -2066,7 +1994,7 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
   badged, cwngsync's open downloads. `isLibraryPlaceholder` itself is not called: it walks every
   record per path. cwngsync records `join(root, book.filename)` (`cwng_library.lua:41-43`, `:187`)
   and KoPanda lists `join(dir, name)` under `home_dir` (`books.lua`'s scan), so the strings match
-  when `home_dir` names the CWNG root, or a parent of it, the same way; given another way (a
+  only when `home_dir` names the CWNG root, or a parent of it, the same way; given another way (a
   symlink, another mount name) nothing is badged and the book reads as downloaded, and cwngsync's
   open hook would miss that path too, so the badge never claims what the download can't do. The
   size check also reads a book being downloaded right: cwngsync renames the real book over the
@@ -2112,12 +2040,6 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
   the callback runs the book has no CoverBrowser row: its title and authors come from the sidecar
   or the file name and it has no series until its cover is extracted again, and on one series or
   one author it is left out of the list until then.
-- The callback (`book_sheet.lua`'s `arrived`) forgets the book's cover (`BookCovers.forget`, the
-  row's delete again, which is idempotent, and the per-process asked mark), then runs the held
-  window's `downloaded`: the library's Refresh covers re-list for that book, the shelf screens'
-  re-list with every record's cover asked for again (`library_chrome.lua`), each only while that
-  window is the one shown. It never opens the book. It runs in the same dispatch as cwngsync's
-  broadcasts, so their re-lists and its own paint the window once.
 
 ### Frosted's wallpaper and plates: `RenderImage`, `lightenRect`, `darkenRect` and the inverse flag
 
@@ -2135,11 +2057,8 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
   at night (`frontend/ui/widget/imagewidget.lua:583-593`), and held apart from the day's image.
 - The decode before the scale: TurboJPEG decodes the whole JPEG into `jpeg.image_bb` and only
   then hands it to `scaleBlitBuffer` (`frontend/ui/renderimage.lua:115-134`), and MuPDF decodes a
-  PNG at its own size likewise, so the peak is the full image (a 4000 × 3000 file near 60 MB, a
-  48 MP photo near 170 MB on the Colorsoft), and a kill for memory can't be caught. So
-  `wallpaper.lua` refuses, before reading, a file over 12 MB (`lfs.attributes(path, "size")`)
-  or one whose PNG IHDR (bytes 16-23) or JPEG frame header (SOFn) claims more than 4000 px on a
-  side; the formats' own headers, not a KOReader surface.
+  PNG at its own size likewise, so the peak is the full image and a kill for memory can't be
+  caught; `wallpaper.lua` refuses an oversize file before reading it.
 - The plates (`plate.lua`): `lightenRect(x, y, w, h, by)` (`base/ffi/blitbuffer.lua:2273-2283`;
   its note says it used to be called `dimRect`) blends white at `by` over the rectangle, through
   the C blitter's `BB_blend_rect` when it can; `darkenRect` (`:2295-2306`) blends black the same
@@ -2149,10 +2068,9 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
 - The inverse flag: KOReader's software night mode sets the screen buffer's inverse flag
   (`base/ffi/framebuffer.lua:481-488`), `getInverse` and `setInverse` (`base/ffi/blitbuffer.lua:686-691`).
   The C blitter skips a flagged buffer, and a pair whose flags differ, for a per-pixel Lua path
-  (`canUseCbb` and `canUseCbbTogether`, `:733-740`). So the plate lifts the flag and darkens the
-  stored pixels by the same amount (lightening what is painted is darkening what is stored), and
-  the wallpaper lifts it, copies the night image and inverts the copy in place, then sets it
-  again; `spec/unit/plate_spec.lua` and `spec/unit/wallpaper_spec.lua` read the stored pixels back.
+  (`canUseCbb` and `canUseCbbTogether`, `:733-740`); `plate.lua` and `wallpaper.lua` lift the
+  flag and invert their stored pixels, and `spec/unit/plate_spec.lua` and
+  `spec/unit/wallpaper_spec.lua` read them back.
 - `Wallpaper._reset` is KoPanda's own seam for the specs, not a KOReader internal; named here
   because the hooks check flags every underscore access.
 
@@ -2226,422 +2144,46 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
 
 ## Capture harness (`spec/emulator/`)
 
-### `UIManager.event_hook`
-
-- `frontend/ui/uimanager.lua:53`; `frontend/ui/hook_container.lua:34-41` (`register`),
-  `:88-98` (`execute`).
-- A `HookContainer`. The capture patch registers a `KoPandaSettled` listener and the plugin
-  under test executes it with `{ screen, paint_ms, cpu_ms, settle_ms }`. The patch shoots on the first
-  signal whose `screen` is `KOPANDA_SHOT_SCREEN` (default `home`) and copies the signal's
-  string, number and boolean arguments into the sidecar. Listeners run in registration order
-  (`hook_container.lua:94-96`), and a listener may execute the hook again from inside its own
-  call (the book-close scenario sends its `scenario` signal from inside a `home` one).
-
-### `Screen:shot(path)`
-
-- `base/ffi/framebuffer.lua:566-581`.
-- Writes the framebuffer as a PNG and returns `ok, err`; `Screen` is `require("device").screen`.
-
-### `UIManager:quit(exit_code)`
-
-- `frontend/ui/uimanager.lua:892-898`; `:1657-1672` (`run` returns it); `reader.lua:305-328`
-  (`os.exit`).
-- The patch quits with no code after a save and with 3 at the settle cap; the code becomes the
-  process exit status, which the driver reports as the settle cap.
-
-### `UIManager:scheduleIn`, `nextTick`, `tickAfterNext`
-
-- `frontend/ui/uimanager.lua:413-418`, `:431-433`, `:447-456`; `_checkTasks` `:1081-1106`;
-  `handleInput` `:1537-1564`.
-- Tasks run only from the UI loop, so the patch's watchdog cannot fire while KOReader hangs:
-  the driver's kill covers that.
-- `tickAfterNext` re-queues its action through `nextTick` at `time.now()`; the action lands
-  past the next `_repaint` only when `time.now()` has advanced past the `_now` that
-  `_checkTasks` sampled at `:1082`, since a task due at `_now` runs in the same pass
-  (`:1088-1097`).
-- `time.now` is `time.monotonic_coarse` (`frontend/ui/time.lua:300`), which on macOS is
-  `CLOCK_MONOTONIC` at µs resolution (`:185-199`). When the `_now` sample
-  (`frontend/ui/uimanager.lua:1082`) and the wrapper's `nextTick` schedule time
-  (`time.now()` at `uimanager.lua:416`) fall in the same floored microsecond, the re-queued
-  action is due at `_now` and runs in the same pass: the probe's `tickAfterNext` signal ran
-  before the first `_repaint` in about 6 % of captures, a blank white shot. The probe now
-  queues its signal with `nextTick` from its widget's first `paintTo`, inside `_repaint`, so
-  it always runs past the paint; `spec/emulator/scenarios/2-scenario-held-clock.lua` holds
-  `time.now()` through each pass so a capture spec reproduces the race on every run. The
-  home's own settle did the same until it too moved to its first `paintTo`: about one run in
-  ten of `spec/unit/push_notice_spec.lua` gave the show's `finished` `false` after a good
-  paint, and that spec now holds `time.now()` to reproduce it on every run. The swatch's
-  settle moved the same way; `spec/unit/swatch_spec.lua` holds `time.now()` and saw the signal
-  before the first paint, and for a paint that then failed, on every run of the old code.
-
-### The `Show` event reaching plugin instances
-
-- `frontend/ui/uimanager.lua:259` (`UIManager:show` sends `Show`).
-- `frontend/ui/widget/container/widgetcontainer.lua:80-107` (propagation to array children,
-  a true return stops it).
-- `frontend/apps/filemanager/filemanager.lua:384` (`registerModule` inserts as array child),
-  `:418-429` (plugins instantiated in `FileManager:init`), `:1312-1331` (`showFiles` calls
-  `UIManager:show`).
-- A `WidgetContainer` plugin with `is_doc_only = false` gets `onShow` on the file manager's
-  first show. `FileManager` defines no `onShow` of its own.
-
-### `PluginLoader:loadPlugins()`
-
-- `frontend/pluginloader.lua:273-291`.
-- Memoised (`:274`); returns the enabled modules, each with `.name` (`:249`). The patch lists
-  their names in the sidecar.
-
-### `plugins_disabled`
-
-- `frontend/pluginloader.lua:175`, `:210-215`.
-- A table keyed by plugin folder name without `.koplugin`; a disabled plugin's `_meta.lua` is
-  loaded instead of `main.lua`.
-
-### `extra_plugin_paths`
-
-- `frontend/pluginloader.lua:177-199`.
-- Present: only the listed paths join `plugins/`. Absent: `<KO_HOME>/plugins/` is added and
-  the key written. The scratch profile leaves it absent.
-
-### `color_rendering`
-
-- `reader.lua:195-203` (first-run notice when absent on a colour screen), `:206-223` (blocking
-  ConfirmBox when true on a grey screen); `frontend/device/generic/device.lua:264-270`.
-- Written as the profile's `color`: true on colorsoft, false on paperwhite.
-
-### `emulator_fake_wifi_connected`
-
-- `frontend/device/sdl/device.lua:478-500` (the emulator's `NetworkMgr:isConnected` and
-  `isWifiOn` read it, true when unset). The driver writes it false into every profile and
-  `spec/plugin_harness.lua` sets it false on each load, so no capture or unit spec fetches the
-  weather; a spec that wants a connection stubs `isConnected`.
-
-### `night_mode`
-
-- `frontend/device/generic/device.lua:344-347` (the device toggles night mode before any UI
-  exists when it is set); `base/ffi/framebuffer.lua:566-581` (`Screen:shot` writes what the
-  panel shows in night mode too).
-- Written true only by a capture with `night_mode` (`home_capture_spec.lua`, `bin/preview.lua`);
-  every other profile leaves it absent, so its `settings.reader.lua` is as before.
-
-### `EMULATE_BW_SCREEN`
-
-- `base/ffi/framebuffer_SDL3.lua:21-24`.
-- Non-empty makes `Device:hasColorScreen()` false; the patch records that value as the
-  sidecar's `color`.
-
-### `EMULATE_BB_TYPE`
-
-- `base/ffi/framebuffer_SDL3.lua:69`, `:85`.
-- Cleared so the framebuffer is `BBRGB32`.
-
-### `EMULATE_READER_W/H/DPI`, `EMULATE_READER_FORCE_PORTRAIT`
-
-- `base/ffi/SDL3.lua:118-119`; `frontend/device/sdl/device.lua:188-191` (presence is what
-  counts).
-- Screen size per profile, portrait locked.
-
-### SIGTERM handling
-
-- `base/ffi/SDL3.lua:719-723`.
-- SDL3 turns SIGTERM into `SDL_EVENT_QUIT`, which the input loop translates to an Alt+F4 key
-  event; a hung emulator never services it, so the driver's killer follows SIGTERM with
-  SIGKILL 5 s later.
-
-### `KO_HOME`
-
-- `datastorage.lua:19-20` (data dir), `:60` (`settings/`), `:79` (`patches/`), `:97-123`
-  (subdirectories created, not `patches/`); `reader.lua:40` (`settings.reader.lua`).
-- The scratch profile. The driver creates `patches/`, `plugins/` and `settings/` itself.
-
-### Userpatches
-
-- `frontend/userpatch.lua:13` (`late` is prefix `2`), `:38` (read from `<KO_HOME>/patches`),
-  `:73` (name match), `:89-99` (a failing patch shows an InfoMessage); applied at
-  `reader.lua:190` before `showFiles` at `:250`.
-- `2-kopanda-capture.lua` registers its listener before any plugin code runs. A capture's
-  extra patches (`capture{ patches }`) must also start with `2-`; late patches run in
-  natural-sort order of their names (`frontend/userpatch.lua:82`).
-
-### The book-close scenario (`spec/emulator/scenarios/2-scenario-book-close.lua`)
-
-- `FileManager.paintTo`: `FileManager` defines none and inherits
-  `frontend/ui/widget/container/inputcontainer.lua:73`; the scenario wraps it at patch time
-  with a counter armed from the close to the home's settled signal.
-- `FileManager.instance.file_chooser.path`: `frontend/apps/filemanager/filemanager.lua:138-155`
-  (`path = self.root_path`); the library the scenario takes its one book from.
-- `ReaderUI:showReader(file)`: `frontend/apps/reader/readerui.lua:616`; a fresh profile has no
-  archived sidecar, so no restore prompt (`:643-667`); an unsupported file shows a message and
-  returns to the file manager (`:668-672`), which the scenario's 10 s poll reports as an error.
-- `ReaderUI.instance`: set at the end of `init` (`readerui.lua:546`), cleared in
-  `onCloseWidget` (`:900-908`); polled with its `document` until the book is open.
-- `ReaderUI:onHome()`: `readerui.lua:935-940` (`setSuspendRepaints(false)`, `onClose`,
-  `showFileManager`); called from a scheduled task, as KOReader's end-of-book file-browser
-  action runs from `nextTick` (`frontend/apps/reader/modules/readerstatus.lua:144-148`).
-- `document_metadata_folder`: `frontend/docsettings.lua:102` (default `doc`, the `.sdr`
-  sidecar beside the book), so the spec opens a copy of a fixture book outside
-  `spec/fixtures/library/`.
-
-### The gesture-forward scenario (`spec/emulator/scenarios/2-scenario-gesture-forward.lua`)
-
-- The Gestures settings file: `plugins/gestures.koplugin/main.lua:32`
-  (`settings/gestures.lua`), `:227-252` (`loadSettings`: one table per mode, `gesture_fm` for
-  the file manager, and `custom_multiswipes`; a non-empty file is used as it is, `:231`). The
-  patch writes it with `LuaSettings` (`frontend/luasettings.lua:21-48`, `:102`) before any
-  plugin loads, binding `tap_right_bottom_corner` to `history` (`frontend/dispatcher.lua:68`,
-  event `ShowHist`).
-- The tap: a `Gesture` event sent with `UIManager:sendEvent` inside `DTAP_ZONE_BOTTOM_RIGHT`
-  (`defaults.lua:69`), 10 px above the nav bar's band, with the fields `GestureRange:match` reads
-  (`frontend/ui/gesturerange.lua:21-51`).
-- `FileManager.instance.history.booklist_menu`: `frontend/apps/filemanager/filemanagerhistory.lua:59-61`
-  (the list `onShowHist` shows), checked with `UIManager:isWidgetShown`
-  (`frontend/ui/uimanager.lua:881-888`); the home with `UIManager:topdown_widgets_iter`
-  (`:846`).
-
-### The swatch scenario (`spec/emulator/scenarios/2-scenario-swatch.lua`)
-
-- On the first home's settled signal it opens Tools › KoPanda › Swatches as the menu does:
-  `FileManager.instance.menu:onShowMenu()` (`frontend/apps/filemanager/filemanagermenu.lua:1006-1032`,
-  which builds `tab_item_table` at `:1007-1009`, `:862`), the item's `callback`, then `onCloseFileManagerMenu`
-  (`:1049`), the order `frontend/ui/widget/touchmenu.lua:913-926` runs them in. The capture is
-  taken on the swatch's own signal (`shot_screen = "swatch"`); a failure is sent as a `"swatch"`
-  signal with `error`.
-
-### The night-toggle scenario (`spec/emulator/scenarios/2-scenario-night-toggle.lua`)
-
-- On the first home's settled signal it wraps the home module's `paintTo`
-  (`package.loaded["home"]`, `kopanda.koplugin/home.lua`) to count the paints from then on, and
-  toggles night mode from `nextTick` by `KOPANDA_NIGHT_ROUTE`:
-  - `menu`: `UIManager:broadcastEvent(Event:new("ToggleNightMode"))`
-    (`frontend/ui/uimanager.lua:1042`), what the menu item runs
-    (`frontend/ui/elements/common_settings_menu_table.lua:266-271`);
-  - `dispatcher`: `Dispatcher:execute({ night_mode = true })` (`frontend/dispatcher.lua:138`,
-    `:1549-1598`, sent with `sendEvent`), through the plugin's dispatch bridge.
-- Either reaches the file manager's `DeviceListener` (`frontend/apps/filemanager/filemanager.lua:414`),
-  which toggles the screen and calls `setDirty("all", "full")`
-  (`frontend/device/devicelistener.lua:14-27`). The scenario reports, from `tickAfterNext`
-  (past that repaint), a `"scenario"` signal with `home_paints` and `night_mode`, the screen's
-  `night_mode` (`base/ffi/framebuffer.lua:22`); a failure is reported with `error`.
-
-### The sheet-hold scenario (`spec/emulator/scenarios/2-scenario-sheet-hold.lua`)
-
-- Run after the home fixture by `sheet_capture_spec.lua`. On the first home's settled signal it
-  finds the home with `UIManager:topdown_widgets_iter` (`frontend/ui/uimanager.lua:846`) and,
-  from `nextTick`, sends one `Gesture` hold with `UIManager:sendEvent` (`:962-1034`), with the
-  fields `GestureRange:match` reads (`frontend/ui/gesturerange.lua:21-51`), at a point
-  `KOPANDA_SHEET_HOLD` names: `book`, the centre of the featured slot's rectangle; `home`,
-  `x = 4` at half the screen's height, checked outside every slot and outside the four
-  `DTAP_ZONE_*` corners (`defaults.lua:66-69`, read through `G_defaults:readSetting`). No
-  `hold_release` follows. The capture is taken on the sheet's own signal
-  (`shot_screen = "sheet"`); a failure is sent as a `"sheet"` signal with `error`.
-
-### The quick-settings scenario (`spec/emulator/scenarios/2-scenario-quick-settings.lua`)
-
-- Run after the home fixture by `quick_settings_capture_spec.lua`. It writes nothing. On the first
-  home's settled signal, from `nextTick`, it sets `getCapacity` on the instance
-  `Device:getPowerDevice()` returns to one returning 84, shadowing `BasePowerD:getCapacity`
-  (`frontend/device/generic/powerd.lua:254`), so the header never reads the Mac's battery
-  (`frontend/device/sdl/powerd.lua:28-33`); it sets `NetworkMgr.isWifiOn` to one returning true;
-  then it opens the sheet through
-  `package.loaded["quick_settings"]` (a userpatch can't `require` it by name once the plugin's
-  path is gone, "`package.path` during plugin load" above) with `started` a `paint_clock.lua`
-  stamp, `{ wall = time.monotonic(), cpu = os.clock() }`.
-  The capture is taken on the sheet's own signal (`shot_screen = "sheet"`); a failure is sent as
-  a `"sheet"` signal with `error`. The Wi-Fi cell reads on: the sheet reads
-  `NetworkMgr:isWifiOn()` (`quick_settings.lua:103`), which the stub shadows, while the
-  emulator's `isConnected` keeps the original `isWifiOn` function
-  (`frontend/device/sdl/device.lua:497-500`) and so the driver's
-  `emulator_fake_wifi_connected` false (`emulator_fake_wifi_connected` above); the patch errors
-  if `isConnected` reads true, so no weather fetch runs. The home isn't rebuilt, so its launcher
-  keeps the Wi-Fi entry it resolved off (`launcher_entries.lua:92-94`).
-
-### The home fixture (`spec/emulator/scenarios/2-scenario-home-fixture.lua`)
-
-- Read by `home_capture_spec.lua`, `night_toggle_spec.lua`, `sheet_capture_spec.lua` and the
-  other emulator specs that start from the home, whose captures pass `TZ`,
-  `KOPANDA_HOME_FIXTURE` (`populated`, `typecover` or `empty`) and `KOPANDA_HOME_LOOK` through
-  the driver's `env` option. Applied at `reader.lua:190`, before any
-  plugin code runs.
-- `os.time()` and `os.date(format)` with no time argument are replaced for the whole process and
-  answer 2026-10-13 08:42 in `TZ` (America/Chicago); calls with a time pass through. KOReader's
-  own no-argument callers, such as the log line's stamp (`frontend/logger.lua:73`), read the frozen
-  instant too. `ui/time`'s monotonic clock is untouched, so `paint_ms` stays real.
-- No `NetworkMgr` stub: the driver's `emulator_fake_wifi_connected = false` (the entry above)
-  already makes `isConnected` false, so no fetch runs after the show or from the start-up
-  `NetworkConnected` (`frontend/ui/network/manager.lua:152-154`, sent only when connected).
-- Populated, it writes, from `DataStorage:getSettingsDir()` (`datastorage.lua:60`):
-  - `kopanda/weather.lua`, the cache `kopanda.koplugin/weather.lua` writes, through `LuaSettings`
-    (`frontend/luasettings.lua:21` `open`, `:247` `reset`, `:270` `flush`);
-  - `statistics.sqlite3` (`plugins/statistics.koplugin/main.lua:27`) through the emulator's
-    `lua-ljsqlite3/init` (`base/thirdparty/lua-ljsqlite3/init.lua:331`, `exec` splitting on `;` at
-    `:381-391`), with the plugin's DDL (`main.lua:405-496`) and `user_version` 20221111 (`:35`).
-    On a fresh profile `checkInitDatabase` finds the `book` table and creates nothing
-    (`main.lua:372-374`); with `convert_to_db` set it compares the version (`:318-319`) and leaves
-    a current one as it is.
-- Populated and typecover, it also writes the featured book, `frankenstein.epub` under
-  `$KOPANDA_ROOT/spec/fixtures/library/`, by its realpath (`base/ffi/util.lua:162-171`), the form
-  history stores (`frontend/readhistory.lua:25-26`):
-  - `G_reader_settings` `document_metadata_folder = "dir"`, in memory for the run: `DocSettings`
-    reads it for each lookup and write (`frontend/docsettings.lua:101-111`, `:118-136`,
-    `:317-339`), so the sidecar lands under `<KO_HOME>/docsettings/` (`datastorage.lua:67-69`) and
-    nothing is written into the fixture library;
-  - `<KO_HOME>/history.lua` (`readhistory.lua:12`) in the `{ time, file }` form `_flush` writes
-    (`:89-97`) and `_read` `dofile`s (`:103-119`), through `util.writeToFile`
-    (`frontend/util.lua:1124`). `ReadHistory` reads it when first required (`:369-373`); one already
-    loaded is made to read it again with `reload(true)` (`:359-367`);
-  - the sidecar through `DocSettings:open` (`docsettings.lua:221`), `saveSetting`
-    (`frontend/luasettings.lua:102-105`, chainable) and `flush` (`docsettings.lua:317-339`):
-    `percent_finished` 0.62, `doc_pages` 220, `doc_props` title and authors, `summary.status`
-    `reading` and `partial_md5_checksum` from `util.partialMD5` (`util.lua:1094`), the keys ReaderUI
-    saves (`frontend/apps/reader/modules/readerrolling.lua:338`,
-    `frontend/apps/reader/readerui.lua:493`, `:497-501`);
-  - in `statistics.sqlite3`, a `book` row with that md5 and `pages = 220`, and ten
-    `page_stat_data` rows of 90 s on 2025-01-01 with `total_pages = 220`, so the `page_stat` view
-    keeps them as they are (`plugins/statistics.koplugin/main.lua:438-451`) and each stays under the
-    default 120 s `max_sec` (`:30`): 84 pages left at 90 s is "2 h 6 min left";
-  - `kopanda/state.lua`, KoPanda's runtime state, with `featured_chapter_file` and
-    `featured_chapter = "Letter IV"`, through `LuaSettings`.
-- Typecover adds `coverbrowser` to `G_reader_settings`' `plugins_disabled` in memory, which
-  `PluginLoader:_discover` reads later in `FileManager:init` (`frontend/pluginloader.lua:175`,
-  `:210-216`).
-- Populated wraps `PluginLoader.loadPlugins` (`pluginloader.lua:273-291`). After its first call,
-  which `FileManager:init` makes before it instantiates any plugin
-  (`frontend/apps/filemanager/filemanager.lua:418`) and which puts CoverBrowser's folder on
-  `package.path` (`pluginloader.lua:283-287`), it requires `bookinfomanager` and runs
-  `extractBookInfo(file, { max_cover_w, max_cover_h })`
-  (`plugins/coverbrowser.koplugin/bookinfomanager.lua:422-570`) synchronously, for the featured
-  widget's own full-width box (`featured_cover.lua` `FeaturedCover.box`), so
-  `isCachedCoverInvalid` (`:1013-1030`) passes and the widget asks for no extraction after the
-  show. It then checks `getBookInfo(file, false)` (`:325-404`) for `has_cover`. Run in-process,
-  `extractBookInfo` points crengine's cache at CoverBrowser's `tmpcr3cache` for the rest of the run
-  (`:423-439`); the home draws nothing with crengine. All of it runs before the file manager's
-  `Show`, where KoPanda's `paint_ms` clock starts, so `paint_ms` never includes it.
-- It opens `kopanda/settings.lua` once and writes the keys its scenario sets with
-  `schema_version = 1` (`frontend/luasettings.lua:21` `open`, `:102` `saveSetting`, `:270`
-  `flush`), as `kopanda.koplugin/settings.lua` stores them: `look` when a look is given, and,
-  empty, `launcher.entries` as the schema's default five without Settings and a sixth
-  `{ kind = "plugin", plugin = "kopanda_absent", action = "terminal", label = "Terminal", icon = "terminal" }`.
-  No plugin has that name, so `PluginLoader:isPluginLoaded` (`frontend/pluginloader.lua:567-569`,
-  a lookup in `loaded_plugins`) is false on every profile and the entry shows "plugin missing",
-  whatever plugins the emulator's own `plugins/` holds.
-- Any failure logs `KOPANDA_SCENARIO: home fixture failed` and exits with status 4, which the
-  driver reports with the log tail.
-
-### The cwngsync stub scenario (`spec/emulator/scenarios/2-scenario-cwngsync.lua`)
-
-- `FileManager.init`: `frontend/apps/filemanager/filemanager.lua:396-448`. The scenario wraps it
-  at patch time, before `showFiles` makes the first file manager (userpatches run at
-  `reader.lua:190`, `showFiles` at `:250`), and registers its stub after the original returns:
-  by then the plugins are instantiated (`:418-429`) and `FileManager.instance` is set (`:447`), so
-  the stub is on the instance the library and `cloud_books.lua` read, before the home or the
-  library lists a book.
-- `FileManager:registerModule(name, module)`: `filemanager.lua:379-384` stores it as
-  `self[name]` and inserts it as an array child, so the stub is an `EventListener`
-  (`frontend/ui/widget/eventlistener.lua:10`) to take the file manager's propagated events
-  (`frontend/ui/widget/container/widgetcontainer.lua:80-107`).
-- The stub stands for cwngsync's instance methods `isConfigured`, `getLibraryState` and
-  `openLibraryPlaceholder` (the "cwngsync's placeholders" entry above); its state names
-  `a-christmas-carol.epub` at the capture library's realpath'd root, at its size at patch time.
-
-### Multi-start runs (`run_starts`), exit 85 and no relaunch on macOS
-
-- `frontend/ui/uimanager.lua:1765-1769` (`restartKOReader` quits with 85); `reader.lua:312-313`
-  (`exitReader` returns a numeric exit code), `:328` (`os.exit` with it).
-- `frontend/device/sdl/device.lua:142` (`canRestart = notOSX`): the emulator on macOS doesn't
-  start itself again on 85, and running `./luajit reader.lua` directly has no launcher loop, so the
-  driver's next start is the relaunch. `run_starts` writes the scratch profile once and runs each
-  start on it, accepting the exit statuses that start lists (85 for a start that restarts, 3 for a
-  start the capture patch's settle cap ends). The capture patch is inactive in a start without
-  `shot` (`KOPANDA_SHOT` unset, `spec/emulator/patches/2-kopanda-capture.lua:8-11`).
-- Extra plugins (`extra_plugins`) are copied into `<KO_HOME>/plugins/`; one whose folder name the
-  emulator's own `plugins/` also holds would load twice, so the driver refuses it. That `plugins/`
-  is a symlink to `~/Projects/kodev/koreader/plugins` (scanned as `plugins`,
-  `frontend/pluginloader.lua:24`, `:177`), which holds the real `simpleui`, `bookshelf` and
-  `solariconpack`; the push spec's stand-in shell is therefore `spec/fixtures/push/shells/ennui.koplugin`,
-  which the coexistence guard matches lower-cased (`kopanda.koplugin/guards.lua:11-17`) and which
-  the driver's default disabled list, matched by exact name (`pluginloader.lua:211-212`), leaves on.
-
-### The push server (`spec/emulator/push_server.lua`): `socket.bind`
-
-- `base/build/arm64-apple-darwin23.5.0-debug/common/socket.lua:27-40` (`bind`: a listening TCP
-  socket, `reuseaddr` set); LuaSocket's `getsockname`, `settimeout` and `accept`
-  (`base/build/arm64-apple-darwin23.5.0-debug/thirdparty/luasocket/source/src/tcp.c:47`, `:56`,
-  `:66`).
-- Bound to `127.0.0.1` on port 0, so the system picks a free port and parallel worktrees never
-  collide; the port is written to a file the spec waits for. `accept` with a timeout of the
-  server's lifetime returns nil once that long passes with no connection, and the server exits.
-  It runs as its own process: Busted blocks on the driver's `io.popen():read` while the emulator
-  runs.
-- KOReader's `socket.http` client (the pull's, the Studio menu entry above) reads the body by
-  `Content-Length`; every answer carries it and `Connection: close`.
-
-### The push-pull scenario (`spec/emulator/scenarios/2-scenario-push-pull.lua`)
-
-- Active when `KOPANDA_PUSH_ADDRESS` is set. Polls with `UIManager:scheduleIn` until
-  `FileManager.instance` (`frontend/apps/filemanager/filemanager.lua:447`) and KoPanda's
-  `push_pull` and `guards` modules are in `package.loaded` (required by `main.lua` at load, in the
-  refused instance too).
-- KoPanda's folder is the `path` the loader set on its module (`frontend/pluginloader.lua:248`),
-  found in `PluginLoader:loadPlugins()` (`:273-291`); the data folder is `DataStorage:getDataDir()`
-  (`datastorage.lua:16-20`, `KO_HOME`). The pull is `PushPull.pull` with `Guards.enabled_shell_names()`,
-  called directly: the emulator's Wi-Fi is off (`emulator_fake_wifi_connected` above), so
-  `NetworkMgr:runWhenConnected` is bypassed.
-- Then `UIManager:broadcastEvent(Event:new("Restart"))` (`frontend/ui/uimanager.lua:1042`,
-  `frontend/ui/event.lua:30`), as the restart offer does: `DeviceListener:onRestart`
-  (`frontend/device/devicelistener.lua:454-456`) closes the file manager
-  (`frontend/apps/filemanager/filemanagermenu.lua:998-1004`) and quits with 85. A failed pull logs
-  `KOPANDA_SCENARIO: <message>` and quits with 5.
-
-### The notices scenario (`spec/emulator/scenarios/2-scenario-notices.lua`)
-
-- Active when `KOPANDA_NOTICES` names a file. Wraps `UIManager.show`
-  (`frontend/ui/uimanager.lua:229`) at patch time, before any plugin runs (`reader.lua:190`), so
-  the plugin's `UIManager:show` calls go through it; an `InfoMessage`
-  (`frontend/ui/widget/infomessage.lua:47`) is told by its metatable, which `Widget:new` sets to the
-  class (`frontend/ui/widget/widget.lua:26-31`, `:40-48`). Each one's `text` is appended to the
-  file as one line before the original `show` runs; the spec reads the last line.
-
-### `logger`
-
-- `frontend/logger.lua:71-90`.
-- `logger.info` writes `<date> INFO  ...` to stdout; every capture line starts with
-  `KOPANDA_SHOT:`.
-
-### The directory argument
-
-- `reader.lua:145-151`, `:248-251`; `:257-261` (quickstart guide only without one).
-- Opens the file manager on the library and skips the quickstart guide.
-
-### coverbrowser's cache database
-
-- `plugins/coverbrowser.koplugin/main.lua:88-98` (`BookInfoManager:getSetting` and `saveSetting`
-  at startup; on a seeded profile `getSetting`, `bookinfomanager.lua:278`, opens the connection from
-  `loadSettings` at `:264`; on an unseeded one `saveSetting` from `main.lua:91` opens it at `:297`;
-  either way `:201-206` runs `createDB` on the first open).
-- `plugins/coverbrowser.koplugin/bookinfomanager.lua:22` (`BOOKINFO_DB_VERSION = 20201210`),
-  `:134` (`settings/bookinfo_cache.sqlite3`), `:166-195` (`createDB`: schema is a no-op on an
-  existing file, a lower `user_version` shows "Book info cache database updated." for 3 s).
-- The driver seeds the file with the current `user_version`, through the emulator's luajit
-  and `common/lua-ljsqlite3/init.lua`.
-
-### `rapidjson`
-
-- `common/rapidjson.so`.
-- `encode` in the patch, `decode` in the driver.
-- `bin/schema-json` encodes the schema with `sort_keys` and `pretty`
-  (`base/thirdparty/lua-rapidjson/build/downloads/source/API.md:79-80`), so two runs are
-  byte-identical; `spec/unit/schema_json_spec.lua` decodes it. The bundled dkjson orders only the
-  keys it is given and the rest in `pairs` order (`common/dkjson.lua:325-346`).
-
-### `RenderImage:renderSVGImageFile`, the icon check
-
-- `frontend/ui/renderimage.lua:338-345` (`renderSVGImageFile`), `:349` (NanoSVG is the renderer),
-  `:351-393` (a `TYPE_BBRGB32` buffer of the requested size, the drawing centred at its aspect
-  ratio, returned with straight alpha at `:393`).
-- NanoSVG draws a file's own colours; an unknown colour name such as `currentColor` parses to
-  grey 128 (`base/build/arm64-apple-darwin23.5.0-debug/staging/include/nanosvg.h:1446-1457`), and
-  the rasteriser unpremultiplies its output (`nanosvgrast.h:1206`, `:1450`), so a black stroke's
-  anti-aliased edge stays R = G = B = 0.
-- `spec/unit/icons_spec.lua` renders every registered icon at 48×48 and reads each pixel with
-  `Blitbuffer:getPixel` (`base/ffi/blitbuffer.lua:819-827`; a `ColorRGB32` has `r`, `g`, `b`,
-  `alpha`, `:54-59`). The plugin itself only names icon files, through `icons.lua`.
+One row per harness entry or scenario patch. A scenario is a `2-` userpatch under `spec/emulator/scenarios/`; userpatches run at `reader.lua:190`, before any plugin code and before `showFiles` at `:250`. Capture spec names are under `spec/emulator/`, except `push_notice_spec.lua`, `swatch_spec.lua`, `schema_json_spec.lua` and `icons_spec.lua`, which are under `spec/unit/`.
+
+| Entry | What it does | KOReader internal and citation | Driven by |
+| --- | --- | --- | --- |
+| `UIManager.event_hook` | The capture patch registers a `KoPandaSettled` listener; the plugin executes it with `{ screen, paint_ms, cpu_ms, settle_ms }`. The patch shoots on the first signal whose `screen` is `KOPANDA_SHOT_SCREEN` (default `home`) and copies the signal's string, number and boolean arguments into the sidecar. A listener may execute the hook again from inside its own call. | `frontend/ui/uimanager.lua:53`; `frontend/ui/hook_container.lua:34-41` (`register`), `:88-98` (`execute`), `hook_container.lua:94-96` (registration order) | every capture spec |
+| `Screen:shot(path)` | Writes the framebuffer as a PNG and returns `ok, err`; `Screen` is `require("device").screen`. | `base/ffi/framebuffer.lua:566-581` | every capture spec |
+| `UIManager:quit(exit_code)` | Quits with no code after a save and with 3 at the settle cap; the code becomes the process exit status. | `frontend/ui/uimanager.lua:892-898`; `:1657-1672` (`run` returns it); `reader.lua:305-328` (`os.exit`) | the driver |
+| `UIManager:scheduleIn`, `nextTick`, `tickAfterNext` | Tasks run only from the UI loop, so the patch's watchdog cannot fire while KOReader hangs: the driver's kill covers that. `tickAfterNext` re-queues through `nextTick` at `time.now()` and lands past the next `_repaint` only when `time.now()` has advanced past the `_now` that `_checkTasks` sampled, since a task due at `_now` runs in the same pass. `time.now` is `time.monotonic_coarse`, `CLOCK_MONOTONIC` at µs resolution on macOS; when both samples fall in the same floored microsecond the action runs before the first `_repaint` (a blank shot in about 6 % of captures). So the probe, the home and the swatch queue their signal with `nextTick` from the widget's first `paintTo`, inside `_repaint`. | `frontend/ui/uimanager.lua:413-418`, `:431-433`, `:447-456`; `_checkTasks` `:1081-1106` (`_now` at `frontend/ui/uimanager.lua:1082`, same-pass run `:1088-1097`; the wrapper's schedule time at `:416`); `handleInput` `:1537-1564`; `frontend/ui/time.lua:300` (`time.now`), `:185-199` | `2-scenario-held-clock.lua` holds `time.now()` through each pass (`capture_spec.lua`) |
+| The `Show` event reaching plugin instances | A `WidgetContainer` plugin with `is_doc_only = false` gets `onShow` on the file manager's first show; `FileManager` defines no `onShow` of its own. | `frontend/ui/uimanager.lua:259`; `frontend/ui/widget/container/widgetcontainer.lua:80-107` (a true return stops propagation); `frontend/apps/filemanager/filemanager.lua:384` (`registerModule`), `:418-429`, `:1312-1331` (`showFiles`) | every capture spec |
+| `PluginLoader:loadPlugins()` | Memoised; returns the enabled modules, each with `.name`; the patch lists their names in the sidecar. | `pluginloader.lua:273-291` (memo `:274`), `:249` | `capture_spec.lua` |
+| `plugins_disabled` | A table keyed by plugin folder name without `.koplugin`; a disabled plugin's `_meta.lua` is loaded instead of `main.lua`. | `frontend/pluginloader.lua:175`, `:210-215` | the driver |
+| `extra_plugin_paths` | Present: only the listed paths join `plugins/`. Absent: `<KO_HOME>/plugins/` is added and the key written. The scratch profile leaves it absent. | `frontend/pluginloader.lua:177-199` | the driver |
+| `color_rendering` | Written as the profile's `color`: true on colorsoft, false on paperwhite. | `reader.lua:195-203` (first-run notice when absent on a colour screen), `:206-223` (blocking ConfirmBox when true on a grey screen); `frontend/device/generic/device.lua:264-270` | the driver |
+| `emulator_fake_wifi_connected` | The driver writes it false into every profile and `spec/plugin_harness.lua` sets it false on each load, so no spec fetches the weather; a spec that wants a connection stubs `isConnected`. | `frontend/device/sdl/device.lua:478-500` (`isConnected` and `isWifiOn` read it, true when unset) | the driver |
+| `night_mode` | Written true only by a capture with `night_mode`; every other profile leaves it absent. | `frontend/device/generic/device.lua:344-347`; `base/ffi/framebuffer.lua:566-581` (`Screen:shot` writes what the panel shows in night mode too) | `home_capture_spec.lua`, `bin/preview.lua` |
+| `EMULATE_BW_SCREEN` | Non-empty makes `Device:hasColorScreen()` false; the patch records it as the sidecar's `color`. | `base/ffi/framebuffer_SDL3.lua:21-24` | the driver |
+| `EMULATE_BB_TYPE` | Cleared so the framebuffer is `BBRGB32`. | `base/ffi/framebuffer_SDL3.lua:69`, `:85` | the driver |
+| `EMULATE_READER_W/H/DPI`, `EMULATE_READER_FORCE_PORTRAIT` | Screen size per profile, portrait locked. | `base/ffi/SDL3.lua:118-119`; `frontend/device/sdl/device.lua:188-191` (presence is what counts) | the driver |
+| SIGTERM handling | SDL3 turns SIGTERM into `SDL_EVENT_QUIT`, which the input loop translates to an Alt+F4 key event; a hung emulator never services it, so the killer follows SIGTERM with SIGKILL 5 s later. | `base/ffi/SDL3.lua:719-723` | the driver |
+| `KO_HOME` | The scratch profile; the driver creates `patches/`, `plugins/` and `settings/` itself. | `datastorage.lua:19-20` (data dir), `:60` (`settings/`), `:79` (`patches/`), `:97-123` (subdirectories created, not `patches/`); `reader.lua:40` (`settings.reader.lua`) | the driver |
+| Userpatches | `2-kopanda-capture.lua` registers its listener before any plugin code runs. A capture's extra patches (`capture{ patches }`) must also start with `2-`; late patches run in natural-sort order. | `frontend/userpatch.lua:13` (`late` is prefix `2`), `:38` (`<KO_HOME>/patches`), `:73` (name match), `frontend/userpatch.lua:82` (order), `:89-99` (a failing patch shows an InfoMessage); `reader.lua:190`, `:250` | the driver |
+| Book close (`2-scenario-book-close.lua`) | Wraps `FileManager.paintTo` with a counter armed from the close to the home's settled signal; takes its one book from the file chooser's path; opens it, polls `ReaderUI.instance` with its `document`, and calls `ReaderUI:onHome()` from a scheduled task. A fresh profile has no archived sidecar, so no restore prompt; an unsupported file returns to the file manager, which the 10 s poll reports as an error. `document_metadata_folder` defaults to `doc`, so the spec opens a copy of a fixture book outside `spec/fixtures/library/`. | `FileManager.paintTo` inherited from `frontend/ui/widget/container/inputcontainer.lua:73`; `frontend/apps/filemanager/filemanager.lua:138-155` (`path = self.root_path`); `frontend/apps/reader/readerui.lua:616` (`showReader`), `:643-667`, `:668-672`, `readerui.lua:546` (`ReaderUI.instance` set), `:900-908` (cleared), `readerui.lua:935-940` (`onHome`); `frontend/apps/reader/modules/readerstatus.lua:144-148` (the end-of-book action runs from `nextTick`); `frontend/docsettings.lua:102` | `book_close_spec.lua` |
+| Gesture forward (`2-scenario-gesture-forward.lua`) | Writes the Gestures settings with `LuaSettings` before any plugin loads, binding `tap_right_bottom_corner` to `history` (event `ShowHist`); sends a `Gesture` tap with `UIManager:sendEvent` inside `DTAP_ZONE_BOTTOM_RIGHT`, 10 px above the nav bar's band, with the fields `GestureRange:match` reads; checks the history list with `UIManager:isWidgetShown` and the home with `topdown_widgets_iter`. | `plugins/gestures.koplugin/main.lua:32` (`settings/gestures.lua`), `:227-252` (`loadSettings`: one table per mode, `gesture_fm`, `custom_multiswipes`; a non-empty file is used as it is, `:231`); `frontend/luasettings.lua:21-48`, `:102`; `frontend/dispatcher.lua:68`; `defaults.lua:69`; `frontend/ui/gesturerange.lua:21-51`; `frontend/apps/filemanager/filemanagerhistory.lua:59-61` (`booklist_menu`); `frontend/ui/uimanager.lua:881-888`, `:846` | `gesture_forward_spec.lua` |
+| Swatch (`2-scenario-swatch.lua`) | On the first home's settled signal opens Tools › KoPanda › Swatches as the menu does: `FileManager.instance.menu:onShowMenu()` builds `tab_item_table`, then the item's `callback`, then `onCloseFileManagerMenu`. The capture is taken on the swatch's own signal (`shot_screen = "swatch"`); a failure is sent as a `"swatch"` signal with `error`. | `frontend/apps/filemanager/filemanagermenu.lua:1006-1032` (`tab_item_table` at `:1007-1009`, `:862`), `:1049` (`onCloseFileManagerMenu`); `frontend/ui/widget/touchmenu.lua:913-926` (the order they run in) | `swatch_capture_spec.lua` |
+| Night toggle (`2-scenario-night-toggle.lua`) | Wraps the home module's `paintTo` (`package.loaded["home"]`) to count paints and toggles night mode from `nextTick` by `KOPANDA_NIGHT_ROUTE`: `menu` broadcasts `ToggleNightMode`, what the menu item runs; `dispatcher` runs `Dispatcher:execute({ night_mode = true })` through the plugin's dispatch bridge. Either reaches the file manager's `DeviceListener`, which toggles the screen and calls `setDirty("all", "full")`. Reports from `tickAfterNext` a `"scenario"` signal with `home_paints` and `night_mode`. | `frontend/ui/uimanager.lua:1042`; `frontend/ui/elements/common_settings_menu_table.lua:266-271`; `frontend/dispatcher.lua:138`, `:1549-1598`; `frontend/apps/filemanager/filemanager.lua:414` (`DeviceListener`); `frontend/device/devicelistener.lua:14-27`; `base/ffi/framebuffer.lua:22` | `night_toggle_spec.lua` |
+| Sheet hold (`2-scenario-sheet-hold.lua`) | Run after the home fixture. Finds the home with `topdown_widgets_iter` and, from `nextTick`, sends one `Gesture` hold with `sendEvent` at a point `KOPANDA_SHEET_HOLD` names: `book`, the centre of the featured slot; `home`, `x = 4` at half the screen's height, outside every slot and the four `DTAP_ZONE_*` corners (read through `G_defaults:readSetting`). No `hold_release` follows. Captured on the sheet's own signal (`shot_screen = "sheet"`); a failure is a `"sheet"` signal with `error`. | `frontend/ui/uimanager.lua:846`, `:962-1034`; `frontend/ui/gesturerange.lua:21-51`; `defaults.lua:66-69` | `sheet_capture_spec.lua` |
+| Quick settings (`2-scenario-quick-settings.lua`) | Run after the home fixture; writes nothing. From `nextTick` sets `getCapacity` on the `Device:getPowerDevice()` instance to return 84 (the header never reads the Mac's battery) and `NetworkMgr.isWifiOn` to return true, then opens the sheet through `package.loaded["quick_settings"]` (a userpatch can't `require` it once the plugin's path is gone, "`package.path` during plugin load") with `started` a `paint_clock.lua` stamp. Captured on the sheet's signal. The sheet reads `NetworkMgr:isWifiOn()` (`quick_settings.lua:103`), which the stub shadows, while `isConnected` keeps the original `isWifiOn` and so the driver's false; the patch errors if `isConnected` reads true. The home isn't rebuilt, so its launcher keeps the Wi-Fi entry it resolved off (`launcher_entries.lua:92-94`). | `frontend/device/generic/powerd.lua:254` (`BasePowerD:getCapacity`); `frontend/device/sdl/powerd.lua:28-33`; `frontend/device/sdl/device.lua:497-500` | `quick_settings_capture_spec.lua` |
+| Home fixture (`2-scenario-home-fixture.lua`) | Driven through the driver's `env` option: `TZ`, `KOPANDA_HOME_FIXTURE` (`populated`, `typecover` or `empty`), `KOPANDA_HOME_LOOK`. Replaces `os.time()` and `os.date(format)` with no time argument for the process: 2026-10-13 08:42 in `TZ` (America/Chicago), calls with a time pass through; `ui/time`'s monotonic clock is untouched, so `paint_ms` stays real. No `NetworkMgr` stub: `emulator_fake_wifi_connected` false already stops any fetch. Any failure logs `KOPANDA_SCENARIO: home fixture failed` and exits 4. | `frontend/logger.lua:73` (the log stamp reads the frozen instant); `frontend/ui/network/manager.lua:152-154` (`NetworkConnected`, sent only when connected) | `home_capture_spec.lua`, `night_toggle_spec.lua`, `sheet_capture_spec.lua` and the other emulator specs that start from the home |
+| Home fixture, populated: settings and statistics | Writes `kopanda/weather.lua` (the weather cache) through `LuaSettings`, and `statistics.sqlite3` through `lua-ljsqlite3` with the statistics plugin's DDL and `user_version` 20221111. On a fresh profile `checkInitDatabase` finds the `book` table and creates nothing; with `convert_to_db` set it compares the version and leaves a current one. | `datastorage.lua:60`; `frontend/luasettings.lua:21` (`open`), `:247` (`reset`), `:270` (`flush`); `plugins/statistics.koplugin/main.lua:27`, `:35`, `main.lua:372-374`, `:318-319`, `main.lua:405-496`; `base/thirdparty/lua-ljsqlite3/init.lua:331`, `:381-391` (`exec` splits on `;`) | as above |
+| Home fixture, populated and typecover: the featured book | Writes `frankenstein.epub` under `$KOPANDA_ROOT/spec/fixtures/library/` by its realpath, in the form history stores; `document_metadata_folder = "dir"` in memory so the sidecar lands under `<KO_HOME>/docsettings/` and nothing is written into the fixture library; `<KO_HOME>/history.lua` in the `{ time, file }` form, read when `ReadHistory` is first required or by `reload(true)`; the sidecar (`percent_finished` 0.62, `doc_pages` 220, `doc_props`, `summary.status` `reading`, `partial_md5_checksum` from `util.partialMD5`); in `statistics.sqlite3` a `book` row with that md5 and ten `page_stat_data` rows of 90 s on 2025-01-01 with `total_pages = 220` (84 pages left at 90 s reads "2 h 6 min left"); `kopanda/state.lua` with `featured_chapter_file` and `featured_chapter = "Letter IV"`. | `base/ffi/util.lua:162-171` (realpath); `frontend/readhistory.lua:25-26`, `readhistory.lua:12`, `:89-97` (`_flush`), `:103-119` (`_read`), `:369-373`, `:359-367`; `frontend/docsettings.lua:101-111`, `:118-136`, `docsettings.lua:317-339` (`flush`), `docsettings.lua:221` (`open`); `datastorage.lua:67-69`; `frontend/util.lua:1124` (`writeToFile`), `util.lua:1094` (`partialMD5`); `frontend/luasettings.lua:102-105`; `frontend/apps/reader/modules/readerrolling.lua:338`; `frontend/apps/reader/readerui.lua:493`, `:497-501`; `plugins/statistics.koplugin/main.lua:438-451` (the `page_stat` view), `:30` (`max_sec` 120 s) | as above |
+| Home fixture, typecover | Adds `coverbrowser` to `plugins_disabled` in memory, which `PluginLoader:_discover` reads later in `FileManager:init`. | `frontend/pluginloader.lua:175`, `:210-216` | `home_capture_spec.lua` |
+| Home fixture, populated: the cover cache | Wraps `PluginLoader.loadPlugins`. After its first call (made by `FileManager:init` before any plugin is instantiated; it puts CoverBrowser's folder on `package.path`) it requires `bookinfomanager` and runs `extractBookInfo(file, { max_cover_w, max_cover_h })` synchronously for the featured widget's full-width box (`featured_cover.lua` `FeaturedCover.box`), so `isCachedCoverInvalid` passes and no extraction runs after the show; then checks `getBookInfo(file, false)` for `has_cover`. Run in-process, it points crengine's cache at CoverBrowser's `tmpcr3cache` for the run. It runs before the file manager's `Show`, so `paint_ms` never includes it. | `frontend/pluginloader.lua:273-291`, `pluginloader.lua:283-287`; `frontend/apps/filemanager/filemanager.lua:418`; `plugins/coverbrowser.koplugin/bookinfomanager.lua:422-570` (`extractBookInfo`), `:1013-1030`, `:325-404`, `:423-439` | as above |
+| Home fixture: the settings file | Opens `kopanda/settings.lua` once and writes the scenario's keys with `schema_version = 1`, as `settings.lua` stores them: `look` when a look is given and, empty, `launcher.entries` as the schema's default five without Settings plus a sixth `{ kind = "plugin", plugin = "kopanda_absent", action = "terminal", label = "Terminal", icon = "terminal" }`; no plugin has that name, so the entry shows "plugin missing" whatever plugins `plugins/` holds. | `frontend/luasettings.lua:21` (`open`), `:102` (`saveSetting`), `:270` (`flush`); `frontend/pluginloader.lua:567-569` (`isPluginLoaded`, a lookup in `loaded_plugins`) | as above |
+| cwngsync stub (`2-scenario-cwngsync.lua`) | Wraps `FileManager.init` at patch time and registers a stub after the original returns, so it is on the instance the library and `cloud_books.lua` read before any book is listed. The stub stands for cwngsync's `isConfigured`, `getLibraryState` and `openLibraryPlaceholder` ("cwngsync's placeholders"); its state names `a-christmas-carol.epub` at the capture library's realpath'd root. It is an `EventListener` so it takes the file manager's propagated events. | `frontend/apps/filemanager/filemanager.lua:396-448`, `:418-429`, `:447` (`FileManager.instance`), `filemanager.lua:379-384` (`registerModule` stores `self[name]` and inserts an array child); `frontend/ui/widget/eventlistener.lua:10`; `frontend/ui/widget/container/widgetcontainer.lua:80-107` | `library_placeholder_capture_spec.lua` |
+| Multi-start runs (`run_starts`), exit 85 | On macOS the emulator doesn't start itself again on 85 and `./luajit reader.lua` has no launcher loop, so the driver's next start is the relaunch. `run_starts` writes the scratch profile once and runs each start on it, accepting 85 (a restarting start) or 3 (the settle cap). The capture patch is inactive in a start without `shot` (`spec/emulator/patches/2-kopanda-capture.lua:8-11`). Extra plugins are copied into `<KO_HOME>/plugins/`; one whose folder name the emulator's own `plugins/` holds would load twice, so the driver refuses it. That `plugins/` is a symlink to `~/Projects/kodev/koreader/plugins` (scanned as `plugins`), which holds the real `simpleui`, `bookshelf` and `solariconpack`; the push spec's stand-in shell is `spec/fixtures/push/shells/ennui.koplugin`, which the coexistence guard matches lower-cased (`kopanda.koplugin/guards.lua:11-17`) and the default disabled list, matched by exact name, leaves on. | `frontend/ui/uimanager.lua:1765-1769` (`restartKOReader` quits with 85); `reader.lua:312-313`, `:328`; `frontend/device/sdl/device.lua:142` (`canRestart = notOSX`); `frontend/pluginloader.lua:24`, `:177`, `pluginloader.lua:211-212` | `push_spec.lua` |
+| Push server (`spec/emulator/push_server.lua`), `socket.bind` | Bound to `127.0.0.1` on port 0 so parallel worktrees never collide; the port is written to a file the spec waits for. `accept` with the server's lifetime as timeout returns nil and the server exits. It runs as its own process because Busted blocks on the driver's `io.popen():read`. KOReader's `socket.http` client reads the body by `Content-Length`; every answer carries it and `Connection: close`. | `base/build/arm64-apple-darwin23.5.0-debug/common/socket.lua:27-40` (`bind`, `reuseaddr`); `base/build/arm64-apple-darwin23.5.0-debug/thirdparty/luasocket/source/src/tcp.c:47`, `:56`, `:66` (`getsockname`, `settimeout`, `accept`) | `push_spec.lua` |
+| Push pull (`2-scenario-push-pull.lua`) | Active when `KOPANDA_PUSH_ADDRESS` is set. Polls with `UIManager:scheduleIn` until `FileManager.instance` and the `push_pull` and `guards` modules are in `package.loaded` (`main.lua` requires both at load, in the refused instance too). KoPanda's folder is the `path` the loader set on its module; the data folder is `DataStorage:getDataDir()`. Calls `PushPull.pull` with `Guards.enabled_shell_names()` directly (Wi-Fi is off, so `runWhenConnected` is bypassed), then broadcasts `Restart`: `DeviceListener:onRestart` closes the file manager and quits with 85. A failed pull logs `KOPANDA_SCENARIO: <message>` and quits with 5. | `frontend/apps/filemanager/filemanager.lua:447`; `frontend/pluginloader.lua:248`, `:273-291`; `datastorage.lua:16-20`; `frontend/ui/uimanager.lua:1042`; `frontend/ui/event.lua:30`; `frontend/device/devicelistener.lua:454-456`; `frontend/apps/filemanager/filemanagermenu.lua:998-1004` | `push_spec.lua` |
+| Notices (`2-scenario-notices.lua`) | Active when `KOPANDA_NOTICES` names a file. Wraps `UIManager.show` at patch time; an `InfoMessage` is told by its metatable, which `Widget:new` sets to the class. Each one's `text` is appended to the file as one line before the original `show` runs; the spec reads the last line. | `frontend/ui/uimanager.lua:229`; `reader.lua:190`; `frontend/ui/widget/infomessage.lua:47`; `frontend/ui/widget/widget.lua:26-31`, `:40-48` | `push_spec.lua` |
+| `logger` | `logger.info` writes `<date> INFO  ...` to stdout; every capture line starts with `KOPANDA_SHOT:`. | `frontend/logger.lua:71-90` | every capture spec |
+| The directory argument | Opens the file manager on the library and skips the quickstart guide. | `reader.lua:145-151`, `:248-251`; `:257-261` (quickstart guide only without one) | the driver |
+| coverbrowser's cache database | The driver seeds `settings/bookinfo_cache.sqlite3` with the current `user_version` through the emulator's luajit and `common/lua-ljsqlite3/init.lua`. On a seeded profile `getSetting` opens the connection from `loadSettings`; on an unseeded one `saveSetting` from `main.lua:91` opens it; either way `createDB` runs on the first open and a lower `user_version` shows "Book info cache database updated." for 3 s. | `plugins/coverbrowser.koplugin/main.lua:88-98`; `plugins/coverbrowser.koplugin/bookinfomanager.lua:22` (`BOOKINFO_DB_VERSION = 20201210`), `:134`, `:166-195` (`createDB`), `bookinfomanager.lua:278`, `:264`, `:297`, `:201-206` | the driver |
+| `rapidjson` | `encode` in the patch, `decode` in the driver. `bin/schema-json` encodes the schema with `sort_keys` and `pretty`, so two runs are byte-identical; `spec/unit/schema_json_spec.lua` decodes it. The bundled dkjson orders only the keys it is given. | `common/rapidjson.so`; `base/thirdparty/lua-rapidjson/build/downloads/source/API.md:79-80`; `common/dkjson.lua:325-346` | `schema_json_spec.lua` |
+| `RenderImage:renderSVGImageFile`, the icon check | NanoSVG draws a file's own colours; an unknown colour name such as `currentColor` parses to grey 128, and the rasteriser unpremultiplies its output, so a black stroke's anti-aliased edge stays R = G = B = 0. The spec renders every registered icon at 48×48 and reads each pixel with `Blitbuffer:getPixel` (a `ColorRGB32` has `r`, `g`, `b`, `alpha`). The plugin itself only names icon files, through `icons.lua`. | `frontend/ui/renderimage.lua:338-345`, `:349`, `:351-393` (straight alpha at `:393`); `base/build/arm64-apple-darwin23.5.0-debug/staging/include/nanosvg.h:1446-1457`; `nanosvgrast.h:1206`, `:1450`; `base/ffi/blitbuffer.lua:819-827`, `:54-59` | `icons_spec.lua` |

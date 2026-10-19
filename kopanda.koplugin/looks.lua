@@ -66,6 +66,8 @@ function Looks.active()
     return looks[Settings.get("look")]
 end
 
+-- Two hues can land on the same grey (base/ffi/blitbuffer.lua:464-467), so each look's grey
+-- palette names an explicit grey per role.
 -- The palette variant to draw with: grey when the screen renders without colour, whatever the
 -- night mode; night when KOReader's night mode is on (Screen.night_mode,
 -- base/ffi/framebuffer.lua:22, :476-477); day otherwise. isColorEnabled honours the user's

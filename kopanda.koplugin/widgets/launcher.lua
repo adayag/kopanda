@@ -318,6 +318,8 @@ function Launcher.tap(ctx, ges, built)
     local at = Geom:new{ x = ges.pos.x - origin.x, y = ges.pos.y - origin.y, w = 0, h = 0 }
     for i, rect in ipairs(built.rects) do
         if rect:contains(at) then
+            -- A folder entry opens folder_sheet from run, required there at call time (it requires
+            -- launcher_entries), with this tap's PaintClock start as the sheet's start.
             LauncherEntries.run(built.entries[i], ctx)
             return true
         end

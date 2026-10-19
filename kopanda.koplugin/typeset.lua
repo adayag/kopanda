@@ -15,6 +15,9 @@
 -- shaped glyphs itself, as TextWidget:paintTo does (textwidget.lua:338-378), through
 -- colorblitFromRGB32 (base/ffi/blitbuffer.lua:1422-1437) for a colour. The widgets stay
 -- TextWidgets; only their paintTo is their own.
+-- A paint that raises (a KOReader whose TextWidget internals differ) is logged once and falls back
+-- to TextWidget:paintTo in the colour's grey; a tracked line whose offset pass raises prints its
+-- glyphs once, without the offset colour.
 --
 -- A look with a misregistration (its misregister token's colour) prints a part set in its display
 -- face twice, as a two-drum Risograph does: the glyphs offset by misregister.x and .y in that

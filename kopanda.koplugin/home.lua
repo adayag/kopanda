@@ -89,7 +89,7 @@ function Home:run_deferred_refresh()
 end
 
 -- Broadcast to every window on wake (frontend/device/generic/device.lua:1125). Returns
--- nothing, so the event reaches the other windows.
+-- nothing, so the event reaches the other windows; schedules no task of its own.
 function Home:onResume()
     self:refresh()
 end
