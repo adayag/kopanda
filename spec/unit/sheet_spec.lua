@@ -557,41 +557,6 @@ describe("the sheet", function()
         end)
     end)
 
-    -- A sheet's failure closes the screen it was shown over (opts.beneath), the home without one.
-    describe("a failure with opts.beneath", function()
-        local closed, beneath
-
-        before_each(function()
-            closed = 0
-            beneath = { close = function() closed = closed + 1 end }
-        end)
-
-        it("closes that screen and not the home when a hold throws", function()
-            local spec = three_rows()
-            spec.hold = function()
-                error("kopanda-test: sheet hold failed")
-            end
-            Sheet.show(spec, ctx_for("editorial"), { beneath = beneath })
-            send(harness.gesture("hold", centre(Sheet.shown.rows[1].rect)))
-            assert.same({ 1, 0 }, { closed, sheets_on_stack() })
-            assert.equals(Home.shown, harness.top())
-        end)
-
-        it("closes that screen and not the home when the show raises, or the paint", function()
-            Sheet.show(book_sheet(stub_cover(function() error("kopanda-test: cover size failed") end)),
-                ctx_for("diner"), { beneath = beneath })
-            assert.same({ 1, 0 }, { closed, sheets_on_stack() })
-            local cover = stub_cover()
-            cover.paintTo = function()
-                error("kopanda-test: paint failed")
-            end
-            Sheet.show(book_sheet(cover), ctx_for("diner"), { beneath = beneath })
-            harness.tick(3)
-            assert.same({ 2, 0 }, { closed, sheets_on_stack() })
-            assert.equals(Home.shown, harness.top())
-        end)
-    end)
-
     describe("a heading's hint", function()
         local bb
 

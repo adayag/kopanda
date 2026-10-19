@@ -1083,21 +1083,23 @@ describe("the book sheet", function()
             end)
         end)
 
+        -- context-menu C4: Add to the home after More by this author, unticked with no pin; Delete last.
         it("lists Open, Book details, Read status, More by this author, Add to the home and Delete with their "
             .. "icons", function()
             open(Books.for_path(a))
             local got = {}
             for i, row in ipairs(Sheet.shown.spec.rows) do
-                got[i] = { row.label, row.icon, row.muted == true }
+                got[i] = { row.label, row.icon, row.muted == true, row.tick == true }
             end
             assert.same({
-                { "Open", "open_book", false },
-                { "Book details", "info", false },
-                { "Read status", "bookmark", false },
-                { "More by this author", "authors", false },
-                { "Add to the home", "home_plus", false },
-                { "Delete…", "trash", false },
+                { "Open", "open_book", false, false },
+                { "Book details", "info", false, false },
+                { "Read status", "bookmark", false, false },
+                { "More by this author", "authors", false, false },
+                { "Add to the home", "home_plus", false, false },
+                { "Delete…", "trash", false, false },
             }, got)
+            assert.is_function(place_of("Add to the home").row.run)
             local status, more = place_of("Read status").row, place_of("More by this author").row
             assert.equals("New ›", status.detail)
             assert.equals("status", status.chip)
@@ -1204,15 +1206,6 @@ describe("the book sheet", function()
                 return link
             end
 
-            it("is the row after More by this author, with home_plus, unticked with no pin", function()
-                open(Books.for_path(a))
-                local got = Sheet.shown.spec.rows
-                assert.equals("More by this author", got[4].label)
-                local row = got[5]
-                assert.same({ "Add to the home", "home_plus", false }, { row.label, row.icon, row.tick == true })
-                assert.is_function(row.run)
-            end)
-
             it("stores the realpath of a book reached through a symlink, changes no other setting, and leaves "
                 .. "the window and the home as they were", function()
                 local link = link_to_a()
@@ -1315,13 +1308,6 @@ describe("the book sheet", function()
                 box.cancel_callback()
                 UIManager:close(box)
             end
-
-            it("is the last row, with trash", function()
-                open(Books.for_path(a))
-                local got = Sheet.shown.spec.rows
-                assert.equals(6, #got)
-                assert.same({ "Delete…", "trash" }, { got[6].label, got[6].icon })
-            end)
 
             it("shows KOReader's delete confirm for the realpath of a book reached through a symlink, with no "
                 .. "archive check for a book with no sidecar", function()

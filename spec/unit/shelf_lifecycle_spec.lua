@@ -60,95 +60,340 @@ local function dirties(widget, fn)
     return n
 end
 
+-- A copy of record with fields over it, as Books.get gives an arrival's re-read record.
+local function changed(record, fields)
+    local fresh = {}
+    for k, v in pairs(record) do
+        fresh[k] = v
+    end
+    for k, v in pairs(fields) do
+        fresh[k] = v
+    end
+    return fresh
+end
+
+-- Books.get re-reads record as changed by fields, and nothing else; returns the copy and the ids
+-- Books.get was asked for.
+local function reread(record, fields)
+    local fresh, got = changed(record, fields), {}
+    package.loaded["books"].get = function(id)
+        got[#got + 1] = id
+        return id == fresh.id and fresh or nil
+    end
+    return fresh, got
+end
+
+local function titles(tiles)
+    local out = {}
+    for i, tile in ipairs(tiles) do
+        out[i] = tile.record.title
+    end
+    return out
+end
+
+-- Each window and what its cases differ in: its shelf, the views shown, the change an arrival
+-- brings and the words the header counts in.
+local SHELVES = {
+    {
+        name = "Series",
+        one = "series",
+        module = "series_screen",
+        -- Seven series of two books, more than one page, then a book in no series.
+        shelf = function()
+            local records = {}
+            for i = 1, 7 do
+                for _, record in ipairs(fixture.series(("Series %02d"):format(i), 2)) do
+                    records[#records + 1] = record
+                end
+            end
+            records[#records + 1] = fixture.book("Loose")
+            return records
+        end,
+        detail = { kind = "series", name = "Series 01" },
+        -- The shelf's last book joins a series that sorts first, and the list leads with it.
+        joins = {
+            fields = { series = "Aardvark Tales", series_index = 1 },
+            first = "Aardvark Tales",
+            check = function(screen, fresh)
+                assert.equals(fresh, screen.rows[1].entry.books[1])
+            end,
+        },
+        -- Series 03's two books share a page; the shelf's first book is another series'.
+        one_page = {
+            view = { kind = "series", name = "Series 03" },
+            off = function(records)
+                return { records[1] }
+            end,
+            on = function(records)
+                return records[6]
+            end,
+        },
+        -- Five series rows fill a page here, so the shelf's seven take two pages, the second with
+        -- room: the loose book's new series lands off the page shown.
+        list_count = {
+            records = function(shelf)
+                return shelf, shelf[#shelf]
+            end,
+            fields = { series = "Zebra Tales", series_index = 1 },
+            pages = 2,
+            before = "7 series",
+            after = "8 series",
+        },
+        -- Three book rows fill a page here, so four books take two pages and a fifth fits the second.
+        one_count = {
+            records = function()
+                local records = fixture.series("Long", 4)
+                records[#records + 1] = fixture.book("Loose", { authors = { "Ann Author" } })
+                return records, records[#records]
+            end,
+            view = { kind = "series", name = "Long" },
+            shown = function(screen)
+                return fixture.names(screen)
+            end,
+            first_page = { "Long 1", "Long 2", "Long 3" },
+            fields = { series = "Long", series_index = 5 },
+            before = "Ann Author, 4 books",
+            after = "Ann Author, 5 books",
+        },
+    },
+    {
+        name = "Authors",
+        one = "author",
+        module = "authors_screen",
+        -- Thirty authors of one book each, "Ann B01" to "Ann B30", more than one page; Bo Many's eight
+        -- books, two pages of tiles; then a book with no author.
+        shelf = function()
+            local records = {}
+            for i = 1, 30 do
+                records[i] = fixture.book(("Book %02d"):format(i), { authors = { ("Ann B%02d"):format(i) } })
+            end
+            for i = 1, 8 do
+                records[#records + 1] = fixture.book("Many " .. i, { authors = { "Bo Many" } })
+            end
+            records[#records + 1] = fixture.book("Anonymous")
+            return records
+        end,
+        detail = { kind = "author", name = "Bo Many" },
+        -- The shelf's anonymous book gains an author who sorts first, under the letter A.
+        joins = {
+            fields = { authors = { "Ada Aardvark" } },
+            first = "Ada Aardvark",
+            check = function(screen)
+                assert.equals("A", screen.groups[1].letter)
+            end,
+        },
+        -- Bo Many's six tiles on the first page; Many 8 on the second, and another author's book.
+        one_page = {
+            view = { kind = "author", name = "Bo Many" },
+            off = function(records, screen)
+                assert.equals(6, #screen.tiles)
+                for _, record in ipairs(records) do
+                    if record.title == "Many 8" then
+                        return { record, records[1] }
+                    end
+                end
+            end,
+            on = function(_, screen)
+                return screen.tiles[1].record
+            end,
+        },
+        -- Twenty-five authors take more than a page; the anonymous book's new author sorts after them.
+        list_count = {
+            records = function()
+                local records = {}
+                for i = 1, 25 do
+                    records[i] = fixture.book(("Book %02d"):format(i), { authors = { ("Ann B%02d"):format(i) } })
+                end
+                records[#records + 1] = fixture.book("Anonymous")
+                return records, records[#records]
+            end,
+            fields = { authors = { "Ann B99" } },
+            after = "^26 authors",
+        },
+        -- Bo Many's eight books take two pages of tiles; a ninth fits the second.
+        one_count = {
+            records = function()
+                local records = {}
+                for i = 1, 8 do
+                    records[i] = fixture.book("Many " .. i, { authors = { "Bo Many" } })
+                end
+                records[#records + 1] = fixture.book("Zed")
+                return records, records[#records]
+            end,
+            view = { kind = "author", name = "Bo Many" },
+            shown = function(screen)
+                return titles(screen.tiles)
+            end,
+            fields = { authors = { "Bo Many" } },
+            after = "^9 books$",
+        },
+    },
+}
+
+local LIST = { kind = "list" }
+local text_of = require("library_fixture").text
+
+-- The header's aside as it reads, matched against a row's expected words: exactly, or as a
+-- lowercase pattern when it starts with "^".
+local function assert_aside(screen, expected)
+    local aside = text_of(screen.header.aside)
+    if expected:sub(1, 1) == "^" then
+        assert.matches(expected, aside:lower())
+    else
+        assert.equals(expected, aside)
+    end
+end
+
+for _, w in ipairs(SHELVES) do
+    describe("the " .. w.name .. " window's lifecycle", function()
+        local Window
+
+        before_each(function()
+            load()
+            Window = package.loaded[w.module]
+        end)
+
+        after_each(function()
+            harness.teardown()
+        end)
+
+        local function show(view)
+            return show_in(w.module, view)
+        end
+
+        it("asks for every record at the library grid's cover box after the first paint, once per show", function()
+            local records = w.shelf()
+            fixture.install(records)
+            harness.show_fm()
+            harness.tick(2)
+            require("home").close()
+            requests = {}
+            local screen = Window.show{}
+            assert.same({}, requests)
+            harness.tick(2)
+            assert.equals(1, #requests)
+            local box = package.loaded["library_tiles"].geometry(screen.dimen.w, screen.ctx)
+            assert.same(ids(records), ids(requests[1].records))
+            assert.same({ max_cover_w = box.cover_w, max_cover_h = box.cover_h }, requests[1].specs)
+            assert.is_true(requests[1].alive())
+            screen:go(LIST, 2)
+            harness.tick(2)
+            screen:go(w.detail, 1)
+            harness.tick(2)
+            assert.equals(1, #requests)
+            Window.close()
+            show()
+            assert.equals(1, #requests, "a new show asks again")
+        end)
+
+        it("adds to the list the " .. w.one .. " an arrival gives a book, and repaints", function()
+            local records = w.shelf()
+            fixture.install(records)
+            local screen = show()
+            local book = records[#records]
+            local fresh, got = reread(book, w.joins.fields)
+            local n = dirties(screen, function()
+                requests[1].on_arrival({ book })
+            end)
+            assert.same({ book.id }, got)
+            assert.equals(w.joins.first, screen.rows[1].entry.name)
+            w.joins.check(screen, fresh)
+            assert.is_true(n > 0)
+            -- The window keeps the re-read record for its next build.
+            screen:go(LIST, 1)
+            assert.equals(w.joins.first, screen.rows[1].entry.name)
+        end)
+
+        it("repaints one " .. w.one .. " for an arrival of a book on its page, and not for one off it", function()
+            local records = w.shelf()
+            fixture.install(records)
+            local screen = show(w.one_page.view)
+            local n = dirties(screen, function()
+                requests[1].on_arrival(w.one_page.off(records, screen))
+            end)
+            assert.equals(0, n)
+            n = dirties(screen, function()
+                requests[1].on_arrival({ w.one_page.on(records, screen) })
+            end)
+            assert.is_true(n > 0)
+        end)
+
+        it("repaints the list for an arrival that changes only the header's count", function()
+            local records, book = w.list_count.records(w.shelf())
+            fixture.install(records)
+            local screen = show()
+            local pages, shown = screen.pages, fixture.names(screen)
+            assert.is_true(pages > 1)
+            if w.list_count.pages then
+                assert.equals(w.list_count.pages, pages)
+            end
+            if w.list_count.before then
+                assert_aside(screen, w.list_count.before)
+            end
+            reread(book, w.list_count.fields)
+            local n = dirties(screen, function()
+                requests[1].on_arrival({ book })
+            end)
+            assert.equals(pages, screen.pages)
+            assert.same(shown, fixture.names(screen))
+            assert.is_true(n > 0)
+            assert_aside(screen, w.list_count.after)
+        end)
+
+        it("repaints one " .. w.one .. " for an arrival that changes only the header's count", function()
+            local case = w.one_count
+            local records, book = case.records()
+            fixture.install(records)
+            local screen = show(case.view)
+            local shown = case.shown(screen)
+            if case.first_page then
+                assert.same(case.first_page, shown)
+            end
+            assert.equals(2, screen.pages)
+            if case.before then
+                assert_aside(screen, case.before)
+            end
+            reread(book, case.fields)
+            local n = dirties(screen, function()
+                requests[1].on_arrival({ book })
+            end)
+            assert.equals(2, screen.pages)
+            assert.same(shown, case.shown(screen))
+            assert.is_true(n > 0)
+            assert_aside(screen, case.after)
+        end)
+
+        it("is no longer checked once the window closes", function()
+            fixture.install(w.shelf())
+            local screen = show()
+            local alive = requests[1].alive
+            local cancelled = cancels
+            Window.close()
+            assert.equals(cancelled + 1, cancels)
+            assert.is_false(alive())
+            assert.is_nil(Window.shown)
+            assert.is_false(UIManager:isWidgetShown(screen))
+            local n = dirties(screen, function()
+                requests[1].on_arrival({ screen.records[1] })
+            end)
+            assert.equals(0, n)
+        end)
+    end)
+end
+
 describe("the Series window's lifecycle", function()
-    local text_of = require("library_fixture").text
-    local Books, LibraryTiles, SeriesScreen
-
-    local LIST = { kind = "list" }
-
     before_each(function()
         load()
-        Books = package.loaded["books"]
-        LibraryTiles = package.loaded["library_tiles"]
-        SeriesScreen = package.loaded["series_screen"]
     end)
 
     after_each(function()
         harness.teardown()
     end)
 
-    local function show(view)
-        return show_in("series_screen", view)
-    end
-
-    -- Seven series of two books, more than one page, then a book in no series.
-    local function shelf()
-        local records = {}
-        for i = 1, 7 do
-            for _, record in ipairs(fixture.series(("Series %02d"):format(i), 2)) do
-                records[#records + 1] = record
-            end
-        end
-        records[#records + 1] = fixture.book("Loose")
-        return records
-    end
-
-    it("asks for every record at the library grid's cover box after the first paint, once per show", function()
-        local records = shelf()
-        fixture.install(records)
-        harness.show_fm()
-        harness.tick(2)
-        require("home").close()
-        requests = {}
-        local screen = SeriesScreen.show{}
-        assert.same({}, requests)
-        harness.tick(2)
-        assert.equals(1, #requests)
-        local box = LibraryTiles.geometry(screen.dimen.w, screen.ctx)
-        assert.same(ids(records), ids(requests[1].records))
-        assert.same({ max_cover_w = box.cover_w, max_cover_h = box.cover_h }, requests[1].specs)
-        assert.is_true(requests[1].alive())
-        screen:go(LIST, 2)
-        harness.tick(2)
-        screen:go({ kind = "series", name = "Series 01" }, 1)
-        harness.tick(2)
-        assert.equals(1, #requests)
-        SeriesScreen.close()
-        show()
-        assert.equals(1, #requests, "a new show asks again")
-    end)
-
-    it("rebuilds the list with a series an arrival gives a book, and repaints", function()
-        local records = shelf()
-        fixture.install(records)
-        local screen = show()
-        local loose = records[#records]
-        local fresh = {}
-        for k, v in pairs(loose) do
-            fresh[k] = v
-        end
-        fresh.series, fresh.series_index = "Aardvark Tales", 1
-        local got = {}
-        Books.get = function(id)
-            got[#got + 1] = id
-            return id == fresh.id and fresh or nil
-        end
-        local n = dirties(screen, function()
-            requests[1].on_arrival({ loose })
-        end)
-        assert.same({ loose.id }, got)
-        assert.equals("Aardvark Tales", screen.rows[1].entry.name)
-        assert.equals(fresh, screen.rows[1].entry.books[1])
-        assert.is_true(n > 0)
-        -- The window keeps the re-read record for its next build.
-        screen:go(LIST, 1)
-        assert.equals("Aardvark Tales", screen.rows[1].entry.name)
-    end)
-
     it("repaints for an arrival whose cover the page draws, and leaves it clean for one it doesn't", function()
-        local records = shelf()
+        local records = SHELVES[1].shelf()
         fixture.install(records)
-        local screen = show()
+        local screen = show_in("series_screen")
         local shown = screen.rows[1].entry.books[1]
         local frame = screen[1]
         local n = dirties(screen, function()
@@ -163,56 +408,11 @@ describe("the Series window's lifecycle", function()
         assert.is_not.equals(frame, screen[1])
     end)
 
-    it("repaints one series for an arrival of one of its books", function()
-        local records = shelf()
-        fixture.install(records)
-        local screen = show({ kind = "series", name = "Series 03" })
-        local n = dirties(screen, function()
-            requests[1].on_arrival({ records[1] })
-        end)
-        assert.equals(0, n)
-        n = dirties(screen, function()
-            requests[1].on_arrival({ records[6] })
-        end)
-        assert.is_true(n > 0)
-    end)
-
-    -- A copy of record with fields over it, as Books.get gives an arrival's re-read record.
-    local function changed(record, fields)
-        local fresh = {}
-        for k, v in pairs(record) do
-            fresh[k] = v
-        end
-        for k, v in pairs(fields) do
-            fresh[k] = v
-        end
-        return fresh
-    end
-
-    -- Five series rows fill a page here, so shelf()'s seven take two pages, the second with room.
-    it("repaints the list's count for a series an arrival adds off the page shown", function()
-        local records = shelf()
-        fixture.install(records)
-        local screen = show()
-        local before = fixture.names(screen)
-        assert.equals(2, screen.pages)
-        assert.equals("7 series", text_of(screen.header.aside))
-        local loose = records[#records]
-        records[#records] = changed(loose, { series = "Zebra Tales", series_index = 1 })
-        local n = dirties(screen, function()
-            requests[1].on_arrival({ loose })
-        end)
-        assert.same(before, fixture.names(screen))
-        assert.equals(2, screen.pages)
-        assert.is_true(n > 0)
-        assert.equals("8 series", text_of(screen.header.aside))
-    end)
-
     it("repaints the list's under-way count for a series that starts off the page shown", function()
-        local records = shelf()
+        local records = SHELVES[1].shelf()
         local progress = {}
         fixture.install(records, progress)
-        local screen = show(LIST)
+        local screen = show_in("series_screen", LIST)
         screen:go(LIST, 2)
         harness.tick(2)
         local before = fixture.names(screen)
@@ -229,144 +429,23 @@ describe("the Series window's lifecycle", function()
         assert.is_true(n > 0)
         assert.equals("7 series, 1 under way", text_of(screen.header.aside))
     end)
-
-    -- Three book rows fill a page here, so four books take two pages and a fifth fits the second.
-    it("repaints one series' count for a book an arrival adds off the page shown", function()
-        local records = fixture.series("Long", 4)
-        records[#records + 1] = fixture.book("Loose", { authors = { "Ann Author" } })
-        fixture.install(records)
-        local screen = show({ kind = "series", name = "Long" })
-        local before = fixture.names(screen)
-        assert.same({ "Long 1", "Long 2", "Long 3" }, before)
-        assert.equals(2, screen.pages)
-        assert.equals("Ann Author, 4 books", text_of(screen.header.aside))
-        local loose = records[#records]
-        records[#records] = changed(loose, { series = "Long", series_index = 5 })
-        local n = dirties(screen, function()
-            requests[1].on_arrival({ loose })
-        end)
-        assert.same(before, fixture.names(screen))
-        assert.equals(2, screen.pages)
-        assert.is_true(n > 0)
-        assert.equals("Ann Author, 5 books", text_of(screen.header.aside))
-    end)
-
-    it("is no longer checked once the window closes", function()
-        fixture.install(shelf())
-        local screen = show()
-        local alive = requests[1].alive
-        local cancelled = cancels
-        SeriesScreen.close()
-        assert.equals(cancelled + 1, cancels)
-        assert.is_false(alive())
-        assert.is_nil(SeriesScreen.shown)
-        assert.is_false(UIManager:isWidgetShown(screen))
-        local n = dirties(screen, function()
-            requests[1].on_arrival({ screen.records[1] })
-        end)
-        assert.equals(0, n)
-    end)
 end)
 
 describe("the Authors window's lifecycle", function()
-    local AuthorsScreen, Books, LibraryTiles
-    local text_of = require("library_fixture").text
-
-    local LIST = { kind = "list" }
-
     before_each(function()
         load()
-        AuthorsScreen = package.loaded["authors_screen"]
-        Books = package.loaded["books"]
-        LibraryTiles = package.loaded["library_tiles"]
     end)
 
     after_each(function()
         harness.teardown()
     end)
 
-    local function show(view)
-        return show_in("authors_screen", view)
-    end
-
-    -- Thirty authors of one book each, "Ann B01" to "Ann B30", more than one page; Bo Many's eight
-    -- books, two pages of tiles; then a book with no author.
-    local function shelf()
-        local records = {}
-        for i = 1, 30 do
-            records[i] = fixture.book(("Book %02d"):format(i), { authors = { ("Ann B%02d"):format(i) } })
-        end
-        for i = 1, 8 do
-            records[#records + 1] = fixture.book("Many " .. i, { authors = { "Bo Many" } })
-        end
-        records[#records + 1] = fixture.book("Anonymous")
-        return records
-    end
-
-    it("asks for every record at the library grid's cover box after the first paint, once per show", function()
-        local records = shelf()
-        fixture.install(records)
-        harness.show_fm()
-        harness.tick(2)
-        require("home").close()
-        requests = {}
-        local screen = AuthorsScreen.show{}
-        assert.same({}, requests)
-        harness.tick(2)
-        assert.equals(1, #requests)
-        local box = LibraryTiles.geometry(screen.dimen.w, screen.ctx)
-        assert.same(ids(records), ids(requests[1].records))
-        assert.same({ max_cover_w = box.cover_w, max_cover_h = box.cover_h }, requests[1].specs)
-        assert.is_true(requests[1].alive())
-        screen:go(LIST, 2)
-        harness.tick(2)
-        screen:go({ kind = "author", name = "Bo Many" }, 1)
-        harness.tick(2)
-        assert.equals(1, #requests)
-        AuthorsScreen.close()
-        show()
-        assert.equals(1, #requests, "a new show asks again")
-    end)
-
-    it("adds to the list the author an arrival gives a book, and repaints", function()
-        local records = shelf()
-        fixture.install(records)
-        local screen = show()
-        local anonymous = records[#records]
-        local fresh = {}
-        for k, v in pairs(anonymous) do
-            fresh[k] = v
-        end
-        fresh.authors = { "Ada Aardvark" }
-        local got = {}
-        Books.get = function(id)
-            got[#got + 1] = id
-            return id == fresh.id and fresh or nil
-        end
-        local n = dirties(screen, function()
-            requests[1].on_arrival({ anonymous })
-        end)
-        assert.same({ anonymous.id }, got)
-        assert.equals("Ada Aardvark", screen.rows[1].entry.name)
-        assert.equals("A", screen.groups[1].letter)
-        assert.is_true(n > 0)
-        screen:go(LIST, 1)
-        assert.equals("Ada Aardvark", screen.rows[1].entry.name)
-    end)
-
     it("repaints the list for an arrival that changes an author's count on the page", function()
-        local records = shelf()
+        local records = SHELVES[2].shelf()
         fixture.install(records)
-        local screen = show()
+        local screen = show_in("authors_screen")
         local anonymous = records[#records]
-        local fresh = {}
-        for k, v in pairs(anonymous) do
-            fresh[k] = v
-        end
-        fresh.authors = { "Ann B01" }
-        Books.get = function(id)
-            return id == fresh.id and fresh or nil
-        end
+        reread(anonymous, { authors = { "Ann B01" } })
         assert.equals(1, screen.rows[1].entry.count)
         local n = dirties(screen, function()
             requests[1].on_arrival({ anonymous })
@@ -376,124 +455,15 @@ describe("the Authors window's lifecycle", function()
     end)
 
     it("leaves the list clean for an arrival that changes no row", function()
-        local records = shelf()
+        local records = SHELVES[2].shelf()
         fixture.install(records)
-        local screen = show()
+        local screen = show_in("authors_screen")
         local frame = screen[1]
         local n = dirties(screen, function()
             requests[1].on_arrival({ records[1], records[#records] })
         end)
         assert.equals(0, n)
         assert.equals(frame, screen[1])
-    end)
-
-    it("repaints one author for an arrival of a book on its page, and not for one off it", function()
-        local records = shelf()
-        fixture.install(records)
-        local screen = show({ kind = "author", name = "Bo Many" })
-        local on_page, off_page = screen.tiles[1].record, nil
-        for _, record in ipairs(records) do
-            if record.title == "Many 8" then
-                off_page = record
-            end
-        end
-        assert.equals(6, #screen.tiles)
-        local n = dirties(screen, function()
-            requests[1].on_arrival({ off_page, records[1] })
-        end)
-        assert.equals(0, n)
-        n = dirties(screen, function()
-            requests[1].on_arrival({ on_page })
-        end)
-        assert.is_true(n > 0)
-    end)
-
-    -- A copy of record with fields over it, as Books.get re-reads it after an arrival.
-    local function reread(record, fields)
-        local fresh = {}
-        for k, v in pairs(record) do
-            fresh[k] = v
-        end
-        for k, v in pairs(fields) do
-            fresh[k] = v
-        end
-        Books.get = function(id)
-            return id == fresh.id and fresh or nil
-        end
-    end
-
-    local function names(rows)
-        local out = {}
-        for i, row in ipairs(rows) do
-            out[i] = row.entry.name
-        end
-        return out
-    end
-
-    local function titles(tiles)
-        local out = {}
-        for i, tile in ipairs(tiles) do
-            out[i] = tile.record.title
-        end
-        return out
-    end
-
-    it("repaints the list for an arrival that changes only the header's count", function()
-        local records = {}
-        for i = 1, 25 do
-            records[i] = fixture.book(("Book %02d"):format(i), { authors = { ("Ann B%02d"):format(i) } })
-        end
-        local anonymous = fixture.book("Anonymous")
-        records[#records + 1] = anonymous
-        fixture.install(records)
-        local screen = show()
-        local pages, shown = screen.pages, names(screen.rows)
-        assert.is_true(pages > 1)
-        reread(anonymous, { authors = { "Ann B99" } })
-        local n = dirties(screen, function()
-            requests[1].on_arrival({ anonymous })
-        end)
-        assert.equals(pages, screen.pages)
-        assert.same(shown, names(screen.rows))
-        assert.is_true(n > 0)
-        assert.matches("^26 authors", text_of(screen.header.aside):lower())
-    end)
-
-    it("repaints one author for an arrival that changes only the header's count", function()
-        local records = {}
-        for i = 1, 8 do
-            records[i] = fixture.book("Many " .. i, { authors = { "Bo Many" } })
-        end
-        local zed = fixture.book("Zed")
-        records[#records + 1] = zed
-        fixture.install(records)
-        local screen = show({ kind = "author", name = "Bo Many" })
-        local shown = titles(screen.tiles)
-        assert.equals(2, screen.pages)
-        reread(zed, { authors = { "Bo Many" } })
-        local n = dirties(screen, function()
-            requests[1].on_arrival({ zed })
-        end)
-        assert.equals(2, screen.pages)
-        assert.same(shown, titles(screen.tiles))
-        assert.is_true(n > 0)
-        assert.equals("9 books", text_of(screen.header.aside):lower())
-    end)
-
-    it("is no longer checked once the window closes", function()
-        fixture.install(shelf())
-        local screen = show()
-        local alive = requests[1].alive
-        local cancelled = cancels
-        AuthorsScreen.close()
-        assert.equals(cancelled + 1, cancels)
-        assert.is_false(alive())
-        assert.is_nil(AuthorsScreen.shown)
-        assert.is_false(UIManager:isWidgetShown(screen))
-        local n = dirties(screen, function()
-            requests[1].on_arrival({ screen.records[1] })
-        end)
-        assert.equals(0, n)
     end)
 end)
 
@@ -510,22 +480,9 @@ describe("the Series and Authors windows' routing", function()
     local AuthorsScreen, Home, LauncherEntries, Library, NavBar, SeriesScreen
     local util, real_open, opened, progress, records, signals, listener
 
-    local LIST = { kind = "list" }
     local BOOK = harness.library .. "/frankenstein.epub"
     local ID = "file:" .. ffiutil.realpath(BOOK)
     local NAMES = { kopanda_home = true, kopanda_library = true, kopanda_series = true, kopanda_authors = true }
-
-    -- A copy of record with fields over it.
-    local function changed(record, fields)
-        local fresh = {}
-        for k, v in pairs(record) do
-            fresh[k] = v
-        end
-        for k, v in pairs(fields) do
-            fresh[k] = v
-        end
-        return fresh
-    end
 
     -- Each window, the view and page its real book (BOOK) shows at, the book's row or tile there,
     -- whether that draws progress, and a change of the library that takes the view away.

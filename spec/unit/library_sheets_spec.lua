@@ -97,91 +97,91 @@ describe("LibrarySheets.hold", function()
         assert_book_sheet(library, hit, record)
     end)
 
-    describe("on the Series window", function()
-        local record
+    -- The Series and Authors windows: a book held on one series or one author opens its sheet; their
+    -- own rows, empty space, no hit and a folder hit (D3: the folder sheet is the library's) open
+    -- nothing.
+    local SHELVES = {
+        {
+            name = "Series",
+            module = "series_screen",
+            one = "series",
+            an = "a series",
+            show = shelf_fixture.show,
+            -- Moons, two books, the first a file.
+            install = function()
+                local books = shelf_fixture.series("Moons", 2)
+                books[1].path = file("series.epub")
+                shelf_fixture.install(books)
+                return books[1]
+            end,
+            detail = { kind = "series", name = "Moons" },
+            book = function(screen)
+                return screen.rows[1]
+            end,
+            folder = { name = "Moons", path = "/moons" },
+        },
+        {
+            name = "Authors",
+            module = "authors_screen",
+            one = "author",
+            an = "an author",
+            show = shelf_fixture.show_authors,
+            -- Ann Author's one book, a file.
+            install = function()
+                local record = shelf_fixture.book("Held", { authors = { "Ann Author" } })
+                record.path = file("authors.epub")
+                shelf_fixture.install({ record })
+                return record
+            end,
+            detail = { kind = "author", name = "Ann Author" },
+            book = function(screen)
+                return screen.tiles[1]
+            end,
+            folder = { name = "Ann", path = "/ann" },
+        },
+    }
 
-        before_each(function()
-            local books = shelf_fixture.series("Moons", 2)
-            record = books[1]
-            record.path = file("series.epub")
-            shelf_fixture.install(books)
-        end)
+    for _, w in ipairs(SHELVES) do
+        describe("on the " .. w.name .. " window", function()
+            local record, Window
 
-        it("opens the book sheet over one series for a book held there", function()
-            local screen = shelf_fixture.show({ kind = "series", name = "Moons" })
-            local SeriesScreen = package.loaded["series_screen"]
-            local hit = SeriesScreen.hit(centre(screen.rows[1].rect))
-            assert.same({ kind = "book", record = record }, hit)
-            assert_book_sheet(screen, hit, record)
-        end)
+            before_each(function()
+                record = w.install()
+                Window = package.loaded[w.module]
+            end)
 
-        it("opens nothing for a series row, empty space or no hit", function()
-            local screen = shelf_fixture.show()
-            local SeriesScreen = package.loaded["series_screen"]
-            local series = SeriesScreen.hit(centre(screen.rows[1].rect))
-            assert.equals("series", series.kind)
-            local open_record = spy.on(package.loaded["book_sheet"], "open_record")
-            for _, hit in ipairs({ series, { kind = "empty" } }) do
-                LibrarySheets.hold(screen, hit, earlier())
+            it("opens the book sheet over one " .. w.one .. " for a book held there", function()
+                local screen = w.show(w.detail)
+                local hit = Window.hit(centre(w.book(screen).rect))
+                assert.same({ kind = "book", record = record }, hit)
+                assert_book_sheet(screen, hit, record)
+            end)
+
+            it("opens nothing for " .. w.an .. " row, empty space or no hit", function()
+                local screen = w.show()
+                local row = Window.hit(centre(screen.rows[1].rect))
+                assert.equals(w.one, row.kind)
+                local open_record = spy.on(package.loaded["book_sheet"], "open_record")
+                for _, hit in ipairs({ row, { kind = "empty" } }) do
+                    LibrarySheets.hold(screen, hit, earlier())
+                    assert.is_nil(Sheet.shown)
+                    assert.equals(screen, harness.top())
+                end
+                LibrarySheets.hold(screen, nil, earlier())
+                assert.is_nil(Sheet.shown)
+                assert.spy(open_record).was_not_called()
+                harness.tick(3)
+                assert.same({}, settled)
+            end)
+
+            it("opens nothing for a folder hit", function()
+                local screen = w.show()
+                LibrarySheets.hold(screen, { kind = "folder", folder = w.folder }, earlier())
                 assert.is_nil(Sheet.shown)
                 assert.equals(screen, harness.top())
-            end
-            LibrarySheets.hold(screen, nil, earlier())
-            assert.is_nil(Sheet.shown)
-            assert.spy(open_record).was_not_called()
-            harness.tick(3)
-            assert.same({}, settled)
+            end)
         end)
-
-        -- D3: the folder sheet is the library's; a folder hit here opens nothing.
-        it("opens nothing for a folder hit", function()
-            local screen = shelf_fixture.show()
-            LibrarySheets.hold(screen, { kind = "folder", folder = { name = "Moons", path = "/moons" } }, earlier())
-            assert.is_nil(Sheet.shown)
-            assert.equals(screen, harness.top())
-        end)
-    end)
-
-    describe("on the Authors window", function()
-        local record
-
-        before_each(function()
-            record = shelf_fixture.book("Held", { authors = { "Ann Author" } })
-            record.path = file("authors.epub")
-            shelf_fixture.install({ record })
-        end)
-
-        it("opens the book sheet over one author for a book held there", function()
-            local screen = shelf_fixture.show_authors({ kind = "author", name = "Ann Author" })
-            local AuthorsScreen = package.loaded["authors_screen"]
-            local hit = AuthorsScreen.hit(centre(screen.tiles[1].rect))
-            assert.same({ kind = "book", record = record }, hit)
-            assert_book_sheet(screen, hit, record)
-        end)
-
-        it("opens nothing for an author row or empty space", function()
-            local screen = shelf_fixture.show_authors()
-            local AuthorsScreen = package.loaded["authors_screen"]
-            local author = AuthorsScreen.hit(centre(screen.rows[1].rect))
-            assert.equals("author", author.kind)
-            local open_record = spy.on(package.loaded["book_sheet"], "open_record")
-            for _, hit in ipairs({ author, { kind = "empty" } }) do
-                LibrarySheets.hold(screen, hit, earlier())
-                assert.is_nil(Sheet.shown)
-                assert.equals(screen, harness.top())
-            end
-            assert.spy(open_record).was_not_called()
-            harness.tick(3)
-            assert.same({}, settled)
-        end)
-
-        it("opens nothing for a folder hit", function()
-            local screen = shelf_fixture.show_authors()
-            LibrarySheets.hold(screen, { kind = "folder", folder = { name = "Ann", path = "/ann" } }, earlier())
-            assert.is_nil(Sheet.shown)
-            assert.equals(screen, harness.top())
-        end)
-    end)
+    end
 
     describe("the folder sheet on the library", function()
         local ROOT = library_fixture.ROOT

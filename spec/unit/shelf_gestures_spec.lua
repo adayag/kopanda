@@ -89,24 +89,323 @@ local function reset()
     harness.teardown()
 end
 
+local LIST = { kind = "list" }
+local LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+-- The row of the window's page whose series or author is name, or whose book is titled name.
+local function row_of(screen, name)
+    for _, row in ipairs(screen.rows) do
+        if (row.entry and row.entry.name or row.record.title) == name then
+            return row
+        end
+    end
+end
+
+local function tile_of(screen, title)
+    for _, tile in ipairs(screen.tiles) do
+        if tile.record.title == title then
+            return tile
+        end
+    end
+end
+
+-- Each window and what its gestures' cases differ in: its shelf, the words of the cases' names, its
+-- one-entry view and how a book is found on it.
+local SHELVES = {
+    {
+        name = "Series",
+        module = "series_screen",
+        Module = "SeriesScreen",
+        show = fixture.show,
+        -- Fourteen series of two books, "Series 01" to "Series 14", three pages or more; Series 01 has
+        -- a third book not downloaded.
+        install = function()
+            local records = {}
+            for i = 1, 14 do
+                for _, record in ipairs(fixture.series(("Series %02d"):format(i), 2)) do
+                    records[#records + 1] = record
+                end
+            end
+            records[#records + 1] = fixture.remote("Untold", { series = "Series 01", series_index = 3 })
+            return fixture.install(records)
+        end,
+        where = "series",
+        one = "series",
+        a_row = "a series row",
+        its = "its",
+        label = "Under way first",
+        a_book = "a downloaded book",
+        detail = { kind = "series", name = "Series 01" },
+        -- The detail view's first page after a tap on the list's first row.
+        first_page = function(screen)
+            assert.same({ "Series 01 1", "Series 01 2", "Untold" }, fixture.names(screen))
+        end,
+        books = { "Series 01 1", "Series 01 2" },
+        -- The book a hold in the detail view lands on: the first row, the marked next-unread one.
+        held = "Series 01 1",
+        book_of = row_of,
+        -- The list's row whose foot has empty space below it.
+        below = function(screen)
+            return screen.rows[1]
+        end,
+    },
+    {
+        name = "Authors",
+        module = "authors_screen",
+        Module = "AuthorsScreen",
+        show = fixture.show_authors,
+        -- Thirty authors of one book each, "Ann A01" to "Ann D30" by their letters, two pages or more;
+        -- and Jo Grid's seven books, the first not downloaded (in a series, so first in D16's order).
+        install = function()
+            local records = {}
+            for i = 1, 30 do
+                local letter = LETTERS:sub((i - 1) % 26 + 1, (i - 1) % 26 + 1)
+                records[i] = fixture.book(("Book %02d"):format(i),
+                    { authors = { ("Ann %s%02d"):format(letter, i) } })
+            end
+            records[#records + 1] = fixture.remote("Untold",
+                { series = "Alpha", series_index = 1, authors = { "Jo Grid" } })
+            for i = 1, 6 do
+                records[#records + 1] = fixture.book("Grid " .. i, { authors = { "Jo Grid" } })
+            end
+            return fixture.install(records)
+        end,
+        where = "authors",
+        one = "author",
+        a_row = "an author row",
+        its = "their",
+        label = "By surname",
+        a_book = "a downloaded book's tile",
+        detail = { kind = "author", name = "Jo Grid" },
+        first_page = function(screen)
+            assert.equals("Book 01", screen.tiles[1].record.title)
+        end,
+        books = { "Grid 1", "Grid 2" },
+        held = "Grid 2",
+        book_of = tile_of,
+        -- Two pages of tiles in the detail view, whose pager turns too.
+        detail_pages = 2,
+        below = function(screen)
+            return screen.rows[#screen.rows]
+        end,
+    },
+}
+
+for _, w in ipairs(SHELVES) do
+    describe("gestures on the " .. w.name .. " window", function()
+        local NavBar, Window
+
+        before_each(function()
+            harness.load()
+            NavBar = package.loaded["nav_bar"]
+            Window = package.loaded[w.module]
+        end)
+
+        after_each(reset)
+
+        it("in the nav bar's band runs the tapped tab first, with where " .. w.where, function()
+            w.install()
+            local screen, fm = w.show()
+            local got = bind(fm, "kopanda_spec_bar_tap", "tap", FULL)
+            local runs = spy(NavBar, "run")
+            local bar = screen.nav
+            local column = bar.columns[5]
+            send(harness.gesture("tap", bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2),
+                bar.dimen.y + math.floor(bar.dimen.h / 2)))
+            assert.same({ { "settings", w.where } }, runs)
+            assert.same({}, got)
+            assert.equals(screen, harness.top())
+        end)
+
+        describe("a tap", function()
+            it("on " .. w.a_row .. " shows that " .. w.one .. " at " .. w.its .. " first page", function()
+                w.install()
+                local screen = w.show()
+                local first = screen.rows[1].entry.name
+                tap_on(screen.rows[1].rect)
+                assert.same({ kind = w.one, name = first }, screen.showing)
+                assert.equals(1, screen.page)
+                w.first_page(screen)
+                assert.equals(screen, Window.shown)
+            end)
+
+            it("on the back control returns to the list at the page holding the " .. w.one, function()
+                w.install()
+                local screen = w.show(LIST, 2)
+                local row = screen.rows[2]
+                local name = row.entry.name
+                tap_on(row.rect)
+                assert.same({ kind = w.one, name = name }, screen.showing)
+                tap_on(screen.header.back_rect)
+                assert.same(LIST, screen.showing)
+                assert.equals(2, screen.page)
+                assert.is_not_nil(row_of(screen, name))
+            end)
+
+            it("on " .. w.a_book .. " opens it through filemanagerutil.openFile, on_open run first", function()
+                w.install()
+                local screen, fm = w.show(w.detail)
+                local order = {}
+                local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile", function(_, _, pre)
+                    order[#order + 1] = "open"
+                    pre()
+                end)
+                local returns = spy(Window, "on_open", function()
+                    order[#order + 1] = "return"
+                end)
+                local book = w.book_of(screen, w.books[2])
+                tap_on(book.rect)
+                assert.equals(1, #opened)
+                assert.equals(fm, opened[1][1])
+                assert.equals(book.record.path, opened[1][2])
+                assert.same({ { w.detail, 1 } }, returns)
+                assert.same({ "open", "return" }, order)
+            end)
+
+            it("on a book not downloaded does nothing and is consumed", function()
+                w.install()
+                local screen, fm = w.show(w.detail)
+                local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile")
+                local got = bind(fm, "kopanda_spec_full_tap", "tap", FULL)
+                tap_on(w.book_of(screen, "Untold").rect)
+                assert.same({}, opened)
+                assert.same({}, got)
+                assert.same(w.detail, screen.showing)
+                assert.equals(screen, harness.top())
+            end)
+
+            it("on " .. w.label .. " is the header's empty space and opens the file manager's menu", function()
+                w.install()
+                local screen, fm = w.show()
+                tap_on(screen.header.right[1])
+                assert.same(LIST, screen.showing)
+                assert.is_not_nil(fm.menu.menu_container)
+                assert.equals(fm.menu.menu_container, harness.top())
+                assert.equals(screen, harness.top(2))
+            end)
+
+            it("on a live pager arrow turns the page" .. (w.detail_pages and ", in the list and one " .. w.one or "")
+                .. ", and on a dead one does nothing", function()
+                w.install()
+                local screen = w.show()
+                local pages = screen.pages
+                assert.is_true(pages >= 2)
+                tap_on(screen.pager.prev.rect)
+                assert.equals(1, screen.page)
+                for page = 2, pages do
+                    tap_on(screen.pager.next.rect)
+                    assert.equals(page, screen.page)
+                end
+                tap_on(screen.pager.next.rect)
+                assert.equals(pages, screen.page)
+                tap_on(screen.pager.prev.rect)
+                assert.equals(pages - 1, screen.page)
+                if w.detail_pages then
+                    screen:go(w.detail, 1)
+                    assert.equals(w.detail_pages, screen.pages)
+                    tap_on(screen.pager.next.rect)
+                    assert.same({ w.detail, 2 }, { screen.showing, screen.page })
+                    tap_on(screen.pager.next.rect)
+                    assert.equals(2, screen.page)
+                    tap_on(screen.pager.prev.rect)
+                    assert.equals(1, screen.page)
+                end
+            end)
+        end)
+
+        it("pages the list with a west or east swipe, without wrapping, and with the page keys", function()
+            assert.is_true(Device:hasKeys())
+            w.install()
+            local screen = w.show()
+            local size = Screen:getSize()
+            local x, y = size.w / 2, size.h / 2
+            send(swipe(x, y, "east"))
+            assert.equals(1, screen.page)
+            send(swipe(x, y, "west"))
+            assert.equals(2, screen.page)
+            send(swipe(x, y, "east"))
+            assert.equals(1, screen.page)
+            UIManager:sendEvent(Event:new("KeyPress", Key:new("RPgFwd", {})))
+            assert.equals(2, screen.page)
+            UIManager:sendEvent(Event:new("KeyPress", Key:new("RPgBack", {})))
+            assert.equals(1, screen.page)
+            UIManager:sendEvent(Event:new("KeyPress", Key:new("RPgBack", {})))
+            assert.equals(1, screen.page)
+        end)
+
+        -- The fixture's books are no files, so a held book's sheet re-lists instead.
+        it("runs no open on a hold, and consumes it", function()
+            w.install()
+            local screen = w.show()
+            send(harness.gesture("hold", centre(screen.rows[1].rect)))
+            assert.same(LIST, screen.showing)
+            screen:go(w.detail, 1)
+            local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile")
+            send(harness.gesture("hold", centre(w.book_of(screen, w.books[1]).rect)))
+            send(harness.gesture("hold", centre(screen.header.back_rect)))
+            assert.same({}, opened)
+            assert.same(w.detail, screen.showing)
+            assert.equals(screen, harness.top())
+        end)
+
+        it("hands the window and what lies under a hold to the dispatch", function()
+            w.install()
+            local screen = w.show()
+            local held = dispatched()
+            local first = screen.rows[1].entry.name
+            send(harness.gesture("hold", centre(screen.rows[1].rect)))
+            screen:go(w.detail, 1)
+            local book = w.book_of(screen, w.held)
+            send(harness.gesture("hold", centre(book.rect)))
+            assert.equals(2, #held)
+            assert.equals(screen, held[1][1])
+            assert.same({ w.one, first }, { held[1][2].kind, held[1][2].entry.name })
+            assert.equals(screen, held[2][1])
+            assert.same({ kind = "book", record = book.record }, held[2][2])
+            assert.equals(book.record, held[2][2].record)
+        end)
+
+        it("runs no dispatch on a hold in the nav bar's band", function()
+            w.install()
+            local screen = w.show()
+            local held = dispatched()
+            hold_bar(screen)
+            assert.same({}, held)
+            assert.equals(screen, harness.top())
+        end)
+
+        it("lets a hold zone on the file manager that consumes the hold win over the dispatch", function()
+            w.install()
+            local screen, fm = w.show(w.detail)
+            local got = bind(fm, "kopanda_spec_hold", "hold", FULL)
+            local held = dispatched()
+            send(harness.gesture("hold", centre(w.book_of(screen, w.held).rect)))
+            assert.equals(1, #got)
+            assert.same({}, held)
+            assert.equals(screen, harness.top())
+        end)
+
+        it(w.Module .. ".hit names the " .. w.one .. ", the book or empty space under a point, and nil with none "
+            .. "shown", function()
+            w.install()
+            assert.is_nil(Window.hit(10, 10))
+            local screen = w.show()
+            local row = screen.rows[1]
+            assert.same({ kind = w.one, entry = row.entry }, Window.hit(row.rect.x, row.rect.y))
+            assert.equals(w.one, Window.hit(row.rect.x + row.rect.w - 1, row.rect.y + row.rect.h - 1).kind)
+            local below = w.below(screen)
+            assert.same({ kind = "empty" }, Window.hit(below.rect.x, below.rect.y + below.rect.h))
+            assert.same({ kind = "empty" }, Window.hit(centre(screen.header.rect)))
+            screen:go(w.detail, 1)
+            local book = w.book_of(screen, "Untold")
+            assert.same({ kind = "book", record = book.record }, Window.hit(centre(book.rect)))
+            assert.same({ kind = "empty" }, Window.hit(book.rect.x + book.rect.w, book.rect.y))
+        end)
+    end)
+end
+
 describe("gestures on the Series window", function()
     local NavBar, SeriesScreen
-
-    local LIST = { kind = "list" }
-    local REMOTE = fixture.remote("Untold", { series = "Series 01", series_index = 3 })
-
-    -- Fourteen series of two books, "Series 01" to "Series 14", three pages or more; Series 01 has a
-    -- third book not downloaded.
-    local function install()
-        local records = {}
-        for i = 1, 14 do
-            for _, record in ipairs(fixture.series(("Series %02d"):format(i), 2)) do
-                records[#records + 1] = record
-            end
-        end
-        records[#records + 1] = REMOTE
-        return fixture.install(records)
-    end
 
     before_each(function()
         harness.load()
@@ -116,112 +415,9 @@ describe("gestures on the Series window", function()
 
     after_each(reset)
 
-    local function row_of(screen, name)
-        for _, row in ipairs(screen.rows) do
-            if (row.entry and row.entry.name or row.record.title) == name then
-                return row
-            end
-        end
-    end
-
-    it("in the nav bar's band runs the tapped tab first, with where series", function()
-        install()
-        local screen, fm = fixture.show()
-        local got = bind(fm, "kopanda_spec_bar_tap", "tap", FULL)
-        local runs = spy(NavBar, "run")
-        local bar = screen.nav
-        local column = bar.columns[5]
-        send(harness.gesture("tap", bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2),
-            bar.dimen.y + math.floor(bar.dimen.h / 2)))
-        assert.same({ { "settings", "series" } }, runs)
-        assert.same({}, got)
-        assert.equals(screen, harness.top())
-    end)
-
     describe("a tap", function()
-        it("on a series row shows that series at its first page", function()
-            install()
-            local screen = fixture.show()
-            tap_on(row_of(screen, "Series 01").rect)
-            assert.same({ kind = "series", name = "Series 01" }, screen.showing)
-            assert.equals(1, screen.page)
-            assert.same({ "Series 01 1", "Series 01 2", "Untold" }, fixture.names(screen))
-            assert.equals(screen, SeriesScreen.shown)
-        end)
-
-        it("on the back control returns to the list at the page holding the series", function()
-            install()
-            local screen = fixture.show(LIST, 2)
-            local row = screen.rows[2]
-            local name = row.entry.name
-            tap_on(row.rect)
-            assert.same({ kind = "series", name = name }, screen.showing)
-            tap_on(screen.header.back_rect)
-            assert.same(LIST, screen.showing)
-            assert.equals(2, screen.page)
-            assert.is_not_nil(row_of(screen, name))
-        end)
-
-        it("on a downloaded book opens it through filemanagerutil.openFile, on_open run first", function()
-            install()
-            local screen, fm = fixture.show({ kind = "series", name = "Series 01" })
-            local order = {}
-            local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile", function(_, _, pre)
-                order[#order + 1] = "open"
-                pre()
-            end)
-            local returns = spy(SeriesScreen, "on_open", function()
-                order[#order + 1] = "return"
-            end)
-            local row = row_of(screen, "Series 01 2")
-            tap_on(row.rect)
-            assert.equals(1, #opened)
-            assert.equals(fm, opened[1][1])
-            assert.equals(row.record.path, opened[1][2])
-            assert.same({ { { kind = "series", name = "Series 01" }, 1 } }, returns)
-            assert.same({ "open", "return" }, order)
-        end)
-
-        it("on a book not downloaded does nothing and is consumed", function()
-            install()
-            local screen, fm = fixture.show({ kind = "series", name = "Series 01" })
-            local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile")
-            local got = bind(fm, "kopanda_spec_full_tap", "tap", FULL)
-            tap_on(row_of(screen, "Untold").rect)
-            assert.same({}, opened)
-            assert.same({}, got)
-            assert.same({ kind = "series", name = "Series 01" }, screen.showing)
-            assert.equals(screen, harness.top())
-        end)
-
-        it("on Under way first is the header's empty space and opens the file manager's menu", function()
-            install()
-            local screen, fm = fixture.show()
-            tap_on(screen.header.right[1])
-            assert.same(LIST, screen.showing)
-            assert.is_not_nil(fm.menu.menu_container)
-            assert.equals(fm.menu.menu_container, harness.top())
-            assert.equals(screen, harness.top(2))
-        end)
-
-        it("on a live pager arrow turns the page, and on a dead one does nothing", function()
-            install()
-            local screen = fixture.show()
-            local pages = screen.pages
-            tap_on(screen.pager.prev.rect)
-            assert.equals(1, screen.page)
-            for page = 2, pages do
-                tap_on(screen.pager.next.rect)
-                assert.equals(page, screen.page)
-            end
-            tap_on(screen.pager.next.rect)
-            assert.equals(pages, screen.page)
-            tap_on(screen.pager.prev.rect)
-            assert.equals(pages - 1, screen.page)
-        end)
-
         it("it doesn't take reaches a corner zone on the file manager, and one in the bar doesn't", function()
-            install()
+            SHELVES[1].install()
             local screen, fm = fixture.show()
             local got = bind(fm, "kopanda_spec_corner", "tap",
                 { ratio_x = 7 / 8, ratio_y = 7 / 8, ratio_w = 1 / 8, ratio_h = 1 / 8 })
@@ -240,21 +436,8 @@ describe("gestures on the Series window", function()
     end)
 
     describe("a swipe", function()
-        it("west and east page the list without wrapping", function()
-            install()
-            local screen = fixture.show()
-            local size = Screen:getSize()
-            local x, y = size.w / 2, size.h / 2
-            send(swipe(x, y, "east"))
-            assert.equals(1, screen.page)
-            send(swipe(x, y, "west"))
-            assert.equals(2, screen.page)
-            send(swipe(x, y, "east"))
-            assert.equals(1, screen.page)
-        end)
-
         it("west in the bottom edge band or east in the top one reaches the file manager instead", function()
-            install()
+            SHELVES[1].install()
             local screen, fm = fixture.show()
             local got = bind(fm, "kopanda_spec_edge_swipe", "swipe", FULL)
             local size = Screen:getSize()
@@ -267,85 +450,8 @@ describe("gestures on the Series window", function()
         end)
     end)
 
-    it("pages forward and back with the page keys", function()
-        assert.is_true(Device:hasKeys())
-        install()
-        local screen = fixture.show()
-        UIManager:sendEvent(Event:new("KeyPress", Key:new("RPgFwd", {})))
-        assert.equals(2, screen.page)
-        UIManager:sendEvent(Event:new("KeyPress", Key:new("RPgBack", {})))
-        assert.equals(1, screen.page)
-        UIManager:sendEvent(Event:new("KeyPress", Key:new("RPgBack", {})))
-        assert.equals(1, screen.page)
-    end)
-
-    -- The fixture's books are no files, so a held book's sheet re-lists instead.
-    it("runs no open on a hold, and consumes it", function()
-        install()
-        local screen = fixture.show()
-        send(harness.gesture("hold", centre(screen.rows[1].rect)))
-        assert.same(LIST, screen.showing)
-        screen:go({ kind = "series", name = "Series 01" }, 1)
-        local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile")
-        send(harness.gesture("hold", centre(screen.rows[1].rect)))
-        send(harness.gesture("hold", centre(screen.header.back_rect)))
-        assert.same({}, opened)
-        assert.same({ kind = "series", name = "Series 01" }, screen.showing)
-        assert.equals(screen, harness.top())
-    end)
-
-    it("hands the window and what lies under a hold to the dispatch", function()
-        install()
-        local screen = fixture.show()
-        local held = dispatched()
-        send(harness.gesture("hold", centre(screen.rows[1].rect)))
-        screen:go({ kind = "series", name = "Series 01" }, 1)
-        send(harness.gesture("hold", centre(screen.rows[1].rect)))
-        assert.equals(2, #held)
-        assert.equals(screen, held[1][1])
-        assert.same({ "series", "Series 01" }, { held[1][2].kind, held[1][2].entry.name })
-        assert.equals(screen, held[2][1])
-        assert.same({ kind = "book", record = screen.rows[1].record }, held[2][2])
-        assert.equals(screen.rows[1].record, held[2][2].record)
-    end)
-
-    it("runs no dispatch on a hold in the nav bar's band", function()
-        install()
-        local screen = fixture.show()
-        local held = dispatched()
-        hold_bar(screen)
-        assert.same({}, held)
-        assert.equals(screen, harness.top())
-    end)
-
-    it("lets a hold zone on the file manager that consumes the hold win over the dispatch", function()
-        install()
-        local screen, fm = fixture.show({ kind = "series", name = "Series 01" })
-        local got = bind(fm, "kopanda_spec_hold", "hold", FULL)
-        local held = dispatched()
-        send(harness.gesture("hold", centre(screen.rows[1].rect)))
-        assert.equals(1, #got)
-        assert.same({}, held)
-        assert.equals(screen, harness.top())
-    end)
-
-    it("SeriesScreen.hit names the series, the book or empty space under a point, and nil with none shown",
-        function()
-        install()
-        assert.is_nil(SeriesScreen.hit(10, 10))
-        local screen = fixture.show()
-        local row = screen.rows[1]
-        assert.same({ kind = "series", entry = row.entry }, SeriesScreen.hit(row.rect.x, row.rect.y))
-        assert.equals("series", SeriesScreen.hit(row.rect.x + row.rect.w - 1, row.rect.y + row.rect.h - 1).kind)
-        assert.same({ kind = "empty" }, SeriesScreen.hit(row.rect.x, row.rect.y + row.rect.h))
-        assert.same({ kind = "empty" }, SeriesScreen.hit(centre(screen.header.rect)))
-        screen:go({ kind = "series", name = "Series 01" }, 1)
-        row = row_of(screen, "Untold")
-        assert.same({ kind = "book", record = row.record }, SeriesScreen.hit(centre(row.rect)))
-    end)
-
     it("does nothing on a tap under KOReader's touch lock", function()
-        install()
+        SHELVES[1].install()
         local screen = fixture.show()
         local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile")
         local runs = spy(NavBar, "run")
@@ -360,243 +466,5 @@ describe("gestures on the Series window", function()
         assert.same({}, runs)
         assert.same({ LIST, 1 }, { screen.showing, screen.page })
         assert.equals(screen, harness.top())
-    end)
-end)
-
-describe("gestures on the Authors window", function()
-    local AuthorsScreen, NavBar
-
-    local LIST = { kind = "list" }
-    local GRID = { kind = "author", name = "Jo Grid" }
-    local LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-    -- Thirty authors of one book each, "Ann A01" to "Ann D30" by their letters, two pages or more;
-    -- and Jo Grid's seven books, the first not downloaded (in a series, so first in D16's order).
-    local function install()
-        local records = {}
-        for i = 1, 30 do
-            local letter = LETTERS:sub((i - 1) % 26 + 1, (i - 1) % 26 + 1)
-            records[i] = fixture.book(("Book %02d"):format(i), { authors = { ("Ann %s%02d"):format(letter, i) } })
-        end
-        records[#records + 1] = fixture.remote("Untold",
-            { series = "Alpha", series_index = 1, authors = { "Jo Grid" } })
-        for i = 1, 6 do
-            records[#records + 1] = fixture.book("Grid " .. i, { authors = { "Jo Grid" } })
-        end
-        return fixture.install(records)
-    end
-
-    before_each(function()
-        harness.load()
-        AuthorsScreen = package.loaded["authors_screen"]
-        NavBar = package.loaded["nav_bar"]
-    end)
-
-    after_each(reset)
-
-    local function row_of(screen, name)
-        for _, row in ipairs(screen.rows) do
-            if row.entry.name == name then
-                return row
-            end
-        end
-    end
-
-    local function tile_of(screen, title)
-        for _, tile in ipairs(screen.tiles) do
-            if tile.record.title == title then
-                return tile
-            end
-        end
-    end
-
-    it("in the nav bar's band runs the tapped tab first, with where authors", function()
-        install()
-        local screen, fm = fixture.show_authors()
-        local got = bind(fm, "kopanda_spec_bar_tap", "tap", FULL)
-        local runs = spy(NavBar, "run")
-        local bar = screen.nav
-        local column = bar.columns[5]
-        send(harness.gesture("tap", bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2),
-            bar.dimen.y + math.floor(bar.dimen.h / 2)))
-        assert.same({ { "settings", "authors" } }, runs)
-        assert.same({}, got)
-        assert.equals(screen, harness.top())
-    end)
-
-    describe("a tap", function()
-        it("on an author row shows that author at their first page", function()
-            install()
-            local screen = fixture.show_authors()
-            tap_on(row_of(screen, "Ann A01").rect)
-            assert.same({ kind = "author", name = "Ann A01" }, screen.showing)
-            assert.equals(1, screen.page)
-            assert.equals("Book 01", screen.tiles[1].record.title)
-            assert.equals(screen, AuthorsScreen.shown)
-        end)
-
-        it("on the back control returns to the list at the page holding the author", function()
-            install()
-            local screen = fixture.show_authors(LIST, 2)
-            local row = screen.rows[2]
-            local name = row.entry.name
-            tap_on(row.rect)
-            assert.same({ kind = "author", name = name }, screen.showing)
-            tap_on(screen.header.back_rect)
-            assert.same(LIST, screen.showing)
-            assert.equals(2, screen.page)
-            assert.is_not_nil(row_of(screen, name))
-        end)
-
-        it("on a downloaded book's tile opens it through filemanagerutil.openFile, on_open run first", function()
-            install()
-            local screen, fm = fixture.show_authors(GRID)
-            local order = {}
-            local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile", function(_, _, pre)
-                order[#order + 1] = "open"
-                pre()
-            end)
-            local returns = spy(AuthorsScreen, "on_open", function()
-                order[#order + 1] = "return"
-            end)
-            local tile = tile_of(screen, "Grid 2")
-            tap_on(tile.rect)
-            assert.equals(1, #opened)
-            assert.equals(fm, opened[1][1])
-            assert.equals(tile.record.path, opened[1][2])
-            assert.same({ { GRID, 1 } }, returns)
-            assert.same({ "open", "return" }, order)
-        end)
-
-        it("on a book not downloaded does nothing and is consumed", function()
-            install()
-            local screen, fm = fixture.show_authors(GRID)
-            local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile")
-            local got = bind(fm, "kopanda_spec_full_tap", "tap", FULL)
-            tap_on(tile_of(screen, "Untold").rect)
-            assert.same({}, opened)
-            assert.same({}, got)
-            assert.same(GRID, screen.showing)
-            assert.equals(screen, harness.top())
-        end)
-
-        it("on By surname is the header's empty space and opens the file manager's menu", function()
-            install()
-            local screen, fm = fixture.show_authors()
-            tap_on(screen.header.right[1])
-            assert.same(LIST, screen.showing)
-            assert.is_not_nil(fm.menu.menu_container)
-            assert.equals(fm.menu.menu_container, harness.top())
-            assert.equals(screen, harness.top(2))
-        end)
-
-        it("on a live pager arrow turns the page, in the list and one author, and on a dead one does nothing",
-            function()
-            install()
-            local screen = fixture.show_authors()
-            local pages = screen.pages
-            assert.is_true(pages >= 2)
-            tap_on(screen.pager.prev.rect)
-            assert.equals(1, screen.page)
-            for page = 2, pages do
-                tap_on(screen.pager.next.rect)
-                assert.equals(page, screen.page)
-            end
-            tap_on(screen.pager.next.rect)
-            assert.equals(pages, screen.page)
-            screen:go(GRID, 1)
-            assert.equals(2, screen.pages)
-            tap_on(screen.pager.next.rect)
-            assert.same({ GRID, 2 }, { screen.showing, screen.page })
-            tap_on(screen.pager.next.rect)
-            assert.equals(2, screen.page)
-            tap_on(screen.pager.prev.rect)
-            assert.equals(1, screen.page)
-        end)
-    end)
-
-    it("pages the list with a west or east swipe, without wrapping, and with the page keys", function()
-        install()
-        local screen = fixture.show_authors()
-        local size = Screen:getSize()
-        local x, y = size.w / 2, size.h / 2
-        send(swipe(x, y, "east"))
-        assert.equals(1, screen.page)
-        send(swipe(x, y, "west"))
-        assert.equals(2, screen.page)
-        send(swipe(x, y, "east"))
-        assert.equals(1, screen.page)
-        UIManager:sendEvent(Event:new("KeyPress", Key:new("RPgFwd", {})))
-        assert.equals(2, screen.page)
-        UIManager:sendEvent(Event:new("KeyPress", Key:new("RPgBack", {})))
-        assert.equals(1, screen.page)
-    end)
-
-    -- The fixture's books are no files, so a held book's sheet re-lists instead.
-    it("runs no open on a hold, and consumes it", function()
-        install()
-        local screen = fixture.show_authors()
-        send(harness.gesture("hold", centre(screen.rows[1].rect)))
-        assert.same(LIST, screen.showing)
-        screen:go(GRID, 1)
-        local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile")
-        send(harness.gesture("hold", centre(tile_of(screen, "Grid 1").rect)))
-        send(harness.gesture("hold", centre(screen.header.back_rect)))
-        assert.same({}, opened)
-        assert.same(GRID, screen.showing)
-        assert.equals(screen, harness.top())
-    end)
-
-    it("hands the window and what lies under a hold to the dispatch", function()
-        install()
-        local screen = fixture.show_authors()
-        local held = dispatched()
-        send(harness.gesture("hold", centre(screen.rows[1].rect)))
-        screen:go(GRID, 1)
-        local tile = tile_of(screen, "Grid 2")
-        send(harness.gesture("hold", centre(tile.rect)))
-        assert.equals(2, #held)
-        assert.equals(screen, held[1][1])
-        assert.equals("author", held[1][2].kind)
-        assert.equals(screen, held[2][1])
-        assert.same({ kind = "book", record = tile.record }, held[2][2])
-        assert.equals(tile.record, held[2][2].record)
-    end)
-
-    it("runs no dispatch on a hold in the nav bar's band", function()
-        install()
-        local screen = fixture.show_authors()
-        local held = dispatched()
-        hold_bar(screen)
-        assert.same({}, held)
-        assert.equals(screen, harness.top())
-    end)
-
-    it("lets a hold zone on the file manager that consumes the hold win over the dispatch", function()
-        install()
-        local screen, fm = fixture.show_authors(GRID)
-        local got = bind(fm, "kopanda_spec_hold", "hold", FULL)
-        local held = dispatched()
-        send(harness.gesture("hold", centre(tile_of(screen, "Grid 2").rect)))
-        assert.equals(1, #got)
-        assert.same({}, held)
-        assert.equals(screen, harness.top())
-    end)
-
-    it("AuthorsScreen.hit names the author, the book or empty space under a point, and nil with none shown",
-        function()
-        install()
-        assert.is_nil(AuthorsScreen.hit(10, 10))
-        local screen = fixture.show_authors()
-        local row = screen.rows[1]
-        assert.same({ kind = "author", entry = row.entry }, AuthorsScreen.hit(row.rect.x, row.rect.y))
-        assert.equals("author", AuthorsScreen.hit(row.rect.x + row.rect.w - 1, row.rect.y + row.rect.h - 1).kind)
-        local last = screen.rows[#screen.rows]
-        assert.same({ kind = "empty" }, AuthorsScreen.hit(last.rect.x, last.rect.y + last.rect.h))
-        assert.same({ kind = "empty" }, AuthorsScreen.hit(centre(screen.header.rect)))
-        screen:go(GRID, 1)
-        local tile = tile_of(screen, "Untold")
-        assert.same({ kind = "book", record = tile.record }, AuthorsScreen.hit(centre(tile.rect)))
-        assert.same({ kind = "empty" }, AuthorsScreen.hit(tile.rect.x + tile.rect.w, tile.rect.y))
     end)
 end)

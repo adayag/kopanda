@@ -335,17 +335,6 @@ describe("the library's lifecycle", function()
         end)
     end)
 
-    describe("closing", function()
-        it("stores the folder and page it was left at", function()
-            local sub = fixture.folder("Sci-fi")
-            fixture.install({ [ROOT] = { folders = { sub } }, [sub.path] = { books = fixture.books(8, sub.path) } })
-            local library = show()
-            library:go(sub.path, 2)
-            Library.close()
-            assert.same({ dir = sub.path, page = 2 }, package.loaded["library_order"].left())
-        end)
-    end)
-
     -- cover-grid C8, D6: the ways in. The library target is what the launcher's entry, the Library
     -- tab everywhere and the featured widget's first-run button run.
     describe("entry points", function()

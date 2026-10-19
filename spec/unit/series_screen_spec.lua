@@ -1,35 +1,25 @@
 -- The Series window (series-and-authors C4): the list's header (D10's count, "Series", "Under way
--- first"), its rows in D12's order a page at a time, the pager and its dead arrows, no tab lit; one
--- series' header (the back control, D10's aside, the name), its rows in series order with the next
--- unread marked; the empty note and a gone series (D23); the rebuild on a variant or size change;
--- the re-listing on the metadata events; and the settled signal. Books.all and Books.progress are
--- stubbed with records under a root that exists nowhere (spec/shelf_fixture.lua).
+-- first"), its rows in D12's order a page at a time and the pager gap; one series' header (the back
+-- control, D10's aside, the name), its rows in series order with the next unread marked. The cases
+-- it shares with the Authors window (spec/shelf_screen_cases.lua) run here for the Series window,
+-- SERIES carrying what differs. Books.all and Books.progress are stubbed with records under a root
+-- that exists nowhere (spec/shelf_fixture.lua).
 describe("the Series window", function()
+    local cases = require("shelf_screen_cases")
     local harness = require("plugin_harness")
     local fixture = require("shelf_fixture")
     local text_of = require("library_fixture").text
-    local Blitbuffer = require("ffi/blitbuffer")
-    local Event = require("ui/event")
-    local Geom = require("ui/geometry")
     local Screen = require("device").screen
-    local UIManager = require("ui/uimanager")
-    local LibraryChrome, LibraryTiles, Looks, NavBar, SeriesScreen, Settings, settled_listener
+    local LibraryChrome, LibraryTiles, SeriesScreen
 
     before_each(function()
         harness.load()
         LibraryChrome = package.loaded["library_chrome"]
         LibraryTiles = package.loaded["library_tiles"]
-        Looks = package.loaded["looks"]
-        NavBar = package.loaded["nav_bar"]
         SeriesScreen = package.loaded["series_screen"]
-        Settings = package.loaded["settings"]
     end)
 
     after_each(function()
-        if settled_listener then
-            UIManager.event_hook:unregister("KoPandaSettled", settled_listener)
-            settled_listener = nil
-        end
         harness.teardown()
     end)
 
@@ -37,14 +27,8 @@ describe("the Series window", function()
         return text and text:lower()
     end
 
-    local function each_look(fn)
-        for _, id in ipairs({ "diner", "editorial" }) do
-            assert.is_true(Settings.set("look", id))
-            fn(id)
-        end
-    end
-
-    local LIST = { kind = "list" }
+    local each_look = cases.each_look
+    local LIST = cases.LIST
 
     -- n series of two books each, named "Series 01" to "Series n", the first under_way of them under
     -- way (their first book complete); returns the records and the progress.
@@ -62,31 +46,61 @@ describe("the Series window", function()
         return records, progress
     end
 
-    describe("the window", function()
-        it("shows full-screen over the file manager as SeriesScreen.shown, and closes", function()
-            fixture.install(shelf(2, 0))
-            local screen, fm = fixture.show()
-            assert.equals("kopanda_series", screen.name)
-            assert.is_true(screen.covers_fullscreen)
-            assert.equals(screen, SeriesScreen.shown)
-            assert.equals(fm, harness.top(2))
-            SeriesScreen.close()
-            assert.is_nil(SeriesScreen.shown)
-            assert.equals(fm, harness.top())
-        end)
+    local SERIES = {
+        name = "Series",
+        id = "series",
+        module = "series_screen",
+        Module = "SeriesScreen",
+        show = fixture.show,
+        -- n series of two books, the first under_way of them under way.
+        shelf = function(n, under_way)
+            return shelf(n, under_way or 0)
+        end,
+        first = "Series 01",
+        detail = { kind = "series", name = "Series 01" },
+        a_one = "a series",
+        -- The window this one's show closes.
+        before = {
+            name = "the library",
+            module = "library",
+            show = function()
+                harness.show_fm()
+                harness.tick(2)
+                return package.loaded["library"].show{}
+            end,
+        },
+        -- A shelf of at least pages pages.
+        paged = { n = 14, pages = 3 },
+        nav = { says = "no tab lit", views = { LIST } },
+        empty = { aside = "no series", note = "no books in a series yet", lists = { "rows" } },
+        relist = {
+            fixture.book("New", { series = "Series 02", series_index = 1 }),
+            fixture.book("Newer", { series = "Series 03", series_index = 1 }),
+        },
+        relisted = { "Series 01", "Series 02", "Series 03" },
+        -- Thirty series, three under way, and "Long", twenty books, half of them finished: each view
+        -- runs to more than one page, sorts the series alone and reads progress again at a refresh.
+        sorted = {
+            install = function()
+                local records, progress = shelf(30, 3)
+                for i, record in ipairs(fixture.series("Long", 20)) do
+                    records[#records + 1] = record
+                    if i <= 10 then
+                        progress[record.id] = { status = "complete", percent = 1 }
+                    end
+                end
+                return records, progress
+            end,
+            cases = {
+                { "the list", LIST, { authors = 0, series = 1 }, reads = true },
+                { "one series", { kind = "series", name = "Long" }, { authors = 0, series = 1 }, reads = true },
+            },
+            turned = { view = LIST, items = fixture.names },
+        },
+    }
 
-        it("closes the library before showing, one window at a time", function()
-            fixture.install(shelf(2, 0))
-            harness.show_fm()
-            harness.tick(2)
-            local Library = package.loaded["library"]
-            local library = Library.show{}
-            assert.is_not_nil(library)
-            local screen = SeriesScreen.show{}
-            assert.is_nil(Library.shown)
-            assert.is_false(UIManager:isWidgetShown(library))
-            assert.equals(screen, harness.top())
-        end)
+    describe("the window", function()
+        cases.window(SERIES)
 
         it("reads the books and each series book's progress once per show, not again in one series", function()
             local records, progress = shelf(3, 1)
@@ -181,52 +195,7 @@ describe("the Series window", function()
             end)
         end)
 
-        it("labels the pager in each look's words, the first page's previous and the last's next dead", function()
-            fixture.install(shelf(14, 0))
-            local wanted = { diner = "page %d of %d", editorial = "%d / %d" }
-            each_look(function(id)
-                local screen = fixture.show()
-                local pages = screen.pages
-                assert.is_true(pages >= 3, id)
-                for page = 1, pages do
-                    screen:go(LIST, page)
-                    assert.equals(wanted[id]:format(page, pages), lower(text_of(screen.pager.label)), id)
-                    assert.same({ page > 1, page < pages }, { screen.pager.prev.live, screen.pager.next.live }, id)
-                end
-                screen:go(LIST, 99)
-                assert.equals(pages, screen.page, id .. ": a page past the end is the last")
-                harness.teardown()
-            end)
-        end)
-
-        it("carries the nav bar at the bottom with no tab lit", function()
-            fixture.install(shelf(2, 0))
-            each_look(function(id)
-                local screen = fixture.show()
-                local nav = screen.nav
-                assert.equals("series", nav.where, id)
-                assert.is_nil(nav.active, id)
-                assert.same({ 0, Screen:getHeight() - NavBar.height(screen.ctx.look, Screen), Screen:getWidth() },
-                    { nav.dimen.x, nav.dimen.y, nav.dimen.w }, id)
-                harness.teardown()
-            end)
-        end)
-
-        it("shows the empty note and page 1 of 1 with no series", function()
-            fixture.install({ fixture.book("Loose"), fixture.remote("Remote") })
-            each_look(function(id)
-                local screen = fixture.show()
-                assert.equals("no series", lower(text_of(screen.header.aside)), id)
-                assert.equals("no books in a series yet", lower(text_of(screen.note)), id)
-                assert.same({}, screen.rows, id)
-                assert.same({ 1, 1 }, { screen.page, screen.pages }, id)
-                assert.same({ false, false }, { screen.pager.prev.live, screen.pager.next.live }, id)
-                harness.teardown()
-            end)
-            fixture.install(shelf(1, 0))
-            local screen = fixture.show()
-            assert.is_nil(screen.note)
-        end)
+        cases.list(SERIES)
     end)
 
     describe("one series", function()
@@ -303,52 +272,11 @@ describe("the Series window", function()
             end)
         end)
 
-        it("shows the list at page 1 for a series no entry has any more", function()
-            fixture.install(shelf(14, 0))
-            local screen = fixture.show({ kind = "series", name = "Gone" }, 3)
-            assert.same(LIST, screen.showing)
-            assert.equals(1, screen.page)
-            assert.equals("series", lower(text_of(screen.header.title)))
-            assert.equals("Series 01", screen.rows[1].entry.name)
-        end)
+        cases.one(SERIES)
     end)
 
     describe("paint", function()
-        it("rebuilds before painting when the variant changed since its build", function()
-            fixture.install(shelf(2, 1))
-            local screen = fixture.show()
-            local frame = screen[1]
-            Looks.variant = function()
-                return "night"
-            end
-            local bb = Blitbuffer.new(screen.dimen.w, screen.dimen.h, Blitbuffer.TYPE_BBRGB32)
-            screen:paintTo(bb, 0, 0)
-            bb:free()
-            assert.equals("night", screen.ctx.variant)
-            assert.is_not.equals(frame, screen[1])
-            assert.equals(screen, SeriesScreen.shown)
-        end)
-
-        it("rebuilds before painting when the screen's size changed since its build", function()
-            fixture.install(shelf(2, 1))
-            local screen = fixture.show({ kind = "series", name = "Series 01" })
-            local frame = screen[1]
-            local get_size = Screen.getSize
-            Screen.getSize = function()
-                return Geom:new{ x = 0, y = 0, w = 800, h = 600 }
-            end
-            local ok, err = pcall(function()
-                local bb = Blitbuffer.new(800, 600, Blitbuffer.TYPE_BBRGB32)
-                screen:paintTo(bb, 0, 0)
-                bb:free()
-            end)
-            Screen.getSize = get_size
-            assert.is_true(ok, tostring(err))
-            assert.same({ 800, 600 }, { screen.dimen.w, screen.dimen.h })
-            assert.equals(800, screen.nav.dimen.w)
-            assert.is_not.equals(frame, screen[1])
-            assert.same({ kind = "series", name = "Series 01" }, screen.showing)
-        end)
+        cases.paint(SERIES)
 
         -- Each list's page ends shelf.list.pager_gap above the pager at the Colorsoft, its last row's
         -- shadow inside the gap (feature "The fit"): five series rows, and three of one series' books with
@@ -448,184 +376,14 @@ describe("the Series window", function()
     end)
 
     describe("kept current", function()
-        it("re-lists the books on BookMetadataChanged and on InvalidateMetadataCache", function()
-            local records = shelf(1, 0)
-            fixture.install(records)
-            local screen = fixture.show()
-            assert.equals(1, #screen.rows)
-            records[#records + 1] = fixture.book("New", { series = "Series 02", series_index = 1 })
-            UIManager:broadcastEvent(Event:new("BookMetadataChanged"))
-            harness.tick()
-            assert.same({ "Series 01", "Series 02" }, fixture.names(screen))
-            records[#records + 1] = fixture.book("Newer", { series = "Series 03", series_index = 1 })
-            UIManager:broadcastEvent(Event:new("InvalidateMetadataCache", records[#records].path))
-            harness.tick()
-            assert.same({ "Series 01", "Series 02", "Series 03" }, fixture.names(screen))
-            assert.equals(screen, harness.top())
-        end)
-
-        -- SeriesScreen.build counted from after the show; a metadata change's events, as the book-info
-        -- editor broadcasts them (filemanagerbookinfo.lua:276-280, :556-557), sent to the shown
-        -- window, then between() if given, then the UI loop run twice.
-        local function builds_after(events, between)
-            fixture.install(shelf(2, 0))
-            fixture.show()
-            local build = SeriesScreen.build
-            local builds = 0
-            SeriesScreen.build = function(...)
-                builds = builds + 1
-                return build(...)
-            end
-            local ok, err = pcall(function()
-                for _, event in ipairs(events) do
-                    UIManager:broadcastEvent(Event:new(event))
-                end
-                if between then
-                    between()
-                end
-                harness.tick(2)
-            end)
-            SeriesScreen.build = build
-            assert.is_true(ok, tostring(err))
-            return builds
-        end
-
-        it("rebuilds once for one change's InvalidateMetadataCache and BookMetadataChanged", function()
-            assert.equals(1, builds_after({ "InvalidateMetadataCache", "BookMetadataChanged" }))
-        end)
-
-        it("rebuilds once when the summary changed too", function()
-            assert.equals(1, builds_after({ "InvalidateMetadataCache", "BookMetadataChanged", "BookMetadataChanged" }))
-        end)
-
-        it("does not rebuild a window closed between the events and the tick", function()
-            assert.equals(0, builds_after({ "InvalidateMetadataCache", "BookMetadataChanged" }, function()
-                SeriesScreen.close()
-            end))
-            assert.is_nil(SeriesScreen.shown)
-        end)
+        cases.kept_current(SERIES)
     end)
 
     describe("kept sorted", function()
-        local LONG = { kind = "series", name = "Long" }
-
-        -- Thirty series, three under way, and "Long", twenty books, half of them finished: each view
-        -- runs to more than one page. Returns the calls (fixture.install's) and the count of
-        -- ShelfOrder.series's from here.
-        local function install()
-            local records, progress = shelf(30, 3)
-            for i, record in ipairs(fixture.series("Long", 20)) do
-                records[#records + 1] = record
-                if i <= 10 then
-                    progress[record.id] = { status = "complete", percent = 1 }
-                end
-            end
-            local calls = fixture.install(records, progress)
-            local ShelfOrder = package.loaded["shelf_order"]
-            local series = ShelfOrder.series
-            local sorts = { n = 0 }
-            ShelfOrder.series = function(...)
-                sorts.n = sorts.n + 1
-                return series(...)
-            end
-            return calls, sorts
-        end
-
-        for _, case in ipairs({ { "the list", LIST }, { "one series", LONG } }) do
-            local where, view = case[1], case[2]
-
-            it("sorts once at a show and not at a page turn, nor reads progress, in " .. where, function()
-                local calls, sorts = install()
-                local screen = fixture.show(view)
-                assert.equals(1, sorts.n)
-                assert.is_true(screen.pages > 1)
-                calls.progress = {}
-                screen:turn(1)
-                assert.equals(2, screen.page)
-                screen:onNextPage()
-                screen:onPrevPage()
-                screen:turn(-1)
-                assert.equals(1, screen.page)
-                assert.equals(1, sorts.n)
-                assert.same({}, calls.progress)
-            end)
-
-            it("sorts and reads progress again once at refresh() and at a metadata change, in " .. where, function()
-                local calls, sorts = install()
-                local screen = fixture.show(view)
-                screen:turn(1)
-                calls.progress = {}
-                screen:refresh()
-                assert.equals(2, sorts.n)
-                assert.is_true(#calls.progress > 0)
-                assert.equals(2, screen.page)
-                calls.progress = {}
-                UIManager:broadcastEvent(Event:new("InvalidateMetadataCache"))
-                UIManager:broadcastEvent(Event:new("BookMetadataChanged"))
-                harness.tick(2)
-                assert.equals(3, sorts.n)
-                assert.is_true(#calls.progress > 0)
-                screen:turn(1)
-                assert.equals(3, sorts.n)
-            end)
-        end
-
-        -- A status written through a sheet shows even when the re-list fails: the sort is dropped
-        -- before the read, not only when the read replaces the records.
-        it("sorts and reads progress again at a refresh() whose re-list fails", function()
-            local calls, sorts = install()
-            local screen = fixture.show(LONG)
-            local Books = package.loaded["books"]
-            local all = Books.all
-            Books.all = function()
-                error("kopanda-test: disk gone")
-            end
-            calls.progress = {}
-            screen:refresh()
-            Books.all = all
-            assert.equals(2, sorts.n)
-            assert.is_true(#calls.progress > 0)
-            assert.equals(screen, SeriesScreen.shown)
-        end)
-
-        it("shows a turned-to page as a show at that page does", function()
-            install()
-            local screen = fixture.show()
-            screen:turn(1)
-            local turned = fixture.names(screen)
-            SeriesScreen.close()
-            local direct = fixture.show(LIST, 2)
-            assert.same(fixture.names(direct), turned)
-        end)
+        cases.kept_sorted(SERIES)
     end)
 
     describe("the settled signal", function()
-        it("is sent once per show after its first paint, with screen series and a numeric paint_ms", function()
-            local signals = {}
-            settled_listener = function(args)
-                signals[#signals + 1] = args
-            end
-            UIManager.event_hook:register("KoPandaSettled", settled_listener)
-            fixture.install(shelf(14, 0))
-            local screen = fixture.show()
-            local function count()
-                local n = 0
-                for _, args in ipairs(signals) do
-                    if args.screen == "series" then
-                        n = n + 1
-                        assert.is_number(args.paint_ms)
-                    end
-                end
-                return n
-            end
-            assert.equals(1, count())
-            screen:go(LIST, 2)
-            harness.tick(3)
-            assert.equals(1, count())
-            SeriesScreen.close()
-            SeriesScreen.show{}
-            harness.tick(3)
-            assert.equals(2, count())
-        end)
+        cases.settled(SERIES)
     end)
 end)
