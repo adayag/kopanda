@@ -152,11 +152,12 @@ function Weather.reading()
     return data
 end
 
--- The line the widget draws for reading at now in the look look_id: "Partly cloudy, 61°" in
--- Editorial (Main.dc.html:25), "61° partly cloudy" in Diner (HomeRetro.dc.html:48-51), the
--- temperature alone for an unknown code, then " · 3 h ago" once the reading is an hour old
--- (" · 2 d ago" from two days); with no reading, "Weather needs Wi-Fi".
-function Weather.line(reading, now, look_id)
+-- The line the widget draws for reading at now in the look whose tokens are look, in its
+-- home.weather_order: "Partly cloudy, 61°" condition first (Editorial, Main.dc.html:25), "61°
+-- partly cloudy" degrees first (Diner, HomeRetro.dc.html:48-51), the temperature alone for an
+-- unknown code, then " · 3 h ago" once the reading is an hour old (" · 2 d ago" from two days);
+-- with no reading, "Weather needs Wi-Fi".
+function Weather.line(reading, now, look)
     if not reading then
         return NO_READING
     end
@@ -165,7 +166,7 @@ function Weather.line(reading, now, look_id)
     local text
     if not condition then
         text = degrees
-    elseif look_id == "diner" then
+    elseif look.home.weather_order == "degrees_first" then
         text = degrees .. " " .. condition:lower()
     else
         text = condition .. ", " .. degrees

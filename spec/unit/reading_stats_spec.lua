@@ -793,6 +793,26 @@ describe("reading stats", function()
                 texts(Stats.build(WIDE, ctx_for("diner"))))
         end)
 
+        -- The wording is the look's home.stats_streak and the line its home.stats_line, each on
+        -- its own, not which look it is.
+        it("words the streak by the look's stats_streak and lays out the line by its stats_line", function()
+            make_db({ on_day(0, 1380), on_day(-1), on_day(-2), on_day(-3) })
+            local editorial, diner = Looks.get("editorial"), Looks.get("diner")
+            finally(function()
+                editorial.home.stats_streak, editorial.home.stats_line = "word_first", "spread"
+                diner.home.stats_streak, diner.home.stats_line = "count_first", "joined"
+            end)
+            editorial.home.stats_streak = "count_first"
+            assert.same({ "4-DAY STREAK", "23 MIN TODAY", "1 BOOK IN OCTOBER" },
+                texts(Stats.build(WIDE, ctx_for("editorial"))))
+            editorial.home.stats_streak, editorial.home.stats_line = "word_first", "joined"
+            assert.same({ "STREAK 4 DAYS · 23 MIN TODAY · 1 BOOK IN OCTOBER" },
+                texts(Stats.build(WIDE, ctx_for("editorial"))))
+            diner.home.stats_streak, diner.home.stats_line = "word_first", "spread"
+            assert.same({ "STREAK 4 DAYS", "23 MIN TODAY", "1 BOOK IN OCTOBER" },
+                texts(Stats.build(WIDE, ctx_for("diner"))))
+        end)
+
         it("uses the singular for one day and one book", function()
             make_db({ on_day(0, 1380) })
             assert.same({ "STREAK 1 DAY", "23 MIN TODAY", "1 BOOK IN OCTOBER" },

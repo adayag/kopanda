@@ -12,16 +12,16 @@ function lookLabel(look: string): string {
 }
 
 /**
- * The profile's home as the emulator renders it, beside the form: the profile's look, or both looks,
+ * The profile's home as the emulator renders it, beside the form: the profile's look, or every look,
  * day or night, rendered again after each landed write. `revision` counts the writes the screen has
  * landed. Mount it keyed by the profile.
  */
 export function PreviewPane({ profile, look, revision }: { profile: ProfileWithPath; look: string; revision: number }) {
-  const [bothLooks, setBothLooks] = useState(false);
+  const [allLooks, setAllLooks] = useState(false);
   const [night, setNight] = useState(false);
   const shown = useMemo(
-    () => (bothLooks ? LOOKS.map((choice) => choice.value) : [look]).map((value) => ({ look: value, night })),
-    [bothLooks, look, night],
+    () => (allLooks ? LOOKS.map((choice) => choice.value) : [look]).map((value) => ({ look: value, night })),
+    [allLooks, look, night],
   );
   const { frames, rerender } = usePreviewFrames(profile.id, shown, revision);
 
@@ -32,8 +32,8 @@ export function PreviewPane({ profile, look, revision }: { profile: ProfileWithP
         <p className="muted">{`${profile.device} · ${profile.width}×${profile.height}`}</p>
         <div className="preview-controls">
           <label className="toggle">
-            <input type="checkbox" checked={bothLooks} onChange={(e) => setBothLooks(e.target.checked)} />
-            Both looks
+            <input type="checkbox" checked={allLooks} onChange={(e) => setAllLooks(e.target.checked)} />
+            All looks
           </label>
           <label className="toggle">
             <input type="checkbox" checked={night} onChange={(e) => setNight(e.target.checked)} />

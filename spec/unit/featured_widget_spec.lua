@@ -317,6 +317,30 @@ describe("the featured widget", function()
             end
         end)
 
+        -- The label is the look's home.featured_label and the details' lines its
+        -- home.featured_details, each on its own, not which look it is.
+        it("words the label by the look's featured_label and lays out the details by its featured_details", function()
+            calls.book = record()
+            local editorial, diner = Looks.get("editorial"), Looks.get("diner")
+            finally(function()
+                editorial.home.featured_label, editorial.home.featured_details = "continue_reading", "split"
+                diner.home.featured_label, diner.home.featured_details = "now_reading", "joined"
+            end)
+            editorial.home.featured_label, editorial.home.featured_details = "now_reading", "joined"
+            local built = Featured.build(1264, ctx_for("editorial"))
+            assert.is_table(line_of(built, "NOW READING"))
+            assert.is_table(line_of(built, "Susanna Clarke · Part 3, The Prophet"))
+            assert.is_table(line_of(built, "62% · 2 h 10 min left"))
+            built:free()
+            diner.home.featured_label, diner.home.featured_details = "continue_reading", "split"
+            built = Featured.build(1264, ctx_for("diner"))
+            for _, text in ipairs({ "CONTINUE READING", "Susanna Clarke", "Part 3, The Prophet", "62%",
+                    "2 h 10 min left" }) do
+                assert.is_table(line_of(built, text), text)
+            end
+            built:free()
+        end)
+
         it("draws Diner's chip in chip.fill_color with an outline of featured.chip_outline", function()
             calls.book = record()
             local ctx = ctx_for("diner")

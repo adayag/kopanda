@@ -95,7 +95,10 @@ describe("bin/preview", function()
             "1264 12a 300 color diner day '" .. out .. "'",
             "1264 1680 0 color diner day '" .. out .. "'",
             "1264 1680 300 colour diner day '" .. out .. "'",
-            "1264 1680 300 color classic day '" .. out .. "'",
+            "1264 1680 300 color Diner day '" .. out .. "'",
+            "1264 1680 300 color 9look day '" .. out .. "'",
+            "1264 1680 300 color di-ner day '" .. out .. "'",
+            "1264 1680 300 color '' day '" .. out .. "'",
             "1264 1680 300 color diner dusk '" .. out .. "'",
             "1264 1680 300 color diner day '" .. out .. "' '" .. scratch .. "/missing.lua'",
             "1264 1680 300 color diner day '" .. out .. "' '" .. scratch .. "'",
@@ -104,9 +107,22 @@ describe("bin/preview", function()
             local stdout, stderr, status = run(args, "KOPANDA_EMULATOR='" .. emulator .. "' FAKE_MODE=success")
             assert.equals(2, status, args)
             assert.equals("", stdout, args)
-            assert.truthy(stderr:find("usage: bin/preview <width> <height> <dpi> <color|grey> <diner|editorial>"
+            assert.truthy(stderr:find("usage: bin/preview <width> <height> <dpi> <color|grey> <look>"
                 .. " <day|night> <out.png> [settings file]", 1, true), args .. ": " .. stderr)
             assert.is_nil(read(scratch .. "/record"), args .. ": the emulator ran")
+        end
+    end)
+
+    -- Which ids are looks is the plugin's to say (spec/emulator/preview_spec.lua runs one that
+    -- isn't); the script passes any id-shaped look on.
+    it("passes on any look id, a look it has never heard of included", function()
+        local emulator = fake_emulator()
+        for _, look in ipairs({ "riso", "frosted_2" }) do
+            os.remove(scratch .. "/record")
+            local _, stderr, status = run("1264 1680 300 color " .. look .. " day '" .. scratch .. "/out.png'",
+                "KOPANDA_EMULATOR='" .. emulator .. "' FAKE_MODE=success")
+            assert.equals(0, status, look .. ": " .. stderr)
+            assert.is_not_nil(read(scratch .. "/record"), look .. ": the emulator did not run")
         end
     end)
 

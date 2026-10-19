@@ -1,6 +1,6 @@
 -- The swatch screen: a test pattern of every look's palettes and faces and of the icon registry,
 -- full screen over the file manager or the reader, for settling the token values on a real
--- panel. Six panels, the looks across and the day, night and grey palettes down, each filled
+-- panel. A panel per look and palette, the looks across and the day, night and grey down, each filled
 -- with its paper and holding a chip per colour role, the roles the look lacks named on one
 -- line, and a line per face; the icons below. A tap closes it. It is not part of the shell, so it
 -- opens while another shell plugin is enabled.
@@ -347,15 +347,17 @@ function Swatch:init()
     local used = header:getSize().h + gap + icons:getSize().h
     local column = VerticalGroup:new{ align = "left", header }
     local panel_h = math.floor((self.dimen.h - 2 * margin - used - 2 * gap) / #VARIANTS)
-    local panel_w = math.floor((inner_w - gap) / 2)
     local ids = Looks.ids()
+    local panel_w = math.floor((inner_w - (#ids - 1) * gap) / #ids)
     for v, variant in ipairs(VARIANTS) do
-        column[#column + 1] = HorizontalGroup:new{
-            align = "top",
-            panel(ids[1], variant, panel_w, panel_h),
-            HorizontalSpan:new{ width = gap },
-            panel(ids[2], variant, panel_w, panel_h),
-        }
+        local row = HorizontalGroup:new{ align = "top" }
+        for i, id in ipairs(ids) do
+            if i > 1 then
+                row[#row + 1] = HorizontalSpan:new{ width = gap }
+            end
+            row[#row + 1] = panel(id, variant, panel_w, panel_h)
+        end
+        column[#column + 1] = row
         if v < #VARIANTS then
             column[#column + 1] = VerticalSpan:new{ width = gap }
         end

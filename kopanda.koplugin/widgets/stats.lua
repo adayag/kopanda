@@ -1,13 +1,14 @@
 -- The reading stats widget: the streak, minutes today and books this month from reading_stats.lua,
--- worded per look on one line in the look's type.stats. Editorial spreads the parts across the
--- column (Main.dc.html:87); Diner joins them with " · ", right-aligned (HomeRetro.dc.html:52).
--- Parts drop from the end while the line is wider than the column; the first always shows,
--- ending in an ellipsis if it must. stats.show false draws nothing at height 0.
+-- on one line in the look's type.stats. The look's home.stats_line chooses the line: spread
+-- across the column (Editorial, Main.dc.html:87) or joined with " · ", right-aligned (Diner,
+-- HomeRetro.dc.html:52); its home.stats_streak the streak's wording, word_first ("Streak 4 days")
+-- or count_first ("4-day streak"). Parts drop from the end while the line is wider than the
+-- column; the first always shows, ending in an ellipsis if it must. stats.show false draws
+-- nothing at height 0.
 local Geom = require("ui/geometry")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local Looks = require("looks")
 local ReadingStats = require("reading_stats")
 local Settings = require("settings")
 local Typeset = require("typeset")
@@ -17,7 +18,7 @@ local Stats = {
     settings_prefix = "stats",
 }
 
-local DINER_JOIN = " · "
+local JOIN = " · "
 
 local function plural(n, one, many)
     if n == 1 then
@@ -26,15 +27,16 @@ local function plural(n, one, many)
     return many
 end
 
--- The parts to draw for stats, in order, worded for Diner when diner is true, Editorial otherwise.
-local function parts(stats, diner)
+-- The parts to draw for stats, in order, the streak worded count first when count_first is true,
+-- word first otherwise.
+local function parts(stats, count_first)
     if stats.state == "off" then
         return { "Reading stats are off" }
     elseif stats.state == "empty" then
         return { "No streak yet", "0 min today", "Read something and this fills in" }
     end
     local streak
-    if diner then
+    if count_first then
         streak = stats.streak .. "-day streak"
     else
         streak = "Streak " .. stats.streak .. plural(stats.streak, " day", " days")
@@ -58,11 +60,11 @@ local function free_all(widgets, from)
     end
 end
 
--- Diner's line: the parts joined, as many as fit, right-aligned in width.
-local function diner_line(texts, width, ctx)
+-- The joined line: the parts joined, as many as fit, right-aligned in width.
+local function joined_line(texts, width, ctx)
     local widget
     for n = #texts, 2, -1 do
-        widget = set(table.concat(texts, DINER_JOIN, 1, n), ctx)
+        widget = set(table.concat(texts, JOIN, 1, n), ctx)
         if widget:getSize().w <= width then
             break
         end
@@ -76,9 +78,9 @@ local function diner_line(texts, width, ctx)
     }
 end
 
--- Editorial's line: as many parts as fit with at least the look's column gap between them,
+-- The spread line: as many parts as fit with at least the look's column gap between them,
 -- spread across width with equal space between; one part sits on the left.
-local function editorial_line(texts, width, ctx)
+local function spread_line(texts, width, ctx)
     local min_gap = ctx.screen:scaleBySize(ctx.look.home.column_gap)
     local widgets, widths = {}, {}
     for i, text in ipairs(texts) do
@@ -119,12 +121,12 @@ local function editorial_line(texts, width, ctx)
 end
 
 local function line(width, ctx)
-    local diner = ctx.look == Looks.get("diner")
-    local texts = parts(ReadingStats.read(ctx.now), diner)
-    if diner then
-        return diner_line(texts, width, ctx)
+    local home = ctx.look.home
+    local texts = parts(ReadingStats.read(ctx.now), home.stats_streak == "count_first")
+    if home.stats_line == "joined" then
+        return joined_line(texts, width, ctx)
     end
-    return editorial_line(texts, width, ctx)
+    return spread_line(texts, width, ctx)
 end
 
 -- The height of one line of the stats type; 0 when stats.show is false.

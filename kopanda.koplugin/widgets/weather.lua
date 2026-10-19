@@ -8,18 +8,8 @@ local HorizontalSpan = require("ui/widget/horizontalspan")
 local IconWidget = require("ui/widget/iconwidget")
 local Icons = require("icons")
 local LeftContainer = require("ui/widget/container/leftcontainer")
-local Looks = require("looks")
 local Typeset = require("typeset")
 local Weather = require("weather")
-
--- The id of the look whose tokens are look.
-local function look_id(look)
-    for _, id in ipairs(Looks.ids()) do
-        if Looks.get(id) == look then
-            return id
-        end
-    end
-end
 
 local function make(width, ctx)
     local look = ctx.look
@@ -41,7 +31,7 @@ local function make(width, ctx)
         group[2] = HorizontalSpan:new{ width = gap }
         available = math.max(0, width - size - gap)
     end
-    local text = Weather.line(reading, ctx.now, look_id(look))
+    local text = Weather.line(reading, ctx.now, look)
     group[#group + 1] = Typeset.line(look.type.weather, text, available, ctx)
     return LeftContainer:new{
         dimen = Geom:new{ w = width, h = group:getSize().h },

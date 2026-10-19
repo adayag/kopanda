@@ -362,7 +362,7 @@ describe("the swatch screen", function()
             assert.equals("kopanda_swatch", swatch.name)
         end)
 
-        it("has six panels, the looks across and day, night and grey down", function()
+        it("has a panel per look across and day, night and grey down", function()
             local panels = collect(swatch, named("kopanda_swatch_panel"))
             local order = {}
             for _, panel in ipairs(panels) do
@@ -506,7 +506,7 @@ describe("the swatch screen", function()
         open_from_fm()
         local swatch = harness.top()
         local panels = collect(swatch, named("kopanda_swatch_panel"))
-        assert.equals(6, #panels)
+        assert.equals(3 * #Looks.ids(), #panels)
         local function grey_of(hex)
             return Looks.color(hex):getColor8()
         end
@@ -555,7 +555,7 @@ describe("the swatch screen", function()
             rawset(Screen, "getSize", function() return Geom:new{ x = 0, y = 0, w = w, h = h } end)
             local swatch = Swatch:new{}
             local panels = collect(swatch, named("kopanda_swatch_panel"))
-            assert.equals(6, #panels)
+            assert.equals(3 * #Looks.ids(), #panels)
             for _, panel in ipairs(panels) do
                 local where = w .. "x" .. h .. " " .. panel.look .. " " .. panel.variant
                 local content = panel[1]:getSize()
@@ -567,6 +567,56 @@ describe("the swatch screen", function()
             assert.truthy(frame[1]:getSize().h <= h - 2 * frame.padding, w .. "x" .. h .. " overall")
             swatch:free()
         end
+    end)
+
+    -- A third look is a third column: each variant's row holds a panel per look, sharing the
+    -- width between the margins with a gap between panels.
+    it("draws a panel per look in each row, the looks sharing the width", function()
+        local diner = Looks.get("diner")
+        local ids_stub = stub(Looks, "ids", function()
+            return { "editorial", "diner", "third" }
+        end)
+        local real_get = Looks.get
+        local get_stub = stub(Looks, "get", function(id)
+            if id == "third" then
+                return diner
+            end
+            return real_get(id)
+        end)
+        finally(function()
+            ids_stub:revert()
+            get_stub:revert()
+        end)
+        color_enabled(true)
+        local swatch = Swatch:new{}
+        local panels = collect(swatch, named("kopanda_swatch_panel"))
+        local order = {}
+        for _, panel in ipairs(panels) do
+            order[#order + 1] = panel.look .. " " .. panel.variant
+        end
+        local expected = {}
+        for _, variant in ipairs({ "day", "night", "grey" }) do
+            for _, id in ipairs({ "editorial", "diner", "third" }) do
+                expected[#expected + 1] = id .. " " .. variant
+            end
+        end
+        assert.same(expected, order)
+        local gap = Screen:scaleBySize(4)
+        local inner_w = Screen:getWidth() - 2 * Screen:scaleBySize(8)
+        local panel_w = math.floor((inner_w - 2 * gap) / 3)
+        for _, panel in ipairs(panels) do
+            assert.equals(panel_w, panel.dimen.w, panel.look .. " " .. panel.variant)
+        end
+        -- Each row: three panels with a gap between, as wide as the margins leave.
+        local rows = collect(swatch, function(w)
+            return w[1] ~= nil and w[1].name == "kopanda_swatch_panel"
+        end)
+        assert.equals(3, #rows)
+        for _, row in ipairs(rows) do
+            assert.equals(5, #row)
+            assert.equals(3 * panel_w + 2 * gap, row:getSize().w)
+        end
+        swatch:free()
     end)
 
     it("draws no lacks line for a palette that lacks nothing", function()

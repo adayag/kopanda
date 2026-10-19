@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&amp;family=Big+Shoulders+Display:wght@800;900&amp;family=Work+Sans:ital,wght@0,500;0,600;0,700;0,800;1,500&amp;family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&amp;family=Recursive:slnt,wght,CASL@-15..0,300..1000,0..1&amp;family=Shantell+Sans:ital,wght@0,500;0,700;0,800;1,500&amp;family=Baloo+2:wght@700;800&amp;family=Nunito:ital,wght@0,600;0,700;0,800;1,600&amp;family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#e6e4df;font-family:system-ui,sans-serif}a{color:#1a1a1a}a:hover{color:#2a78d6}.dv-turn{padding:40px 44px 48px;scroll-margin-top:16px}.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 14px}.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a}.dv-opt{display:flex;flex-direction:column;gap:14px;scroll-margin-top:16px}.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}.dv-olabel{display:flex;align-items:baseline;gap:10px;font:400 13px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.6)}.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}.dv-next{margin:40px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.55)}</style>
+</helmet>
+<sc-for list="{{ turns }}" as="TT" hint-placeholder-count="2">
+<section class="dv-turn" id="{{ TT.id }}" style="{{ TT.secS }}">
+<sc-if value="{{ TT.isT3 }}" hint-placeholder-val="{{ false }}">
+  <div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Wallpaper looks: <a class="dv-oid" href="#3a">3a</a> Plates · <a class="dv-oid" href="#3b">3b</a> Frosted Plates</span></div>
+  <div style="max-width:880px; font:13px/1.6 system-ui,sans-serif; color:#3a3a3a; margin:0 0 36px; display:flex; flex-direction:column; gap:4px">
+    <div>Built for any image, tested on the busiest one: your flowers. There's no opacity or blur, so legibility comes from opaque plates, never from dimming the picture. The wallpaper shows in the margins and gutters only.</div>
+    <div>On the Paperwhite board the image is shown in greyscale, as the device will show it. The plates don't change.</div>
+  </div>
+</sc-if>
+<sc-if value="{{ TT.isT2 }}" hint-placeholder-val="{{ false }}">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Playful looks: <a class="dv-oid" href="#2a">2a</a> Sticker Book · <a class="dv-oid" href="#2b">2b</a> Funnies · <a class="dv-oid" href="#2c">2c</a> Toybox</span></div>
+  <div style="max-width:880px; font:13px/1.6 system-ui,sans-serif; color:#3a3a3a; margin:0 0 36px; display:flex; flex-direction:column; gap:4px">
+    <div>Same screens, same rules, more fun. Play only goes where it doesn't cost legibility: the clock, titles and the nav never tilt or sit on texture, and covers keep their real shape inside the frame.</div>
+    <div>Each look adds one texture or frame that does a job: die-cut rings that separate tiles on a dotted backing, Ben-Day halftone that becomes a real e-ink grey on the Paperwhite, and a solid block edge that shows a tile is pressable.</div>
+  </div>
+</sc-if>
+<sc-if value="{{ TT.isT1 }}" hint-placeholder-val="{{ true }}">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Four new looks: <a class="dv-oid" href="#1a">1a</a> Grid · <a class="dv-oid" href="#1b">1b</a> Riso · <a class="dv-oid" href="#1c">1c</a> Logbook · <a class="dv-oid" href="#1d">1d</a> Ex Libris</span></div>
+  <div style="max-width:880px; font:13px/1.6 system-ui,sans-serif; color:#3a3a3a; margin:0 0 36px; display:flex; flex-direction:column; gap:4px">
+    <div>Boards are 632×840 (Colorsoft at half size); the Paperwhite board is 618×824. Every board, table and Lua block below comes from the same token object, so they can't drift apart.</div>
+    <div>I couldn't open the original canvas, so I calibrated against your Diner and Editorial screenshots. Weather sits in the header row as the brief says. Covers are striped placeholders, shown in each look's frame and never tinted. Paperwhite greys use only the 16 hardware levels (multiples of #111111).</div>
+  </div>
+</sc-if>
+  <div style="display:flex; flex-direction:column; gap:80px">
+    <sc-for list="{{ TT.looks }}" as="L" hint-placeholder-count="3">
+      <div class="dv-opt" id="{{ L.id }}">
+        <div class="dv-olabel"><a class="dv-oid" href="#{{ L.id }}">{{ L.id }}</a><span style="font:700 17px system-ui,sans-serif; color:#1a1a1a">{{ L.name }}</span><span style="font:600 12px system-ui,sans-serif; color:#1a1a1a">{{ L.kicker }}</span><span>{{ L.thesis }}</span></div>
+        <div style="display:flex; gap:28px; align-items:flex-start">
+          <sc-for list="{{ L.boards }}" as="b" hint-placeholder-count="4">
+            <div style="{{ b.s.wrap }}">
+              <div style="font:600 11px ui-monospace,Menlo,monospace; color:#555">{{ b.caption }}</div>
+              <div style="{{ b.s.board }}">
+                <div style="{{ b.s.rules }}"></div>
+                <div style="{{ b.s.margin }}"></div>
+                <div style="{{ b.s.frame }}"></div>
+                <div style="{{ b.s.body }}">
+                  <div style="{{ b.s.header }}">
+                    <div style="{{ b.s.hLeft }}">
+                      <div style="{{ b.s.hDay }}">Tuesday</div>
+                      <div style="{{ b.s.hDate }}">October 13</div>
+                      <div style="{{ b.s.hWeather }}">61° Partly cloudy</div>
+                    </div>
+                    <div style="{{ b.s.clock }}">8:42</div>
+                  </div>
+                  <div style="{{ b.s.feat }}">
+                    <div style="{{ b.s.coverBox }}">
+                      <div style="{{ b.s.coverUnder }}"></div>
+                      <div style="{{ b.s.cover }}"><div>cover</div><div style="font-weight:700">Frankenstein</div></div>
+                    </div>
+                    <div style="{{ b.s.featText }}">
+                      <div style="{{ b.s.chip }}">Now reading</div>
+                      <div style="{{ b.s.title }}"><span style="{{ b.s.titleMark }}">Frankenstein</span></div>
+                      <div style="{{ b.s.author }}">Mary Shelley · Letter IV</div>
+                      <div style="flex:1"></div>
+                      <div style="{{ b.s.prog }}"><div style="{{ b.s.progFill }}"></div></div>
+                      <div style="{{ b.s.progText }}">62% · 2 h 6 min left</div>
+                    </div>
+                  </div>
+                  <div style="{{ b.s.quoteRow }}"><div style="{{ b.s.quoteTail }}"></div><div style="{{ b.s.quote }}">“Books must be read as deliberately and reservedly as they were written.”</div></div>
+                  <div style="{{ b.s.launch }}">
+                    <sc-for list="{{ b.tiles }}" as="t" hint-placeholder-count="6">
+                      <div style="{{ t.tileS }}">
+                        <div style="{{ t.underS }}"></div>
+                        <div style="{{ t.innerS }}">
+                          {{ t.icon }}
+                          <div style="{{ b.s.tileText }}">
+                            <div style="{{ b.s.tileLabel }}">{{ t.label }}</div>
+                            <div style="{{ t.subS }}">{{ t.sub }}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="{{ b.s.stats }}">3-day streak · 42 min today</div>
+                </div>
+                <div style="{{ b.s.nav }}">
+                  <sc-for list="{{ b.nav }}" as="n" hint-placeholder-count="5">
+                    <div style="{{ n.cell }}"><div style="{{ n.bar }}"></div>{{ n.icon }}<div style="{{ n.label }}">{{ n.text }}</div></div>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ b.sheet }}" hint-placeholder-val="{{ false }}">
+                  <div style="{{ b.s.sheetBox }}">
+                    <div style="{{ b.s.sheetUnder }}"></div>
+                    <div style="{{ b.s.sheet }}">
+                      <div style="{{ b.s.sheetHead }}">
+                        <div style="{{ b.s.sheetCover }}"><div>cover</div></div>
+                        <div style="{{ b.s.sheetMeta }}">
+                          <div style="{{ b.s.sheetTitle }}">Frankenstein</div>
+                          <div style="{{ b.s.sheetAuthor }}">Mary Shelley</div>
+                          <div style="{{ b.s.sheetProgRow }}"><div style="{{ b.s.sheetProg }}"><div style="{{ b.s.progFill }}"></div></div><span>62%</span></div>
+                          <div style="{{ b.s.sheetLast }}">Last opened today, 7:58</div>
+                        </div>
+                      </div>
+                      <sc-for list="{{ b.rows }}" as="r" hint-placeholder-count="6">
+                        <div style="{{ b.s.row }}"><span>{{ r.label }}</span><span style="{{ b.s.rowChev }}">{{ r.chev }}</span></div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+          <div style="{{ L.lib.s.wrap }}">
+            <div style="font:600 11px ui-monospace,Menlo,monospace; color:#555">03 · Library grid · Colorsoft</div>
+            <div style="{{ L.lib.s.board }}">
+              <div style="{{ L.lib.s.rules }}"></div>
+              <div style="{{ L.lib.s.margin }}"></div>
+              <div style="{{ L.lib.s.frame }}"></div>
+              <div style="{{ L.lib.s.body }}">
+                <div style="{{ L.lib.s.head }}">
+                  <div style="{{ L.lib.s.headL }}">
+                    <div style="{{ L.lib.s.libTitle }}">Library</div>
+                    <div style="{{ L.lib.s.count }}">148 books</div>
+                  </div>
+                  <div style="display:flex; gap:8px">
+                    <div style="{{ L.lib.s.picker }}">Recent ▾</div>
+                    <div style="{{ L.lib.s.picker }}">All ▾</div>
+                  </div>
+                </div>
+                <div style="{{ L.lib.s.grid }}">
+                  <div style="{{ L.lib.s.item }}">
+                    <div style="{{ L.lib.s.folder }}">
+                      <div style="{{ L.lib.s.folderUnder }}"></div>
+                      <div style="{{ L.lib.s.folderInner }}">
+                        {{ L.lib.folderIcon }}
+                        <div>
+                          <div style="{{ L.lib.s.folderName }}">Short stories</div>
+                          <div style="{{ L.lib.s.count }}">12 books</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <sc-for list="{{ L.lib.books }}" as="k" hint-placeholder-count="5">
+                    <div style="{{ L.lib.s.item }}">
+                      <div style="{{ k.box }}">
+                        <div style="{{ k.under }}"></div>
+                        <div style="{{ k.cover }}"><div>{{ k.coverTag }}</div><div style="{{ k.coverTitle }}">{{ k.title }}</div></div>
+                      </div>
+                      <div style="{{ k.strip }}"><div style="{{ k.stripFill }}"></div></div>
+                      <div style="{{ k.missing }}">Not downloaded</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="{{ L.lib.s.nav }}">
+                <sc-for list="{{ L.lib.nav }}" as="n" hint-placeholder-count="5">
+                  <div style="{{ n.cell }}"><div style="{{ n.bar }}"></div>{{ n.icon }}<div style="{{ n.label }}">{{ n.text }}</div></div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; margin-top:10px; font:12px/1.45 system-ui,sans-serif; color:#222">
+          <div style="width:560px; background:#fff; border:1px solid rgba(0,0,0,.1); border-radius:6px; overflow:hidden">
+            <div style="padding:10px 14px; font-weight:700; border-bottom:1px solid rgba(0,0,0,.1)">Tokens · {{ L.name }}</div>
+            <sc-for list="{{ L.table }}" as="r" hint-placeholder-count="17">
+              <div style="display:grid; grid-template-columns:120px minmax(0,1fr); gap:12px; padding:6px 14px; border-bottom:1px solid rgba(0,0,0,.06)"><div style="font-weight:600">{{ r.k }}</div><div style="text-wrap:pretty">{{ r.v }}</div></div>
+            </sc-for>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:24px; width:440px">
+            <div style="background:#fff; border:1px solid rgba(0,0,0,.1); border-radius:6px; overflow:hidden">
+              <div style="display:grid; grid-template-columns:90px 1fr 1fr 1fr; gap:8px; padding:10px 14px; font-weight:700; border-bottom:1px solid rgba(0,0,0,.1)"><div>Role</div><div>Day</div><div>Night</div><div>Grey (16)</div></div>
+              <sc-for list="{{ L.palRows }}" as="p" hint-placeholder-count="8">
+                <div style="display:grid; grid-template-columns:90px 1fr 1fr 1fr; gap:8px; padding:5px 14px; border-bottom:1px solid rgba(0,0,0,.06); font-family:ui-monospace,Menlo,monospace; font-size:11px; align-items:center">
+                  <div style="font-family:system-ui,sans-serif; font-size:12px; font-weight:600">{{ p.role }}</div>
+                  <div style="display:flex; gap:6px; align-items:center"><span style="{{ p.dS }}"></span>{{ p.d }}</div>
+                  <div style="display:flex; gap:6px; align-items:center"><span style="{{ p.nS }}"></span>{{ p.n }}</div>
+                  <div style="display:flex; gap:6px; align-items:center"><span style="{{ p.gS }}"></span>{{ p.g }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:#fff; border:1px solid rgba(0,0,0,.1); border-radius:6px; overflow:hidden">
+              <div style="padding:10px 14px; font-weight:700; border-bottom:1px solid rgba(0,0,0,.1)">Type sizes (board px)</div>
+              <sc-for list="{{ L.sizeRows }}" as="z" hint-placeholder-count="8">
+                <div style="display:flex; justify-content:space-between; gap:12px; padding:5px 14px; border-bottom:1px solid rgba(0,0,0,.06)"><span>{{ z.k }}</span><span style="font-family:ui-monospace,Menlo,monospace">{{ z.v }}</span></div>
+              </sc-for>
+            </div>
+            <div style="background:#1b1b1b; color:#f0eee8; border-radius:6px; padding:14px 16px; font-size:12.5px; line-height:1.55">
+              <div style="font-weight:700; margin-bottom:6px">Verdict</div>
+              <div style="text-wrap:pretty">{{ L.verdict }}</div>
+            </div>
+          </div>
+          <div style="width:420px; background:#fff; border:1px solid rgba(0,0,0,.1); border-radius:6px; overflow:hidden">
+            <div style="padding:10px 14px; font-weight:700; border-bottom:1px solid rgba(0,0,0,.1)">Icon set · Home, Library, Series, Authors, History, Wi-Fi off, Settings, Folder</div>
+            <sc-for list="{{ L.iconSets }}" as="ic" hint-placeholder-count="3">
+              <div style="border-bottom:1px solid rgba(0,0,0,.08)">
+                <div style="display:flex; gap:8px; align-items:baseline; padding:10px 14px 0"><span style="{{ ic.tagS }}">{{ ic.tag }}</span><span style="font-weight:700">{{ ic.name }}</span></div>
+                <div style="padding:2px 14px 8px; font:11px ui-monospace,Menlo,monospace; color:#555">{{ ic.meta }}</div>
+                <div style="{{ ic.stripS }}"><sc-for list="{{ ic.icons }}" as="g" hint-placeholder-count="8">{{ g }}</sc-for></div>
+                <div style="padding:8px 14px 12px; color:#444; text-wrap:pretty">{{ ic.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <pre style="width:460px; max-height:1080px; overflow:auto; margin:0; background:#fff; border:1px solid rgba(0,0,0,.1); border-radius:6px; padding:12px 14px; font:11px/1.45 ui-monospace,Menlo,monospace; color:#222">{{ L.lua }}</pre>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{ TT.isT3 }}" hint-placeholder-val="{{ false }}"><p class="dv-next">Try next: "<a class="dv-oid" href="#3a">3a</a> with the plates in Funnies style" · "a wallpaper version of <a class="dv-oid" href="#1d">1d</a>" · "try a darker wallpaper"</p></sc-if>
+  <sc-if value="{{ TT.isT2 }}" hint-placeholder-val="{{ false }}"><p class="dv-next">Try next: "<a class="dv-oid" href="#2b">2b</a> but with the Logbook's ruled sheet" · "tone <a class="dv-oid" href="#2a">2a</a> down: no tilt" · "<a class="dv-oid" href="#2c">2c</a> with <a class="dv-oid" href="#1a">1a</a>'s Grid header"</p></sc-if>
+  <sc-if value="{{ TT.isT1 }}" hint-placeholder-val="{{ true }}"><p class="dv-next">Try next: "push <a class="dv-oid" href="#1b">1b</a> further: more out of register" · "<a class="dv-oid" href="#1a">1a</a> with the bookplate's centred header" · "draw the Series and History screens in <a class="dv-oid" href="#1c">1c</a>"</p></sc-if>
+</section>
+</sc-for>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const h = React.createElement;
+const RAYS = [0,1,2,3,4,5,6,7].map(i => { const a = i * Math.PI / 4, c = Math.cos(a), s = Math.sin(a); return ['path', { d: `M${12 + c * 6.2} ${12 + s * 6.2} L${12 + c * 8.8} ${12 + s * 8.8}` }]; });
+const ICONS = {
+  home: [['path', { d: 'M4 11 L12 4 L20 11 V20 H4 Z' }]],
+  library: [['rect', { x: 4, y: 4, width: 4, height: 16 }], ['rect', { x: 10, y: 4, width: 4, height: 16 }], ['path', { d: 'M16 5 L19.4 4.3 L21.8 19 L18.4 19.7 Z' }]],
+  series: [['path', { d: 'M12 4 L21 9 L12 14 L3 9 Z' }], ['path', { d: 'M3 14 L12 19 L21 14' }]],
+  authors: [['circle', { cx: 12, cy: 8, r: 4 }], ['path', { d: 'M4 21 C4 14.5 20 14.5 20 21' }]],
+  history: [['circle', { cx: 12, cy: 12, r: 8.5 }], ['path', { d: 'M12 7 V12 L15.5 14' }]],
+  wifi: [['path', { d: 'M3 9.5 C8 5 16 5 21 9.5' }], ['path', { d: 'M6.5 13 C9.5 10.5 14.5 10.5 17.5 13' }], ['path', { d: 'M10 16.5 C11 15.6 13 15.6 14 16.5' }], ['path', { d: 'M4 4 L20 20' }]],
+  settings: [['circle', { cx: 12, cy: 12, r: 3.2 }], ...RAYS],
+  folder: [['path', { d: 'M3 6 H10 L12 8 H21 V19 H3 Z' }]],
+};
+const JD = 'https://cdn.jsdelivr.net/npm/';
+const KEYS = ['home', 'library', 'series', 'authors', 'history', 'wifi', 'settings', 'folder'];
+const ICONSETS = {
+  ms_sharp: { name: 'Material Symbols Sharp, 600', licence: 'Apache-2.0', repo: 'google/material-design-icons', pkg: '@material-symbols/svg-600', url: n => `${JD}@material-symbols/svg-600@0.27.0/sharp/${n}.svg`, n: ['home', 'library_books', 'stacks', 'person', 'history', 'wifi_off', 'settings', 'folder'], note: 'Square terminals and a 24 grid, so the icons sit on the same rules as the type.' },
+  ms_round_fill: { name: 'Material Symbols Rounded, filled 500', licence: 'Apache-2.0', repo: 'google/material-design-icons', pkg: '@material-symbols/svg-500', url: n => `${JD}@material-symbols/svg-500@0.27.0/rounded/${n}-fill.svg`, n: ['home', 'library_books', 'stacks', 'person', 'history', 'wifi_off', 'settings', 'folder'], note: 'Soft solid blobs; less character than Phosphor.' },
+  ph_bold: { name: 'Phosphor Bold', licence: 'MIT', repo: 'phosphor-icons/core', pkg: '@phosphor-icons/core', url: n => `${JD}@phosphor-icons/core@2.1.1/assets/bold/${n}-bold.svg`, n: ['house', 'books', 'stack', 'user', 'clock-counter-clockwise', 'wifi-slash', 'gear-six', 'folder'], note: 'Heavy round strokes; friendlier than the grid wants.' },
+  ph_fill: { name: 'Phosphor Fill', licence: 'MIT', repo: 'phosphor-icons/core', pkg: '@phosphor-icons/core', url: n => `${JD}@phosphor-icons/core@2.1.1/assets/fill/${n}-fill.svg`, n: ['house', 'books', 'stack', 'user', 'clock-counter-clockwise', 'wifi-slash', 'gear-six', 'folder'], note: 'Solid shapes print like a single riso pass, with no thin strokes for the 150 ppi colour layer to blur.' },
+  ph_light: { name: 'Phosphor Light', licence: 'MIT', repo: 'phosphor-icons/core', pkg: '@phosphor-icons/core', url: n => `${JD}@phosphor-icons/core@2.1.1/assets/light/${n}-light.svg`, n: ['house', 'books', 'stack', 'user', 'clock-counter-clockwise', 'wifi-slash', 'gear-six', 'folder'], note: 'A fine, even line that matches Garamond hairlines and is still at least 1 board px at 24.' },
+  ph_thin: { name: 'Phosphor Thin', licence: 'MIT', repo: 'phosphor-icons/core', pkg: '@phosphor-icons/core', url: n => `${JD}@phosphor-icons/core@2.1.1/assets/thin/${n}-thin.svg`, n: ['house', 'books', 'stack', 'user', 'clock-counter-clockwise', 'wifi-slash', 'gear-six', 'folder'], note: 'More engraved, but under 1 board px at 24, so it fails the hairline rule.' },
+  tabler: { name: 'Tabler Outline', licence: 'MIT', repo: 'tabler/tabler-icons', pkg: '@tabler/icons', url: n => `${JD}@tabler/icons@3.24.0/icons/outline/${n}.svg`, n: ['home', 'books', 'stack-2', 'user', 'history', 'wifi-off', 'settings', 'folder'], note: 'Neutral 2 px outline; the safe fallback for any look.' },
+  pixel: { name: 'Pixelarticons', licence: 'MIT', repo: 'halfmage/pixelarticons', pkg: 'pixelarticons', url: n => `${JD}pixelarticons@1.8.1/svg/${n}.svg`, n: ['home', 'book-open', 'card-stack', 'user', 'clock', 'cellular-signal-off', 'sliders', 'folder'], note: 'Drawn on a 24 grid, so at 24 board px each pixel is exactly 2×2 device px with no anti-aliasing. Pairs with the typewriter face.' },
+  iconoir: { name: 'Iconoir Regular', licence: 'MIT', repo: 'iconoir-icons/iconoir', pkg: 'iconoir', url: n => `${JD}iconoir@7.10.1/icons/regular/${n}.svg`, n: ['home', 'book-stack', 'multiple-pages', 'user', 'clock-rotate-right', 'wifi-off', 'settings', 'folder'], note: '1.5 px hand-ish outline; calm but generic.' },
+};
+ICONSETS.ms_round_700 = { name: 'Material Symbols Rounded, 700', licence: 'Apache-2.0', repo: 'google/material-design-icons', pkg: '@material-symbols/svg-700', url: n => `${JD}@material-symbols/svg-700@0.27.0/rounded/${n}.svg`, n: ['home', 'library_books', 'stacks', 'person', 'history', 'wifi_off', 'settings', 'folder'], note: 'A thick, rounded, inked outline, like the brush-pen lettering in comic panels.' };
+ICONSETS.mingcute = { name: 'MingCute Line', licence: 'Apache-2.0', repo: 'Richard9394/MingCute', pkg: 'mingcute_icon', url: n => `${JD}mingcute_icon@2.9.6/svg/${n}.svg`, n: ['building/home_3_line', 'education/book_2_line', 'design/layer_line', 'user/user_3_line', 'system/history_line', 'device/wifi_off_line', 'system/settings_3_line', 'file/folder_2_line'], note: 'Soft, round and toy-like, with even 1.5 px lines that sit well inside coloured badges.' };
+const LOOK_ICONS = { plates: ['ph_bold', 'ms_round_700', 'tabler'], frosted: ['ph_bold', 'ms_round_700', 'tabler'], sticker: ['ph_fill', 'ph_bold', 'mingcute'], funnies: ['ms_round_700', 'ph_bold', 'tabler'], toybox: ['mingcute', 'ms_round_700', 'ph_bold'], grid: ['ms_sharp', 'ph_bold', 'tabler'], riso: ['ph_fill', 'ms_round_fill', 'ph_bold'], logbook: ['pixel', 'tabler', 'iconoir'], exlibris: ['ph_light', 'ph_thin', 'iconoir'] };
+const iconFrom = (setKey, n, c, sz) => { const S = ICONSETS[setKey], u = S.url(S.n[KEYS.indexOf(n)]); const m = `url("${u}") center / contain no-repeat`; return h('span', { style: { display: 'block', flex: 'none', width: sz, height: sz, background: c, WebkitMask: m, mask: m } }); };
+const icon = (n, c, sz, sw, look) => look ? iconFrom(LOOK_ICONS[look][0], n, c, sz) : icon0(n, c, sz, sw);
+const icon0 = (n, c, sz, sw) => h('svg', { width: sz, height: sz, viewBox: '0 0 24 24', fill: 'none', stroke: c, strokeWidth: sw, strokeLinecap: 'round', strokeLinejoin: 'round', style: { display: 'block', flex: 'none' } }, ICONS[n].map((k, i) => h(k[0], { key: i, ...k[1] })));
+
+const NAV = [['Home', 'home'], ['Library', 'library'], ['Authors', 'authors'], ['History', 'history'], ['Settings', 'settings']];
+const TILES = [['Library', 'library'], ['Series', 'series'], ['Authors', 'authors'], ['History', 'history'], ['Wi-Fi', 'wifi', 'Off'], ['Settings', 'settings']];
+const ROWS = [['Open', ''], ['Book details', ''], ['Read status', '›'], ['More by this author', '›'], ['Feature a different book', ''], ["This widget's settings", '']];
+const BOOKS = [{ t: 'Frankenstein', p: 62 }, { t: 'Middlemarch', p: 18 }, { t: 'Moby-Dick', p: 100 }, { t: 'The Age of Innocence', p: 0 }, { t: 'Persuasion', p: 0, missing: true }];
+const HATCH = { angle: 135, pitch: 6, line: 2, color: 'ink' };
+
+const LOOKS = [
+{
+  id: '1a', key: 'grid', name: 'Grid', kicker: 'Swiss / International',
+  thesis: 'One face, one red, every row hung from a 2 px rule. The clock is the headline.',
+  faces: { display: { family: 'Archivo', weight: 800, repo: 'Omnibus-Type/Archivo', file: 'Archivo-ExtraBold.ttf' }, text: { family: 'Archivo', weight: 500, bold: 700, repo: 'Omnibus-Type/Archivo', file: 'Archivo-Medium.ttf, Archivo-Bold.ttf' }, accent: 'none' },
+  pal: {
+    day: { paper: '#f4f3ef', ink: '#141414', text: '#2a2927', muted: '#57554f', hairLight: '#cfccc4', a1: '#d6402b' },
+    night: { paper: '#121212', ink: '#efeee9', text: '#d8d6d0', muted: '#a29f98', hairLight: '#3c3b38', a1: '#f0705a' },
+    grey: { paper: '#ffffff', ink: '#000000', text: '#222222', muted: '#444444', hairLight: '#aaaaaa', a1: '#000000', a1Fill: 'hatch' },
+  },
+  stroke: { hair: 1, rule: 2, greyHair: 2 },
+  header: { layout: 'clockLeft', rule: 2, ruleColor: 'ink', tracking: -0.045, dateFace: 'text', dateWeight: 700 },
+  cover: { w: 150, h: 225, outline: 0, outlineColor: 'none', shadow: 'none', under: 'none', frame: 0, radius: 0 },
+  chip: { fill: 'ink', color: 'paper', border: 0, borderColor: 'none' },
+  title: { tracking: -0.02, mark: 'none' },
+  progress: { h: 8, outline: 0, outlineColor: 'none', fill: 'a1', track: 'hairLight' },
+  quote: { style: 'ruleTop', rule: 2, ruleColor: 'ink', face: 'text', weight: 600, slant: 'normal' },
+  tile: { style: 'rule', cols: 3, h: 78, border: 2, borderColor: 'ink', fill: 'none', under: 'none' },
+  nav: { edge: 2, edgeStyle: 'solid', lit: 'bar', litColor: 'a1', bar: 6 },
+  sheet: { style: 'panel', edge: 4, edgeStyle: 'solid', inset: 0, border: 0, under: 'none', band: 'none', rowRule: 'hairLight' },
+  picker: { border: 2, borderColor: 'ink', fill: 'none' },
+  label: { size: 11, weight: 700, tracking: 0.08, case: 'upper', color: 'muted' },
+  size: { date: 22, clock: 92, title: 34, author: 16, quote: 20, launcher: 18, label: 11, sheetRow: 18, nav: 11 },
+  misreg: 'none', ruled: 'none', frame: 'none', align: 'left', iconStroke: 2,
+  table: [
+    ['Display face', 'Archivo 800'], ['Text face', 'Archivo 500–700'], ['Accent face', 'none'],
+    ['Paper / Ink', '#f4f3ef / #141414'], ['Muted / Text', '#57554f / #2a2927'],
+    ['Hairline', 'structural rules are ink; light #cfccc4'], ['Accents', 'red #d6402b (progress fill, lit tab only)'],
+    ['Band', 'none'], ['Stroke', '2 px ink rules (header, quote, tiles, nav), 1 px light between sheet rows'],
+    ['Shadow', 'none'], ['Radius', '0'], ['Tile', 'no box: 2 px ink rule on top, icon top-left, label bottom-left'],
+    ['Progress', '8 px bar, red on light hairline, no outline'], ['Sheet', 'paper panel from the bottom under a 4 px ink rule'],
+    ['Chip', 'ink box, paper uppercase 700'], ['Labels', '11 px uppercase 700, 0.08 em'], ['Date/clock', '22 px 700 / 92 px 800, −0.045 em, clock left'],
+  ],
+  verdict: "For the owner who glances at the device for the time as often as for the book. One face, one red, and the hierarchy comes from size and 2 px rules, so it reads the same with the colour removed: red only marks where you are (progress, lit tab) and becomes black or a hatch on the Paperwhite. You'd pick it over Diner if you like Diner's confidence but not its costume. The risk: Archivo 800 at 92 px with −0.045 em tracking can close the gaps between digits once e-ink ghosting softens edges. Test 11:11 and 10:08 on the device and back off to −0.03 em if they touch.",
+},
+{
+  id: '1b', key: 'riso', name: 'Riso', kicker: 'Two-drum Risograph',
+  thesis: 'Blue and fluoro pink, no black anywhere. The pink is always a few pixels out of register.',
+  faces: { display: { family: 'Big Shoulders Display', weight: 900, repo: 'xotypeco/big_shoulders', file: 'BigShouldersDisplay-Black.ttf' }, text: { family: 'Work Sans', weight: 500, bold: 700, repo: 'weiweihuanghuang/Work-Sans', file: 'WorkSans-Medium.ttf, WorkSans-Bold.ttf' }, accent: 'none' },
+  pal: {
+    day: { paper: '#f3eee2', ink: '#22509f', text: '#22509f', muted: '#3d5b9a', hairLight: '#f2a9c4', a1: '#e9508a', tint: '#f6c6d8' },
+    night: { paper: '#141a2e', ink: '#f1ece0', text: '#f1ece0', muted: '#b8bfd8', hairLight: '#6e3557', a1: '#f0729f', tint: '#4a2643' },
+    grey: { paper: '#ffffff', ink: '#000000', text: '#000000', muted: '#333333', hairLight: '#bbbbbb', a1: '#999999', a1Fill: 'hatch', tint: '#dddddd' },
+  },
+  stroke: { hair: 2, rule: 3, greyHair: 2 },
+  header: { layout: 'clockRight', rule: 0, ruleColor: 'none', tracking: -0.01, dateFace: 'text', dateWeight: 700 },
+  cover: { w: 150, h: 225, outline: 0, outlineColor: 'none', shadow: 'none', under: { x: 6, y: 6, border: 2, color: 'ink' }, frame: 0, radius: 0 },
+  chip: { fill: 'tint', color: 'ink', border: 0, borderColor: 'none' },
+  title: { tracking: 0, mark: 'none' },
+  progress: { h: 14, outline: 2, outlineColor: 'ink', fill: 'a1', track: 'paper' },
+  quote: { style: 'ruleBoth', rule: 2, ruleColor: 'hairLight', face: 'text', weight: 500, slant: 'italic' },
+  tile: { style: 'box', cols: 3, h: 84, border: 2, borderColor: 'ink', fill: 'none', under: { x: 5, y: 4, fill: 'tint' } },
+  nav: { edge: 3, edgeStyle: 'solid', lit: 'fill', litColor: 'tint', bar: 0 },
+  sheet: { style: 'inset', edge: 3, edgeStyle: 'solid', inset: 20, border: 3, under: { x: 8, y: 8, fill: 'a1' }, band: 'tint', rowRule: 'hairLight' },
+  picker: { border: 2, borderColor: 'ink', fill: 'tint' },
+  label: { size: 11, weight: 700, tracking: 0.12, case: 'upper', color: 'muted' },
+  size: { date: 15, clock: 124, title: 46, author: 16, quote: 18, launcher: 19, label: 11, sheetRow: 19, nav: 11 },
+  misreg: { x: 3, y: 2, color: 'a1' }, ruled: 'none', frame: 'none', align: 'left', iconStroke: 2.25,
+  table: [
+    ['Display face', 'Big Shoulders Display 900'], ['Text face', 'Work Sans 500–700'], ['Accent face', 'none'],
+    ['Paper / Ink', '#f3eee2 / #22509f (blue drum, never black)'], ['Muted / Text', '#3d5b9a / ink'],
+    ['Hairline', 'pink #f2a9c4 for secondary rules; structure is ink'], ['Accents', 'fluoro pink #e9508a, pink tint #f6c6d8'],
+    ['Band', 'tint band at the top of the sheet only'], ['Stroke', '3 px ink nav edge and sheet, 2 px ink tile outlines, 2 px pink rules'],
+    ['Shadow', 'misregistration, not shadow: pink 3 right 2 down under display type; tint 5/4 under tiles; pink 8/8 under the sheet; 2 px ink outline 6/6 behind the cover'],
+    ['Radius', '0'], ['Tile', '2 px ink outline, tint fill knocked 5/4 out of register'],
+    ['Progress', '14 px, 2 px ink outline, pink on paper'], ['Sheet', 'inset 20, 3 px ink outline, pink 8/8 offset, tint header band'],
+    ['Chip', 'tint fill, ink uppercase 700'], ['Labels', '11 px uppercase 700, 0.12 em'], ['Date/clock', '15 px 700 / 124 px 900, clock right'],
+  ],
+  verdict: "A zine on the nightstand: two inks, no black, and the pink is printed a few pixels off on purpose. It's for people who picked Diner for the colour but want it to feel handmade, not like signage. Without colour the motif still works, because the offset layer becomes a light grey ghost behind black, but it loses half its point, so it's the weakest of the four on the Paperwhite. The e-ink risk: the Colorsoft's colour layer is 150 ppi against 300 ppi for mono, so a 3 px misregistration can read as blur rather than intent. Keep the offsets at 3 board px or more, and check that the blue text holds up in direct sun, since it has less contrast than ink black.",
+},
+{
+  id: '1c', key: 'logbook', name: 'Logbook', kicker: 'Ruled field notebook',
+  thesis: 'Typewriter mono on ruled paper with a red margin; the current book is highlighted, like you marked it.',
+  faces: { display: { family: 'Courier Prime', weight: 700, repo: 'quoteunquoteapps/CourierPrime', file: 'CourierPrime-Bold.ttf' }, text: { family: 'Courier Prime', weight: 400, bold: 700, repo: 'quoteunquoteapps/CourierPrime', file: 'CourierPrime-Regular.ttf, CourierPrime-Italic.ttf' }, accent: 'none' },
+  pal: {
+    day: { paper: '#f2eee2', ink: '#1d2834', text: '#1d2834', muted: '#4c5762', hairLight: '#b7c8d6', a1: '#ead35c', a2: '#c4675b', card: '#faf7ef' },
+    night: { paper: '#1a1f28', ink: '#ece6d4', text: '#ece6d4', muted: '#a9b1b9', hairLight: '#303b48', a1: '#6b5d1d', a2: '#a3584e', card: '#222833' },
+    grey: { paper: '#ffffff', ink: '#000000', text: '#000000', muted: '#444444', hairLight: '#dddddd', a1: '#bbbbbb', a2: '#777777', card: '#ffffff' },
+  },
+  stroke: { hair: 1, rule: 2, greyHair: 2 },
+  header: { layout: 'clockRight', rule: 0, ruleColor: 'none', tracking: -0.04, dateFace: 'text', dateWeight: 700 },
+  cover: { w: 140, h: 210, outline: 1, outlineColor: 'ink', shadow: 'none', under: 'none', frame: 0, radius: 0 },
+  chip: { fill: 'none', color: 'ink', border: 2, borderColor: 'ink' },
+  title: { tracking: -0.02, mark: 'a1' },
+  progress: { h: 12, outline: 2, outlineColor: 'ink', fill: 'a1', track: 'paper' },
+  quote: { style: 'plain', rule: 0, ruleColor: 'none', face: 'text', weight: 400, slant: 'italic' },
+  tile: { style: 'ruled', cols: 2, h: 56, border: 0, borderColor: 'none', fill: 'none', under: 'none' },
+  nav: { edge: 2, edgeStyle: 'solid', lit: 'fill', litColor: 'a1', bar: 0 },
+  sheet: { style: 'card', edge: 4, edgeStyle: 'solid', inset: 18, border: 2, under: 'none', band: 'none', rowRule: 'none' },
+  picker: { border: 2, borderColor: 'ink', fill: 'paper' },
+  label: { size: 11, weight: 700, tracking: 0.06, case: 'upper', color: 'muted' },
+  size: { date: 20, clock: 68, title: 30, author: 16, quote: 17, launcher: 18, label: 11, sheetRow: 17, nav: 11 },
+  misreg: 'none', ruled: { pitch: 28, line: 1, color: 'hairLight', marginX: 26, marginLine: 1, marginColor: 'a2' }, frame: 'none', align: 'left', iconStroke: 1.75,
+  table: [
+    ['Display face', 'Courier Prime 700'], ['Text face', 'Courier Prime 400 + italic'], ['Accent face', 'none'],
+    ['Paper / Ink', '#f2eee2 / #1d2834 (blue-black)'], ['Muted / Text', '#4c5762 / ink'],
+    ['Hairline', 'ruled blue #b7c8d6, 1 px every 28 px; margin red #c4675b at x 26'], ['Accents', 'highlighter #ead35c, margin red #c4675b'],
+    ['Band', 'none'], ['Stroke', '1 px ruled lines, 2 px ink outlines (chip, progress, card, nav edge)'],
+    ['Shadow', 'none'], ['Radius', '0'], ['Tile', 'no box: icon + label sitting on the ruled line, two columns'],
+    ['Progress', '12 px, 2 px ink outline, highlighter on paper'], ['Sheet', 'index card inset 18, card #faf7ef, 2 px ink outline, 4 px red rule on top, ruled'],
+    ['Chip', '2 px ink outline, uppercase 700'], ['Labels', '11 px uppercase 700, 0.06 em'], ['Date/clock', '20 px 700 / 68 px 700, clock right; featured title on highlighter'],
+  ],
+  verdict: "Reading as a record: a typewriter face on ruled paper, and the one thing you're reading is highlighted, which is also what passes the half-second test. It's for people who find Diner too loud and Editorial too polished, and who care more about streaks and history than about signage. With the colour removed it's almost unchanged, because the highlighter becomes a light grey bar and the lines stay lines. The risk: full-screen ruling is the most ink of any look, so partial refreshes leave the most ghosting, and on the Paperwhite 2 px lines at #dddddd sit near the panel's lowest grey. If they vanish or band, go to #cccccc and keep everything else the same.",
+},
+{
+  id: '1d', key: 'exlibris', name: 'Ex Libris', kicker: 'Antiquarian bookplate',
+  thesis: 'A single Garamond, centred, inside a double-rule frame, with oxblood used once per screen.',
+  faces: { display: { family: 'EB Garamond', weight: 500, repo: 'octaviopardo/EBGaramond12', file: 'EBGaramond-Medium.ttf' }, text: { family: 'EB Garamond', weight: 400, bold: 500, repo: 'octaviopardo/EBGaramond12', file: 'EBGaramond-Regular.ttf, EBGaramond-Italic.ttf' }, accent: 'none' },
+  pal: {
+    day: { paper: '#efe9dc', ink: '#221b16', text: '#3a3029', muted: '#5f5449', hairLight: '#cfc5b2', a1: '#7b2723' },
+    night: { paper: '#1b1714', ink: '#eee6d6', text: '#ddd3c1', muted: '#ada290', hairLight: '#463c34', a1: '#d47c70' },
+    grey: { paper: '#ffffff', ink: '#000000', text: '#222222', muted: '#444444', hairLight: '#aaaaaa', a1: '#333333' },
+  },
+  stroke: { hair: 1, rule: 6, greyHair: 2 },
+  header: { layout: 'center', rule: 0, ruleColor: 'none', tracking: 0, dateFace: 'display', dateWeight: 400 },
+  cover: { w: 126, h: 189, outline: 0, outlineColor: 'none', shadow: 'none', under: 'none', frame: 6, radius: 0 },
+  chip: { fill: 'none', color: 'a1', border: 0, borderColor: 'none' },
+  title: { tracking: 0, mark: 'none' },
+  progress: { h: 4, outline: 0, outlineColor: 'none', fill: 'a1', track: 'hairLight' },
+  quote: { style: 'centered', rule: 1, ruleColor: 'hairLight', face: 'display', weight: 400, slant: 'italic' },
+  tile: { style: 'cell', cols: 3, h: 76, border: 1, borderColor: 'hairLight', fill: 'paper', under: 'none' },
+  nav: { edge: 6, edgeStyle: 'double', lit: 'text', litColor: 'a1', bar: 0 },
+  sheet: { style: 'panel', edge: 6, edgeStyle: 'double', inset: 0, border: 0, under: 'none', band: 'none', rowRule: 'hairLight' },
+  picker: { border: 0, borderColor: 'none', fill: 'none' },
+  label: { size: 13, weight: 500, tracking: 0.1, case: 'smallcaps', color: 'muted' },
+  size: { date: 20, clock: 76, title: 32, author: 18, quote: 20, launcher: 20, label: 13, sheetRow: 19, nav: 13 },
+  misreg: 'none', ruled: 'none', frame: { inset: 12, w: 6, style: 'double', color: 'ink' }, align: 'center', iconStroke: 1.5,
+  table: [
+    ['Display face', 'EB Garamond 500'], ['Text face', 'EB Garamond 400 + italic, small caps'], ['Accent face', 'none'],
+    ['Paper / Ink', '#efe9dc / #221b16'], ['Muted / Text', '#5f5449 / #3a3029'],
+    ['Hairline', '#cfc5b2'], ['Accents', 'oxblood #7b2723 (chip, progress, lit tab)'],
+    ['Band', 'none'], ['Stroke', '6 px double rule (2/2/2) as board frame, nav edge, sheet edge and cover frame; 1 px hairlines between launcher cells'],
+    ['Shadow', 'none'], ['Radius', '0'], ['Tile', 'centred cell, icon over small-caps label, 1 px hairline grid'],
+    ['Progress', '4 px, oxblood on hairline'], ['Sheet', 'paper panel from the bottom under a 6 px double rule, centred head'],
+    ['Chip', 'small caps oxblood, no box'], ['Labels', '13 px small caps 500, 0.1 em'], ['Date/clock', '20 px italic / 76 px 500 lining figures, centred stack'],
+  ],
+  verdict: "For a library that is mostly old books: one Garamond, a double-rule frame, everything centred, and oxblood in exactly three places. It's Editorial with ceremony, for someone who would never pick Diner. Without colour it's essentially the same, because the frame and symmetry carry it, not the red. The risk: the labels depend on real small caps (smcp). If KOReader's UI text path doesn't apply the OpenType feature, they fall back to full caps at 13 px and look shouty, so either confirm smcp works or ship a small-caps instance. The 2/2/2 double rule may also shimmer on the Paperwhite and should be checked at full refresh.",
+},
+];
+
+const LOOKS3 = [
+{
+  id: '3a', key: 'plates', name: 'Plates', kicker: 'Wallpaper look',
+  thesis: 'Your wallpaper fills the screen; every row sits on an opaque plate with an ink keyline and a paper halo. Nothing is ever printed on the image.',
+  faces: { display: { family: 'Atkinson Hyperlegible', weight: 700, repo: 'googlefonts/atkinson-hyperlegible', file: 'AtkinsonHyperlegible-Bold.ttf' }, text: { family: 'Atkinson Hyperlegible', weight: 400, bold: 700, repo: 'googlefonts/atkinson-hyperlegible', file: 'AtkinsonHyperlegible-Regular.ttf, AtkinsonHyperlegible-Italic.ttf' }, accent: 'none' },
+  pal: {
+    day: { paper: '#fbfaf6', ink: '#1b1a1f', text: '#1b1a1f', muted: '#4d4b55', hairLight: '#d9d6df', a1: '#6b55c8', a2: '#f2c230', die: '#fbfaf6', card: '#fbfaf6' },
+    night: { paper: '#1d1c22', ink: '#f3f1ec', text: '#f3f1ec', muted: '#b5b2bd', hairLight: '#3a3842', a1: '#a593f2', a2: '#8a6d10', die: '#1d1c22', card: '#1d1c22' },
+    grey: { paper: '#ffffff', ink: '#000000', text: '#000000', muted: '#333333', hairLight: '#bbbbbb', a1: '#000000', a1Fill: 'hatch', a2: '#cccccc', die: '#ffffff', card: '#ffffff' },
+  },
+  stroke: { hair: 1, rule: 2, greyHair: 2 },
+  header: { layout: 'clockRight', rule: 0, ruleColor: 'none', tracking: -0.03, dateFace: 'text', dateWeight: 700 },
+  cover: { w: 122, h: 183, outline: 2, outlineColor: 'ink', shadow: 'none', under: 'none', frame: 0, radius: 0, ring: { w: 3, color: 'paper' } },
+  chip: { fill: 'a2', color: 'ink', border: 2, borderColor: 'ink', radius: 999 },
+  title: { tracking: -0.015, mark: 'none' },
+  progress: { h: 12, outline: 2, outlineColor: 'ink', fill: 'a1', track: 'paper', radius: 999 },
+  quote: { style: 'plain', rule: 0, ruleColor: 'none', face: 'text', weight: 400, slant: 'italic' },
+  tile: { style: 'plate', cols: 3, h: 74, border: 2, borderColor: 'ink', fill: 'paper', under: 'none', radius: 12, gap: 14 },
+  nav: { edge: 3, edgeStyle: 'solid', lit: 'fill', litColor: 'a2', bar: 0 },
+  sheet: { style: 'inset', edge: 2, edgeStyle: 'solid', inset: 16, border: 2, under: 'none', band: 'none', rowRule: 'hairLight', radius: 16, ring: 4 },
+  picker: { border: 2, borderColor: 'ink', fill: 'paper', radius: 999 },
+  label: { size: 11, weight: 700, tracking: 0.08, case: 'upper', color: 'muted' },
+  size: { date: 18, clock: 84, title: 32, author: 16, quote: 18, launcher: 19, label: 11, sheetRow: 18, nav: 11 },
+  misreg: 'none', ruled: 'none', frame: 'none', align: 'left', iconStroke: 2, bodyGap: 14,
+  plate: { fill: 'paper', border: 2, borderColor: 'ink', ring: 4, ringColor: 'paper', radius: 12 },
+  wallpaper: { src: 'assets/wallpaper-flowers.webp', file: 'wallpaper.png' },
+  table: [
+    ['Display face', 'Atkinson Hyperlegible 700'], ['Text face', 'Atkinson Hyperlegible 400–700 + italic'], ['Accent face', 'none'],
+    ['Paper / Ink', 'plate #fbfaf6 / #1b1a1f'], ['Muted / Text', '#4d4b55 / ink'],
+    ['Hairline', '#d9d6df (sheet rows only)'], ['Accents', 'violet #6b55c8 (progress), yellow #f2c230 (chip, lit tab)'],
+    ['Band', 'none; the wallpaper is the band'], ['Stroke', '2 px ink keyline on every plate, 4 px paper halo outside it, 3 px ink nav edge'],
+    ['Shadow', 'none (sheet only: ink 5/7 beyond the halo)'], ['Radius', '12 plates and tiles, 16 sheet, 999 chip/pill/progress, 0 cover'],
+    ['Tile', 'opaque plate: paper fill, 2 px ink keyline, 4 px paper halo; 14 px gutters show the wallpaper'],
+    ['Progress', '12 px pill, 2 px ink outline, violet on paper'], ['Sheet', 'plate inset 16, radius 16, 4 px halo'],
+    ['Chip', 'yellow pill, 2 px ink, uppercase 700'], ['Labels', '11 px uppercase 700, 0.08 em'], ['Date/clock', '18 px 700 / 84 px 700, on the header plate'],
+  ],
+  verdict: "A home screen for people who want their own picture on the device, a garden, a pet, a painting, without losing a single piece of information. The rule is simple: text never touches the wallpaper. Every row sits on an opaque plate, and the paper halo outside the ink keyline means the edge reads even against the busiest image, like these flowers. The wallpaper only shows in the margins and 14 px gutters, so it frames the information rather than competing with it. The look is fixed; only the image changes. You'd pick it over Diner to make the device feel like yours. The e-ink risk is the wallpaper itself: a full-screen photo is the heaviest possible redraw and ghosts on partial refresh. Under KOReader night mode the image is inverted unless image inversion is turned off, which turns flowers into a negative, so the night board assumes images aren't inverted. On the Paperwhite the photo dithers to 16 greys and a busy one turns to noise, which is exactly why the plates are opaque.",
+},
+];
+
+LOOKS3.push({
+  ...LOOKS3[0], id: '3b', key: 'frosted', name: 'Frosted Plates', kicker: 'Wallpaper look, translucent',
+  thesis: 'Same plates, but the wallpaper shows through them, washed toward paper. Built with KOReader\'s lighten/dim rectangle, not opacity.',
+  plate: { fill: 'paper', border: 2, borderColor: 'ink', ring: 0, ringColor: 'none', radius: 12, lighten: { op: 'lighten', day: 0.82, night: 0.84, grey: 0.85 } },
+  tile: { ...LOOKS3[0].tile, gap: 12 },
+  table: LOOKS3[0].table.map(([k, v]) => [k, ({
+    'Paper / Ink': 'plate = wallpaper lightened 0.82 toward #fbfaf6 / #1b1a1f',
+    Stroke: '2 px ink keyline on every plate, no halo; 3 px ink nav edge',
+    Tile: 'translucent plate: wallpaper lightened 0.82, 2 px ink keyline; 12 px gutters',
+    Sheet: 'opaque plate inset 16, radius 16 (modal content never sits on the image)',
+    Band: 'none; nav bar and sheet stay opaque',
+  })[k] || v]).concat([['Translucency', 'lightenRect 0.82 day, dimRect 0.84 night (toward #1d1c22), 0.85 Paperwhite. A number per mode, applied to the framebuffer under each plate before text is drawn']]),
+  verdict: "The softer version of Plates: the flowers carry on faintly behind every row, so the screen reads as one picture rather than cards on a picture. It isn't CSS opacity. Before drawing a plate's text, KoPanda lightens the framebuffer rectangle under it by 0.82 toward paper (KOReader's BlitBuffer lightenRect, or dimRect at night), so the token is a number and text is still drawn solid on top. At 0.82 the darkest flower only pulls the plate to about #d0cad6, which is still about 12:1 for ink and above 5:1 for muted labels. Below about 0.75, purple and red petals start to break up 11 px labels. The nav bar and the hold sheet stay opaque on purpose: you're acting on them, not admiring them. The e-ink risk: a lightened photo is a field of mid-greys that need waveform-heavy refreshes, so expect more ghosting than 3a and plan a full refresh on Home. On the Paperwhite the washed image dithers into a fine grain behind the text, which is why that mode uses 0.85. Before committing, check that lightenRect behaves the same on the Colorsoft's colour layer.",
+});
+
+const LOOKS2 = [
+{
+  id: '2a', key: 'sticker', name: 'Sticker Book', kicker: 'Die-cut stickers on a dotted backing sheet',
+  thesis: 'Every tile is a sticker: a white die-cut ring, an ink outline, a slight tilt. Recursive Casual everywhere.',
+  faces: { display: { family: 'Recursive', weight: 900, fvs: "'CASL' 1", repo: 'arrowtype/recursive', file: 'RecursiveSansCslSt-Black.ttf' }, text: { family: 'Recursive', weight: 600, bold: 800, fvs: "'CASL' 1", repo: 'arrowtype/recursive', file: 'RecursiveSansCslSt-SemiBold.ttf, RecursiveSansCslSt-ExtraBold.ttf' }, accent: 'none' },
+  pal: {
+    day: { paper: '#e6eaee', ink: '#1f2430', text: '#1f2430', muted: '#4a5260', hairLight: '#c3cad2', a1: '#f27a5e', a2: '#7cc0e8', a3: '#c4dc66', die: '#ffffff', card: '#ffffff' },
+    night: { paper: '#1a1e27', ink: '#f3f0e9', text: '#f3f0e9', muted: '#adb5c2', hairLight: '#2f3542', a1: '#a5493a', a2: '#2f6a8e', a3: '#5c7224', die: '#353b48', card: '#262b36' },
+    grey: { paper: '#dddddd', ink: '#000000', text: '#000000', muted: '#333333', hairLight: '#bbbbbb', a1: '#bbbbbb', a2: '#ffffff', a3: '#999999', die: '#ffffff', card: '#ffffff' },
+  },
+  stroke: { hair: 2, rule: 3, greyHair: 2 },
+  header: { layout: 'clockRight', rule: 0, ruleColor: 'none', tracking: -0.03, dateFace: 'text', dateWeight: 800 },
+  cover: { w: 136, h: 204, outline: 2, outlineColor: 'ink', shadow: { x: 3, y: 4, color: 'ink' }, under: 'none', frame: 0, radius: 0, ring: { w: 5, color: 'die' }, tilt: -2.5 },
+  chip: { fill: 'a1', color: 'ink', border: 2, borderColor: 'ink', radius: 999 },
+  title: { tracking: -0.02, mark: 'none' },
+  progress: { h: 16, outline: 2, outlineColor: 'ink', fill: 'a3', track: 'die', radius: 999 },
+  quote: { style: 'sticker', rule: 0, ruleColor: 'none', face: 'text', weight: 600, slant: 'normal', radius: 14, ring: 4 },
+  tile: { style: 'sticker', cols: 3, h: 78, border: 2, borderColor: 'ink', fill: 'none', under: 'none', fills: ['a1', 'a2', 'a3', 'a2', 'a3', 'a1'], radius: 16, ring: 5, tilt: [-2, 1.5, -1, 1, -1.5, 2], gap: 22 },
+  nav: { edge: 3, edgeStyle: 'solid', lit: 'pill', litColor: 'a1', bar: 0, radius: 999, dieBg: 1 },
+  sheet: { style: 'inset', edge: 2, edgeStyle: 'solid', inset: 18, border: 2, under: 'none', band: 'a2', rowRule: 'hairLight', radius: 22, ring: 6 },
+  picker: { border: 2, borderColor: 'ink', fill: 'die', radius: 999 },
+  label: { size: 11, weight: 800, tracking: 0.08, case: 'upper', color: 'muted' },
+  size: { date: 18, clock: 96, title: 36, author: 16, quote: 18, launcher: 19, label: 11, sheetRow: 18, nav: 11 },
+  misreg: 'none', ruled: 'none', frame: 'none', align: 'left', iconStroke: 2, bodyGap: 18,
+  texture: { kind: 'dots', pitch: 14, r: 1.2, color: 'hairLight' },
+  table: [
+    ['Display face', 'Recursive Sans Casual 900'], ['Text face', 'Recursive Sans Casual 600–800'], ['Accent face', 'none'],
+    ['Paper / Ink', '#e6eaee backing sheet / #1f2430'], ['Muted / Text', '#4a5260 / ink'],
+    ['Hairline', '#c3cad2 (backing dots, sheet rows)'], ['Accents', 'tomato #f27a5e, sky #7cc0e8, lime #c4dc66; die-cut #ffffff'],
+    ['Band', 'sky band at the top of the sheet only'], ['Stroke', '2 px ink sticker outline, 5 px die ring, 3 px ink nav edge'],
+    ['Shadow', 'hard ink 3 right 4 down, spread to the die ring (tiles, cover, quote); 5/7 under the sheet'],
+    ['Radius', '16 tiles, 14 quote, 22 sheet, 999 chip/pill/progress, 0 cover'], ['Tile', 'filled sticker cycling tomato/sky/lime, tilted −2…+2°'],
+    ['Progress', '16 px pill, 2 px ink outline, lime on white'], ['Sheet', 'white card inset 18, radius 22, die ring 6, sky header band'],
+    ['Chip', 'tomato pill, 2 px ink, uppercase 800'], ['Labels', '11 px uppercase 800, 0.08 em'], ['Date/clock', '18 px 800 / 96 px 900, clock right; backing dots 1.2 r every 14'],
+  ],
+  verdict: "The most cheerful of the set: a sticker sheet you peel your library off of. It's for someone who loves Diner's colour but finds the signage stiff, and wants the device to feel like a personal object, not a kiosk. Only the tiles, the cover and nothing typographic tilt, so the clock and title stay perfectly level. Without colour it still reads, because the white die-cut ring and hard shadow separate every sticker from the grey backing. The e-ink risk: rotated text is anti-aliased, and on a partial refresh the stair-stepped edges of the tilted tile labels can look fuzzy next to the crisp clock. Keep tilts at 2° or less and labels at 19 px bold or more, and if they shimmer, set tilt to 0 and lose nothing structural.",
+},
+{
+  id: '2b', key: 'funnies', name: 'Funnies', kicker: 'Sunday comics page',
+  thesis: 'Panels with gutters, a yellow caption box, Ben-Day dots and a speech bubble for the quote. Shantell Sans throughout.',
+  faces: { display: { family: 'Shantell Sans', weight: 800, repo: 'arrowtype/shantell-sans', file: 'ShantellSans-ExtraBold.ttf' }, text: { family: 'Shantell Sans', weight: 500, bold: 700, repo: 'arrowtype/shantell-sans', file: 'ShantellSans-Medium.ttf, ShantellSans-Bold.ttf' }, accent: 'none' },
+  pal: {
+    day: { paper: '#f6f0dc', ink: '#151310', text: '#151310', muted: '#4f483d', hairLight: '#d8cdb0', a1: '#f6cf3c', a2: '#e1493e', a3: '#3d7cc6' },
+    night: { paper: '#17161c', ink: '#f4efe0', text: '#f4efe0', muted: '#b6ae9e', hairLight: '#3a3730', a1: '#7a6212', a2: '#a3362e', a3: '#2c5990' },
+    grey: { paper: '#ffffff', ink: '#000000', text: '#000000', muted: '#333333', hairLight: '#bbbbbb', a1: '#dddddd', a2: '#777777', a3: '#999999' },
+  },
+  stroke: { hair: 2, rule: 3, greyHair: 2 },
+  header: { layout: 'clockRight', rule: 0, ruleColor: 'none', tracking: -0.02, dateFace: 'text', dateWeight: 800, caption: 'a1' },
+  cover: { w: 140, h: 210, outline: 3, outlineColor: 'ink', shadow: 'none', under: 'none', frame: 0, radius: 0 },
+  chip: { fill: 'a1', color: 'ink', border: 2, borderColor: 'ink', radius: 0 },
+  title: { tracking: -0.01, mark: 'none' },
+  progress: { h: 14, outline: 3, outlineColor: 'ink', fill: 'a2', track: 'paper', radius: 0 },
+  quote: { style: 'bubble', rule: 0, ruleColor: 'none', face: 'text', weight: 500, slant: 'normal', radius: 30 },
+  tile: { style: 'panel', cols: 3, h: 80, border: 3, borderColor: 'ink', fill: 'none', under: 'none', fills: ['a1', 'dots:a2', 'dots:a3', 'paper', 'dots:a3', 'dots:a2'], gap: 10 },
+  nav: { edge: 3, edgeStyle: 'solid', lit: 'fill', litColor: 'a1', bar: 0 },
+  sheet: { style: 'inset', edge: 3, edgeStyle: 'solid', inset: 16, border: 3, under: { x: 7, y: 7, fill: 'ink' }, band: 'a1', rowRule: 'hairLight' },
+  picker: { border: 2, borderColor: 'ink', fill: 'paper', radius: 0 },
+  label: { size: 11, weight: 800, tracking: 0.06, case: 'upper', color: 'muted' },
+  size: { date: 18, clock: 100, title: 38, author: 16, quote: 18, launcher: 19, label: 11, sheetRow: 18, nav: 11 },
+  misreg: 'none', ruled: 'none', frame: 'none', align: 'left', iconStroke: 2, bodyGap: 18,
+  dots: { pitch: 7, r: 1.6 },
+  table: [
+    ['Display face', 'Shantell Sans 800'], ['Text face', 'Shantell Sans 500–700'], ['Accent face', 'none'],
+    ['Paper / Ink', '#f6f0dc newsprint / #151310'], ['Muted / Text', '#4f483d / ink'],
+    ['Hairline', '#d8cdb0 (sheet rows only)'], ['Accents', 'yellow #f6cf3c, red #e1493e, blue #3d7cc6'],
+    ['Band', 'yellow caption box behind date and weather; yellow band on the sheet'], ['Stroke', '3 px ink panels, bubble, cover, nav edge; 2 px ink chip'],
+    ['Shadow', 'none, except hard ink 7/7 under the sheet'], ['Radius', '30 speech bubble, 0 elsewhere'],
+    ['Tile', '3 px ink panel, 10 px gutters; fills yellow, or Ben-Day dots (1.6 r every 7) in red or blue on paper'],
+    ['Progress', '14 px, 3 px ink outline, red on paper'], ['Sheet', 'inset 16, 3 px ink, ink 7/7 offset, yellow caption band'],
+    ['Chip', 'yellow caption box, 2 px ink, uppercase 800'], ['Labels', '11 px uppercase 800, 0.06 em'], ['Date/clock', '18 px 800 in caption / 100 px 800, clock right'],
+  ],
+  verdict: "The home screen as the Sunday funnies: panels and gutters, a yellow caption box for the date, and the quote in a speech bubble, which tells you it's a quote before you read a word. It's for someone who'd pick Diner for its noise but wants warmth and a wink rather than mid-century polish. It's the best of the playful three on the Paperwhite, because Ben-Day dots are a real halftone, so the colours turn into honest e-ink greys instead of flat fills. The risk: dots behind text cost contrast, and at 7 px pitch they can beat against the panel's own dithering. Keep dots at or under about 16% coverage, never put them behind type under 19 px, and test the red-dot panel in direct sun.",
+},
+{
+  id: '2c', key: 'toybox', name: 'Toybox', kicker: 'Chunky toy blocks',
+  thesis: 'Rounded blocks with a solid edge beneath, round coloured icon badges and a floating pill nav. Baloo 2 with Nunito.',
+  faces: { display: { family: 'Baloo 2', weight: 800, repo: 'EkType/Baloo2', file: 'Baloo2-ExtraBold.ttf' }, text: { family: 'Nunito', weight: 700, bold: 800, repo: 'googlefonts/nunito', file: 'Nunito-Bold.ttf, Nunito-ExtraBold.ttf, Nunito-SemiBoldItalic.ttf' }, accent: 'none' },
+  pal: {
+    day: { paper: '#fbf5ec', ink: '#2b2934', text: '#2b2934', muted: '#5b5867', hairLight: '#e7ddcd', a1: '#ffc94a', a2: '#ff8f75', a3: '#86d3b4', die: '#ffffff', card: '#fbf5ec' },
+    night: { paper: '#1e1d26', ink: '#f4f0ea', text: '#f4f0ea', muted: '#b4b1c0', hairLight: '#383645', a1: '#8a6a12', a2: '#a2493a', a3: '#2f7a5c', die: '#282733', card: '#24232e' },
+    grey: { paper: '#ffffff', ink: '#000000', text: '#000000', muted: '#333333', hairLight: '#cccccc', a1: '#dddddd', a2: '#999999', a3: '#bbbbbb', die: '#ffffff', card: '#ffffff' },
+  },
+  stroke: { hair: 2, rule: 3, greyHair: 2 },
+  header: { layout: 'clockLeft', rule: 0, ruleColor: 'none', tracking: -0.02, dateFace: 'text', dateWeight: 800 },
+  cover: { w: 140, h: 210, outline: 3, outlineColor: 'ink', shadow: { x: 0, y: 6, color: 'ink' }, under: 'none', frame: 0, radius: 6 },
+  chip: { fill: 'a3', color: 'ink', border: 2, borderColor: 'ink', radius: 999 },
+  title: { tracking: -0.01, mark: 'none' },
+  progress: { h: 18, outline: 3, outlineColor: 'ink', fill: 'a2', track: 'paper', radius: 999 },
+  quote: { style: 'plain', rule: 0, ruleColor: 'none', face: 'text', weight: 600, slant: 'italic' },
+  tile: { style: 'block', cols: 3, h: 84, border: 3, borderColor: 'ink', fill: 'paper', under: 'none', fills: ['a1', 'a2', 'a3', 'a2', 'a3', 'a1'], radius: 18, edge: 6, gap: 16 },
+  nav: { edge: 3, edgeStyle: 'solid', lit: 'pill', litColor: 'a1', bar: 0, radius: 999, float: 6 },
+  sheet: { style: 'inset', edge: 3, edgeStyle: 'solid', inset: 16, border: 3, under: { x: 0, y: 8, fill: 'ink' }, band: 'a3', rowRule: 'hairLight', radius: 24 },
+  picker: { border: 2, borderColor: 'ink', fill: 'paper', radius: 999 },
+  label: { size: 11, weight: 800, tracking: 0.1, case: 'upper', color: 'muted' },
+  size: { date: 18, clock: 100, title: 36, author: 16, quote: 18, launcher: 19, label: 11, sheetRow: 18, nav: 11 },
+  misreg: 'none', ruled: 'none', frame: 'none', align: 'left', iconStroke: 2, bodyGap: 18,
+  table: [
+    ['Display face', 'Baloo 2 800'], ['Text face', 'Nunito 700–800, 600 italic for the quote'], ['Accent face', 'none'],
+    ['Paper / Ink', '#fbf5ec / #2b2934'], ['Muted / Text', '#5b5867 / ink'],
+    ['Hairline', '#e7ddcd (sheet rows)'], ['Accents', 'sun #ffc94a, coral #ff8f75, mint #86d3b4'],
+    ['Band', 'mint band on the sheet only'], ['Stroke', '3 px ink blocks, cover, progress, nav; 2.5 px ink icon badges'],
+    ['Shadow', 'solid block edge: ink 0 right 6 down (tiles, cover, nav), 8 under the sheet'],
+    ['Radius', '18 tiles, 24 sheet, 6 cover, 999 badges/pills/progress/nav'], ['Tile', 'paper block with a 42 px round icon badge cycling sun/coral/mint'],
+    ['Progress', '18 px pill, 3 px ink outline, coral on paper'], ['Sheet', 'inset 16, radius 24, ink 0/8 edge, mint header band'],
+    ['Chip', 'mint pill, 2 px ink, uppercase 800'], ['Labels', '11 px uppercase 800, 0.1 em'], ['Date/clock', '18 px 800 / 100 px 800, clock left; floating pill nav, 6 px edge'],
+  ],
+  verdict: "Toy blocks: everything you can press has a solid edge under it, as if it would click down, and the colour lives in small round badges so the blocks themselves stay calm. It's for someone who wants friendly, maybe a shared or family Kindle, and finds Diner's full-colour tiles too much. Without colour it's nearly unchanged, because the 6 px edge and round badges carry the identity, not the hue. The risk: large rounded corners and pill shapes are all anti-aliased curves, which ghost more than straight edges on partial refreshes, and the floating nav's rounded ends may leave a faint outline after page turns. Make sure KOReader does a full refresh when returning home.",
+},
+];
+
+function luaOf(v, ind) {
+  ind = ind || '';
+  if (v === null || v === undefined || v === 'none') return '"none"';
+  if (typeof v === 'number') return String(v);
+  if (typeof v === 'string') return JSON.stringify(v);
+  if (Array.isArray(v)) return '{ ' + v.map(x => luaOf(x, ind)).join(', ') + ' }';
+  const n = ind + '  ';
+  return '{\n' + Object.entries(v).map(([k, x]) => n + (/^[a-z_]\w*$/i.test(k) ? k : `["${k}"]`) + ' = ' + luaOf(x, n)).join(',\n') + '\n' + ind + '}';
+}
+
+function ctx(L, mode) {
+  const pm = mode === 'sheet' ? 'day' : mode;
+  const P = L.pal[pm], grey = pm === 'grey';
+  const W = grey ? 618 : 632, H = grey ? 824 : 840;
+  const hair = grey ? Math.max(L.stroke.greyHair, L.stroke.hair) : L.stroke.hair;
+  const fd = `'${L.faces.display.family}', serif`, ft = `'${L.faces.text.family}', sans-serif`;
+  const fr = L.frame !== 'none' ? L.frame : null;
+  const inset = fr ? fr.inset + fr.w : 0;
+  const pad = L.plate ? 24 : (fr ? 44 : 40);
+  const navH = fr ? 72 : 84;
+  const col = r => (r === 'none' || r == null) ? 'transparent' : (P[r] || r);
+  const fill = r => (typeof r === 'string' && r.startsWith('dots:')) ? (() => { const [, dc, base] = r.split(':'), Dt = L.dots; return { backgroundColor: col(base || 'paper'), backgroundImage: `radial-gradient(circle, ${col(dc)} ${Dt.r}px, transparent ${Dt.r + 0.6}px)`, backgroundSize: `${Dt.pitch}px ${Dt.pitch}px` }; })() : (P[r + 'Fill'] === 'hatch') ? { backgroundImage: `repeating-linear-gradient(135deg, ${P.ink} 0 ${HATCH.line}px, ${P.paper} ${HATCH.line}px ${HATCH.pitch}px)` } : { background: col(r) };
+  const lab = o => ({ fontFamily: ft, fontSize: L.label.size, fontWeight: L.label.weight, letterSpacing: L.label.tracking + 'em', textTransform: L.label.case === 'upper' ? 'uppercase' : 'none', fontVariantCaps: L.label.case === 'smallcaps' ? 'all-small-caps' : 'normal', color: P[L.label.color], lineHeight: 1.2, ...o });
+  const mis = L.misreg !== 'none' ? `${L.misreg.x}px ${L.misreg.y}px 0 ${col(L.misreg.color)}` : 'none';
+  const display = { fontFamily: fd, fontWeight: L.faces.display.weight, color: P.ink, fontVariantNumeric: 'lining-nums', fontVariationSettings: L.faces.display.fvs || 'normal' };
+  return { L, P, grey, W, H, hair, fd, ft, fr, inset, pad, navH, col, fill, lab, mis, display };
+}
+
+const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255}, ${n >> 8 & 255}, ${n & 255}, ${a})`; };
+function plateOf(c) {
+  const { L, P } = c, p = L.plate;
+  const amt = p.lighten && (c.grey ? p.lighten.grey : (c.L.pal.night === P ? p.lighten.night : p.lighten.day));
+  return { background: amt ? rgba(P.paper, amt) : P.paper, border: `${p.border}px solid ${P.ink}`, borderRadius: p.radius, boxShadow: p.ring ? `0 0 0 ${p.ring}px ${P.paper}` : 'none' };
+}
+function common(c) {
+  const { L, P, W, H, fr, inset, pad, navH, col } = c;
+  const R = L.ruled;
+  return {
+    board: { position: 'relative', width: W, height: H, background: P.paper, fontVariationSettings: L.faces.text.fvs || 'normal', overflow: 'hidden', fontFamily: c.ft, color: P.text, boxSizing: 'border-box', flex: 'none', boxShadow: '0 1px 2px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.08)' },
+    rules: L.wallpaper ? { position: 'absolute', inset: 0, backgroundImage: `url("${L.wallpaper.src}")`, backgroundSize: 'cover', backgroundPosition: 'center', filter: c.grey ? 'grayscale(1)' : 'none' } : R !== 'none' ? { position: 'absolute', inset: 0, backgroundImage: `repeating-linear-gradient(to bottom, transparent 0 ${R.pitch - c.hair * (c.grey ? 1 : R.line)}px, ${col(R.color)} ${R.pitch - c.hair * (c.grey ? 1 : R.line)}px ${R.pitch}px)` } : (L.texture ? { position: 'absolute', inset: 0, backgroundImage: `radial-gradient(circle, ${col(L.texture.color)} ${L.texture.r}px, transparent ${L.texture.r + 0.6}px)`, backgroundSize: `${L.texture.pitch}px ${L.texture.pitch}px` } : { display: 'none' }),
+    margin: R !== 'none' ? { position: 'absolute', top: 0, bottom: 0, left: R.marginX, width: c.grey ? 2 : R.marginLine, background: col(R.marginColor) } : { display: 'none' },
+    frame: fr ? { position: 'absolute', inset: fr.inset, border: `${fr.w}px double ${col(fr.color)}`, pointerEvents: 'none', zIndex: 2 } : { display: 'none' },
+    body: { position: 'relative', height: '100%', boxSizing: 'border-box', padding: `${L.plate ? 26 : (fr ? 40 : (R !== 'none' ? 34 : 36))}px ${pad}px ${navH + inset + 14}px`, display: 'flex', flexDirection: 'column', gap: L.bodyGap || (L.key === 'logbook' ? 22 : (L.key === 'exlibris' ? 18 : 24)) },
+    nav: L.nav.float ? { position: 'absolute', left: 22, right: 22, bottom: 20, height: navH - 16, display: 'flex', gap: 4, padding: 5, boxSizing: 'border-box', border: `${L.nav.edge}px solid ${P.ink}`, borderRadius: L.nav.radius, background: P.die || P.paper, boxShadow: `0 ${L.nav.float}px 0 0 ${P.ink}`, zIndex: 1 } : { position: 'absolute', left: inset, right: inset, bottom: inset, height: navH, display: 'flex', borderTop: `${L.nav.edge}px ${L.nav.edgeStyle} ${P.ink}`, background: P.die && L.nav.dieBg ? P.die : P.paper, zIndex: 1 },
+  };
+}
+
+function navItems(c, lit) {
+  const { L, P } = c;
+  return NAV.map(([t, ic], i) => {
+    const on = i === lit, mode = L.nav.lit;
+    const color = on ? (mode === 'text' ? c.col(L.nav.litColor) : P.ink) : P.muted;
+    return {
+      text: t,
+      icon: icon(ic, color, 24, L.iconStroke, L.key),
+      cell: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 7, position: 'relative', ...(on && (mode === 'fill' || mode === 'pill') ? c.fill(L.nav.litColor) : {}), ...(mode === 'pill' ? { borderRadius: L.nav.radius, border: `2px solid ${on ? P.ink : 'transparent'}`, margin: L.nav.float ? 0 : '9px 3px', gap: 4 } : {}) },
+      bar: on && mode === 'bar' ? { position: 'absolute', top: -L.nav.edge, left: 0, right: 0, height: L.nav.bar, background: c.col(L.nav.litColor) } : { display: 'none' },
+      label: c.lab({ fontSize: L.size.nav, color, fontWeight: on ? 800 : L.label.weight, borderBottom: `2px solid ${on && mode === 'text' ? color : 'transparent'}`, paddingBottom: 1 }),
+    };
+  });
+}
+
+function coverParts(c, w, h, small) {
+  const { L, P } = c, cv = L.cover;
+  const sh = [];
+  const ow = c.grey ? Math.max(2, cv.outline) : cv.outline;
+  const ow2 = (ow && !cv.frame) ? ow : 0, rw = cv.ring ? cv.ring.w : 0;
+  if (ow2) sh.push(`0 0 0 ${ow2}px ${c.grey ? P.ink : c.col(cv.outlineColor)}`);
+  if (rw) sh.push(`0 0 0 ${ow2 + rw}px ${c.col(cv.ring.color)}`);
+  if (cv.shadow !== 'none') sh.push(`${cv.shadow.x}px ${cv.shadow.y}px 0 ${ow2 + rw}px ${c.col(cv.shadow.color)}`);
+  const fw = cv.frame;
+  return {
+    box: { position: 'relative', flex: 'none', alignSelf: 'flex-start', transform: cv.tilt && !small ? `rotate(${cv.tilt}deg)` : 'none', padding: fw ? 4 : 0, border: fw ? `${fw}px double ${P.ink}` : 'none' },
+    under: cv.under !== 'none' ? { position: 'absolute', left: cv.under.x, top: cv.under.y, width: w, height: h, border: `${cv.under.border}px solid ${c.col(cv.under.color)}`, boxSizing: 'border-box' } : { display: 'none' },
+    cover: { position: 'relative', width: w, height: h, backgroundImage: 'repeating-linear-gradient(135deg,#d6d2ca 0 6px,#e1ddd5 6px 12px)', boxShadow: sh.join(', ') || 'none', borderRadius: cv.radius, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: small ? 6 : 10, boxSizing: 'border-box', fontFamily: 'ui-monospace, Menlo, monospace', fontSize: small ? 9 : 10, color: '#3f3b36', lineHeight: 1.35, overflow: 'hidden', textAlign: 'left' },
+  };
+}
+
+function home(L, mode) {
+  const c = ctx(L, mode), { P, col, fill, lab, display, hair } = c, S = L.size;
+  const s = common(c);
+  const hl = L.header.layout, center = hl === 'center';
+  s.wrap = { display: 'flex', flexDirection: 'column', gap: 8, order: { day: 1, sheet: 2, night: 4, grey: 5 }[mode] };
+  s.header = { display: 'flex', flexDirection: center ? 'column-reverse' : (hl === 'clockLeft' ? 'row-reverse' : 'row'), justifyContent: 'space-between', alignItems: center ? 'center' : 'flex-end', gap: center ? 6 : 16, paddingBottom: L.header.rule ? 16 : 0, borderBottom: L.header.rule ? `${L.header.rule}px solid ${col(L.header.ruleColor)}` : 'none', textAlign: center ? 'center' : (hl === 'clockLeft' ? 'right' : 'left') };
+  s.hLeft = { display: 'flex', flexDirection: 'column', gap: 4, paddingBottom: center ? 0 : 6, ...(L.header.caption ? { ...fill(L.header.caption), border: `3px solid ${P.ink}`, padding: '8px 12px', marginBottom: 4 } : {}) };
+  s.hDay = lab({});
+  s.hDate = L.header.dateFace === 'display' ? { fontFamily: c.fd, fontStyle: 'italic', fontSize: S.date, color: P.ink, lineHeight: 1.1 } : { fontFamily: c.ft, fontWeight: L.header.dateWeight, fontSize: S.date, color: P.ink, lineHeight: 1.1, letterSpacing: L.key === 'grid' ? '-0.01em' : 0 };
+  s.hWeather = { fontFamily: c.ft, fontSize: center ? 16 : 14, color: P.text, fontStyle: center ? 'italic' : 'normal', fontWeight: L.key === 'logbook' ? 400 : 500 };
+  s.clock = { ...display, fontSize: S.clock, lineHeight: 0.8, letterSpacing: L.header.tracking + 'em', textShadow: c.mis, fontVariantNumeric: 'lining-nums tabular-nums', whiteSpace: 'nowrap' };
+  const cp = coverParts(c, L.cover.w, L.cover.h);
+  s.feat = { display: 'flex', gap: center ? 26 : 24, alignItems: 'stretch' };
+  s.coverBox = cp.box; s.coverUnder = cp.under; s.cover = cp.cover;
+  s.featText = { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', paddingTop: 2, paddingBottom: L.key === 'riso' ? 6 : 0 };
+  const ch = L.chip, boxed = ch.fill !== 'none' || ch.border;
+  s.chip = lab({ alignSelf: 'flex-start', color: col(ch.color), ...(ch.fill !== 'none' ? fill(ch.fill) : {}), border: ch.border ? `${ch.border}px solid ${col(ch.borderColor)}` : 'none', padding: boxed ? (ch.radius ? '4px 11px' : '4px 8px') : 0, borderRadius: ch.radius || 0, marginBottom: 12, fontWeight: boxed ? 700 : L.label.weight });
+  s.title = { ...display, fontSize: S.title, lineHeight: 1.04, letterSpacing: L.title.tracking + 'em', textShadow: c.mis, textWrap: 'pretty' };
+  s.titleMark = L.title.mark !== 'none' ? { ...fill(L.title.mark), padding: '0 6px', marginLeft: -6, boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone' } : {};
+  s.author = { fontFamily: c.ft, fontSize: S.author, color: P.text, marginTop: 10, fontStyle: center ? 'italic' : 'normal', fontWeight: L.key === 'logbook' ? 400 : 500 };
+  const pg = L.progress;
+  s.prog = { position: 'relative', height: pg.h, boxSizing: 'border-box', borderRadius: pg.radius || 0, overflow: 'hidden', ...fill(pg.track), border: pg.outline ? `${pg.outline}px solid ${col(pg.outlineColor)}` : 'none' };
+  s.progFill = { position: 'absolute', left: 0, top: 0, bottom: 0, width: '62%', ...fill(pg.fill) };
+  s.progText = { fontFamily: c.ft, fontSize: center ? 17 : 14, fontWeight: center || L.key === 'logbook' ? 400 : 600, fontStyle: center ? 'italic' : 'normal', color: P.text, marginTop: 10, fontVariantNumeric: 'tabular-nums lining-nums' };
+  const q = L.quote, qr = Math.max(q.rule, q.rule ? hair : 0);
+  s.quoteRow = { borderTop: q.style !== 'plain' && q.rule ? `${q.style === 'ruleTop' ? q.rule : qr}px solid ${col(q.ruleColor)}` : 'none', borderBottom: (q.style === 'ruleBoth' || q.style === 'centered') ? `${qr}px solid ${col(q.ruleColor)}` : 'none', padding: q.style === 'plain' ? '0' : (q.style === 'ruleTop' ? '14px 0 0' : '14px 0'), textAlign: center ? 'center' : 'left' };
+  s.quote = { fontFamily: q.face === 'display' ? c.fd : c.ft, fontSize: S.quote, fontWeight: q.weight, fontStyle: q.slant, lineHeight: L.key === 'logbook' ? '28px' : 1.35, color: P.ink, textWrap: 'pretty', letterSpacing: L.key === 'grid' ? '-0.01em' : 0 };
+  s.quoteTail = { display: 'none' };
+  if (q.style === 'sticker') Object.assign(s.quoteRow, { background: P.die, border: `2px solid ${P.ink}`, borderRadius: q.radius, padding: '14px 18px', boxShadow: `0 0 0 ${q.ring}px ${P.die}, 3px 4px 0 ${q.ring}px ${P.ink}`, margin: `${q.ring}px` });
+  if (q.style === 'bubble') { Object.assign(s.quoteRow, { position: 'relative', background: P.paper, border: `3px solid ${P.ink}`, borderRadius: q.radius, padding: '14px 22px', marginBottom: 10 }); s.quoteTail = { position: 'absolute', left: 54, bottom: -12, width: 20, height: 20, background: P.paper, borderRight: `3px solid ${P.ink}`, borderBottom: `3px solid ${P.ink}`, transform: 'rotate(45deg)' }; }
+  const T = L.tile;
+  s.launch = { display: 'grid', gridTemplateColumns: `repeat(${T.cols}, minmax(0,1fr))`, columnGap: T.style === 'cell' ? hair : (T.style === 'ruled' ? 28 : 16), rowGap: T.style === 'cell' ? hair : (T.style === 'ruled' ? 0 : (T.style === 'box' ? 16 : 18)), ...(T.style === 'cell' ? { background: P.hairLight } : {}) };
+  s.tile = { position: 'relative', height: T.h, ...(T.style === 'cell' ? { background: P.paper } : {}) };
+  s.tileUnder = T.under !== 'none' ? { position: 'absolute', left: T.under.x, top: T.under.y, right: -T.under.x, bottom: -T.under.y, ...fill(T.under.fill) } : { display: 'none' };
+  const iconC = P.ink;
+  s.tileInner = T.style === 'rule' ? { height: '100%', boxSizing: 'border-box', borderTop: `${T.border}px solid ${col(T.borderColor)}`, paddingTop: 10, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }
+    : T.style === 'box' ? { position: 'relative', height: '100%', boxSizing: 'border-box', border: `${T.border}px solid ${col(T.borderColor)}`, padding: '11px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }
+    : T.style === 'ruled' ? { height: '100%', boxSizing: 'border-box', display: 'flex', alignItems: 'flex-end', gap: 12, paddingBottom: 5 }
+    : { height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 };
+  s.tileText = T.style === 'ruled' ? { display: 'flex', alignItems: 'baseline', gap: 10 } : { display: 'flex', flexDirection: T.style === 'cell' ? 'row' : 'column', alignItems: T.style === 'cell' ? 'baseline' : 'flex-start', gap: T.style === 'cell' ? 6 : 2 };
+  s.tileLabel = { fontFamily: center ? c.fd : c.ft, fontSize: S.launcher, fontWeight: center ? 500 : 700, color: P.ink, lineHeight: 1.1, fontVariantCaps: center ? 'all-small-caps' : 'normal', letterSpacing: center ? '0.06em' : (L.key === 'grid' ? '-0.01em' : 0) };
+  if (T.gap) { s.launch.columnGap = T.gap; s.launch.rowGap = T.gap; }
+  if (['sticker', 'panel', 'block', 'plate'].includes(T.style)) s.tileText = { display: 'flex', alignItems: 'baseline', gap: 8 };
+  const tiles = TILES.map(([label, ic, sub], i) => {
+    const f = T.fills ? T.fills[i % T.fills.length] : null;
+    const tileS = { ...s.tile, ...(T.tilt ? { transform: `rotate(${T.tilt[i % T.tilt.length]}deg)` } : {}) };
+    let innerS = s.tileInner, ico = icon(ic, iconC, 24, L.iconStroke, L.key);
+    const col3 = { height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' };
+    if (T.style === 'sticker') innerS = { ...col3, border: `2px solid ${P.ink}`, borderRadius: T.radius, ...fill(f), padding: '11px 13px', boxShadow: `0 0 0 ${T.ring}px ${P.die}, 3px 4px 0 ${T.ring}px ${P.ink}` };
+    if (T.style === 'plate') innerS = { ...col3, ...plateOf(c), padding: '11px 13px' };
+    if (T.style === 'panel') innerS = { ...col3, border: `3px solid ${P.ink}`, ...fill(f), padding: '10px 12px' };
+    if (T.style === 'block') { innerS = { ...col3, border: `3px solid ${P.ink}`, borderRadius: T.radius, background: P.paper, boxShadow: `0 ${T.edge}px 0 0 ${P.ink}`, padding: '9px 11px' }; ico = h('span', { style: { width: 42, height: 42, borderRadius: 999, boxSizing: 'border-box', border: `2.5px solid ${P.ink}`, ...fill(f), display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' } }, icon(ic, iconC, 22, L.iconStroke, L.key)); }
+    return { label, sub: sub || '', icon: ico, subS: sub ? lab({}) : { display: 'none' }, tileS, underS: s.tileUnder, innerS };
+  });
+  s.stats = lab({ fontSize: Math.max(L.label.size, 12), color: P.text, textAlign: center ? 'center' : 'left', marginTop: 'auto' });
+  if (L.plate) {
+    const pl = plateOf(c);
+    Object.assign(s.header, pl, { padding: '14px 18px', alignItems: 'center' });
+    s.hLeft.paddingBottom = 0;
+    Object.assign(s.feat, pl, { padding: 14, gap: 20 });
+    Object.assign(s.quoteRow, pl, { padding: '12px 18px' });
+    Object.assign(s.stats, pl, { alignSelf: 'flex-start', borderRadius: 999, padding: '8px 14px' });
+  }
+  const b = { caption: { day: '01 · Home, day · Colorsoft', sheet: '02 · Hold on the book', night: '04 · Home, night (as seen)', grey: '05 · Home · Paperwhite, 16 greys · 618×824' }[mode], s, tiles, nav: navItems(c, 0), sheet: mode === 'sheet', rows: [] };
+  if (mode === 'sheet') sheet(c, b);
+  return b;
+}
+
+function sheet(c, b) {
+  const { L, P, col, fill, lab, hair, display } = c, s = b.s, sh = L.sheet, S = L.size;
+  const center = L.align === 'center';
+  const inset = sh.style === 'panel' ? c.inset : sh.inset;
+  s.sheetBox = { position: 'absolute', left: inset, right: inset, bottom: inset, zIndex: 3 };
+  s.sheetUnder = sh.under !== 'none' ? { position: 'absolute', left: sh.under.x, top: sh.under.y, right: -sh.under.x, bottom: -sh.under.y, ...fill(sh.under.fill) } : { display: 'none' };
+  const R = L.ruled;
+  s.sheet = sh.style === 'panel'
+    ? { position: 'relative', background: P.paper, borderTop: `${sh.edge}px ${sh.edgeStyle} ${P.ink}`, padding: `22px ${c.pad}px 22px` }
+    : { position: 'relative', background: P.card || P.paper, border: `${sh.border}px solid ${P.ink}`, ...(sh.style === 'card' ? { borderTop: `${sh.edge}px solid ${P.a2}`, backgroundImage: `repeating-linear-gradient(to bottom, transparent 0 ${R.pitch - c.hair}px, ${P.hairLight} ${R.pitch - c.hair}px ${R.pitch}px)` } : {}), padding: '0 20px 8px' };
+  if (sh.radius) { s.sheet.borderRadius = sh.radius; s.sheet.overflow = 'hidden'; s.sheetUnder.borderRadius = sh.radius; }
+  if (sh.ring) s.sheet.boxShadow = `0 0 0 ${sh.ring}px ${P.die}, 5px 7px 0 ${sh.ring}px ${P.ink}`;
+  const band = sh.band !== 'none';
+  s.sheetHead = { display: 'flex', flexDirection: center ? 'column' : 'row', alignItems: center ? 'center' : 'flex-start', textAlign: center ? 'center' : 'left', gap: center ? 12 : 16, padding: sh.style === 'panel' ? '0 0 18px' : '18px 20px 16px', margin: sh.style === 'panel' ? 0 : '0 -20px', ...(band ? fill(sh.band) : {}), borderBottom: `${sh.style === 'inset' ? 2 : Math.max(hair, 2)}px solid ${P.ink}` };
+  const cp = coverParts(c, center ? 52 : 64, center ? 78 : 96, true);
+  s.sheetCover = { ...cp.cover, flex: 'none' };
+  s.sheetMeta = { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: center ? 'center' : 'stretch', gap: 6 };
+  s.sheetTitle = { ...display, fontSize: Math.round(S.title * 0.72), lineHeight: 1.05, textShadow: c.mis };
+  s.sheetAuthor = { fontFamily: c.ft, fontSize: 15, color: P.text, fontStyle: center ? 'italic' : 'normal' };
+  s.sheetProgRow = { display: 'flex', alignItems: 'center', gap: 10, width: center ? 240 : 'auto', fontFamily: c.ft, fontSize: 13, fontWeight: 700, color: P.text, marginTop: 4 };
+  const pg = L.progress;
+  s.sheetProg = { position: 'relative', flex: 1, borderRadius: pg.radius || 0, overflow: 'hidden', height: Math.min(pg.h, 10), boxSizing: 'border-box', ...fill(pg.track), border: pg.outline ? `${pg.outline}px solid ${col(pg.outlineColor)}` : 'none' };
+  s.sheetLast = lab({});
+  const rr = sh.rowRule;
+  s.row = { display: 'flex', justifyContent: center ? 'center' : 'space-between', gap: 8, alignItems: 'center', height: L.ruled !== 'none' ? 56 : 48, boxSizing: 'border-box', borderBottom: rr !== 'none' ? `${hair}px solid ${col(rr)}` : 'none', fontFamily: center ? c.fd : c.ft, fontSize: S.sheetRow, fontWeight: center || L.key === 'logbook' ? 400 : 500, color: P.ink, paddingTop: L.ruled !== 'none' ? 18 : 0, letterSpacing: L.key === 'grid' ? '-0.01em' : 0 };
+  s.rowChev = { fontSize: S.sheetRow + 4, lineHeight: 1, color: P.ink, fontFamily: c.ft };
+  b.rows = ROWS.map(([label, chev]) => ({ label, chev }));
+}
+
+function library(L) {
+  const c = ctx(L, 'day'), { P, col, fill, lab, display, hair } = c, S = L.size;
+  const s = common(c), center = L.align === 'center';
+  s.wrap = { display: 'flex', flexDirection: 'column', gap: 8, order: 3 };
+  s.head = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, paddingBottom: L.header.rule ? 14 : 0, borderBottom: L.header.rule ? `${L.header.rule}px solid ${col(L.header.ruleColor)}` : 'none' };
+  s.headL = { display: 'flex', flexDirection: 'column', gap: 4 };
+  s.libTitle = { ...display, fontSize: L.key === 'riso' ? 56 : S.title, lineHeight: 0.95, textShadow: c.mis, letterSpacing: L.title.tracking + 'em' };
+  s.count = lab({});
+  const pk = L.picker;
+  s.picker = lab({ color: P.ink, fontWeight: 700, padding: pk.border ? '7px 10px' : '7px 2px', border: pk.border ? `${pk.border}px solid ${col(pk.borderColor)}` : 'none', borderBottom: pk.border ? `${pk.border}px solid ${col(pk.borderColor)}` : `${Math.max(hair, 1)}px solid ${P.ink}`, ...(pk.fill !== 'none' ? fill(pk.fill) : {}) });
+  const cw = Math.floor((c.W - 2 * c.pad - 40) / 3) - (L.cover.frame ? 2 * (L.cover.frame + 4) : 0), chh = Math.round(cw * 1.5);
+  s.grid = { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', columnGap: 20, rowGap: L.ruled !== 'none' ? 18 : 22, marginTop: 4 };
+  s.item = { display: 'flex', flexDirection: 'column', gap: 8, alignItems: center ? 'center' : 'stretch' };
+  const T = L.tile, fullW = cw + (L.cover.frame ? 2 * (L.cover.frame + 4) : 0), fullH = chh + (L.cover.frame ? 2 * (L.cover.frame + 4) : 0);
+  s.folder = { position: 'relative', width: fullW, height: fullH, background: T.style === 'ruled' ? P.paper : 'transparent' };
+  s.folderUnder = T.under !== 'none' ? { position: 'absolute', left: T.under.x, top: T.under.y, right: -T.under.x, bottom: -T.under.y, ...fill(T.under.fill) } : { display: 'none' };
+  s.folderInner = { position: 'relative', height: '100%', boxSizing: 'border-box', padding: T.style === 'rule' ? '12px 0 0' : 14, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: center ? 'center' : 'flex-start', textAlign: center ? 'center' : 'left', ...(T.style === 'rule' ? { borderTop: `${T.border}px solid ${P.ink}` } : T.style === 'cell' ? { border: `${fill ? 1 : 1}px solid ${P.hairLight}`, outline: `${L.cover.frame}px double ${P.ink}`, outlineOffset: -L.cover.frame } : { border: `2px solid ${P.ink}` }) };
+  if (['sticker', 'panel', 'block'].includes(T.style)) {
+    Object.assign(s.folderInner, { border: `${T.style === 'sticker' ? 2 : 3}px solid ${P.ink}`, borderRadius: T.radius || 0, ...(T.style === 'block' ? { background: P.paper, boxShadow: `0 ${T.edge}px 0 0 ${P.ink}` } : fill(T.fills[0])), ...(T.style === 'sticker' ? { boxShadow: `0 0 0 ${T.ring}px ${P.die}, 3px 4px 0 ${T.ring}px ${P.ink}` } : {}) });
+  }
+  if (pk.radius) s.picker.borderRadius = pk.radius;
+  if (L.plate) {
+    const pl = plateOf(c);
+    Object.assign(s.head, pl, { padding: '14px 18px', alignItems: 'center' });
+    Object.assign(s.folderInner, pl);
+  }
+  s.folderName = { fontFamily: center ? c.fd : c.ft, fontSize: 19, fontWeight: center ? 500 : 700, color: P.ink, marginBottom: 4, lineHeight: 1.1 };
+  const pg = L.progress, sh = Math.max(5, Math.min(pg.h, 8)), so = Math.min(pg.outline, 2);
+  const books = BOOKS.map(bk => {
+    const cp = coverParts(c, cw, chh);
+    const missing = !!bk.missing;
+    return {
+      title: bk.t, coverTag: missing ? '' : 'cover',
+      box: cp.box, under: missing ? { display: 'none' } : cp.under,
+      cover: missing ? { width: cw, height: chh, boxSizing: 'border-box', border: `2px dashed ${P.muted}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 14, textAlign: 'center', background: P.paper } : cp.cover,
+      coverTitle: missing ? { ...display, fontSize: 20, lineHeight: 1.1 } : { fontWeight: 700 },
+      strip: missing ? { display: 'none' } : { position: 'relative', width: center ? cw : 'auto', height: sh, boxSizing: 'border-box', borderRadius: pg.radius || 0, overflow: 'hidden', ...fill(pg.track === 'paper' ? 'paper' : pg.track), border: so ? `${so}px solid ${col(pg.outlineColor)}` : 'none' },
+      stripFill: { position: 'absolute', left: 0, top: 0, bottom: 0, width: bk.p + '%', ...fill(pg.fill) },
+      missing: missing ? lab({ color: P.text, ...(L.plate ? { ...plateOf(c), borderRadius: 999, padding: '5px 10px', alignSelf: 'flex-start' } : {}) }) : { display: 'none' },
+    };
+  });
+  return { s, books, nav: navItems(c, 1), folderIcon: icon('folder', P.ink, 28, L.iconStroke, L.key) };
+}
+
+function prepare(L) {
+  const roles = Object.keys(L.pal.day);
+  const table = L.table.map(([k, v]) => ({ k, v }));
+  const sw = v => ({ display: 'inline-block', width: 14, height: 14, flex: 'none', borderRadius: 2, border: '1px solid rgba(0,0,0,.15)', ...(v === 'hatch' ? { backgroundImage: 'repeating-linear-gradient(135deg,#000 0 2px,#fff 2px 6px)' } : { background: v }) });
+  const gv = r => L.pal.grey[r + 'Fill'] === 'hatch' ? 'hatch' : L.pal.grey[r];
+  const palRows = roles.map(r => ({ role: r, d: L.pal.day[r], n: L.pal.night[r], g: gv(r) === 'hatch' ? `${L.pal.grey[r]} / hatch` : gv(r), dS: sw(L.pal.day[r]), nS: sw(L.pal.night[r]), gS: sw(gv(r)) }));
+  const S = L.size;
+  const sizeRows = [['Date / clock', `${S.date} / ${S.clock}`], ['Featured title', S.title], ['Quote', S.quote], ['Launcher entry', S.launcher], ['Labels', S.label], ['Sheet rows', S.sheetRow], ['Nav labels', S.nav]].map(([k, v]) => ({ k, v: String(v) }));
+  const greyPal = { ...L.pal.grey }; Object.keys(greyPal).forEach(k => { if (greyPal[k] === 'hatch') greyPal[k] = HATCH; });
+  const lua = '-- looks/' + L.key + '.lua\nreturn ' + luaOf({
+    name: L.key, faces: L.faces, palette: { day: L.pal.day, night: L.pal.night, grey: greyPal }, stroke: L.stroke,
+    header: L.header, cover: L.cover, chip: L.chip, title: L.title, progress: L.progress, quote: L.quote, tile: L.tile,
+    nav: L.nav, sheet: L.sheet, picker: L.picker, label: L.label, size: L.size, misregister: L.misreg, ruled: L.ruled, frame: L.frame, align: L.align, texture: L.texture || 'none', dots: L.dots || 'none', wallpaper: L.wallpaper ? { file: L.wallpaper.file, fit: 'cover', position: 'center', under_text: 'never' } : 'none', plate: L.plate || 'none',
+    icons: (() => { const I = ICONSETS[LOOK_ICONS[L.key][0]]; const files = {}; KEYS.forEach((k, i) => files[k] = I.n[i] + '.svg'); return { set: I.name, repo: I.repo, licence: I.licence, size: 24, nav_size: 24, color: 'ink', nav_unlit: 'muted', files }; })(),
+  });
+  const P = L.pal.day;
+  const iconSets = LOOK_ICONS[L.key].map((k, i) => { const I = ICONSETS[k]; return {
+    name: I.name, meta: `${I.licence} · github.com/${I.repo}`, note: I.note, tag: i === 0 ? 'Chosen' : 'Alternate',
+    tagS: { font: '600 10px ui-monospace,Menlo,monospace', padding: '2px 6px', borderRadius: 4, background: i === 0 ? '#1a1a1a' : 'rgba(0,0,0,.08)', color: i === 0 ? '#fff' : '#1a1a1a' },
+    stripS: { display: 'flex', gap: 18, alignItems: 'center', padding: '12px 14px', background: P.paper },
+    icons: KEYS.map(n => iconFrom(k, n, P.ink, 28)),
+    _bg: 0,
+  }; });
+  const chosen = ICONSETS[LOOK_ICONS[L.key][0]];
+  table.splice(13, 0, { k: 'Icons', v: `${chosen.name} (${chosen.licence}, ${chosen.repo}), 24 px, ink; unlit nav in muted` });
+  return {
+    id: L.id, name: L.name, kicker: L.kicker, thesis: L.thesis, verdict: L.verdict,
+    table, palRows, sizeRows, lua, iconSets,
+    boards: ['day', 'sheet', 'night', 'grey'].map(m => home(L, m)),
+    lib: library(L),
+  };
+}
+
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const sep = { borderBottom: '1px solid rgba(0,0,0,.12)' };
+    this.turns = [
+      { id: 't3', isT3: true, isT2: false, isT1: false, secS: sep, looks: LOOKS3.map(prepare) },
+      { id: 't2', isT2: true, isT1: false, secS: sep, looks: LOOKS2.map(prepare) },
+      { id: 't1', isT2: false, isT1: true, secS: {}, looks: LOOKS.map(prepare) },
+    ];
+  }
+  renderVals() { return { turns: this.turns }; }
+}
+</script>
+</body>
+</html>

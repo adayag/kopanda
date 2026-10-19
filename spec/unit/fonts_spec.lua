@@ -75,23 +75,53 @@ describe("fonts", function()
         return table.concat(steps, "/")
     end
 
+    -- The faces the looks' tables name.
+    local look_faces = {
+        "fonts/bricolage-grotesque/BricolageGrotesque-Bold.ttf",
+        "fonts/bricolage-grotesque/BricolageGrotesque-ExtraBold.ttf",
+        "fonts/bricolage-grotesque/BricolageGrotesque-Medium.ttf",
+        "fonts/caveat/Caveat-Regular.ttf",
+        "fonts/ibm-plex-sans/IBMPlexSans-Medium.ttf",
+        "fonts/ibm-plex-sans/IBMPlexSans-Regular.ttf",
+        "fonts/newsreader/Newsreader16pt-Medium.ttf",
+        "fonts/newsreader/Newsreader16pt-MediumItalic.ttf",
+    }
+
+    -- The faces for the looks in docs/plans/2026-10-19-new-looks-design.md, which no look names
+    -- yet, each with the family and style its name table gives FreeType.
+    local new_look_faces = {
+        { file = "fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Bold.ttf",
+          family = "Atkinson Hyperlegible", style = "Bold" },
+        { file = "fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Italic.ttf",
+          family = "Atkinson Hyperlegible", style = "Italic" },
+        { file = "fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Regular.ttf",
+          family = "Atkinson Hyperlegible", style = "Regular" },
+        { file = "fonts/baloo-2/Baloo2-ExtraBold.ttf", family = "Baloo 2", style = "ExtraBold" },
+        { file = "fonts/big-shoulders-display/BigShouldersDisplay-Black.ttf",
+          family = "Big Shoulders Display", style = "Black" },
+        { file = "fonts/nunito/Nunito-Bold.ttf", family = "Nunito", style = "Bold" },
+        { file = "fonts/nunito/Nunito-ExtraBold.ttf", family = "Nunito", style = "ExtraBold" },
+        { file = "fonts/nunito/Nunito-SemiBoldItalic.ttf", family = "Nunito", style = "SemiBold Italic" },
+        { file = "fonts/work-sans/WorkSans-Bold.ttf", family = "Work Sans", style = "Bold" },
+        { file = "fonts/work-sans/WorkSans-Medium.ttf", family = "Work Sans", style = "Medium" },
+    }
+
     local Fonts
     setup(function()
         harness.load()
         Fonts = package.loaded["fonts"]
     end)
 
-    it("ships the eight faces the looks use", function()
-        assert.same({
-            "fonts/bricolage-grotesque/BricolageGrotesque-Bold.ttf",
-            "fonts/bricolage-grotesque/BricolageGrotesque-ExtraBold.ttf",
-            "fonts/bricolage-grotesque/BricolageGrotesque-Medium.ttf",
-            "fonts/caveat/Caveat-Regular.ttf",
-            "fonts/ibm-plex-sans/IBMPlexSans-Medium.ttf",
-            "fonts/ibm-plex-sans/IBMPlexSans-Regular.ttf",
-            "fonts/newsreader/Newsreader16pt-Medium.ttf",
-            "fonts/newsreader/Newsreader16pt-MediumItalic.ttf",
-        }, ttf_files())
+    it("ships the eight faces the looks use and the ten for the new looks", function()
+        local expected = {}
+        for _, file in ipairs(look_faces) do
+            expected[#expected + 1] = file
+        end
+        for _, face in ipairs(new_look_faces) do
+            expected[#expected + 1] = face.file
+        end
+        table.sort(expected)
+        assert.same(expected, ttf_files())
     end)
 
     it("keeps every face in a family folder beside its OFL.txt", function()
@@ -202,6 +232,37 @@ describe("fonts", function()
             end
         end
         assert.equals(9, named)
+    end)
+
+    it("names in the looks' tables exactly the eight look faces", function()
+        local seen, files = {}, {}
+        for _, id in ipairs({ "editorial", "diner" }) do
+            for _, face in pairs(package.loaded["looks/" .. id].faces) do
+                if face.file and not seen[face.file] then
+                    seen[face.file] = true
+                    files[#files + 1] = face.file
+                end
+            end
+        end
+        table.sort(files)
+        assert.same(look_faces, files)
+    end)
+
+    -- FTSize:hasGlyph and :renderGlyph read the face getFace opened (ffi/freetype.lua:74-96), and
+    -- its family and style are FreeType's reading of that file, so a wrong or fallback file fails.
+    it("renders a glyph from each face for the new looks through Fonts.face", function()
+        local ffi = require("ffi")
+        for _, expected in ipairs(new_look_faces) do
+            local face = Fonts.face(expected.file, 20)
+            assert.truthy(face, expected.file)
+            local ft_face = face.ftsize.face
+            assert.equals(expected.family, ffi.string(ft_face.family_name), expected.file)
+            assert.equals(expected.style, ffi.string(ft_face.style_name), expected.file)
+            assert.is_true(face.ftsize:hasGlyph(0x48), expected.file .. " has no H")
+            local glyph = face.ftsize:renderGlyph(0x48)
+            assert.truthy(glyph.bb:getWidth() > 0 and glyph.bb:getHeight() > 0, expected.file .. " drew no H")
+            assert.truthy(glyph.ax > 0, expected.file .. " H has no advance")
+        end
     end)
 
     -- The look faces have no U+2011 (non-breaking hyphen), so KOReader would draw it from a

@@ -16,6 +16,12 @@ return {
         quote = { file = "fonts/bricolage-grotesque/BricolageGrotesque-Medium.ttf", label = "Bricolage Grotesque 500" },
     },
 
+    -- The icon set the look draws with: a set id under icons/, or false for the registry's
+    -- default Lucide set.
+    icons = {
+        set = false,
+    },
+
     palettes = {
         day = {
             paper = "#f5f1e6",
@@ -263,6 +269,22 @@ return {
         },
         -- The weather's sun or moon before its line, and the gap after it (HomeRetro.dc.html:48-49).
         weather_icon = { size = 20, gap = 8 },
+        -- The weather line's order: degrees_first ("61° partly cloudy", HomeRetro.dc.html:48-51) or
+        -- condition_first ("Partly cloudy, 61°").
+        weather_order = "degrees_first",
+        -- The date's lines: 1, "Tuesday, October 13" (HomeRetro.dc.html:22), or 2, the weekday over
+        -- the month and day.
+        date_lines = 1,
+        -- The stats: joined, the parts on one right-aligned line as many as fit, or spread across
+        -- the column; the streak count_first, "4-day streak", or word_first, "Streak 4 days"
+        -- (HomeRetro.dc.html:52).
+        stats_line = "joined",
+        stats_streak = "count_first",
+        -- The featured book: its label now_reading, "Now reading", or continue_reading
+        -- (HomeRetro.dc.html:34); its authors and chapter, and its caption's parts, joined on one
+        -- line each, or split (HomeRetro.dc.html:27-43).
+        featured_label = "now_reading",
+        featured_details = "joined",
     },
 
     -- The home widgets' text, per part: a face role, a size in board pixels (before text_size),

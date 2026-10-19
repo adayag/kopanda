@@ -125,6 +125,17 @@ describe("the date and clock widgets", function()
             assert.same({ "TUESDAY, OCTOBER 13" }, drawn(Date.build(520, ctx_for("diner"))))
         end)
 
+        -- The line count is the look's home.date_lines, not which look it is.
+        it("reads as many lines as the look's date_lines", function()
+            local editorial, diner = Looks.get("editorial"), Looks.get("diner")
+            finally(function()
+                editorial.home.date_lines, diner.home.date_lines = 2, 1
+            end)
+            editorial.home.date_lines, diner.home.date_lines = 1, 2
+            assert.same({ "Tuesday, October 13" }, Date.lines(editorial, TUESDAY_0842))
+            assert.same({ "Tuesday", "October 13" }, Date.lines(diner, TUESDAY_0842))
+        end)
+
         it("has no leading zero on the day", function()
             local fifth = at(2026, 11, 5, 12, 0)
             assert.same({ "Thursday", "November 5" }, Date.lines(Looks.get("editorial"), fifth))

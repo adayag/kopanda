@@ -43,7 +43,7 @@ local BUTTON_GAP = 16
 -- (base/ffi/blitbuffer.lua:2223), so 5 px matches the board's 7 px period (PWRetro.dc.html:40).
 local STRIPE_WIDTH = 5
 local TITLE_LINES = 2
-local DINER_JOIN = " · "
+local JOIN = " · "
 -- floor(percent × 100) less a hair, so 0.29 reads 29 although 0.29 × 100 is 28.999…
 local EPSILON = 1e-9
 
@@ -89,9 +89,14 @@ function Fill:paintTo(bb, x, y)
     end
 end
 
-local function is_diner(ctx)
-    return ctx.look == Looks.get("diner")
+-- Whether the look joins the authors and chapter, and the caption's parts, on one line each
+-- (home.featured_details).
+local function details_joined(ctx)
+    return ctx.look.home.featured_details == "joined"
 end
+
+-- The label's words by the look's home.featured_label.
+local LABELS = { now_reading = "Now reading", continue_reading = "Continue reading" }
 
 local function scaler(ctx)
     return function(px)
@@ -175,12 +180,13 @@ local function text_box(part_name, text, width, max_lines, ctx)
     }
 end
 
--- The label at most width wide: Editorial's plain label, or Diner's chip, a Box of chip.fill_color
--- with an outline of featured.chip_outline in chip.outline_color (HomeRetro.dc.html:34).
+-- The label at most width wide, worded by home.featured_label: a plain label with no
+-- featured.chip_outline (Editorial), or a chip, a Box of chip.fill_color with an outline of
+-- featured.chip_outline in chip.outline_color (Diner, HomeRetro.dc.html:34).
 local function label(width, ctx)
     local look = ctx.look
     local tokens = look.featured
-    local text = is_diner(ctx) and "Now reading" or "Continue reading"
+    local text = LABELS[look.home.featured_label]
     if not tokens.chip_outline then
         return Typeset.line(look.type.featured_label, text, width, ctx)
     end
@@ -274,13 +280,13 @@ function Featured.bar(shown, width, inner_h, outline_width, ctx)
     }
 end
 
--- The caption width wide: Editorial's percent on the left and the rest on the right
--- (Main.dc.html:47-50), Diner's parts joined (HomeRetro.dc.html:41).
+-- The caption width wide: the percent on the left and the rest on the right when the details
+-- split (Editorial, Main.dc.html:47-50), the parts joined when they join (Diner, HomeRetro.dc.html:41).
 local function caption(book, width, ctx)
     local part = ctx.look.type.featured_caption
     local parts = Featured.caption(book)
-    if is_diner(ctx) then
-        return Typeset.line(part, table.concat(parts, DINER_JOIN), width, ctx)
+    if details_joined(ctx) then
+        return Typeset.line(part, table.concat(parts, JOIN), width, ctx)
     end
     local percent = Typeset.line(part, parts[1], width, ctx)
     local room = width - percent:getSize().w - ctx.screen:scaleBySize(ITEM_GAP)
@@ -331,7 +337,7 @@ local function book_column(book, w, h, ctx)
         { label(w, ctx), 0 },
         { text_box("featured_title", book.title or "", w, TITLE_LINES, ctx), scale(look.featured.title_gap) },
     }
-    if is_diner(ctx) then
+    if details_joined(ctx) then
         local joined = {}
         for _, key in ipairs({ "authors", "chapter" }) do
             if book[key] and book[key] ~= "" then
@@ -339,7 +345,7 @@ local function book_column(book, w, h, ctx)
             end
         end
         if #joined > 0 then
-            top[#top + 1] = { Typeset.line(look.type.featured_authors, table.concat(joined, DINER_JOIN), w, ctx),
+            top[#top + 1] = { Typeset.line(look.type.featured_authors, table.concat(joined, JOIN), w, ctx),
                 scale(ITEM_GAP) }
         end
     else

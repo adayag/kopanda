@@ -102,7 +102,7 @@ export function removeRow(rows: Rows, i: number): Edit {
   return { rows: next };
 }
 
-/** A copy of the schema's default; the looks hold no layout of their own, so it is both looks'. */
+/** A copy of the schema's default; the looks hold no layout of their own, so it is every look's. */
 export function reset(): Edit {
   return { rows: copy(entry.default) };
 }

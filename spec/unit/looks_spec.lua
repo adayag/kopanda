@@ -1,10 +1,36 @@
--- The two looks' token tables (looks/editorial.lua, looks/diner.lua) and looks.lua, which picks
--- the active look, the palette variant (C5) and the palette to draw with, night inverted (night
--- mode's C1, C2).
+-- The looks' token tables (looks/<id>.lua, one per id Looks.ids() lists) and looks.lua, which
+-- picks the active look, the palette variant (C5) and the palette to draw with, night inverted
+-- (night mode's C1, C2). The rules every look keeps run over every id; the tests that pin Diner's
+-- and Editorial's own values name them.
 describe("looks", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
-    local ids = { "editorial", "diner" }
+    -- Every look id, from looks.lua once the plugin has loaded (setup).
+    local ids
+    -- The looks whose own board values the value tests pin.
+    local pinned = { "editorial", "diner" }
+
+    -- The home widgets' shapes a look chooses, each token under home with its values: the
+    -- weather line's order, the date's line count, the stats joined on one right-aligned line or
+    -- spread, the streak worded "4-day streak" (count first) or "Streak 4 days" (word first), the
+    -- featured label "Now reading" or "Continue reading", and the featured authors and chapter,
+    -- and the caption's parts, joined on one line each or split.
+    local HOME_CHOICES = {
+        weather_order = { "degrees_first", "condition_first" },
+        date_lines = { 1, 2 },
+        stats_line = { "joined", "spread" },
+        stats_streak = { "count_first", "word_first" },
+        featured_label = { "now_reading", "continue_reading" },
+        featured_details = { "joined", "split" },
+    }
+
+    local function home_choices(look)
+        local out = {}
+        for key in pairs(HOME_CHOICES) do
+            out[key] = look.home[key]
+        end
+        return out
+    end
 
     -- A look file run with no globals at all, as pure data must run: no require, no functions
     -- from the environment.
@@ -66,6 +92,9 @@ describe("looks", function()
 
     local looks = {}
     setup(function()
+        harness.load()
+        ids = package.loaded["looks"].ids()
+        harness.teardown()
         for _, id in ipairs(ids) do
             looks[id] = load_look(id)
         end
@@ -80,11 +109,13 @@ describe("looks", function()
             end
         end)
 
-        it("declare identical token paths in both looks", function()
-            local editorial, diner = paths(looks.editorial), paths(looks.diner)
-            assert.truthy(#editorial > 40, "too few tokens: " .. #editorial)
-            for _, wanted in ipairs({ "faces.display.file", "faces.accent.file", "palettes.grey.paper",
-                    "stroke.outline", "shadow.cover.color", "radius.cover", "tile.outline_color",
+        it("declare identical token paths in every look", function()
+            local diner = paths(looks.diner)
+            assert.truthy(#diner > 40, "too few tokens: " .. #diner)
+            for _, wanted in ipairs({ "icons.set", "home.weather_order", "home.date_lines", "home.stats_line",
+                    "home.stats_streak", "home.featured_label", "home.featured_details", "faces.display.file",
+                    "faces.accent.file",
+                    "palettes.grey.paper", "stroke.outline", "shadow.cover.color", "radius.cover", "tile.outline_color",
                     "progress.fill_grey", "sheet.rule_color", "chip.fill_color", "label.size",
                     "palettes.day.on_band", "faces.strong.file", "faces.quote.file", "home.margin.side",
                     "home.free_space", "home.header.padding.top", "home.footer.line_pitch",
@@ -148,7 +179,40 @@ describe("looks", function()
                 end
                 assert.is_true(found, wanted)
             end
-            assert.same(diner, editorial)
+            for _, id in ipairs(ids) do
+                assert.same(diner, paths(looks[id]), id)
+            end
+        end)
+
+        -- The icon set a look draws with: a set id, or false for the registry's default.
+        it("give every look an icon set id or false, Diner and Editorial false", function()
+            for _, id in ipairs(ids) do
+                local set = looks[id].icons.set
+                assert.is_true(set == false or (type(set) == "string" and set ~= ""), id .. " icons.set")
+            end
+            assert.is_false(looks.diner.icons.set)
+            assert.is_false(looks.editorial.icons.set)
+        end)
+
+        -- The home widgets' shapes a look chooses (HOME_CHOICES): one of each token's values on
+        -- every look; Diner's and Editorial's as their boards draw them.
+        it("give every look one of each home choice's values, Diner's and Editorial's their boards'", function()
+            for _, id in ipairs(ids) do
+                for key, values in pairs(HOME_CHOICES) do
+                    local value = looks[id].home[key]
+                    local known = false
+                    for _, allowed in ipairs(values) do
+                        known = known or value == allowed
+                    end
+                    assert.is_true(known, id .. " home." .. key .. " = " .. tostring(value))
+                end
+            end
+            assert.same({ weather_order = "degrees_first", date_lines = 1, stats_line = "joined",
+                stats_streak = "count_first", featured_label = "now_reading", featured_details = "joined" },
+                home_choices(looks.diner))
+            assert.same({ weather_order = "condition_first", date_lines = 2, stats_line = "spread",
+                stats_streak = "word_first", featured_label = "continue_reading", featured_details = "split" },
+                home_choices(looks.editorial))
         end)
 
         it("declare the same roles in the day, night and grey palettes of each look", function()
@@ -236,6 +300,10 @@ describe("looks", function()
                         assert.truthy(value == "before_last_row" or value == "before_footer", where .. " = " .. value)
                     elseif key == "align" then
                         assert.truthy(value == "top" or value == "bottom", where .. " = " .. value)
+                    elseif path == "home." .. tostring(key) and HOME_CHOICES[key] then
+                        return -- one of its values, checked by the home choices' own test
+                    elseif path == "icons.set" then
+                        assert.truthy(value ~= "", where)
                     else
                         error(where .. " is a string that is neither a role, a face nor a marker: " .. value)
                     end
@@ -514,7 +582,7 @@ describe("looks", function()
             },
         }
 
-        for _, id in ipairs(ids) do
+        for _, id in ipairs(pinned) do
             it("give " .. id .. "'s quick settings block and parts their values", function()
                 local wanted = QUICK_SETTINGS[id]
                 assert.equals(wanted.band, looks[id].sheet.quick_settings_band_color)
@@ -674,7 +742,7 @@ describe("looks", function()
         end
 
         it("give both looks every library path and part", function()
-            for _, id in ipairs(ids) do
+            for _, id in ipairs(pinned) do
                 local wanted = {}
                 for _, path in ipairs(paths(LIBRARY_BOARD[id])) do
                     wanted[#wanted + 1] = "library." .. path
@@ -693,7 +761,7 @@ describe("looks", function()
         end)
 
         it("give the library block and parts the boards' values, D2's cuts commented with the board's", function()
-            for _, id in ipairs(ids) do
+            for _, id in ipairs(pinned) do
                 local lines = library_lines(id)
                 assert.truthy(#lines > 0, id .. " has no library block")
                 for _, path in ipairs(paths(LIBRARY_BOARD[id])) do
@@ -842,7 +910,7 @@ describe("looks", function()
         end
 
         it("give both looks every shelf path and part", function()
-            for _, id in ipairs(ids) do
+            for _, id in ipairs(pinned) do
                 local wanted = {}
                 for _, path in ipairs(paths(SHELF_BOARD[id])) do
                     wanted[#wanted + 1] = "shelf." .. path
@@ -861,7 +929,7 @@ describe("looks", function()
         end)
 
         it("give the shelf block and parts their values, the one-author cover cut commented D14", function()
-            for _, id in ipairs(ids) do
+            for _, id in ipairs(pinned) do
                 local lines = shelf_lines(id)
                 assert.truthy(#lines > 0, id .. " has no shelf block")
                 for _, path in ipairs(paths(SHELF_BOARD[id])) do
@@ -888,7 +956,7 @@ describe("looks", function()
 
         -- Every shelf length is commented with its board line or the lead's analogy (D26).
         it("comment every shelf value with its board line or the lead's analogy", function()
-            for _, id in ipairs(ids) do
+            for _, id in ipairs(pinned) do
                 for _, line in ipairs(shelf_lines(id)) do
                     local code, comment = line:match("^(.-)%s*%-%-%s*(.*)$")
                     code = code or line
@@ -905,7 +973,7 @@ describe("looks", function()
         it("name in the shelf block only colours the look draws by day", function()
             local lacking = { diner = { "hairline", "hairline_light" },
                 editorial = { "outline", "mustard", "pink", "teal" } }
-            for _, id in ipairs(ids) do
+            for _, id in ipairs(pinned) do
                 local function walk(node, prefix)
                     for k, v in pairs(node) do
                         if type(v) == "table" then
@@ -951,7 +1019,7 @@ describe("looks", function()
                     sheet_sublabel = { "text", 12, false, 0, 0, "muted" },
                 },
             }
-            for _, id in ipairs(ids) do
+            for _, id in ipairs(pinned) do
                 for key, value in pairs(SHEET[id]) do
                     assert.equals(value, looks[id].sheet[key], id .. " sheet." .. key)
                 end
@@ -971,7 +1039,7 @@ describe("looks", function()
                 editorial = { band = false, box = { size = 60, outline_width = 1, outline_color = "hairline",
                     fill_color = "paper", icon_size = 34, icon_color = "ink" } },
             }
-            for _, id in ipairs(ids) do
+            for _, id in ipairs(pinned) do
                 assert.equals(wanted[id].band, looks[id].sheet.library_folder_band_color, id)
                 assert.same(wanted[id].box, looks[id].sheet.folder_box, id)
                 local lines, inside = {}, false
@@ -1007,7 +1075,7 @@ describe("looks", function()
                 editorial = { library_empty_band_color = false, sort_chip_color = false, show_chip_color = false,
                     plain = part_values(looks.editorial.type.sheet_chip) },
             }
-            for _, id in ipairs(ids) do
+            for _, id in ipairs(pinned) do
                 for _, key in ipairs({ "library_empty_band_color", "sort_chip_color", "show_chip_color" }) do
                     assert.equals(wanted[id][key], looks[id].sheet[key], id .. " sheet." .. key)
                 end
@@ -1088,14 +1156,52 @@ describe("looks", function()
             os.remove(harness.state_dir)
         end)
 
-        it("is loaded with both look files when the plugin loads", function()
+        it("is loaded with every look file when the plugin loads", function()
             assert.is_table(Looks)
-            assert.is_table(package.loaded["looks/editorial"])
-            assert.is_table(package.loaded["looks/diner"])
+            for _, id in ipairs(Looks.ids()) do
+                assert.is_table(package.loaded["looks/" .. id], id)
+                assert.equals(package.loaded["looks/" .. id], Looks.get(id), id)
+            end
         end)
 
-        it("lists the looks in the swatch's column order", function()
-            assert.same({ "editorial", "diner" }, Looks.ids())
+        it("lists the looks in the swatch's column order, Editorial then Diner first", function()
+            local listed = Looks.ids()
+            assert.same({ "editorial", "diner" }, { listed[1], listed[2] })
+        end)
+
+        it("lists a fresh copy each time", function()
+            local listed = Looks.ids()
+            local count = #listed
+            listed[1] = "changed"
+            listed[count + 1] = "added"
+            assert.equals("editorial", Looks.ids()[1])
+            assert.equals(count, #Looks.ids())
+        end)
+
+        -- Adding a look is one id in looks.lua, one token file and one choice of the look setting.
+        it("lists one id per look file and per choice of the look setting", function()
+            local listed = Looks.ids()
+            table.sort(listed)
+            local files = {}
+            for name in require("libs/libkoreader-lfs").dir(harness.plugin_dir .. "/looks") do
+                local id = name:match("^(.+)%.lua$")
+                if id then
+                    files[#files + 1] = id
+                end
+            end
+            table.sort(files)
+            assert.same(files, listed)
+            local choices
+            for _, key in ipairs(require("schema").keys) do
+                if key.id == "look" then
+                    choices = {}
+                    for _, choice in ipairs(key.choices) do
+                        choices[#choices + 1] = choice.value
+                    end
+                end
+            end
+            table.sort(choices)
+            assert.same(choices, listed)
         end)
 
         it("returns a look's tokens by id and nil for an unknown id", function()

@@ -4,7 +4,10 @@
 # and settings file, one look, day or night. The studio's preview pane asks it for each frame
 # (bin/preview.lua holds the capture).
 #
-#   bin/preview <width> <height> <dpi> <color|grey> <diner|editorial> <day|night> <out.png> [settings file]
+#   bin/preview <width> <height> <dpi> <color|grey> <look> <day|night> <out.png> [settings file]
+#
+# <look> is a look id (kopanda.koplugin/looks.lua); one shaped like an id but no look's ends in
+# exit 1, named by bin/preview.lua.
 #
 # Exit 0 with one JSON line on stdout, { "png": <out.png as an absolute path>, "width": w,
 # "height": h, "paint_ms": n }; 1 when the render fails, its message (the driver's carries the
@@ -19,7 +22,7 @@ emulator_default="$HOME/Projects/kodev/koreader/koreader-emulator-arm64-apple-da
 KOPANDA_EMULATOR="${KOPANDA_EMULATOR:-$emulator_default/koreader}"
 
 usage() {
-    printf '%s %s\n' "usage: bin/preview <width> <height> <dpi> <color|grey> <diner|editorial> <day|night>" \
+    printf '%s %s\n' "usage: bin/preview <width> <height> <dpi> <color|grey> <look> <day|night>" \
         "<out.png> [settings file]" >&2
     exit 2
 }
@@ -31,7 +34,7 @@ for size in "$1" "$2" "$3"; do
     [[ "$size" =~ ^[1-9][0-9]*$ ]] || usage
 done
 [[ "$4" == color || "$4" == grey ]] || usage
-[[ "$5" == diner || "$5" == editorial ]] || usage
+[[ "$5" =~ ^[a-z][a-z0-9_]*$ ]] || usage
 [[ "$6" == day || "$6" == night ]] || usage
 if [[ $# -eq 8 && ! -f "$8" ]]; then
     usage

@@ -1,10 +1,10 @@
 -- The home's date, from KOReader's translation tables so it follows its language
 -- (frontend/datetime.lua:29-42 month names, :54-62 long day names), with no leading zero on the
--- day and no year. Editorial draws the weekday as a label over the month and day
--- (Main.dc.html:20-22); Diner draws one line (HomeRetro.dc.html:22). Left-aligned.
+-- day and no year. The look's home.date_lines chooses: 2 draws the weekday as a label over the
+-- month and day (Editorial, Main.dc.html:20-22); 1 draws one line (Diner, HomeRetro.dc.html:22).
+-- Left-aligned.
 local Geom = require("ui/geometry")
 local LeftContainer = require("ui/widget/container/leftcontainer")
-local Looks = require("looks")
 local Typeset = require("typeset")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
@@ -19,7 +19,7 @@ local Date = {
 
 -- Whether look draws the date as one line.
 local function one_line(look)
-    return look == Looks.get("diner")
+    return look.home.date_lines == 1
 end
 
 -- The date's lines at time t in look, before the type's case: the weekday and "October 13" in

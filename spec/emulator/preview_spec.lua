@@ -158,6 +158,17 @@ describe("bin/preview", function()
             .. " KOReader would load the plugin from both paths", stderr:match("^([^\n]*)"))
     end)
 
+    -- The fixture stores whatever look it is given, and the plugin's Settings reads a choice it
+    -- doesn't know as the default: an id no look holds would render Diner unless it is refused.
+    it("exits 1 naming the look, rendering nothing, for an id no look holds", function()
+        local out = fresh("out.png")
+        local status, stdout, stderr = run(COLORSOFT, "classic", "day", out)
+        assert.equals(1, status, stderr)
+        assert.equals("", stdout)
+        assert.equals(1, stderr:find("no look classic; the looks are editorial, diner", 1, true), stderr)
+        assert.is_nil(lfs.attributes(out, "mode"))
+    end)
+
     it("renders a grey device at its own size", function()
         local out, answer, stdout, stderr = preview("1072 1448 300 grey", "diner", "day")
         assert_answer(out, answer, stdout, stderr, 1072, 1448)

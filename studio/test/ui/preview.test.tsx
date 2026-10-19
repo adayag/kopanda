@@ -31,6 +31,10 @@ const paperwhite = {
 
 const defaults = Object.fromEntries(schema.keys.map((key) => [key.id, key.default]));
 
+const lookKey = schema.keys.find((key) => key.id === "look");
+/** The schema's looks, in its order: what All looks shows. */
+const LOOKS = lookKey?.type === "choice" ? lookKey.choices : [];
+
 function settings(values: Record<string, unknown> = {}): Settings {
   return {
     path: colorsoft.settings_path,
@@ -192,7 +196,7 @@ describe("the preview pane", () => {
     await open();
     expect(within(pane()).getByText("Colorsoft")).toBeInTheDocument();
     expect(within(pane()).getByText("Kindle Colorsoft SE · 1264×1680")).toBeInTheDocument();
-    expect(within(pane()).getByRole("checkbox", { name: "Both looks" })).not.toBeChecked();
+    expect(within(pane()).getByRole("checkbox", { name: "All looks" })).not.toBeChecked();
     expect(within(pane()).getByRole("checkbox", { name: "Night" })).not.toBeChecked();
     expect(rerender()).toBeInTheDocument();
 
@@ -444,43 +448,42 @@ describe("the preview pane", () => {
     expect(renders).toHaveLength(2);
   });
 
-  it("shows both looks side by side, then night, keeping each frame's last good image", async () => {
+  it("shows every look side by side, then night, keeping each frame's last good image", async () => {
+    // The schema's looks in its order, Diner (the default, the profile's look) first.
+    const looks = LOOKS.map((choice) => choice.value);
+    const labels = LOOKS.map((choice) => choice.label);
+    const count = looks.length;
+    expect(looks.slice(0, 2)).toEqual(["diner", "editorial"]);
     await open();
     await succeed(0);
 
-    fireEvent.click(within(pane()).getByRole("checkbox", { name: "Both looks" }));
+    fireEvent.click(within(pane()).getByRole("checkbox", { name: "All looks" }));
     await tick();
-    expect(captions()).toEqual(["Diner", "Editorial"]);
-    expect(renders.map(({ look, night }) => ({ look, night }))).toEqual([
-      { look: "diner", night: false },
-      { look: "editorial", night: false },
-    ]);
-    await succeed(1);
-    expect(image("Diner")).toHaveAttribute("src", "blob:preview-1");
-    expect(image("Editorial")).toHaveAttribute("src", "blob:preview-2");
+    expect(captions()).toEqual(labels);
+    expect(renders.map(({ look, night }) => ({ look, night }))).toEqual(looks.map((look) => ({ look, night: false })));
+    for (let i = 1; i < count; i++) await succeed(i);
+    labels.forEach((label, i) => expect(image(label)).toHaveAttribute("src", `blob:preview-${i + 1}`));
 
     fireEvent.click(within(pane()).getByRole("checkbox", { name: "Night" }));
     await tick();
-    expect(captions()).toEqual(["Diner · night", "Editorial · night"]);
-    expect(renders.slice(2).map(({ look, night }) => ({ look, night }))).toEqual([
-      { look: "diner", night: true },
-      { look: "editorial", night: true },
-    ]);
-    await succeed(2);
-    await succeed(3);
-    expect(image("Diner · night")).toHaveAttribute("src", "blob:preview-3");
-    expect(image("Editorial · night")).toHaveAttribute("src", "blob:preview-4");
+    expect(captions()).toEqual(labels.map((label) => `${label} · night`));
+    expect(renders.slice(count).map(({ look, night }) => ({ look, night }))).toEqual(
+      looks.map((look) => ({ look, night: true })),
+    );
+    for (let i = count; i < 2 * count; i++) await succeed(i);
+    labels.forEach((label, i) =>
+      expect(image(`${label} · night`)).toHaveAttribute("src", `blob:preview-${count + i + 1}`),
+    );
 
     fireEvent.click(within(pane()).getByRole("checkbox", { name: "Night" }));
     await tick(10_000);
-    expect(renders).toHaveLength(4);
-    expect(image("Diner")).toHaveAttribute("src", "blob:preview-1");
-    expect(image("Editorial")).toHaveAttribute("src", "blob:preview-2");
+    expect(renders).toHaveLength(2 * count);
+    labels.forEach((label, i) => expect(image(label)).toHaveAttribute("src", `blob:preview-${i + 1}`));
 
     fireEvent.click(within(pane()).getByRole("checkbox", { name: "Night" }));
     await tick(10_000);
-    expect(renders).toHaveLength(4);
-    expect(image("Diner · night")).toHaveAttribute("src", "blob:preview-3");
+    expect(renders).toHaveLength(2 * count);
+    expect(image(`${labels[0]!} · night`)).toHaveAttribute("src", `blob:preview-${count + 1}`);
     expect(revokeObjectURL).not.toHaveBeenCalled();
   });
 
@@ -507,19 +510,23 @@ describe("the preview pane", () => {
   it("renders every shown frame on Re-render, disabled until they end", async () => {
     await open();
     await succeed(0);
-    fireEvent.click(within(pane()).getByRole("checkbox", { name: "Both looks" }));
+    const looks = LOOKS.map((choice) => choice.value);
+    const count = looks.length;
+    fireEvent.click(within(pane()).getByRole("checkbox", { name: "All looks" }));
     await tick();
-    expect(rerender()).toBeDisabled();
-    await succeed(1);
+    for (let i = 1; i < count; i++) {
+      expect(rerender()).toBeDisabled();
+      await succeed(i);
+    }
     expect(rerender()).toBeEnabled();
 
     fireEvent.click(rerender());
     await tick();
-    expect(renders.slice(2).map(({ look }) => look)).toEqual(["diner", "editorial"]);
-    expect(rerender()).toBeDisabled();
-    await succeed(2);
-    expect(rerender()).toBeDisabled();
-    await succeed(3);
+    expect(renders.slice(count).map(({ look }) => look)).toEqual(looks);
+    for (let i = count; i < 2 * count; i++) {
+      expect(rerender()).toBeDisabled();
+      await succeed(i);
+    }
     expect(rerender()).toBeEnabled();
   });
 

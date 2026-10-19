@@ -1,21 +1,29 @@
--- The two looks: their token tables by id, the active one from the look setting, and the
--- palette variant to draw with.
+-- The looks: their token tables by id, the active one from the look setting, and the palette
+-- variant to draw with. Adding a look is its id here, its token file looks/<id>.lua, its
+-- require in main.lua and its choice of the look setting in schema.lua.
 local Blitbuffer = require("ffi/blitbuffer")
 local Device = require("device")
 local Settings = require("settings")
 
 local Looks = {}
 
+-- The look ids in the swatch's column order.
 local ids = { "editorial", "diner" }
 
-local looks = {
-    editorial = require("looks/editorial"),
-    diner = require("looks/diner"),
-}
+local looks = {}
+for _, id in ipairs(ids) do
+    -- The plugin's own looks/<id>.lua, not a KOReader module HOOKS.md names.
+    local module = "looks/" .. id
+    looks[id] = require(module)
+end
 
--- The look ids in the swatch's column order.
+-- The look ids in the swatch's column order, as a fresh list.
 function Looks.ids()
-    return { ids[1], ids[2] }
+    local copy = {}
+    for i, id in ipairs(ids) do
+        copy[i] = id
+    end
+    return copy
 end
 
 -- The token table of the look id, or nil for an id that is no look.

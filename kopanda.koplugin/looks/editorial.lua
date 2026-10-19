@@ -15,6 +15,12 @@ return {
         quote = { file = "fonts/newsreader/Newsreader16pt-MediumItalic.ttf", label = "Newsreader 500 italic" },
     },
 
+    -- The icon set the look draws with: a set id under icons/, or false for the registry's
+    -- default Lucide set.
+    icons = {
+        set = false,
+    },
+
     palettes = {
         day = {
             paper = "#f3f1ea",
@@ -253,6 +259,21 @@ return {
             edge_color = false,
         },
         weather_icon = { size = 0, gap = 0 }, -- Editorial's weather has no icon (Main.dc.html:25)
+        -- The weather line's order: condition_first ("Partly cloudy, 61°", Main.dc.html:25) or
+        -- degrees_first ("61° partly cloudy").
+        weather_order = "condition_first",
+        -- The date's lines: 2, the weekday over the month and day (Main.dc.html:20-22), or 1,
+        -- "Tuesday, October 13".
+        date_lines = 2,
+        -- The stats: spread across the column with equal space between, or joined on one line;
+        -- the streak word_first, "Streak 4 days", or count_first, "4-day streak" (Main.dc.html:87).
+        stats_line = "spread",
+        stats_streak = "word_first",
+        -- The featured book: its label continue_reading, "Continue reading", or now_reading; its
+        -- authors and chapter on their own lines and its caption's percent and the rest apart,
+        -- split, or joined (Main.dc.html:32-52).
+        featured_label = "continue_reading",
+        featured_details = "split",
     },
 
     -- The home widgets' text, per part: a face role, a size in board pixels (before text_size),

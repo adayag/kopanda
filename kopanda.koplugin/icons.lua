@@ -6,9 +6,21 @@
 -- and turns an unknown colour name such as currentColor into mid-grey
 -- (base/build/<target>/staging/include/nanosvg.h:1446-1457). `used_in` names the places the canvas
 -- draws the icon.
+--
+-- A look may draw another set, named by its `icons.set` token: one file per registry id under the
+-- set's folder, vendored from a pack and recoloured to black (icons/SOURCES.md).
 local Fonts = require("fonts")
+local lfs = require("libs/libkoreader-lfs")
+local logger = require("logger")
 
 local Icons = {}
+
+-- The vendored sets by id: Riso draws Phosphor Fill, Frosted Phosphor Bold and Toybox MingCute Line.
+Icons.sets = {
+    ["phosphor-fill"] = { label = "Phosphor Fill", licence = "MIT", dir = "icons/phosphor-fill" },
+    ["phosphor-bold"] = { label = "Phosphor Bold", licence = "MIT", dir = "icons/phosphor-bold" },
+    ["mingcute-line"] = { label = "MingCute Line", licence = "Apache-2.0", dir = "icons/mingcute-line" },
+}
 
 Icons.entries = {
     { id = "home", label = "Home", used_in = { "nav" }, file = "icons/home.svg" },
@@ -88,15 +100,47 @@ Icons.entries = {
     { id = "refresh", label = "Refresh covers", used_in = { "library sheet" }, file = "icons/refresh.svg" },
 }
 
--- The path of the icon file for id, in the form Fonts.path gives a plugin file, or nil for an
--- id the registry doesn't hold.
-function Icons.path(id)
+-- The set ids already logged as unknown, so a screen of icons logs one line.
+local warned = {}
+
+-- The active look's icons.set token, or false when the look names none. Looks is required here,
+-- not at load, as it is the module that knows the look; it doesn't require this one.
+local function active_set()
+    local look = require("looks").active()
+    return look and look.icons and look.icons.set or false
+end
+
+-- The path of the icon file for id, in the form Fonts.path gives a plugin file: set's file when
+-- the set has one, otherwise the default Lucide file. set is a set id, false for the default
+-- files, or nil for the active look's set. nil for an id the registry doesn't hold; a set it
+-- doesn't hold gives the default file, logged once per set, so a look with a bad token still draws.
+function Icons.path(id, set)
+    local file
     for _, entry in ipairs(Icons.entries) do
         if entry.id == id then
-            return Fonts.path(entry.file)
+            file = entry.file
+            break
         end
     end
-    return nil
+    if not file then
+        return nil
+    end
+    if set == nil then
+        set = active_set()
+    end
+    if set then
+        local spec = Icons.sets[set]
+        if spec then
+            local path = Fonts.path(spec.dir .. "/" .. id .. ".svg")
+            if lfs.attributes(path, "mode") == "file" then
+                return path
+            end
+        elseif not warned[set] then
+            warned[set] = true
+            logger.warn("KoPanda: no icon set", set)
+        end
+    end
+    return Fonts.path(file)
 end
 
 return Icons

@@ -12,6 +12,11 @@ describe("weather", function()
     local cache_file = harness.state_dir .. "/weather.lua"
     local Weather, Settings
 
+    -- The token table of look id, from the loaded plugin.
+    local function tokens_of(id)
+        return require("looks").get(id)
+    end
+
     local NEEDS_WIFI = "Weather needs Wi-Fi"
     local CHICAGO = { name = "Chicago, Illinois", latitude = 41.85003, longitude = -87.65005 }
 
@@ -355,7 +360,7 @@ describe("weather", function()
             }) do
                 write(cache_file, cache_text(reading(fields)))
                 assert.is_nil(Weather.reading(), what)
-                assert.equals(NEEDS_WIFI, Weather.line(Weather.reading(), 1000000, "editorial"), what)
+                assert.equals(NEEDS_WIFI, Weather.line(Weather.reading(), 1000000, tokens_of("editorial")), what)
             end
         end)
 
@@ -384,38 +389,46 @@ describe("weather", function()
             }
             for _, case in ipairs(cases) do
                 local r = reading({ weather_code = case[1], fetched_at = now })
-                assert.equals(case[2], Weather.line(r, now, "editorial"), "code " .. case[1])
-                assert.equals(case[3], Weather.line(r, now, "diner"), "code " .. case[1])
+                assert.equals(case[2], Weather.line(r, now, tokens_of("editorial")), "code " .. case[1])
+                assert.equals(case[3], Weather.line(r, now, tokens_of("diner")), "code " .. case[1])
             end
+        end)
+
+        -- The order is the look's home.weather_order token, not which look it is.
+        it("orders the line by the look's weather order", function()
+            local r = reading({ weather_code = 2, fetched_at = now })
+            assert.equals("61° partly cloudy", Weather.line(r, now, { home = { weather_order = "degrees_first" } }))
+            assert.equals("Partly cloudy, 61°", Weather.line(r, now, { home = { weather_order = "condition_first" } }))
         end)
 
         it("rounds the temperature to a whole degree", function()
             assert.equals("62°", Weather.line(reading({ temperature = 61.5, weather_code = 42, fetched_at = now }), now,
-                "editorial"))
+                tokens_of("editorial")))
             assert.equals("0° clear", Weather.line(reading({ temperature = -0.4, weather_code = 0, fetched_at = now }),
-                now, "diner"))
+                now, tokens_of("diner")))
             assert.equals("-1° clear", Weather.line(reading({ temperature = -0.6, weather_code = 0, fetched_at = now }),
-                now, "diner"))
+                now, tokens_of("diner")))
         end)
 
         it("adds the age once the reading is an hour old, in hours under two days and days after", function()
-            local function aged(seconds, look)
-                return Weather.line(reading({ fetched_at = now - seconds }), now, look)
+            local function aged(seconds, tokens)
+                return Weather.line(reading({ fetched_at = now - seconds }), now, tokens)
             end
-            assert.equals("Partly cloudy, 61°", aged(59 * 60, "editorial"))
-            assert.equals("Partly cloudy, 61° · 1 h ago", aged(61 * 60, "editorial"))
-            assert.equals("Partly cloudy, 61° · 47 h ago", aged(47 * 3600, "editorial"))
-            assert.equals("Partly cloudy, 61° · 2 d ago", aged(49 * 3600, "editorial"))
-            assert.equals("61° partly cloudy · 3 h ago", aged(3 * 3600 + 5, "diner"))
+            assert.equals("Partly cloudy, 61°", aged(59 * 60, tokens_of("editorial")))
+            assert.equals("Partly cloudy, 61° · 1 h ago", aged(61 * 60, tokens_of("editorial")))
+            assert.equals("Partly cloudy, 61° · 47 h ago", aged(47 * 3600, tokens_of("editorial")))
+            assert.equals("Partly cloudy, 61° · 2 d ago", aged(49 * 3600, tokens_of("editorial")))
+            assert.equals("61° partly cloudy · 3 h ago", aged(3 * 3600 + 5, tokens_of("diner")))
         end)
 
         it("shows no age for a reading from the future", function()
-            assert.equals("Partly cloudy, 61°", Weather.line(reading({ fetched_at = now + 7200 }), now, "editorial"))
+            assert.equals("Partly cloudy, 61°",
+                Weather.line(reading({ fetched_at = now + 7200 }), now, tokens_of("editorial")))
         end)
 
         it("says the weather needs Wi-Fi with no reading", function()
-            assert.equals(NEEDS_WIFI, Weather.line(nil, now, "editorial"))
-            assert.equals(NEEDS_WIFI, Weather.line(nil, now, "diner"))
+            assert.equals(NEEDS_WIFI, Weather.line(nil, now, tokens_of("editorial")))
+            assert.equals(NEEDS_WIFI, Weather.line(nil, now, tokens_of("diner")))
         end)
     end)
 
