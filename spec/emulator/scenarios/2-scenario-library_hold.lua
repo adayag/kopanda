@@ -1,5 +1,5 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
--- by spec/emulator/library_hold_golden_spec.lua beside the home fixture patch (at empty) and the
+-- by spec/emulator/library_hold_capture_spec.lua beside the home fixture patch (at empty) and the
 -- library scenario patch (2-scenario-library.lua, at its root step), whose names sort before this
 -- one (frontend/userpatch.lua:82, natsort; "." before "_"), so the capture library is the home
 -- folder and the-time-machine.epub's sidecar is written before anything here runs.

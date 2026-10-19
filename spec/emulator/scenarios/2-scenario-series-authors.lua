@@ -1,5 +1,5 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
--- by spec/emulator/series_authors_golden_spec.lua after the home fixture patch, whose name sorts
+-- by spec/emulator/series_authors_capture_spec.lua after the home fixture patch, whose name sorts
 -- before this one (frontend/userpatch.lua:60-61), so the look it stores is in place before
 -- anything here reads it. It runs beside KOPANDA_HOME_FIXTURE=empty, which sets up no featured
 -- book.
@@ -40,7 +40,7 @@
 --   - authors-list: the Authors list at its first page;
 --   - author-books: the author AUTHOR at its first page.
 -- A failure before the UI runs exits with status 4, as the home fixture does, since a half-made
--- library would be captured as if it were the golden's; one after is reported as a settled signal
+-- library would be captured as if it were the scenario's; one after is reported as a settled signal
 -- with error on the screen the view's capture shoots, so the spec fails with the message.
 local logger = require("logger")
 

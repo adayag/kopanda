@@ -1,4 +1,4 @@
--- The goldens' paint budget (spec/emulator/paint_budget.lua): cpu_ms judged on every run, wall
+-- The captures' paint budget (spec/emulator/paint_budget.lua): cpu_ms judged on every run, wall
 -- time's paint_ms only on a host whose 1-minute load is at or below its core count, or whose load
 -- or cores can't be read; a run that doesn't judge wall time says so.
 describe("the paint budget", function()

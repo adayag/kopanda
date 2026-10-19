@@ -1,8 +1,8 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
--- by spec/emulator/home_golden_spec.lua, home_capture_spec.lua, night_golden_spec.lua,
--- night_toggle_spec.lua, capture_inputs_spec.lua and preview_spec.lua, and by bin/preview.lua.
--- Applied by reader.lua:190 before any plugin code runs, it makes the home deterministic for a
--- golden:
+-- by spec/emulator/home_capture_spec.lua, night_toggle_spec.lua, capture_inputs_spec.lua,
+-- preview_spec.lua and the capture specs of the screens opened over the home, and by
+-- bin/preview.lua. Applied by reader.lua:190 before any plugin code runs, it makes the home
+-- deterministic for a capture:
 --   - os.time() and os.date(format) with no time argument answer 2026-10-13 08:42 in the run's
 --     TZ (a Tuesday, the boards' date); calls with a time pass through, and ui/time's monotonic
 --     clock is untouched, so paint_ms stays real;
@@ -334,7 +334,7 @@ local ok, err = pcall(function()
     conn:close()
 end)
 
--- A half-applied fixture would be captured as if it were the golden's state, so a failure
+-- A half-applied fixture would be captured as if it were the scenario's state, so a failure
 -- ends the run at once; the driver reports the exit status with this line in the log tail.
 if not ok then
     logger.warn("KOPANDA_SCENARIO: home fixture failed", err)

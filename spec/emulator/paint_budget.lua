@@ -1,4 +1,4 @@
--- The paint budget the goldens hold each capture's settled signal to (featured-book C9,
+-- The paint budget the capture specs hold each capture's settled signal to (featured-book C9,
 -- home-layout C10): a screen paints within M.MS of its open, in the emulator on this Mac. A
 -- regression tripwire, not a device figure.
 --

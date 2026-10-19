@@ -526,7 +526,7 @@ describe("the swatch screen", function()
         end
     end)
 
-    -- The golden profiles' sizes (spec/emulator/profiles.lua), where Diner's 14 chips, on_accent
+    -- The capture profiles' sizes (spec/emulator/profiles.lua), where Diner's 14 chips, on_accent
     -- among them, leave the lacks text no empty cell: every face line still ends inside its
     -- panel.
     it("fits every panel's content inside its panel at the Colorsoft's and the Paperwhite's sizes", function()

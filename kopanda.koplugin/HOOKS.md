@@ -2215,8 +2215,8 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
 - `frontend/device/generic/device.lua:344-347` (the device toggles night mode before any UI
   exists when it is set); `base/ffi/framebuffer.lua:566-581` (`Screen:shot` writes what the
   panel shows in night mode too).
-- Written true only by a capture with `night_mode` (`night_golden_spec.lua`); every other profile
-  leaves it absent, so its `settings.reader.lua` is as before.
+- Written true only by a capture with `night_mode` (`home_capture_spec.lua`, `bin/preview.lua`);
+  every other profile leaves it absent, so its `settings.reader.lua` is as before.
 
 ### `EMULATE_BW_SCREEN`
 
@@ -2317,18 +2317,9 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
   (past that repaint), a `"scenario"` signal with `home_paints` and `night_mode`, the screen's
   `night_mode` (`base/ffi/framebuffer.lua:22`); a failure is reported with `error`.
 
-### The cover-rect scenario (`spec/emulator/scenarios/2-scenario-cover-rect.lua`)
-
-- On the first home's settled signal it finds the featured slot's `ImageWidget` in
-  `package.loaded["home"].shown` (by metatable: `Widget:new` makes the class the instance's metatable,
-  `frontend/ui/widget/widget.lua:26-31`, `:40-48`) and reports the `dimen` its `paintTo` kept
-  (`frontend/ui/widget/imagewidget.lua:518-531`) as `cover_x`, `cover_y`, `cover_w`, `cover_h`
-  in a `"scenario"` signal. That is the rectangle `ImageWidget` inverts again in night mode
-  (`:76-77`, `:583-593`), which `night_golden_spec.lua` compares un-inverted on the Paperwhite.
-
 ### The sheet-hold scenario (`spec/emulator/scenarios/2-scenario-sheet-hold.lua`)
 
-- Run after the home fixture by `sheet_golden_spec.lua`. On the first home's settled signal it
+- Run after the home fixture by `sheet_capture_spec.lua`. On the first home's settled signal it
   finds the home with `UIManager:topdown_widgets_iter` (`frontend/ui/uimanager.lua:846`) and,
   from `nextTick`, sends one `Gesture` hold with `UIManager:sendEvent` (`:962-1034`), with the
   fields `GestureRange:match` reads (`frontend/ui/gesturerange.lua:21-51`), at a point
@@ -2340,7 +2331,7 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
 
 ### The quick-settings scenario (`spec/emulator/scenarios/2-scenario-quick-settings.lua`)
 
-- Run after the home fixture by `quick_settings_golden_spec.lua`. It writes nothing. On the first
+- Run after the home fixture by `quick_settings_capture_spec.lua`. It writes nothing. On the first
   home's settled signal, from `nextTick`, it sets `getCapacity` on the instance
   `Device:getPowerDevice()` returns to one returning 84, shadowing `BasePowerD:getCapacity`
   (`frontend/device/generic/powerd.lua:254`), so the header never reads the Mac's battery
@@ -2360,10 +2351,10 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
 
 ### The home fixture (`spec/emulator/scenarios/2-scenario-home-fixture.lua`)
 
-- Read by `home_golden_spec.lua`, `home_capture_spec.lua`, `night_golden_spec.lua`,
-  `night_toggle_spec.lua` and `sheet_golden_spec.lua`, whose captures pass `TZ`,
-  `KOPANDA_HOME_FIXTURE` (`populated`, `typecover` or `empty`) and, for Editorial,
-  `KOPANDA_HOME_LOOK` through the driver's `env` option. Applied at `reader.lua:190`, before any
+- Read by `home_capture_spec.lua`, `night_toggle_spec.lua`, `sheet_capture_spec.lua` and the
+  other emulator specs that start from the home, whose captures pass `TZ`,
+  `KOPANDA_HOME_FIXTURE` (`populated`, `typecover` or `empty`) and `KOPANDA_HOME_LOOK` through
+  the driver's `env` option. Applied at `reader.lua:190`, before any
   plugin code runs.
 - `os.time()` and `os.date(format)` with no time argument are replaced for the whole process and
   answer 2026-10-13 08:42 in `TZ` (America/Chicago); calls with a time pass through. KOReader's

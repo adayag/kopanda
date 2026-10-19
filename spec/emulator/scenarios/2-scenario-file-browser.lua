@@ -1,5 +1,5 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
--- by spec/emulator/nav_golden_spec.lua beside the home fixture patch. Its name sorts before the
+-- by spec/emulator/nav_capture_spec.lua beside the home fixture patch. Its name sorts before the
 -- fixture's (frontend/userpatch.lua:60-61); that is harmless, since the only setting it writes,
 -- home_dir, is one the fixture never touches. It does two things:
 --   - At patch time, before any plugin loads (reader.lua:190), it stores the fixture library
@@ -9,7 +9,7 @@
 --     (filemanager.lua:108-112, filemanagerutil.lua:25-43), and without a stored home_dir the
 --     home folder is the scratch profile (XDG_DOCUMENTS_DIR, frontend/device/sdl/device.lua:70),
 --     so the subtitle showed the library's absolute path, cut on the left only where it ran out of
---     width (".../<the checkout's last folders>/spec/fixtures/library"): a golden that depends on
+--     width (".../<the checkout's last folders>/spec/fixtures/library"): a capture that depends on
 --     where the repo is checked out (open fact F3, candidate a). With the library as home, the
 --     subtitle read "Home" in every checkout, as it does on the device. Since bars/title-bar,
 --     KoPanda's title bar replaces KOReader's and draws no path: with the library as home its

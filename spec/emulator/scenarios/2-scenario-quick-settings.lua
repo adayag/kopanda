@@ -1,5 +1,5 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
--- by spec/emulator/quick_settings_golden_spec.lua after the home fixture patch. It writes nothing.
+-- by spec/emulator/quick_settings_capture_spec.lua after the home fixture patch. It writes nothing.
 -- On the first home's settled signal, from the next tick, it stubs the power device's capacity at
 -- 84 (an instance field, so the emulator's reading of the Mac's battery,
 -- frontend/device/sdl/powerd.lua:28-33, stays out), stubs NetworkMgr.isWifiOn to true so the sheet's

@@ -1,5 +1,5 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
--- by spec/emulator/library_golden_spec.lua after the home fixture patch, whose name sorts before
+-- by spec/emulator/library_capture_spec.lua after the home fixture patch, whose name sorts before
 -- this one (frontend/userpatch.lua:60-61), so the look it stores is in place before anything here
 -- reads it. It runs beside KOPANDA_HOME_FIXTURE=empty, which sets up no featured book.
 -- KOPANDA_LIBRARY_DIR is the capture library the spec built (the driver's library_dir): its books
@@ -35,7 +35,7 @@
 --     not the root, so a library that came back at the root fails same_dir; the capture library
 --     holds one page per folder, so the page is 1 either way.
 -- A failure before the UI runs exits with status 4, as the home fixture does, since a half-made
--- library would be captured as if it were the golden's; one after is reported as a settled signal
+-- library would be captured as if it were the scenario's; one after is reported as a settled signal
 -- with error on the screen the step's capture shoots, so the spec fails with the message.
 local logger = require("logger")
 

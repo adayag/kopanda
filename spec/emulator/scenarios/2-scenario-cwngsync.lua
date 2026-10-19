@@ -1,5 +1,5 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile by
--- spec/emulator/library_placeholder_golden_spec.lua beside the home fixture patch (at empty) and the
+-- spec/emulator/library_placeholder_capture_spec.lua beside the home fixture patch (at empty) and the
 -- library scenario patch (2-scenario-library.lua, at its root step). It sorts before both
 -- (frontend/userpatch.lua:60-61, natsort), which does not matter: it reads only the capture
 -- library's files, and acts only once a file manager is made.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Renders a profile's home in the emulator, as the dev loop's goldens do: the populated home
+# Renders a profile's home in the emulator, as the emulator specs capture it: the populated home
 # fixture frozen at 2026-10-13 08:42 in Chicago, the working tree's plugin, the profile's screen
 # and settings file, one look, day or night. The studio's preview pane asks it for each frame
 # (bin/preview.lua holds the capture).

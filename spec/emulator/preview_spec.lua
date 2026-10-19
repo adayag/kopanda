@@ -1,18 +1,22 @@
 -- bin/preview renders a profile's home in one look, day or night (C2, C3): the default settings
--- render the committed goldens, never writing one, and a settings change renders differently.
--- Each case runs the script as the studio's server does, with KOPANDA_UPDATE_GOLDENS unset in
--- its environment, and TMPDIR under this run's KO_HOME, which bin/check removes.
+-- render what the capture driver takes of the populated home, night renders the look's night
+-- paper, and a settings change renders differently. Each case runs the script as the studio's
+-- server does, with TMPDIR under this run's KO_HOME, which bin/check removes.
 describe("bin/preview", function()
     require("commonrequire")
     local lfs = require("libs/libkoreader-lfs")
     local rapidjson = require("rapidjson")
     local driver = require("emulator.driver")
-    local golden = require("emulator.golden")
     local compare = require("emulator.compare")
+    local Looks = require("looks")
     local root = os.getenv("KOPANDA_ROOT")
     local ko_home = os.getenv("KO_HOME")
-    -- The home goldens' fraction, spec/emulator/home_golden_spec.lua.
+    -- About 42 px at 1264×1680, against compare's default of about 1,060: two clean captures of
+    -- the same home differ by 0 px, and the featured caption at 60 s a page or at 63 % differs by
+    -- 356 px or more (TW-i9qml9), which the default lets through.
     local HOME_MAX_FRACTION = 0.00002
+    -- The paper is a flat fill, read close to exact (home_capture_spec.lua).
+    local PAPER_TOLERANCE = 4
     local COLORSOFT = "1264 1680 300 color"
     -- Paris as spec/emulator/capture_inputs_spec.lua has it.
     local function paris(units)
@@ -61,7 +65,7 @@ describe("bin/preview", function()
     -- before it; returns the exit status, stdout and stderr.
     local function run(device, look, variant, out, settings, env)
         local stdout, stderr = fresh("stdout"), fresh("stderr")
-        local command = string.format("cd '%s' && env -u KOPANDA_UPDATE_GOLDENS TMPDIR='%s' %s"
+        local command = string.format("cd '%s' && env TMPDIR='%s' %s"
             .. " bin/preview %s %s %s '%s'%s > '%s' 2> '%s'", root, tmp, env or "", device, look, variant, out,
             settings and (" '" .. settings .. "'") or "", stdout, stderr)
         local quoted = command:gsub("'", "'\\''")
@@ -95,20 +99,30 @@ describe("bin/preview", function()
         assert.is_number(answer.paint_ms)
     end
 
-    it("renders the Diner day golden with no settings file", function()
+    it("renders Diner by day with no settings file as the capture driver takes the populated home", function()
         local out, answer, stdout, stderr = preview(COLORSOFT, "diner", "day")
         default_diner = out
         assert_answer(out, answer, stdout, stderr, 1264, 1680)
-        local checked = golden.check("home-diner", "colorsoft", { png = out },
-            { update = false, max_fraction = HOME_MAX_FRACTION })
-        assert.is_true(checked.ok)
+        local captured = driver.capture{
+            profile = "colorsoft",
+            plugin_dir = root .. "/kopanda.koplugin",
+            patches = { root .. "/spec/emulator/scenarios/2-scenario-home-fixture.lua" },
+            env = { TZ = "America/Chicago", KOPANDA_HOME_FIXTURE = "populated", KOPANDA_HOME_LOOK = "diner" },
+        }
+        local same = compare.compare(out, captured.png, { max_fraction = HOME_MAX_FRACTION })
+        assert.is_true(same.ok, string.format("%d px differ", same.differing or -1))
     end)
 
-    it("renders the Editorial night golden with no settings file", function()
+    it("renders Editorial by night on Editorial's night paper with no settings file", function()
         local out, answer, stdout, stderr = preview(COLORSOFT, "editorial", "night")
         assert_answer(out, answer, stdout, stderr, 1264, 1680)
-        local checked = golden.check("home-night-editorial", "colorsoft", { png = out }, { update = false })
-        assert.is_true(checked.ok)
+        -- The left margin at mid-height, as home_capture_spec.lua reads it.
+        local paper = Looks.get("editorial").palettes.night.paper
+        local got = compare.pixel(out, 2, 1680 / 2)
+        for c, at in ipairs({ 2, 4, 6 }) do
+            assert.truthy(math.abs(got[c] - tonumber(paper:sub(at, at + 1), 16)) <= PAPER_TOLERANCE,
+                string.format("paper %02x%02x%02x, want %s", got[1], got[2], got[3], paper))
+        end
     end)
 
     it("renders another text size differently from no settings file", function()
@@ -129,9 +143,8 @@ describe("bin/preview", function()
     it("renders the look it is given, not the look the settings file stores", function()
         local settings = settings_file('return { ["schema_version"] = 1, ["look"] = "editorial" }\n')
         local out = preview(COLORSOFT, "diner", "day", settings)
-        local checked = golden.check("home-diner", "colorsoft", { png = out },
-            { update = false, max_fraction = HOME_MAX_FRACTION })
-        assert.is_true(checked.ok)
+        local same = compare.compare(out, default_diner_render(), { max_fraction = HOME_MAX_FRACTION })
+        assert.is_true(same.ok, string.format("%d px differ", same.differing or -1))
         assert.equals('return { ["schema_version"] = 1, ["look"] = "editorial" }\n', read(settings),
             "the profile's file is not written")
     end)

@@ -1,5 +1,5 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
--- by spec/emulator/screens_golden_spec.lua after the home fixture patch, whose name sorts first
+-- by spec/emulator/screens_capture_spec.lua after the home fixture patch, whose name sorts first
 -- (frontend/userpatch.lua:60-61), so the fixture's settings are written before this one runs.
 -- KOPANDA_SCREEN says what it opens:
 --   - layout: on the first home's settled signal, from the next tick, edit layout with row 2

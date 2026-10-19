@@ -1,5 +1,6 @@
--- Pixel comparison of a capture against its golden. Both PNGs are decoded to 8-bit RGB, so
--- the emulator's RGBA captures and grey images compare alike and alpha never enters.
+-- Pixel comparison of one capture against another, and one pixel of a capture read. PNGs are
+-- decoded to 8-bit RGB, so the emulator's RGBA captures and grey images compare alike and alpha
+-- never enters.
 local ffi = require("ffi")
 local BB = require("ffi/blitbuffer")
 local Png = require("ffi/png")
@@ -67,6 +68,15 @@ local function write_diff(path, golden, differs, w, h)
     if not ok then
         error("compare: cannot write " .. path .. ": " .. tostring(err))
     end
+end
+
+-- The pixel at x, y (from the top left, 0-based) of the PNG at path, as { r, g, b }.
+function M.pixel(path, x, y)
+    local image = load(path)
+    local o = (y * image.width + x) * 3
+    local rgb = { image.data[o], image.data[o + 1], image.data[o + 2] }
+    image.bb:free()
+    return rgb
 end
 
 -- opts: masks ({ {x=, y=, w=, h=}, ... } in pixels), tolerance (largest per-channel

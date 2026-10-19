@@ -1,7 +1,8 @@
 -- The library captures' book folder (cover-grid goldens task.md:8-11), shared by
--- spec/emulator/library_golden_spec.lua and library_hold_golden_spec.lua: copies of the three
--- fixture books at its root and a sub-folder holding one more copy, so spec/fixtures/library/
--- (counted by fixtures_spec.lua, listed by the file-browser goldens) is not changed. The library
+-- spec/emulator/library_capture_spec.lua, library_hold_capture_spec.lua and
+-- library_placeholder_capture_spec.lua: copies of the three fixture books at its root and a
+-- sub-folder holding one more copy, so spec/fixtures/library/ (counted by fixtures_spec.lua) is
+-- not changed. The library
 -- scenario patch (scenarios/2-scenario-library.lua) reads it as KOPANDA_LIBRARY_DIR.
 -- Busted's assertions, which a required module doesn't get as its global assert.
 local assert = require("luassert")

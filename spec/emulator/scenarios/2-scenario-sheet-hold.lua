@@ -1,5 +1,5 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
--- by spec/emulator/sheet_golden_spec.lua after the home fixture patch. It writes nothing. On the
+-- by spec/emulator/sheet_capture_spec.lua after the home fixture patch. It writes nothing. On the
 -- first home's settled signal, from the next tick, it sends one hold to the home, where
 -- KOPANDA_SHEET_HOLD says:
 --   - book: the centre of the featured slot's rectangle, which opens the book sheet;

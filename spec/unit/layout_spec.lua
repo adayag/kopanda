@@ -467,7 +467,7 @@ describe("Layout", function()
 
     -- Open fact F1 (feature.md, "Fitting the default home above the bar"): the schema's default
     -- rows with the real widgets and the real bar, in both looks at each text size, on the
-    -- Colorsoft and the Paperwhite, with the home goldens' content (2-scenario-home-fixture.lua):
+    -- Colorsoft and the Paperwhite, with the home fixture's content (2-scenario-home-fixture.lua):
     -- populated, a featured book with its chapter, a weather reading and the quote of their day;
     -- empty, none of them and the fixture's six launcher entries. Text is measured by Font:getFace
     -- at the device screen's scale (frontend/ui/font.lua:276), so the device screen itself answers
@@ -476,7 +476,7 @@ describe("Layout", function()
         local harness = require("plugin_harness")
         local Geom = require("ui/geometry")
         local TextWidget = require("ui/widget/textwidget")
-        -- The goldens' frozen time, 2026-10-13 08:42.
+        -- The home fixture's frozen time, 2026-10-13 08:42.
         local NOW = os.time{ year = 2026, month = 10, day = 13, hour = 8, min = 42, sec = 0 }
 
         -- harness.at_colorsoft's stubs at the Paperwhite's 1236×1648, no DPI override.

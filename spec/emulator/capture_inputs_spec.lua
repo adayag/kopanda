@@ -7,14 +7,15 @@ describe("the capture inputs", function()
     require("commonrequire")
     local lfs = require("libs/libkoreader-lfs")
     local driver = require("emulator.driver")
-    local golden = require("emulator.golden")
     local compare = require("emulator.compare")
     local root = os.getenv("KOPANDA_ROOT")
     local ko_home = os.getenv("KO_HOME")
     local probe = root .. "/spec/fixtures/probe.koplugin"
     local plugin = root .. "/kopanda.koplugin"
     local fixture = root .. "/spec/emulator/scenarios/2-scenario-home-fixture.lua"
-    -- The home goldens' fraction, spec/emulator/home_golden_spec.lua.
+    -- About 42 px at 1264×1680, against compare's default of about 1,060: two clean captures of
+    -- the same home differ by 0 px, and the featured caption at 60 s a page or at 63 % differs by
+    -- 356 px or more (TW-i9qml9), which the default lets through.
     local HOME_MAX_FRACTION = 0.00002
 
     local counter = 0
@@ -50,6 +51,34 @@ describe("the capture inputs", function()
             end
         end
         return names
+    end
+
+    -- The capture options of the populated home in Diner on the Colorsoft, with the weather
+    -- variables weather sets and settings_file, if any, as the plugin's settings.
+    local function home(weather, settings_file)
+        local env = {
+            TZ = "America/Chicago",
+            KOPANDA_HOME_FIXTURE = "populated",
+            KOPANDA_HOME_LOOK = "diner",
+        }
+        for name, value in pairs(weather) do
+            env[name] = value
+        end
+        return {
+            profile = "colorsoft",
+            plugin_dir = plugin,
+            patches = { fixture },
+            settings_file = settings_file,
+            env = env,
+        }
+    end
+
+    -- The PNG of that home with no weather variable set and no settings file, captured once: what
+    -- an empty variable and a settings file returning a non-table must render.
+    local default_png
+    local function default_home()
+        default_png = default_png or driver.capture(home({})).png
+        return default_png
     end
 
     local function capture_error(opts)
@@ -132,24 +161,6 @@ describe("the capture inputs", function()
             .. "    [\"weather.units\"] = \"celsius\",\n"
             .. "}\n"
 
-        local function home(weather, settings_file)
-            local env = {
-                TZ = "America/Chicago",
-                KOPANDA_HOME_FIXTURE = "populated",
-                KOPANDA_HOME_LOOK = "diner",
-            }
-            for name, value in pairs(weather) do
-                env[name] = value
-            end
-            return {
-                profile = "colorsoft",
-                plugin_dir = plugin,
-                patches = { fixture },
-                settings_file = settings_file,
-                env = env,
-            }
-        end
-
         it("show a reading for the stored location and units only when set to them", function()
             local settings = fresh_dir("settings") .. "/paris.lua"
             write(settings, PARIS)
@@ -172,9 +183,8 @@ describe("the capture inputs", function()
                 KOPANDA_HOME_WEATHER_LONGITUDE = "",
                 KOPANDA_HOME_WEATHER_UNITS = "",
             }))
-            local checked = golden.check("home-diner", "colorsoft", result,
-                { update = false, max_fraction = HOME_MAX_FRACTION })
-            assert.is_true(checked.ok)
+            local same = compare.compare(result.png, default_home(), { max_fraction = HOME_MAX_FRACTION })
+            assert.is_true(same.ok, string.format("%d px differ", same.differing or -1))
         end)
 
         local failures = {
@@ -222,19 +232,8 @@ describe("the capture inputs", function()
     it("renders a copied settings file returning a non-table as every key at its default", function()
         local settings = fresh_dir("settings") .. "/five.lua"
         write(settings, "return 5\n")
-        local result = driver.capture{
-            profile = "colorsoft",
-            plugin_dir = plugin,
-            patches = { fixture },
-            settings_file = settings,
-            env = {
-                TZ = "America/Chicago",
-                KOPANDA_HOME_FIXTURE = "populated",
-                KOPANDA_HOME_LOOK = "diner",
-            },
-        }
-        local checked = golden.check("home-diner", "colorsoft", result,
-            { update = false, max_fraction = HOME_MAX_FRACTION })
-        assert.is_true(checked.ok)
+        local result = driver.capture(home({}, settings))
+        local same = compare.compare(result.png, default_home(), { max_fraction = HOME_MAX_FRACTION })
+        assert.is_true(same.ok, string.format("%d px differ", same.differing or -1))
     end)
 end)
