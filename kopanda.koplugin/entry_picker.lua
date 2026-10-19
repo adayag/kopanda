@@ -5,7 +5,7 @@
 -- on_entry isn't called.
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Dispatcher = require("dispatcher")
-local InfoMessage = require("ui/widget/infomessage")
+local Helpers = require("helpers")
 local InputDialog = require("ui/widget/inputdialog")
 local PathChooser = require("ui/widget/pathchooser")
 local PluginLoader = require("pluginloader")
@@ -27,10 +27,6 @@ EntryPicker.KINDS = {
     { kind = "action", label = "Action" },
     { kind = "plugin", label = "Plugin" },
 }
-
-local function note(text)
-    UIManager:show(InfoMessage:new{ text = text })
-end
 
 -- fn wrapped for one pick: an error is logged with what, and every widget the pick showed that
 -- is still up is closed.
@@ -137,7 +133,7 @@ local function action_tree(pick, done)
     end
     if #items ~= 4 then
         logger.err("KoPanda: the entry picker found", #menu, "items in KOReader's action tree, not its sections")
-        note("Couldn't list KOReader's actions.")
+        Helpers.note("Couldn't list KOReader's actions.")
         return
     end
     local container = CenterContainer:new{ ignore = "height", dimen = Screen:getSize() }
@@ -160,9 +156,9 @@ local function action_tree(pick, done)
             end
         end
         if #ticked ~= 1 then
-            note("Pick one action.")
+            Helpers.note("Pick one action.")
         elseif ticked[1].value ~= true then
-            note("That action needs a value, which a launcher entry can't keep.")
+            Helpers.note("That action needs a value, which a launcher entry can't keep.")
         else
             local id = ticked[1].id
             ask_label(pick, Dispatcher.getDisplayList({ [id] = true })[1].text, function(label)
@@ -207,7 +203,7 @@ local PICKERS = {
             onConfirm = guard(pick, "failed on a chosen folder:", function(path)
                 path = path:gsub("/+$", "")
                 if path == "" then
-                    note("Choose a folder inside the root.")
+                    Helpers.note("Choose a folder inside the root.")
                     return
                 end
                 ask_label(pick, path:match("[^/]+$"), function(label)
@@ -238,7 +234,7 @@ local PICKERS = {
             end
         end
         if #rows == 0 then
-            note("No plugins are loaded.")
+            Helpers.note("No plugins are loaded.")
             return
         end
         table.sort(rows, function(a, b)

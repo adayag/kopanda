@@ -155,7 +155,7 @@ Upgrading KOReader walks this list.
   cpu_ms, settle_ms }`, once per home; the capture harness entry below is the listener.
   The sheet, editor, swatch and file-browser signals carry `paint_ms` and `cpu_ms` too.
   `cpu_ms` is `os.clock()` process CPU time over the same span as `paint_ms`, stamped through
-  `paint_clock.lua`.
+  `paint_clock.lua`, whose `PaintClock.settled` sends the sheet's, editor's and swatch's signals.
   `paint_ms` runs from the start of the show path to the end of the home's first `paintTo`;
   `settle_ms` runs on to the signal, which the first `paintTo`'s `nextTick`
   (`uimanager.lua:431-433`) queues behind tasks already due on the tick after the paint, such

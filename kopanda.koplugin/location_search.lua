@@ -3,6 +3,7 @@
 -- caller's on_pick gets the chosen { name, latitude, longitude }. The fetch blocks the UI for
 -- its duration, at most the timeouts Weather.get sets, so a note says so while it runs.
 local ButtonDialog = require("ui/widget/buttondialog")
+local Helpers = require("helpers")
 local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
 local UIManager = require("ui/uimanager")
@@ -80,11 +81,6 @@ local function network()
     return require("ui/network/manager")
 end
 
--- A note closed by a tap; no timeout, so no timer (frontend/ui/widget/infomessage.lua:53, :283-290).
-local function note(message)
-    UIManager:show(InfoMessage:new{ text = message })
-end
-
 -- Asks for a place and calls on_pick with the chosen { name, latitude, longitude }: the query
 -- dialog, then offline a note, else a searching note over the blocking fetch, then a note for
 -- no result or a failure, or a chooser with one row per candidate. Every step is guarded: an
@@ -138,7 +134,7 @@ function LocationSearch.ask(on_pick)
     local function run(query)
         if not network():isConnected() then
             -- A plain hyphen, though the spec writes U+2011: no plugin source holds one (fonts_spec.lua).
-            note("Finding a place needs Wi-Fi.")
+            Helpers.note("Finding a place needs Wi-Fi.")
             return
         end
         -- Painted now: the fetch blocks the UI loop that would paint it (frontend/ui/uimanager.lua:1404).
@@ -148,9 +144,9 @@ function LocationSearch.ask(on_pick)
         close(searching)
         if not candidates then
             logger.warn("KoPanda: could not search for places:", why)
-            note("Couldn't search for places.")
+            Helpers.note("Couldn't search for places.")
         elseif #candidates == 0 then
-            note("No place found for “" .. query .. "”.")
+            Helpers.note("No place found for “" .. query .. "”.")
         else
             choose(candidates)
         end

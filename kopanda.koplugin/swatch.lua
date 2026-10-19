@@ -419,19 +419,8 @@ end
 -- The dev loop's settled signal after the first paint, unless that paint failed. paint_ms runs
 -- from the show to the end of that paint, and cpu_ms on the CPU clock.
 local function settle(swatch)
-    if swatch.paint_failed then
-        return
-    end
-    local ok, err = pcall(function()
-        local paint_ms, cpu_ms = PaintClock.ms(PaintClock.since(swatch.started, swatch.painted_at))
-        UIManager.event_hook:execute("KoPandaSettled", {
-            screen = "swatch",
-            paint_ms = paint_ms,
-            cpu_ms = cpu_ms,
-        })
-    end)
-    if not ok then
-        logger.err("KoPanda: the swatch settled signal failed:", err)
+    if not swatch.paint_failed then
+        PaintClock.settled("the swatch", swatch.started, swatch.painted_at, { screen = "swatch" })
     end
 end
 

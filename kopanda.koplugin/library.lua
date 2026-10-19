@@ -8,6 +8,7 @@
 -- { dir, page } a book was opened from, which the next file manager's show returns to (D4), or nil,
 -- in memory only; Library.on_picker(kind), run on a tap on the "sort" or "status" picker, a hook
 -- library_pickers.lua fills (here a no-op).
+local Helpers = require("helpers")
 local LibraryChrome = require("library_chrome")
 local LibraryCovers = require("library_covers")
 local LibraryOrder = require("library_order")
@@ -70,7 +71,7 @@ end
 -- book without one does nothing; a folder shows at its page; a picker runs Library.on_picker.
 function Library:action_at(pos)
     for _, tile in ipairs(self.tiles) do
-        if LibraryChrome.inside(tile.rect, pos) then
+        if Helpers.inside(tile.rect, pos) then
             if tile.folder then
                 return function()
                     self:open_folder(tile.folder)
@@ -84,7 +85,7 @@ function Library:action_at(pos)
         end
     end
     for _, kind in ipairs({ "sort", "status" }) do
-        if LibraryChrome.inside(self.header[kind].hit, pos) then
+        if Helpers.inside(self.header[kind].hit, pos) then
             return function()
                 Library.on_picker(kind)
             end
@@ -102,7 +103,7 @@ function Library.hit(x, y)
     end
     local pos = { x = x, y = y }
     for _, tile in ipairs(library.tiles) do
-        if LibraryChrome.inside(tile.rect, pos) then
+        if Helpers.inside(tile.rect, pos) then
             if tile.record then
                 return { kind = "book", record = tile.record }
             end

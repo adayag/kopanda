@@ -6,7 +6,7 @@
 -- calls is guarded: an error is logged and gives a safe answer, and nothing is written after it.
 -- Module state: the types already logged as having no row builder, so each is logged once.
 local FeaturedBook = require("featured_book")
-local InfoMessage = require("ui/widget/infomessage")
+local Helpers = require("helpers")
 local Schema = require("schema")
 local Settings = require("settings")
 local UIManager = require("ui/uimanager")
@@ -34,11 +34,6 @@ local function guarded(what, fallback, f)
     end
 end
 
--- No timeout, so no timer (frontend/ui/widget/infomessage.lua:53, :283-290).
-local function note(text)
-    UIManager:show(InfoMessage:new{ text = text })
-end
-
 -- NetworkMgr, looked up at call time so a spec can stub it.
 local function network()
     return require("ui/network/manager")
@@ -56,7 +51,7 @@ local function write(entry, value)
     local ok, why = Settings.set(entry.id, value)
     if not ok then
         logger.err("KoPanda: could not save " .. entry.id .. ":", why)
-        note("Couldn't save " .. entry.label .. ".")
+        Helpers.note("Couldn't save " .. entry.label .. ".")
         return
     end
     if entry.id == "look" then

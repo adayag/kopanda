@@ -15,6 +15,7 @@ local DocSettings = require("docsettings")
 local Featured = require("widgets/featured")
 local FeaturedBook = require("featured_book")
 local FeaturedCover = require("featured_cover")
+local Guards = require("guards")
 local Home = require("home")
 local Math = require("optmath")
 local PaintClock = require("paint_clock")
@@ -270,24 +271,14 @@ local function book_rows(file, title, on, ctx, beneath)
     return rows
 end
 
--- Runs fn, logging what failed when it raises, so a row's failure leaves the window it was shown
--- over as it was rather than closing it, as the sheet's own failure would (context-menu "Failure
--- behaviour").
-local function guarded(what, fn)
-    return function()
-        local ok, err = pcall(fn)
-        if not ok then
-            logger.err("KoPanda: " .. what .. " failed:", err)
-        end
-    end
-end
-
 -- Add to the home (context-menu D8): pins the book at file by its realpath, as the picker pins
 -- one, history holding realpaths (readhistory.lua:26). The window stays shown and the home, closed
 -- while a library window is up, builds afresh on its next show, so nothing is refreshed. When
 -- featured.pinned already names the book, by realpath, and is a file, as the picker reads the pin,
 -- the row reads On the home, ticked, so a tap runs nothing. A refused write is logged and changes
--- nothing. Greyed with no file (D2).
+-- nothing. Greyed with no file (D2). Its run, as the delete's and the download's below, goes through
+-- Guards.guarded, so a row's failure leaves the window it was shown over as it was rather than
+-- closing it, as the sheet's own failure would (context-menu "Failure behaviour").
 local function home_row(file)
     local row = { icon = "home_plus", label = "Add to the home" }
     if not file then
@@ -301,7 +292,7 @@ local function home_row(file)
         row.tick = true
         return row
     end
-    row.run = guarded("the pin to the home", function()
+    row.run = Guards.guarded("the pin to the home", function()
         local ok, err = Settings.set("featured.pinned", real)
         if not ok then
             logger.err("KoPanda: could not change the featured book:", err)
@@ -322,7 +313,7 @@ local function delete_row(file, placeholder, window)
         row.muted = true
         return row
     end
-    row.run = guarded("the delete", function()
+    row.run = Guards.guarded("the delete", function()
         local fm = file_manager()
         if not fm then
             logger.warn("KoPanda: no file manager to delete the book from")
@@ -371,7 +362,7 @@ local function download_row(record, window)
         row.muted = true
         return row
     end
-    row.run = guarded("the download", function()
+    row.run = Guards.guarded("the download", function()
         local plugin = cwngsync()
         if not can_download(plugin) then
             logger.warn("KoPanda: cwngsync went before the download; nothing to download the book with")

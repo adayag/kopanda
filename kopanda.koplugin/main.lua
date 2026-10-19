@@ -41,6 +41,7 @@ require("entry_picker")
 require("featured_book")
 require("featured_cover")
 require("folder_sheet")
+require("helpers")
 require("home_gestures")
 require("home_rows")
 require("home_sheet")
@@ -401,24 +402,6 @@ function KoPanda:goHome()
     end
 end
 
--- f wrapped so an error is logged rather than reaching KOReader's menu or UI loop.
-local function guarded(what, f)
-    return function()
-        local ok, err = pcall(f)
-        if not ok then
-            logger.err("KoPanda: " .. what .. " failed:", err)
-        end
-    end
-end
-
--- A menu item's callback runs before the menu closes (frontend/ui/widget/touchmenu.lua:913-926),
--- so the item acts from the next tick.
-local function after_menu(what, f)
-    return guarded(what, function()
-        UIManager:nextTick(guarded(what, f))
-    end)
-end
-
 function KoPanda:onDispatcherRegisterActions()
     if self.refused then
         return
@@ -443,7 +426,7 @@ end
 function KoPanda:addToMainMenu(menu_items)
     local swatches = {
         text = "Swatches",
-        callback = after_menu("Tools › KoPanda › Swatches", Swatch.show),
+        callback = Guards.after_menu("Tools › KoPanda › Swatches", Swatch.show),
     }
     -- The Studio's pull works from both menus: the first pull onto a device runs while another
     -- shell is still enabled.
@@ -462,7 +445,7 @@ function KoPanda:addToMainMenu(menu_items)
         menu_items.kopanda_home = {
             icon = "home",
             remember = false,
-            callback = guarded("the Home tab", function()
+            callback = Guards.guarded("the Home tab", function()
                 self.ui.menu:onCloseFileManagerMenu()
                 self:goHome()
             end),
@@ -477,7 +460,7 @@ function KoPanda:addToMainMenu(menu_items)
         menu_items.kopanda_quick_settings = {
             icon = "appbar.contrast",
             remember = false,
-            callback = guarded("the Quick settings tab", function()
+            callback = Guards.guarded("the Quick settings tab", function()
                 local started = PaintClock.now()
                 if self.in_fm then
                     self.ui.menu:onCloseFileManagerMenu()
@@ -497,7 +480,7 @@ function KoPanda:addToMainMenu(menu_items)
         sub_item_table = {
             {
                 text = "Home",
-                callback = after_menu("Tools › KoPanda › Home", function()
+                callback = Guards.after_menu("Tools › KoPanda › Home", function()
                     self:goHome()
                 end),
             },

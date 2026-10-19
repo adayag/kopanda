@@ -113,10 +113,7 @@ end
 function HomeRows.build(home)
     local look = Looks.active()
     local variant = Looks.variant()
-    local palette = Looks.palette(look, variant)
-    local function color(role)
-        return role and palette[role] and Looks.color(palette[role]) or nil
-    end
+    local color = Looks.colorer({ look = look, variant = variant })
     local wallpaper_key = wallpaper_of(home, look, variant)
     local ctx = {
         look = look,

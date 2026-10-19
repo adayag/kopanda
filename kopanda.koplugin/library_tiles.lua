@@ -11,34 +11,23 @@
 local FeaturedCover = require("featured_cover")
 local Featured = require("widgets/featured")
 local Geom = require("ui/geometry")
+local Helpers = require("helpers")
 local Icons = require("icons")
 local Layout = require("layout")
 local Looks = require("looks")
+local Paint = require("paint")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
 
 local LibraryTiles = {}
 
 local COLUMNS = 3
--- A line's height is its face's or its forced one, whatever its text
--- (frontend/ui/widget/textwidget.lua:112-113, :292-299), so one sample measures every line of a part.
-local SAMPLE = "Library"
 
 -- The tile: its children painted at their places from its top left, in order, so the badge and
 -- the chip come after the cover they sit on.
 local Tile = FeaturedCover.Box:extend{
     name = "kopanda_library_tile",
 }
-
--- Where child is painted, from the tile's top left, or nil for a widget the tile doesn't hold.
-function Tile:place(child)
-    for i, held in ipairs(self) do
-        if held == child then
-            return self.places[i]
-        end
-    end
-    return nil
-end
 
 local function add(box, child, x, y)
     box[#box + 1] = child
@@ -51,34 +40,6 @@ local function fixed(ctx)
     return { look = ctx.look, variant = ctx.variant, screen = ctx.screen }
 end
 
-local function scaler(ctx)
-    return function(px)
-        return ctx.screen:scaleBySize(px)
-    end
-end
-
--- A negative length, an overhang, scaled as its size is, so a corner overhangs as far as it insets.
-local function scale_signed(scale, px)
-    if px < 0 then
-        return -scale(-px)
-    end
-    return scale(px)
-end
-
-local function colorer(ctx)
-    local palette = Looks.palette(ctx.look, ctx.variant)
-    return function(role)
-        return role and palette[role] and Looks.color(palette[role]) or nil
-    end
-end
-
-local function line_height(part, ctx)
-    local line = Typeset.line(part, SAMPLE, math.huge, ctx)
-    local h = line:getSize().h
-    line:free()
-    return h
-end
-
 -- The grid across a screen screen_w wide under ctx, in device pixels: columns, three { x, w } from
 -- the screen's left edge inside grid.side at grid.column_gap (Layout.columns), the cover box's
 -- cover_w (the narrowest column's width) and cover_h, the strip's strip_y and strip_h and the
@@ -87,7 +48,7 @@ end
 -- grid's, as the one-author grid's (shelf.author_grid.cover_h). Raises when the title's face won't load.
 function LibraryTiles.geometry(screen_w, ctx, cover_h)
     ctx = fixed(ctx)
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     local library = ctx.look.library
     local grid = library.grid
     local side = scale(grid.side)
@@ -112,7 +73,7 @@ function LibraryTiles.geometry(screen_w, ctx, cover_h)
         strip_y = strip_y,
         strip_h = strip_h,
         title_y = title_y,
-        height = title_y + line_height(ctx.look.type.tile_title, ctx),
+        height = title_y + Typeset.line_height(ctx.look.type.tile_title, ctx),
     }
 end
 
@@ -121,12 +82,12 @@ end
 -- no taller than its line), and its edge.
 function LibraryTiles.header_height(ctx)
     ctx = fixed(ctx)
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     local look = ctx.look
     local header = look.library.header
-    local text = line_height(look.type.library_count, ctx) + scale(header.line_gap)
-        + line_height(look.type.library_title, ctx)
-    local picker = line_height(look.type.library_picker, ctx)
+    local text = Typeset.line_height(look.type.library_count, ctx) + scale(header.line_gap)
+        + Typeset.line_height(look.type.library_title, ctx)
+    local picker = Typeset.line_height(look.type.library_picker, ctx)
         + 2 * (scale(header.picker_padding.y) + scale(header.picker_outline_width))
     return scale(header.padding.top) + math.max(text, picker) + scale(header.padding.bottom)
         + scale(header.edge_width)
@@ -136,10 +97,10 @@ end
 -- the space under it.
 function LibraryTiles.pager_height(ctx)
     ctx = fixed(ctx)
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     local look = ctx.look
     local pager = look.library.pager
-    return math.max(scale(pager.button_h), line_height(look.type.pager_label, ctx)) + scale(pager.bottom)
+    return math.max(scale(pager.button_h), Typeset.line_height(look.type.pager_label, ctx)) + scale(pager.bottom)
 end
 
 local function new_tile(box)
@@ -168,7 +129,7 @@ end
 -- The download badge: a circle of badge.size in fill_color with an outline, the download icon
 -- centred in it.
 local function badge(ctx)
-    local scale, color = scaler(ctx), colorer(ctx)
+    local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local tokens = ctx.look.library.badge
     local size = scale(tokens.size)
     local radius = math.floor(size / 2)
@@ -198,7 +159,7 @@ end
 -- padding and outline colour at outline_width (board pixels), on fill_color. "Up next" takes the
 -- shelf's up_next fill and outline width (series-and-authors D5).
 local function chip(text, part, fill_color, outline_width, max_w, ctx)
-    local scale, color = scaler(ctx), colorer(ctx)
+    local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local tokens = ctx.look.library.not_downloaded
     local outline_color = color(tokens.outline_color)
     local outline = outline_color and scale(outline_width) or 0
@@ -223,12 +184,12 @@ end
 -- corner badge.align names (the right one, top or bottom), inset from the cover's outline
 -- (negative: overhanging), its size, the outline's width and whether it is on the cover's foot.
 local function badge_place(box, ctx)
-    local scale, color = scaler(ctx), colorer(ctx)
+    local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local library = ctx.look.library
     local tokens = library.badge
     local edge = color(library.cover.outline_color) and scale(library.cover.outline_width) or 0
     local size = scale(tokens.size)
-    local inset = scale_signed(scale, tokens.inset)
+    local inset = Paint.scale_signed(scale, tokens.inset)
     local on_foot = tokens.align == "bottom"
     return {
         x = box.cover_w - edge - inset - size,
@@ -244,7 +205,7 @@ end
 -- (tweaks/badge-only-not-downloaded). The chip sits left of the badge's place: beside it where both
 -- are on the foot, at the placeholder's padding where the badge is on top.
 local function foot(tile, box, ctx, badged, label)
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     local look = ctx.look
     local library = look.library
     local place = badge_place(box, ctx)
@@ -272,7 +233,7 @@ end
 function LibraryTiles.overhang(box, ctx)
     ctx = fixed(ctx)
     local shadow = ctx.look.library.cover.shadow
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     local place = badge_place(box, ctx)
     return {
         top = math.max(0, -place.y),
@@ -296,7 +257,7 @@ function LibraryTiles.book(record, progress, box, ctx, chip_spec)
     tile.cover = add(tile, FeaturedCover.framed(record, box.cover_w, box.cover_h, ctx, cover_frame(look)), 0, 0)
     if record.path and progress.percent and progress.status ~= "new" and progress.status ~= "complete" then
         local outline_width = look.library.strip.outline_width
-        local outline = colorer(ctx)(look.progress.outline_color) and scaler(ctx)(outline_width) or 0
+        local outline = Looks.colorer(ctx)(look.progress.outline_color) and Paint.scaler(ctx)(outline_width) or 0
         tile.strip = add(tile, Featured.bar(Featured.shown_percent(progress), box.cover_w, box.strip_h - 2 * outline,
             outline_width, ctx), 0, box.strip_y)
     end
@@ -308,17 +269,6 @@ function LibraryTiles.book(record, progress, box, ctx, chip_spec)
     return tile
 end
 
--- A folder's book count in words: "No books", "1 book", "14 books"; the folder sheet's meta reads
--- it so (context-menu D12).
-local function books_text(n)
-    if n == 0 then
-        return "No books"
-    elseif n == 1 then
-        return "1 book"
-    end
-    return n .. " books"
-end
-LibraryTiles.books_text = books_text
 
 -- A folder's tile for folder ({ name, path }) with counts ({ books, reading }, the books directly
 -- in it and how many of them are reading) in box: the cover box filled in folder.fill_color with
@@ -327,7 +277,7 @@ LibraryTiles.books_text = books_text
 -- the title's place. The tile keeps cover and title.
 function LibraryTiles.folder(folder, counts, box, ctx)
     ctx = fixed(ctx)
-    local scale, color = scaler(ctx), colorer(ctx)
+    local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local look = ctx.look
     local tokens = look.library.folder
     local shadow = look.library.cover.shadow
@@ -358,7 +308,7 @@ function LibraryTiles.folder(folder, counts, box, ctx)
         size = scale(tokens.icon_size),
         color = color(tokens.icon_color),
     }, pad_x, pad_y)
-    local lines = { Typeset.line(look.type.folder_count, books_text(counts.books or 0), inner_w, ctx) }
+    local lines = { Typeset.line(look.type.folder_count, Helpers.count_text(counts.books or 0), inner_w, ctx) }
     if counts.reading and counts.reading > 0 then
         lines[2] = Typeset.line(look.type.folder_reading, counts.reading .. " reading", inner_w, ctx)
     end

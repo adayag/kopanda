@@ -144,9 +144,7 @@ local function compose(width, ctx)
     local function color(role)
         return role and Looks.color(palette[role])
     end
-    local function scale(px)
-        return ctx.screen:scaleBySize(px)
-    end
+    local scale = Paint.scaler(ctx)
 
     local style = look.type.quote
     local size = Layout.font_size(style.size, ctx.text_size)

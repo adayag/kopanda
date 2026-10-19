@@ -3,12 +3,11 @@
 -- widget draws from resolve, and the folder sheet (folder_sheet.lua) reuses both, resolving a
 -- folder's entries when it opens and running them through run. Nothing here writes a setting.
 local Dispatcher = require("dispatcher")
+local Helpers = require("helpers")
 local Home = require("home")
-local InfoMessage = require("ui/widget/infomessage")
 local LibraryOrder = require("library_order")
 local PaintClock = require("paint_clock")
 local SettingsMenu = require("settings_menu")
-local UIManager = require("ui/uimanager")
 local T = require("ffi/util").template
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
@@ -110,12 +109,6 @@ function LauncherEntries.resolve(entry)
     return view
 end
 
--- A note over the home, closed by a tap anywhere; no timeout, so no timer
--- (frontend/ui/widget/infomessage.lua:53, :283-290, :67, :88-100).
-local function note(text)
-    UIManager:show(InfoMessage:new{ text = text })
-end
-
 local function file_manager()
     local FileManager = package.loaded["apps/filemanager/filemanager"]
     return FileManager and FileManager.instance
@@ -177,11 +170,11 @@ local KOPANDA_RUN = {
 local function unavailable_note(entry, suffix)
     local label = label_of(entry)
     if suffix == "plugin missing" then
-        note(T("%1: the %2 plugin isn't loaded.", label, entry.plugin))
+        Helpers.note(T("%1: the %2 plugin isn't loaded.", label, entry.plugin))
     elseif suffix == "folder missing" then
-        note(T("%1: %2 isn't there.", label, entry.path))
+        Helpers.note(T("%1: %2 isn't there.", label, entry.path))
     else
-        note(T("%1 isn't available here.", label))
+        Helpers.note(T("%1 isn't available here.", label))
     end
 end
 

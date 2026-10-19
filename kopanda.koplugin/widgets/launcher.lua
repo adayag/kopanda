@@ -173,13 +173,7 @@ local function make(width, ctx)
     end
     local look = ctx.look
     local tokens = look.launcher
-    local palette = Looks.palette(look, ctx.variant)
-    local function color(role)
-        return role and palette[role] and Looks.color(palette[role]) or nil
-    end
-    local function scale(px)
-        return ctx.screen:scaleBySize(px)
-    end
+    local color, scale = Looks.colorer(ctx), Paint.scaler(ctx)
 
     local views, wifi_off = {}, nil
     for i, entry in ipairs(entries) do

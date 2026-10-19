@@ -9,6 +9,7 @@ local ConfirmBox = require("ui/widget/confirmbox")
 local DataStorage = require("datastorage")
 local Event = require("ui/event")
 local Guards = require("guards")
+local Helpers = require("helpers")
 local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
 local PushPull = require("push_pull")
@@ -26,31 +27,6 @@ local PROFILE = "studio_profile"
 -- NetworkMgr, looked up at call time so a spec can stub it.
 local function network()
     return require("ui/network/manager")
-end
-
--- f wrapped so an error is logged rather than reaching KOReader's menu or UI loop.
-local function guarded(what, f)
-    return function(...)
-        local ok, err = pcall(f, ...)
-        if not ok then
-            logger.err("KoPanda: " .. what .. " failed:", err)
-        end
-    end
-end
-
--- A menu item's callback runs before the menu acts on it (frontend/ui/widget/touchmenu.lua:913-926),
--- so the item acts from the next tick, with the menu it was given.
-local function after_menu(what, f)
-    return guarded(what, function(touchmenu)
-        UIManager:nextTick(guarded(what, function()
-            f(touchmenu)
-        end))
-    end)
-end
-
--- A note closed by a tap; no timeout, so no timer.
-local function note(text)
-    UIManager:show(InfoMessage:new{ text = text })
 end
 
 -- The stored value of key when it is a non-empty string.
@@ -78,14 +54,14 @@ local function edit_address(touchmenu)
             {
                 text = "Cancel",
                 id = "close",
-                callback = guarded(what, function()
+                callback = Guards.guarded(what, function()
                     UIManager:close(dialog)
                 end),
             },
             {
                 text = "Save",
                 is_enter_default = true,
-                callback = guarded(what, function()
+                callback = Guards.guarded(what, function()
                     local address = util.trim(dialog:getInputText())
                     UIManager:close(dialog)
                     -- An empty address clears the key: saveSetting(key, nil) deletes it
@@ -94,7 +70,7 @@ local function edit_address(touchmenu)
                         address = nil
                     end
                     if not State.set(ADDRESS, address) then
-                        note("Couldn't save the address.")
+                        Helpers.note("Couldn't save the address.")
                     end
                     refresh(touchmenu)
                 end),
@@ -109,17 +85,17 @@ local function choose_profile(touchmenu)
     local what = "Tools › KoPanda › Studio › Profile"
     local address = stored(ADDRESS)
     if not address then
-        note("Set the studio's address first.")
+        Helpers.note("Set the studio's address first.")
         return
     end
-    network():runWhenConnected(guarded(what, function()
+    network():runWhenConnected(Guards.guarded(what, function()
         local profiles, why = PushPull.fetch_profiles(address)
         if not profiles then
-            note(why)
+            Helpers.note(why)
             return
         end
         if #profiles == 0 then
-            note("The studio has no profiles.")
+            Helpers.note("The studio has no profiles.")
             return
         end
         local dialog
@@ -127,10 +103,10 @@ local function choose_profile(touchmenu)
         for _, profile in ipairs(profiles) do
             buttons[#buttons + 1] = { {
                 text = profile.name,
-                callback = guarded(what, function()
+                callback = Guards.guarded(what, function()
                     UIManager:close(dialog)
                     if not State.set(PROFILE, profile.id) then
-                        note("Couldn't save the profile.")
+                        Helpers.note("Couldn't save the profile.")
                     end
                     refresh(touchmenu)
                 end),
@@ -138,7 +114,7 @@ local function choose_profile(touchmenu)
         end
         buttons[#buttons + 1] = { {
             text = "Cancel",
-            callback = guarded(what, function()
+            callback = Guards.guarded(what, function()
                 UIManager:close(dialog)
             end),
         } }
@@ -155,7 +131,7 @@ local function offer_restart(name)
         text = "Restart to apply " .. name .. "?",
         ok_text = "Restart",
         cancel_text = "Later",
-        ok_callback = guarded("Tools › KoPanda › Studio › Restart", function()
+        ok_callback = Guards.guarded("Tools › KoPanda › Studio › Restart", function()
             UIManager:broadcastEvent(Event:new("Restart"))
         end),
     })
@@ -172,9 +148,9 @@ local function pull_behind_note(opts, text, name)
     UIManager:close(busy)
     if not called then
         logger.err("KoPanda: the pull failed:", ok)
-        note("The pull failed.")
+        Helpers.note("The pull failed.")
     elseif not ok then
-        note(why)
+        Helpers.note(why)
     else
         offer_restart(name)
     end
@@ -192,7 +168,7 @@ local function pull(plugin)
     }
     local refused = PushPull.refusal(opts)
     if refused then
-        note(refused)
+        Helpers.note(refused)
         return
     end
     local text = "Pull " .. profile .. " from the studio? KoPanda and its settings on this Kindle are replaced "
@@ -203,8 +179,8 @@ local function pull(plugin)
     UIManager:show(ConfirmBox:new{
         text = text,
         ok_text = "Pull",
-        ok_callback = guarded(what, function()
-            network():runWhenConnected(guarded(what, function()
+        ok_callback = Guards.guarded(what, function()
+            network():runWhenConnected(Guards.guarded(what, function()
                 pull_behind_note(opts, "Pulling " .. profile .. "…", profile)
             end))
         end),
@@ -215,7 +191,7 @@ end
 -- newer, confirms and installs it: the plugin only, the settings file kept.
 local function check_for_update(plugin)
     local what = "Tools › KoPanda › Studio › Check for update"
-    network():runWhenConnected(guarded(what, function()
+    network():runWhenConnected(Guards.guarded(what, function()
         -- Painted now, as the pull's note is: the request blocks the UI loop.
         local busy = InfoMessage:new{ text = "Checking for an update…" }
         UIManager:show(busy)
@@ -226,12 +202,12 @@ local function check_for_update(plugin)
             error(release, 0)
         end
         if not release then
-            note(why)
+            Helpers.note(why)
             return
         end
         local installed = ReleaseSource.installed_version(plugin.path)
         if ReleaseSource.compare(release.version, installed) <= 0 then
-            note("KoPanda " .. installed .. " is the latest.")
+            Helpers.note("KoPanda " .. installed .. " is the latest.")
             return
         end
         local opts = {
@@ -242,7 +218,7 @@ local function check_for_update(plugin)
         }
         local refused = PushPull.refusal(opts)
         if refused then
-            note(refused)
+            Helpers.note(refused)
             return
         end
         local name = "v" .. release.version
@@ -254,8 +230,8 @@ local function check_for_update(plugin)
         UIManager:show(ConfirmBox:new{
             text = text,
             ok_text = "Install",
-            ok_callback = guarded(what, function()
-                network():runWhenConnected(guarded(what, function()
+            ok_callback = Guards.guarded(what, function()
+                network():runWhenConnected(Guards.guarded(what, function()
                     pull_behind_note(opts, "Installing " .. name .. "…", name)
                 end))
             end),
@@ -274,14 +250,14 @@ function StudioMenu.item(plugin)
                     return "Address: " .. (stored(ADDRESS) or "not set")
                 end,
                 keep_menu_open = true,
-                callback = after_menu("Tools › KoPanda › Studio › Address", edit_address),
+                callback = Guards.after_menu("Tools › KoPanda › Studio › Address", edit_address),
             },
             {
                 text_func = function()
                     return "Profile: " .. (stored(PROFILE) or "not chosen")
                 end,
                 keep_menu_open = true,
-                callback = after_menu("Tools › KoPanda › Studio › Profile", choose_profile),
+                callback = Guards.after_menu("Tools › KoPanda › Studio › Profile", choose_profile),
             },
             {
                 text_func = function()
@@ -291,13 +267,13 @@ function StudioMenu.item(plugin)
                 enabled_func = function()
                     return stored(ADDRESS) ~= nil and stored(PROFILE) ~= nil
                 end,
-                callback = after_menu("Tools › KoPanda › Studio › Pull", function()
+                callback = Guards.after_menu("Tools › KoPanda › Studio › Pull", function()
                     pull(plugin)
                 end),
             },
             {
                 text = "Check for update",
-                callback = after_menu("Tools › KoPanda › Studio › Check for update", function()
+                callback = Guards.after_menu("Tools › KoPanda › Studio › Check for update", function()
                     check_for_update(plugin)
                 end),
             },

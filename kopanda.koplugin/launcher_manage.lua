@@ -10,8 +10,8 @@ local ConfirmBox = require("ui/widget/confirmbox")
 local Editor = require("editor")
 local EntriesEdit = require("entries_edit")
 local EntryPicker = require("entry_picker")
+local Helpers = require("helpers")
 local Icons = require("icons")
-local InfoMessage = require("ui/widget/infomessage")
 local Looks = require("looks")
 local Paint = require("paint")
 local Settings = require("settings")
@@ -23,12 +23,6 @@ local logger = require("logger")
 local util = require("util")
 
 local LauncherManage = {}
-
--- A note over the screen, closed by a tap; no timeout, so no timer
--- (frontend/ui/widget/infomessage.lua:53, :283-290).
-local function note(text)
-    UIManager:show(InfoMessage:new{ text = text })
-end
 
 local function scale(ctx, px)
     return ctx.screen:scaleBySize(px)
@@ -125,7 +119,7 @@ local function apply(screen, new, folder_removed)
     local ok, err = Settings.set("launcher.entries", new)
     if not ok then
         logger.err("KoPanda: could not save the launcher:", err)
-        note("Couldn't save the launcher.")
+        Helpers.note("Couldn't save the launcher.")
         return
     end
     screen.entries = new
@@ -412,7 +406,7 @@ add_kind = function(screen, kind)
         end
     end
     if not has_room(screen, n, in_folder) then
-        note("There's no room for another entry here.")
+        Helpers.note("There's no room for another entry here.")
         return
     end
     EntryPicker.pick(kind, screen.editor.ctx, function(entry)

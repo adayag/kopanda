@@ -12,6 +12,7 @@
 -- the chrome's LibraryChrome.return_to.
 local Books = require("books")
 local Geom = require("ui/geometry")
+local Helpers = require("helpers")
 local LibraryChrome = require("library_chrome")
 local LibraryOrder = require("library_order")
 local LibraryTiles = require("library_tiles")
@@ -173,17 +174,13 @@ function AuthorsScreen:page_keys(view, page)
     return page_keys(plan(self, view, page, self.dimen.w, self.dimen.h, self.ctx))
 end
 
-local function books_text(n)
-    return n == 1 and "1 book" or n .. " books"
-end
-
 -- D10's count: the authors, "on the shelf" after them in a look whose title bar says so; or one
 -- author's books and those finished, joined in each look's words as the library's count is worded
 -- (title_bar.count_on_shelf).
 local function count_text(p, look)
     local on_shelf = look.title_bar.count_on_shelf
     if p.entry then
-        local text = books_text(#p.books)
+        local text = Helpers.books_text(#p.books)
         if p.finished > 0 then
             text = text .. (on_shelf and ", " or " · ") .. p.finished .. " finished"
         end
@@ -309,14 +306,14 @@ end
 -- author at their first page; a downloaded book opens; a book without a file does nothing.
 function AuthorsScreen:action_at(pos)
     for _, row in ipairs(self.rows) do
-        if LibraryChrome.inside(row.rect, pos) then
+        if Helpers.inside(row.rect, pos) then
             return function()
                 self:go({ kind = "author", name = row.entry.name }, 1)
             end
         end
     end
     for _, tile in ipairs(self.tiles) do
-        if LibraryChrome.inside(tile.rect, pos) then
+        if Helpers.inside(tile.rect, pos) then
             return function()
                 if tile.record.path then
                     self:open(tile.record)
@@ -336,12 +333,12 @@ function AuthorsScreen.hit(x, y)
     end
     local pos = { x = x, y = y }
     for _, row in ipairs(screen.rows) do
-        if LibraryChrome.inside(row.rect, pos) then
+        if Helpers.inside(row.rect, pos) then
             return { kind = "author", entry = row.entry }
         end
     end
     for _, tile in ipairs(screen.tiles) do
-        if LibraryChrome.inside(tile.rect, pos) then
+        if Helpers.inside(tile.rect, pos) then
             return { kind = "book", record = tile.record }
         end
     end

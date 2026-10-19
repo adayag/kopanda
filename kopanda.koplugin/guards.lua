@@ -1,4 +1,5 @@
 -- Coexistence: KoPanda refuses its shell while another shell plugin is enabled, and says which.
+-- And the wrap that keeps a callback's error from KOReader's menus and UI loop.
 -- Module state: the conflicts, computed on the first call of the process, and whether the
 -- message has been raised.
 local InfoMessage = require("ui/widget/infomessage")
@@ -88,6 +89,27 @@ function Guards.notify_once()
         if not ok then
             logger.err("KoPanda: could not show the refusal message:", err)
         end
+    end)
+end
+
+-- f wrapped so an error is logged as what failed rather than reaching KOReader's menu or UI loop.
+-- The wrap passes its arguments on and returns nothing.
+function Guards.guarded(what, f)
+    return function(...)
+        local ok, err = pcall(f, ...)
+        if not ok then
+            logger.err("KoPanda: " .. what .. " failed:", err)
+        end
+    end
+end
+
+-- A menu item's callback runs before the menu acts on it (frontend/ui/widget/touchmenu.lua:913-926),
+-- so the item acts from the next tick, with the menu it was given.
+function Guards.after_menu(what, f)
+    return Guards.guarded(what, function(touchmenu)
+        UIManager:nextTick(Guards.guarded(what, function()
+            f(touchmenu)
+        end))
     end)
 end
 

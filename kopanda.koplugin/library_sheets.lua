@@ -9,10 +9,11 @@ local BookSheet = require("book_sheet")
 local Books = require("books")
 local FeaturedCover = require("featured_cover")
 local Geom = require("ui/geometry")
+local Helpers = require("helpers")
 local Icons = require("icons")
 local LibraryOrder = require("library_order")
-local LibraryTiles = require("library_tiles")
 local Looks = require("looks")
+local Paint = require("paint")
 local Sheet = require("sheet")
 local TintedIcon = require("tinted_icon")
 local logger = require("logger")
@@ -27,13 +28,7 @@ local JOIN = " · "
 -- paper would hide them. The sheet frees it.
 local function folder_box(ctx)
     local tokens = ctx.look.sheet.folder_box
-    local palette = Looks.palette(ctx.look, ctx.variant)
-    local function color(role)
-        return role and palette[role] and Looks.color(palette[role]) or nil
-    end
-    local function scale(px)
-        return ctx.screen:scaleBySize(px)
-    end
+    local color, scale = Looks.colorer(ctx), Paint.scaler(ctx)
     local size = scale(tokens.size)
     local outline_color = color(tokens.outline_color)
     local box = FeaturedCover.Box:new{
@@ -56,7 +51,7 @@ end
 -- The folder sheet's meta (D12, HoldFolderC.dc.html:41): the book count as the tile words it,
 -- then the reading and finished counts, each only when not zero.
 local function folder_meta(counts)
-    local parts = { LibraryTiles.books_text(counts.books or 0) }
+    local parts = { Helpers.count_text(counts.books or 0) }
     if (counts.reading or 0) > 0 then
         parts[#parts + 1] = counts.reading .. " reading"
     end

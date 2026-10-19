@@ -14,9 +14,11 @@ local CenterContainer = require("ui/widget/container/centercontainer")
 local Featured = require("widgets/featured")
 local FeaturedCover = require("featured_cover")
 local Geom = require("ui/geometry")
+local Helpers = require("helpers")
 local Icons = require("icons")
 local ImageWidget = require("ui/widget/imagewidget")
 local Looks = require("looks")
+local Paint = require("paint")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
 
@@ -24,25 +26,12 @@ local ShelfRows = {}
 
 -- A series row stacks the first three books' covers (D21).
 local STACK = 3
--- A line's height is its face's or its forced one, whatever its text, so one sample measures every
--- line of a part (frontend/ui/widget/textwidget.lua:112-113, :292-299).
-local SAMPLE = "Library"
 
 -- A row, a group or a stack: its children painted at their places from its top left, in order,
 -- inside its shadow, fill and outline (FeaturedCover.Box).
 local Box = FeaturedCover.Box:extend{
     name = "kopanda_shelf_row",
 }
-
--- Where child is painted, from the box's top left, or nil for a widget the box doesn't hold.
-function Box:place(child)
-    for i, held in ipairs(self) do
-        if held == child then
-            return self.places[i]
-        end
-    end
-    return nil
-end
 
 local function add(box, child, x, y)
     box[#box + 1] = child
@@ -55,37 +44,9 @@ local function fixed(ctx)
     return { look = ctx.look, variant = ctx.variant, screen = ctx.screen }
 end
 
-local function scaler(ctx)
-    return function(px)
-        return ctx.screen:scaleBySize(px)
-    end
-end
-
--- A negative length, an overhang, scaled as its size is.
-local function scale_signed(scale, px)
-    if px < 0 then
-        return -scale(-px)
-    end
-    return scale(px)
-end
-
-local function colorer(ctx)
-    local palette = Looks.palette(ctx.look, ctx.variant)
-    return function(role)
-        return role and palette[role] and Looks.color(palette[role]) or nil
-    end
-end
-
-local function line_height(part, ctx)
-    local line = Typeset.line(part, SAMPLE, math.huge, ctx)
-    local h = line:getSize().h
-    line:free()
-    return h
-end
-
 -- A stroke width in board pixels where its colour role is drawn, else 0, in device pixels.
 local function stroke(width, role, ctx)
-    return colorer(ctx)(role) and scaler(ctx)(width) or 0
+    return Looks.colorer(ctx)(role) and Paint.scaler(ctx)(width) or 0
 end
 
 local function new_box(w, h, fields)
@@ -111,7 +72,7 @@ end
 -- shadow ({ x, y } board pixels), Diner's "filled box with an outline and a hard shadow".
 local function row_box(w, h, fill_role, outline_width, shadow, ctx)
     local look = ctx.look
-    local scale, color = scaler(ctx), colorer(ctx)
+    local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local shadow_x, shadow_y = scale(shadow.x), scale(shadow.y)
     local shadow_color = (shadow_x > 0 or shadow_y > 0) and color(look.shadow.tile.color) or nil
     return new_box(w, h, {
@@ -127,7 +88,7 @@ end
 -- The row frame's lengths in device pixels: outline, padding (padding, else shelf.row's), the column
 -- gap and the rule below.
 local function frame(ctx, padding)
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     local look = ctx.look
     local row = look.shelf.row
     padding = padding or row.padding
@@ -143,7 +104,7 @@ end
 -- The row's rule along its foot, where the look rules its rows.
 local function add_rule(box, w, h, rule, role, ctx)
     if rule > 0 then
-        add(box, rect(w, rule, colorer(ctx)(role)), 0, h - rule)
+        add(box, rect(w, rule, Looks.colorer(ctx)(role)), 0, h - rule)
     end
 end
 
@@ -153,7 +114,7 @@ end
 -- cover (SeriesBooksC.dc.html:35); else inside it, as the stack keeps its room. Reads the cover
 -- through BookCovers.read, the bitmap freed with the widget.
 local function small_cover(record, w, h, outline_width, outline_role, outside, ctx)
-    local scale, color = scaler(ctx), colorer(ctx)
+    local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local radius = scale(ctx.look.library.cover.radius)
     local outline = stroke(outline_width, outline_role, ctx)
     if outside then
@@ -186,7 +147,7 @@ local CHIPS = {
 }
 
 local function chip_pads(ctx)
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     local tokens = ctx.look.shelf.chip
     local outline = stroke(tokens.outline_width, ctx.look.chip.outline_color, ctx)
     return outline, outline + scale(tokens.padding.x), outline + scale(tokens.padding.y)
@@ -196,13 +157,14 @@ end
 local function chip_height(ctx)
     local types = ctx.look.type
     local _, _, pad_y = chip_pads(ctx)
-    return math.max(line_height(types.shelf_chip, ctx), line_height(types.shelf_chip_plain, ctx)) + 2 * pad_y
+    return math.max(Typeset.line_height(types.shelf_chip, ctx), Typeset.line_height(types.shelf_chip_plain, ctx))
+        + 2 * pad_y
 end
 
 -- text in kind's chip, at most max_w wide: its line inside the chip's padding and the chip's
 -- outline, on kind's fill.
 local function chip(kind, text, max_w, ctx)
-    local color = colorer(ctx)
+    local color = Looks.colorer(ctx)
     local look = ctx.look
     local spec = CHIPS[kind]
     local outline, pad_x, pad_y = chip_pads(ctx)
@@ -220,7 +182,7 @@ end
 -- The stack's lengths in device pixels: a cover's w and h, the offsets, and the stack's own size,
 -- the room three covers take.
 local function stack_metrics(ctx)
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     local tokens = ctx.look.shelf.stack
     local w, h = scale(tokens.cover_w), scale(tokens.cover_h)
     local ox, oy = scale(tokens.offset_x), scale(tokens.offset_y)
@@ -242,13 +204,6 @@ local function stack(books, ctx)
     return box, covers
 end
 
-local function books_text(n)
-    if n == 1 then
-        return "1 book"
-    end
-    return n .. " books"
-end
-
 -- D15's sub-line: the author, " and others" when another first author is in the series, then
 -- "next: <title>" while under way with a next unread, else the series' book count.
 local function sub_line(entry)
@@ -259,7 +214,7 @@ local function sub_line(entry)
     if entry.state == "under_way" and entry.next then
         parts[#parts + 1] = "next: " .. (entry.next.title or "")
     else
-        parts[#parts + 1] = books_text(entry.total or #entry.books)
+        parts[#parts + 1] = Helpers.books_text(entry.total or #entry.books)
     end
     return table.concat(parts, " · ")
 end
@@ -272,8 +227,8 @@ local SERIES_CHIPS = {
 local function series_content_h(ctx)
     local look = ctx.look
     local _, _, _, _, _, stack_h = stack_metrics(ctx)
-    local text = line_height(look.type.series_name, ctx) + scaler(ctx)(look.shelf.row.line_gap)
-        + line_height(look.type.series_sub, ctx)
+    local text = Typeset.line_height(look.type.series_name, ctx) + Paint.scaler(ctx)(look.shelf.row.line_gap)
+        + Typeset.line_height(look.type.series_sub, ctx)
     return math.max(stack_h, text, chip_height(ctx))
 end
 
@@ -306,7 +261,7 @@ function ShelfRows.series(entry, width, ctx)
     local text_w = math.max(1, chip_x - f.gap - text_x)
     row.name = Typeset.line(look.type.series_name, entry.name or "", text_w, ctx)
     row.sub = Typeset.line(look.type.series_sub, sub_line(entry), text_w, ctx)
-    local name_h, line_gap = row.name:getSize().h, scaler(ctx)(look.shelf.row.line_gap)
+    local name_h, line_gap = row.name:getSize().h, Paint.scaler(ctx)(look.shelf.row.line_gap)
     local text_y = y0 + math.floor((content_h - (name_h + line_gap + row.sub:getSize().h)) / 2)
     add(row, row.name, text_x, text_y)
     add(row, row.sub, text_x, text_y + name_h + line_gap)
@@ -317,7 +272,7 @@ end
 
 -- A book row's cover in device pixels: cover_w by cover_h with its outline outside, and the outline.
 local function book_cover_size(ctx)
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     local look = ctx.look
     local book = look.shelf.book
     local edge = stroke(book.cover_outline_width, look.library.cover.outline_color, ctx)
@@ -328,19 +283,19 @@ end
 local function bar_height(ctx)
     local look = ctx.look
     local book = look.shelf.book
-    return scaler(ctx)(book.bar_height) + 2 * stroke(book.bar_outline_width, look.progress.outline_color, ctx)
+    return Paint.scaler(ctx)(book.bar_height) + 2 * stroke(book.bar_outline_width, look.progress.outline_color, ctx)
 end
 
 local function book_content_h(ctx)
     local look = ctx.look
     local shelf, types = look.shelf, look.type
-    local scale = scaler(ctx)
-    local second = math.max(bar_height(ctx), line_height(types.book_next_note, ctx),
-        line_height(types.book_row_note, ctx))
-    local text = line_height(types.book_row_title, ctx) + math.max(scale(shelf.book.line_gap),
+    local scale = Paint.scaler(ctx)
+    local second = math.max(bar_height(ctx), Typeset.line_height(types.book_next_note, ctx),
+        Typeset.line_height(types.book_row_note, ctx))
+    local text = Typeset.line_height(types.book_row_title, ctx) + math.max(scale(shelf.book.line_gap),
         scale(shelf.next.line_gap)) + second
     local _, cover_h = book_cover_size(ctx)
-    return math.max(line_height(types.book_index, ctx), cover_h, text, chip_height(ctx))
+    return math.max(Typeset.line_height(types.book_index, ctx), cover_h, text, chip_height(ctx))
 end
 
 -- D20's index: a whole series_index without decimals, any other as Lua writes it.
@@ -354,7 +309,7 @@ end
 -- The download badge on a book row's cover: a circle of badge_size in the library badge's fill with
 -- its outline, the download icon centred in it.
 local function badge(ctx)
-    local scale, color = scaler(ctx), colorer(ctx)
+    local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local look = ctx.look
     local book, colours = look.shelf.book, look.library.badge
     local size = scale(book.badge_size)
@@ -402,7 +357,7 @@ end
 -- colour. The row keeps index, cover, badge, title, bar, note, chip (nil where not drawn) and marked.
 function ShelfRows.book(record, progress, mark, width, ctx)
     ctx = fixed(ctx)
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     local look = ctx.look
     local shelf = look.shelf
     local marked = mark and true or false
@@ -479,7 +434,7 @@ function ShelfRows.book(record, progress, mark, width, ctx)
     end
 
     if not_downloaded(record) then
-        local inset = scale_signed(scale, shelf.book.badge_inset)
+        local inset = Paint.scale_signed(scale, shelf.book.badge_inset)
         local size = scale(shelf.book.badge_size)
         local badge_y = look.library.badge.align == "bottom" and cover_y + cover_h - edge - inset - size
             or cover_y + edge + inset
@@ -492,7 +447,7 @@ end
 -- An author group's lengths in device pixels: its outline, letter column and rule, its rows' padding,
 -- the rule between rows and the group's rule.
 local function group_frame(ctx)
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     local look = ctx.look
     local shelf = look.shelf
     return {
@@ -509,12 +464,9 @@ end
 local function author_row_h(ctx)
     local types = ctx.look.type
     local g = group_frame(ctx)
-    return 2 * g.pad_y + math.max(line_height(types.author_name, ctx), line_height(types.author_count, ctx))
+    return 2 * g.pad_y
+        + math.max(Typeset.line_height(types.author_name, ctx), Typeset.line_height(types.author_count, ctx))
         + g.author_rule
-end
-
-local function count_text(n)
-    return books_text(n) .. " ›"
 end
 
 -- The authors list's letter group, width wide (AuthorsC.dc.html:28-75): the letter column (its fill
@@ -527,7 +479,7 @@ function ShelfRows.group(letter, authors, repeats, width, ctx)
     ctx = fixed(ctx)
     local look = ctx.look
     local shelf = look.shelf
-    local color = colorer(ctx)
+    local color = Looks.colorer(ctx)
     local g = group_frame(ctx)
     local row_h = author_row_h(ctx)
     local h = 2 * g.outline + #authors * row_h - g.author_rule + g.group_rule
@@ -554,7 +506,7 @@ function ShelfRows.group(letter, authors, repeats, width, ctx)
     for i, author in ipairs(authors) do
         local y = g.outline + (i - 1) * row_h
         local last = i == #authors
-        local count = Typeset.line(look.type.author_count, count_text(author.count or 0),
+        local count = Typeset.line(look.type.author_count, Helpers.books_text(author.count or 0) .. " ›",
             math.max(1, rows_w - 2 * g.pad_x), ctx)
         local count_size = count:getSize()
         local count_x = rows_x + rows_w - g.pad_x - count_size.w
@@ -594,7 +546,7 @@ end
 function ShelfRows.group_cost(width, ctx)
     ctx = fixed(ctx)
     local g = group_frame(ctx)
-    return 2 * g.outline - g.author_rule + g.group_rule + scaler(ctx)(ctx.look.shelf.groups.gap)
+    return 2 * g.outline - g.author_rule + g.group_rule + Paint.scaler(ctx)(ctx.look.shelf.groups.gap)
 end
 
 -- What a list keeps clear between its page's last row of kind ("series", "book" or "author") and the
@@ -608,7 +560,7 @@ function ShelfRows.pager_reserve(kind, ctx)
     elseif kind == "author" then
         shadow = shelf.group.shadow.y
     end
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     return scale(shelf.list.pager_gap) + scale(shadow)
 end
 

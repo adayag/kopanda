@@ -5,9 +5,9 @@
 -- against the home's fit, written once through Settings.set, then the screen is refreshed once
 -- and the shown home once the editor closes. The selection is the screen's, never stored.
 local Editor = require("editor")
+local Helpers = require("helpers")
 local Home = require("home")
 local Icons = require("icons")
-local InfoMessage = require("ui/widget/infomessage")
 local Layout = require("layout")
 local Looks = require("looks")
 local Paint = require("paint")
@@ -16,16 +16,10 @@ local Settings = require("settings")
 local Sheet = require("sheet")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
-local UIManager = require("ui/uimanager")
 local logger = require("logger")
 local util = require("util")
 
 local EditLayout = {}
-
--- No timeout, so no timer (frontend/ui/widget/infomessage.lua:53, :283-290).
-local function note(text)
-    UIManager:show(InfoMessage:new{ text = text })
-end
 
 -- Frees the text and icon widgets of an earlier build.
 local function release(widgets)
@@ -129,7 +123,7 @@ end
 local function apply(state, new, why, selection)
     if not new then
         if why then
-            note(why)
+            Helpers.note(why)
         end
         return
     end
@@ -143,13 +137,13 @@ local function apply(state, new, why, selection)
         state.fit.overflow = Layout.overflow(state.rows, ctx)
     end
     if overflow > state.fit.overflow then
-        note("That won't fit on the home.")
+        Helpers.note("That won't fit on the home.")
         return
     end
     local ok, err = Settings.set("layout.rows", new)
     if not ok then
         logger.err("KoPanda: could not save the layout:", err)
-        note("Couldn't save the layout.")
+        Helpers.note("Couldn't save the layout.")
         return
     end
     state.rows = new

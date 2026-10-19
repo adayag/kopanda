@@ -9,6 +9,7 @@
 -- tap's book open goes ahead, records the return in the chrome's LibraryChrome.return_to.
 local Books = require("books")
 local Geom = require("ui/geometry")
+local Helpers = require("helpers")
 local LibraryChrome = require("library_chrome")
 local LibraryTiles = require("library_tiles")
 local NavBar = require("nav_bar")
@@ -161,10 +162,6 @@ function SeriesScreen:page_keys(view, page)
     return page_keys(plan(self, view, page, self.dimen.w, self.dimen.h, self.ctx))
 end
 
-local function books_text(n)
-    return n == 1 and "1 book" or n .. " books"
-end
-
 -- D10's count: the series and those under way, or one series' author part (D15) and its books,
 -- joined in each look's words as the library's count is worded (title_bar.count_on_shelf).
 local function count_text(p, look)
@@ -172,9 +169,10 @@ local function count_text(p, look)
     local entry = p.entry
     if entry then
         if not entry.author then
-            return books_text(entry.total)
+            return Helpers.books_text(entry.total)
         end
-        return (entry.others and entry.author .. " and others" or entry.author) .. join .. books_text(entry.total)
+        local author = entry.others and entry.author .. " and others" or entry.author
+        return author .. join .. Helpers.books_text(entry.total)
     end
     if #p.entries == 0 then
         return "No series"
@@ -265,7 +263,7 @@ end
 -- first page; a downloaded book opens; a book without a file does nothing.
 function SeriesScreen:action_at(pos)
     for _, row in ipairs(self.rows) do
-        if LibraryChrome.inside(row.rect, pos) then
+        if Helpers.inside(row.rect, pos) then
             if row.entry then
                 return function()
                     self:go({ kind = "series", name = row.entry.name }, 1)
@@ -290,7 +288,7 @@ function SeriesScreen.hit(x, y)
     end
     local pos = { x = x, y = y }
     for _, row in ipairs(screen.rows) do
-        if LibraryChrome.inside(row.rect, pos) then
+        if Helpers.inside(row.rect, pos) then
             if row.entry then
                 return { kind = "series", entry = row.entry }
             end

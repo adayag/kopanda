@@ -287,17 +287,7 @@ local function settle(editor)
         return
     end
     editor.settled = true
-    local ok, err = pcall(function()
-        local paint_ms, cpu_ms = PaintClock.ms(PaintClock.since(editor.started, editor.painted_at))
-        UIManager.event_hook:execute("KoPandaSettled", {
-            screen = editor.spec.screen,
-            paint_ms = paint_ms,
-            cpu_ms = cpu_ms,
-        })
-    end)
-    if not ok then
-        logger.err("KoPanda: the editor's settled signal failed:", err)
-    end
+    PaintClock.settled("the editor's", editor.started, editor.painted_at, { screen = editor.spec.screen })
 end
 
 -- Shows the editor of spec, closing the one shown, and returns it. opts.started is the

@@ -14,6 +14,7 @@ local BookList = require("ui/widget/booklist")
 local FileChooser = require("ui/widget/filechooser")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
+local Helpers = require("helpers")
 local Icons = require("icons")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local Looks = require("looks")
@@ -230,23 +231,6 @@ local function same_state(a, b)
     return true
 end
 
--- The count's words: "3 books", "1 book", "No books", and "on the shelf" after them in a look
--- that says so.
-local function count_text(count, on_shelf)
-    local text
-    if count == 0 then
-        text = "No books"
-    elseif count == 1 then
-        text = "1 book"
-    else
-        text = count .. " books"
-    end
-    if on_shelf then
-        text = text .. " on the shelf"
-    end
-    return text
-end
-
 local function free_build(built)
     if not built then
         return
@@ -277,7 +261,7 @@ local function lay_out(bar, state, lines)
     local sort_w = lines.sort:getSize().w + 2 * inset
     boxes.sort = { x = boxes.status.x - m.picker_gap - sort_w, y = row_top, w = sort_w, h = m.row }
     local column_w = math.max(0, boxes.sort.x - m.picker_gap - m.side)
-    local count = state.count and count_text(state.count, look.title_bar.count_on_shelf) or ""
+    local count = state.count and Helpers.count_text(state.count, look.title_bar.count_on_shelf) or ""
     lines.title = Typeset.line(parts.title_bar_title, state.title, column_w, ctx)
     lines.count = Typeset.line(parts.title_bar_count, count, column_w, ctx)
     local title_y = content_bottom - m.title_h
@@ -390,13 +374,9 @@ function KoTitleBar:paintTo(bb, x, y)
     end
 end
 
-local function inside(rect, pos)
-    return pos.x >= rect.x and pos.x < rect.x + rect.w and pos.y >= rect.y and pos.y < rect.y + rect.h
-end
-
 -- The area under pos: "title", "sort", "status" or "plus", or nil off the bar or before a build.
 function KoTitleBar:areaAt(pos)
-    if not (self.areas and inside(self.dimen, pos)) then
+    if not (self.areas and Helpers.inside(self.dimen, pos)) then
         return nil
     end
     local px = pos.x - self.dimen.x

@@ -8,6 +8,7 @@
 -- text_size (D12), as the tiles'.
 local Books = require("books")
 local Geom = require("ui/geometry")
+local Helpers = require("helpers")
 local Icons = require("icons")
 local LibraryChrome = require("library_chrome")
 local LibraryOrder = require("library_order")
@@ -49,17 +50,6 @@ local function name_of(dir)
     return dir:match("([^/]+)/*$") or dir
 end
 
--- The count's words, as the file browser's title bar words its own (title_bar.lua:233-248, bars/
--- title-bar's D2), so the two headers read alike: "3 books", "1 book", "No books", and "on the
--- shelf" after them in a look whose title bar says so.
-local function count_text(n, on_shelf)
-    local text = n == 0 and "No books" or n == 1 and "1 book" or n .. " books"
-    if on_shelf then
-        text = text .. " on the shelf"
-    end
-    return text
-end
-
 local new_box, add, tools = LibraryChrome.box, LibraryChrome.add, LibraryChrome.tools
 
 -- A picker: its label in part, then the chevron_down mark sized to the label's line in the
@@ -96,7 +86,7 @@ local function header(built, w, books, choice)
     local look = ctx.look
     local tokens = look.library.header
     local sub = not LibraryView.same_dir(built.dir, LibraryView.root())
-    local text = { count = count_text(books, look.title_bar.count_on_shelf),
+    local text = { count = Helpers.count_text(books, look.title_bar.count_on_shelf),
         title = sub and name_of(built.dir) or "Library", sort = SORT_LABELS[choice.sort],
         status = STATUS_LABELS[choice.status] }
     local status_chip, status = picker(look.type.library_picker_status, text.status, tokens.status_fill_color, ctx)

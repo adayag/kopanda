@@ -397,4 +397,14 @@ describe("typeset", function()
             end
         end
     end)
+
+    it("measures a part's line height as its face's, whatever the text", function()
+        for _, look_id in ipairs({ "diner", "editorial" }) do
+            local ctx = ctx_for(look_id)
+            local part = ctx.look.type.library_count
+            local line = Typeset.line(part, "gjÅ", math.huge, ctx)
+            assert.equals(line:getSize().h, Typeset.line_height(part, ctx), look_id)
+            line:free()
+        end
+    end)
 end)

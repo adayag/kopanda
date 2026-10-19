@@ -124,4 +124,12 @@ function Looks.color(hex)
     return nil
 end
 
+-- The colour of a role in ctx's palette (Looks.palette), or nil for no role or one the look lacks.
+function Looks.colorer(ctx)
+    local palette = Looks.palette(ctx.look, ctx.variant)
+    return function(role)
+        return role and palette[role] and Looks.color(palette[role]) or nil
+    end
+end
+
 return Looks

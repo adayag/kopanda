@@ -79,17 +79,6 @@ function Bar:paintTo(bb, x, y)
     end
 end
 
--- A plain fill of dimen in color, rounded by radius, square without one.
-local Fill = Widget:extend{
-    name = "kopanda_featured_fill",
-}
-
-function Fill:paintTo(bb, x, y)
-    if self.dimen.w > 0 and self.color then
-        Paint.fill(bb, x, y, self.dimen.w, self.dimen.h, self.color, self.radius)
-    end
-end
-
 -- Whether the look joins the authors and chapter, and the caption's parts, on one line each
 -- (home.featured_details).
 local function details_joined(ctx)
@@ -98,19 +87,6 @@ end
 
 -- The label's words by the look's home.featured_label.
 local LABELS = { now_reading = "Now reading", continue_reading = "Continue reading" }
-
-local function scaler(ctx)
-    return function(px)
-        return ctx.screen:scaleBySize(px)
-    end
-end
-
-local function colorer(ctx)
-    local palette = Looks.palette(ctx.look, ctx.variant)
-    return function(role)
-        return role and palette[role] and Looks.color(palette[role]) or nil
-    end
-end
 
 -- The percent the book shows: floored, so only a complete book shows 100. The book sheet's
 -- meta reads it too.
@@ -193,7 +169,7 @@ local function label(width, ctx)
     if not tokens.chip_outline then
         return Typeset.line(look.type.featured_label, text, width, ctx)
     end
-    local scale, color = scaler(ctx), colorer(ctx)
+    local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local outline = scale(tokens.chip_outline)
     -- A pill where the look rounds its chips (Toybox), square otherwise.
     local radius = look.chip.radius > 0 and scale(look.chip.radius) or nil
@@ -222,7 +198,7 @@ end
 local function button(width, ctx)
     local look = ctx.look
     local tokens = look.featured
-    local scale, color = scaler(ctx), colorer(ctx)
+    local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local outline = scale(look.stroke.outline)
     local pad_x, pad_y = scale(tokens.button_padding.x), scale(tokens.button_padding.y)
     local shadow = look.shadow.tile
@@ -260,7 +236,7 @@ end
 -- base/ffi/blitbuffer.lua:2209-2235).
 function Featured.bar(shown, width, inner_h, outline_width, ctx)
     local tokens = ctx.look.progress
-    local scale, color = scaler(ctx), colorer(ctx)
+    local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local outline_color = color(tokens.outline_color)
     local outline = outline_color and scale(outline_width) or 0
     local inner_w = width - 2 * outline
@@ -278,7 +254,7 @@ function Featured.bar(shown, width, inner_h, outline_width, ctx)
             Widget:new{ dimen = Geom:new{ w = fill_w, h = inner_h } },
         }
     else
-        filled = Fill:new{
+        filled = Paint.Fill:new{
             dimen = Geom:new{ w = fill_w, h = inner_h },
             color = color(tokens.fill_color),
             radius = radius and math.max(0, radius - outline),
@@ -345,7 +321,7 @@ end
 -- authors, are left out, and then the title takes one line.
 local function book_column(book, w, h, ctx)
     local look = ctx.look
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     local pad = scale(look.featured.column_padding_y)
     local top = {
         { label(w, ctx), 0 },
@@ -398,7 +374,7 @@ end
 -- for them the title takes one line and the body is left out. Returns the column and the
 -- button.
 local function empty_column(w, h, ctx)
-    local scale = scaler(ctx)
+    local scale = Paint.scaler(ctx)
     local pad = scale(ctx.look.featured.column_padding_y)
     local the_button = button(w, ctx)
     local title = "Nothing open yet."

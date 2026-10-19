@@ -193,18 +193,7 @@ local function settle(sheet)
         return
     end
     sheet.settled = true
-    local ok, err = pcall(function()
-        local paint_ms, cpu_ms = PaintClock.ms(PaintClock.since(sheet.started, sheet.painted_at))
-        UIManager.event_hook:execute("KoPandaSettled", {
-            screen = "sheet",
-            name = sheet.spec.name,
-            paint_ms = paint_ms,
-            cpu_ms = cpu_ms,
-        })
-    end)
-    if not ok then
-        logger.err("KoPanda: the sheet's settled signal failed:", err)
-    end
+    PaintClock.settled("the sheet's", sheet.started, sheet.painted_at, { screen = "sheet", name = sheet.spec.name })
 end
 
 -- Shows the sheet of spec under ctx (the screen's beneath), closing the one shown. opts.started is

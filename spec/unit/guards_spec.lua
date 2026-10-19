@@ -502,4 +502,52 @@ describe("KoPanda's guards", function()
             assert.is_false(State.set_many({ kopanda_test_a = "1", kopanda_test_b = "2" }))
         end)
     end)
+
+    describe("guarded", function()
+        local Guards
+
+        before_each(function()
+            Guards = require("guards")
+        end)
+
+        it("runs f with the arguments it is given and returns nothing", function()
+            local got
+            assert.equals(0, select("#", Guards.guarded("the test", function(a, b)
+                got = { a, b }
+                return true
+            end)("one", 2)))
+            assert.same({ "one", 2 }, got)
+        end)
+
+        it("logs a raise as what failed, raises nothing and returns nothing", function()
+            local logged = spy.on(logger, "err")
+            finally(function()
+                logger.err:revert()
+            end)
+            assert.equals(0, select("#", Guards.guarded("the test", function()
+                error("boom")
+            end)()))
+            assert.spy(logged).was_called(1)
+            assert.equals("KoPanda: the test failed:", logged.calls[1].vals[1])
+            assert.is_truthy(tostring(logged.calls[1].vals[2]):find("boom", 1, true))
+        end)
+
+        it("after a menu runs f with the menu from the next tick, a raise there logged", function()
+            local got
+            local run = Guards.after_menu("the test", function(touchmenu)
+                got = touchmenu
+                error("boom")
+            end)
+            local logged = spy.on(logger, "err")
+            finally(function()
+                logger.err:revert()
+            end)
+            run("the menu")
+            assert.is_nil(got)
+            harness.tick()
+            assert.equals("the menu", got)
+            assert.spy(logged).was_called(1)
+            assert.equals("KoPanda: the test failed:", logged.calls[1].vals[1])
+        end)
+    end)
 end)

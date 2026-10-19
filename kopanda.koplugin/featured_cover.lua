@@ -40,6 +40,16 @@ function CoverBox:paintTo(bb, x, y)
     Paint.outline(bb, x, y, w, h, self)
 end
 
+-- Where child is painted, from the box's top left, or nil for a widget the box doesn't hold.
+function CoverBox:place(child)
+    for i, held in ipairs(self) do
+        if held == child then
+            return self.places[i]
+        end
+    end
+    return nil
+end
+
 -- The first run's frame: dash-long strokes with dash_gap between them along each edge of the
 -- box, then the child at its place. KOReader has no dashed border.
 local DashedBox = WidgetContainer:extend{
@@ -160,13 +170,7 @@ end
 -- is the box plus the shadow's offset, so the shadow is never cut. Reads the cover cache through
 -- BookCovers.read, the bitmap freed with the widget; never asks for an extraction.
 function FeaturedCover.framed(record, w, h, ctx, frame)
-    local palette = Looks.palette(ctx.look, ctx.variant)
-    local function color(role)
-        return role and palette[role] and Looks.color(palette[role]) or nil
-    end
-    local function scale(px)
-        return ctx.screen:scaleBySize(px)
-    end
+    local color, scale = Looks.colorer(ctx), Paint.scaler(ctx)
     local shadow = frame.shadow
     local shadow_x, shadow_y = scale(shadow.x), scale(shadow.y)
     local outline_color = color(frame.outline_color)
@@ -233,9 +237,7 @@ function FeaturedCover.build(book, w, h, ctx)
     local look = ctx.look
     if not book then
         local palette = Looks.palette(look, ctx.variant)
-        local function scale(px)
-            return ctx.screen:scaleBySize(px)
-        end
+        local scale = Paint.scaler(ctx)
         local inset = scale(look.featured.cover_padding.x)
         local stroke = math.max(1, scale(look.stroke.outline))
         local text = Typeset.line(look.type.cover_empty, "No book yet", w - 2 * inset, ctx)

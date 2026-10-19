@@ -24,6 +24,7 @@ local Books = require("books")
 local Device = require("device")
 local FeaturedCover = require("featured_cover")
 local Geom = require("ui/geometry")
+local Helpers = require("helpers")
 local Home = require("home")
 local HomeGestures = require("home_gestures")
 local Icons = require("icons")
@@ -38,7 +39,6 @@ local Sheet = require("sheet")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
 local UIManager = require("ui/uimanager")
-local Widget = require("ui/widget/widget")
 local logger = require("logger")
 local time = require("ui/time")
 local Screen = Device.screen
@@ -47,21 +47,6 @@ local LibraryChrome = {}
 
 LibraryChrome.shown = nil
 LibraryChrome.return_to = nil
-
--- Whether pos lies in rect, its right and bottom edges outside, as the nav bar tests its columns.
-function LibraryChrome.inside(rect, pos)
-    return pos.x >= rect.x and pos.x < rect.x + rect.w and pos.y >= rect.y and pos.y < rect.y + rect.h
-end
-
--- A filled rectangle of its dimen in color.
-local Fill = Widget:extend{
-    name = "kopanda_library_fill",
-    color = nil,
-}
-
-function Fill:paintTo(bb, x, y)
-    Paint.fill(bb, x, y, self.dimen.w, self.dimen.h, self.color)
-end
 
 -- A box w by h in fill (a colour or nil) with an outline wide in outline_color, its children
 -- painted at their places.
@@ -90,20 +75,13 @@ local new_box, add = LibraryChrome.box, LibraryChrome.add
 -- look lacks), and a part's line height, which is its face's whatever the text
 -- (frontend/ui/widget/textwidget.lua:112-113).
 function LibraryChrome.tools(ctx)
-    local palette = Looks.palette(ctx.look, ctx.variant)
     local function scale(px)
         return Screen:scaleBySize(px)
     end
-    local function color(role)
-        return role and palette[role] and Looks.color(palette[role]) or nil
-    end
     local function line_height(part)
-        local line = Typeset.line(part, "Library", math.huge, ctx)
-        local h = line:getSize().h
-        line:free()
-        return h
+        return Typeset.line_height(part, ctx)
     end
-    return scale, color, line_height
+    return scale, Looks.colorer(ctx), line_height
 end
 
 local tools = LibraryChrome.tools
@@ -208,7 +186,7 @@ function LibraryChrome.header(ctx, w, spec)
     end
     local edge_color = color(tokens.edge_color)
     if edge > 0 and edge_color then
-        add(box, Fill:new{ dimen = Geom:new{ w = w, h = edge }, color = edge_color }, 0, h - edge)
+        add(box, Paint.Fill:new{ dimen = Geom:new{ w = w, h = edge }, color = edge_color }, 0, h - edge)
     end
     return box, parts
 end
@@ -476,13 +454,13 @@ local function action_at(window, pos)
     end
     local top, foot = window.header, window.pager
     local back = top.back_rect or top.title_rect
-    if back and LibraryChrome.inside(back, pos) then
+    if back and Helpers.inside(back, pos) then
         return function()
             window:back()
         end
     end
     for delta, which in pairs({ [-1] = "prev", [1] = "next" }) do
-        if foot[which].live and LibraryChrome.inside(foot[which].rect, pos) then
+        if foot[which].live and Helpers.inside(foot[which].rect, pos) then
             return function()
                 window:turn(delta)
             end

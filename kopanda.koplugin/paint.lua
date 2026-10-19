@@ -1,7 +1,9 @@
--- Fills and borders that keep a colour's hue, and the box a widget paints around its content.
+-- Fills and borders that keep a colour's hue, the box a widget paints around its content, a plain
+-- fill widget, and board pixels scaled to the screen's.
 -- A colour goes through the RGB32 variants, since the plain ones grey it
 -- (base/ffi/blitbuffer.lua:1704-1724, :1827, :2096, :2118-2126, :2169-2197).
 local Blitbuffer = require("ffi/blitbuffer")
+local Widget = require("ui/widget/widget")
 
 local Paint = {}
 
@@ -54,6 +56,33 @@ function Paint.outline(bb, x, y, w, h, box)
     if box.outline > 0 then
         Paint.border(bb, x, y, w, h, box.outline, box.outline_color, box.radius)
     end
+end
+
+-- A plain fill of dimen in color, rounded by radius, square without one; nothing at a width of 0
+-- or without a colour.
+Paint.Fill = Widget:extend{
+    name = "kopanda_fill",
+}
+
+function Paint.Fill:paintTo(bb, x, y)
+    if self.dimen.w > 0 and self.color then
+        Paint.fill(bb, x, y, self.dimen.w, self.dimen.h, self.color, self.radius)
+    end
+end
+
+-- Board pixels to device pixels on ctx's screen.
+function Paint.scaler(ctx)
+    return function(px)
+        return ctx.screen:scaleBySize(px)
+    end
+end
+
+-- A negative length, an overhang, scaled as its size is, so a corner overhangs as far as it insets.
+function Paint.scale_signed(scale, px)
+    if px < 0 then
+        return -scale(-px)
+    end
+    return scale(px)
 end
 
 return Paint

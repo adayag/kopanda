@@ -11,6 +11,7 @@
 -- chrome windows reach this module through library_chrome.
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
+local Helpers = require("helpers")
 local Icons = require("icons")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local Layout = require("layout")
@@ -226,10 +227,7 @@ end
 -- The band (paint_band) or the floating pill (paint_pill), then the icons and labels.
 function Bar:paintTo(bb, x, y)
     local nav = self.look.nav
-    local palette = Looks.palette(self.look, self.variant)
-    local function color(role)
-        return role and palette[role] and Looks.color(palette[role]) or nil
-    end
+    local color = Looks.colorer({ look = self.look, variant = self.variant })
     if nav.float then
         paint_pill(self, bb, x, y, color)
     else
@@ -248,13 +246,9 @@ function Bar:paintTo(bb, x, y)
     end
 end
 
-local function inside(rect, pos)
-    return pos.x >= rect.x and pos.x < rect.x + rect.w and pos.y >= rect.y and pos.y < rect.y + rect.h
-end
-
 -- The tab whose column holds pos, or nil outside the bar or in its side padding.
 function Bar:column_at(pos)
-    if not inside(self.dimen, pos) then
+    if not Helpers.inside(self.dimen, pos) then
         return nil
     end
     local x = pos.x - self.dimen.x - self.padding_x
@@ -284,7 +278,7 @@ end
 -- anywhere else on it runs nothing; anything else, or anything off the bar, is left to what lies
 -- beneath.
 function Bar:handle(ges)
-    if not inside(self.dimen, ges.pos) then
+    if not Helpers.inside(self.dimen, ges.pos) then
         return false
     end
     if ges.ges == "hold" then

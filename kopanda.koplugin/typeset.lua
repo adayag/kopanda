@@ -339,6 +339,15 @@ function Typeset.line(part, text, max_width, ctx)
     return line
 end
 
+-- The height of part's line under ctx: its face's or its forced one, whatever its text
+-- (frontend/ui/widget/textwidget.lua:112-113, :292-299), so one sample measures every line of a part.
+function Typeset.line_height(part, ctx)
+    local line = Typeset.line(part, "Library", math.huge, ctx)
+    local h = line:getSize().h
+    line:free()
+    return h
+end
+
 -- The y of the baseline of a line from Typeset.line, from the line's top. TextWidget:getBaseline
 -- gives the face's baseline, not a forced one (textwidget.lua:312); a tracked line's glyphs share
 -- one height and sit on the line's bottom, a misregistered one's above its offset.
