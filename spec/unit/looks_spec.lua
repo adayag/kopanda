@@ -270,6 +270,26 @@ describe("looks", function()
             end
         end)
 
+        it("give every look the insight parts and tokens, Diner's levels in its accents", function()
+            for _, id in ipairs(ids) do
+                local look = looks[id]
+                for _, part in ipairs({ "insight_label", "insight_caption", "insight_value", "insight_note" }) do
+                    assert.is_table(look.type[part], id .. " " .. part)
+                end
+                local i = look.insights
+                assert.is_number(i.padding)
+                assert.is_number(i.calendar_cell)
+                assert.is_number(i.chart_height)
+                for _, role in ipairs({ "level_1_color", "level_2_color", "level_3_color", "read_fill_color",
+                    "bar_fill_color" }) do
+                    assert.is_string(i[role], id .. " " .. role)
+                end
+            end
+            local diner = looks.diner
+            assert.same({ "mustard", "teal", "ink" },
+                { diner.insights.level_1_color, diner.insights.level_2_color, diner.insights.level_3_color })
+        end)
+
         -- The two pickers' lines differ in colour alone, so the header's height measures either
         -- (LibraryTiles.header_height measures library_picker).
         it("set the status picker's label as the sort picker's in its own colour", function()

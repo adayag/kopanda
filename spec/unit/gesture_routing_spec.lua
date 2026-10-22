@@ -1,6 +1,6 @@
 -- The home's gestures: its own swipe up from the bottom edge, the file manager's menu from
--- the top zone, nothing paged under it and every other gesture passed to the zones registered on
--- the file manager; none of it in the file browser or the reader. Holds are
+-- the top zone, its page turned with nothing paged under it, and every other gesture passed to the
+-- zones registered on the file manager; none of it in the file browser or the reader. Holds are
 -- in hold_routing_spec.lua.
 describe("gestures on the KoPanda home", function()
     local harness = require("plugin_harness")
@@ -171,15 +171,18 @@ describe("gestures on the KoPanda home", function()
         assert.is_not_nil(fm.menu.menu_container)
     end)
 
-    it("consumes a west or east swipe mid-screen, leaving the file chooser's page", function()
+    it("turns the page on a west or east swipe mid-screen, leaving the file chooser's page", function()
         local fm = fm_with_home(long_library())
         local home = Home.shown
         assert.truthy(fm.file_chooser.page_num > 1)
         local page = fm.file_chooser.page
         local size = Screen:getSize()
+        assert.equals(1, home.page)
         send(swipe(size.w / 2, size.h / 2, "west"))
+        assert.equals(2, home.page)
         assert.equals(page, fm.file_chooser.page)
         send(swipe(size.w / 2, size.h / 2, "east"))
+        assert.equals(1, home.page)
         assert.equals(page, fm.file_chooser.page)
         assert.equals(home, harness.top())
         assert.equals(home, Home.shown)

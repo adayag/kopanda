@@ -20,14 +20,14 @@ function decode(segment: string): string {
 }
 
 /**
- * The profile `#/profiles/<id>` names, its id decoded, and the view after it: `/layout` and `/launcher`
- * the editors, anything else the form. Null for any other hash.
+ * The profile `#/profiles/<id>` names, its id decoded, and the view after it: `/layout`, `/layout-2`
+ * and `/launcher` the editors, anything else the form. Null for any other hash.
  */
 function profileRoute(hash: string): { id: string; view: ProfileView } | null {
   const match = /^#\/profiles\/([^/]+)(?:\/(.*))?$/.exec(hash);
   if (match === null) return null;
   const rest = match[2];
-  const view = rest === "layout" || rest === "launcher" ? rest : "form";
+  const view = rest === "layout" || rest === "layout-2" || rest === "launcher" ? rest : "form";
   return { id: decode(match[1]!), view };
 }
 

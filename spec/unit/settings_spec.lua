@@ -157,7 +157,7 @@ describe("Settings", function()
             ["a row with no slot"] = { {} },
             ["a row of four"] = { { slot("date", 1), slot("clock", 1), slot("weather", 1), slot("quote", 1) } },
             ["a slot that is a string"] = { { "date" } },
-            ["a widget not in the list"] = { { slot("calendar", 1) } },
+            ["a widget not in the list"] = { { slot("almanac", 1) } },
             ["a widget that is not a string"] = { { slot(1, 1) } },
             ["a widget twice in a row"] = { { slot("date", 1), slot("date", 1) } },
             ["a widget twice across rows"] = { { slot("date", 1) }, { slot("date", 2) } },
@@ -215,7 +215,7 @@ describe("Settings", function()
                 ["a string"] = '"date"',
                 ["a row of four"] = '{ { { widget = "date", share = 1 }, { widget = "clock", share = 1 }, '
                     .. '{ widget = "weather", share = 1 }, { widget = "quote", share = 1 } } }',
-                ["an unknown id"] = '{ { { widget = "calendar", share = 1 } } }',
+                ["an unknown id"] = '{ { { widget = "almanac", share = 1 } } }',
                 ["a repeated id"] = '{ { { widget = "date", share = 1 } }, { { widget = "date", share = 1 } } }',
                 ["share 0"] = '{ { { widget = "date", share = 0 } } }',
                 ["share 1.5"] = '{ { { widget = "date", share = 1.5 } } }',
@@ -235,6 +235,26 @@ describe("Settings", function()
             assert.same(value, dofile(file)["layout.rows"])
             Settings._reset()
             assert.same(value, Settings.get("layout.rows"))
+        end)
+    end)
+
+    describe("layout.rows_2", function()
+        it("is its schema default with no file, and holds a widget layout.rows holds too", function()
+            local default
+            for _, entry in ipairs(require("schema").keys) do
+                if entry.id == "layout.rows_2" then
+                    default = entry.default
+                end
+            end
+            assert.is_table(default)
+            assert.same(default, Settings.get("layout.rows_2"))
+            local first = { { { widget = "date", share = 1 } }, { { widget = "quote", share = 1 } } }
+            local second = { { { widget = "date", share = 1 }, { widget = "heatmap", share = 2 } } }
+            assert.is_true(Settings.set("layout.rows", first))
+            assert.is_true(Settings.set("layout.rows_2", second))
+            Settings._reset()
+            assert.same(first, Settings.get("layout.rows"))
+            assert.same(second, Settings.get("layout.rows_2"))
         end)
     end)
 
@@ -374,7 +394,7 @@ describe("Settings", function()
     end)
 
     describe("featured.pinned", function()
-        local entry = require("schema").keys[9]
+        local entry = require("schema").keys[10]
 
         it("is false by default", function()
             assert.equals("featured.pinned", entry.id)
@@ -471,7 +491,7 @@ describe("Settings", function()
     end)
 
     describe("launcher.entries", function()
-        local entry = require("schema").keys[10]
+        local entry = require("schema").keys[11]
 
         local function kopanda(target)
             return { kind = "kopanda", target = target }

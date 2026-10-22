@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Key } from "../schema";
+import { entryFor } from "../core/rows-edit";
 import type { ProfileWithPath } from "../server/profiles.js";
 import { ApiError, fetchProfile, fetchSettings, putSetting, type Settings } from "./api";
 import { LayoutEditor } from "./layout/LayoutEditor";
@@ -10,7 +11,10 @@ import { PushStatus } from "./PushStatus";
 import { SettingsForm } from "./settings/SettingsForm";
 
 /** What the profile's screen shows under its facts: the form or one of the editors. */
-export type ProfileView = "form" | "layout" | "launcher";
+export type ProfileView = "form" | "layout" | "layout-2" | "launcher";
+
+/** The rows key each layout editor view edits. */
+const PAGES = { layout: entryFor("layout.rows"), "layout-2": entryFor("layout.rows_2") };
 
 type State =
   | { status: "loading" }
@@ -117,12 +121,13 @@ export function ProfileScreen({ id, view = "form" }: { id: string; view?: Profil
                   errors={errors}
                   onWrite={write}
                 />
-              ) : view === "layout" ? (
+              ) : view === "layout" || view === "layout-2" ? (
                 <LayoutEditor
+                  entry={PAGES[view]}
                   profileId={id}
                   settings={state.settings}
-                  pending={pending.has("layout.rows")}
-                  error={errors["layout.rows"]}
+                  pending={pending.has(PAGES[view].id)}
+                  error={errors[PAGES[view].id]}
                   onWrite={write}
                 />
               ) : (

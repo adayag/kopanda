@@ -1,5 +1,5 @@
--- The home's own sheet, opened by a hold on empty space (home_gestures.lua): Edit layout, Open the file
--- browser, Refresh weather, Wi-Fi, KoPanda settings and Sleep. Wi-Fi and Sleep are launcher entries,
+-- The home's own sheet, opened by a hold on empty space (home_gestures.lua): Edit layout, Edit page 2, Open
+-- the file browser, Refresh weather, Wi-Fi, KoPanda settings and Sleep. Wi-Fi and Sleep are launcher entries,
 -- resolved and run as the launcher runs them. Each row's detail is read when the sheet opens.
 local EditLayout = require("edit_layout")
 local Home = require("home")
@@ -55,6 +55,13 @@ local function spec(ctx)
                 label = "Edit layout",
                 run = function()
                     EditLayout.open{ started = PaintClock.now() }
+                end,
+            },
+            {
+                icon = "layout",
+                label = "Edit page 2",
+                run = function()
+                    EditLayout.open{ key = "layout.rows_2", started = PaintClock.now() }
                 end,
             },
             {

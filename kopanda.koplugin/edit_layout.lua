@@ -1,6 +1,7 @@
--- Edit layout: the screen that edits layout.rows, in the editor frame (editor.lua): a card per row
--- with its arrows, caption and a box per column. Each change is a rows_edit operation, checked against
--- the home's fit, written once through Settings.set; the shown home refreshes once the editor closes.
+-- Edit layout: the screen that edits a rows key (layout.rows, or layout.rows_2 as Edit page 2), in the
+-- editor frame (editor.lua): a card per row with its arrows, caption and a box per column. Each change is a
+-- rows_edit operation, checked against the home's fit, written once through Settings.set; the shown home
+-- refreshes once the editor closes.
 local Editor = require("editor")
 local Helpers = require("helpers")
 local Home = require("home")
@@ -132,7 +133,7 @@ local function apply(state, new, why, selection)
         Helpers.note("That won't fit on the home.")
         return
     end
-    local ok, err = Settings.set("layout.rows", new)
+    local ok, err = Settings.set(state.key, new)
     if not ok then
         logger.err("KoPanda: could not save the layout:", err)
         Helpers.note("Couldn't save the layout.")
@@ -165,7 +166,7 @@ end
 -- The rows of a picker of the unused widgets, each running on_pick with its id.
 local function unused_rows(state, on_pick)
     local rows = {}
-    for _, id in ipairs(RowsEdit.unused(state.rows)) do
+    for _, id in ipairs(RowsEdit.unused(state.rows, state.key)) do
         rows[#rows + 1] = {
             label = RowsEdit.label(id),
             run = function()
@@ -182,7 +183,7 @@ local function card_buttons(state, i, j)
     local buttons = {
         {
             label = "Add column",
-            opts = { disabled = #row >= RowsEdit.max_columns or #RowsEdit.unused(state.rows) == 0 },
+            opts = { disabled = #row >= RowsEdit.max_columns or #RowsEdit.unused(state.rows, state.key) == 0 },
             run = function()
                 picker(state, "Add a widget", unused_rows(state, function(id)
                     local new, why = RowsEdit.add_column(state.rows, i, id)
@@ -393,7 +394,7 @@ local function spec(state)
     return {
         screen = "edit_layout",
         aside = "Home",
-        title = "Edit layout",
+        title = state.key == "layout.rows_2" and "Edit page 2" or "Edit layout",
         body = function(ctx, width)
             release(state.body_widgets)
             local k = kit(ctx, state.body_widgets)
@@ -407,7 +408,7 @@ local function spec(state)
         foot = function(ctx, width)
             release(state.foot_widgets)
             local k = kit(ctx, state.foot_widgets)
-            local full = #RowsEdit.unused(state.rows) == 0
+            local full = #RowsEdit.unused(state.rows, state.key) == 0
             local add = button(k, "Add row", { disabled = full }, width)
             local reset = button(k, "Reset to the look's default", { bare = true }, width - add.w)
             local h = math.max(add.h, reset.h)
@@ -431,7 +432,7 @@ local function spec(state)
                     rect = { x = width - reset.w, y = h - reset.h, w = reset.w, h = reset.h },
                     draw = reset.draw,
                     run = function()
-                        apply(state, RowsEdit.reset(), nil, nil)
+                        apply(state, RowsEdit.reset(state.key), nil, nil)
                     end,
                 },
             } }
@@ -439,14 +440,16 @@ local function spec(state)
     }
 end
 
--- Opens edit layout on the stored layout.rows. opts.started is the PaintClock stamp the opening tap
--- took; opts.selected a row to start selected. A failure is logged and leaves no screen.
+-- Opens edit layout on the stored opts.key, layout.rows when nil. opts.started is the PaintClock stamp
+-- the opening tap took; opts.selected a row to start selected. A failure is logged and leaves no screen.
 function EditLayout.open(opts)
     opts = opts or {}
     local ok, err = pcall(function()
         -- Settings.get hands back the stored table itself, so the screen works on a copy.
+        local key = opts.key or "layout.rows"
         local state = {
-            rows = util.tableDeepCopy(Settings.get("layout.rows")),
+            key = key,
+            rows = util.tableDeepCopy(Settings.get(key)),
             body_widgets = {},
             foot_widgets = {},
         }

@@ -9,6 +9,7 @@ local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")
+local Helpers = require("helpers")
 local LauncherEntries = require("launcher_entries")
 local Layout = require("layout")
 local Looks = require("looks")
@@ -95,17 +96,8 @@ function Featured.shown_percent(book)
     return math.floor(book.percent * 100 + EPSILON)
 end
 
--- "N min left" under an hour, else "H h left" or "H h M min left", rounded to the minute.
 local function time_left(seconds)
-    local minutes = Math.round(seconds / 60)
-    if minutes < 60 then
-        return minutes .. " min left"
-    end
-    local hours, rest = math.floor(minutes / 60), minutes % 60
-    if rest == 0 then
-        return hours .. " h left"
-    end
-    return hours .. " h " .. rest .. " min left"
+    return Helpers.duration(seconds) .. " left"
 end
 
 -- The caption's parts for book: the percent, then "Finished", the time left or the pages left,

@@ -1,8 +1,8 @@
 -- Reading stats from KOReader's Statistics plugin: its database, read-only, for the streak, minutes today and
--- books this month and for a book's reading speed, and its settings, for whether it records at all and its
--- cap on one page's time. Days are local calendar days, bounded by os.time. State: the last numbers read,
--- which a busy database reads as, and the memo of both reads, which a home build reads instead of the
--- database while Statistics hasn't written.
+-- books this month, for a book's reading speed and for the reading history of the last year, and its settings,
+-- for whether it records at all and its cap on one page's time. Days are local calendar days, bounded by
+-- os.time. State: the last numbers and history read, which a busy database reads as, and the memo of the reads,
+-- which a home build reads instead of the database while Statistics hasn't written.
 local DataStorage = require("datastorage")
 local datetime = require("datetime")
 local lfs = require("libs/libkoreader-lfs")
@@ -25,10 +25,12 @@ local MONTHS = {
 }
 
 local last
+local last_insights
 
 -- The last reads, each valid while the files' stamp is key: numbers, the result of read for the
 -- local date of now, kept with no key when the stamp is nil so that a refresh reads the latest
--- date read; rate, seconds_per_page's for md5 under the cap (nil when none is found).
+-- date read; rate, seconds_per_page's for md5 under the cap (nil when none is found); insights,
+-- the result of insights for the local date of now, and for now itself while the stamp is nil.
 local memo = {}
 
 -- The size and modification time of the database and of its WAL file, the two files Statistics writes, as one
@@ -138,6 +140,77 @@ local function query(conn, now)
         books_month = books,
         month_name = datetime.longMonthTranslation[MONTHS[t.month]],
     }
+end
+
+ReadingStats.INSIGHT_DAYS = 371
+local HOUR_DAYS = 90
+local SESSION_DAYS = 365
+local SESSION_GAP = 1800
+
+-- Seconds per local day for the INSIGHT_DAYS days ending today, oldest first; per hour of the day over the last
+-- HOUR_DAYS days; and the sessions of the last SESSION_DAYS days: runs of page rows each starting within
+-- SESSION_GAP of the latest end before it. SQLite groups by the C library's local zone, the one os.date uses.
+local function insight_query(conn, now)
+    local t = os.date("*t", now)
+    local days, index = {}, {}
+    for i = 1, ReadingStats.INSIGHT_DAYS do
+        days[i] = 0
+        index[os.date("%Y-%m-%d", day_start(t, ReadingStats.INSIGHT_DAYS - i) + 43200)] = i
+    end
+    local stmt = conn:prepare("SELECT strftime('%Y-%m-%d', start_time, 'unixepoch', 'localtime'), sum(duration)"
+        .. " FROM page_stat_data WHERE start_time >= ? GROUP BY 1")
+    local row = stmt:bind(day_start(t, ReadingStats.INSIGHT_DAYS - 1)):step()
+    while row do
+        local i = index[row[1]]
+        if i then
+            days[i] = tonumber(row[2]) or 0
+        end
+        row = stmt:step()
+    end
+    stmt:close()
+
+    local hours = {}
+    for i = 1, 24 do
+        hours[i] = 0
+    end
+    stmt = conn:prepare("SELECT strftime('%H', start_time, 'unixepoch', 'localtime'), sum(duration)"
+        .. " FROM page_stat_data WHERE start_time >= ? GROUP BY 1")
+    row = stmt:bind(day_start(t, HOUR_DAYS - 1)):step()
+    while row do
+        hours[tonumber(row[1]) + 1] = tonumber(row[2]) or 0
+        row = stmt:step()
+    end
+    stmt:close()
+
+    local sessions, current, pages, total = {}, nil, 0, 0
+    stmt = conn:prepare("SELECT start_time, duration FROM page_stat_data WHERE start_time >= ? ORDER BY start_time")
+    row = stmt:bind(day_start(t, SESSION_DAYS - 1)):step()
+    while row do
+        local start, duration = tonumber(row[1]), tonumber(row[2]) or 0
+        if not current or start - current.ends > SESSION_GAP then
+            current = { seconds = 0, ends = start }
+            sessions[#sessions + 1] = current
+        end
+        current.seconds = current.seconds + duration
+        current.ends = math.max(current.ends, start + duration)
+        pages, total = pages + 1, total + duration
+        row = stmt:step()
+    end
+    stmt:close()
+    local summary
+    if #sessions > 0 then
+        local longest = 0
+        for _, s in ipairs(sessions) do
+            longest = math.max(longest, s.seconds)
+        end
+        summary = {
+            count = #sessions,
+            longest = longest,
+            average = math.floor(total / #sessions + 0.5),
+            pages_per_hour = total > 0 and math.floor(pages * 3600 / total + 0.5) or 0,
+        }
+    end
+    return { state = "ok", days = days, hours = hours, sessions = summary }
 end
 
 local function empty(now)
@@ -261,6 +334,60 @@ function ReadingStats.read(now)
     if not ok then
         logger.err("KoPanda: could not read the reading stats:", result)
         return empty(now)
+    end
+    return result
+end
+
+local function empty_insights()
+    local days, hours = {}, {}
+    for i = 1, ReadingStats.INSIGHT_DAYS do
+        days[i] = 0
+    end
+    for i = 1, 24 do
+        hours[i] = 0
+    end
+    return { state = "empty", days = days, hours = hours }
+end
+
+-- The reading history at now (epoch seconds): { state, days, hours, sessions }, as insight_query reads them, with
+-- state as read gives it, "empty" (zeros, no sessions) also when the days hold no reading. Opened, kept and read
+-- when busy as read does. Never raises.
+function ReadingStats.insights(now)
+    local ok, result = pcall(function()
+        if off() then
+            return { state = "off" }
+        end
+        local path = db_path()
+        if not util.fileExists(path) then
+            return empty_insights()
+        end
+        local key = stamp(path)
+        local date = os.date("%Y-%m-%d", now)
+        local held = memo.insights
+        if held and (key and held.key == key and held.date == date or not key and held.now == now) then
+            return held.value
+        end
+        local read_ok, insights = with_db(path, function(conn)
+            return insight_query(conn, now)
+        end)
+        if not read_ok then
+            local busy = insights:find("ljsqlite3%[busy%]") or insights:find("ljsqlite3%[locked%]")
+            if busy and last_insights then
+                return last_insights
+            end
+            return empty_insights()
+        end
+        if math.max(unpack(insights.days)) == 0 then
+            insights = empty_insights()
+        else
+            last_insights = insights
+        end
+        memo.insights = { key = key, date = date, now = now, value = insights }
+        return insights
+    end)
+    if not ok then
+        logger.err("KoPanda: could not read the reading history:", result)
+        return empty_insights()
     end
     return result
 end

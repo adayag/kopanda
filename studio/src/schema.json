@@ -115,7 +115,71 @@
                 "quote",
                 "stats",
                 "featured",
-                "launcher"
+                "launcher",
+                "heatmap",
+                "calendar",
+                "forecast",
+                "hours",
+                "records"
+            ]
+        },
+        {
+            "default": [
+                [
+                    {
+                        "share": 1,
+                        "widget": "date"
+                    },
+                    {
+                        "share": 1,
+                        "widget": "clock"
+                    }
+                ],
+                [
+                    {
+                        "share": 1,
+                        "widget": "heatmap"
+                    }
+                ],
+                [
+                    {
+                        "share": 1,
+                        "widget": "calendar"
+                    },
+                    {
+                        "share": 1,
+                        "widget": "forecast"
+                    }
+                ],
+                [
+                    {
+                        "share": 1,
+                        "widget": "hours"
+                    },
+                    {
+                        "share": 1,
+                        "widget": "records"
+                    }
+                ]
+            ],
+            "group": "home",
+            "id": "layout.rows_2",
+            "label": "Page 2",
+            "max_columns": 3,
+            "type": "rows",
+            "widgets": [
+                "date",
+                "clock",
+                "weather",
+                "quote",
+                "stats",
+                "featured",
+                "launcher",
+                "heatmap",
+                "calendar",
+                "forecast",
+                "hours",
+                "records"
             ]
         },
         {

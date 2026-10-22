@@ -34,7 +34,7 @@ describe("schema.lua", function()
         assert.same({ "schema.keys.1.check" }, functions_in({ keys = { { check = print } } }, "schema"))
     end)
 
-    it("is version 1 with the ten keys of the Keys tables, in order", function()
+    it("is version 1 with the eleven keys of the Keys tables, in order", function()
         local schema = load_bare()
         assert.equals(1, schema.version)
         assert.same({
@@ -75,7 +75,8 @@ describe("schema.lua", function()
             {
                 id = "layout.rows",
                 type = "rows",
-                widgets = { "date", "clock", "weather", "quote", "stats", "featured", "launcher" },
+                widgets = { "date", "clock", "weather", "quote", "stats", "featured", "launcher",
+                    "heatmap", "calendar", "forecast", "hours", "records" },
                 max_columns = 3,
                 default = {
                     { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
@@ -85,6 +86,21 @@ describe("schema.lua", function()
                     { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
                 },
                 label = "Layout",
+                group = "home",
+            },
+            {
+                id = "layout.rows_2",
+                type = "rows",
+                widgets = { "date", "clock", "weather", "quote", "stats", "featured", "launcher",
+                    "heatmap", "calendar", "forecast", "hours", "records" },
+                max_columns = 3,
+                default = {
+                    { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                    { { widget = "heatmap", share = 1 } },
+                    { { widget = "calendar", share = 1 }, { widget = "forecast", share = 1 } },
+                    { { widget = "hours", share = 1 }, { widget = "records", share = 1 } },
+                },
+                label = "Page 2",
                 group = "home",
             },
             {
@@ -154,7 +170,7 @@ describe("schema.lua", function()
     it("validates the path type, whose default false is allowed", function()
         local Settings = require("settings")
         assert.is_function(Settings.validators.path)
-        local pinned = load_bare().keys[9]
+        local pinned = load_bare().keys[10]
         assert.equals("featured.pinned", pinned.id)
         assert.is_true(Settings.validators.path(pinned, pinned.default))
     end)
@@ -177,7 +193,7 @@ describe("schema.lua", function()
     it("validates the launcher type, whose default six are allowed", function()
         local Settings = require("settings")
         assert.is_function(Settings.validators.launcher)
-        local launcher = load_bare().keys[10]
+        local launcher = load_bare().keys[11]
         assert.equals("launcher.entries", launcher.id)
         assert.is_true(Settings.validators.launcher(launcher, launcher.default))
     end)

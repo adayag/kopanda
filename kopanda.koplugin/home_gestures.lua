@@ -1,5 +1,7 @@
--- The home's gestures: its own touch zones and the order a gesture on the home runs in. The
--- home's onGesture (home.lua) calls route through a pcall.
+-- The home's gestures: its own touch zones and the order a gesture on the home runs in, a page
+-- swipe, one of its own zones, turning the home's page. The home's onGesture (home.lua) calls route
+-- through a pcall.
+local BD = require("ui/bidi")
 local Geom = require("ui/geometry")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local PaintClock = require("paint_clock")
@@ -76,6 +78,17 @@ function HomeGestures.own_zones(home)
                 end
             end,
         },
+        {
+            id = "kopanda_home_page",
+            ges = "swipe",
+            screen_zone = FULL_SCREEN,
+            handler = function(ges)
+                if HomeGestures.is_page_swipe(ges) then
+                    home.own_step = "page"
+                    return true
+                end
+            end,
+        },
         -- No menu-zone test: the file manager's menu zones are tap and swipe only
         -- (frontend/apps/filemanager/filemanagermenu.lua:76-113).
         {
@@ -131,9 +144,11 @@ function HomeGestures.forward(ges)
 end
 
 -- The home's gestures, in order, each step stopping at the first that consumes: its own swipe up; a
--- tap or hold in the nav bar's band; the forward step, so a hold corner bound on the file manager wins
--- over the hold (gestures main.lua:1124-1139); the hold step; a tap outside the top menu zones runs the
--- tapped slot's widget, and otherwise, or on false, closes the home onto the file browser via close(home).
+-- tap or hold in the nav bar's band; its own page swipe, turning the home's page, mirrored as
+-- FileManager:onSwipeFM reads it (filemanager.lua:475); the forward step, so a hold corner bound on the
+-- file manager wins over the hold (gestures main.lua:1124-1139); the hold step; a tap outside the top
+-- menu zones runs the tapped slot's widget, and otherwise, or on false, closes the home onto the file
+-- browser via close(home).
 function HomeGestures.route(home, ges, close)
     home.own_step = nil
     -- The home's own zones, under KOReader's touch lock (see own_zones).
@@ -145,6 +160,10 @@ function HomeGestures.route(home, ges, close)
         return true
     end
     if (own_step == "tap" or own_step == "hold") and home.nav and home.nav:handle(ges) then
+        return true
+    end
+    if own_step == "page" then
+        home:turn(BD.flipDirectionIfMirroredUILayout(ges.direction) == "west" and 1 or -1)
         return true
     end
     if HomeGestures.forward(ges) then

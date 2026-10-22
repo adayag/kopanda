@@ -31,6 +31,16 @@ const data = table([
       ],
     ]),
   ],
+  [
+    "layout.rows_2",
+    fromJson([
+      [{ widget: "heatmap", share: 1 }],
+      [
+        { widget: "hours", share: 2 },
+        { widget: "records", share: 1 },
+      ],
+    ]),
+  ],
   ["weather.location", fromJson({ name: "Seattle, Washington", latitude: 47.60621, longitude: -122.33207 })],
   ["weather.units", "celsius"],
   ["quote.source", "builtin"],

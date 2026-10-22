@@ -292,7 +292,7 @@ return {
                 { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
             },
         },
-        result = {},
+        result = { "heatmap", "calendar", "forecast", "hours", "records" },
     },
     {
         op = "unused",
@@ -305,12 +305,14 @@ return {
                 { { widget = "weather", share = 1 } },
             },
         },
-        result = { "stats" },
+        result = { "stats", "heatmap", "calendar", "forecast", "hours", "records" },
     },
     {
         op = "unused",
         args = { { { { widget = "launcher", share = 1 } }, { { widget = "quote", share = 1 } } } },
-        result = { "date", "clock", "weather", "stats", "featured" },
+        result = {
+            "date", "clock", "weather", "stats", "featured", "heatmap", "calendar", "forecast", "hours", "records",
+        },
     },
 
     -- label
@@ -321,7 +323,12 @@ return {
     { op = "label", args = { "stats" }, result = "Reading stats" },
     { op = "label", args = { "featured" }, result = "Featured book" },
     { op = "label", args = { "launcher" }, result = "Launcher" },
-    { op = "label", args = { "calendar" }, result = "calendar" },
+    { op = "label", args = { "heatmap" }, result = "Reading heatmap" },
+    { op = "label", args = { "calendar" }, result = "Calendar" },
+    { op = "label", args = { "forecast" }, result = "Finish by" },
+    { op = "label", args = { "hours" }, result = "Reading hours" },
+    { op = "label", args = { "records" }, result = "Sessions" },
+    { op = "label", args = { "almanac" }, result = "almanac" },
 
     -- share_text
     { op = "share_text", args = { { { widget = "featured", share = 2 } }, 1 }, result = "full" },

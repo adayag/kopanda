@@ -14,6 +14,11 @@ local modules = {
     weather = "widgets/weather",
     featured = "widgets/featured",
     launcher = "widgets/launcher",
+    heatmap = "widgets/heatmap",
+    calendar = "widgets/calendar",
+    forecast = "widgets/forecast",
+    hours = "widgets/hours",
+    records = "widgets/records",
 }
 
 -- The module for id, or nil when this plugin has none.

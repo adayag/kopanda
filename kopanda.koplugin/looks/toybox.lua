@@ -197,6 +197,14 @@ return {
 
     -- The badge would stack over the label, but at KOReader's line heights the two overrun an 84 px block, so the label
     -- sits beside the badge.
+    -- The insight tiles tightened so the page-2 default fits above the nav bar at the large text size, where
+    -- Toybox's taller label and value lines leave it a few pixels short.
+    insights = {
+        padding = 8,
+        label_gap = 4,
+        calendar_cell = 13,
+    },
+
     launcher = {
         row_gap = 16,
         icon_gap = 10,

@@ -1,9 +1,9 @@
-// A port of the plugin's row operations (kopanda.koplugin/rows_edit.lua) over a layout.rows value,
-// with the labels, shares and captions the layout editor shows. Pure: every operation copies the
-// rows it is given and answers new rows, or the note it refuses with (null for none); none changes
-// its input. Row and column indices count from 1, as the plugin's do, so
+// A port of the plugin's row operations (kopanda.koplugin/rows_edit.lua) over a rows key's value
+// (layout.rows, layout.rows_2), with the labels, shares and captions the layout editor shows. Pure:
+// every operation copies the rows it is given and answers new rows, or the note it refuses with (null
+// for none); none changes its input. Row and column indices count from 1, as the plugin's do, so
 // spec/fixtures/studio/rows_edit_cases.lua holds both sides to the same cases.
-import { schema } from "../schema.js";
+import { schema, type Key } from "../schema.js";
 
 export interface Slot {
   widget: string;
@@ -15,10 +15,18 @@ export type Rows = Row[];
 /** An operation's answer: the new rows, or its refusal with the note to show, null for none. */
 export type Edit = { rows: Rows } | { refused: string | null };
 
-const found = schema.keys.find((key) => key.id === "layout.rows");
-if (found?.type !== "rows") throw new Error("the schema has no layout.rows of type rows");
+/** A key of the schema's rows type: layout.rows or layout.rows_2. */
+export type RowsEntry = Extract<Key, { type: "rows" }>;
+
+/** The schema's entry for the rows key with this id; throws for any other id. */
+export function entryFor(id: string): RowsEntry {
+  const found = schema.keys.find((key) => key.id === id);
+  if (found?.type !== "rows") throw new Error(`the schema has no ${id} of type rows`);
+  return found;
+}
+
 /** The schema's layout.rows entry. */
-export const entry = found;
+export const entry = entryFor("layout.rows");
 
 /** The most columns a row holds. */
 export const maxColumns = entry.max_columns;
@@ -34,6 +42,11 @@ const LABELS: Record<string, string> = {
   stats: "Reading stats",
   featured: "Featured book",
   launcher: "Launcher",
+  heatmap: "Reading heatmap",
+  calendar: "Calendar",
+  forecast: "Finish by",
+  hours: "Reading hours",
+  records: "Sessions",
 };
 
 const COLUMNS = ["one column", "two columns", "three columns"];
@@ -102,14 +115,14 @@ export function removeRow(rows: Rows, i: number): Edit {
   return { rows: next };
 }
 
-/** A copy of the schema's default; the looks hold no layout of their own, so it is every look's. */
-export function reset(): Edit {
-  return { rows: copy(entry.default) };
+/** A copy of the key's schema default; the looks hold no layout of their own, so it is every look's. */
+export function reset(of: RowsEntry = entry): Edit {
+  return { rows: copy(of.default) };
 }
 
-/** The schema's widgets not on the home, in schema order. */
-export function unused(rows: Rows): string[] {
-  return entry.widgets.filter((widget) => !onHome(rows, widget));
+/** The key's schema widgets not in rows, in schema order. */
+export function unused(rows: Rows, of: RowsEntry = entry): string[] {
+  return of.widgets.filter((widget) => !onHome(rows, widget));
 }
 
 /** A widget's label, or its id for one with none. */

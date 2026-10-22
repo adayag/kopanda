@@ -105,8 +105,27 @@ return {
         valid = false,
         why = "a widget repeated in a row",
     },
-    { key = "layout.rows", value = { { { widget = "calendar", share = 1 } } }, valid = false, why = "an unknown widget" },
+    { key = "layout.rows", value = { { { widget = "almanac", share = 1 } } }, valid = false, why = "an unknown widget" },
     { key = "layout.rows", value = "date", valid = false, why = "a string" },
+
+    -- layout.rows_2
+    {
+        key = "layout.rows_2",
+        value = {
+            { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+            { { widget = "heatmap", share = 1 } },
+            { { widget = "calendar", share = 1 }, { widget = "forecast", share = 1 } },
+            { { widget = "hours", share = 1 }, { widget = "records", share = 1 } },
+        },
+        valid = true,
+        why = "the default",
+    },
+    {
+        key = "layout.rows_2",
+        value = { { { widget = "heatmap", share = 1 } }, { { widget = "heatmap", share = 1 } } },
+        valid = false,
+        why = "a widget repeated across rows",
+    },
 
     -- weather.location
     {

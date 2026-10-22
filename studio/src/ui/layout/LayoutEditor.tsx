@@ -4,7 +4,6 @@ import {
   addRow,
   caption,
   changeWidget,
-  entry,
   label,
   maxColumns,
   move,
@@ -16,6 +15,7 @@ import {
   unused,
   type Edit,
   type Rows,
+  type RowsEntry,
 } from "../../core/rows-edit";
 import { schema, type Key } from "../../schema";
 import { checkFit, type FitAnswer, type Settings } from "../api";
@@ -72,12 +72,14 @@ function PickerMenu({
 }
 
 export interface LayoutEditorProps {
+  /** The rows key the editor edits: layout.rows, or layout.rows_2 for page 2. */
+  entry: RowsEntry;
   profileId: string;
-  /** The profile's settings file as the API last answered it; its layout.rows is what the editor shows. */
+  /** The profile's settings file as the API last answered it; its value of the key is what the editor shows. */
   settings: Settings;
-  /** True while a write of layout.rows is in flight. */
+  /** True while a write of the key is in flight. */
   pending: boolean;
-  /** The failure line of the last write of layout.rows. */
+  /** The failure line of the last write of the key. */
   error: string | undefined;
   /** Writes one key; resolves true once written, false when refused. */
   onWrite: (entry: Key, value: unknown) => Promise<boolean>;
@@ -86,10 +88,10 @@ export interface LayoutEditorProps {
 /**
  * The layout editor (the device's edit layout, kopanda.koplugin/edit_layout.lua): a card per row with
  * its arrows, caption and a box per column; the selected card's buttons; Add row and Reset at the foot.
- * Each change is a row operation, checked against the home's fit, then written as one PUT of
- * layout.rows; the rows shown are always the settings answer's.
+ * Each change is a row operation, checked against the home's fit, then written as one PUT of the
+ * key; the rows shown are always the settings answer's.
  */
-export function LayoutEditor({ profileId, settings, pending, error, onWrite }: LayoutEditorProps) {
+export function LayoutEditor({ entry, profileId, settings, pending, error, onWrite }: LayoutEditorProps) {
   const rows = (settings.values[entry.id] ?? entry.default) as Rows;
   const [selected, setSelected] = useState<Selection | null>(null);
   const [picker, setPicker] = useState<Picker | null>(null);
@@ -111,7 +113,7 @@ export function LayoutEditor({ profileId, settings, pending, error, onWrite }: L
   // A selection the rows shown no longer hold is none.
   const selection =
     selected !== null && selected.column <= (rows[selected.row - 1]?.length ?? 0) ? selected : null;
-  const spare = unused(rows);
+  const spare = unused(rows, entry);
 
   /**
    * Applies an operation's answer: its note when refused; "That won't fit on the home." when the
@@ -129,7 +131,7 @@ export function LayoutEditor({ profileId, settings, pending, error, onWrite }: L
     setChecking(true);
     let fit: FitAnswer;
     try {
-      fit = await checkFit(profileId, edit.rows, signal);
+      fit = await checkFit(profileId, edit.rows, entry.id, signal);
     } catch (err) {
       fit = { checked: false, reason: err instanceof Error ? err.message : String(err) };
     }
@@ -255,7 +257,7 @@ export function LayoutEditor({ profileId, settings, pending, error, onWrite }: L
       <header className="editor-head">
         <div>
           <span className="editor-aside">Home</span>
-          <h2 id={titleId}>Edit layout</h2>
+          <h2 id={titleId}>{entry.label}</h2>
         </div>
         <a className="editor-link" href={profileHref(profileId)}>
           Done
@@ -337,7 +339,7 @@ export function LayoutEditor({ profileId, settings, pending, error, onWrite }: L
         <button type="button" disabled={busy || spare.length === 0} onClick={() => toggle("add_row")}>
           Add row
         </button>
-        <button type="button" className="bare" disabled={busy} onClick={() => run(reset(), null)}>
+        <button type="button" className="bare" disabled={busy} onClick={() => run(reset(entry), null)}>
           Reset to the look's default
         </button>
       </footer>

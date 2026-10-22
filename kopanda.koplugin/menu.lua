@@ -74,10 +74,11 @@ end
 
 -- A callback for a row that opens a screen: TouchMenu closes itself after the callback
 -- (frontend/ui/widget/touchmenu.lua:920-926), so the screen opens from the next tick, as main.lua's
--- after_menu defers. The module is required then: edit_layout requires home, which reaches this module.
-local function open_screen(entry, module)
+-- after_menu defers, with opts. The module is required then: edit_layout requires home, which reaches
+-- this module.
+local function open_screen(entry, module, opts)
     local open = guarded(entry.id .. " screen", nil, function()
-        require(module).open{}
+        require(module).open(opts or {})
     end)
     return guarded(entry.id .. " row", nil, function()
         UIManager:nextTick(open)
@@ -264,7 +265,7 @@ function BUILDERS.location(entry)
 end
 
 function BUILDERS.rows(entry)
-    return { text = entry.label, callback = open_screen(entry, "edit_layout") }
+    return { text = entry.label, callback = open_screen(entry, "edit_layout", { key = entry.id }) }
 end
 
 function BUILDERS.launcher(entry)

@@ -778,6 +778,206 @@ describe("reading stats", function()
         end)
     end)
 
+    describe("insights", function()
+        local function total(list)
+            local sum = 0
+            for _, s in ipairs(list) do
+                sum = sum + s
+            end
+            return sum
+        end
+
+        it("reads a year of days, oldest first, today last", function()
+            make_db({ on_day(0, 600), on_day(-1, 900), on_day(-370, 60), on_day(-371, 60) })
+            local got = ReadingStats.insights(NOW)
+            assert.equals("ok", got.state)
+            assert.equals(ReadingStats.INSIGHT_DAYS, #got.days)
+            assert.equals(600, got.days[#got.days])
+            assert.equals(900, got.days[#got.days - 1])
+            -- 370 days ago is the first day kept; 371 days ago is out.
+            assert.equals(60, got.days[1])
+            assert.equals(600 + 900 + 60, total(got.days))
+        end)
+
+        it("groups the days by local date", function()
+            local t = os.date("*t", NOW)
+            -- 01:30 and 04:50 the next day in UTC.
+            make_db({
+                { 1, at(t.year, t.month, t.day, 20, 30), 600 },
+                { 1, at(t.year, t.month, t.day - 1, 23, 50), 300 },
+            })
+            local days = ReadingStats.insights(NOW).days
+            assert.equals(600, days[#days])
+            assert.equals(300, days[#days - 1])
+        end)
+
+        it("sums each hour of the day over the last 90 days", function()
+            local t = os.date("*t", NOW)
+            make_db({
+                { 1, at(t.year, t.month, t.day, 7, 10), 600 },
+                { 1, at(t.year, t.month, t.day - 1, 7, 50), 300 },
+                { 1, at(t.year, t.month, t.day - 89, 22, 0), 120 },
+                { 1, at(t.year, t.month, t.day - 90, 22, 0), 120 },
+            })
+            local hours = ReadingStats.insights(NOW).hours
+            assert.equals(24, #hours)
+            -- Hour h is index h + 1.
+            assert.equals(600 + 300, hours[8])
+            assert.equals(120, hours[23])
+            assert.equals(600 + 300 + 120, total(hours))
+        end)
+
+        it("folds page rows into sessions split by a gap over 30 minutes, over the last 365 days", function()
+            local t = os.date("*t", NOW)
+            local base = at(t.year, t.month, t.day, 7, 0)
+            make_db({
+                { 1, base, 60 }, { 1, base + 60, 60 }, { 1, base + 120, 60 },
+                -- Ends at base + 180; a gap of exactly 1800 s keeps the session: 240 s over 4 pages.
+                { 1, base + 180 + 1800, 60 },
+                -- Ends at base + 2040; a gap of 1801 s starts a session: 600 s over 1 page.
+                { 1, base + 2040 + 1801, 600 },
+                -- 364 days ago is the first day kept: 60 s over 1 page. 365 days ago is out.
+                { 1, at(t.year, t.month, t.day - 364, 7, 0), 60 },
+                { 1, at(t.year, t.month, t.day - 365, 7, 0), 60 },
+            })
+            local s = ReadingStats.insights(NOW).sessions
+            assert.equals(3, s.count)
+            assert.equals(600, s.longest)
+            -- (240 + 600 + 60) / 3
+            assert.equals(300, s.average)
+            -- 6 pages over 900 s: 6 * 3600 / 900
+            assert.equals(24, s.pages_per_hour)
+        end)
+
+        it("keeps a session's end at its latest row's end when rows overlap", function()
+            local t = os.date("*t", NOW)
+            local base = at(t.year, t.month, t.day, 7, 0)
+            -- The second row ends inside the first, at base + 600; the third starts 1700 s after that.
+            make_db({ { 1, base, 600 }, { 1, base + 60, 60 }, { 1, base + 2300, 60 } })
+            local s = ReadingStats.insights(NOW).sessions
+            assert.equals(1, s.count)
+            assert.equals(720, s.longest)
+        end)
+
+        it("rounds the average and the pages an hour to the nearest whole number", function()
+            local t = os.date("*t", NOW)
+            local base = at(t.year, t.month, t.day, 7, 0)
+            make_db({ { 1, base, 100 }, { 1, base + 4000, 101 } })
+            local s = ReadingStats.insights(NOW).sessions
+            assert.equals(2, s.count)
+            -- 201 / 2 = 100.5
+            assert.equals(101, s.average)
+            -- 2 * 3600 / 201 = 35.8
+            assert.equals(36, s.pages_per_hour)
+        end)
+
+        it("reads as off, and as empty with no database or nothing read in the year", function()
+            local function assert_empty(got)
+                assert.equals("empty", got.state)
+                assert.equals(ReadingStats.INSIGHT_DAYS, #got.days)
+                assert.equals(0, total(got.days))
+                assert.equals(24, #got.hours)
+                assert.equals(0, total(got.hours))
+                assert.is_nil(got.sessions)
+            end
+            assert_empty(ReadingStats.insights(NOW))
+            assert.is_nil(lfs.attributes(db_path, "mode"))
+            assert.is_false(logged_error())
+
+            make_db({ on_day(-371) })
+            assert_empty(ReadingStats.insights(NOW))
+
+            make_db({ on_day(0) })
+            G_reader_settings:saveSetting("statistics", { is_enabled = false })
+            assert.same({ state = "off" }, ReadingStats.insights(NOW))
+            G_reader_settings:delSetting("statistics")
+            G_reader_settings:saveSetting("plugins_disabled", { statistics = true })
+            assert.same({ state = "off" }, ReadingStats.insights(NOW))
+        end)
+
+        it("reads a corrupt file as empty and logs it", function()
+            local f = assert(io.open(db_path, "wb"))
+            f:write(string.rep("not a database ", 100))
+            f:close()
+            assert.equals("empty", ReadingStats.insights(NOW).state)
+            assert.is_true(logged_error())
+        end)
+
+        describe("read once", function()
+            local real_open, opened
+
+            -- Dates the database a minute back: a file written before the current second.
+            local function settle(seconds_ago)
+                local t = os.time() - (seconds_ago or 60)
+                assert(lfs.touch(db_path, t, t))
+            end
+
+            before_each(function()
+                real_open = SQ3.open
+                opened = 0
+                SQ3.open = function(path, mode)
+                    if mode == "ro" then
+                        opened = opened + 1
+                    end
+                    return real_open(path, mode)
+                end
+            end)
+
+            after_each(function()
+                SQ3.open = real_open
+            end)
+
+            it("reads the database once per stamp and date", function()
+                make_db({ on_day(0), on_day(-1) }, "DELETE")
+                settle()
+                local first = ReadingStats.insights(NOW)
+                assert.same(first, ReadingStats.insights(NOW))
+                assert.equals(1, opened)
+
+                settle(30)
+                assert.same(first, ReadingStats.insights(NOW))
+                assert.equals(2, opened)
+
+                local t = os.date("*t", NOW)
+                local tomorrow = ReadingStats.insights(at(t.year, t.month, t.day + 1, 0, 5))
+                assert.equals(3, opened)
+                assert.equals(0, tomorrow.days[#tomorrow.days])
+                assert.equals(600, tomorrow.days[#tomorrow.days - 1])
+            end)
+
+            it("reads the database once per now while the files were written within the last second", function()
+                make_db({ on_day(0), on_day(-1) })
+                local first = ReadingStats.insights(NOW)
+                assert.same(first, ReadingStats.insights(NOW))
+                assert.equals(1, opened)
+
+                ReadingStats.insights(NOW + 1)
+                assert.equals(2, opened)
+            end)
+
+            it("reads a busy database as the last insights read, or empty with none, and logs it", function()
+                make_db({ on_day(0), on_day(-1) }, "DELETE")
+                local locker = real_open(db_path)
+                locker:exec("BEGIN EXCLUSIVE;")
+                local first = ReadingStats.insights(NOW)
+                locker:exec("ROLLBACK;")
+                assert.equals("empty", first.state)
+                assert.is_true(logged_error())
+
+                settle()
+                local before = ReadingStats.insights(NOW)
+                assert.equals("ok", before.state)
+                settle(30)
+                locker:exec("BEGIN EXCLUSIVE;")
+                local busy = ReadingStats.insights(NOW)
+                locker:exec("ROLLBACK;")
+                locker:close()
+                assert.equals(3, opened)
+                assert.same(before, busy)
+            end)
+        end)
+    end)
+
     describe("the widget", function()
         local WIDE = 4000
 

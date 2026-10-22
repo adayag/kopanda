@@ -1,5 +1,5 @@
--- Small helpers several modules share: the words a count of books reads in, whether a point lies
--- in a rectangle, and a note over the screen.
+-- Small helpers several modules share: the words a count of books and a duration read in, whether a
+-- point lies in a rectangle, and a note over the screen.
 local InfoMessage = require("ui/widget/infomessage")
 local UIManager = require("ui/uimanager")
 
@@ -18,6 +18,19 @@ function Helpers.count_text(n, on_shelf)
         text = text .. " on the shelf"
     end
     return text
+end
+
+-- "N min" under an hour, else "H h" or "H h M min", rounded to the minute.
+function Helpers.duration(seconds)
+    local minutes = math.floor(seconds / 60 + 0.5)
+    if minutes < 60 then
+        return minutes .. " min"
+    end
+    local hours, rest = math.floor(minutes / 60), minutes % 60
+    if rest == 0 then
+        return hours .. " h"
+    end
+    return hours .. " h " .. rest .. " min"
 end
 
 -- Whether pos lies in rect, its right and bottom edges outside.

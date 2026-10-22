@@ -112,7 +112,7 @@ describe("the settings menu's rows", function()
                 ids[i] = entry.id
             end
             assert.same(ids, keys)
-            assert.same({ "wallpaper.file", "layout.rows", "weather.units", "quote.source", "stats.show",
+            assert.same({ "wallpaper.file", "layout.rows_2", "weather.units", "quote.source", "stats.show",
                 "featured.pinned" }, separated)
         end)
 
@@ -536,6 +536,22 @@ describe("the settings menu's rows", function()
             harness.tick()
             assert.is_not_nil(Editor.shown)
             assert.equals("edit_layout", Editor.shown.spec.screen)
+        end)
+
+        it("opens edit layout on page 2's key from the Page 2 row", function()
+            gestures.fm_with_home()
+            local EditLayout = require("edit_layout")
+            local opened = spy.on(EditLayout, "open")
+            finally(function()
+                opened:revert()
+            end)
+            local page_2 = row(SchemaMenu.items(), "layout.rows_2")
+            assert.equals("Page 2", page_2.text or page_2.text_func())
+            page_2.callback()
+            harness.tick()
+            assert.spy(opened).was.called(1)
+            assert.equals("layout.rows_2", opened.calls[1].vals[1].key)
+            assert.equals("Edit page 2", Editor.shown.spec.title)
         end)
 
         it("opens launcher management from the next tick", function()

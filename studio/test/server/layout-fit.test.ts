@@ -187,6 +187,59 @@ describe("POST /api/profiles/:id/layout-fit", () => {
     ]);
   });
 
+  it("measures layout.rows_2's default as current for that key", async () => {
+    const { app, record } = setup("answers.sh");
+    const page2 = schema.keys.find((key) => key.id === "layout.rows_2")!.default;
+
+    const res = await request(app).post("/api/profiles/kobo/layout-fit").send({ rows: proposed, key: "layout.rows_2" });
+
+    expect(res.status).toBe(200);
+    expect(JSON.parse(fs.readFileSync(path.join(record, "stdin"), "utf8"))).toEqual([page2, proposed]);
+  });
+
+  it("measures layout.rows_2's stored rows as current for that key, not layout.rows's", async () => {
+    const { app, record, settingsFile } = setup("answers.sh");
+    fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
+    fs.writeFileSync(
+      settingsFile,
+      `return {
+    ["layout.rows"] = {
+        { { widget = "quote", share = 1 } },
+    },
+    ["layout.rows_2"] = {
+        { { widget = "heatmap", share = 1 } },
+        { { widget = "hours", share = 2 }, { widget = "records", share = 1 } },
+    },
+    ["schema_version"] = 1,
+}
+`,
+    );
+
+    const res = await request(app).post("/api/profiles/kobo/layout-fit").send({ rows: proposed, key: "layout.rows_2" });
+
+    expect(res.status).toBe(200);
+    expect(JSON.parse(fs.readFileSync(path.join(record, "stdin"), "utf8"))).toEqual([
+      [
+        [{ widget: "heatmap", share: 1 }],
+        [
+          { widget: "hours", share: 2 },
+          { widget: "records", share: 1 },
+        ],
+      ],
+      proposed,
+    ]);
+  });
+
+  it.each([["look"], ["layout.rows_3"], [3]])("answers 400 for the key %s, which is no rows key, running nothing", async (key) => {
+    const { app, record } = setup("answers.sh");
+
+    const res = await request(app).post("/api/profiles/kobo/layout-fit").send({ rows: proposed, key });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("the key is not a rows key");
+    expect(fs.existsSync(path.join(record, "args"))).toBe(false);
+  });
+
   it("answers 400 for a body without rows, running nothing", async () => {
     const { app, record } = setup("answers.sh");
 

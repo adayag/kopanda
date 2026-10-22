@@ -691,6 +691,62 @@ describe("Layout", function()
             assert.equals(24, cases)
             assert.same(expected, counts)
         end)
+
+        -- Page 2's insights with a year of reading, every hour of the day used and a featured book in progress.
+        it("fits the page-2 default on the Colorsoft and the Paperwhite at every text size in every look", function()
+            local FeaturedBook = require("featured_book")
+            local Looks = require("looks")
+            local ReadingStats = require("reading_stats")
+            local Schema = require("schema")
+            local rows
+            for _, key in ipairs(Schema.keys) do
+                if key.id == "layout.rows_2" then
+                    rows = key.default
+                end
+            end
+            local days, hours = {}, {}
+            for i = 1, ReadingStats.INSIGHT_DAYS do
+                days[i] = i % 6 == 0 and 0 or 1200 + (i * 397) % 3600
+            end
+            for h = 1, 24 do
+                hours[h] = 600 + (h * 731) % 5400
+            end
+            local insights = { state = "ok", days = days, hours = hours,
+                sessions = { count = 312, longest = 6480, average = 1440, pages_per_hour = 41 } }
+            local real_insights, real_current = ReadingStats.insights, FeaturedBook.current
+            ReadingStats.insights = function() return insights end
+            FeaturedBook.current = function()
+                return { file = "/x.epub", title = "Frankenstein", percent = 0.62, status = "reading",
+                    seconds_left = 7560 }
+            end
+            local counts, expected, cases = {}, {}, 0
+            local function count(profile)
+                for _, id in ipairs(Looks.ids()) do
+                    for _, size in ipairs({ "small", "medium", "large" }) do
+                        local ctx = {
+                            look = Looks.get(id),
+                            variant = "day",
+                            text_size = size,
+                            now = os.time{ year = 2026, month = 10, day = 13, hour = 20, min = 42, sec = 0 },
+                            screen = Screen,
+                        }
+                        local key = table.concat({ profile, id, size }, " ")
+                        counts[key] = require("layout").overflow(rows, ctx)
+                        expected[key] = 0
+                        cases = cases + 1
+                    end
+                end
+            end
+            local ok, err = pcall(function()
+                harness.at_colorsoft(function() count("colorsoft") end)
+                harness.at_paperwhite(function() count("paperwhite") end)
+            end)
+            ReadingStats.insights, FeaturedBook.current = real_insights, real_current
+            assert(ok, err)
+            -- Two profiles, three text sizes, every look.
+            assert.equals(6 * #Looks.ids(), cases)
+            assert.same(expected, counts)
+        end)
     end)
 
     describe("font_size", function()

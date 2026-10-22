@@ -1,4 +1,4 @@
--- helpers.lua: the words a count of books reads in, whether a point lies in a rectangle, and a note.
+-- helpers.lua: the words a count of books and a duration read in, whether a point lies in a rectangle, and a note.
 describe("helpers", function()
     require("plugin_harness") -- KOReader's commonrequire, for the note's widgets
     local Helpers = require("helpers")
@@ -22,6 +22,17 @@ describe("helpers", function()
             assert.equals("No books on the shelf", Helpers.count_text(0, true))
             assert.equals("1 book on the shelf", Helpers.count_text(1, true))
             assert.equals("3 books", Helpers.count_text(3, false))
+        end)
+    end)
+
+    describe("duration", function()
+        it("words seconds as minutes under an hour, else hours and the minutes left, rounded to the minute", function()
+            assert.equals("0 min", Helpers.duration(20))
+            assert.equals("1 min", Helpers.duration(30))
+            assert.equals("24 min", Helpers.duration(1440))
+            assert.equals("1 h", Helpers.duration(3600))
+            assert.equals("1 h 48 min", Helpers.duration(6480))
+            assert.equals("2 h 6 min", Helpers.duration(7560))
         end)
     end)
 

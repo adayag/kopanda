@@ -82,6 +82,24 @@ then\9Café “quoted”",
             },
         },
     },
+    ["layout.rows_2"] = {
+        [1] = {
+            [1] = {
+                ["share"] = 1,
+                ["widget"] = "heatmap",
+            },
+        },
+        [2] = {
+            [1] = {
+                ["share"] = 2,
+                ["widget"] = "hours",
+            },
+            [2] = {
+                ["share"] = 1,
+                ["widget"] = "records",
+            },
+        },
+    },
     ["look"] = "editorial",
     ["quote.source"] = "builtin",
     ["schema_version"] = 1,

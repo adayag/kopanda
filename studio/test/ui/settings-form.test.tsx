@@ -199,18 +199,22 @@ describe("the form's controls", () => {
     expect(place.getByText("47.60621, -122.33207")).toBeInTheDocument();
   });
 
-  it("counts the layout's rows and the launcher's entries", () => {
+  it("counts each page's rows and the launcher's entries, each page linking to its own editor", () => {
     const rows = [[{ widget: "clock", share: 1 }], [{ widget: "quote", share: 2 }]];
+    const page2 = [[{ widget: "heatmap", share: 1 }]];
     const entries = [{ kind: "kopanda", target: "library" }];
     render(
       <SettingsForm
         profileId="colorsoft"
-        settings={settings({}, { "layout.rows": rows, "launcher.entries": entries })}
+        settings={settings({}, { "layout.rows": rows, "layout.rows_2": page2, "launcher.entries": entries })}
         {...idle}
       />,
     );
 
     expect(within(control("layout.rows")).getByRole("link")).toHaveTextContent("Layout · 2 rows");
+    expect(within(control("layout.rows")).getByRole("link")).toHaveAttribute("href", "#/profiles/colorsoft/layout");
+    expect(within(control("layout.rows_2")).getByRole("link")).toHaveTextContent("Page 2 · 1 row");
+    expect(within(control("layout.rows_2")).getByRole("link")).toHaveAttribute("href", "#/profiles/colorsoft/layout-2");
     expect(within(control("launcher.entries")).getByRole("link")).toHaveTextContent("Launcher · 1 entry");
   });
 });
@@ -522,7 +526,8 @@ describe("the reports", () => {
 
 describe("the editors", () => {
   it.each([
-    ["Layout · 5 rows", "#/profiles/colorsoft/layout", "Edit layout"],
+    ["Layout · 5 rows", "#/profiles/colorsoft/layout", "Layout"],
+    ["Page 2 · 4 rows", "#/profiles/colorsoft/layout-2", "Page 2"],
     ["Launcher · 6 entries", "#/profiles/colorsoft/launcher", "Launcher"],
   ])("opens %s at its route, and Done returns to the form", async (link, hash, heading) => {
     await open(settings());
@@ -542,7 +547,8 @@ describe("the editors", () => {
   });
 
   it.each([
-    ["#/profiles/colorsoft/layout", "Edit layout"],
+    ["#/profiles/colorsoft/layout", "Layout"],
+    ["#/profiles/colorsoft/layout-2", "Page 2"],
     ["#/profiles/colorsoft/launcher", "Launcher"],
   ])("shows the editor slot when loaded at %s", async (hash, heading) => {
     await open(settings(), {}, hash);

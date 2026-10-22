@@ -139,6 +139,15 @@ return {
         date_lines = 1,
     },
 
+    insights = {
+        level_1_color = "mustard",
+        level_2_color = "teal",
+        read_fill_color = "mustard",
+        read_text_color = "on_accent",
+        bar_fill_color = "teal",
+        bar_outline_width = 1,
+    },
+
     type = {
         -- Not drawn: Diner's date is one line. The look's label style, on the band.
         date_label = { face = "display", color = "on_band" },
@@ -148,6 +157,8 @@ return {
         -- The quote face at Editorial's size and line height.
         quote = { line_height = 0.4 },
         stats = { size = 13, tracking = 0.06, color = "ink" },
+        insight_label = { face = "display" },
+        insight_note = { face = "accent", size = 18 },
         -- The display face stands in for the cover title's serif.
         cover_title = { size = 22 },
         cover_authors = { face = "text" },

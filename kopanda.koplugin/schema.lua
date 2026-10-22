@@ -43,12 +43,13 @@ return {
             group = "appearance",
         },
         {
-            -- The home's rows, top to bottom; each row's slots, left to right, take the row's
+            -- Page 1's rows, top to bottom; each row's slots, left to right, take the row's
             -- width by share. widgets lists the ids a slot may name, max_columns the slots a row
             -- may hold.
             id = "layout.rows",
             type = "rows",
-            widgets = { "date", "clock", "weather", "quote", "stats", "featured", "launcher" },
+            widgets = { "date", "clock", "weather", "quote", "stats", "featured", "launcher",
+                "heatmap", "calendar", "forecast", "hours", "records" },
             max_columns = 3,
             default = {
                 { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
@@ -58,6 +59,22 @@ return {
                 { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
             },
             label = "Layout",
+            group = "home",
+        },
+        {
+            -- The second page's rows, reached by a west swipe; the same shape as layout.rows.
+            id = "layout.rows_2",
+            type = "rows",
+            widgets = { "date", "clock", "weather", "quote", "stats", "featured", "launcher",
+                "heatmap", "calendar", "forecast", "hours", "records" },
+            max_columns = 3,
+            default = {
+                { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                { { widget = "heatmap", share = 1 } },
+                { { widget = "calendar", share = 1 }, { widget = "forecast", share = 1 } },
+                { { widget = "hours", share = 1 }, { widget = "records", share = 1 } },
+            },
+            label = "Page 2",
             group = "home",
         },
         {

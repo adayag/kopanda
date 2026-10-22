@@ -310,6 +310,28 @@ return {
         featured_details = "joined",
     },
 
+    -- The insight tiles: their padding and gaps, the heatmap's levels, the calendar's days and the hour bars.
+    insights = {
+        padding = 10, -- inside the chrome
+        label_gap = 6, -- under the label line
+        gap = 1, -- between heatmap cells, calendar cells and hour bars
+        cell_max = 12, -- a heatmap cell no wider than this
+        level_1_color = "muted", -- under 15 min
+        level_2_color = "text", -- 15 to 45 min
+        level_3_color = "ink", -- over 45 min
+        empty_outline_color = "muted", -- a day with no reading: a 1 px outline, no fill
+        calendar_cell = 16,
+        read_fill_color = "ink",
+        read_text_color = "paper",
+        today_outline_width = 2,
+        chart_height = 60,
+        bar_fill_color = "muted",
+        bar_high_color = "ink", -- an hour at or above 60 % of the busiest
+        bar_outline_width = 0,
+        value_gap = 2, -- between a record's value and its caption
+        record_gap = 10, -- between the two record rows
+    },
+
     -- The text, per part: a face role, a size in board pixels (before text_size), case, tracking in
     -- em, line height as KOReader's TextBoxWidget counts it (extra space in em,
     -- frontend/ui/widget/textboxwidget.lua:48, so CSS 1.4 is 0.4) and a palette role.
@@ -321,6 +343,18 @@ return {
         weather = { face = "text", size = 14, uppercase = false, tracking = 0, line_height = 0, color = "text" },
         quote = { face = "quote", size = 18, uppercase = false, tracking = 0, line_height = 0.35, color = "ink" },
         stats = { face = "strong", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "text" },
+        insight_label = {
+            face = "strong", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
+        },
+        insight_caption = {
+            face = "text", size = 12, uppercase = false, tracking = 0, line_height = 0, color = "muted",
+        },
+        insight_value = {
+            face = "display", size = 22, uppercase = false, tracking = -0.02, line_height = -0.1, color = "ink",
+        },
+        insight_note = {
+            face = "text", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "muted",
+        },
         cover_title = {
             face = "display", size = 24, uppercase = true, tracking = 0.04, line_height = 0.05, color = "on_cover",
         },

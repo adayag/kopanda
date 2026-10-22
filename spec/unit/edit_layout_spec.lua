@@ -13,13 +13,24 @@ describe("edit layout", function()
         return { widget = widget, share = share or 1 }
     end
 
-    -- Without weather and stats, so two widgets are unused.
+    -- Without weather, stats and the five insight widgets, so seven widgets are unused.
     local function four_rows()
         return {
             { slot("date"), slot("clock") },
             { slot("featured") },
             { slot("quote") },
             { slot("launcher") },
+        }
+    end
+
+    -- Every widget, within three columns a row.
+    local function every_widget()
+        return {
+            { slot("date"), slot("clock") },
+            { slot("featured") },
+            { slot("quote"), slot("heatmap"), slot("calendar") },
+            { slot("launcher"), slot("forecast"), slot("hours") },
+            { slot("weather"), slot("stats"), slot("records") },
         }
     end
 
@@ -306,7 +317,7 @@ describe("edit layout", function()
 
     describe("a tap on a card", function()
         it("selects its row and shows its buttons, Width and Remove column on a row of two", function()
-            open()
+            open(every_widget())
             tap_card(2)
             assert.equals("Row 2 · one column · selected", one({ kind = "card", row = 2 }).control.caption)
             assert.same({ "Add column", "Change widget", "Remove row" }, button_labels(2))
@@ -314,7 +325,7 @@ describe("edit layout", function()
             assert.equals("Row 2 · one column", one({ kind = "card", row = 2 }).control.caption)
             assert.same({}, button_labels(2))
             assert.same({ "Add column", "Change widget", "Width", "Remove column", "Remove row" }, button_labels(1))
-            -- Every widget is on the default home.
+            -- Every widget is on this home.
             assert.is_true(one({ kind = "button", label = "Add column" }).control.disabled)
         end)
 
@@ -376,7 +387,8 @@ describe("edit layout", function()
                 assert.equals("picker", Sheet.shown.spec.name)
                 assert.equals("home", Sheet.shown.spec.band)
                 assert.equals("Add a widget", Sheet.shown.spec.header.heading)
-                assert.same({ "Weather", "Reading stats" }, sheet_rows())
+                assert.same({ "Weather", "Reading stats", "Reading heatmap", "Calendar", "Finish by",
+                    "Reading hours", "Sessions" }, sheet_rows())
                 pick("Weather")
             end, { { slot("date"), slot("clock") }, { slot("featured") }, { slot("quote"), slot("weather") },
                 { slot("launcher") } })
@@ -517,7 +529,7 @@ describe("edit layout", function()
         end)
 
         it("grey Add row on a home with every widget, and a tap on it opens nothing", function()
-            open()
+            open(every_widget())
             local add = one({ kind = "button", label = "Add row" })
             assert.is_true(add.control.disabled)
             tap(add.rect)
@@ -529,7 +541,8 @@ describe("edit layout", function()
             open(four_rows())
             tap_card(2)
             tap_button("Change widget")
-            assert.same({ "Featured book ✓", "Weather", "Reading stats" }, sheet_rows())
+            assert.same({ "Featured book ✓", "Weather", "Reading stats", "Reading heatmap", "Calendar",
+                "Finish by", "Reading hours", "Sessions" }, sheet_rows())
             -- The ticked row closes the sheet and changes nothing.
             pick("Featured book")
             assert.is_nil(Sheet.shown)
@@ -708,6 +721,68 @@ describe("edit layout", function()
             pick("Weather")
             assert.equals("That won't fit on the home.", message().text)
             assert.equals(4, #stored())
+        end)
+    end)
+
+    describe("on page 2's key", function()
+        local function page_2_default()
+            for _, key in ipairs(Schema.keys) do
+                if key.id == "layout.rows_2" then
+                    return key.default
+                end
+            end
+        end
+
+        local function stored_2()
+            return dofile(harness.settings_file)["layout.rows_2"]
+        end
+
+        -- Stores four_rows as page 1 and rows, when given, as page 2, then opens the editor on page 2.
+        local function open_2(rows)
+            assert.is_true(Settings.set("layout.rows", four_rows()))
+            if rows then
+                assert.is_true(Settings.set("layout.rows_2", rows))
+            end
+            return open(nil, { key = "layout.rows_2" })
+        end
+
+        it("is headed Home over Edit page 2", function()
+            local editor = open_2()
+            assert.same({ "edit_layout", "Home", "Edit page 2" },
+                { editor.spec.screen, editor.spec.aside, editor.spec.title })
+        end)
+
+        it("shows page 2's rows", function()
+            open_2()
+            assert.equals(#page_2_default(), #find({ kind = "card" }))
+            assert.equals("Reading heatmap", one({ kind = "box", row = 2, column = 1 }).control.label)
+            assert.same({ "Calendar", "Finish by" }, {
+                one({ kind = "box", row = 3, column = 1 }).control.label,
+                one({ kind = "box", row = 3, column = 2 }).control.label,
+            })
+        end)
+
+        it("writes a change to page 2, leaving page 1 as it was", function()
+            open_2()
+            tap_card(4)
+            tap_button("Remove row")
+            local wanted = { unpack(page_2_default(), 1, 3) }
+            assert.same(wanted, stored_2())
+            assert.same(four_rows(), stored())
+            assert.is_nil(message())
+        end)
+
+        it("resets to page 2's default", function()
+            open_2({ { slot("records") }, { slot("weather") } })
+            tap_button("Reset to the look's default")
+            assert.same(page_2_default(), stored_2())
+            assert.same(four_rows(), stored())
+        end)
+
+        it("lists page 2's unused widgets to add a row", function()
+            open_2()
+            tap_button("Add row")
+            assert.same({ "Weather", "Quote", "Reading stats", "Featured book", "Launcher" }, sheet_rows())
         end)
     end)
 

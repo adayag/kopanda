@@ -1,20 +1,23 @@
--- The row operations edit layout applies to a layout.rows value (schema.lua), with the labels,
--- shares and captions its cards show. Pure: every operation deep-copies the rows it is given
--- and returns new rows, or nil and the note to show; none changes its input.
+-- The row operations edit layout applies to a value of a rows key (layout.rows or layout.rows_2,
+-- schema.lua), with the labels, shares and captions its cards show. Pure: every operation deep-copies
+-- the rows it is given and returns new rows, or nil and the note to show; none changes its input.
 local Schema = require("schema")
 local util = require("util")
 
 local RowsEdit = {}
 
-local entry
-for _, key in ipairs(Schema.keys) do
-    if key.id == "layout.rows" then
-        entry = key
+-- The schema entry of key, layout.rows when nil.
+function RowsEdit.entry(key)
+    key = key or "layout.rows"
+    for _, entry in ipairs(Schema.keys) do
+        if entry.id == key then
+            return entry
+        end
     end
 end
 
--- The most columns a row holds.
-RowsEdit.max_columns = entry.max_columns
+-- The most columns a row holds, the same for both rows keys.
+RowsEdit.max_columns = RowsEdit.entry().max_columns
 
 -- A widget is on the home at most once (settings.lua's rows validator).
 local ONCE = "Each widget can be on the home once."
@@ -27,6 +30,11 @@ local LABELS = {
     stats = "Reading stats",
     featured = "Featured book",
     launcher = "Launcher",
+    heatmap = "Reading heatmap",
+    calendar = "Calendar",
+    forecast = "Finish by",
+    hours = "Reading hours",
+    records = "Sessions",
 }
 
 local COLUMNS = { "one column", "two columns", "three columns" }
@@ -116,16 +124,16 @@ function RowsEdit.remove_row(rows, i)
     return new
 end
 
--- A copy of the schema's default. The looks hold no layout of their own, so it is the default
--- in both.
-function RowsEdit.reset()
-    return util.tableDeepCopy(entry.default)
+-- A copy of key's schema default (layout.rows when nil). The looks hold no layout of their own,
+-- so it is the default in each.
+function RowsEdit.reset(key)
+    return util.tableDeepCopy(RowsEdit.entry(key).default)
 end
 
--- The schema's widgets not on the home, in schema order.
-function RowsEdit.unused(rows)
+-- Key's schema widgets (layout.rows when nil) not on the home, in schema order.
+function RowsEdit.unused(rows, key)
     local unused = {}
-    for _, widget in ipairs(entry.widgets) do
+    for _, widget in ipairs(RowsEdit.entry(key).widgets) do
         if not on_home(rows, widget) then
             unused[#unused + 1] = widget
         end

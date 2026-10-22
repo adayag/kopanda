@@ -7,6 +7,7 @@ import {
   caption,
   changeWidget,
   entry,
+  entryFor,
   label,
   move,
   removeColumn,
@@ -107,5 +108,39 @@ describe("reset", () => {
 
     expect(reset()).toEqual({ rows: entry.default });
     expect(entry.default[0]![0]!.share).toBe(1);
+  });
+});
+
+describe("entryFor", () => {
+  it("answers each rows key's schema entry, layout.rows's being entry", () => {
+    expect(entryFor("layout.rows")).toBe(entry);
+    const page2 = entryFor("layout.rows_2");
+
+    expect(page2.id).toBe("layout.rows_2");
+    expect(page2.label).toBe("Page 2");
+    expect(page2.default).toHaveLength(4);
+  });
+
+  it.each(["look", "layout.rows_3"])("throws for %s, which is no rows key", (id) => {
+    expect(() => entryFor(id)).toThrow(id);
+  });
+});
+
+describe("reset and unused for another rows key", () => {
+  const page2 = entryFor("layout.rows_2");
+
+  it("resets to that key's default, a fresh copy", () => {
+    const first = reset(page2);
+    if (!("rows" in first)) throw new Error("reset refused");
+    first.rows[0]![0]!.share = 3;
+
+    expect(reset(page2)).toEqual({ rows: page2.default });
+    expect(page2.default).not.toEqual(entry.default);
+  });
+
+  it("lists that key's widgets not on the page", () => {
+    const narrow = { ...page2, widgets: ["date", "heatmap", "records"] };
+
+    expect(unused([[{ widget: "heatmap", share: 1 }]], narrow)).toEqual(["date", "records"]);
   });
 });
