@@ -249,7 +249,7 @@ describe("Settings", function()
             assert.is_table(default)
             assert.same(default, Settings.get("layout.rows_2"))
             local first = { { { widget = "date", share = 1 } }, { { widget = "quote", share = 1 } } }
-            local second = { { { widget = "date", share = 1 }, { widget = "heatmap", share = 2 } } }
+            local second = { { { widget = "date", share = 1 }, { widget = "reading", share = 2 } } }
             assert.is_true(Settings.set("layout.rows", first))
             assert.is_true(Settings.set("layout.rows_2", second))
             Settings._reset()

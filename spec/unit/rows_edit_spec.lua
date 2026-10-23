@@ -194,7 +194,7 @@ describe("RowsEdit", function()
     end)
 
     it("lists the schema's widgets not on the home, in schema order", function()
-        local insights = { "heatmap", "calendar", "forecast", "hours", "records" }
+        local insights = { "reading", "streak", "forecast", "hours", "records" }
         assert.same(insights, RowsEdit.unused(entry.default))
         local without_stats = copy(entry.default)
         without_stats[5] = { slot("weather") }
@@ -242,7 +242,7 @@ describe("RowsEdit", function()
             labels[#labels + 1] = RowsEdit.label(id)
         end
         assert.same({ "Date", "Clock", "Weather", "Quote", "Reading stats", "Featured book", "Launcher",
-            "Reading heatmap", "Calendar", "Finish by", "Reading hours", "Sessions" }, labels)
+            "Reading", "Streak", "Finish by", "Reading hours", "Sessions" }, labels)
         assert.equals("sundial", RowsEdit.label("sundial"))
     end)
 

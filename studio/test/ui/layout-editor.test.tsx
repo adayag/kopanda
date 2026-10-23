@@ -42,7 +42,7 @@ const FOUR: Rows = [[s("date"), s("clock")], [s("featured")], [s("quote")], [s("
 const EVERY: Rows = [
   [s("date"), s("clock")],
   [s("featured")],
-  [s("quote"), s("heatmap"), s("calendar")],
+  [s("quote"), s("reading"), s("streak")],
   [s("launcher"), s("forecast"), s("hours")],
   [s("weather"), s("stats"), s("records")],
 ];
@@ -50,13 +50,13 @@ const EVERY: Rows = [
 /** Page 2's default layout. */
 const PAGE_2: Rows = [
   [s("date"), s("clock")],
-  [s("heatmap")],
-  [s("calendar"), s("forecast")],
+  [s("reading")],
+  [s("streak"), s("forecast")],
   [s("hours"), s("records")],
 ];
 
 /** The five insight widgets' labels, in the schema's order. */
-const INSIGHTS = ["Reading heatmap", "Calendar", "Finish by", "Reading hours", "Sessions"];
+const INSIGHTS = ["Reading", "Streak", "Finish by", "Reading hours", "Sessions"];
 
 /** A settings answer: every key at its default unless changed. */
 function settings(changes: Partial<Settings> = {}, values: Record<string, unknown> = {}): Settings {
@@ -573,8 +573,8 @@ describe("page 2", () => {
     expect(within(editor()).getByText("Home")).toBeInTheDocument();
     expect(cards()).toHaveLength(4);
     expect(card(1).getByRole("button", { name: "Date 1/2" })).toBeInTheDocument();
-    expect(card(2).getByRole("button", { name: "Reading heatmap full" })).toBeInTheDocument();
-    expect(card(3).getByRole("button", { name: "Calendar 1/2" })).toBeInTheDocument();
+    expect(card(2).getByRole("button", { name: "Reading full" })).toBeInTheDocument();
+    expect(card(3).getByRole("button", { name: "Streak 1/2" })).toBeInTheDocument();
     expect(card(3).getByRole("button", { name: "Finish by 1/2" })).toBeInTheDocument();
     expect(card(4).getByRole("button", { name: "Reading hours 1/2" })).toBeInTheDocument();
     expect(card(4).getByRole("button", { name: "Sessions 1/2" })).toBeInTheDocument();
@@ -595,7 +595,7 @@ describe("page 2", () => {
     const expected = [PAGE_2[1], PAGE_2[0], ...PAGE_2.slice(2)];
     await waitFor(() => expect(puts(PUT_2_URL)).toEqual([expected]));
     expect(fitBodies()).toEqual([{ rows: expected, key: "layout.rows_2" }]);
-    await waitFor(() => expect(card(1).getByRole("button", { name: "Reading heatmap full" })).toBeInTheDocument());
+    await waitFor(() => expect(card(1).getByRole("button", { name: "Reading full" })).toBeInTheDocument());
   });
 
   it("resets to page 2's default", async () => {

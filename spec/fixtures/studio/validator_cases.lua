@@ -113,8 +113,8 @@ return {
         key = "layout.rows_2",
         value = {
             { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
-            { { widget = "heatmap", share = 1 } },
-            { { widget = "calendar", share = 1 }, { widget = "forecast", share = 1 } },
+            { { widget = "reading", share = 1 } },
+            { { widget = "streak", share = 1 }, { widget = "forecast", share = 1 } },
             { { widget = "hours", share = 1 }, { widget = "records", share = 1 } },
         },
         valid = true,
@@ -122,7 +122,7 @@ return {
     },
     {
         key = "layout.rows_2",
-        value = { { { widget = "heatmap", share = 1 } }, { { widget = "heatmap", share = 1 } } },
+        value = { { { widget = "reading", share = 1 } }, { { widget = "reading", share = 1 } } },
         valid = false,
         why = "a widget repeated across rows",
     },

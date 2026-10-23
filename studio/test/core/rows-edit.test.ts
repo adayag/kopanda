@@ -139,8 +139,8 @@ describe("reset and unused for another rows key", () => {
   });
 
   it("lists that key's widgets not on the page", () => {
-    const narrow = { ...page2, widgets: ["date", "heatmap", "records"] };
+    const narrow = { ...page2, widgets: ["date", "reading", "records"] };
 
-    expect(unused([[{ widget: "heatmap", share: 1 }]], narrow)).toEqual(["date", "records"]);
+    expect(unused([[{ widget: "reading", share: 1 }]], narrow)).toEqual(["date", "records"]);
   });
 });

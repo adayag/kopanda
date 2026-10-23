@@ -5,12 +5,8 @@ local Helpers = require("helpers")
 local InsightTile = require("insight_tile")
 local Paint = require("paint")
 local ReadingStats = require("reading_stats")
-local TextWidget = require("ui/widget/textwidget")
 local Typeset = require("typeset")
 local Widget = require("ui/widget/widget")
-
-local VALUE_STEP = 2
-local VALUE_MIN_SIZE = 14
 
 local Records = {
     id = "records",
@@ -27,35 +23,6 @@ function Records.cells(insights)
         { value = Helpers.duration(s.average), caption = "average" },
         { value = tostring(s.pages_per_hour), caption = "pages an hour" },
     }
-end
-
--- Whether a line from Typeset.line shows its whole text: a tracked line is a group only when it fits, and a
--- TextWidget says when it cut its text (frontend/ui/widget/textwidget.lua:307).
-local function whole(line)
-    return getmetatable(line) ~= TextWidget or not line:isTruncated()
-end
-
--- The four values set in part, at its size or the largest smaller one, a step at a time down to VALUE_MIN_SIZE,
--- that sets every value whole in column_w, so the grid's values read at one size; and that part.
-local function value_lines(part, values, column_w, ctx)
-    local sized = {}
-    for k, v in pairs(part) do
-        sized[k] = v
-    end
-    while true do
-        local lines, fits = {}, true
-        for i, value in ipairs(values) do
-            lines[i] = Typeset.line(sized, value, column_w, ctx)
-            fits = fits and whole(lines[i])
-        end
-        if fits or sized.size <= VALUE_MIN_SIZE then
-            return lines, sized
-        end
-        for _, line in ipairs(lines) do
-            line:free()
-        end
-        sized.size = math.max(VALUE_MIN_SIZE, sized.size - VALUE_STEP)
-    end
 end
 
 -- The tile and the cells' lines, which the tile's paint draws but doesn't own.
@@ -100,7 +67,7 @@ local function compose(width, ctx)
     for i, cell in ipairs(records) do
         values[i] = cell.value
     end
-    local lines, value_part = value_lines(look.type.insight_value, values, column_w, ctx)
+    local lines, value_part = InsightTile.values(look.type.insight_value, values, column_w, ctx)
     local value_h = Typeset.line_height(value_part, ctx)
     local cell_h = value_h + value_gap + Typeset.line_height(caption_part, ctx)
     local cells = {}

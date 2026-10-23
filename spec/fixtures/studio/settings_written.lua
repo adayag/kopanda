@@ -86,7 +86,7 @@ then\9Café “quoted”",
         [1] = {
             [1] = {
                 ["share"] = 1,
-                ["widget"] = "heatmap",
+                ["widget"] = "reading",
             },
         },
         [2] = {

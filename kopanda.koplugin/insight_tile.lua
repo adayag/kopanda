@@ -1,11 +1,15 @@
 -- The chrome the insight widgets share: the quote's tile (a box with its outline and shadow, rules in a look
 -- without a tile box, nothing on a plate) around a label line, with an optional right-aligned aside, and the
--- content each widget paints beneath it.
+-- content each widget paints beneath it; and the one size a tile's values share.
 local Geom = require("ui/geometry")
 local Looks = require("looks")
 local Paint = require("paint")
+local TextWidget = require("ui/widget/textwidget")
 local Typeset = require("typeset")
 local Widget = require("ui/widget/widget")
+
+local VALUE_STEP = 2
+local VALUE_MIN_SIZE = 14
 
 local InsightTile = {}
 
@@ -121,6 +125,35 @@ function InsightTile.compose(width, ctx, label, aside, content_h, paint)
         content_h = content_h,
         paint = paint,
     }, { w = inner_w, label_h = label_h }
+end
+
+-- Whether a line from Typeset.line shows its whole text: a tracked line is a group only when it fits, and a
+-- TextWidget says when it cut its text (frontend/ui/widget/textwidget.lua:307).
+local function whole(line)
+    return getmetatable(line) ~= TextWidget or not line:isTruncated()
+end
+
+-- texts set in part, at its size or the largest smaller one, a step at a time down to VALUE_MIN_SIZE, that sets
+-- every text whole in width, so a tile's values read at one size; and that part.
+function InsightTile.values(part, texts, width, ctx)
+    local sized = {}
+    for k, v in pairs(part) do
+        sized[k] = v
+    end
+    while true do
+        local lines, fits = {}, true
+        for i, text in ipairs(texts) do
+            lines[i] = Typeset.line(sized, text, width, ctx)
+            fits = fits and whole(lines[i])
+        end
+        if fits or sized.size <= VALUE_MIN_SIZE then
+            return lines, sized
+        end
+        for _, line in ipairs(lines) do
+            line:free()
+        end
+        sized.size = math.max(VALUE_MIN_SIZE, sized.size - VALUE_STEP)
+    end
 end
 
 return InsightTile

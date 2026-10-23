@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** A second home page, reached by a west swipe and left by an east swipe, laid out from a new `layout.rows_2` key, with five new widgets drawn from KOReader's Statistics database: a year heatmap, this month's calendar, the finish-by forecast for the featured book, a when-you-read hour chart and the year's session records.
+**Goal:** A second home page, reached by a west swipe and left by an east swipe, laid out from a new `layout.rows_2` key, with five new widgets drawn from KOReader's Statistics database: this month's reading beside a 12-week chart, the reading streak, the finish-by forecast for the featured book, a when-you-read hour chart and the year's session records.
 
 **Architecture:** The home keeps one page built at a time: `Home.page` picks the key `HomeRows.build` lays out, and a page swipe rebuilds and repaints. `layout.rows_2` is a second key of the existing `rows` type, so the device editor, the studio form and `bin/layout-fit` keep working once each takes the key as a parameter. The five widgets share one tile chrome (`insight_tile.lua`) and one read of the database (`ReadingStats.insights`), memoised like the existing stats. New look tokens live in `looks/base.lua` with Diner's overrides; every other look takes the base's.
 
@@ -42,8 +42,8 @@ Rules: TDD, every test written and seen failing before its code. Comments say wh
 
 ```lua
 { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
-{ { widget = "heatmap", share = 1 } },
-{ { widget = "calendar", share = 1 }, { widget = "forecast", share = 1 } },
+{ { widget = "reading", share = 1 } },
+{ { widget = "streak", share = 1 }, { widget = "forecast", share = 1 } },
 { { widget = "hours", share = 1 }, { widget = "records", share = 1 } },
 ```
 
@@ -63,17 +63,14 @@ type.insight_note    = { face = "text", size = 15, uppercase = false, tracking =
 insights = {
     padding = 14,            -- inside the chrome
     label_gap = 10,          -- under the label line
-    gap = 1,                 -- between heatmap cells, calendar cells and hour bars
-    cell_max = 12,           -- a heatmap cell no wider than this
-    level_1_color = "muted", -- under 15 min
-    level_2_color = "text",  -- 15 to 45 min
-    level_3_color = "ink",   -- over 45 min
-    empty_outline_color = "muted", -- a day with no reading: a 1 px outline, no fill
-    calendar_cell = 22,
-    read_fill_color = "ink",
-    read_text_color = "paper",
+    gap = 1,                 -- between hour bars
     today_outline_width = 2,
     chart_height = 70,
+    chart_area_color = "muted", chart_line_color = "ink", chart_line_width = 3,
+    today_ring = 10, today_ring_color = "ink",
+    reading_column = 0.36,   -- the reading tile's figures' share of its width
+    streak_scale = 2,        -- the streak's count at this many times insight_value's size
+    dot = 14, dot_gap = 8, dot_fill_color = "ink", dot_empty_color = "muted",
     bar_fill_color = "muted",
     bar_high_color = "ink",  -- an hour at or above 60 % of the busiest
     bar_outline_width = 0,
@@ -82,9 +79,9 @@ insights = {
 }
 ```
 
-Diner overrides: `type.insight_label.face = "display"`, `type.insight_note.face = "accent"` (size 18), `level_1_color = "mustard"`, `level_2_color = "teal"`, `level_3_color = "ink"`, `read_fill_color = "mustard"`, `read_text_color = "on_accent"`, `bar_fill_color = "teal"`, `bar_outline_width = 1`, `empty_outline_color = "muted"`.
+Diner overrides: `type.insight_label.face = "display"`, `type.insight_note.face = "accent"` (size 18), `chart_area_color = "teal"`, `dot_fill_color = "ink"`, `today_ring_color = "mustard"`, `bar_fill_color = "teal"`, `bar_outline_width = 1`.
 
-**Thresholds** are fixed: 15 and 45 minutes for the heatmap levels, 60 % of the busiest hour for a high bar, 14 days for the forecast's pace (at least 5 min a day), 30 minutes for a session gap. No setting.
+**Thresholds** are fixed: 60 % of the busiest hour for a high bar, 14 days for the forecast's pace (at least 5 min a day), 30 minutes for a session gap. No setting.
 
 ---
 
@@ -100,7 +97,7 @@ Diner overrides: `type.insight_label.face = "display"`, `type.insight_note.face 
 
 ```lua
 widgets = { "date", "clock", "weather", "quote", "stats", "featured", "launcher",
-    "heatmap", "calendar", "forecast", "hours", "records" },
+    "reading", "streak", "forecast", "hours", "records" },
 ```
 
 Rename the test "is version 1 with the eleven keys of the Keys tables, in order". In `settings_spec.lua` add one case: `Settings.get("layout.rows_2")` returns the schema default with no file, and a value naming `date` on both keys reads back from both.
@@ -115,12 +112,12 @@ Rename the test "is version 1 with the eleven keys of the Keys tables, in order"
     id = "layout.rows_2",
     type = "rows",
     widgets = { "date", "clock", "weather", "quote", "stats", "featured", "launcher",
-        "heatmap", "calendar", "forecast", "hours", "records" },
+        "reading", "streak", "forecast", "hours", "records" },
     max_columns = 3,
     default = {
         { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
-        { { widget = "heatmap", share = 1 } },
-        { { widget = "calendar", share = 1 }, { widget = "forecast", share = 1 } },
+        { { widget = "reading", share = 1 } },
+        { { widget = "streak", share = 1 }, { widget = "forecast", share = 1 } },
         { { widget = "hours", share = 1 }, { widget = "records", share = 1 } },
     },
     label = "Page 2",
@@ -374,28 +371,19 @@ it("cuts the label before the aside when both don't fit", function() ... end)
 
 ---
 
-### Task 5: the heatmap widget
+### Task 5: the reading widget
 
-**Files:**
-- Create: `kopanda.koplugin/widgets/heatmap.lua`
-- Modify: `kopanda.koplugin/widgets.lua` (`heatmap = "widgets/heatmap"`), `kopanda.koplugin/main.lua` (require)
-- Test: `spec/unit/heatmap_widget_spec.lua`
+**Files:** `widgets/reading.lua`, registry, `main.lua`; test `spec/unit/reading_widget_spec.lua`.
 
-**Shape.** `{ id = "heatmap", settings_prefix = "stats" }`. Label "Reading this year"; aside "<hours> h over <days> days" summing the year, or "Nothing read yet" when empty, "Reading stats are off" when off (then the content is empty at height 0). Content: 53 columns of 7 cells, a column a week ending on the last day's weekday (today in column 53 at its weekday row, Monday first), each cell a square of `cell = min(scale(cell_max), floor((inner_w - 52 * gap) / 53))` with `gap = scale(insights.gap)`; a day's fill by level (0 → outline only in `empty_outline_color`, 1 px; under 900 s level 1; under 2700 s level 2; else level 3); a day after today → nothing. Under the grid, `label_gap` then a line of month abbreviations (`datetime.shortMonthTranslation` keys from `os.date("%b")`) in `insight_caption`, each at the x of the first column whose Monday falls in that month, skipping the first column. Height = 7 cells + 6 gaps + label_gap + one caption line. Hold: none (the home opens the `stats` settings). Use `Typeset.measured`.
-
-**Step 1: Write the failing tests.** Stub the data: `ReadingStats.insights = function() return fixture end` inside the spec (restore after). Cases: (a) the grid is 53 columns and today's cell is the last column's row of today's weekday, checked by painting into a `Blitbuffer` and sampling the cell centre's colour against `Looks.palette(look, "day").ink` for a 3000 s day; (b) a 0 s day samples paper at the centre; (c) `height` at 520 wide in Diner equals the formula; (d) the aside reads "12 h over 40 days" for a fixture summing 43200 s over 40 days; (e) off reads "Reading stats are off" with content height 0; (f) at `harness.at_colorsoft` the widget fits a full-width row (`Layout.fits` of the page-2 default is Task 10's).
-
-**Step 2–4:** fail, implement, pass. Lint.
+**Shape.** Full width. Label "Reading"; aside "hours a week, last 12 weeks". Left, in `reading_column` of the width: this month's time read ("this month") over its days read ("days read"), values in `insight_value` shrunk together to fit. Right, `padding` away: an area chart of the last 12 Monday-to-Sunday weeks scaled to the busiest, this week ringed, month abbreviations under the first week of each new month. Off: the label line alone.
 
 ---
 
-### Task 6: the calendar widget
+### Task 6: the streak widget
 
-**Files:** `widgets/calendar.lua`, registry, `main.lua`; test `spec/unit/calendar_widget_spec.lua`.
+**Files:** `widgets/streak.lua`, registry, `main.lua`; test `spec/unit/streak_widget_spec.lua`.
 
-**Shape.** Label: the month's name (`datetime.longMonthTranslation`); aside "<read> of <elapsed> days". Content: a weekday-initials line (`insight_caption`, Monday first, the first letter of `datetime.shortDayOfWeekToLongTranslation`'s values), then a grid of 7 columns and as many rows as the month needs (5 or 6), cell width `floor((inner_w - 6 * gap) / 7)`, height `scale(calendar_cell)`: a day read (seconds > 0 in `days`) is filled `read_fill_color` with its number in `read_text_color`; a day not read up to today is an outline in `empty_outline_color` with the number in `insight_caption`'s colour; today adds a `today_outline_width` outline in `ink`; days after today draw the number only in `muted`. Numbers in `insight_caption`'s part at its size, centred. The day's seconds come from `insights.days` by distance from today. Height = initials line + label_gap + rows * cell + (rows - 1) * gap.
-
-Tests: October 2026 (Thursday the 1st, five rows); a fixture marking the 10th to 13th read gives four filled cells and "4 of 13 days"; a month that needs six rows (August 2026) gives the taller height; February 2027 four rows... (28 days from a Monday: 4 rows). Sample cell centres as in Task 5.
+**Shape.** Half width. Label "Streak"; aside "best N", the longest run of days read in `days`. The current run (to today, or to yesterday before today's reading) in `insight_value` at `streak_scale` times its size, "days in a row" beside it; under it this week's seven dots, a day read filled, today ringed, "this week" to their right.
 
 ---
 

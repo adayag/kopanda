@@ -28,7 +28,7 @@ describe("edit layout", function()
         return {
             { slot("date"), slot("clock") },
             { slot("featured") },
-            { slot("quote"), slot("heatmap"), slot("calendar") },
+            { slot("quote"), slot("reading"), slot("streak") },
             { slot("launcher"), slot("forecast"), slot("hours") },
             { slot("weather"), slot("stats"), slot("records") },
         }
@@ -387,7 +387,7 @@ describe("edit layout", function()
                 assert.equals("picker", Sheet.shown.spec.name)
                 assert.equals("home", Sheet.shown.spec.band)
                 assert.equals("Add a widget", Sheet.shown.spec.header.heading)
-                assert.same({ "Weather", "Reading stats", "Reading heatmap", "Calendar", "Finish by",
+                assert.same({ "Weather", "Reading stats", "Reading", "Streak", "Finish by",
                     "Reading hours", "Sessions" }, sheet_rows())
                 pick("Weather")
             end, { { slot("date"), slot("clock") }, { slot("featured") }, { slot("quote"), slot("weather") },
@@ -541,7 +541,7 @@ describe("edit layout", function()
             open(four_rows())
             tap_card(2)
             tap_button("Change widget")
-            assert.same({ "Featured book ✓", "Weather", "Reading stats", "Reading heatmap", "Calendar",
+            assert.same({ "Featured book ✓", "Weather", "Reading stats", "Reading", "Streak",
                 "Finish by", "Reading hours", "Sessions" }, sheet_rows())
             -- The ticked row closes the sheet and changes nothing.
             pick("Featured book")
@@ -755,8 +755,8 @@ describe("edit layout", function()
         it("shows page 2's rows", function()
             open_2()
             assert.equals(#page_2_default(), #find({ kind = "card" }))
-            assert.equals("Reading heatmap", one({ kind = "box", row = 2, column = 1 }).control.label)
-            assert.same({ "Calendar", "Finish by" }, {
+            assert.equals("Reading", one({ kind = "box", row = 2, column = 1 }).control.label)
+            assert.same({ "Streak", "Finish by" }, {
                 one({ kind = "box", row = 3, column = 1 }).control.label,
                 one({ kind = "box", row = 3, column = 2 }).control.label,
             })

@@ -140,10 +140,9 @@ return {
     },
 
     insights = {
-        level_1_color = "mustard",
-        level_2_color = "teal",
-        read_fill_color = "mustard",
-        read_text_color = "on_accent",
+        chart_area_color = "teal",
+        dot_fill_color = "ink",
+        today_ring_color = "mustard",
         bar_fill_color = "teal",
         bar_outline_width = 1,
     },

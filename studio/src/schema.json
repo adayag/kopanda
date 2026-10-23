@@ -116,8 +116,8 @@
                 "stats",
                 "featured",
                 "launcher",
-                "heatmap",
-                "calendar",
+                "reading",
+                "streak",
                 "forecast",
                 "hours",
                 "records"
@@ -138,13 +138,13 @@
                 [
                     {
                         "share": 1,
-                        "widget": "heatmap"
+                        "widget": "reading"
                     }
                 ],
                 [
                     {
                         "share": 1,
-                        "widget": "calendar"
+                        "widget": "streak"
                     },
                     {
                         "share": 1,
@@ -175,8 +175,8 @@
                 "stats",
                 "featured",
                 "launcher",
-                "heatmap",
-                "calendar",
+                "reading",
+                "streak",
                 "forecast",
                 "hours",
                 "records"

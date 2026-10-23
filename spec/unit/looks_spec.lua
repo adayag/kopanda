@@ -270,24 +270,27 @@ describe("looks", function()
             end
         end)
 
-        it("give every look the insight parts and tokens, Diner's levels in its accents", function()
+        it("give every look the insight parts and tokens, Diner's chart and today in its accents", function()
             for _, id in ipairs(ids) do
                 local look = looks[id]
                 for _, part in ipairs({ "insight_label", "insight_caption", "insight_value", "insight_note" }) do
                     assert.is_table(look.type[part], id .. " " .. part)
                 end
                 local i = look.insights
-                assert.is_number(i.padding)
-                assert.is_number(i.calendar_cell)
-                assert.is_number(i.chart_height)
-                for _, role in ipairs({ "level_1_color", "level_2_color", "level_3_color", "read_fill_color",
-                    "bar_fill_color" }) do
-                    assert.is_string(i[role], id .. " " .. role)
+                for _, size in ipairs({ "padding", "chart_height", "chart_line_width", "today_ring", "reading_column",
+                    "streak_scale", "dot", "dot_gap" }) do
+                    assert.is_number(i[size], id .. " " .. size)
+                end
+                for _, role in ipairs({ "bar_fill_color", "chart_area_color", "chart_line_color", "today_ring_color",
+                    "dot_fill_color", "dot_empty_color" }) do
+                    assert.is_string(look.palettes.day[i[role]], id .. " " .. role .. " names no palette role")
+                end
+                for _, gone in ipairs({ "cell_max", "calendar_cell", "level_1_color", "read_fill_color" }) do
+                    assert.is_nil(i[gone], id .. " " .. gone)
                 end
             end
             local diner = looks.diner
-            assert.same({ "mustard", "teal", "ink" },
-                { diner.insights.level_1_color, diner.insights.level_2_color, diner.insights.level_3_color })
+            assert.same({ "teal", "mustard" }, { diner.insights.chart_area_color, diner.insights.today_ring_color })
         end)
 
         -- The two pickers' lines differ in colour alone, so the header's height measures either

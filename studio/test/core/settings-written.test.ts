@@ -34,7 +34,7 @@ const data = table([
   [
     "layout.rows_2",
     fromJson([
-      [{ widget: "heatmap", share: 1 }],
+      [{ widget: "reading", share: 1 }],
       [
         { widget: "hours", share: 2 },
         { widget: "records", share: 1 },

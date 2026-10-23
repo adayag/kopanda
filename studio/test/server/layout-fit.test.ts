@@ -207,7 +207,7 @@ describe("POST /api/profiles/:id/layout-fit", () => {
         { { widget = "quote", share = 1 } },
     },
     ["layout.rows_2"] = {
-        { { widget = "heatmap", share = 1 } },
+        { { widget = "reading", share = 1 } },
         { { widget = "hours", share = 2 }, { widget = "records", share = 1 } },
     },
     ["schema_version"] = 1,
@@ -220,7 +220,7 @@ describe("POST /api/profiles/:id/layout-fit", () => {
     expect(res.status).toBe(200);
     expect(JSON.parse(fs.readFileSync(path.join(record, "stdin"), "utf8"))).toEqual([
       [
-        [{ widget: "heatmap", share: 1 }],
+        [{ widget: "reading", share: 1 }],
         [
           { widget: "hours", share: 2 },
           { widget: "records", share: 1 },

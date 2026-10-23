@@ -292,7 +292,7 @@ return {
                 { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
             },
         },
-        result = { "heatmap", "calendar", "forecast", "hours", "records" },
+        result = { "reading", "streak", "forecast", "hours", "records" },
     },
     {
         op = "unused",
@@ -305,13 +305,13 @@ return {
                 { { widget = "weather", share = 1 } },
             },
         },
-        result = { "stats", "heatmap", "calendar", "forecast", "hours", "records" },
+        result = { "stats", "reading", "streak", "forecast", "hours", "records" },
     },
     {
         op = "unused",
         args = { { { { widget = "launcher", share = 1 } }, { { widget = "quote", share = 1 } } } },
         result = {
-            "date", "clock", "weather", "stats", "featured", "heatmap", "calendar", "forecast", "hours", "records",
+            "date", "clock", "weather", "stats", "featured", "reading", "streak", "forecast", "hours", "records",
         },
     },
 
@@ -323,8 +323,8 @@ return {
     { op = "label", args = { "stats" }, result = "Reading stats" },
     { op = "label", args = { "featured" }, result = "Featured book" },
     { op = "label", args = { "launcher" }, result = "Launcher" },
-    { op = "label", args = { "heatmap" }, result = "Reading heatmap" },
-    { op = "label", args = { "calendar" }, result = "Calendar" },
+    { op = "label", args = { "reading" }, result = "Reading" },
+    { op = "label", args = { "streak" }, result = "Streak" },
     { op = "label", args = { "forecast" }, result = "Finish by" },
     { op = "label", args = { "hours" }, result = "Reading hours" },
     { op = "label", args = { "records" }, result = "Sessions" },

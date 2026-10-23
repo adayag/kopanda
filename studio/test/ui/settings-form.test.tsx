@@ -201,7 +201,7 @@ describe("the form's controls", () => {
 
   it("counts each page's rows and the launcher's entries, each page linking to its own editor", () => {
     const rows = [[{ widget: "clock", share: 1 }], [{ widget: "quote", share: 2 }]];
-    const page2 = [[{ widget: "heatmap", share: 1 }]];
+    const page2 = [[{ widget: "reading", share: 1 }]];
     const entries = [{ kind: "kopanda", target: "library" }];
     render(
       <SettingsForm

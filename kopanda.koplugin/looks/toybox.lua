@@ -202,7 +202,6 @@ return {
     insights = {
         padding = 8,
         label_gap = 4,
-        calendar_cell = 13,
     },
 
     launcher = {
