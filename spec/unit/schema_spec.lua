@@ -91,6 +91,7 @@ describe("schema.lua", function()
                         { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
                         { { widget = "featured", share = 1 } },
                         { { widget = "launcher", share = 1 } },
+                        { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
                     },
                 },
                 label = "Layout",
@@ -111,6 +112,7 @@ describe("schema.lua", function()
                 defaults_by_text_size = {
                     extra_large = {
                         { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                        { { widget = "quote", share = 1 } },
                         { { widget = "reading", share = 1 } },
                         { { widget = "streak", share = 1 }, { widget = "forecast", share = 1 } },
                     },

@@ -98,8 +98,18 @@ return {
 
     const res = await request(app).get("/api/profiles/kobo/settings");
 
-    expect(res.body.values["layout.rows"]).toEqual([[s("date"), s("clock")], [s("featured")], [s("launcher")]]);
-    expect(res.body.values["layout.rows_2"]).toEqual([[s("date"), s("clock")], [s("reading")], [s("streak"), s("forecast")]]);
+    expect(res.body.values["layout.rows"]).toEqual([
+      [s("date"), s("clock")],
+      [s("featured")],
+      [s("launcher")],
+      [s("weather"), s("stats")],
+    ]);
+    expect(res.body.values["layout.rows_2"]).toEqual([
+      [s("date"), s("clock")],
+      [s("quote")],
+      [s("reading")],
+      [s("streak"), s("forecast")],
+    ]);
     expect(res.body.invalid).toEqual([{ key: "layout.rows" }]);
 
     store(`return {

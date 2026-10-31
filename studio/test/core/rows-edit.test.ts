@@ -150,14 +150,16 @@ describe("defaultRows", () => {
   const s = (widget: string) => ({ widget, share: 1 });
   const page2 = entryFor("layout.rows_2");
 
-  it("answers each key's three rows at extra_large", () => {
+  it("answers each key's four rows at extra_large", () => {
     expect(defaultRows(entry, { text_size: "extra_large" })).toEqual([
       [s("date"), s("clock")],
       [s("featured")],
       [s("launcher")],
+      [s("weather"), s("stats")],
     ]);
     expect(defaultRows(page2, { text_size: "extra_large" })).toEqual([
       [s("date"), s("clock")],
+      [s("quote")],
       [s("reading")],
       [s("streak"), s("forecast")],
     ]);
@@ -187,10 +189,10 @@ describe("defaultRows", () => {
     first.rows[0]![0]!.share = 3;
 
     expect(reset(entry, { text_size: "extra_large" })).toEqual({
-      rows: [[s("date"), s("clock")], [s("featured")], [s("launcher")]],
+      rows: [[s("date"), s("clock")], [s("featured")], [s("launcher")], [s("weather"), s("stats")]],
     });
     expect(reset(page2, { text_size: "extra_large" })).toEqual({
-      rows: [[s("date"), s("clock")], [s("reading")], [s("streak"), s("forecast")]],
+      rows: [[s("date"), s("clock")], [s("quote")], [s("reading")], [s("streak"), s("forecast")]],
     });
     expect(reset(entry, { text_size: "medium" })).toEqual({ rows: entry.default });
   });

@@ -224,8 +224,8 @@ describe("the form's controls", () => {
     delete answer.values["layout.rows_2"];
     render(<SettingsForm profileId="colorsoft" settings={answer} {...idle} />);
 
-    expect(within(control("layout.rows")).getByRole("link")).toHaveTextContent("Layout · 3 rows");
-    expect(within(control("layout.rows_2")).getByRole("link")).toHaveTextContent("Page 2 · 3 rows");
+    expect(within(control("layout.rows")).getByRole("link")).toHaveTextContent("Layout · 4 rows");
+    expect(within(control("layout.rows_2")).getByRole("link")).toHaveTextContent("Page 2 · 4 rows");
   });
 });
 

@@ -629,10 +629,10 @@ describe("at the extra_large text size", () => {
     return answer;
   }
 
-  it("shows the three rows of the default at that size when the values hold no rows", async () => {
+  it("shows the four rows of the default at that size when the values hold no rows", async () => {
     await open(noRows());
 
-    expect(cards()).toHaveLength(3);
+    expect(cards()).toHaveLength(4);
     expect(card(3).getByRole("button", { name: "Launcher full" })).toBeInTheDocument();
   });
 
@@ -641,7 +641,9 @@ describe("at the extra_large text size", () => {
 
     click("Reset to the look's default");
 
-    await waitFor(() => expect(puts()).toEqual([[[s("date"), s("clock")], [s("featured")], [s("launcher")]]]));
+    await waitFor(() =>
+      expect(puts()).toEqual([[[s("date"), s("clock")], [s("featured")], [s("launcher")], [s("weather"), s("stats")]]]),
+    );
   });
 });
 

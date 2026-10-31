@@ -197,7 +197,7 @@ describe("POST /api/profiles/:id/layout-fit", () => {
 
     expect(res.status).toBe(200);
     expect(JSON.parse(fs.readFileSync(path.join(record, "stdin"), "utf8"))).toEqual([
-      [[s("date"), s("clock")], [s("featured")], [s("launcher")]],
+      [[s("date"), s("clock")], [s("featured")], [s("launcher")], [s("weather"), s("stats")]],
       proposed,
     ]);
   });

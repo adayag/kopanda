@@ -365,10 +365,13 @@ describe("Settings", function()
             return { widget = widget, share = 1 }
         end
 
-        local PAGE_1 = { { slot("date"), slot("clock") }, { slot("featured") }, { slot("launcher") } }
-        local PAGE_2 = { { slot("date"), slot("clock") }, { slot("reading") }, { slot("streak"), slot("forecast") } }
+        local PAGE_1 = { { slot("date"), slot("clock") }, { slot("featured") }, { slot("launcher") },
+            { slot("weather"), slot("stats") } }
+        local PAGE_2 = { { slot("date"), slot("clock") }, { slot("quote") }, { slot("reading") },
+            { slot("streak"), slot("forecast") } }
 
-        it("reads three rows a page at extra_large with no rows stored, the launcher third", function()
+        it("reads four rows a page at extra_large with no rows stored, the launcher third and the quote on page 2",
+            function()
             store('return { text_size = "extra_large" }')
             assert.same(PAGE_1, Settings.get("layout.rows"))
             assert.same(PAGE_2, Settings.get("layout.rows_2"))
