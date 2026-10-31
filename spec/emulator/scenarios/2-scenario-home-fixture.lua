@@ -111,8 +111,8 @@ local ok, err = pcall(function()
             { kind = "kopanda", target = "library" },
             { kind = "kopanda", target = "series" },
             { kind = "kopanda", target = "authors" },
+            { kind = "kopanda", target = "subjects" },
             { kind = "koreader", target = "history" },
-            { kind = "koreader", target = "wifi" },
             { kind = "plugin", plugin = "kopanda_absent", action = "terminal", label = "Terminal", icon = "terminal" },
         }
     end

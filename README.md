@@ -1,6 +1,6 @@
 # KoPanda
 
-KoPanda is one person's own interface for [KOReader](https://koreader.rocks) e-readers: a plugin that replaces the shell (a home screen over the file browser, a navigation bar, a library with search, series and author views, sheets and quick settings), and a desktop studio that edits the same settings the plugin's on-device menus edit, from one schema.
+KoPanda is one person's own interface for [KOReader](https://koreader.rocks) e-readers: a plugin that replaces the shell (a home screen over the file browser, a navigation bar, a library with search, series, author and subject views, sheets and quick settings), and a desktop studio that edits the same settings the plugin's on-device menus edit, from one schema.
 
 The repo is public so the work can be read. The plugin is built for its owner's devices (a Kindle Colorsoft and a Paperwhite) and is not supported for anyone else. There is no issue tracker and no help with installs.
 

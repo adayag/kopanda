@@ -27,7 +27,7 @@ local MINUS, PLUS = "\u{2212}", "+"
 -- A bar whose read failed shows this in place of its value.
 local DASH = "\u{2013}"
 
--- The launcher's entries whose availability greys a cell (launcher_entries.lua:60-80).
+-- The launcher's entries whose availability greys a cell (launcher_entries.lua:61).
 local WIFI = { kind = "koreader", target = "wifi" }
 local SYNC = { kind = "plugin", plugin = "cwngsync", action = "cwngsync_sync_now", label = "Sync books" }
 local SLEEP = { kind = "action", action = "suspend", label = "Sleep" }
@@ -192,7 +192,7 @@ local function toggle_wifi()
 end
 
 -- A close-first action running the launcher's entry, which checks availability again and
--- shows the launcher's note when it can't run (launcher_entries.lua:158-190).
+-- shows the launcher's note when it can't run (launcher_entries.lua:196-228).
 local function run(entry)
     return { close_first = true, tap = function() LauncherEntries.run(entry) end }
 end

@@ -328,12 +328,12 @@
                     "target": "authors"
                 },
                 {
-                    "kind": "koreader",
-                    "target": "history"
+                    "kind": "kopanda",
+                    "target": "subjects"
                 },
                 {
                     "kind": "koreader",
-                    "target": "wifi"
+                    "target": "history"
                 },
                 {
                     "kind": "kopanda",
@@ -349,6 +349,7 @@
                     "library",
                     "series",
                     "authors",
+                    "subjects",
                     "settings",
                     "quick_settings"
                 ],

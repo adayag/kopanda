@@ -78,6 +78,7 @@ const adding = () => within(screen.getByRole("region", { name: "Add an entry" })
 const L = { kind: "kopanda", target: "library" };
 const S = { kind: "kopanda", target: "series" };
 const A = { kind: "kopanda", target: "authors" };
+const SU = { kind: "kopanda", target: "subjects" };
 const H = { kind: "koreader", target: "history" };
 const W = { kind: "koreader", target: "wifi" };
 const ST = { kind: "kopanda", target: "settings" };
@@ -100,17 +101,17 @@ describe("the list", () => {
     await open(settings(schema.keys.find((k) => k.type === "launcher")!.default));
 
     expect(screen.getByText("6 of 6 on the home screen")).toBeInTheDocument();
-    const labels = ["Library", "Series", "Authors", "History", "Wi-Fi", "Settings"];
+    const labels = ["Library", "Series", "Authors", "Subjects", "History", "Settings"];
     expect(rows()).toEqual(labels.map(row));
     expect(rows().map((r) => within(r).getByText(/ · /).textContent)).toEqual([
       "KoPanda · library",
       "KoPanda · series",
       "KoPanda · authors",
+      "KoPanda · subjects",
       "KOReader · history",
-      "KOReader · wifi",
       "KoPanda · settings",
     ]);
-    const icons = ["library", "series", "authors", "history", "wifi", "settings"];
+    const icons = ["library", "series", "authors", "subjects", "history", "settings"];
     labels.forEach((label, i) => {
       const img = row(label).querySelector("img")!;
       const prefix = "data:image/svg+xml,";
@@ -161,7 +162,7 @@ describe("the list", () => {
     expect(screen.getByText("The stored value isn't allowed, so this shows the default.")).toBeInTheDocument();
     fireEvent.click(button("Remove Settings"));
 
-    await waitFor(() => expect(puts()).toEqual([[L, S, A, H, W]]));
+    await waitFor(() => expect(puts()).toEqual([[L, S, A, SU, H]]));
   });
 });
 
@@ -333,7 +334,7 @@ describe("adding", () => {
     await open(settings([L]));
 
     fireEvent.click(adding().getByRole("button", { name: kind }));
-    const targets = kind === "KoPanda screen" ? ["Library", "Series", "Authors", "Settings", "Quick settings"] : ["History", "Favorites", "Collections", "Wi-Fi"];
+    const targets = kind === "KoPanda screen" ? ["Library", "Series", "Authors", "Subjects", "Settings", "Quick settings"] : ["History", "Favorites", "Collections", "Wi-Fi"];
     expect(adding().getAllByRole("button").map((b) => b.textContent)).toEqual([...targets, "Cancel"]);
     expect(adding().getByRole("button", { name: label }).querySelector(".icon-tile img")).not.toBeNull();
     fireEvent.click(adding().getByRole("button", { name: label }));

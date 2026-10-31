@@ -731,6 +731,10 @@
             "settings": {
                 "icon": "settings",
                 "label": "Settings"
+            },
+            "subjects": {
+                "icon": "subjects",
+                "label": "Subjects"
             }
         },
         "koreader": {

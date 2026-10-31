@@ -11,16 +11,17 @@ describe("the launcher widget", function()
     local util = require("util")
     local Launcher, LauncherEntries, Settings, Looks, Icons, Widgets, Home
 
-    -- The default six's views, by target, as resolve gives them with Wi-Fi on.
+    -- The default six's views and Wi-Fi's, by target, as resolve gives them with Wi-Fi on.
     local VIEWS = {
         library = { label = "Library", icon = "library", state = "ready" },
         series = { label = "Series", icon = "series", state = "ready" },
         authors = { label = "Authors", icon = "authors", state = "ready" },
+        subjects = { label = "Subjects", icon = "subjects", state = "ready" },
         history = { label = "History", icon = "history", state = "ready" },
         wifi = { label = "Wi-Fi", icon = "wifi", state = "ready" },
         settings = { label = "Settings", icon = "settings", state = "ready" },
     }
-    local LABELS = { "Library", "Series", "Authors", "History", "Wi-Fi", "Settings" }
+    local LABELS = { "Library", "Series", "Authors", "Subjects", "History", "Settings" }
 
     local resolved, ran
 
@@ -44,6 +45,13 @@ describe("the launcher widget", function()
 
     local function set_entries(entries)
         assert.is_true(Settings.set("launcher.entries", entries))
+    end
+
+    -- The default six with Wi-Fi in Subjects' place.
+    local function with_wifi()
+        local entries = default_entries()
+        entries[4] = { kind = "koreader", target = "wifi" }
+        return entries
     end
 
     before_each(function()
@@ -281,7 +289,7 @@ describe("the launcher widget", function()
                 end
                 assert.equals(4, #built.rects, id)
                 assert.equals(2, util.tableSize(ys), id)
-                assert.same({ "Library", "Series", "Authors", "History" }, texts(built), id)
+                assert.same({ "Library", "Series", "Authors", "Subjects" }, texts(built), id)
                 built:free()
             end
         end)
@@ -332,7 +340,7 @@ describe("the launcher widget", function()
                 local built = Launcher.build(1184, ctx)
                 local entries = entries_of(built)
                 assert.equals(6, #entries, id)
-                local targets = { "library", "series", "authors", "history", "wifi", "settings" }
+                local targets = { "library", "series", "authors", "subjects", "history", "settings" }
                 for i, entry in ipairs(entries) do
                     local icons = icons_of(entry)
                     assert.equals(1, #icons, id .. " " .. i)
@@ -522,11 +530,12 @@ describe("the launcher widget", function()
         }
 
         it("draws Wi-Fi off with the wifi_off icon in ink and OFF in muted", function()
+            set_entries(with_wifi())
             stub_resolve({ wifi = OFF })
             for _, id in ipairs({ "editorial", "diner" }) do
                 local ctx = ctx_for(id)
                 local built = Launcher.build(1184, ctx)
-                local entry = entries_of(built)[5]
+                local entry = entries_of(built)[4]
                 local icons = icons_of(entry)
                 assert.equals(Icons.path("wifi_off"), icons[1].file, id)
                 assert.is_true(same_color(role(ctx, "ink"), icons[1].color), id)
@@ -868,6 +877,7 @@ describe("the launcher widget", function()
 
         it("is false while the drawn Wi-Fi state holds and true once it flips", function()
             local OFF = { label = "Wi-Fi", icon = "wifi_off", state = "off", suffix = "off" }
+            set_entries(with_wifi())
             stub_resolve({ wifi = OFF })
             set_wifi(false)
             local ctx = ctx_for("diner")
@@ -885,7 +895,7 @@ describe("the launcher widget", function()
         end)
 
         it("is false for a launcher with no Wi-Fi entry, or with Wi-Fi unavailable, either way", function()
-            local entries = default_entries()
+            local entries = with_wifi()
             set_entries({ entries[1], entries[2] })
             local ctx = ctx_for("editorial")
             local without = Launcher.build(1184, ctx)

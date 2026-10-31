@@ -6,7 +6,7 @@
 --     selected; it writes nothing.
 --   - launcher: at patch time, before any plugin loads (reader.lua:190), it stores
 --     launcher.entries in settings/kopanda/settings.lua, keeping what the fixture stored there:
---     Library, Series, Authors, History, a folder "Tools" of three dispatcher actions
+--     Library, Series, Authors, Subjects, a folder "Tools" of three dispatcher actions
 --     (frontend/dispatcher.lua:86, :138, :141, all unconditional on the emulator) and Settings.
 --     On the first home's settled signal, from the next tick, it checks that list against the
 --     plugin's own launcher validator, then opens launcher management.
@@ -27,7 +27,7 @@ local LAUNCHER = {
     { kind = "kopanda", target = "library" },
     { kind = "kopanda", target = "series" },
     { kind = "kopanda", target = "authors" },
-    { kind = "koreader", target = "history" },
+    { kind = "kopanda", target = "subjects" },
     { kind = "folder", label = "Tools", entries = TOOLS },
     { kind = "kopanda", target = "settings" },
 }

@@ -151,15 +151,15 @@ return {
             type = "launcher",
             max_entries = 6,
             targets = {
-                kopanda = { "library", "series", "authors", "settings", "quick_settings" },
+                kopanda = { "library", "series", "authors", "subjects", "settings", "quick_settings" },
                 koreader = { "history", "favorites", "collections", "wifi" },
             },
             default = {
                 { kind = "kopanda", target = "library" },
                 { kind = "kopanda", target = "series" },
                 { kind = "kopanda", target = "authors" },
+                { kind = "kopanda", target = "subjects" },
                 { kind = "koreader", target = "history" },
-                { kind = "koreader", target = "wifi" },
                 { kind = "kopanda", target = "settings" },
             },
             label = "Launcher",

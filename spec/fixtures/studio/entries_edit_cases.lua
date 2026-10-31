@@ -257,8 +257,8 @@ return {
         op = "count", why = "the default six",
         args = {
             { { kind = "kopanda", target = "library" }, { kind = "kopanda", target = "series" },
-                { kind = "kopanda", target = "authors" }, { kind = "koreader", target = "history" },
-                { kind = "koreader", target = "wifi" }, { kind = "kopanda", target = "settings" } },
+                { kind = "kopanda", target = "authors" }, { kind = "kopanda", target = "subjects" },
+                { kind = "koreader", target = "history" }, { kind = "kopanda", target = "settings" } },
         },
         result = 6,
     },

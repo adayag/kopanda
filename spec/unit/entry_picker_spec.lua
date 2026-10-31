@@ -178,6 +178,7 @@ describe("the entry picker", function()
                 { label = "Library", icon = "library" },
                 { label = "Series", icon = "series" },
                 { label = "Authors", icon = "authors" },
+                { label = "Subjects", icon = "subjects" },
                 { label = "Settings", icon = "settings" },
                 { label = "Quick settings", icon = "quick_settings" },
             }, row_views(sheet))
@@ -191,8 +192,8 @@ describe("the entry picker", function()
             fm_with_home()
             EntryPicker.pick("kopanda", Home.shown.ctx, on_entry)
             local sheet = Sheet.shown
-            assert.same({ label = "Quick settings", icon = "quick_settings" }, row_views(sheet)[5])
-            tap_row(sheet, 5)
+            assert.same({ label = "Quick settings", icon = "quick_settings" }, row_views(sheet)[6])
+            tap_row(sheet, 6)
             assert.is_nil(Sheet.shown)
             assert.same({ kind = "kopanda", target = "quick_settings" }, the_entry())
         end)

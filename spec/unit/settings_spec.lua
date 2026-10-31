@@ -558,7 +558,7 @@ describe("Settings", function()
         end
 
         local one_of_each = {
-            kopanda("library"),
+            kopanda("subjects"),
             { kind = "koreader", target = "wifi" },
             plugin("terminal"),
             { kind = "action", action = "file_search", label = "Search", icon = "search" },

@@ -18,6 +18,7 @@ LauncherEntries.KOPANDA = {
     library = { label = "Library", icon = "library" },
     series = { label = "Series", icon = "series" },
     authors = { label = "Authors", icon = "authors" },
+    subjects = { label = "Subjects", icon = "subjects" },
     settings = { label = "Settings", icon = "settings" },
     quick_settings = { label = "Quick settings", icon = "quick_settings" },
 }
@@ -150,6 +151,20 @@ local KOPANDA_RUN = {
         local fm = file_manager()
         if fm then
             fm.kopanda:showAuthors{}
+        end
+    end,
+    -- The Subjects window's list at its first page: on the Subjects window, in place; from anywhere else, the
+    -- home closed and the window shown.
+    subjects = function()
+        local SubjectsScreen = require("subjects_screen")
+        if SubjectsScreen.shown then
+            SubjectsScreen.shown:go({ kind = "list" }, 1)
+            return
+        end
+        Home.close()
+        local fm = file_manager()
+        if fm then
+            fm.kopanda:showSubjects{}
         end
     end,
     settings = function()

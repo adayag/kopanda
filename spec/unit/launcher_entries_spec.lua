@@ -199,8 +199,7 @@ describe("LauncherEntries", function()
                 LauncherEntries.resolve(folder_entry(3)))
         end)
 
-        it("reads the default six as Library, Series, Authors, History, Wi-Fi and Settings", function()
-            set_wifi(true)
+        it("reads the default six as Library, Series, Authors, Subjects, History and Settings", function()
             local views = {}
             for i, entry in ipairs(require("schema").keys[11].default) do
                 views[i] = LauncherEntries.resolve(entry)
@@ -209,8 +208,8 @@ describe("LauncherEntries", function()
                 { label = "Library", icon = "library", state = "ready" },
                 { label = "Series", icon = "series", state = "ready" },
                 { label = "Authors", icon = "authors", state = "ready" },
+                { label = "Subjects", icon = "subjects", state = "ready" },
                 { label = "History", icon = "history", state = "ready" },
-                { label = "Wi-Fi", icon = "wifi", state = "ready" },
                 { label = "Settings", icon = "settings", state = "ready" },
             }, views)
         end)
@@ -341,6 +340,39 @@ describe("LauncherEntries", function()
             assert.equals(fm, harness.top(2))
             assert.same({ fixture.ROOT, 1 }, { Library.shown.dir, Library.shown.page })
             assert.spy(on_home).was_not_called()
+        end)
+
+        -- subjects_screen stubbed as the window shown, or none, for the rest of the test.
+        local function subjects_shown(shown)
+            local real = package.loaded["subjects_screen"]
+            package.loaded["subjects_screen"] = { shown = shown }
+            cleanup(function()
+                package.loaded["subjects_screen"] = real
+            end)
+        end
+
+        it("goes to the Subjects list's first page in place on the Subjects window", function()
+            fm_with_home()
+            local home = Home.shown
+            local went = {}
+            subjects_shown({ go = function(_, view, page) went[#went + 1] = { view, page } end })
+            LauncherEntries.run({ kind = "kopanda", target = "subjects" }, {})
+            assert.same({ { { kind = "list" }, 1 } }, went)
+            assert.equals(home, Home.shown)
+        end)
+
+        it("opens Subjects: closes the home and shows the Subjects window through the file manager", function()
+            local fm = fm_with_home()
+            subjects_shown(nil)
+            local shows = {}
+            local real = rawget(fm.kopanda, "showSubjects")
+            fm.kopanda.showSubjects = function(_, opts) shows[#shows + 1] = opts end
+            cleanup(function()
+                fm.kopanda.showSubjects = real
+            end)
+            LauncherEntries.run({ kind = "kopanda", target = "subjects" }, {})
+            assert.same({ {} }, shows)
+            assert.is_nil(Home.shown)
         end)
 
         it("opens a directory entry: closes the home and leaves the file browser at the folder", function()

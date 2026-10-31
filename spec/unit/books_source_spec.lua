@@ -137,7 +137,8 @@ describe("Books with a source", function()
             remote({ { id = "remote:x", title = "X", path = "/tmp/x.epub" } })
             local all = Books.all()
             assert.same({ id = "remote:x", source = "remote", title = "X", authors = {}, subjects = {},
-                cover = "none" }, all[4])
+                    cover = "none" },
+                all[4])
         end)
 
         it("lists the source's books alone from a missing root", function()
