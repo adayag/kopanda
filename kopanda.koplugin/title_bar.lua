@@ -28,6 +28,7 @@ local KoTitleBar = TitleBar:extend{
     look = nil,
     on_sort = nil,
     on_status = nil,
+    text_size = nil,
 }
 
 -- The sort picker's label by KOReader's collate id (frontend/ui/widget/booklist.lua:20-270); an
@@ -57,17 +58,17 @@ local STATUSES = { "new", "reading", "abandoned", "complete" }
 -- point (U+0378) draws a missing-glyph box, so " ▾" (U+25BE) is the mark.
 local DOWN_MARK = " \u{25BE}"
 
--- The height of part's line under look with no text size: a line's height is its face's or its forced
+-- The height of part's line under look at text_size: a line's height is its face's or its forced
 -- height, whatever the text (typeset.lua:31-45). The variant only colours it.
-local function line_height(look, part, sample, screen)
-    local line = Typeset.line(part, sample, screen:getWidth(), { look = look, variant = "day" })
+local function line_height(look, part, sample, screen, text_size)
+    local line = Typeset.line(part, sample, screen:getWidth(), { look = look, variant = "day", text_size = text_size })
     local h = line:getSize().h
     line:free()
     return h
 end
 
--- The bar's lengths in device pixels on screen, and its line heights.
-local function metrics(look, screen)
+-- The bar's lengths in device pixels on screen, and its line heights at text_size.
+local function metrics(look, screen, text_size)
     local tokens, parts = look.title_bar, look.type
     local m = {
         edge = screen:scaleBySize(tokens.edge_width),
@@ -80,10 +81,10 @@ local function metrics(look, screen)
         pad_x = screen:scaleBySize(tokens.picker_padding.x),
         pad_y = screen:scaleBySize(tokens.picker_padding.y),
         icon = screen:scaleBySize(tokens.icon_size),
-        count_h = line_height(look, parts.title_bar_count, "0 books", screen),
-        title_h = line_height(look, parts.title_bar_title, "Library", screen),
-        picker_h = math.max(line_height(look, parts.title_bar_sort, "Name", screen),
-            line_height(look, parts.title_bar_status, "Name", screen)),
+        count_h = line_height(look, parts.title_bar_count, "0 books", screen, text_size),
+        title_h = line_height(look, parts.title_bar_title, "Library", screen, text_size),
+        picker_h = math.max(line_height(look, parts.title_bar_sort, "Name", screen, text_size),
+            line_height(look, parts.title_bar_status, "Name", screen, text_size)),
     }
     m.row = m.picker_h + 2 * (m.pad_y + m.outline)
     m.content = math.max(m.count_h + m.line_gap + m.title_h, m.row)
@@ -91,11 +92,11 @@ local function metrics(look, screen)
     return m
 end
 
--- The bar's height in look on screen, in device pixels: the edge, the top padding, the taller of
--- the count-over-title column and the picker row, and the bottom padding. Raises when a face
+-- The bar's height in look on screen at text_size, in device pixels: the edge, the top padding, the
+-- taller of the count-over-title column and the picker row, and the bottom padding. Raises when a face
 -- won't load.
-function KoTitleBar.height(look, screen)
-    return metrics(look, screen).height
+function KoTitleBar.height(look, screen, text_size)
+    return metrics(look, screen, text_size).height
 end
 
 -- Replaces TitleBar:init (titlebar.lua:86-393) whole: no title, subtitle or buttons of KOReader's, one
@@ -105,7 +106,7 @@ function KoTitleBar:init()
     if not self.width then
         self.width = Screen:getWidth()
     end
-    self.metrics = metrics(self.look, Screen)
+    self.metrics = metrics(self.look, Screen, self.text_size)
     self.titlebar_height = self.metrics.height
     self.dimen = Geom:new{ x = 0, y = 0, w = self.width, h = self.titlebar_height }
     self.has_left_icon = false
@@ -240,7 +241,7 @@ end
 local function lay_out(bar, state, lines)
     local look, m, width = bar.look, bar.metrics, bar.width
     local parts = look.type
-    local ctx = { look = look, variant = state.variant }
+    local ctx = { look = look, variant = state.variant, text_size = bar.text_size }
     lines.sort = Typeset.line(parts.title_bar_sort, state.sort .. DOWN_MARK, width, ctx)
     lines.status = Typeset.line(parts.title_bar_status, state.status .. DOWN_MARK, width, ctx)
     local content_bottom = m.height - m.edge - m.bottom

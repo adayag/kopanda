@@ -392,6 +392,38 @@ describe("the quick-settings sheet", function()
             end)
         end)
 
+        it("size the buttons, the level bar and the cells' icons at the text size, larger at extra_large", function()
+            local Layout = package.loaded["layout"]
+            local qs = Looks.get("editorial").quick_settings
+            local ink = rgb(Looks.get("editorial").palettes.day.ink)
+            kindle_light(12, 4)
+            local seen = {}
+            for _, size in ipairs({ "medium", "extra_large" }) do
+                Settings.set("text_size", size)
+                build("editorial", "day", function(_, bb, by_id, parts)
+                    local minus = by_id.brightness_minus
+                    local left = bar(bb, minus, by_id.brightness_plus, ink)
+                    local level = 0
+                    for y = minus.y, minus.y + minus.h - 1 do
+                        if near(pixel(bb, left + 1, y), ink) then
+                            level = level + 1
+                        end
+                    end
+                    local wanted = { Layout.size_at(scale(qs.button_w), size),
+                        Layout.size_at(scale(qs.button_h), size) }
+                    seen[size] = { button = { minus.w, minus.h }, level = level,
+                        icon = icon_in(parts, by_id.screenshot).w, wanted = wanted }
+                end)
+            end
+            assert.same(seen.medium.wanted, seen.medium.button)
+            assert.same(seen.extra_large.wanted, seen.extra_large.button)
+            assert.is_true(seen.extra_large.button[1] > seen.medium.button[1])
+            assert.is_true(seen.extra_large.level > seen.medium.level,
+                seen.medium.level .. " to " .. seen.extra_large.level)
+            assert.is_true(seen.extra_large.icon > seen.medium.icon,
+                seen.medium.icon .. " to " .. seen.extra_large.icon)
+        end)
+
         it("read 0 with no fill with the light off", function()
             kindle_light(0, 4)
             build("editorial", "day", function(_, bb, by_id, parts)

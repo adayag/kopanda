@@ -252,6 +252,18 @@ describe("the featured widget", function()
             end
         end)
 
+        it("grows at extra_large with the cover box, the box's cap still 40 % of the column", function()
+            for _, id in ipairs({ "editorial", "diner" }) do
+                local medium, large = ctx_for(id), ctx_for(id, { text_size = "extra_large" })
+                local featured = medium.look.featured
+                local cover_w, cover_h = Screen:scaleBySize(featured.cover_w), Screen:scaleBySize(featured.cover_h)
+                assert.same({ Layout.size_at(cover_w, "extra_large"), Layout.size_at(cover_h, "extra_large") },
+                    { FeaturedCover.box(1264, large) }, id)
+                assert.is_true(Featured.height(1264, large) > Featured.height(1264, medium), id)
+                assert.same({ FeaturedCover.box(300, medium) }, { FeaturedCover.box(300, large) }, id)
+            end
+        end)
+
         it("paints nothing outside itself at 600 px or in a half-width column, at the large text size", function()
             local long = record{
                 title = string.rep("A Very Long Title Indeed ", 6),

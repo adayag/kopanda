@@ -19,6 +19,7 @@ local Looks = require("looks")
 local NavBar = require("nav_bar")
 local Paint = require("paint")
 local PaintClock = require("paint_clock")
+local Settings = require("settings")
 local Sheet = require("sheet")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
@@ -226,7 +227,8 @@ end
 function LibraryChrome.foot(built, frame, where)
     local w, h = built.dimen.w, built.dimen.h
     local ctx = built.ctx
-    local nav = NavBar.new{ look = ctx.look, variant = ctx.variant, width = w, where = where, listen = false }
+    local nav = NavBar.new{ look = ctx.look, variant = ctx.variant, width = w, where = where, listen = false,
+        text_size = ctx.text_size }
     nav.dimen.x, nav.dimen.y = 0, h - nav.dimen.h
     built.nav = nav
     built.pager = pager(built, frame, w, nav.dimen.y)
@@ -237,7 +239,8 @@ end
 function LibraryChrome.build(built, fill)
     local size = Screen:getSize()
     built.dimen = Geom:new{ x = 0, y = 0, w = size.w, h = size.h }
-    built.ctx = { look = Looks.active(), variant = Looks.variant(), screen = Screen }
+    built.ctx = { look = Looks.active(), variant = Looks.variant(), screen = Screen,
+        text_size = Settings.get("text_size") }
     built.frame = new_box(size.w, size.h)
     local ok, err = pcall(function()
         local _, color = tools(built.ctx)

@@ -119,11 +119,11 @@ local function footer_height(home)
     return 0
 end
 
--- The nav bar's height in look on Layout.screen, in device pixels, or 0, logged, when it raises,
--- so the home still lays out. nav_bar is required at call time: it requires this module.
-local function bar_height(look)
+-- The nav bar's height in look on Layout.screen at text_size, in device pixels, or 0, logged, when it
+-- raises, so the home still lays out. nav_bar is required at call time: it requires this module.
+local function bar_height(look, text_size)
     local ok, h = pcall(function()
-        return require("nav_bar").height(look, Layout.screen)
+        return require("nav_bar").height(look, Layout.screen, text_size)
     end)
     if ok and type(h) == "number" then
         return h
@@ -168,7 +168,7 @@ local function arrange(rows, ctx, placer)
     local header = home.header
     local width, height = Layout.screen:getWidth(), Layout.screen:getHeight()
     local side = scale(home.margin.side)
-    local bar = bar_height(ctx.look)
+    local bar = bar_height(ctx.look, ctx.text_size)
     local above = height - bar
     local plates = ctx.look.plate
     local keyline = plates.fill_color and scale(plates.keyline) or 0
@@ -317,9 +317,13 @@ function Layout.font_size(size, text_size)
     return math.floor(size * (TEXT_SCALE[text_size] or 1) + 0.5)
 end
 
--- A length that grows with the text, such as an icon or a cover, at the text_size setting, rounded.
+-- A length that grows with the text, such as an icon or a cover, at the text_size setting, rounded: only
+-- extra_large grows lengths, every other step keeps today's geometry.
 function Layout.size_at(px, text_size)
-    return math.floor(px * (TEXT_SCALE[text_size] or 1) + 0.5)
+    if text_size ~= "extra_large" then
+        return px
+    end
+    return math.floor(px * TEXT_SCALE.extra_large + 0.5)
 end
 
 return Layout

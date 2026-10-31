@@ -40,10 +40,10 @@ local function content_top(nav, screen)
     return edge + math.max(0, screen:scaleBySize(nav.active_rule_width) - edge) + screen:scaleBySize(nav.padding_top)
 end
 
--- The taller of the two label parts' lines. They are set with no text size, so the bar keeps one
--- height whatever the stored text size; the variant colours the line and doesn't change it.
-local function label_height(look, screen)
-    local ctx = { look = look, variant = "day" }
+-- The taller of the two label parts' lines at text_size; the variant colours the line and doesn't
+-- change it.
+local function label_height(look, screen, text_size)
+    local ctx = { look = look, variant = "day", text_size = text_size }
     local height = 0
     for _, part in ipairs({ look.type.nav_label, look.type.nav_label_active }) do
         local line = Typeset.line(part, "Home", screen:getWidth(), ctx)
@@ -53,13 +53,14 @@ local function label_height(look, screen)
     return height
 end
 
--- The bar's height in look on screen, in device pixels: the content's top, the icon, the gap,
+-- The bar's height in look on screen at text_size, in device pixels: the content's top, the icon, the gap,
 -- a label line and the tab's bottom padding; a floating pill's outline at its foot and its margin
 -- below it besides. Raises when a label face won't load.
-function NavBar.height(look, screen)
+function NavBar.height(look, screen, text_size)
     local nav = look.nav
-    local h = content_top(nav, screen) + screen:scaleBySize(nav.icon_size) + screen:scaleBySize(nav.icon_gap)
-        + label_height(look, screen) + screen:scaleBySize(nav.padding_bottom)
+    local h = content_top(nav, screen) + Layout.size_at(screen:scaleBySize(nav.icon_size), text_size)
+        + screen:scaleBySize(nav.icon_gap) + label_height(look, screen, text_size)
+        + screen:scaleBySize(nav.padding_bottom)
     if nav.float then
         h = h + screen:scaleBySize(nav.edge_width) + screen:scaleBySize(nav.margin.bottom)
     end
@@ -107,13 +108,14 @@ local Bar = InputContainer:extend{
     width = nil,
     where = nil,
     listen = false,
+    text_size = nil,
 }
 
 -- Builds each tab's icon and label once; the columns split the width less the side padding, and
 -- for a floating pill its margin and outline, with the tab gap between them.
 function Bar:init()
     local look, nav = self.look, self.look.nav
-    self.dimen = Geom:new{ x = 0, y = 0, w = self.width, h = NavBar.height(look, Screen) }
+    self.dimen = Geom:new{ x = 0, y = 0, w = self.width, h = NavBar.height(look, Screen, self.text_size) }
     -- Where the columns start from the bar's left: its side padding, and a floating pill's margin
     -- and outline before it.
     self.padding_x = Screen:scaleBySize(nav.padding_x)
@@ -126,8 +128,8 @@ function Bar:init()
     end
     self.columns = Layout.columns(self.width - 2 * self.padding_x, shares, nav.tab_gap)
     local palette = Looks.palette(look, self.variant)
-    local ctx = { look = look, variant = self.variant }
-    local icon_size = Screen:scaleBySize(nav.icon_size)
+    local ctx = { look = look, variant = self.variant, text_size = self.text_size }
+    local icon_size = Layout.size_at(Screen:scaleBySize(nav.icon_size), self.text_size)
     self.tabs = {}
     for i, tab in ipairs(NavBar.TABS) do
         local active = tab.id == ACTIVE[self.where]
@@ -228,7 +230,7 @@ function Bar:paintTo(bb, x, y)
         paint_band(self, bb, x, y, color)
     end
     local left = x + self.padding_x
-    local icon_size = Screen:scaleBySize(nav.icon_size)
+    local icon_size = Layout.size_at(Screen:scaleBySize(nav.icon_size), self.text_size)
     local icon_top = y + content_top(nav, Screen)
     local label_top = icon_top + icon_size + Screen:scaleBySize(nav.icon_gap)
     for i, tab in ipairs(self.tabs) do
@@ -302,9 +304,9 @@ function Bar:free()
     self.tabs = nil
 end
 
--- A bar { look, variant, width, where, listen } width × NavBar.height(look, Screen), where "home"
--- (Home active), "file_browser" or "library" (Library active). With listen it takes taps and holds on its
--- dimen itself; without, it takes none, and its screen hands them to handle.
+-- A bar { look, variant, width, where, listen, text_size } width × NavBar.height(look, Screen, text_size),
+-- where "home" (Home active), "file_browser" or "library" (Library active). With listen it takes taps and
+-- holds on its dimen itself; without, it takes none, and its screen hands them to handle.
 function NavBar.new(args)
     return Bar:new{
         look = args.look,
@@ -312,6 +314,7 @@ function NavBar.new(args)
         width = args.width,
         where = args.where,
         listen = args.listen or false,
+        text_size = args.text_size,
     }
 end
 

@@ -2,7 +2,7 @@
 -- (library_chrome.lua) with the parts its gestures and covers read. The header holds the count, "Library"
 -- or the back mark and the folder's name, and the sort and status pickers; then two rows of three tiles
 -- (library_tiles.lua) or the empty note, and the chrome's pager and nav bar. What a folder shows, in what
--- order, is library_order.lua's. Lengths are board pixels; the text ignores text_size, as the tiles'.
+-- order, is library_order.lua's. Lengths are board pixels; the text follows ctx.text_size, as the tiles' does.
 local Books = require("books")
 local Geom = require("ui/geometry")
 local Helpers = require("helpers")

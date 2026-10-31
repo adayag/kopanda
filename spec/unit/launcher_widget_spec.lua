@@ -347,6 +347,21 @@ describe("the launcher widget", function()
             end
         end)
 
+        it("draws each icon at the text size, larger at extra_large", function()
+            local Layout = require("layout")
+            for _, id in ipairs({ "editorial", "diner" }) do
+                local ctx = ctx_for(id)
+                ctx.text_size = "extra_large"
+                local built = Launcher.build(1184, ctx)
+                local wanted = Layout.size_at(scale(ctx.look.launcher.icon_size), "extra_large")
+                assert.is_true(wanted > scale(ctx.look.launcher.icon_size), id)
+                for i, entry in ipairs(entries_of(built)) do
+                    assert.equals(wanted, icons_of(entry)[1].size, id .. " " .. i)
+                end
+                built:free()
+            end
+        end)
+
         it("fills Diner's tiles mustard, pink, teal, then paper, outlined with the hard shadow, by day and in grey",
             function()
                 for _, variant in ipairs({ "day", "grey" }) do

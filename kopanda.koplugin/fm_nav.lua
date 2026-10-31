@@ -12,6 +12,7 @@ local Looks = require("looks")
 local NavBar = require("nav_bar")
 local Paint = require("paint")
 local PaintClock = require("paint_clock")
+local Settings = require("settings")
 local Screen = require("device").screen
 local TitleBar = require("ui/widget/titlebar")
 local TouchMenu = require("ui/widget/touchmenu")
@@ -25,17 +26,18 @@ local installed = false
 
 -- The frame in a file manager's self[1]: the bar first among its children, so a gesture reaches it before
 -- the chooser and the file manager's own zones (widgetcontainer.lua:80-107), and fm_ui second. Keeps
--- the look, variant and band it was built with, and layout_span (paint_clock.lua).
+-- the look, variant, text size and band it was built with, and layout_span (paint_clock.lua).
 FmNav.Frame = WidgetContainer:extend{
     name = "kopanda_fm_nav",
     fm = nil,
     fm_ui = nil,
     look = nil,
     variant = nil,
+    text_size = nil,
     band = nil,
 }
 
--- A bar in the frame's look and variant across the screen, on the band at its bottom.
+-- A bar in the frame's look, variant and text size across the screen, on the band at its bottom.
 local function new_bar(frame, variant)
     local bar = NavBar.new{
         look = frame.look,
@@ -43,6 +45,7 @@ local function new_bar(frame, variant)
         width = frame.dimen.w,
         where = "file_browser",
         listen = true,
+        text_size = frame.text_size,
     }
     bar.dimen.x, bar.dimen.y = 0, frame.dimen.h - frame.band
     return bar
@@ -112,12 +115,13 @@ function FmNav.Frame:paintTo(bb, x, y)
 end
 
 -- Puts the original's fm_ui in a frame as fm[1] and frees the bar of the frame it replaces.
-local function wrap(fm, previous, look, band, started)
+local function wrap(fm, previous, look, text_size, band, started)
     local frame = FmNav.Frame:new{
         fm = fm,
         fm_ui = fm[1],
         look = look,
         variant = Looks.variant(),
+        text_size = text_size,
         band = band,
     }
     fm[1] = frame
@@ -158,10 +162,10 @@ function FmNav.open_status(fm)
 end
 
 -- What TitleBar.new is while the wrapped setupLayout runs, so the file manager's one TitleBar:new call
--- (filemanager.lua:118-136) builds KoPanda's bar in look: it puts prior, the class's own new, back
--- first so later calls build as KOReader does, then builds the bar from a copy of KOReader's attributes.
+-- (filemanager.lua:118-136) builds KoPanda's bar in look at text_size: it puts prior, the class's own new,
+-- back first so later calls build as KOReader does, then builds the bar from a copy of KOReader's attributes.
 -- A build that raises is logged and KOReader's own bar is built.
-local function one_shot(fm, look, prior)
+local function one_shot(fm, look, text_size, prior)
     return function(class, attrs, ...)
         TitleBar.new = prior
         local ok, bar = pcall(function()
@@ -171,6 +175,7 @@ local function one_shot(fm, look, prior)
             end
             copy.fm = fm
             copy.look = look
+            copy.text_size = text_size
             copy.on_sort = function()
                 FmNav.open_sort(fm)
             end
@@ -206,9 +211,10 @@ function FmNav.install()
             return original(fm, ...)
         end
         local started = PaintClock.now()
+        local text_size = Settings.get("text_size")
         local ok, look, band = pcall(function()
             local active = Looks.active()
-            return active, NavBar.height(active, Screen)
+            return active, NavBar.height(active, Screen, text_size)
         end)
         if not ok then
             logger.err("KoPanda: the file browser's nav bar band failed:", look)
@@ -218,7 +224,7 @@ function FmNav.install()
         local height = rawget(FileChooser, "height")
         local new = rawget(TitleBar, "new")
         FileChooser.height = Screen:getHeight() - band
-        TitleBar.new = one_shot(fm, look, new)
+        TitleBar.new = one_shot(fm, look, text_size, new)
         local call_ok, err = pcall(original, fm, ...)
         FileChooser.height = height
         TitleBar.new = new
@@ -226,7 +232,7 @@ function FmNav.install()
             error(err, 0)
         end
         local fm_ui = fm[1]
-        local wrap_ok, wrap_err = pcall(wrap, fm, previous, look, band, started)
+        local wrap_ok, wrap_err = pcall(wrap, fm, previous, look, text_size, band, started)
         if not wrap_ok then
             logger.err("KoPanda: the file browser's nav bar failed to build:", wrap_err)
             -- The chooser was built short of the band; fm_ui at the screen's height paints its

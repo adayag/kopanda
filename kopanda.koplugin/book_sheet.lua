@@ -13,6 +13,7 @@ local FeaturedBook = require("featured_book")
 local FeaturedCover = require("featured_cover")
 local Guards = require("guards")
 local Home = require("home")
+local Layout = require("layout")
 local Math = require("optmath")
 local PaintClock = require("paint_clock")
 local Settings = require("settings")
@@ -353,10 +354,11 @@ local function download_row(record, window)
     return row
 end
 
--- The sheet's cover size under ctx, the tokens' cover_w by cover_h.
+-- The sheet's cover size under ctx, the tokens' cover_w by cover_h at the text size.
 local function cover_size(ctx)
     local tokens = ctx.look.sheet
-    return ctx.screen:scaleBySize(tokens.cover_w), ctx.screen:scaleBySize(tokens.cover_h)
+    return Layout.size_at(ctx.screen:scaleBySize(tokens.cover_w), ctx.text_size),
+        Layout.size_at(ctx.screen:scaleBySize(tokens.cover_h), ctx.text_size)
 end
 
 -- Shows the sheet of built's book (the featured widget's) under ctx, with opts passed on to Sheet.show.

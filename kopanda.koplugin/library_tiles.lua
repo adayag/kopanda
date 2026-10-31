@@ -1,7 +1,7 @@
 -- The library grid's tiles: the grid's geometry (three columns inside the side padding, the cover box, a
 -- tile's height), the header's and the pager's heights the two-row fit adds up, and one widget per book or
--- folder, from the look's library tokens. Lengths are board pixels scaled by ctx.screen; the text ignores
--- text_size, as NavBar.height's labels do. A tile is the cover box's width and the geometry's height
+-- folder, from the look's library tokens. Lengths are board pixels scaled by ctx.screen; the text and the
+-- badge follow ctx.text_size, the cover box doesn't. A tile is the cover box's width and the geometry's height
 -- whatever it holds; what reaches past the box (the cover's shadow, Diner's badge) is painted into the gaps.
 local FeaturedCover = require("featured_cover")
 local Featured = require("widgets/featured")
@@ -30,17 +30,11 @@ local function add(box, child, x, y)
     return child
 end
 
--- ctx without its text size.
-local function fixed(ctx)
-    return { look = ctx.look, variant = ctx.variant, screen = ctx.screen }
-end
-
 -- The grid across a screen screen_w wide under ctx, in device pixels: columns (three { x, w } inside
 -- grid.side at grid.column_gap, Layout.columns), cover_w (the narrowest column's), cover_h, the strip's
 -- strip_y and strip_h, the title's title_y from a tile's top, and the tile's height. cover_h, in board
 -- pixels, overrides the grid's (shelf.author_grid.cover_h). Raises when the title's face won't load.
 function LibraryTiles.geometry(screen_w, ctx, cover_h)
-    ctx = fixed(ctx)
     local scale = Paint.scaler(ctx)
     local library = ctx.look.library
     local grid = library.grid
@@ -74,7 +68,6 @@ end
 -- title and a picker (its label line inside its padding and outline; the picker's mark is drawn
 -- no taller than its line), and its edge.
 function LibraryTiles.header_height(ctx)
-    ctx = fixed(ctx)
     local scale = Paint.scaler(ctx)
     local look = ctx.look
     local header = look.library.header
@@ -89,7 +82,6 @@ end
 -- The pager's height under ctx, in device pixels: the taller of a button and the page label, and
 -- the space under it.
 function LibraryTiles.pager_height(ctx)
-    ctx = fixed(ctx)
     local scale = Paint.scaler(ctx)
     local look = ctx.look
     local pager = look.library.pager
@@ -124,12 +116,12 @@ end
 local function badge(ctx)
     local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local tokens = ctx.look.library.badge
-    local size = scale(tokens.size)
+    local size = Layout.size_at(scale(tokens.size), ctx.text_size)
     local radius = math.floor(size / 2)
     local outline_color = color(tokens.outline_color)
     local icon = TintedIcon:new{
         file = Icons.path("download"),
-        size = scale(tokens.icon_size),
+        size = Layout.size_at(scale(tokens.icon_size), ctx.text_size),
         color = color(tokens.icon_color),
     }
     local offset = math.floor((size - icon.size) / 2)
@@ -180,7 +172,7 @@ local function badge_place(box, ctx)
     local library = ctx.look.library
     local tokens = library.badge
     local edge = color(library.cover.outline_color) and scale(library.cover.outline_width) or 0
-    local size = scale(tokens.size)
+    local size = Layout.size_at(scale(tokens.size), ctx.text_size)
     local inset = Paint.scale_signed(scale, tokens.inset)
     local on_foot = tokens.align == "bottom"
     return {
@@ -222,7 +214,6 @@ end
 -- bottom }, none on the left. The cover's shadow reaches right and below, the download badge
 -- past the corner it overhangs (badge_place). Counts both whether the tile draws them or not.
 function LibraryTiles.overhang(box, ctx)
-    ctx = fixed(ctx)
     local shadow = ctx.look.library.cover.shadow
     local scale = Paint.scaler(ctx)
     local place = badge_place(box, ctx)
@@ -239,7 +230,6 @@ end
 -- path, or cwngsync's placeholder). chip, optional { label }, is drawn beside the badge. The tile keeps
 -- cover, strip, title, badge and chip, the last three nil where not drawn.
 function LibraryTiles.book(record, progress, box, ctx, chip_spec)
-    ctx = fixed(ctx)
     local look = ctx.look
     local tile = new_tile(box)
     tile.cover = add(tile, FeaturedCover.framed(record, box.cover_w, box.cover_h, ctx, cover_frame(look)), 0, 0)
@@ -263,7 +253,6 @@ end
 -- book count and the reading count (when not zero) at its foot, and the folder's name in the title's
 -- place. The tile keeps cover and title.
 function LibraryTiles.folder(folder, counts, box, ctx)
-    ctx = fixed(ctx)
     local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local look = ctx.look
     local tokens = look.library.folder

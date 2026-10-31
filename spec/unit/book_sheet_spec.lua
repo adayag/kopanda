@@ -1035,6 +1035,31 @@ describe("the book sheet", function()
             assert.equals(0, extractions)
         end)
 
+        it("sizes its cover at the window's text size, larger at extra_large", function()
+            sidecar(a, '{ doc_props = { title = "Frankenstein" } }')
+            local record = Books.for_path(a)
+            fm_with_home()
+            local sizes = {}
+            local framed = FeaturedCover.framed
+            replace(FeaturedCover, "framed", function(framed_record, w, h, ctx, frame)
+                sizes[#sizes + 1] = { w, h }
+                return framed(framed_record, w, h, ctx, frame)
+            end)
+            local Layout = require("layout")
+            local tokens = Looks.active().sheet
+            for _, size in ipairs({ "medium", "extra_large" }) do
+                local w = window()
+                w.ctx.text_size = size
+                BookSheet.open_record(record, w, w.ctx, { beneath = w })
+                harness.tick(3)
+                Sheet.close()
+            end
+            local medium = { Screen:scaleBySize(tokens.cover_w), Screen:scaleBySize(tokens.cover_h) }
+            local grown = { Layout.size_at(medium[1], "extra_large"), Layout.size_at(medium[2], "extra_large") }
+            assert.same({ medium, grown }, sizes)
+            assert.is_true(grown[1] > medium[1] and grown[2] > medium[2])
+        end)
+
         describe("meta line", function()
             local function meta(now)
                 local result

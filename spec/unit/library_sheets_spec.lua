@@ -318,6 +318,22 @@ describe("LibrarySheets.hold", function()
                 Looks.color(Looks.palette(Looks.get("diner"), "night").ink))
         end)
 
+        it("grows the folder box and its icon at extra_large", function()
+            local Layout = package.loaded["layout"]
+            sub_and_books()
+            local library = library_fixture.show()
+            for _, id in ipairs({ "diner", "editorial" }) do
+                local tokens = Looks.get(id).sheet.folder_box
+                library.ctx = { look = Looks.get(id), variant = "day", screen = Screen, text_size = "extra_large" }
+                local box = hold_folder(library, 1).spec.header.cover
+                local size = Layout.size_at(Screen:scaleBySize(tokens.size), "extra_large")
+                assert.is_true(size > Screen:scaleBySize(tokens.size), id)
+                assert.same({ size, size }, { box:getSize().w, box:getSize().h }, id)
+                assert.equals(Layout.size_at(Screen:scaleBySize(tokens.icon_size), "extra_large"), box[1].size, id)
+                Sheet.close()
+            end
+        end)
+
         it("opens the folder at its remembered page on Open", function()
             local sub = sub_and_books()
             assert.is_true(LibraryOrder.leave(sub.path, 2))

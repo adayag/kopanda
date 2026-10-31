@@ -10,6 +10,7 @@ local FeaturedCover = require("featured_cover")
 local Geom = require("ui/geometry")
 local Helpers = require("helpers")
 local Icons = require("icons")
+local Layout = require("layout")
 local LibraryOrder = require("library_order")
 local Looks = require("looks")
 local Paint = require("paint")
@@ -27,7 +28,7 @@ local JOIN = " · "
 local function folder_box(ctx)
     local tokens = ctx.look.sheet.folder_box
     local color, scale = Looks.colorer(ctx), Paint.scaler(ctx)
-    local size = scale(tokens.size)
+    local size = Layout.size_at(scale(tokens.size), ctx.text_size)
     local outline_color = color(tokens.outline_color)
     local box = FeaturedCover.Box:new{
         dimen = Geom:new{ w = size, h = size },
@@ -38,8 +39,11 @@ local function folder_box(ctx)
         outline_color = outline_color,
         places = {},
     }
-    local icon = TintedIcon:new{ file = Icons.path("folder"), size = scale(tokens.icon_size),
-        color = color(tokens.icon_color) }
+    local icon = TintedIcon:new{
+        file = Icons.path("folder"),
+        size = Layout.size_at(scale(tokens.icon_size), ctx.text_size),
+        color = color(tokens.icon_color),
+    }
     local at = math.floor((size - icon.size) / 2)
     box[1] = icon
     box.places[1] = { x = at, y = at }

@@ -104,7 +104,7 @@ local function plan_list(p, page, w, h, ctx)
     for i, entry in ipairs(p.entries) do
         rows[i] = { h = row_h, group = entry.letter, group_cost = cost, entry = entry }
     end
-    local available = h - NavBar.height(ctx.look, Screen) - LibraryTiles.pager_height(ctx) - p.top
+    local available = h - NavBar.height(ctx.look, Screen, ctx.text_size) - LibraryTiles.pager_height(ctx) - p.top
         - ShelfRows.pager_reserve("author", ctx)
     p.paging = ShelfOrder.pages(rows, available, 0)
     p.pages = #p.paging

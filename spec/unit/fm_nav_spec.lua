@@ -173,6 +173,17 @@ describe("the file browser's nav bar", function()
             assert.equals(h, PathChooser:new{ path = harness.library, ui = fm }.dimen.h)
         end)
 
+        it("builds the band, the bar and the title bar at the stored text size", function()
+            assert.is_true(package.loaded["settings"].set("text_size", "extra_large"))
+            local fm = fm_on_top()
+            local look = Looks.active()
+            local grown = NavBar.height(look, Screen, "extra_large")
+            assert.is_true(grown > band())
+            assert.equals(Screen:getHeight() - grown, fm.file_chooser.dimen.h)
+            assert.equals(grown, fm[1].bar.dimen.h)
+            assert.equals(package.loaded["title_bar"].height(look, Screen, "extra_large"), fm.title_bar:getHeight())
+        end)
+
         it("leaves setupLayout KOReader's when KoPanda is refused", function()
             package.loaded["guards"].refused = function()
                 return true

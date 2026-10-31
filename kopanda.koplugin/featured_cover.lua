@@ -71,12 +71,12 @@ function DashedBox:paintTo(bb, x, y)
     self[1]:paintTo(bb, x + self.places[1].x, y + self.places[1].y)
 end
 
--- The cover box's w and h in device pixels for a column width wide: the look's size, scaled,
--- with the width at most 40 % of the column and the height then 1.5 times the width.
+-- The cover box's w and h in device pixels for a column width wide: the look's size, scaled and at
+-- the text size, with the width at most 40 % of the column and the height then 1.5 times the width.
 function FeaturedCover.box(width, ctx)
     local featured = ctx.look.featured
-    local w = ctx.screen:scaleBySize(featured.cover_w)
-    local h = ctx.screen:scaleBySize(featured.cover_h)
+    local w = Layout.size_at(ctx.screen:scaleBySize(featured.cover_w), ctx.text_size)
+    local h = Layout.size_at(ctx.screen:scaleBySize(featured.cover_h), ctx.text_size)
     local cap = math.floor(0.4 * width)
     if w > cap then
         w = cap

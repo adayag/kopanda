@@ -1,4 +1,4 @@
--- NavBar: its five tabs, its height per look whatever the text size, its five
+-- NavBar: its five tabs, its height per look at the text size it is handed, its five
 -- columns, its paint in each look and variant, and what a tap, a hold and anything else on it do.
 -- Nothing here places the bar on a screen; each case sets the bar's dimen as a screen would.
 describe("the nav bar", function()
@@ -35,12 +35,12 @@ describe("the nav bar", function()
         return Screen:scaleBySize(px)
     end
 
-    -- The bar's height: edge, the active rule's overhang, the tab's padding, icon and gap and
-    -- the taller of the two label lines, each length scaled, the lines set with no text size. A
-    -- floating pill adds its outline at its foot and its margin below it.
-    local function formula(look)
+    -- The bar's height at text_size (none when nil): edge, the active rule's overhang, the tab's padding,
+    -- icon and gap and the taller of the two label lines, each length scaled, the icon at the step's factor.
+    -- A floating pill adds its outline at its foot and its margin below it.
+    local function formula(look, text_size)
         local nav = look.nav
-        local ctx = { look = look, variant = "day" }
+        local ctx = { look = look, variant = "day", text_size = text_size }
         local label = 0
         for _, part in ipairs({ look.type.nav_label, look.type.nav_label_active }) do
             local line = Typeset.line(part, "Home", Screen:getWidth(), ctx)
@@ -49,7 +49,7 @@ describe("the nav bar", function()
         end
         local edge = scale(nav.edge_width)
         local h = edge + math.max(0, scale(nav.active_rule_width) - edge) + scale(nav.padding_top)
-            + scale(nav.icon_size) + scale(nav.icon_gap) + label + scale(nav.padding_bottom)
+            + Layout.size_at(scale(nav.icon_size), text_size) + scale(nav.icon_gap) + label + scale(nav.padding_bottom)
         if nav.float then
             h = h + edge + scale(nav.margin.bottom)
         end
@@ -147,6 +147,31 @@ describe("the nav bar", function()
                     end)
                 end
             end
+        end)
+
+        it("grows at extra_large over medium, medium the same as no text size", function()
+            for _, id in ipairs(Looks.ids()) do
+                local look = Looks.get(id)
+                harness.at_colorsoft(function()
+                    local medium = NavBar.height(look, Screen, "medium")
+                    assert.equals(NavBar.height(look, Screen), medium, id)
+                    assert.equals(formula(look, "extra_large"), NavBar.height(look, Screen, "extra_large"), id)
+                    assert.is_true(NavBar.height(look, Screen, "extra_large") > medium, id)
+                end)
+            end
+        end)
+
+        it("is the height of a bar built at a text size, its icons at the step's factor", function()
+            harness.at_colorsoft(function()
+                for _, id in ipairs(Looks.ids()) do
+                    local look = Looks.get(id)
+                    local bar = NavBar.new{ look = look, variant = "day", width = Screen:getWidth(), where = "home",
+                        text_size = "extra_large" }
+                    assert.equals(NavBar.height(look, Screen, "extra_large"), bar:getSize().h, id)
+                    assert.equals(Layout.size_at(scale(look.nav.icon_size), "extra_large"), bar.tabs[1].icon.size, id)
+                    bar:free()
+                end
+            end)
         end)
 
         it("differs between the two looks", function()

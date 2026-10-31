@@ -118,6 +118,38 @@ function M.list(w)
         end)
     end)
 
+    -- The page is planned on the bar's height at the text size, and its rows end above the pager.
+    it("builds its text, its nav bar and its page at the stored text size", function()
+        local NavBar = package.loaded["nav_bar"]
+        local pager_h = package.loaded["library_tiles"].pager_height
+        local reserve = package.loaded["shelf_rows"].pager_reserve
+        local height, sizes = NavBar.height, {}
+        NavBar.height = function(look, screen, text_size)
+            sizes[#sizes + 1] = tostring(text_size)
+            return height(look, screen, text_size)
+        end
+        fixture.install(w.shelf(40))
+        assert.is_true(package.loaded["settings"].set("text_size", "extra_large"))
+        local ok, err = pcall(harness.at_colorsoft, function()
+            each_look(function(id)
+                local screen = w.show()
+                assert.equals("extra_large", screen.ctx.text_size, id)
+                assert.equals(height(screen.ctx.look, Screen, "extra_large"), screen.nav.dimen.h, id)
+                local last = screen.rows[#screen.rows].rect
+                local foot = screen.nav.dimen.y - pager_h(screen.ctx)
+                    - reserve(w.id == "series" and "series" or "author", screen.ctx)
+                assert.is_true(last.y + last.h <= foot, id)
+                harness.teardown()
+            end)
+        end)
+        NavBar.height = height
+        assert(ok, err)
+        assert.is_true(#sizes > 0)
+        for _, size in ipairs(sizes) do
+            assert.equals("extra_large", size)
+        end
+    end)
+
     -- A book in no series and by no author, and one not downloaded.
     it("shows the empty note and page 1 of 1 with no " .. w.id, function()
         fixture.install({ fixture.book("Loose"), fixture.remote("Remote") })

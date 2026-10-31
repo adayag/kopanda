@@ -181,6 +181,7 @@ function HomeRows.build(home)
             width = home.dimen.w,
             where = "home",
             listen = false,
+            text_size = ctx.text_size,
         })
         if ok then
             bar = result

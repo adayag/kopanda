@@ -7,11 +7,12 @@ describe("shelf rows", function()
     local HorizontalSpan = require("ui/widget/horizontalspan")
     local Screen = require("device").screen
     local TextWidget = require("ui/widget/textwidget")
-    local Books, LibraryTiles, Looks, NavBar, ShelfRows, Typeset
+    local Books, Layout, LibraryTiles, Looks, NavBar, ShelfRows, Typeset
 
     setup(function()
         harness.load()
         Books = package.loaded["books"]
+        Layout = package.loaded["layout"]
         LibraryTiles = package.loaded["library_tiles"]
         Looks = package.loaded["looks"]
         NavBar = package.loaded["nav_bar"]
@@ -555,20 +556,28 @@ describe("shelf rows", function()
             end)
         end)
 
-        -- The rows' text does not follow text_size.
-        it("keeps every height whatever the text size", function()
+        it("grows the author row and the book row's badge at extra_large, medium the same as no text size", function()
+            covers()
             harness.at_colorsoft(function()
                 for _, id in ipairs(IDS) do
-                    local plain = ctx_for(id)
+                    local plain, medium = ctx_for(id), ctx_for(id, "day", "medium")
+                    local large = ctx_for(id, "day", "extra_large")
                     local width = row_width(plain)
-                    for _, size in ipairs({ "small", "large", "xlarge" }) do
-                        local sized = ctx_for(id, "day", size)
-                        for _, kind in ipairs({ "series", "book", "author" }) do
-                            assert.equals(ShelfRows.height(kind, width, plain), ShelfRows.height(kind, width, sized),
-                                id .. " " .. kind .. " " .. size)
-                        end
-                        assert.equals(ShelfRows.group_cost(width, plain), ShelfRows.group_cost(width, sized), id)
+                    for _, kind in ipairs({ "series", "book", "author" }) do
+                        local h = ShelfRows.height(kind, width, medium)
+                        assert.equals(ShelfRows.height(kind, width, plain), h, id .. " " .. kind)
+                        assert.is_true(ShelfRows.height(kind, width, large) >= h, id .. " " .. kind)
                     end
+                    assert.is_true(ShelfRows.height("author", width, large) > ShelfRows.height("author", width, medium),
+                        id)
+                    local stone = remote("The Stone Sky", { series_index = 3 })
+                    local small = ShelfRows.book(stone, { status = "new" }, false, width, medium)
+                    local big = ShelfRows.book(stone, { status = "new" }, false, width, large)
+                    assert.equals(Layout.size_at(scale(large.look.shelf.book.badge_size), "extra_large"),
+                        big.badge:getSize().w, id)
+                    assert.is_true(big.badge:getSize().w > small.badge:getSize().w, id)
+                    small:free()
+                    big:free()
                 end
             end)
         end)

@@ -42,7 +42,7 @@ which the owner judges on the emulator.
 |---|---|
 | The step | `text_size` gains `{ value = "extra_large", label = "Extra large" }`. Small, Medium and Large keep their factors. No new schema key. |
 | Type | `Layout.font_size` at Extra large multiplies by 1.4 after lifting any part under 14 tokens to 14. The floor is Extra large's alone. Every surface that sets type passes the text size: nav bar, library (header, tiles, pager), sheets, quick settings, series and authors, the editor screens. |
-| Icons and covers | A new `Layout.size_at(px, text_size)`, the step's factor with no floor, used by the nav bar's icons, the launcher's icons, the featured cover box, the sheets' covers, the quick-settings buttons and level bar, and the badges. Paddings, gaps and rules do not scale. |
+| Icons and covers | A new `Layout.size_at(px, text_size)`, 1.4 at Extra large, 1 at every other step, no floor, used by the nav bar's icons, the launcher's icons, the featured cover box, the sheets' covers, the quick-settings buttons and level bar, and the badges. Paddings, gaps and rules do not scale. |
 | Default rows | Each rows key gets `defaults_by_text_size = { extra_large = … }`, pure data. Page 1: date and clock; featured; launcher. Page 2: date and clock; reading; streak and forecast. The settings reader falls back to it when nothing is stored and the text size has an entry; a stored layout wins. The studio's form, fit check and preview read the same table. |
 | Free space | Unchanged. Editorial puts spare height before the last row, so the launcher sits by the nav bar. |
 | Library paging | A page holds the rows that fit between the header and the pager, times the three columns, at least one row. Six at Medium on both devices, as today. |

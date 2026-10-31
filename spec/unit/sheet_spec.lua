@@ -61,6 +61,24 @@ describe("the sheet", function()
             end
         end)
 
+        it("grows the panel and indents the labels past a larger icon at extra_large over medium", function()
+            local Layout = require("layout")
+            for _, id in ipairs(Looks.ids()) do
+                local laid = {}
+                for _, size in ipairs({ "medium", "extra_large" }) do
+                    local ctx = ctx_for(id, colorsoft)
+                    ctx.text_size = size
+                    Sheet.show(three_rows(), ctx)
+                    laid[size] = { h = Sheet.shown.panel.h, label_x = Sheet.shown.rows[1].label.x }
+                    Sheet.close()
+                end
+                local icon = scale(Looks.get(id).sheet.icon_size)
+                assert.is_true(laid.extra_large.h > laid.medium.h, id)
+                assert.equals(Layout.size_at(icon, "extra_large") - icon,
+                    laid.extra_large.label_x - laid.medium.label_x, id)
+            end
+        end)
+
         it("spans Editorial's panel across the screen on its bottom edge under its ink rule", function()
             local sheet, look, palette = painted("editorial")
             local panel = sheet.panel

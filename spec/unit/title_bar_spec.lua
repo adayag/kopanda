@@ -1,4 +1,4 @@
--- KoTitleBar: its height per look whatever the text size, what it reads from
+-- KoTitleBar: its height per look at the text size it is handed, what it reads from
 -- a real file chooser (the title, the count, the sort and status labels), its rebuilds at paint,
 -- its paint in each look and variant, its taps and holds, and the interface KOReader's file
 -- manager and chooser call. Nothing here puts the bar into the file manager; each case builds one
@@ -207,6 +207,28 @@ describe("the title bar", function()
             harness.at_colorsoft(function()
                 check("Colorsoft")
                 assert.is_true(KoTitleBar.height(Looks.get("diner"), Screen) > scale(100))
+            end)
+        end)
+
+        it("grows at extra_large over medium, medium the same as no text size", function()
+            harness.at_colorsoft(function()
+                local fm = harness.show_fm(lib)
+                for _, id in ipairs(Looks.ids()) do
+                    local look = Looks.get(id)
+                    local medium = KoTitleBar.height(look, Screen, "medium")
+                    assert.equals(KoTitleBar.height(look, Screen), medium, id)
+                    local large = KoTitleBar.height(look, Screen, "extra_large")
+                    assert.is_true(large > medium, id)
+                    local bar = KoTitleBar:new{ fm = fm, look = look, text_size = "extra_large" }
+                    assert.same({ large, large }, { bar:getHeight(), bar:getSize().h }, id)
+                    local plain = bar_for(id, fm)
+                    local bb, plain_bb = paint(bar), paint(plain)
+                    assert.is_true(bar.built.lines.title:getSize().h > plain.built.lines.title:getSize().h, id)
+                    bb:free()
+                    plain_bb:free()
+                    plain:free()
+                    bar:free()
+                end
             end)
         end)
 

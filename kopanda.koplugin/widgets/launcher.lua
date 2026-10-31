@@ -184,7 +184,7 @@ local function make(width, ctx)
         slots[i] = { share = 1 }
     end
     local cols = Layout.columns(width, slots, tokens.column_gap)
-    local icon_px = scale(tokens.icon_size)
+    local icon_px = Layout.size_at(scale(tokens.icon_size), ctx.text_size)
     local pad_x, pad_y = scale(tokens.padding.x), scale(tokens.padding.y)
     local box = look.tile.box
     local shadow = look.shadow.tile

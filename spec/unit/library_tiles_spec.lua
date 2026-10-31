@@ -8,12 +8,13 @@ describe("library tiles", function()
     local HorizontalSpan = require("ui/widget/horizontalspan")
     local Screen = require("device").screen
     local TextWidget = require("ui/widget/textwidget")
-    local LibraryTiles, Looks, NavBar
+    local Layout, LibraryTiles, Looks, NavBar
 
     local BOOK = "/books/piranesi.epub"
 
     setup(function()
         harness.load()
+        Layout = package.loaded["layout"]
         LibraryTiles = package.loaded["library_tiles"]
         Looks = package.loaded["looks"]
         NavBar = package.loaded["nav_bar"]
@@ -228,18 +229,28 @@ describe("library tiles", function()
             end)
         end)
 
-        -- The library's text does not follow text_size.
-        it("keeps the tile, the header and the pager whatever the text size", function()
+        -- Three columns bound the cover's width and two rows must fit, so the cover box keeps its size
+        -- and only the text grows; the badge grows with the text.
+        it("grows the title line, the header and the badge at extra_large, the cover box the same", function()
+            covers()
             harness.at_colorsoft(function()
                 for _, id in ipairs({ "diner", "editorial" }) do
-                    local plain = ctx_for(id)
-                    for _, size in ipairs({ "small", "large", "xlarge" }) do
-                        local sized = ctx_for(id, "day", size)
-                        assert.same(LibraryTiles.geometry(Screen:getWidth(), plain),
-                            LibraryTiles.geometry(Screen:getWidth(), sized), id .. " " .. size)
-                        assert.equals(LibraryTiles.header_height(plain), LibraryTiles.header_height(sized), id)
-                        assert.equals(LibraryTiles.pager_height(plain), LibraryTiles.pager_height(sized), id)
-                    end
+                    local medium, large = ctx_for(id, "day", "medium"), ctx_for(id, "day", "extra_large")
+                    local w = Screen:getWidth()
+                    assert.same(LibraryTiles.geometry(w, ctx_for(id)), LibraryTiles.geometry(w, medium), id)
+                    local plain, grown = LibraryTiles.geometry(w, medium), LibraryTiles.geometry(w, large)
+                    assert.same({ plain.cover_w, plain.cover_h, plain.title_y },
+                        { grown.cover_w, grown.cover_h, grown.title_y }, id)
+                    assert.is_true(grown.height - grown.title_y > plain.height - plain.title_y, id)
+                    assert.is_true(LibraryTiles.header_height(large) > LibraryTiles.header_height(medium), id)
+                    assert.is_true(LibraryTiles.pager_height(large) >= LibraryTiles.pager_height(medium), id)
+                    local small = LibraryTiles.book(remote(), { status = "new" }, plain, medium)
+                    local big = LibraryTiles.book(remote(), { status = "new" }, grown, large)
+                    assert.is_true(big.badge:getSize().w > small.badge:getSize().w, id)
+                    assert.equals(Layout.size_at(scale(large.look.library.badge.size), "extra_large"),
+                        big.badge:getSize().w, id)
+                    small:free()
+                    big:free()
                 end
             end)
         end)

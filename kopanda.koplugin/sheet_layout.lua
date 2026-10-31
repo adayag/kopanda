@@ -2,6 +2,7 @@
 -- sheet.lua matches taps against. sheet.lua's header comment gives the spec.
 local Geom = require("ui/geometry")
 local Icons = require("icons")
+local Layout = require("layout")
 local Looks = require("looks")
 local Paint = require("paint")
 local TintedIcon = require("tinted_icon")
@@ -236,7 +237,7 @@ function SheetLayout.build(spec, ctx, variant)
 
     -- The rows, each built in full before any is placed.
     local pad_x, pad_y = scale(tokens.row_padding.x), scale(tokens.row_padding.y)
-    local icon_size, row_gap = scale(tokens.icon_size), scale(tokens.row_gap)
+    local icon_size, row_gap = Layout.size_at(scale(tokens.icon_size), ctx.text_size), scale(tokens.row_gap)
     local row_w = content_w - 2 * pad_x
     local indent = spec.flush and 0 or icon_size + row_gap
     local built, unknown = {}, {}

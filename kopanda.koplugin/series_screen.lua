@@ -103,7 +103,7 @@ local function plan(self, view, page, w, h, ctx)
             p.rows[i] = { h = row_h, entry = candidate }
         end
     end
-    local available = h - NavBar.height(ctx.look, Screen) - LibraryTiles.pager_height(ctx) - p.top
+    local available = h - NavBar.height(ctx.look, Screen, ctx.text_size) - LibraryTiles.pager_height(ctx) - p.top
         - ShelfRows.pager_reserve(kind, ctx)
     p.pages = ShelfOrder.pages(p.rows, available, p.gap)
     p.page = math.max(1, math.min(page or 1, #p.pages))

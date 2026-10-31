@@ -1,7 +1,7 @@
 -- The series and authors screens' rows: a series row (stacked covers, name, sub-line, state chip),
 -- a one-series book row (index, cover, title, bar or note, chip) and an author letter group, from the
--- look's shelf tokens. Lengths are scaled by ctx.screen and the text ignores text_size, as the library's
--- tiles do. Each widget has a fixed height for its kind, so the screens page by ShelfRows.height.
+-- look's shelf tokens. Lengths are scaled by ctx.screen; the text and the badge follow ctx.text_size, as the
+-- library's tiles do. Each widget has a fixed height for its kind, so the screens page by ShelfRows.height.
 local BookCovers = require("book_covers")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Featured = require("widgets/featured")
@@ -10,6 +10,7 @@ local Geom = require("ui/geometry")
 local Helpers = require("helpers")
 local Icons = require("icons")
 local ImageWidget = require("ui/widget/imagewidget")
+local Layout = require("layout")
 local Looks = require("looks")
 local Paint = require("paint")
 local TintedIcon = require("tinted_icon")
@@ -30,11 +31,6 @@ local function add(box, child, x, y)
     box[#box + 1] = child
     box.places[#box.places + 1] = { x = x, y = y }
     return child
-end
-
--- ctx without its text size.
-local function fixed(ctx)
-    return { look = ctx.look, variant = ctx.variant, screen = ctx.screen }
 end
 
 -- A stroke width in board pixels where its colour role is drawn, else 0, in device pixels.
@@ -222,7 +218,6 @@ end
 -- The series list's row for entry (ShelfOrder.series's entries), width wide: the stack, the name and
 -- sub-line each cut to one line, and the state's chip. Keeps stack, covers, name, sub and chip.
 function ShelfRows.series(entry, width, ctx)
-    ctx = fixed(ctx)
     local look = ctx.look
     local f = frame(ctx)
     local content_h = series_content_h(ctx)
@@ -297,11 +292,11 @@ local function badge(ctx)
     local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local look = ctx.look
     local book, colours = look.shelf.book, look.library.badge
-    local size = scale(book.badge_size)
+    local size = Layout.size_at(scale(book.badge_size), ctx.text_size)
     local radius = math.floor(size / 2)
     local icon = TintedIcon:new{
         file = Icons.path("download"),
-        size = scale(book.badge_icon_size),
+        size = Layout.size_at(scale(book.badge_icon_size), ctx.text_size),
         color = color(colours.icon_color),
     }
     local offset = math.floor((size - icon.size) / 2)
@@ -336,7 +331,6 @@ end
 -- mark says it is the series' next unread, width wide. Keeps index, cover, badge, title, bar, note,
 -- chip (nil where not drawn) and marked.
 function ShelfRows.book(record, progress, mark, width, ctx)
-    ctx = fixed(ctx)
     local scale = Paint.scaler(ctx)
     local look = ctx.look
     local shelf = look.shelf
@@ -415,7 +409,7 @@ function ShelfRows.book(record, progress, mark, width, ctx)
 
     if not_downloaded(record) then
         local inset = Paint.scale_signed(scale, shelf.book.badge_inset)
-        local size = scale(shelf.book.badge_size)
+        local size = Layout.size_at(scale(shelf.book.badge_size), ctx.text_size)
         local badge_y = look.library.badge.align == "bottom" and cover_y + cover_h - edge - inset - size
             or cover_y + edge + inset
         row.badge = add(row, badge(ctx), cover_x + cover_w - edge - inset - size, badge_y)
@@ -452,7 +446,6 @@ end
 -- (ShelfOrder.authors's entries). repeats draws the letter again for a group continued from the page
 -- before. Keeps letter, repeats and rows, each { entry, name, count, y, h }.
 function ShelfRows.group(letter, authors, repeats, width, ctx)
-    ctx = fixed(ctx)
     local look = ctx.look
     local shelf = look.shelf
     local color = Looks.colorer(ctx)
@@ -507,7 +500,6 @@ end
 -- "author" one author's row in a group, the rule below it included. A group of n authors is
 -- n × height("author") + group_cost less the groups' gap.
 function ShelfRows.height(kind, width, ctx)
-    ctx = fixed(ctx)
     if kind == "author" then
         return author_row_h(ctx)
     end
@@ -520,7 +512,6 @@ end
 -- What a letter group adds to its authors' rows on a page, in device pixels: its outline at top and
 -- bottom and its rule, less the rule its last row has none of, and the gap after it.
 function ShelfRows.group_cost(width, ctx)
-    ctx = fixed(ctx)
     local g = group_frame(ctx)
     return 2 * g.outline - g.author_rule + g.group_rule + Paint.scaler(ctx)(ctx.look.shelf.groups.gap)
 end

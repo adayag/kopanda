@@ -334,7 +334,9 @@ function QuickSettings.body(bctx, content_w)
         y = y + row_h + scale(qs.section_gap)
 
         -- The control row: minus, the level bar centred on the buttons, plus.
-        local bw, bh, gap = scale(qs.button_w), scale(qs.button_h), scale(qs.control_gap)
+        local bw = Layout.size_at(scale(qs.button_w), bctx.text_size)
+        local bh = Layout.size_at(scale(qs.button_h), bctx.text_size)
+        local gap = scale(qs.control_gap)
         for _, button in ipairs({ { "_minus", pad_x, MINUS }, { "_plus", pad_x + inner_w - bw, PLUS } }) do
             local x = button[2]
             fill(x, y, bw, bh, qs.button_fill_color)
@@ -349,7 +351,7 @@ function QuickSettings.body(bctx, content_w)
                 hold = actions.hold }
         end
         local level_outline = qs.level_outline_color and scale(qs.level_outline_width) or 0
-        local level_h = scale(qs.level_h) + 2 * level_outline
+        local level_h = Layout.size_at(scale(qs.level_h), bctx.text_size) + 2 * level_outline
         local level_x, level_w = pad_x + bw + gap, inner_w - 2 * (bw + gap)
         local level_y = y + math.floor((bh - level_h) / 2)
         fill(level_x, level_y, level_w, level_h, qs.level_track_color)
@@ -368,7 +370,7 @@ function QuickSettings.body(bctx, content_w)
     -- The grid: three columns, two rows, each row as tall as its tallest cell.
     y = y + scale(qs.grid_padding.top)
     local columns = Layout.columns(inner_w, { { share = 1 }, { share = 1 }, { share = 1 } }, qs.grid_gap)
-    local icon_size = scale(qs.cell_icon_size)
+    local icon_size = Layout.size_at(scale(qs.cell_icon_size), bctx.text_size)
     local cell_outline = qs.cell_outline_color and scale(qs.cell_outline_width) or 0
     local cell_top = cell_outline + scale(qs.cell_padding.top)
     local cell_bottom = scale(qs.cell_padding.bottom) + cell_outline
