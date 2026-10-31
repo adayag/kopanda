@@ -8,7 +8,7 @@ tags in Calibre to a short list; KoPanda shows what the files carry and maps not
 ## Facts
 
 - crengine joins every `dc:subject` of an EPUB with `"\n"` into the document's keywords
-  (`base/thirdparty/kpvcrlib/crengine/crengine/src/epubfmt.cpp:1201-1216`, as it joins authors at
+  (`base/thirdparty/kpvcrlib/crengine/crengine/src/epubfmt.cpp:1201-1219`, as it joins authors at
   `:1179-1199`), `Document:getProps` passes them on as `keywords`
   (`frontend/document/document.lua:187,196`), and CoverBrowser's cache keeps them in the `keywords`
   column (`plugins/coverbrowser.koplugin/bookinfomanager.lua:58`, read at `:96`). So a record's

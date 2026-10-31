@@ -1,5 +1,5 @@
--- The author and series index over a list of book records (books.lua), derived from the records
--- given on each call, nothing kept. The orders here only make the output deterministic; the screens
+-- The author, series and subject index over a list of book records (books.lua), derived from the
+-- records given on each call, nothing kept. The orders here only make the output deterministic; the screens
 -- apply their own. A record field of the wrong type is skipped for that part alone, logged once per call.
 local logger = require("logger")
 
@@ -60,16 +60,17 @@ local function warn(what, count, first)
     end
 end
 
--- One entry { name, books } per distinct author name as written; a book is in the entry of each
--- of its authors once, so a two-author book counts for both, and a book with no authors is in
--- none. Entries by lowercase name, then name; books by lowercase title, then id.
-function BookIndex.authors(records)
+-- One entry { name, books } per distinct name in each record's list field as written; a book is in
+-- the entry of each of its names once, and a book with an empty list is in none. Entries by lowercase
+-- name, then name; books by lowercase title, then id.
+local function by_names(records, field, what)
     local groups = {}
     local bad, first = 0, nil
     for _, record in ipairs(records) do
-        local malformed = type(record.authors) ~= "table"
+        local list = record[field]
+        local malformed = type(list) ~= "table"
         local seen = {}
-        for _, name in ipairs(malformed and {} or record.authors) do
+        for _, name in ipairs(malformed and {} or list) do
             if not is_name(name) then
                 malformed = true
             elseif not seen[name] then
@@ -83,8 +84,20 @@ function BookIndex.authors(records)
             first = first or record.id
         end
     end
-    warn("author", bad, first)
+    warn(what, bad, first)
     return entries_of(groups, by_title)
+end
+
+-- One entry { name, books } per distinct author name as written; a two-author book counts for both,
+-- and a book with no authors is in none. Ordered as by_names orders.
+function BookIndex.authors(records)
+    return by_names(records, "authors", "author")
+end
+
+-- One entry { name, books } per distinct subject as written, nothing merged or recased; a book is
+-- under each of its subjects, and a book with none is in none. Ordered as by_names orders.
+function BookIndex.subjects(records)
+    return by_names(records, "subjects", "subject")
 end
 
 -- One entry { name, books } per distinct series; books by ascending series_index, books with no

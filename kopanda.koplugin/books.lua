@@ -17,9 +17,9 @@ local STATUSES = { reading = true, abandoned = true, complete = true }
 local sources = {}
 
 -- The progress memo: a book's path to { file, modification, size, progress, props }, the sidecar file
--- findSidecarFile gave, its mtime and size, and what one open of it read (progress, and the title and
--- authors of its doc_props). An entry serves while path, mtime and size hold. Not pruned: a few
--- hundred bytes per book path read (Books.reset is for specs).
+-- findSidecarFile gave, its mtime and size, and what one open of it read (progress, and the title,
+-- authors and keywords of its doc_props). An entry serves while path, mtime and size hold. Not
+-- pruned: a few hundred bytes per book path read (Books.reset is for specs).
 local reads = {}
 
 -- f(...) caught: its result, or nil with the failure logged as what.
@@ -38,8 +38,9 @@ local function text(value)
     end
 end
 
--- Authors text, several separated by newlines (crengine's join, epubfmt.cpp:1179-1199), as a list
--- of names: each trimmed, runs of white space made one space, empty names dropped.
+-- Authors or keywords text, several separated by newlines (crengine's joins, epubfmt.cpp:1179-1199
+-- and :1201-1219), as a list of names: each trimmed, runs of white space made one space, empty names
+-- dropped.
 local function names(value)
     local list = {}
     if type(value) ~= "string" then
@@ -113,17 +114,22 @@ end
 
 -- The record of the file at path, from one getBookInfo call, then the sidecar, then the file name. The
 -- sidecar's doc_props are read always with always_sidecar, else only when the row gives no title or
--- no authors, by props_of(path); CoverBrowser's fields come first either way.
+-- no authors, by props_of(path); CoverBrowser's fields come first either way. Subjects are the
+-- keywords (document.lua:187,196).
 local function record(path, always_sidecar, props_of, index)
     local info, enabled = row(path)
     local title = info and text(info.title)
     local authors = names(info and info.authors)
+    local subjects = names(info and info.keywords)
     if always_sidecar or not title or #authors == 0 then
         local props = (props_of or sidecar_props)(path)
         if type(props) == "table" then
             title = title or text(props.title)
             if #authors == 0 then
                 authors = names(props.authors)
+            end
+            if #subjects == 0 then
+                subjects = names(props.keywords)
             end
         end
     end
@@ -133,6 +139,7 @@ local function record(path, always_sidecar, props_of, index)
         path = path,
         title = title or file_title(path),
         authors = authors,
+        subjects = subjects,
         series = info and text(info.series),
         series_index = info and tonumber(info.series_index),
         cover = cover_state(info, enabled),
@@ -157,6 +164,7 @@ local function source_books(source)
             copy.source = source.name
             copy.path = nil
             copy.authors = book.authors or {}
+            copy.subjects = book.subjects or {}
             copy.cover = book.cover == "cached" and "cached" or "none"
             records[#records + 1] = copy
         else
@@ -390,10 +398,10 @@ local function copy(progress)
     return out
 end
 
--- The title and authors of a sidecar's doc_props, each only when a non-empty string.
-local function title_authors(props)
+-- The title, authors and keywords of a sidecar's doc_props, each only when a non-empty string.
+local function record_props(props)
     if type(props) == "table" then
-        return { title = text(props.title), authors = text(props.authors) }
+        return { title = text(props.title), authors = text(props.authors), keywords = text(props.keywords) }
     end
 end
 
@@ -418,7 +426,7 @@ local function sidecar_read(path)
         modification = attributes.modification,
         size = attributes.size,
         progress = try("the progress of " .. path, sidecar_progress, doc, true) or { status = "reading" },
-        props = doc and title_authors(doc:readSetting("doc_props")),
+        props = doc and record_props(doc:readSetting("doc_props")),
     }
     reads[path] = doc and attributes.modification and read or nil
     return read
@@ -443,8 +451,8 @@ function Books.progress(book)
 end
 
 -- The record of the file at path and its progress, as Books.for_path and Books.progress give them,
--- with its sidecar opened once, and not again while the progress memo serves it: the title and
--- authors the record reads from the sidecar are the memo's.
+-- with its sidecar opened once, and not again while the progress memo serves it: the title, authors
+-- and keywords the record reads from the sidecar are the memo's.
 function Books.with_progress(path)
     if type(path) ~= "string" or lfs.attributes(path, "mode") ~= "file" then
         return nil

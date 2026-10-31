@@ -243,8 +243,9 @@ describe("Books", function()
             assert.same({ books = {}, folders = {} }, Books.folder(gone))
         end)
 
-        it("takes a listed book's title and authors from the sidecar when CoverBrowser gives none", function()
-            sidecar(a, '{ doc_props = { title = "Frankenstein", authors = "Mary Shelley" } }')
+        it("takes a listed book's title, authors and subjects from the sidecar when CoverBrowser gives none", function()
+            sidecar(a, '{ doc_props = { title = "Frankenstein", authors = "Mary Shelley",'
+                .. ' keywords = "Gothic fiction\\nHorror" } }')
             local function listed_a(records)
                 for _, record in ipairs(records) do
                     if record.path == a then
@@ -255,11 +256,13 @@ describe("Books", function()
             for _, record in ipairs({ listed_a(Books.folder(lib).books), listed_a(Books.all()) }) do
                 assert.equals("Frankenstein", record.title)
                 assert.same({ "Mary Shelley" }, record.authors)
+                assert.same({ "Gothic fiction", "Horror" }, record.subjects)
             end
             coverbrowser({ [a] = { title = "T" } })
             for _, record in ipairs({ listed_a(Books.folder(lib).books), listed_a(Books.all()) }) do
                 assert.equals("T", record.title)
                 assert.same({ "Mary Shelley" }, record.authors)
+                assert.same({ "Gothic fiction", "Horror" }, record.subjects)
             end
         end)
 
@@ -314,6 +317,7 @@ describe("Books", function()
                 path = a,
                 title = "a",
                 authors = {},
+                subjects = {},
                 cover = "none",
             }, Books.for_path(a))
             local dotted = book("Mr. Smith.v2.epub")
@@ -338,15 +342,16 @@ describe("Books", function()
         end)
 
         it("takes CoverBrowser's fields first, with one getBookInfo call without a cover", function()
-            sidecar(a, '{ doc_props = { title = "Sidecar title", authors = "Sidecar author" } }')
+            sidecar(a, '{ doc_props = { title = "Sidecar title", authors = "Sidecar author",'
+                .. ' keywords = "Sidecar subject" } }')
             local calls = coverbrowser({ [a] = {
                 title = "Frankenstein", authors = "Mary Shelley", series = "Gothic", series_index = 1.5,
-                cover_fetched = "Y", has_cover = "Y",
+                keywords = "Gothic fiction\nHorror", cover_fetched = "Y", has_cover = "Y",
             } })
             local record = Books.for_path(a)
             assert.same({
                 id = id_of(a), source = "file", path = a, title = "Frankenstein", authors = { "Mary Shelley" },
-                series = "Gothic", series_index = 1.5, cover = "cached",
+                subjects = { "Gothic fiction", "Horror" }, series = "Gothic", series_index = 1.5, cover = "cached",
             }, record)
             assert.equals(1, #calls.get)
             assert.equals(package.loaded["bookinfomanager"], calls.get[1].self)
@@ -368,11 +373,34 @@ describe("Books", function()
             assert.same({ "Sidecar author" }, Books.for_path(a).authors)
         end)
 
+        it("fills the subjects CoverBrowser leaves empty from a sidecar it reads", function()
+            sidecar(a, '{ doc_props = { keywords = "Sidecar subject" } }')
+            assert.same({ "Sidecar subject" }, Books.for_path(a).subjects)
+            coverbrowser({ [a] = { title = "Frankenstein", authors = "Mary Shelley", keywords = " \n " } })
+            assert.same({ "Sidecar subject" }, Books.for_path(a).subjects)
+            coverbrowser({ [a] = { title = "Frankenstein", authors = "Mary Shelley" } })
+            assert.same({ "Sidecar subject" }, Books.for_path(a).subjects)
+        end)
+
         it("splits authors on newlines, trimmed, white space squeezed, empty names dropped", function()
             coverbrowser({ [a] = { title = "T", authors = "A\n  B  \n\nC" } })
             assert.same({ "A", "B", "C" }, Books.for_path(a).authors)
             coverbrowser({ [a] = { title = "T", authors = "  Mary \t  Shelley \nPercy  Shelley" } })
             assert.same({ "Mary Shelley", "Percy Shelley" }, Books.for_path(a).authors)
+        end)
+
+        it("splits subjects on newlines, trimmed, white space squeezed, empty names dropped", function()
+            coverbrowser({ [a] = { title = "T", authors = "A", keywords = "Cooking\n  Baking  \n\nQuick \t meals" } })
+            assert.same({ "Cooking", "Baking", "Quick meals" }, Books.for_path(a).subjects)
+        end)
+
+        it("gives no subjects for a missing or empty keywords column and no sidecar's", function()
+            coverbrowser({ [a] = { title = "T", authors = "A" } })
+            assert.same({}, Books.for_path(a).subjects)
+            coverbrowser({ [a] = { title = "T", authors = "A", keywords = "" } })
+            assert.same({}, Books.for_path(a).subjects)
+            sidecar(a, '{ doc_props = { title = "T", keywords = 3 } }')
+            assert.same({}, Books.for_path(a).subjects)
         end)
 
         it("reads every cover state from the row", function()
@@ -569,6 +597,12 @@ describe("Books", function()
                 opened = 0
                 assert.equals("Dracula", Books.with_progress(b).title)
                 assert.equals(0, opened)
+            end)
+
+            it("gives Books.with_progress the sidecar's subjects", function()
+                sidecar(a, '{ doc_props = { keywords = "Gothic fiction\\nHorror" } }')
+                assert.same({ "Gothic fiction", "Horror" }, Books.with_progress(a).subjects)
+                assert.equals(1, opened)
             end)
 
             it("gives Books.with_progress a rewritten sidecar's title and authors, not the memo's", function()

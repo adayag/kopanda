@@ -1,7 +1,7 @@
--- What the Series and Authors screens list, in what order, in what state and on which page: the series
--- with their state, chip counts, next unread and author line; the authors by surname under their
--- letters; one author's books with their up-next marks; and the pagings by whole rows. Pure: records
--- in, tables out.
+-- What the Series, Authors and Subjects screens list, in what order, in what state and on which page: the
+-- series with their state, chip counts, next unread and author line; the authors by surname under their
+-- letters; one author's books with their up-next marks; the subjects by count; and the pagings by whole
+-- rows. Pure: records in, tables out.
 local BookIndex = require("book_index")
 local LibraryOrder = require("library_order")
 
@@ -163,6 +163,40 @@ function ShelfOrder.author_books(entry, series_entries, progress_of)
         end
     end
     return books, up_next
+end
+
+-- Most books first, then the title order of the name, then the name.
+local function by_subject(a, b)
+    if a.count ~= b.count then
+        return a.count > b.count
+    end
+    if a.key ~= b.key then
+        return a.key < b.key
+    end
+    return a.name < b.name
+end
+
+-- BookIndex.subjects' entries { name, books, count } in by_subject's order, count the number of books.
+function ShelfOrder.subjects(records)
+    local entries = {}
+    for _, group in ipairs(BookIndex.subjects(records)) do
+        entries[#entries + 1] = {
+            name = group.name,
+            books = group.books,
+            count = #group.books,
+            key = LibraryOrder.title_key(group.name),
+        }
+    end
+    table.sort(entries, by_subject)
+    for _, entry in ipairs(entries) do
+        entry.key = nil
+    end
+    return entries
+end
+
+-- A subject entry's books in the library grid's title order, as a new list.
+function ShelfOrder.subject_books(entry)
+    return LibraryOrder.view({ books = entry.books, folders = {} }, "title", "all", nil, {})
 end
 
 -- rows ({ h, group, group_cost }) as pages { first, last, rows, repeats } of runs that fit whole in

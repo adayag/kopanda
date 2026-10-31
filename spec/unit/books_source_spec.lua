@@ -70,8 +70,8 @@ describe("Books with a source", function()
     end
 
     local DUNE = {
-        id = "remote:dune", title = "Dune", authors = { "Frank Herbert" }, series = "Dune", series_index = 1,
-        cover = "cached", url = "https://example.invalid/dune",
+        id = "remote:dune", title = "Dune", authors = { "Frank Herbert" }, subjects = { "Science fiction" },
+        series = "Dune", series_index = 1, cover = "cached", url = "https://example.invalid/dune",
     }
     local EMMA = { id = "remote:emma", title = "Emma", authors = { "Jane Austen" } }
 
@@ -126,16 +126,18 @@ describe("Books with a source", function()
             local dune, emma = all[4], all[5]
             assert.same({
                 id = "remote:dune", source = "remote", title = "Dune", authors = { "Frank Herbert" },
-                series = "Dune", series_index = 1, cover = "cached", url = "https://example.invalid/dune",
+                subjects = { "Science fiction" }, series = "Dune", series_index = 1, cover = "cached",
+                url = "https://example.invalid/dune",
             }, dune)
             assert.same({ id = "remote:emma", source = "remote", title = "Emma", authors = { "Jane Austen" },
-                cover = "none" }, emma)
+                subjects = {}, cover = "none" }, emma)
         end)
 
-        it("gives a source's record without authors none, and drops a path it supplies", function()
+        it("gives a source's record without authors or subjects none, and drops a path it supplies", function()
             remote({ { id = "remote:x", title = "X", path = "/tmp/x.epub" } })
             local all = Books.all()
-            assert.same({ id = "remote:x", source = "remote", title = "X", authors = {}, cover = "none" }, all[4])
+            assert.same({ id = "remote:x", source = "remote", title = "X", authors = {}, subjects = {},
+                cover = "none" }, all[4])
         end)
 
         it("lists the source's books alone from a missing root", function()

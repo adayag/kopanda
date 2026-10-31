@@ -1,5 +1,6 @@
--- The author and series index over hand-built records: one entry per distinct name as written, a two-author book in
--- both entries, series books in series-index order with the unindexed last, ties by id, and nothing kept between calls.
+-- The author, series and subject index over hand-built records: one entry per distinct name as written, a
+-- two-author book in both entries, series books in series-index order with the unindexed last, ties by id, and
+-- nothing kept between calls.
 describe("BookIndex", function()
     local BookIndex = require("book_index")
     local logger = require("logger")
@@ -185,6 +186,54 @@ describe("BookIndex", function()
                 { "dune", { "d1" } },
                 { "Foundation", { "f1", "f2" } },
             }, shape(entries))
+        end)
+    end)
+
+    describe("subjects", function()
+        it("lists a book under each of its subjects, entries by lowercase name then name, books by title", function()
+            local salt = book("s", "Salt Fat Acid Heat", { subjects = { "Cooking", "Food" } })
+            local entries = BookIndex.subjects({
+                salt,
+                book("b", "baking basics", { subjects = { "Cooking" } }),
+                book("h", "Atomic Habits", { subjects = { "Self-help" } }),
+                book("u", "Untagged", { subjects = {} }),
+                book("l", "lowercase", { subjects = { "cooking" } }),
+                book("a", "Baking Basics", { subjects = { "Cooking" } }),
+            })
+            assert.same({
+                { "Cooking", { "a", "b", "s" } },
+                { "cooking", { "l" } },
+                { "Food", { "s" } },
+                { "Self-help", { "h" } },
+            }, shape(entries))
+            assert.equals(salt, entries[1].books[3])
+            assert.equals(salt, entries[3].books[1])
+            assert.equals(0, #logged)
+        end)
+
+        it("counts a subject listed twice in one book once", function()
+            local entries = BookIndex.subjects({ book("s", "Salt", { subjects = { "Cooking", "Cooking" } }) })
+            assert.same({ { "Cooking", { "s" } } }, shape(entries))
+        end)
+
+        it("skips subjects that aren't a list of names, logged once per call", function()
+            local entries = BookIndex.subjects({
+                book("s", "String subjects", { subjects = "Cooking" }),
+                book("o", "Odd names", { subjects = { 42, "", "Food", false } }),
+                book("n", "No field"),
+                book("c", "Cookbook", { subjects = { "Cooking" } }),
+            })
+            assert.same({ { "Cooking", { "c" } }, { "Food", { "o" } } }, shape(entries))
+            assert.equals(1, #logged)
+            assert.equals(3, logged[1][2])
+            assert.equals("s", logged[1][4])
+            logged = {}
+            BookIndex.subjects({ book("c", "Cookbook", { subjects = { "Cooking" } }) })
+            assert.equals(0, #logged)
+        end)
+
+        it("gives no entries for no records", function()
+            assert.same({}, BookIndex.subjects({}))
         end)
     end)
 

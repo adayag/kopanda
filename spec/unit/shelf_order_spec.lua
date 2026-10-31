@@ -1,7 +1,7 @@
--- What the Series and Authors screens list, in what order, in what state and on which page, on hand-built records: a
--- series' state, chip counts and next unread; the series list's order, under way first; a series' author line; the
--- authors' order and letters; one author's books in the library grid's series order with their up-next marks; and
--- the pagings by rows that fit whole.
+-- What the Series, Authors and Subjects screens list, in what order, in what state and on which page, on hand-built
+-- records: a series' state, chip counts and next unread; the series list's order, under way first; a series' author
+-- line; the authors' order and letters; one author's books in the library grid's series order with their up-next
+-- marks; the subjects by count and one subject's books in title order; and the pagings by rows that fit whole.
 describe("ShelfOrder", function()
     local harness = require("plugin_harness")
     local ShelfOrder
@@ -245,6 +245,56 @@ describe("ShelfOrder", function()
             assert.same({ 2, 1 }, { entries[1].count, entries[2].count })
             assert.same({ "1", "2" }, ids(entries[1].books))
             assert.same({ "1" }, ids(entries[2].books))
+        end)
+    end)
+
+    describe("subjects", function()
+        local function tagged(id, ...)
+            return book(id, "Book " .. id, { subjects = { ... } })
+        end
+
+        local function keys_of(entry)
+            local keys = {}
+            for k in pairs(entry) do
+                keys[#keys + 1] = k
+            end
+            table.sort(keys)
+            return keys
+        end
+
+        it("orders by count, most first, then the title order of the name, then name, with counts", function()
+            local entries = ShelfOrder.subjects({
+                tagged("1", "Fitness", "Cooking", "an Essay"),
+                tagged("2", "Fitness", "Cooking", "The Body"),
+                tagged("3", "Cooking", "Body", "Zen"),
+                tagged("4", "The Body", "Body"),
+                tagged("5"),
+            })
+            assert.same({ "Cooking", "Body", "The Body", "Fitness", "an Essay", "Zen" }, names(entries))
+            local counts = {}
+            for i, entry in ipairs(entries) do
+                counts[i] = entry.count
+            end
+            assert.same({ 3, 2, 2, 2, 1, 1 }, counts)
+            assert.same({ "1", "2", "3" }, ids(entries[1].books))
+            for _, entry in ipairs(entries) do
+                assert.same({ "books", "count", "name" }, keys_of(entry), entry.name)
+            end
+        end)
+
+        it("gives no entries for an untagged library", function()
+            assert.same({}, ShelfOrder.subjects({ tagged("1"), tagged("2") }))
+        end)
+    end)
+
+    describe("subject_books", function()
+        it("lists a subject's books in the library's title order, a leading article dropped", function()
+            local entry = ShelfOrder.subjects({
+                book("omelette", "An Omelette", { subjects = { "Cooking" } }),
+                book("banana", "Banana Bread", { subjects = { "Cooking" } }),
+                book("apple", "The Apple Cookbook", { subjects = { "Cooking" } }),
+            })[1]
+            assert.same({ "apple", "banana", "omelette" }, ids(ShelfOrder.subject_books(entry)))
         end)
     end)
 

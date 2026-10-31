@@ -225,6 +225,46 @@ describe("shelf rows", function()
             end)
         end)
 
+        -- A subject's row: an entry with no state, its sub-line the screen's text.
+        it("draws no chip and the entry's sub-line for an entry with no state, at the series row's height", function()
+            covers()
+            harness.at_colorsoft(function()
+                for _, id in ipairs(IDS) do
+                    local ctx = ctx_for(id)
+                    local width = row_width(ctx)
+                    local subject = { name = "Cooking", books = { FIFTH, OBELISK, STONE }, sub = "12 books" }
+                    local built = ShelfRows.series(subject, width, ctx)
+                    assert.same({ "Cooking" }, texts(built.name), id)
+                    assert.same({ "12 books" }, texts(built.sub), id)
+                    assert.is_nil(built.chip, id)
+                    assert.equals(3, #built.covers, id)
+                    assert.equals(ShelfRows.height("series", width, ctx), built:getSize().h, id)
+                    built:free()
+                end
+            end)
+        end)
+
+        it("gives a stateless row's name and sub-line the chip's room", function()
+            covers()
+            harness.at_colorsoft(function()
+                for _, id in ipairs(IDS) do
+                    local ctx = ctx_for(id)
+                    local width = row_width(ctx)
+                    local long = string.rep("The Long Way to a Small Angry Planet ", 4)
+                    local stated = ShelfRows.series(entry{ name = long, author = long }, width, ctx)
+                    local stateless = ShelfRows.series({ name = long, books = { FIFTH }, sub = long }, width, ctx)
+                    for _, part in ipairs({ "name", "sub" }) do
+                        local line = stateless[part]
+                        assert.is_true(line:isTruncated(), id .. " " .. part)
+                        assert.is_true(line:getSize().w > stated[part]:getSize().w, id .. " " .. part)
+                        assert.is_true(stateless:place(line).x + line:getSize().w <= width, id .. " " .. part)
+                    end
+                    stated:free()
+                    stateless:free()
+                end
+            end)
+        end)
+
         -- Up to three covers, the first in series order in front, left-most and lowest; a series of one has one cover
         -- and no offset.
         it("stacks one, two or three covers with the first in front", function()

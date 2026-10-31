@@ -216,7 +216,9 @@ local function series_content_h(ctx)
 end
 
 -- The series list's row for entry (ShelfOrder.series's entries), width wide: the stack, the name and
--- sub-line each cut to one line, and the state's chip. Keeps stack, covers, name, sub and chip.
+-- sub-line each cut to one line, and the state's chip. An entry with no state (a subject's) draws no
+-- chip, its sub-line entry.sub, the name and sub-line taking the chip's room. Keeps stack, covers,
+-- name, sub and chip (nil where not drawn).
 function ShelfRows.series(entry, width, ctx)
     local look = ctx.look
     local f = frame(ctx)
@@ -231,21 +233,27 @@ function ShelfRows.series(entry, width, ctx)
     row.stack = add(row, the_stack, x0, y0 + math.floor((content_h - stack_size.h) / 2))
     row.covers = covers
 
-    local spec = SERIES_CHIPS[entry.state] or { kind = "under_way",
-        text = (entry.complete or 0) .. " of " .. (entry.total or #(entry.books or {})) }
     local text_x = x0 + stack_size.w + f.gap
-    local the_chip = chip(spec.kind, spec.text, math.max(1, right - text_x), ctx)
-    local chip_size = the_chip:getSize()
-    local chip_x = right - chip_size.w
-
-    local text_w = math.max(1, chip_x - f.gap - text_x)
+    local the_chip, chip_size, chip_x
+    local text_w, sub = math.max(1, right - text_x), entry.sub or ""
+    if entry.state ~= nil then
+        local spec = SERIES_CHIPS[entry.state] or { kind = "under_way",
+            text = (entry.complete or 0) .. " of " .. (entry.total or #(entry.books or {})) }
+        the_chip = chip(spec.kind, spec.text, text_w, ctx)
+        chip_size = the_chip:getSize()
+        chip_x = right - chip_size.w
+        text_w = math.max(1, chip_x - f.gap - text_x)
+        sub = sub_line(entry)
+    end
     row.name = Typeset.line(look.type.series_name, entry.name or "", text_w, ctx)
-    row.sub = Typeset.line(look.type.series_sub, sub_line(entry), text_w, ctx)
+    row.sub = Typeset.line(look.type.series_sub, sub, text_w, ctx)
     local name_h, line_gap = row.name:getSize().h, Paint.scaler(ctx)(look.shelf.row.line_gap)
     local text_y = y0 + math.floor((content_h - (name_h + line_gap + row.sub:getSize().h)) / 2)
     add(row, row.name, text_x, text_y)
     add(row, row.sub, text_x, text_y + name_h + line_gap)
-    row.chip = add(row, the_chip, chip_x, y0 + math.floor((content_h - chip_size.h) / 2))
+    if the_chip then
+        row.chip = add(row, the_chip, chip_x, y0 + math.floor((content_h - chip_size.h) / 2))
+    end
     add_rule(row, width, h, f.rule, look.shelf.row.rule_color, ctx)
     return row
 end

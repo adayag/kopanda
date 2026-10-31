@@ -76,6 +76,7 @@ describe("Books against the real CoverBrowser", function()
                 path = fixture(entry.file),
                 title = entry.file:gsub("%.epub$", ""),
                 authors = {},
+                subjects = {},
                 cover = "missing",
             }, all[i])
         end
