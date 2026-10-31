@@ -1,8 +1,9 @@
 -- The library window's view: what it draws for a folder at a page, built on the chrome's frame
 -- (library_chrome.lua) with the parts its gestures and covers read. The header holds the count, "Library"
--- or the back mark and the folder's name, and the sort and status pickers; then two rows of three tiles
--- (library_tiles.lua) or the empty note, and the chrome's pager and nav bar. What a folder shows, in what
--- order, is library_order.lua's. Lengths are board pixels; the text follows ctx.text_size, as the tiles' does.
+-- or the back mark and the folder's name, and the sort and status pickers; then the rows of three tiles
+-- (library_tiles.lua) that fit above the pager, or the empty note; then the chrome's pager and nav bar. What a
+-- folder shows, in what order, is library_order.lua's. Lengths are board pixels; the text follows
+-- ctx.text_size, as the tiles' does.
 local Books = require("books")
 local Geom = require("ui/geometry")
 local Helpers = require("helpers")
@@ -10,6 +11,7 @@ local Icons = require("icons")
 local LibraryChrome = require("library_chrome")
 local LibraryOrder = require("library_order")
 local LibraryTiles = require("library_tiles")
+local NavBar = require("nav_bar")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
 local ffiutil = require("ffi/util")
@@ -183,8 +185,6 @@ local function fill(built, frame, w)
     local kept = keep(built.kept, built.dir, choice)
     built.kept = kept
     local listing, items = kept.listing, kept.items
-    local slice
-    slice, built.pages, built.page = LibraryOrder.page(items, built.page)
     local header_box
     header_box, built.header = header(built, w, #items - #listing.folders, choice)
     add(frame, header_box, 0, 0)
@@ -192,10 +192,16 @@ local function fill(built, frame, w)
     local box = LibraryTiles.geometry(w, ctx)
     built.box = box
     local top = built.header.rect.h + scale(grid.padding_top)
+    local gap = scale(grid.row_gap)
+    local available = built.dimen.h - NavBar.height(look, Screen, ctx.text_size) - LibraryTiles.pager_height(ctx)
+        - top
+    local rows = math.max(1, math.floor((available + gap) / (box.height + gap)))
+    local slice
+    slice, built.pages, built.page = LibraryOrder.page(items, built.page, rows * #box.columns)
     built.tiles = {}
     for i, item in ipairs(slice) do
         local x = box.columns[(i - 1) % #box.columns + 1].x
-        local y = top + math.floor((i - 1) / #box.columns) * (box.height + scale(grid.row_gap))
+        local y = top + math.floor((i - 1) / #box.columns) * (box.height + gap)
         local tile = { rect = Geom:new{ x = x, y = y, w = box.cover_w, h = box.height } }
         if item.id then
             tile.kind, tile.record = "book", item

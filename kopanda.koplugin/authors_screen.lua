@@ -88,7 +88,7 @@ local function plan_author(self, p, page, w, ctx)
     p.header_h = LibraryChrome.detail_header_height(ctx)
     p.box = LibraryTiles.geometry(w, ctx, ctx.look.shelf.author_grid.cover_h)
     p.top = p.header_h + scale(ctx.look.library.grid.padding_top)
-    p.slice, p.pages, p.page = LibraryOrder.page(p.books, page)
+    p.slice, p.pages, p.page = LibraryOrder.page(p.books, page, 6)
 end
 
 -- The list's part of the plan: a row per author, each a letter group's member with that group's cost

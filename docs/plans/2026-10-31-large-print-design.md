@@ -65,7 +65,8 @@ Each written first and seen failing.
   `npm run schema` regenerates `studio/src/schema.json`.
 - Surface specs (`nav_bar_spec`, `library_tiles_spec`, `sheet_spec`, `quick_settings_spec`): the
   height at `extra_large` exceeds the height at `medium`.
-- `spec/unit/library_order_spec.lua`: pages hold rows that fit times three, at least one row.
+- `spec/unit/library_order_spec.lua`: a page slices the count it is given. `spec/unit/library_screen_spec.lua`:
+  pages hold rows that fit times three, at least one row; six at Medium on both devices in every look.
 - `spec/unit/looks_spec.lua` keeps checking Editorial's token paths; the new values take no test.
 - Emulator: the 7th gen in `home_capture_spec.lua`; the new Extra large capture; the paint budget
   unchanged; `bin/preview` on the 7th gen at Extra large as the smoke render.

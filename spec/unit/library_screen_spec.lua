@@ -1,6 +1,6 @@
 -- The library window: its header (the count in each look's words under the status,
 -- the title or the back mark and the folder's name, the pickers' labels), the page's tiles in three
--- columns and two rows, the pager and its dead arrows, the empty note, the nav bar with Library
+-- columns and the rows that fit, the pager and its dead arrows, the empty note, the nav bar with Library
 -- active, its rebuild on a variant or size change, its re-listing on the metadata events, and its
 -- settled signal. Books.folder and Books.progress are stubbed with listings under a root that exists
 -- nowhere (spec/library_fixture.lua).
@@ -211,6 +211,49 @@ describe("the library window", function()
                     }, tile.rect, id .. " tile " .. i)
                 end
                 harness.teardown()
+            end)
+        end)
+
+        local function each_profile_look(profiles, fn)
+            for _, profile in ipairs(profiles) do
+                profile[2](function()
+                    for _, id in ipairs(Looks.ids()) do
+                        assert.is_true(Settings.set("look", id))
+                        fn(profile[1] .. " " .. id)
+                    end
+                end)
+            end
+        end
+
+        it("holds six at medium on the Colorsoft and the Paperwhite in every look", function()
+            fixture.install({ [ROOT] = { books = fixture.books(7) } })
+            each_profile_look({ { "colorsoft", harness.at_colorsoft }, { "paperwhite", harness.at_paperwhite } },
+                function(where)
+                    local library = Library.show{ dir = ROOT }
+                    assert.same({ 6, 2 }, { #library.tiles, library.pages }, where)
+                    Library.close()
+                end)
+        end)
+
+        it("holds the rows that fit above the pager, three tiles each, at extra large", function()
+            fixture.install({ [ROOT] = { books = fixture.books(40) } })
+            assert.is_true(Settings.set("text_size", "extra_large"))
+            each_profile_look({ { "colorsoft", harness.at_colorsoft }, { "paperwhite", harness.at_paperwhite },
+                { "paperwhite7", function(fn) harness.at_screen(1072, 1448, fn) end } }, function(where)
+                local library = Library.show{ dir = ROOT }
+                local box, grid = library.box, library.ctx.look.library.grid
+                local per_page = #library.tiles
+                local rows = per_page / 3
+                local pager_top = library.nav.dimen.y - LibraryTiles.pager_height(library.ctx)
+                local last = library.tiles[per_page].rect
+                local next_row = last.y + last.h + scale(grid.row_gap) + box.height
+                assert.is_true(rows >= 1 and rows == math.floor(rows), where)
+                local bottom = last.y + last.h
+                assert.is_true(bottom <= pager_top,
+                    ("%s: the last tile's bottom %d below the pager's top %d"):format(where, bottom, pager_top))
+                assert.is_true(next_row > pager_top, where .. ": another row fits")
+                assert.equals(math.ceil(40 / per_page), library.pages, where)
+                Library.close()
             end)
         end)
 

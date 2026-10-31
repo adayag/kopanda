@@ -1,6 +1,6 @@
 -- What a library folder shows, in what order, on which page, and what the library remembers. Folders first
 -- by the title order of their names, then the books the status keeps in the sort's order; every order ends
--- on id, so it is total. Pages hold six items. The memory is the runtime state file's one key `library` =
+-- on id, so it is total. The memory is the runtime state file's one key `library` =
 -- { folders = { [realpath] = { sort, status } }, at = { dir, page }, hidden = { [realpath] = true } };
 -- never a setting. State: this session's choices, read before the file, so one whose write failed still holds.
 local BookIndex = require("book_index")
@@ -10,7 +10,6 @@ local logger = require("logger")
 
 local LibraryOrder = {}
 
-local PER_PAGE = 6
 local SORTS = { recent = true, title = true, author = true, series = true }
 -- Each status's sidecar status (Books.progress); All keeps every book.
 local STATUSES = { reading = "reading", finished = "complete", all = true }
@@ -164,17 +163,20 @@ function LibraryOrder.history_times()
     return times
 end
 
--- Page n of items, six to a page; the page count, at least 1; and n clamped into 1 to the count,
--- a missing or NaN n read as 1.
-function LibraryOrder.page(items, n)
-    local count = math.max(1, math.ceil(#items / PER_PAGE))
+-- Page n of items, per_page to a page (one that is no whole number of at least 1 read as 1); the page
+-- count, at least 1; and n clamped into 1 to the count, a missing or NaN n read as 1.
+function LibraryOrder.page(items, n, per_page)
+    if type(per_page) ~= "number" or per_page < 1 or per_page ~= math.floor(per_page) then
+        per_page = 1
+    end
+    local count = math.max(1, math.ceil(#items / per_page))
     n = tonumber(n)
     if n == nil or n ~= n then
         n = 1
     end
     n = math.max(1, math.min(count, math.floor(n)))
     local slice = {}
-    for i = PER_PAGE * (n - 1) + 1, math.min(#items, PER_PAGE * n) do
+    for i = per_page * (n - 1) + 1, math.min(#items, per_page * n) do
         slice[#slice + 1] = items[i]
     end
     return slice, count, n
