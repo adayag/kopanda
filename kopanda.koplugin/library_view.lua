@@ -1,8 +1,8 @@
 -- The library window's view: what it draws for a folder at a page, built on the chrome's frame
 -- (library_chrome.lua) with the parts its gestures and covers read. The header holds the count, "Library"
--- or the back mark and the folder's name, and the sort and status pickers; then the rows of three tiles
--- (library_tiles.lua) that fit above the pager, or the empty note; then the chrome's pager and nav bar. What a
--- folder shows, in what order, is library_order.lua's. Lengths are board pixels; the text follows
+-- or the back mark and the folder's name, the sort and status pickers and the search chip; then the rows of
+-- three tiles (library_tiles.lua) that fit above the pager, or the empty note; then the chrome's pager and nav
+-- bar. What a folder shows, in what order, is library_order.lua's. Lengths are board pixels; the text follows
 -- ctx.text_size, as the tiles' does.
 local Books = require("books")
 local Geom = require("ui/geometry")
@@ -50,36 +50,50 @@ end
 
 local new_box, add, tools = LibraryChrome.box, LibraryChrome.add, LibraryChrome.tools
 
--- A picker: its label in part, then the chevron_down mark sized to the label's line in the
--- label's colour, inside the header's picker padding and outline, on fill, rounded by the
--- header's picker radius where it has one (Toybox's pills). Returns the chip and { label, mark }.
-local function picker(part, text, fill, ctx)
+-- A header chip: widgets side by side, top-aligned, inside the header's picker padding and outline, on fill,
+-- rounded by the header's picker radius where it has one (Toybox's pills).
+local function chip(widgets, fill, ctx)
     local scale, color = tools(ctx)
     local tokens = ctx.look.library.header
     local outline_color = color(tokens.picker_outline_color)
     local outline = outline_color and scale(tokens.picker_outline_width) or 0
     local pad_x, pad_y = outline + scale(tokens.picker_padding.x), outline + scale(tokens.picker_padding.y)
-    local label = Typeset.line(part, text, Screen:getWidth(), ctx)
-    local size = label:getSize()
-    local mark = TintedIcon:new{ file = Icons.path("chevron_down"), size = size.h, color = color(part.color) }
-    local chip = new_box(size.w + size.h + 2 * pad_x, size.h + 2 * pad_y, color(fill), outline, outline_color)
-    if tokens.picker_radius > 0 then
-        chip.radius = scale(tokens.picker_radius)
-        chip.fill_radius = chip.radius
+    local w, h = 0, 0
+    for _, widget in ipairs(widgets) do
+        local size = widget:getSize()
+        w, h = w + size.w, math.max(h, size.h)
     end
-    add(chip, label, pad_x, pad_y)
-    add(chip, mark, pad_x + size.w, pad_y)
-    return chip, { label = label, mark = mark }
+    local box = new_box(w + 2 * pad_x, h + 2 * pad_y, color(fill), outline, outline_color)
+    if tokens.picker_radius > 0 then
+        box.radius = scale(tokens.picker_radius)
+        box.fill_radius = box.radius
+    end
+    local x = pad_x
+    for _, widget in ipairs(widgets) do
+        add(box, widget, x, pad_y)
+        x = x + widget:getSize().w
+    end
+    return box
+end
+
+-- A picker: a chip of its label in part, then the chevron_down mark sized to the label's line in the label's
+-- colour. Returns the chip and { label, mark }.
+local function picker(part, text, fill, ctx)
+    local _, color = tools(ctx)
+    local label = Typeset.line(part, text, Screen:getWidth(), ctx)
+    local mark = TintedIcon:new{ file = Icons.path("chevron_down"), size = label:getSize().h,
+        color = color(part.color) }
+    return chip({ label, mark }, fill, ctx), { label = label, mark = mark }
 end
 
 -- The header, w wide, LibraryTiles.header_height tall: the chrome's header frame (LibraryChrome.header),
 -- the count over the title in its left column, the back mark before the folder's name inside a sub-folder,
--- and the status and sort pickers at the right. Returns the header and its parts: the frame's, count,
--- sort and status ({ rect, hit, label, mark }), and text ({ count, title, sort, status }), which the
--- empty-space sheet's header and chips repeat.
+-- and the status and sort pickers and the search chip at the right. Returns the header and its parts: the
+-- frame's, count, sort and status ({ rect, hit, label, mark }), search ({ rect, hit, icon }), and text
+-- ({ count, title, sort, status }), which the empty-space sheet's header and chips repeat.
 local function header(built, w, books, choice)
     local ctx = built.ctx
-    local scale = tools(ctx)
+    local scale, color = tools(ctx)
     local look = ctx.look
     local tokens = look.library.header
     local sub = not LibraryView.same_dir(built.dir, LibraryView.root())
@@ -88,24 +102,26 @@ local function header(built, w, books, choice)
         status = STATUS_LABELS[choice.status] }
     local status_chip, status = picker(look.type.library_picker_status, text.status, tokens.status_fill_color, ctx)
     local sort_chip, sort = picker(look.type.library_picker, text.sort, tokens.sort_fill_color, ctx)
+    local search = { icon = TintedIcon:new{ file = Icons.path("search"), size = sort.label:getSize().h,
+        color = color(look.type.library_picker.color) } }
     local box, parts = LibraryChrome.header(ctx, w, {
         height = LibraryTiles.header_height(ctx),
         band = tokens.fill_color,
-        right = { status_chip, sort_chip },
+        right = { status_chip, sort_chip, chip({ search.icon }, tokens.sort_fill_color, ctx) },
         aside = { part = look.type.library_count, text = text.count },
         title = { part = look.type.library_title, text = text.title },
         back = sub,
     })
     parts.text = text
-    status.rect, sort.rect = parts.right[1], parts.right[2]
-    -- Where a tap opens each picker: its chip, reaching down through the padding to the edge, as far up, and
+    status.rect, sort.rect, search.rect = parts.right[1], parts.right[2], parts.right[3]
+    -- Where a tap reaches each chip: the chip, reaching down through the padding to the edge, as far up, and
     -- halfway across the gap at each side, so Editorial's unpadded label line is not the whole target.
     local gap, reach = scale(tokens.picker_gap), scale(tokens.padding.bottom)
-    for _, part in ipairs({ sort, status }) do
+    for _, part in ipairs({ sort, status, search }) do
         part.hit = Geom:new{ x = part.rect.x - math.floor(gap / 2), y = part.rect.y - reach,
             w = part.rect.w + 2 * math.floor(gap / 2), h = part.rect.h + 2 * reach }
     end
-    parts.sort, parts.status, parts.count = sort, status, parts.aside
+    parts.sort, parts.status, parts.search, parts.count = sort, status, search, parts.aside
     return box, parts
 end
 

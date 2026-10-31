@@ -63,7 +63,8 @@ function Library:back()
 end
 
 -- The action a tap at pos on the library's own parts runs, or nil: a book with a file opens; a
--- book without one does nothing; a folder shows at its page; a picker runs Library.on_picker.
+-- book without one does nothing; a folder shows at its page; a picker runs Library.on_picker; the
+-- search chip asks for a search from the folder and page shown.
 function Library:action_at(pos)
     for _, tile in ipairs(self.tiles) do
         if Helpers.inside(tile.rect, pos) then
@@ -86,17 +87,25 @@ function Library:action_at(pos)
             end
         end
     end
+    if Helpers.inside(self.header.search.hit, pos) then
+        return function()
+            require("search_screen").ask({ dir = self.dir, page = self.page })
+        end
+    end
     return nil
 end
 
 -- What lies at (x, y) on the shown library: { kind = "book", record }, { kind = "folder",
--- folder } or { kind = "empty" }; nil with no library shown.
+-- folder } or { kind = "empty" }; nil with no library shown or on the search chip, whose hold opens nothing.
 function Library.hit(x, y)
     local library = Library.shown
     if not library then
         return nil
     end
     local pos = { x = x, y = y }
+    if Helpers.inside(library.header.search.hit, pos) then
+        return nil
+    end
     for _, tile in ipairs(library.tiles) do
         if Helpers.inside(tile.rect, pos) then
             if tile.record then

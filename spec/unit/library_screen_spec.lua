@@ -181,6 +181,111 @@ describe("the library window", function()
                 harness.teardown()
             end)
         end)
+
+        it("puts the search chip left of the sort picker and right of the title column, as tall as the pickers",
+            function()
+            fixture.install({ [ROOT] = { books = fixture.books(2) } })
+            each_look(function(id)
+                local library = fixture.show()
+                local ctx, header = library.ctx, library.header
+                local gap = scale(ctx.look.library.header.picker_gap)
+                local search, sort = header.search.rect, header.sort.rect
+                assert.equals(sort.x - gap, search.x + search.w, id)
+                assert.same({ sort.y, sort.h }, { search.y, search.h }, id)
+                assert.equals(line_h(ctx.look.type.library_picker, ctx), header.search.icon.size, id)
+                local title_end = header.title_place.x + header.title:getSize().w
+                assert.is_true(title_end <= search.x - gap, id)
+                harness.teardown()
+            end)
+        end)
+
+        it("reaches the search chip's tap as far round it as the pickers' reach", function()
+            fixture.install({ [ROOT] = { books = fixture.books(2) } })
+            each_look(function(id)
+                local header = fixture.show().header
+                local function reach(part)
+                    return { part.rect.x - part.hit.x, part.rect.y - part.hit.y, part.hit.w - part.rect.w,
+                        part.hit.h - part.rect.h }
+                end
+                assert.same(reach(header.sort), reach(header.search), id)
+                assert.truthy(header.search.hit.h > header.search.rect.h, id)
+                assert.truthy(header.search.hit.x + header.search.hit.w <= header.sort.hit.x, id)
+                harness.teardown()
+            end)
+        end)
+
+        it("asks for a search from the folder and page shown on a tap inside the chip, and not just outside it",
+            function()
+            local sub = fixture.folder("Sci-fi")
+            fixture.install({ [ROOT] = { folders = { sub } }, [sub.path] = { books = fixture.books(8, sub.path) } })
+            local library = fixture.show(sub.path, 2)
+            local asked = {}
+            require("search_screen").ask = function(from)
+                asked[#asked + 1] = from
+            end
+            local picked = {}
+            Library.on_picker = function(kind)
+                picked[#picked + 1] = kind
+            end
+            local function tap(x, y)
+                UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", x, y)))
+            end
+            local hit = library.header.search.hit
+            local _, mid_y = fixture.centre(hit)
+            tap(fixture.centre(library.header.search.rect))
+            assert.same({ { dir = sub.path, page = 2 } }, asked)
+            tap(hit.x, hit.y)
+            tap(hit.x + hit.w - 1, hit.y + hit.h - 1)
+            assert.equals(3, #asked)
+            tap(fixture.centre(library.header.sort.rect))
+            tap(fixture.centre(library.header.status.rect))
+            assert.same({ "sort", "status" }, picked)
+            assert.same({ sub.path, 2 }, { library.dir, library.page })
+            tap(hit.x - 1, mid_y)
+            tap(hit.x + hit.w / 2, hit.y - 1)
+            assert.equals(3, #asked)
+        end)
+
+        it("opens no sheet on a hold on the search chip, and the empty-space sheet on a picker", function()
+            fixture.install({ [ROOT] = { books = fixture.books(2) } })
+            local library = fixture.show()
+            local Sheet = package.loaded["sheet"]
+            local hit = library.header.search.hit
+            assert.is_nil(Library.hit(fixture.centre(hit)))
+            assert.is_nil(Library.hit(hit.x, hit.y))
+            assert.is_nil(Library.hit(hit.x + hit.w - 1, hit.y + hit.h - 1))
+            local x, y = fixture.centre(library.header.search.rect)
+            UIManager:sendEvent(Event:new("Gesture", harness.gesture("hold", x, y)))
+            assert.is_nil(Sheet.shown)
+            assert.equals(library, harness.top())
+            assert.same({ kind = "empty" }, Library.hit(fixture.centre(library.header.sort.rect)))
+        end)
+
+        it("fits the three chips beside the whole title at medium and extra large on the 7th gen in every look",
+            function()
+            fixture.install({ [ROOT] = { books = fixture.books(2) } })
+            harness.at_screen(1072, 1448, function()
+                for _, size in ipairs({ "medium", "extra_large" }) do
+                    assert.is_true(Settings.set("text_size", size))
+                    for _, id in ipairs(Looks.ids()) do
+                        assert.is_true(Settings.set("look", id))
+                        local where = id .. " " .. size
+                        local library = Library.show{ dir = ROOT }
+                        local header = library.header
+                        local side = scale(library.ctx.look.library.header.padding.side)
+                        local gap = scale(library.ctx.look.library.header.picker_gap)
+                        assert.equals("Library", fixture.text(header.title), where)
+                        assert.is_true(header.title:getSize().w > 0, where)
+                        local title_end = header.title_place.x + header.title:getSize().w
+                        assert.is_true(title_end <= header.search.rect.x - gap, where)
+                        assert.is_true(header.search.rect.x >= side, where)
+                        local status = header.status.rect
+                        assert.equals(Screen:getWidth() - side, status.x + status.w, where)
+                        Library.close()
+                    end
+                end
+            end)
+        end)
     end)
 
     describe("the page", function()
