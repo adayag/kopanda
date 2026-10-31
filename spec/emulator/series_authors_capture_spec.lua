@@ -1,12 +1,12 @@
--- The Series and Authors views' paint budget: each of the four views (Series list, one series, Authors list, one
--- author) in Diner on the Colorsoft, over a capture library this spec builds in its scratch space: the three fixture
--- books under their own names and copies of one of them under the names the scenario's catalogue lists, so
--- spec/fixtures/library/ is not changed. The home fixture patch (at empty) freezes the clock and stores the look; the
--- scenario patch stores the capture library as the home folder, writes the sidecars, adds one path-less book,
--- extracts every book's row and gives each copy its scripted metadata before any window shows, and shows the view's
--- window directly once the home settles, so the window's one settled signal is the shot. The look is passed empty so
--- a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
-describe("the series and authors views", function()
+-- The Series, Authors and search views' paint budget: each of the five views (Series list, one series, Authors list,
+-- one author, the search's results) in Diner on the Colorsoft, over a capture library this spec builds in its scratch
+-- space: the three fixture books under their own names and copies of one of them under the names the scenario's
+-- catalogue lists, so spec/fixtures/library/ is not changed. The home fixture patch (at empty) freezes the clock and
+-- stores the look; the scenario patch stores the capture library as the home folder, writes the sidecars, adds one
+-- path-less book, extracts every book's row and gives each copy its scripted metadata before any window shows, and
+-- shows the view's window directly once the home settles, so the window's one settled signal is the shot. The look is
+-- passed empty so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
+describe("the series, authors and search views", function()
     require("commonrequire")
     local lfs = require("libs/libkoreader-lfs")
     local driver = require("emulator.driver")
@@ -35,6 +35,7 @@ describe("the series and authors views", function()
         { view = "series-books", screen = "series" },
         { view = "authors-list", screen = "authors" },
         { view = "author-books", screen = "authors" },
+        { view = "search-books", screen = "search" },
     }
 
     local function quote(s)
@@ -106,8 +107,8 @@ describe("the series and authors views", function()
             assert.equals(scenario_opts.screen, sidecar.screen)
             assert.is_number(sidecar.paint_ms)
             assert.truthy(sidecar.paint_ms > 0)
-            print(string.format("%s paint on colorsoft: paint_ms=%s", scenario_opts.view,
-                tostring(sidecar.paint_ms)))
+            print(string.format("%s paint on colorsoft: paint_ms=%s png=%s", scenario_opts.view,
+                tostring(sidecar.paint_ms), result.png))
             assert.truthy(sidecar.paint_ms <= PAINT_BUDGET_MS,
                 string.format("paint_ms %s over the %d ms budget", tostring(sidecar.paint_ms), PAINT_BUDGET_MS))
             local log = read(result.log)

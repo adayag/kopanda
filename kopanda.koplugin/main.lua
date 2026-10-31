@@ -17,6 +17,7 @@ local MenuEntries = require("menu_entries")
 local PaintClock = require("paint_clock")
 local PushNotice = require("push_notice")
 local SchemaMenu = require("menu")
+local SearchScreen = require("search_screen")
 local SeriesScreen = require("series_screen")
 local State = require("state")
 local StudioMenu = require("studio_menu")
@@ -29,6 +30,7 @@ local time = require("ui/time")
 -- use them get them from the require cache.
 require("book_covers")
 require("book_index")
+require("book_search")
 require("book_sheet")
 require("books")
 require("cloud_books")
@@ -215,7 +217,7 @@ end
 -- The Series and Authors windows, by the screen a return names.
 local SHELVES = { series = SeriesScreen, authors = AuthorsScreen }
 
--- Shows a window of cls (SeriesScreen or AuthorsScreen) with opts unless the file manager has gone since
+-- Shows a window of cls (SeriesScreen, AuthorsScreen or SearchScreen) with opts unless the file manager has gone since
 -- the show was asked for; the window's show closes the home. Like the library's, it takes no part in the
 -- boot guard; one that fails to build is logged by the chrome and the file browser left up.
 local function show_shelf(cls, opts)
@@ -233,6 +235,11 @@ end
 -- The Authors window with opts (AuthorsScreen.show's), as show_shelf.
 function KoPanda:showAuthors(opts)
     show_shelf(AuthorsScreen, opts)
+end
+
+-- The library search's results with opts (SearchScreen.show's), as show_shelf.
+function KoPanda:showSearch(opts)
+    show_shelf(SearchScreen, opts)
 end
 
 -- The window a book's close returns to and the fields it is built with: the library at the folder and page
@@ -363,13 +370,14 @@ end
 
 -- The file manager closing (quit, or a book opening) takes the home and the chrome window with it; a window
 -- left on the stack would keep KOReader from quitting. A return recorded by an open that never closed the
--- file manager is dropped once the window it names has closed.
+-- file manager is dropped once the window it was opened from has closed (the library's, from the library or
+-- the search window).
 function KoPanda:onCloseWidget()
     if self.refused then
         return
     end
     if self.in_fm then
-        if not Library.shown then
+        if not (Library.shown or SearchScreen.shown) then
             Library.return_to = nil
         end
         local back = LibraryChrome.return_to

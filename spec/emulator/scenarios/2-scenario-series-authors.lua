@@ -33,25 +33,36 @@
 --   - wraps BookInfoManager:extractInBackground to log each batch asked for, so the spec can
 --     prove the windows asked for no extraction and nothing arrived to repaint them.
 -- On the first home's settled signal, from the next tick, it shows, per KOPANDA_SHELF_VIEW, the
--- window directly at its view through the plugin (KoPanda:showSeries, KoPanda:showAuthors), so
--- that window's one settled signal is the capture's:
+-- window directly at its view through the plugin (KoPanda:showSeries, KoPanda:showAuthors,
+-- KoPanda:showSearch), so that window's one settled signal is the capture's:
 --   - series-list: the Series list at its first page;
 --   - series-books: the series SERIES at its first page;
 --   - authors-list: the Authors list at its first page;
---   - author-books: the author AUTHOR at its first page.
+--   - author-books: the author AUTHOR at its first page;
+--   - search-books: the library search's results for QUERY at their first page, started from the
+--     capture library.
 -- A failure before the UI runs exits with status 4, as the home fixture does, since a half-made
 -- library would be captured as if it were the scenario's; one after is reported as a settled signal
 -- with error on the screen the view's capture shoots, so the spec fails with the message.
 local logger = require("logger")
 
--- The views, each the window's show and the view it is shown at.
+-- The views, each the window's module and show and the view it is shown at, or, for the search, the opts
+-- it is shown with under the capture library root.
 local SERIES = "Sherlock Holmes"
 local AUTHOR = "Arthur Conan Doyle"
+local QUERY = "the"
 local VIEWS = {
-    ["series-list"] = { screen = "series", show = "showSeries", view = { kind = "list" } },
-    ["series-books"] = { screen = "series", show = "showSeries", view = { kind = "series", name = SERIES } },
-    ["authors-list"] = { screen = "authors", show = "showAuthors", view = { kind = "list" } },
-    ["author-books"] = { screen = "authors", show = "showAuthors", view = { kind = "author", name = AUTHOR } },
+    ["series-list"] = { screen = "series", module = "series_screen", show = "showSeries", view = { kind = "list" } },
+    ["series-books"] = { screen = "series", module = "series_screen", show = "showSeries",
+        view = { kind = "series", name = SERIES } },
+    ["authors-list"] = { screen = "authors", module = "authors_screen", show = "showAuthors",
+        view = { kind = "list" } },
+    ["author-books"] = { screen = "authors", module = "authors_screen", show = "showAuthors",
+        view = { kind = "author", name = AUTHOR } },
+    ["search-books"] = { screen = "search", module = "search_screen", show = "showSearch",
+        opts = function(root)
+            return { query = QUERY, from = { dir = root }, page = 1 }
+        end },
 }
 
 -- The fixture books, kept under their own names, with their own metadata and covers.
@@ -131,8 +142,8 @@ local ok, err = pcall(function()
     local Screen = require("device").screen
 
     if not VIEW then
-        error("KOPANDA_SHELF_VIEW must be series-list, series-books, authors-list or author-books, not "
-            .. tostring(view_name))
+        error("KOPANDA_SHELF_VIEW must be series-list, series-books, authors-list, author-books or search-books, "
+            .. "not " .. tostring(view_name))
     end
     local library_dir = os.getenv("KOPANDA_SHELF_DIR")
     local root = library_dir and library_dir ~= "" and ffiutil.realpath(library_dir)
@@ -255,8 +266,8 @@ local ok, err = pcall(function()
                 error("no file manager with the kopanda plugin")
             end
             logger.info("KOPANDA_SCENARIO: " .. VIEW.show .. " at " .. view_name)
-            fm.kopanda[VIEW.show](fm.kopanda, { view = VIEW.view, page = 1 })
-            local shown = require(VIEW.screen == "series" and "series_screen" or "authors_screen").shown
+            fm.kopanda[VIEW.show](fm.kopanda, VIEW.opts and VIEW.opts(root) or { view = VIEW.view, page = 1 })
+            local shown = require(VIEW.module).shown
             if not shown then
                 error(VIEW.show .. " showed no window")
             end
