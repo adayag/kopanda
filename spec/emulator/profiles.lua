@@ -3,4 +3,5 @@
 return {
     colorsoft = { width = 1264, height = 1680, dpi = 300, color = true },
     paperwhite = { width = 1236, height = 1648, dpi = 300, color = false },
+    paperwhite7 = { width = 1072, height = 1448, dpi = 300, color = false },
 }

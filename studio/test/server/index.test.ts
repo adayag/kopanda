@@ -100,7 +100,7 @@ describe("the server entry point", { timeout: killAfterMs + 5_000 }, () => {
 
       await start(String(port));
 
-      expect(fs.readdirSync(path.join(tmp, "profiles")).sort()).toEqual(["colorsoft", "paperwhite"]);
+      expect(fs.readdirSync(path.join(tmp, "profiles")).sort()).toEqual(["colorsoft", "paperwhite", "paperwhite7"]);
     } finally {
       await new Promise((done) => holder.close(done));
     }

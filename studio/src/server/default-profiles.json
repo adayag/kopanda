@@ -14,5 +14,13 @@
     "height": 1648,
     "dpi": 300,
     "color": false
+  },
+  "paperwhite7": {
+    "name": "Paperwhite 7th gen",
+    "device": "Kindle Paperwhite (7th gen)",
+    "width": 1072,
+    "height": 1448,
+    "dpi": 300,
+    "color": false
   }
 }

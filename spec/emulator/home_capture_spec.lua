@@ -1,11 +1,11 @@
 -- The home on the emulator, every look's smoke gate: for each id Looks.ids() lists, the populated fixture
 -- (2026-10-13 08:42 in Chicago, a known weather cache, reading statistics and a featured book with its real cover) on
--- the Colorsoft by day and with night mode on from the start, and on the Paperwhite by day. Each is taken on the
+-- the Colorsoft by day and with night mode on from the start, and on both Paperwhites by day. Each is taken on the
 -- plugin's own settled signal, within the paint budget, with no row dropped, its paper (read in the left margin at
 -- mid-height) the paper of the palette it is drawn in (Looks.variant): the PNG is what the panel shows
 -- (base/ffi/framebuffer.lua:566-581). Beside them, in Diner on the Colorsoft, the fixture's two other states: none of
 -- it (the featured slot in its first-run state, the launcher's last entry a plugin that isn't there) and the
--- featured book with CoverBrowser disabled; and Frosted with a wallpaper, by day, at night and on the Paperwhite. The
+-- featured book with CoverBrowser disabled; and Frosted with a wallpaper, by day, at night and on both Paperwhites. The
 -- look is always passed (empty for Diner's two) so a KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
 describe("capturing the KoPanda home on the emulator", function()
     require("commonrequire")
@@ -88,6 +88,7 @@ describe("capturing the KoPanda home on the emulator", function()
         { profile = "colorsoft", variant = "day" },
         { profile = "colorsoft", variant = "night" },
         { profile = "paperwhite", variant = "grey" },
+        { profile = "paperwhite7", variant = "grey" },
     }
 
     for _, id in ipairs(Looks.ids()) do

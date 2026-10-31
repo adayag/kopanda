@@ -52,7 +52,7 @@ function app(profilesDir: string) {
 }
 
 describe("ensureProfilesDir", () => {
-  it("creates a missing directory holding the two seed profiles and no settings", async () => {
+  it("creates a missing directory holding the three seed profiles and no settings", async () => {
     const dir = path.join(tempDir(), "nested", "profiles");
 
     await ensureProfilesDir(dir);
@@ -62,6 +62,8 @@ describe("ensureProfilesDir", () => {
       path.join("colorsoft", "profile.json"),
       "paperwhite",
       path.join("paperwhite", "profile.json"),
+      "paperwhite7",
+      path.join("paperwhite7", "profile.json"),
     ]);
     for (const [id, profile] of Object.entries(seed)) {
       expect(JSON.parse(fs.readFileSync(path.join(dir, id, "profile.json"), "utf8"))).toEqual(profile);
@@ -108,6 +110,7 @@ describe("GET /api/profiles", () => {
       profiles: [
         { id: "colorsoft", ...seed.colorsoft, has_settings: false },
         { id: "paperwhite", ...seed.paperwhite, has_settings: false },
+        { id: "paperwhite7", ...seed.paperwhite7, has_settings: false },
       ],
     });
   });

@@ -36,8 +36,14 @@ describe("the studio's seed profiles", function()
         return found
     end
 
-    it("holds exactly colorsoft and paperwhite", function()
-        assert.same({ "colorsoft", "paperwhite" }, sorted_ids(read_seed()))
+    it("holds exactly colorsoft, paperwhite and paperwhite7", function()
+        assert.same({ "colorsoft", "paperwhite", "paperwhite7" }, sorted_ids(read_seed()))
+    end)
+
+    it("captures and seeds the Paperwhite 7th gen at its panel's 1072 by 1448, 300 dpi, in grey", function()
+        assert.same({ width = 1072, height = 1448, dpi = 300, color = false }, captured.paperwhite7)
+        assert.same({ name = "Paperwhite 7th gen", device = "Kindle Paperwhite (7th gen)",
+            width = 1072, height = 1448, dpi = 300, color = false }, read_seed().paperwhite7)
     end)
 
     it("matches spec/emulator/profiles.lua in width, height, dpi and color", function()
