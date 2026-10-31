@@ -45,6 +45,7 @@ local function before(ka, kb)
     return ka < kb
 end
 
+-- The title order over entries { record, title_key }. Exported for the library search.
 local function by_title(a, b)
     local first = before(a.title_key, b.title_key)
     if first ~= nil then
@@ -52,6 +53,7 @@ local function by_title(a, b)
     end
     return a.record.id < b.record.id
 end
+LibraryOrder.by_title = by_title
 
 local function index_of(record)
     local index = record.series_index
