@@ -27,19 +27,21 @@ return {
         grey = {
             paper = "#f4f4f4",
             ink = "#111111",
-            muted = "#555555",
-            -- The nearest grey on the Paperwhite palette to #333333.
-            text = "#444444",
-            hairline = "#8c8c8c",
-            hairline_light = "#d0d0d0",
-            outline = "#8c8c8c", -- the Paperwhite cover gains an outline, Editorial's is a hairline
-            shadow = "#8c8c8c", -- the shadow is the hairline colour
+            muted = "#333333",
+            text = "#222222",
+            hairline = "#444444",
+            hairline_light = "#8c8c8c",
+            outline = "#444444", -- the Paperwhite cover gains an outline, Editorial's is a hairline
+            shadow = "#444444", -- the shadow is the hairline colour
             on_accent = false, -- Editorial has no accent fills
             on_cover = "#f4f4f4",
         },
     },
 
-    stroke = { outline = 1 }, -- Editorial's outlines are hairlines
+    -- The text face is the medium weight: the regular reads light on a grey panel.
+    faces = { text = { file = "fonts/ibm-plex-sans/IBMPlexSans-Medium.ttf", label = "IBM Plex Sans 500" } },
+
+    stroke = { outline = 2 },
 
     shadow = { cover = { x = 2, y = 3 }, sheet = { y = 0, color = false } },
 
@@ -73,7 +75,7 @@ return {
         row_padding = { x = 0, y = 15 },
         row_gap = 16,
         row_rule_color = "hairline",
-        row_rule_width = 1,
+        row_rule_width = 2,
         last_row_bottom = 0,
         chip_padding = { x = false, y = false },
         chip_outline_width = 0,
@@ -170,15 +172,15 @@ return {
         title_bar_title = { line_height = 0 },
         title_bar_sort = { color = "text" },
         title_bar_status = { color = "text" },
-        library_count = { face = "text" },
+        library_count = { face = "text", size = 14 },
         library_title = { line_height = 0 },
-        library_picker = { color = "text" },
-        library_picker_status = { color = "text" },
-        tile_title = { line_height = 0.25 },
+        library_picker = { size = 14, color = "text" },
+        library_picker_status = { size = 14, color = "text" },
+        tile_title = { size = 16, line_height = 0.25 },
         tile_cover_title = { size = 18 },
         folder_count = { face = "display", size = 22, line_height = 0.05 },
         folder_reading = { face = "text", tracking = 0.14 },
-        pager_label = { face = "text", tracking = 0.14, color = "muted" },
+        pager_label = { face = "text", size = 14, tracking = 0.14, color = "muted" },
         -- Series and authors parts: set by analogy with the library's.
         shelf_detail_title = { size = 34, line_height = 0 },
         shelf_back = { tracking = 0.14, color = "text" },
@@ -205,7 +207,7 @@ return {
     },
 
     quote = {
-        rule_width = 1,
+        rule_width = 2,
         rule_color = "hairline",
     },
 
@@ -286,7 +288,7 @@ return {
             padding = { x = 12, y = 16 },
         },
         strip = {
-            height = 4,
+            height = 6,
             outline_width = 0,
         },
         folder = {

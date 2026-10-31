@@ -26,8 +26,9 @@ which the owner judges on the emulator.
   scales a size the same way (`frontend/ui/font.lua:276`). On a 1072 by 1448 panel the factor is 1.79
   at 300 dots per inch, so an 18 token part is 8 points on paper, a 12 token part 5. The 7th gen draws
   the same token 15 % smaller than the Colorsoft.
-- Today `text_size` scales only the home's text (`Layout.font_size`, factors 0.85, 1, 1.15). The nav
-  bar, library, sheets, quick settings, series and authors screens and the editor ignore it.
+- Before this work `text_size` scaled the home's text, its sheets, quick settings and the editor
+  (`Layout.font_size`, factors 0.85, 1, 1.15). The nav bar, title bar, library, series and authors
+  screens ignored it.
 - The home drops rows that do not fit (`Layout.place`). At 1.4 the default five rows lose the launcher
   and the weather row; at 1.5 the date beside the clock truncates.
 - The library pages by a constant of six tiles (`library_order.lua`, `PER_PAGE`), not by height.
@@ -41,15 +42,15 @@ which the owner judges on the emulator.
 | Topic | Decision |
 |---|---|
 | The step | `text_size` gains `{ value = "extra_large", label = "Extra large" }`. Small, Medium and Large keep their factors. No new schema key. |
-| Type | `Layout.font_size` at Extra large multiplies by 1.4 after lifting any part under 14 tokens to 14. The floor is Extra large's alone. Every surface that sets type passes the text size: nav bar, library (header, tiles, pager), sheets, quick settings, series and authors, the editor screens. Outside the home's rows the step takes effect at Extra large only; Small, Medium and Large keep today's nav bar, title bar, library and shelf screens. |
+| Type | `Layout.font_size` at Extra large multiplies by 1.4 after lifting any part under 14 tokens to 14. The floor is Extra large's alone. Every surface that sets type passes the text size: nav bar, library (header, tiles, pager), sheets, quick settings, series and authors, the editor screens. The nav bar, title bar, library, shelf screens and the sheets opened from them take the step at Extra large only; at Small, Medium and Large they are as they were. The home's rows, its sheets, quick settings and the editor follow every step, as before. |
 | Icons and covers | A new `Layout.size_at(px, text_size)`, 1.4 at Extra large, 1 at every other step, no floor, used by the nav bar's icons, the launcher's icons, the sheets' covers, the quick-settings buttons and level bar, and the badges. Paddings, gaps and rules do not scale. |
-| The featured row | The cover box keeps its size; at Extra large the row is as tall as the taller of the cover and its text column, so no line drops. Small, Medium and Large keep the cover's height and drop lines in a column too short, as today. |
+| The featured row | The cover box keeps its size; at Extra large the row is as tall as the taller of the cover and its text column, so no line of a book's column drops; the first run's body still takes the lines that fit. Small, Medium and Large keep the cover's height and drop lines in a column too short, as today. |
 | Default rows | Each rows key gets `defaults_by_text_size = { extra_large = … }`, pure data. Page 1: date and clock; featured; launcher. Page 2: date and clock; reading; streak and forecast. The settings reader falls back to it when nothing is stored and the text size has an entry; a stored layout wins. The studio's form, fit check and preview read the same table. |
 | Free space | Unchanged. Editorial puts spare height before the last row, so the launcher sits by the nav bar. |
-| Library paging | A page holds the rows that fit between the header and the pager, times the three columns, at least one row. Six at Medium on both devices, as today. |
+| Library paging | The library grid and the one-author grid always hold two rows: where two rows of the look's cover height don't fit the room between the header and the pager, the cover is shortened to the tallest that fits, never below half the token height, the tile's other parts unchanged. A page is the rows that fit times the three columns, at least one row, so six everywhere; at Medium on both current devices the token cover fits and nothing changes. The cover request asks at the shortened box. |
 | Library columns | Three, unchanged. |
-| Editorial's contrast | In the grey palette: muted `#555555` to `#1a1a1a`, text `#444444` to `#111111`, hairline `#8c8c8c` to `#444444`, hairline_light `#d0d0d0` to `#8c8c8c`. The text face becomes IBM Plex Sans Medium. Outline stroke, quote rule, sheet row rule, progress bar and library strip go from one unit to two; the nav's active rule from three to four. Day and night palettes unchanged. Starting values; the owner judges them on the emulator and the device. |
-| Editorial's captions | `tile_title` 12 to 16 tokens; `library_count`, `library_picker`, `library_picker_status` and `pager_label` to 14; `nav_label` and `nav_label_active` to 14; `nav.icon_size` 26 to 34. At every size. |
+| Editorial's contrast | In the grey palette: muted `#555555` to `#333333`, text `#444444` to `#222222` (ink stays `#111111`, and the three roles stay distinct, as the look spec demands), hairline `#8c8c8c` to `#444444`, hairline_light `#d0d0d0` to `#8c8c8c`, the cover's outline and shadow to `#444444`. The text face becomes IBM Plex Sans Medium. Outline stroke, quote rule, sheet row rule and library strip go from one unit to two. The progress bar's height and the nav's active rule stay: with them the home's default rows no longer fit at Medium on the Paperwhite, which Editorial's spacing was tightened to. Day and night palettes unchanged. Starting values; the owner judges them on the emulator and the device. |
+| Editorial's captions | `tile_title` 12 to 16 tokens; `library_count`, `library_picker`, `library_picker_status` and `pager_label` to 14. At every size: at Medium on the Colorsoft the taller title shortens the library cover by 14 px under the two-rows rule. The nav label and icon stay: Extra large's floor and `size_at` grow them there, and growing them at every size pushes a default row off the Paperwhite at Medium. |
 | The device | A `paperwhite7` profile, 1072 by 1448, 300 dots per inch, grey, in `studio/src/server/default-profiles.json` and `spec/emulator/profiles.lua`. `home_capture_spec.lua` captures every look on it by day, as it does the Paperwhite. |
 | Goldens | None, per the rule. One new emulator capture, Editorial at Extra large on the 7th gen, asserts that no default row dropped on either page and that the pager sits below the grid's last tile. |
 
@@ -86,7 +87,7 @@ Each lands as its own commit on `main`, test first; no Tiller unless the owner a
 
 That Extra large in Editorial on the 7th gen reads as large print at arm's length; that the darker
 hairlines do not read as rules; that the medium text weight does not fill in at 300 dots per inch;
-that two library rows still fit with the taller captions.
+that the shortened covers at Extra large, nearly square boxes with paper either side of a 2:3 cover, read well.
 
 ## Out of scope
 

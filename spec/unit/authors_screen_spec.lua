@@ -400,9 +400,12 @@ describe("the Authors window", function()
                 local screen = fixture.show_authors({ kind = "author", name = JEMISIN })
                 local ctx = screen.ctx
                 local grid = ctx.look.library.grid
-                local box = LibraryTiles.geometry(Screen:getWidth(), ctx,
-                    { cover_h = ctx.look.shelf.author_grid.cover_h })
-                local top = LibraryChrome.detail_header_height(ctx) + Screen:scaleBySize(grid.padding_top)
+                local header_h = LibraryChrome.detail_header_height(ctx)
+                local box = LibraryTiles.geometry(Screen:getWidth(), ctx, {
+                    cover_h = ctx.look.shelf.author_grid.cover_h,
+                    room = LibraryTiles.room(Screen:getHeight(), ctx, header_h),
+                })
+                local top = header_h + Screen:scaleBySize(grid.padding_top)
                 assert.same({ "The Fifth Season", "The Obelisk Gate", "The Stone Sky", "The Killing Moon",
                     "Dreamblood 2", "Emergency Skin" }, titles(screen), id)
                 for i, tile in ipairs(screen.tiles) do

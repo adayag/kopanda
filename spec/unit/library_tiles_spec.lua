@@ -165,11 +165,13 @@ describe("library tiles", function()
                 for _, id in ipairs({ "diner", "editorial" }) do
                     local ctx = ctx_for(id)
                     local grid = ctx.look.library.grid
-                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx)
+                    local room = LibraryTiles.room(Screen:getHeight(), ctx)
+                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx, { room = room })
                     local used = LibraryTiles.header_height(ctx) + scale(grid.padding_top) + 2 * box.height
                         + scale(grid.row_gap) + LibraryTiles.pager_height(ctx) + NavBar.height(ctx.look, Screen)
                     assert.is_true(used <= Screen:getHeight(),
                         ("%s at %s: %d px for a %d px screen"):format(id, where, used, Screen:getHeight()))
+                    assert.equals(2, box.rows, id .. " at " .. where)
                 end
             end)
         end)
@@ -193,9 +195,9 @@ describe("library tiles", function()
             end)
         end)
 
-        -- The room between the header and the pager on the Colorsoft at medium, where two rows of the token
-        -- cover fit exactly in Editorial and Diner.
-        local ROOM = { editorial = 1087, diner = 1077 }
+        -- The room between the header and the pager on the Colorsoft at medium: two rows of the token cover
+        -- fit it exactly in Diner; Editorial's taller title shortens its cover there.
+        local ROOM = { editorial = 1080, diner = 1077 }
         local COVER = { editorial = { 336, 439 }, diner = { 333, 411 } }
 
         it("measures the room for the rows: the window less the header, the top padding, pager and nav bar", function()
@@ -213,15 +215,23 @@ describe("library tiles", function()
             harness.at_colorsoft(function()
                 for _, id in ipairs({ "diner", "editorial" }) do
                     local ctx = ctx_for(id, "day", "medium")
-                    local w = Screen:getWidth()
-                    local box = LibraryTiles.geometry(w, ctx, { room = ROOM[id] })
+                    local w, gap = Screen:getWidth(), scale(ctx.look.library.grid.row_gap)
+                    local exact = 2 * LibraryTiles.geometry(w, ctx).height + gap
+                    local box = LibraryTiles.geometry(w, ctx, { room = exact })
                     assert.same(COVER[id], { box.cover_w, box.cover_h }, id)
-                    assert.equals(ROOM[id], 2 * box.height + scale(ctx.look.library.grid.row_gap), id)
                     assert.equals(2, box.rows, id)
-                    local roomy = LibraryTiles.geometry(w, ctx, { room = ROOM[id] + box.height + 200 })
+                    local roomy = LibraryTiles.geometry(w, ctx, { room = exact + box.height + 200 })
                     assert.same({ COVER[id][2], 3 }, { roomy.cover_h, roomy.rows }, id)
-                    assert.equals(COVER[id][2] - 1, LibraryTiles.geometry(w, ctx, { room = ROOM[id] - 2 }).cover_h, id)
+                    assert.equals(COVER[id][2] - 1, LibraryTiles.geometry(w, ctx, { room = exact - 2 }).cover_h, id)
                 end
+                -- Diner's room on the Colorsoft is that exact fit; Editorial's is shorter, so its cover is.
+                local diner = ctx_for("diner", "day", "medium")
+                assert.equals(ROOM.diner, 2 * LibraryTiles.geometry(Screen:getWidth(), diner).height
+                    + scale(diner.look.library.grid.row_gap))
+                local editorial = ctx_for("editorial", "day", "medium")
+                local box = LibraryTiles.geometry(Screen:getWidth(), editorial, { room = ROOM.editorial })
+                assert.is_true(box.cover_h < COVER.editorial[2])
+                assert.is_true(2 * box.height + scale(editorial.look.library.grid.row_gap) <= ROOM.editorial)
             end)
         end)
 
