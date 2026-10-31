@@ -85,6 +85,40 @@ return {
     });
   });
 
+  it("answers each rows key with nothing valid stored at its default for the stored text size", async () => {
+    const { app, store } = setup();
+    const s = (widget: string) => ({ widget, share: 1 });
+    const stored = [[s("quote")], [s("weather"), s("stats")]];
+    store(`return {
+    ["text_size"] = "extra_large",
+    ["layout.rows"] = "date",
+    ["schema_version"] = 1,
+}
+`);
+
+    const res = await request(app).get("/api/profiles/kobo/settings");
+
+    expect(res.body.values["layout.rows"]).toEqual([[s("date"), s("clock")], [s("featured")], [s("launcher")]]);
+    expect(res.body.values["layout.rows_2"]).toEqual([[s("date"), s("clock")], [s("reading")], [s("streak"), s("forecast")]]);
+    expect(res.body.invalid).toEqual([{ key: "layout.rows" }]);
+
+    store(`return {
+    ["text_size"] = "extra_large",
+    ["layout.rows"] = {
+        { { widget = "quote", share = 1 } },
+        { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
+    },
+    ["schema_version"] = 1,
+}
+`);
+    expect((await request(app).get("/api/profiles/kobo/settings")).body.values["layout.rows"]).toEqual(stored);
+
+    store('return { ["text_size"] = "huge" }');
+    expect((await request(app).get("/api/profiles/kobo/settings")).body.values["layout.rows"]).toEqual(
+      defaults["layout.rows"],
+    );
+  });
+
   it("reads schema_version absent or false as 1, writable", async () => {
     const { app, store } = setup();
     for (const text of ['return { look = "editorial" }', 'return { look = "editorial", schema_version = false }']) {

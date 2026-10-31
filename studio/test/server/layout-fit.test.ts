@@ -187,6 +187,21 @@ describe("POST /api/profiles/:id/layout-fit", () => {
     ]);
   });
 
+  it("measures the default at the stored text size as current when no rows are stored", async () => {
+    const { app, record, settingsFile } = setup("answers.sh");
+    fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
+    fs.writeFileSync(settingsFile, 'return {\n    ["text_size"] = "extra_large",\n    ["schema_version"] = 1,\n}\n');
+    const s = (widget: string) => ({ widget, share: 1 });
+
+    const res = await request(app).post("/api/profiles/kobo/layout-fit").send({ rows: proposed });
+
+    expect(res.status).toBe(200);
+    expect(JSON.parse(fs.readFileSync(path.join(record, "stdin"), "utf8"))).toEqual([
+      [[s("date"), s("clock")], [s("featured")], [s("launcher")]],
+      proposed,
+    ]);
+  });
+
   it("measures layout.rows_2's default as current for that key", async () => {
     const { app, record } = setup("answers.sh");
     const page2 = schema.keys.find((key) => key.id === "layout.rows_2")!.default;

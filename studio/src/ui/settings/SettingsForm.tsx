@@ -1,4 +1,5 @@
 import { useId, type ComponentType } from "react";
+import { defaultRows } from "../../core/rows-edit";
 import { schema as studioSchema, type Key, type Schema } from "../../schema";
 import type { Settings } from "../api";
 import { profileHref } from "../ProfileList";
@@ -33,6 +34,11 @@ function groups(keys: readonly Key[]): { id: string; keys: Key[] }[] {
     else runs.push({ id: entry.group, keys: [entry] });
   }
   return runs;
+}
+
+/** The key's default under values; a rows key's depends on their text size (defaultRows). */
+function defaultOf(entry: Key, values: Readonly<Record<string, unknown>>): unknown {
+  return entry.type === "rows" ? defaultRows(entry, values) : entry.default;
 }
 
 function capitalised(id: string): string {
@@ -112,7 +118,7 @@ export function SettingsForm({
       <Control
         key={entry.id}
         entry={entry}
-        value={entry.id in settings.values ? settings.values[entry.id] : entry.default}
+        value={entry.id in settings.values ? settings.values[entry.id] : defaultOf(entry, settings.values)}
         disabled={!writable || pending.has(entry.id)}
         write={(value) => onWrite(entry, value)}
         profileHref={href}

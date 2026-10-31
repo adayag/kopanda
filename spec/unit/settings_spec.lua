@@ -352,6 +352,53 @@ describe("Settings", function()
         end)
     end)
 
+    -- A rows key with nothing valid stored reads as its default at the stored text size, when
+    -- the schema gives that step one.
+    describe("the rows keys at a text size", function()
+        local Schema = require("schema")
+        local entries = {}
+        for _, entry in ipairs(Schema.keys) do
+            entries[entry.id] = entry
+        end
+
+        local function slot(widget)
+            return { widget = widget, share = 1 }
+        end
+
+        local PAGE_1 = { { slot("date"), slot("clock") }, { slot("featured") }, { slot("launcher") } }
+        local PAGE_2 = { { slot("date"), slot("clock") }, { slot("reading") }, { slot("streak"), slot("forecast") } }
+
+        it("reads three rows a page at extra_large with no rows stored, the launcher third", function()
+            store('return { text_size = "extra_large" }')
+            assert.same(PAGE_1, Settings.get("layout.rows"))
+            assert.same(PAGE_2, Settings.get("layout.rows_2"))
+        end)
+
+        it("reads the plain default at medium, with no text size stored and with an invalid one", function()
+            local files = { 'return { text_size = "medium" }', "return {}", 'return { text_size = "huge" }' }
+            for _, text in ipairs(files) do
+                Settings._reset()
+                store(text)
+                assert.equals(entries["layout.rows"].default, Settings.get("layout.rows"), text)
+                assert.equals(entries["layout.rows_2"].default, Settings.get("layout.rows_2"), text)
+            end
+        end)
+
+        it("reads the extra_large default for a stored malformed layout", function()
+            store('return { text_size = "extra_large", ["layout.rows"] = "date" }')
+            assert.same(PAGE_1, Settings.get("layout.rows"))
+        end)
+
+        it("reads a stored valid layout at extra_large", function()
+            local value = { { slot("quote") }, { slot("weather"), slot("stats") } }
+            assert.is_true(Settings.set("text_size", "extra_large"))
+            assert.is_true(Settings.set("layout.rows", value))
+            Settings._reset()
+            assert.same(value, Settings.get("layout.rows"))
+            assert.same(PAGE_2, Settings.get("layout.rows_2"))
+        end)
+    end)
+
     describe("text_size", function()
         it("is medium by default and takes small, large and extra_large", function()
             assert.equals("medium", Settings.get("text_size"))

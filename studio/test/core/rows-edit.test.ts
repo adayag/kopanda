@@ -6,6 +6,7 @@ import {
   addRow,
   caption,
   changeWidget,
+  defaultRows,
   entry,
   entryFor,
   label,
@@ -142,5 +143,55 @@ describe("reset and unused for another rows key", () => {
     const narrow = { ...page2, widgets: ["date", "reading", "records"] };
 
     expect(unused([[{ widget: "reading", share: 1 }]], narrow)).toEqual(["date", "records"]);
+  });
+});
+
+describe("defaultRows", () => {
+  const s = (widget: string) => ({ widget, share: 1 });
+  const page2 = entryFor("layout.rows_2");
+
+  it("answers each key's three rows at extra_large", () => {
+    expect(defaultRows(entry, { text_size: "extra_large" })).toEqual([
+      [s("date"), s("clock")],
+      [s("featured")],
+      [s("launcher")],
+    ]);
+    expect(defaultRows(page2, { text_size: "extra_large" })).toEqual([
+      [s("date"), s("clock")],
+      [s("reading")],
+      [s("streak"), s("forecast")],
+    ]);
+  });
+
+  it.each([["medium"], ["large"], ["huge"], ["constructor"], [7]])(
+    "answers the plain default at the text size %s, which has none of its own",
+    (textSize) => {
+      expect(defaultRows(entry, { text_size: textSize })).toBe(entry.default);
+    },
+  );
+
+  it("answers the plain default with no text size, which is medium", () => {
+    expect(defaultRows(entry, {})).toBe(entry.default);
+  });
+
+  it("answers the plain default for a key without defaults_by_text_size", () => {
+    const plain = structuredClone(entry);
+    delete plain.defaults_by_text_size;
+
+    expect(defaultRows(plain, { text_size: "extra_large" })).toBe(plain.default);
+  });
+
+  it("resets to a fresh copy of the default at the values' text size", () => {
+    const first = reset(entry, { text_size: "extra_large" });
+    if (!("rows" in first)) throw new Error("reset refused");
+    first.rows[0]![0]!.share = 3;
+
+    expect(reset(entry, { text_size: "extra_large" })).toEqual({
+      rows: [[s("date"), s("clock")], [s("featured")], [s("launcher")]],
+    });
+    expect(reset(page2, { text_size: "extra_large" })).toEqual({
+      rows: [[s("date"), s("clock")], [s("reading")], [s("streak"), s("forecast")]],
+    });
+    expect(reset(entry, { text_size: "medium" })).toEqual({ rows: entry.default });
   });
 });

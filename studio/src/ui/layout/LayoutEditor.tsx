@@ -4,6 +4,7 @@ import {
   addRow,
   caption,
   changeWidget,
+  defaultRows,
   label,
   maxColumns,
   move,
@@ -92,7 +93,7 @@ export interface LayoutEditorProps {
  * key; the rows shown are always the settings answer's.
  */
 export function LayoutEditor({ entry, profileId, settings, pending, error, onWrite }: LayoutEditorProps) {
-  const rows = (settings.values[entry.id] ?? entry.default) as Rows;
+  const rows = (settings.values[entry.id] ?? defaultRows(entry, settings.values)) as Rows;
   const [selected, setSelected] = useState<Selection | null>(null);
   const [picker, setPicker] = useState<Picker | null>(null);
   const [checking, setChecking] = useState(false);
@@ -339,7 +340,7 @@ export function LayoutEditor({ entry, profileId, settings, pending, error, onWri
         <button type="button" disabled={busy || spare.length === 0} onClick={() => toggle("add_row")}>
           Add row
         </button>
-        <button type="button" className="bare" disabled={busy} onClick={() => run(reset(entry), null)}>
+        <button type="button" className="bare" disabled={busy} onClick={() => run(reset(entry, settings.values), null)}>
           Reset to the look's default
         </button>
       </footer>

@@ -432,7 +432,7 @@ local function spec(state)
                     rect = { x = width - reset.w, y = h - reset.h, w = reset.w, h = reset.h },
                     draw = reset.draw,
                     run = function()
-                        apply(state, RowsEdit.reset(state.key), nil, nil)
+                        apply(state, RowsEdit.reset(state.key, Settings.get("text_size")), nil, nil)
                     end,
                 },
             } }

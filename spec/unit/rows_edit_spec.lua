@@ -193,6 +193,17 @@ describe("RowsEdit", function()
         assert.same(before, entry.default)
     end)
 
+    it("resets to a copy of the key's default at a text size that has one, the plain default at any other", function()
+        local by_size = entry.defaults_by_text_size.extra_large
+        local result = RowsEdit.reset(nil, "extra_large")
+        assert.same(by_size, result)
+        assert.equals("launcher", result[3][1].widget)
+        result[1][1].share = 3
+        assert.equals(1, by_size[1][1].share)
+        assert.same(entry.default, RowsEdit.reset(nil, "medium"))
+        assert.same(entry.default, RowsEdit.reset(nil, "huge"))
+    end)
+
     it("lists the schema's widgets not on the home, in schema order", function()
         local insights = { "reading", "streak", "forecast", "hours", "records" }
         assert.same(insights, RowsEdit.unused(entry.default))
@@ -228,6 +239,7 @@ describe("RowsEdit", function()
             assert.is_true(Settings.validators.rows(page_2, result))
             result[1][1].share = 3
             assert.same(before, page_2.default)
+            assert.same(page_2.defaults_by_text_size.extra_large, RowsEdit.reset("layout.rows_2", "extra_large"))
         end)
 
         it("lists that key's widgets not on its default, in schema order", function()

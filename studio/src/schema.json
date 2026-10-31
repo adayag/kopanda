@@ -107,6 +107,32 @@
                     }
                 ]
             ],
+            "defaults_by_text_size": {
+                "extra_large": [
+                    [
+                        {
+                            "share": 1,
+                            "widget": "date"
+                        },
+                        {
+                            "share": 1,
+                            "widget": "clock"
+                        }
+                    ],
+                    [
+                        {
+                            "share": 1,
+                            "widget": "featured"
+                        }
+                    ],
+                    [
+                        {
+                            "share": 1,
+                            "widget": "launcher"
+                        }
+                    ]
+                ]
+            },
             "group": "home",
             "id": "layout.rows",
             "label": "Layout",
@@ -166,6 +192,36 @@
                     }
                 ]
             ],
+            "defaults_by_text_size": {
+                "extra_large": [
+                    [
+                        {
+                            "share": 1,
+                            "widget": "date"
+                        },
+                        {
+                            "share": 1,
+                            "widget": "clock"
+                        }
+                    ],
+                    [
+                        {
+                            "share": 1,
+                            "widget": "reading"
+                        }
+                    ],
+                    [
+                        {
+                            "share": 1,
+                            "widget": "streak"
+                        },
+                        {
+                            "share": 1,
+                            "widget": "forecast"
+                        }
+                    ]
+                ]
+            },
             "group": "home",
             "id": "layout.rows_2",
             "label": "Page 2",

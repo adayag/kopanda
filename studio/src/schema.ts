@@ -46,6 +46,8 @@ const Key = z.discriminatedUnion("type", [
     widgets: z.array(z.string()),
     max_columns: z.number(),
     default: z.array(z.array(Slot)),
+    // The default at a text size that has one, by text_size value, when nothing is stored.
+    defaults_by_text_size: z.record(z.string(), z.array(z.array(Slot))).optional(),
   }),
   z.strictObject({
     ...common,

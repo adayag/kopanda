@@ -28,6 +28,19 @@ export function entryFor(id: string): RowsEntry {
 /** The schema's layout.rows entry. */
 export const entry = entryFor("layout.rows");
 
+const textSize = schema.keys.find((key) => key.id === "text_size")!;
+
+/**
+ * The key's default under a settings file's values, as the plugin's Settings.get falls back to it: its
+ * defaults_by_text_size at the values' text_size (text_size's default when they hold none) when it has
+ * one there, else its default.
+ */
+export function defaultRows(of: RowsEntry, values: Readonly<Record<string, unknown>>): Rows {
+  const size = values.text_size ?? textSize.default;
+  const bySize = of.defaults_by_text_size;
+  return typeof size === "string" && bySize !== undefined && Object.hasOwn(bySize, size) ? bySize[size]! : of.default;
+}
+
 /** The most columns a row holds. */
 export const maxColumns = entry.max_columns;
 
@@ -115,9 +128,12 @@ export function removeRow(rows: Rows, i: number): Edit {
   return { rows: next };
 }
 
-/** A copy of the key's schema default; the looks hold no layout of their own, so it is every look's. */
-export function reset(of: RowsEntry = entry): Edit {
-  return { rows: copy(of.default) };
+/**
+ * A copy of the key's default under values (defaultRows); the looks hold no layout of their own, so it is
+ * every look's.
+ */
+export function reset(of: RowsEntry = entry, values: Readonly<Record<string, unknown>> = {}): Edit {
+  return { rows: copy(defaultRows(of, values)) };
 }
 
 /** The key's schema widgets not in rows, in schema order. */

@@ -15,8 +15,8 @@ export interface LayoutFitOptions {
 /**
  * The fit check over the profiles directory `dir`, mounted on the profiles router: how many rows
  * the home leaves out for the profile's current value of the rows key `key` (stored, else the
- * default; layout.rows when the body names none) and for the proposed rows. Any failure to check
- * answers 200, unchecked with its reason.
+ * default at the file's text size; layout.rows when the body names none) and for the proposed
+ * rows. Any failure to check answers 200, unchecked with its reason.
  */
 export function layoutFitRouter(dir: string, options: LayoutFitOptions = {}): express.Router {
   const router = express.Router();

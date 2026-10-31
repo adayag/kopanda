@@ -46,7 +46,8 @@ return {
         {
             -- Page 1's rows, top to bottom; each row's slots, left to right, take the row's
             -- width by share. widgets lists the ids a slot may name, max_columns the slots a row
-            -- may hold.
+            -- may hold. defaults_by_text_size is the default at a text size that has one, when
+            -- nothing is stored.
             id = "layout.rows",
             type = "rows",
             widgets = { "date", "clock", "weather", "quote", "stats", "featured", "launcher",
@@ -59,11 +60,19 @@ return {
                 { { widget = "launcher", share = 1 } },
                 { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
             },
+            defaults_by_text_size = {
+                extra_large = {
+                    { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                    { { widget = "featured", share = 1 } },
+                    { { widget = "launcher", share = 1 } },
+                },
+            },
             label = "Layout",
             group = "home",
         },
         {
-            -- The second page's rows, reached by a west swipe; the same shape as layout.rows.
+            -- The second page's rows, reached by a west swipe; the same shape as layout.rows,
+            -- defaults_by_text_size the default at a text size that has one, when nothing is stored.
             id = "layout.rows_2",
             type = "rows",
             widgets = { "date", "clock", "weather", "quote", "stats", "featured", "launcher",
@@ -74,6 +83,13 @@ return {
                 { { widget = "reading", share = 1 } },
                 { { widget = "streak", share = 1 }, { widget = "forecast", share = 1 } },
                 { { widget = "hours", share = 1 }, { widget = "records", share = 1 } },
+            },
+            defaults_by_text_size = {
+                extra_large = {
+                    { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                    { { widget = "reading", share = 1 } },
+                    { { widget = "streak", share = 1 }, { widget = "forecast", share = 1 } },
+                },
             },
             label = "Page 2",
             group = "home",

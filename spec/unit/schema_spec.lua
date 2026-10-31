@@ -86,6 +86,13 @@ describe("schema.lua", function()
                     { { widget = "launcher", share = 1 } },
                     { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
                 },
+                defaults_by_text_size = {
+                    extra_large = {
+                        { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                        { { widget = "featured", share = 1 } },
+                        { { widget = "launcher", share = 1 } },
+                    },
+                },
                 label = "Layout",
                 group = "home",
             },
@@ -100,6 +107,13 @@ describe("schema.lua", function()
                     { { widget = "reading", share = 1 } },
                     { { widget = "streak", share = 1 }, { widget = "forecast", share = 1 } },
                     { { widget = "hours", share = 1 }, { widget = "records", share = 1 } },
+                },
+                defaults_by_text_size = {
+                    extra_large = {
+                        { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                        { { widget = "reading", share = 1 } },
+                        { { widget = "streak", share = 1 }, { widget = "forecast", share = 1 } },
+                    },
                 },
                 label = "Page 2",
                 group = "home",
@@ -224,6 +238,23 @@ describe("schema.lua", function()
             assert.is_function(validate, "no validator for type " .. entry.type)
             assert.is_true(validate(entry, entry.default), entry.id .. "'s default is not allowed")
         end
+    end)
+
+    it("names only text sizes in defaults_by_text_size, each default passing its key's type", function()
+        local Settings = require("settings")
+        local keys = load_bare().keys
+        local text_size = keys[2]
+        assert.equals("text_size", text_size.id)
+        local found = 0
+        for _, entry in ipairs(keys) do
+            for step, default in pairs(entry.defaults_by_text_size or {}) do
+                found = found + 1
+                assert.is_true(Settings.validators.choice(text_size, step), entry.id .. " names " .. tostring(step))
+                assert.is_true(Settings.validators[entry.type](entry, default),
+                    entry.id .. "'s " .. tostring(step) .. " default is not allowed")
+            end
+        end
+        assert.equals(2, found)
     end)
 
     it("lists each choice with a value and a label, and the default among the values", function()

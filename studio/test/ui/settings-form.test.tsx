@@ -217,6 +217,16 @@ describe("the form's controls", () => {
     expect(within(control("layout.rows_2")).getByRole("link")).toHaveAttribute("href", "#/profiles/colorsoft/layout-2");
     expect(within(control("launcher.entries")).getByRole("link")).toHaveTextContent("Launcher · 1 entry");
   });
+
+  it("counts each page's default at the extra_large text size when the values hold no rows", () => {
+    const answer = settings({}, { text_size: "extra_large" });
+    delete answer.values["layout.rows"];
+    delete answer.values["layout.rows_2"];
+    render(<SettingsForm profileId="colorsoft" settings={answer} {...idle} />);
+
+    expect(within(control("layout.rows")).getByRole("link")).toHaveTextContent("Layout · 3 rows");
+    expect(within(control("layout.rows_2")).getByRole("link")).toHaveTextContent("Page 2 · 3 rows");
+  });
 });
 
 describe("writing a key", () => {

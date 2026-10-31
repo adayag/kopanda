@@ -621,6 +621,30 @@ describe("page 2", () => {
   });
 });
 
+describe("at the extra_large text size", () => {
+  /** A settings answer at extra_large whose values hold no layout.rows. */
+  function noRows(): Settings {
+    const answer = settings({}, { text_size: "extra_large" });
+    delete answer.values["layout.rows"];
+    return answer;
+  }
+
+  it("shows the three rows of the default at that size when the values hold no rows", async () => {
+    await open(noRows());
+
+    expect(cards()).toHaveLength(3);
+    expect(card(3).getByRole("button", { name: "Launcher full" })).toBeInTheDocument();
+  });
+
+  it("resets to the default at that size", async () => {
+    await open(settings({}, { text_size: "extra_large", "layout.rows": [[s("quote")]] }));
+
+    click("Reset to the look's default");
+
+    await waitFor(() => expect(puts()).toEqual([[[s("date"), s("clock")], [s("featured")], [s("launcher")]]]));
+  });
+});
+
 describe("the selection", () => {
   it("follows a moved row", async () => {
     await open(withRows(FOUR));

@@ -272,8 +272,9 @@ local function open()
     return settings
 end
 
--- The value of key: the stored one when its type allows it, the schema default otherwise.
--- nil, logged, for a key the schema doesn't define.
+-- The value of key: the stored one when its type allows it, otherwise the schema default, or the
+-- entry's defaults_by_text_size at the text size when it has one. nil, logged, for a key the schema
+-- doesn't define.
 function Settings.get(key)
     local entry = entries[key]
     if not entry then
@@ -291,7 +292,8 @@ function Settings.get(key)
         value = nil
     end
     if value == nil then
-        return entry.default
+        local by_text_size = entry.defaults_by_text_size
+        return by_text_size and by_text_size[Settings.get("text_size")] or entry.default
     end
     return value
 end

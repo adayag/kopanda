@@ -124,10 +124,12 @@ function RowsEdit.remove_row(rows, i)
     return new
 end
 
--- A copy of key's schema default (layout.rows when nil). The looks hold no layout of their own,
--- so it is the default in each.
-function RowsEdit.reset(key)
-    return util.tableDeepCopy(RowsEdit.entry(key).default)
+-- A copy of key's schema default (layout.rows when nil) at text_size, as Settings.get falls back to
+-- it. The looks hold no layout of their own, so it is the default in each.
+function RowsEdit.reset(key, text_size)
+    local entry = RowsEdit.entry(key)
+    local by_text_size = entry.defaults_by_text_size
+    return util.tableDeepCopy(by_text_size and by_text_size[text_size] or entry.default)
 end
 
 -- Key's schema widgets (layout.rows when nil) not on the home, in schema order.
