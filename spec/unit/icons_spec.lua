@@ -87,7 +87,7 @@ describe("icons", function()
             "download", "eye_off", "filter", "folder", "folder_open", "forward", "history", "home",
             "home_plus", "info", "layout", "library", "list", "moon", "open_book", "plugin_missing", "plus",
             "power", "quick_settings", "refresh", "rotation_lock", "screenshot", "search", "series", "settings",
-            "sort", "sun", "sync", "terminal", "trash", "wifi", "wifi_off",
+            "sort", "subjects", "sun", "sync", "terminal", "trash", "wifi", "wifi_off",
         }, ids)
     end)
 
@@ -139,6 +139,21 @@ describe("icons", function()
         end
         assert.is_true(places.quick_settings and places.quick_settings.launcher)
         assert.is_true(places.wifi_off["quick settings"])
+    end)
+
+    -- The Subjects screen is reached as Series and Authors are: from a launcher entry, picked in launcher management.
+    it("uses series, authors and subjects in the launcher and launcher management", function()
+        local places = {}
+        for _, entry in ipairs(Icons.entries) do
+            places[entry.id] = {}
+            for _, place in ipairs(entry.used_in) do
+                places[entry.id][place] = true
+            end
+        end
+        for _, id in ipairs({ "series", "authors", "subjects" }) do
+            assert.is_true(places[id] and places[id].launcher, id .. " in launcher")
+            assert.is_true(places[id] and places[id]["launcher management"], id .. " in launcher management")
+        end
     end)
 
     -- The library draws forward and back as the pager's arrows and back as the folder's back mark, chevron_down after

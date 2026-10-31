@@ -26,6 +26,9 @@ Icons.entries = {
       file = "icons/series.svg" },
     { id = "authors", label = "Authors", used_in = { "launcher", "nav", "book sheet", "launcher management" },
       file = "icons/authors.svg" },
+    -- Lucide's `tag` icon (ISC; see icons/LICENSE-lucide.txt).
+    { id = "subjects", label = "Subjects", used_in = { "launcher", "launcher management" },
+      file = "icons/subjects.svg" },
     { id = "history", label = "History", used_in = { "launcher", "nav", "launcher management" },
       file = "icons/history.svg" },
     { id = "wifi", label = "Wi-Fi", used_in = { "launcher", "home sheet", "quick settings" },

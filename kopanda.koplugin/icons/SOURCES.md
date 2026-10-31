@@ -54,6 +54,7 @@ as shipped here, not the pack's.
 | series | `assets/fill/stack-fill.svg` | 36218018848bc80ed1bb7239ed26d8b6b4208355068d3285b8c510fd5596b3a4 |
 | settings | `assets/fill/gear-six-fill.svg` | fb7988bcc52bc8f4d2229d7365d37c3d1a4d98f703b690684325af32f863635a |
 | sort | `assets/fill/sort-ascending-fill.svg` | 8d49f3dca28158f1182e9c7821f7404cfbb6c348f4fd534c4d5874521375ca0a |
+| subjects | `assets/fill/tag-fill.svg` | e0bd0bee016deb33bd3855634e076aad830d1ec568a310139b29a0d6fccb44c2 |
 | sun | `assets/fill/sun-fill.svg` | 1019ae02cdb08886da9a9bd06d367ff97cfd0834844135cf4b2adb856e95406c |
 | sync | `assets/fill/cloud-arrow-down-fill.svg` | 18d12311cd77cfb5c8a2b5c423d9b1fb8472c8e0b43ff73bb45eca996c195992 |
 | terminal | `assets/fill/terminal-window-fill.svg` | df9620f1b3f811d4efd0d286f50945ae1f30abed82496c584541177af4d34001 |
@@ -106,6 +107,7 @@ as shipped here, not the pack's.
 | series | `assets/bold/stack-bold.svg` | 26d72b817b11fb398c857c4780128c51a3a664d0d8a1ce48c4aa2e0aea7926df |
 | settings | `assets/bold/gear-six-bold.svg` | 11f4c359cd45d67e8f4721593199a6f3f9f7c5749ab47e0219a17e93fa450ada |
 | sort | `assets/bold/sort-ascending-bold.svg` | 5187954195c65154d345fd01ac670bce637858efec066ba98fccff33d11646e3 |
+| subjects | `assets/bold/tag-bold.svg` | 6ef3a3af0b3d96a7d168dfa24f4bfc1b1811fe9d0b1670e2d626d07d9a4c77af |
 | sun | `assets/bold/sun-bold.svg` | 62578d5184297e7b5ed04b59a549aade5bc814d9364413cb5d3e23c47094e13f |
 | sync | `assets/bold/cloud-arrow-down-bold.svg` | 320a93def6d327981f52ac87ace22b338e42a4e48b321738a957a7305512be54 |
 | terminal | `assets/bold/terminal-window-bold.svg` | bdef5db73431e002bd90286412300b7d4c0ea55fa3a96d66f05934ec8525fec0 |
@@ -158,6 +160,7 @@ as shipped here, not the pack's.
 | series | `svg/design/layer_line.svg` | 2ed9381ec7e00be3e260efc49d2338a8ee75d9ce231f20ebcfa6bdc9de1c8684 |
 | settings | `svg/system/settings_3_line.svg` | 5e785a13c6a2fd98c41153d1ea68bc12c531f2eb476e7e9509c23397bd2ef584 |
 | sort | `svg/editor/sort_descending_line.svg` | 64ccb1dfad92c897ed6d2b5dfb49b04c9188f7a2a90802a6739f2cf7eb4679d2 |
+| subjects | `svg/business/tag_line.svg` | 711d0d6a95fca1b3c3d413ccc4655fee755690056733ddb1b276cfc2784d51ed |
 | sun | `svg/weather/sun_line.svg` | 1ba4a67eaf199777990db225e6f4f30688d2cbc00dbcbfad7e45e6d90a4a0b5f |
 | sync | `svg/file/download_3_line.svg` | bf4fe330db2a0102f0b5ffc259933857a7a12cfe1bac3120f38cd362b752d928 |
 | terminal | `svg/development/terminal_box_line.svg` | dfedad0bf8c773649792af2791e0e6ee075f1e3560d7491924020f7c43103eb6 |
