@@ -31,9 +31,10 @@ which the owner judges on the emulator.
 - The home drops rows that do not fit (`Layout.place`). At 1.4 the default five rows lose the launcher
   and the weather row; at 1.5 the date beside the clock truncates.
 - The library pages by a constant of six tiles (`library_order.lua`, `PER_PAGE`), not by height.
-- **Assumption:** the Paperwhite 7th generation panel is 1072 by 1448 at 300 dots per inch, grey. KOReader's
-  device table confirms the DPI and frontlight (`frontend/device/kindle/device.lua:1023-1027`), not the
-  pixel count, which comes from the framebuffer. Task 1 reads it off the device.
+- The Paperwhite 7th generation (the 2015 Paperwhite 3) panel is 1072 by 1448 in portrait at 300 dots per
+  inch, 16-level grey (MobileRead wiki, Kindle paperwhite 3; Wikipedia, Amazon Kindle devices). KOReader's
+  device table confirms the DPI and frontlight (`frontend/device/kindle/device.lua:1023-1027`). Task 1 still
+  checks the size the device reports.
 
 ## Decisions
 
@@ -70,7 +71,7 @@ Each written first and seen failing.
 
 ## Tasks, in order
 
-1. The 7th gen profile in the studio and the specs, with the panel size read off the device.
+1. The 7th gen profile in the studio and the specs, checked against the size the device reports.
 2. The Extra large step: schema choice, factor, floor, `size_at`.
 3. The surfaces that ignore text size start taking it.
 4. Per-step default rows: schema data, settings fallback, studio.
