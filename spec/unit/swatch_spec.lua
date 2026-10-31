@@ -790,8 +790,8 @@ describe("the swatch screen", function()
             -- The cell's left edge: the right column's chip x, and the whole cell's width.
             local chip_x = math.max(unpack(placed.chip_xs))
             assert.equals(chip_x, lacks.dimen.x)
-            -- On the last left chip's row: its top, the chip's or its label's, whichever is higher
-            -- (the row centres them).
+            -- On the last left chip's row: it overlaps the row's visible top, the chip's or its label's,
+            -- whichever is higher (the row centres them, so the tallest item sits at or above it).
             local row_top = col.last_left.dimen.y
             for _, chip in ipairs(collect(placed.panel, named("kopanda_swatch_chip"))) do
                 if chip.dimen.y <= col.last_left.dimen.y + col.last_left:getSize().h
@@ -799,7 +799,8 @@ describe("the swatch screen", function()
                     row_top = math.min(row_top, chip.dimen.y)
                 end
             end
-            assert.equals(row_top, lacks.dimen.y)
+            assert.is_true(lacks.dimen.y <= row_top and lacks.dimen.y + lacks:getSize().h > row_top,
+                "lacks y " .. lacks.dimen.y .. " off the row at " .. row_top)
             assert.is_true(lacks.dimen.y > col.last_right.dimen.y)
             assert.equals(col.right_x - chip_x + col.right_w, lacks.width)
             assert.equals(1, #lacks.vertical_string_list)

@@ -353,7 +353,7 @@ describe("LibraryOrder", function()
         end)
 
         it("reads a per_page that is no whole number of at least 1 as 1", function()
-            for _, bad in ipairs({ 0, -6, 0 / 0, "6", 2.5 }) do
+            for _, bad in ipairs({ 0, -6, 0 / 0, "6", 2.5, math.huge }) do
                 local items, count = LibraryOrder.page(numbers(4), 2, bad)
                 assert.same({ 2 }, items, tostring(bad))
                 assert.equals(4, count, tostring(bad))

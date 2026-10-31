@@ -82,7 +82,6 @@ describe("fonts", function()
         "fonts/bricolage-grotesque/BricolageGrotesque-Medium.ttf",
         "fonts/caveat/Caveat-Regular.ttf",
         "fonts/ibm-plex-sans/IBMPlexSans-Medium.ttf",
-        "fonts/ibm-plex-sans/IBMPlexSans-Regular.ttf",
         "fonts/newsreader/Newsreader16pt-Medium.ttf",
         "fonts/newsreader/Newsreader16pt-MediumItalic.ttf",
     }
@@ -233,7 +232,7 @@ describe("fonts", function()
         assert.equals(9, named)
     end)
 
-    it("names in the looks' tables exactly the eight look faces", function()
+    it("names in the looks' tables exactly the seven look faces", function()
         local seen, files = {}, {}
         for _, id in ipairs({ "editorial", "diner" }) do
             for _, face in pairs(package.loaded["looks"].get(id).faces) do

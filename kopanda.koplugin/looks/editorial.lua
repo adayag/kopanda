@@ -38,9 +38,6 @@ return {
         },
     },
 
-    -- The text face is the medium weight: the regular reads light on a grey panel.
-    faces = { text = { file = "fonts/ibm-plex-sans/IBMPlexSans-Medium.ttf", label = "IBM Plex Sans 500" } },
-
     stroke = { outline = 2 },
 
     shadow = { cover = { x = 2, y = 3 }, sheet = { y = 0, color = false } },

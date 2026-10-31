@@ -166,7 +166,7 @@ end
 -- Page n of items, per_page to a page (one that is no whole number of at least 1 read as 1); the page
 -- count, at least 1; and n clamped into 1 to the count, a missing or NaN n read as 1.
 function LibraryOrder.page(items, n, per_page)
-    if type(per_page) ~= "number" or per_page < 1 or per_page ~= math.floor(per_page) then
+    if type(per_page) ~= "number" or per_page < 1 or per_page == math.huge or per_page ~= math.floor(per_page) then
         per_page = 1
     end
     local count = math.max(1, math.ceil(#items / per_page))

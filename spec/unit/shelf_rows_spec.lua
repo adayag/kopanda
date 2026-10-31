@@ -663,8 +663,11 @@ describe("shelf rows", function()
                 for _, id in ipairs(IDS) do
                     local ctx = ctx_for(id)
                     local grid = ctx.look.library.grid
-                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx,
-                        { cover_h = ctx.look.shelf.author_grid.cover_h })
+                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx, {
+                        cover_h = ctx.look.shelf.author_grid.cover_h,
+                        room = LibraryTiles.room(Screen:getHeight(), ctx, detail_header_height(ctx)),
+                    })
+                    assert.equals(2, box.rows, id .. " at " .. where)
                     local used = detail_header_height(ctx) + scale(grid.padding_top) + 2 * box.height
                         + scale(grid.row_gap) + LibraryTiles.pager_height(ctx) + NavBar.height(ctx.look, Screen)
                     assert.is_true(used <= Screen:getHeight(),
