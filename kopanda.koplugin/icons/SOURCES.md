@@ -50,6 +50,7 @@ as shipped here, not the pack's.
 | refresh | `assets/fill/arrow-clockwise-fill.svg` | 3bd547af1e2f86de299c20cfb484079cdb8be69a9894503ca58c859688a4b690 |
 | rotation_lock | `assets/fill/device-rotate-fill.svg` | 763726c9113887516d3346db3f4a61dffe1db0db8f2c98d8d10991b61fa39063 |
 | screenshot | `assets/fill/camera-fill.svg` | 7dfb177061eb3d870a6b972c3b4cc18824296300b4a30014d27823826c88ba76 |
+| search | `assets/fill/magnifying-glass-fill.svg` | 6886e8f8b32bd173bf4297bbacce9c08e191681e4d403749312bdacf793fca53 |
 | series | `assets/fill/stack-fill.svg` | 36218018848bc80ed1bb7239ed26d8b6b4208355068d3285b8c510fd5596b3a4 |
 | settings | `assets/fill/gear-six-fill.svg` | fb7988bcc52bc8f4d2229d7365d37c3d1a4d98f703b690684325af32f863635a |
 | sort | `assets/fill/sort-ascending-fill.svg` | 8d49f3dca28158f1182e9c7821f7404cfbb6c348f4fd534c4d5874521375ca0a |
@@ -101,6 +102,7 @@ as shipped here, not the pack's.
 | refresh | `assets/bold/arrow-clockwise-bold.svg` | f1739ec6d2153220a3cdf75ab17d67c44b3cecafb86a52555efddb402765c523 |
 | rotation_lock | `assets/bold/device-rotate-bold.svg` | fc1a162ce5f504860545a2dc98b83019d86b975f0fc900e7fc281ca79ff44e2f |
 | screenshot | `assets/bold/camera-bold.svg` | 8aa03eeb7f8dddba034d67ac4656bc7b8f3ef479f737bcc3bf8a68d3c2a02055 |
+| search | `assets/bold/magnifying-glass-bold.svg` | 408b0e315bc54f82ae101179e92a5789da1d009bc4a8787fb866def4aef3e736 |
 | series | `assets/bold/stack-bold.svg` | 26d72b817b11fb398c857c4780128c51a3a664d0d8a1ce48c4aa2e0aea7926df |
 | settings | `assets/bold/gear-six-bold.svg` | 11f4c359cd45d67e8f4721593199a6f3f9f7c5749ab47e0219a17e93fa450ada |
 | sort | `assets/bold/sort-ascending-bold.svg` | 5187954195c65154d345fd01ac670bce637858efec066ba98fccff33d11646e3 |
@@ -152,6 +154,7 @@ as shipped here, not the pack's.
 | refresh | `svg/system/refresh_1_line.svg` | 557bc1d00ba9174a05ad3ed559f78bd819fb381d4aba6f7a3f00543a10e787e4 |
 | rotation_lock | `svg/media/rotate_to_vertical_line.svg` | 4fc45c920b065decec47870cd9dd44ee3eef30773d69906789e65605627213f5 |
 | screenshot | `svg/media/camera_2_line.svg` | 77d2a86ef119f1c02ba718972a92766a959c4c5a4e91c4b2653efe23530e137c |
+| search | `svg/file/search_line.svg` | 45f5e30ac6453abcb52c4ff596842beb202c1801f21ed40bc96d9ba70dd097f9 |
 | series | `svg/design/layer_line.svg` | 2ed9381ec7e00be3e260efc49d2338a8ee75d9ce231f20ebcfa6bdc9de1c8684 |
 | settings | `svg/system/settings_3_line.svg` | 5e785a13c6a2fd98c41153d1ea68bc12c531f2eb476e7e9509c23397bd2ef584 |
 | sort | `svg/editor/sort_descending_line.svg` | 64ccb1dfad92c897ed6d2b5dfb49b04c9188f7a2a90802a6739f2cf7eb4679d2 |

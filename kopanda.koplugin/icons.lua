@@ -81,6 +81,8 @@ Icons.entries = {
     -- Lucide's `arrow-down-to-line`, not Lucide's `download`, which has a tray (ISC; see icons/LICENSE-lucide.txt).
     { id = "download", label = "Not downloaded", used_in = { "library", "series", "authors" },
       file = "icons/download.svg" },
+    -- Lucide's `search` icon (ISC; see icons/LICENSE-lucide.txt).
+    { id = "search", label = "Search", used_in = { "library" }, file = "icons/search.svg" },
     -- Lucide's `sliders-horizontal` icon (ISC; see icons/LICENSE-lucide.txt).
     { id = "quick_settings", label = "Quick settings", used_in = { "launcher" }, file = "icons/quick_settings.svg" },
     { id = "home_plus", label = "Add to the home", used_in = { "book sheet" }, file = "icons/home_plus.svg" },

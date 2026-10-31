@@ -86,8 +86,8 @@ describe("icons", function()
             "action", "authors", "back", "bookmark", "check", "chevron_down", "chevron_up", "close",
             "download", "eye_off", "filter", "folder", "folder_open", "forward", "history", "home",
             "home_plus", "info", "layout", "library", "list", "moon", "open_book", "plugin_missing", "plus",
-            "power", "quick_settings", "refresh", "rotation_lock", "screenshot", "series", "settings", "sort",
-            "sun", "sync", "terminal", "trash", "wifi", "wifi_off",
+            "power", "quick_settings", "refresh", "rotation_lock", "screenshot", "search", "series", "settings",
+            "sort", "sun", "sync", "terminal", "trash", "wifi", "wifi_off",
         }, ids)
     end)
 
@@ -142,8 +142,8 @@ describe("icons", function()
     end)
 
     -- The library draws forward and back as the pager's arrows and back as the folder's back mark, chevron_down after
-    -- each picker and download on a book not downloaded.
-    it("uses forward, back, chevron_down and download in the library", function()
+    -- each picker, download on a book not downloaded and search on the header's search chip.
+    it("uses forward, back, chevron_down, download and search in the library", function()
         local places = {}
         for _, entry in ipairs(Icons.entries) do
             places[entry.id] = {}
@@ -151,7 +151,7 @@ describe("icons", function()
                 places[entry.id][place] = true
             end
         end
-        for _, id in ipairs({ "forward", "back", "chevron_down", "download" }) do
+        for _, id in ipairs({ "forward", "back", "chevron_down", "download", "search" }) do
             assert.is_true(places[id] and places[id].library, id)
         end
     end)
