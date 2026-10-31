@@ -53,11 +53,12 @@ local function label_height(look, screen, text_size)
     return height
 end
 
--- The bar's height in look on screen at text_size, in device pixels: the content's top, the icon, the gap,
--- a label line and the tab's bottom padding; a floating pill's outline at its foot and its margin
--- below it besides. Raises when a label face won't load.
+-- The bar's height in look on screen at text_size's shell size, in device pixels: the content's top, the
+-- icon, the gap, a label line and the tab's bottom padding; a floating pill's outline at its foot and its
+-- margin below it besides. Raises when a label face won't load.
 function NavBar.height(look, screen, text_size)
     local nav = look.nav
+    text_size = Layout.shell_text_size(text_size)
     local h = content_top(nav, screen) + Layout.size_at(screen:scaleBySize(nav.icon_size), text_size)
         + screen:scaleBySize(nav.icon_gap) + label_height(look, screen, text_size)
         + screen:scaleBySize(nav.padding_bottom)
@@ -115,6 +116,7 @@ local Bar = InputContainer:extend{
 -- for a floating pill its margin and outline, with the tab gap between them.
 function Bar:init()
     local look, nav = self.look, self.look.nav
+    self.text_size = Layout.shell_text_size(self.text_size)
     self.dimen = Geom:new{ x = 0, y = 0, w = self.width, h = NavBar.height(look, Screen, self.text_size) }
     -- Where the columns start from the bar's left: its side padding, and a floating pill's margin
     -- and outline before it.
@@ -129,7 +131,7 @@ function Bar:init()
     self.columns = Layout.columns(self.width - 2 * self.padding_x, shares, nav.tab_gap)
     local palette = Looks.palette(look, self.variant)
     local ctx = { look = look, variant = self.variant, text_size = self.text_size }
-    local icon_size = Layout.size_at(Screen:scaleBySize(nav.icon_size), self.text_size)
+    self.icon_size = Layout.size_at(Screen:scaleBySize(nav.icon_size), self.text_size)
     self.tabs = {}
     for i, tab in ipairs(NavBar.TABS) do
         local active = tab.id == ACTIVE[self.where]
@@ -139,7 +141,7 @@ function Bar:init()
         self.tabs[i] = {
             icon = TintedIcon:new{
                 file = Icons.path(tab.icon),
-                size = icon_size,
+                size = self.icon_size,
                 color = Looks.color(palette[active and nav.active_icon_color or nav.icon_color]),
             },
             label = Typeset.line(active and look.type.nav_label_active or look.type.nav_label, tab.label,
@@ -230,13 +232,12 @@ function Bar:paintTo(bb, x, y)
         paint_band(self, bb, x, y, color)
     end
     local left = x + self.padding_x
-    local icon_size = Layout.size_at(Screen:scaleBySize(nav.icon_size), self.text_size)
     local icon_top = y + content_top(nav, Screen)
-    local label_top = icon_top + icon_size + Screen:scaleBySize(nav.icon_gap)
+    local label_top = icon_top + self.icon_size + Screen:scaleBySize(nav.icon_gap)
     for i, tab in ipairs(self.tabs) do
         local column = self.columns[i]
         local column_x = left + column.x
-        tab.icon:paintTo(bb, column_x + math.floor((column.w - icon_size) / 2), icon_top)
+        tab.icon:paintTo(bb, column_x + math.floor((column.w - self.icon_size) / 2), icon_top)
         local label_w = tab.label:getSize().w
         tab.label:paintTo(bb, column_x + math.floor((column.w - label_w) / 2), label_top)
     end
@@ -304,9 +305,10 @@ function Bar:free()
     self.tabs = nil
 end
 
--- A bar { look, variant, width, where, listen, text_size } width × NavBar.height(look, Screen, text_size),
--- where "home" (Home active), "file_browser" or "library" (Library active). With listen it takes taps and
--- holds on its dimen itself; without, it takes none, and its screen hands them to handle.
+-- A bar { look, variant, width, where, listen, text_size } width × NavBar.height(look, Screen, text_size), its
+-- type at text_size's shell size, where "home" (Home active), "file_browser" or "library" (Library active).
+-- With listen it takes taps and holds on its dimen itself; without, it takes none, and its screen hands them
+-- to handle.
 function NavBar.new(args)
     return Bar:new{
         look = args.look,

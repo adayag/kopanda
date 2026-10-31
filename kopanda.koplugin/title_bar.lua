@@ -9,6 +9,7 @@ local GestureRange = require("ui/gesturerange")
 local Helpers = require("helpers")
 local Icons = require("icons")
 local InputContainer = require("ui/widget/container/inputcontainer")
+local Layout = require("layout")
 local Looks = require("looks")
 local OverlapGroup = require("ui/widget/overlapgroup")
 local Paint = require("paint")
@@ -92,11 +93,11 @@ local function metrics(look, screen, text_size)
     return m
 end
 
--- The bar's height in look on screen at text_size, in device pixels: the edge, the top padding, the
--- taller of the count-over-title column and the picker row, and the bottom padding. Raises when a face
+-- The bar's height in look on screen at text_size's shell size, in device pixels: the edge, the top padding,
+-- the taller of the count-over-title column and the picker row, and the bottom padding. Raises when a face
 -- won't load.
 function KoTitleBar.height(look, screen, text_size)
-    return metrics(look, screen, text_size).height
+    return metrics(look, screen, Layout.shell_text_size(text_size)).height
 end
 
 -- Replaces TitleBar:init (titlebar.lua:86-393) whole: no title, subtitle or buttons of KOReader's, one
@@ -106,6 +107,7 @@ function KoTitleBar:init()
     if not self.width then
         self.width = Screen:getWidth()
     end
+    self.text_size = Layout.shell_text_size(self.text_size)
     self.metrics = metrics(self.look, Screen, self.text_size)
     self.titlebar_height = self.metrics.height
     self.dimen = Geom:new{ x = 0, y = 0, w = self.width, h = self.titlebar_height }

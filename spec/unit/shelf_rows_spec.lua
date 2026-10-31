@@ -576,6 +576,16 @@ describe("shelf rows", function()
                     assert.equals(Layout.size_at(scale(large.look.shelf.book.badge_size), "extra_large"),
                         big.badge:getSize().w, id)
                     assert.is_true(big.badge:getSize().w > small.badge:getSize().w, id)
+                    -- The grown badge keeps its corner of the cover: its right edge and its inset from the cover's
+                    -- edge it aligns to.
+                    local function corner(row)
+                        local badge, cover, w = row:place(row.badge), row:place(row.cover), row.badge:getSize().w
+                        if large.look.library.badge.align == "bottom" then
+                            return { badge.x + w - cover.x, badge.y + w - cover.y }
+                        end
+                        return { badge.x + w - cover.x, badge.y - cover.y }
+                    end
+                    assert.same(corner(small), corner(big), id)
                     small:free()
                     big:free()
                 end

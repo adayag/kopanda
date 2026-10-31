@@ -1,4 +1,4 @@
--- NavBar: its five tabs, its height per look at the text size it is handed, its five
+-- NavBar: its five tabs, its height per look at the shell size of the text size it is handed, its five
 -- columns, its paint in each look and variant, and what a tap, a hold and anything else on it do.
 -- Nothing here places the bar on a screen; each case sets the bar's dimen as a screen would.
 describe("the nav bar", function()
@@ -161,6 +161,27 @@ describe("the nav bar", function()
             end
         end)
 
+        -- Outside the home's rows only extra_large changes the type, so the bar is the same on every screen.
+        it("is today's bar at small, medium and large, measured or built, and grows at extra_large", function()
+            harness.at_colorsoft(function()
+                for _, id in ipairs(Looks.ids()) do
+                    local look = Looks.get(id)
+                    local plain = NavBar.height(look, Screen)
+                    for _, size in ipairs({ "small", "medium", "large" }) do
+                        assert.equals(plain, NavBar.height(look, Screen, size), id .. " " .. size)
+                    end
+                    assert.is_true(NavBar.height(look, Screen, "extra_large") > plain, id)
+                    local bar = NavBar.new{ look = look, variant = "day", width = Screen:getWidth(), where = "home" }
+                    local large = NavBar.new{ look = look, variant = "day", width = Screen:getWidth(), where = "home",
+                        text_size = "large" }
+                    assert.same({ plain, bar.tabs[1].label:getSize().h, bar.tabs[1].icon.size },
+                        { large:getSize().h, large.tabs[1].label:getSize().h, large.tabs[1].icon.size }, id)
+                    bar:free()
+                    large:free()
+                end
+            end)
+        end)
+
         it("is the height of a bar built at a text size, its icons at the step's factor", function()
             harness.at_colorsoft(function()
                 for _, id in ipairs(Looks.ids()) do
@@ -259,6 +280,42 @@ describe("the nav bar", function()
             end
             return bar, bb, holds
         end
+
+        -- The labels sit below the grown icons: in an inactive column with the icons painting nothing, the first
+        -- row of ink is the label's, at or below the content's top, the icon at the step's factor and the gap.
+        it("sets the labels below the icon at extra_large", function()
+            harness.at_colorsoft(function()
+                local look = Looks.get("editorial")
+                local nav = look.nav
+                local bar = NavBar.new{ look = look, variant = "day", width = Screen:getWidth(), where = "home",
+                    text_size = "extra_large" }
+                for _, tab in ipairs(bar.tabs) do
+                    tab.icon:free()
+                    tab.icon = { paintTo = function() end, free = function() end }
+                end
+                local size = bar:getSize()
+                local bb = Blitbuffer.new(size.w, size.h, Blitbuffer.TYPE_BBRGB32)
+                bb:fill(Blitbuffer.COLOR_WHITE)
+                bar:paintTo(bb, 0, 0)
+                local paper = rgb(Looks.palette(look, "day").paper)
+                local edge = scale(nav.edge_width)
+                local top = edge + math.max(0, scale(nav.active_rule_width) - edge) + scale(nav.padding_top)
+                local x, w = column(bar, 2)
+                local first
+                for y = top, size.h - 1 do
+                    for px = x, x + w - 1 do
+                        if not near(pixel(bb, px, y), paper, 2) then
+                            first = first or y
+                        end
+                    end
+                end
+                assert.is_number(first)
+                assert.is_true(first >= top + Layout.size_at(scale(nav.icon_size), "extra_large") + scale(nav.icon_gap),
+                    "the label's first ink row " .. first)
+                bar:free()
+                bb:free()
+            end)
+        end)
 
         it("draws Editorial's 1 px ink edge across the top and its 3 px rule over the active column only", function()
             harness.at_colorsoft(function()

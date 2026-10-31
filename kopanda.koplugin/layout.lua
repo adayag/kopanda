@@ -326,4 +326,12 @@ function Layout.size_at(px, text_size)
     return math.floor(px * TEXT_SCALE.extra_large + 0.5)
 end
 
+-- Outside the home's rows, only Extra large changes the type; the other steps keep today's shell.
+function Layout.shell_text_size(text_size)
+    if text_size == "extra_large" then
+        return text_size
+    end
+    return nil
+end
+
 return Layout

@@ -304,6 +304,18 @@ describe("the library window", function()
             assert.equals("extra_large", library.ctx.text_size)
             assert.equals(NavBar.height(library.ctx.look, Screen, "extra_large"), library.nav.dimen.h)
         end)
+
+        it("and the window's text keep today's size at large", function()
+            fixture.install({ [ROOT] = { books = fixture.books(2) } })
+            assert.is_true(Settings.set("text_size", "large"))
+            local library = fixture.show()
+            local look, w = library.ctx.look, Screen:getWidth()
+            local medium = { look = look, variant = library.ctx.variant, screen = Screen, text_size = "medium" }
+            assert.same({ NavBar.height(look, Screen, "medium"), LibraryTiles.geometry(w, medium).height,
+                LibraryTiles.header_height(medium) },
+                { library.nav.dimen.h, LibraryTiles.geometry(w, library.ctx).height,
+                    LibraryTiles.header_height(library.ctx) })
+        end)
     end)
 
     describe("paint", function()

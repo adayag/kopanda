@@ -252,16 +252,56 @@ describe("the featured widget", function()
             end
         end)
 
-        it("grows at extra_large with the cover box, the box's cap still 40 % of the column", function()
-            for _, id in ipairs({ "editorial", "diner" }) do
-                local medium, large = ctx_for(id), ctx_for(id, { text_size = "extra_large" })
-                local featured = medium.look.featured
-                local cover_w, cover_h = Screen:scaleBySize(featured.cover_w), Screen:scaleBySize(featured.cover_h)
-                assert.same({ Layout.size_at(cover_w, "extra_large"), Layout.size_at(cover_h, "extra_large") },
-                    { FeaturedCover.box(1264, large) }, id)
-                assert.is_true(Featured.height(1264, large) > Featured.height(1264, medium), id)
-                assert.same({ FeaturedCover.box(300, medium) }, { FeaturedCover.box(300, large) }, id)
-            end
+        -- The cover keeps its size at extra_large and the row grows to its text column, so no line drops: in a
+        -- half-width slot on the Colorsoft, 547 px, the column is taller than the cover.
+        it("grows at extra_large with its text column, the cover box the same, every line kept", function()
+            calls.book = record()
+            harness.at_colorsoft(function()
+                for _, id in ipairs({ "editorial", "diner" }) do
+                    local medium, large = ctx_for(id), ctx_for(id, { text_size = "extra_large" })
+                    local featured = medium.look.featured
+                    assert.same({ Screen:scaleBySize(featured.cover_w), Screen:scaleBySize(featured.cover_h) },
+                        { FeaturedCover.box(1264, large) }, id)
+                    assert.same({ FeaturedCover.box(547, medium) }, { FeaturedCover.box(547, large) }, id)
+                    assert.same({ FeaturedCover.box(300, medium) }, { FeaturedCover.box(300, large) }, id)
+                    assert.is_true(Featured.height(547, large) > Featured.height(547, medium), id)
+                    local built = Featured.build(547, large)
+                    assert.equals(Featured.height(547, large), built:getSize().h, id)
+                    local shown = table.concat(texts(built), "\n"):lower()
+                    assert.truthy(shown:find("susanna", 1, true), id)
+                    -- Diner joins the chapter to the authors' line.
+                    if id == "editorial" then
+                        assert.truthy(shown:find("part 3", 1, true), id)
+                    end
+                    local bb = paint(built)
+                    assert.equals(0, spilled(bb, 547, built:getSize().h), id)
+                    bb:free()
+                    built:free()
+                end
+            end)
+            calls.book = nil
+            harness.at_colorsoft(function()
+                for _, id in ipairs({ "editorial", "diner" }) do
+                    local medium, large = ctx_for(id), ctx_for(id, { text_size = "extra_large" })
+                    assert.is_true(Featured.height(547, large) > Featured.height(547, medium), id .. " first run")
+                    local built = Featured.build(547, large)
+                    assert.equals(Featured.height(547, large), built:getSize().h, id .. " first run")
+                    built:free()
+                end
+            end)
+        end)
+
+        -- The other steps keep the cover's height and leave lines out instead.
+        it("keeps the cover box's height at large in the same slot, leaving the chapter out", function()
+            calls.book = record()
+            harness.at_colorsoft(function()
+                local ctx = ctx_for("editorial", { text_size = "large" })
+                local _, h = FeaturedCover.box(547, ctx)
+                assert.equals(h + Screen:scaleBySize(ctx.look.shadow.cover.y), Featured.height(547, ctx))
+                local built = Featured.build(547, ctx)
+                assert.falsy(table.concat(texts(built), "\n"):find("Part 3", 1, true))
+                built:free()
+            end)
         end)
 
         it("paints nothing outside itself at 600 px or in a half-width column, at the large text size", function()
@@ -292,6 +332,15 @@ describe("the featured widget", function()
             calls.book = record()
             local built = Featured.build(1264, ctx_for("editorial"))
             assert.equals(1, calls.current)
+            built:free()
+        end)
+
+        it("reads the featured book once for a height and the build that follows", function()
+            calls.book = record()
+            local ctx = ctx_for("editorial", { text_size = "extra_large" })
+            local h = Featured.height(1264, ctx)
+            local built = Featured.build(1264, ctx)
+            assert.same({ 1, h }, { calls.current, built:getSize().h })
             built:free()
         end)
     end)

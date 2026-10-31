@@ -118,7 +118,9 @@ function M.list(w)
         end)
     end)
 
-    -- The page is planned on the bar's height at the text size, and its rows end above the pager.
+    -- The page is planned on the bar's height at the text size, and its rows end above the pager. The spy on
+    -- NavBar.height's text size stays: it alone catches a plan that leaves ctx.text_size out, whose rows still end
+    -- above the pager.
     it("builds its text, its nav bar and its page at the stored text size", function()
         local NavBar = package.loaded["nav_bar"]
         local pager_h = package.loaded["library_tiles"].pager_height

@@ -13,6 +13,7 @@ local Home = require("home")
 local HomeGestures = require("home_gestures")
 local Icons = require("icons")
 local InputContainer = require("ui/widget/container/inputcontainer")
+local Layout = require("layout")
 local LibrarySheets = require("library_sheets")
 local LibraryTiles = require("library_tiles")
 local Looks = require("looks")
@@ -234,13 +235,14 @@ function LibraryChrome.foot(built, frame, where)
     built.pager = pager(built, frame, w, nav.dimen.y)
 end
 
--- Fills built (the window's view and page) at the screen's size in the active look and variant: dimen, ctx,
--- frame, the paper, then fill(built, frame, w, h), then the nav bar. A failure frees what was built and raises.
+-- Fills built (the window's view and page) at the screen's size in the active look and variant at the shell's
+-- text size: dimen, ctx, frame, the paper, then fill(built, frame, w, h), then the nav bar. A failure frees what
+-- was built and raises.
 function LibraryChrome.build(built, fill)
     local size = Screen:getSize()
     built.dimen = Geom:new{ x = 0, y = 0, w = size.w, h = size.h }
     built.ctx = { look = Looks.active(), variant = Looks.variant(), screen = Screen,
-        text_size = Settings.get("text_size") }
+        text_size = Layout.shell_text_size(Settings.get("text_size")) }
     built.frame = new_box(size.w, size.h)
     local ok, err = pcall(function()
         local _, color = tools(built.ctx)

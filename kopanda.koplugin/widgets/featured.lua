@@ -296,14 +296,20 @@ local function stacked_height(items)
     return h
 end
 
+-- Whether the text column is as high as its lines where taller than the cover box: at extra_large only, so
+-- the other steps keep the cover's height and leave lines out instead.
+local function grows(ctx)
+    return ctx.text_size == "extra_large"
+end
+
 -- A container exactly w by h holding group.
 local function column(group, w, h)
     return WidgetContainer:new{ dimen = Geom:new{ w = w, h = h }, group }
 end
 
--- The book's text column, w by h: the top block and the bottom block with the free height
--- between them, inside featured.column_padding_y. When they don't fit, the chapter, then the
--- authors, are left out, and then the title takes one line.
+-- The book's text column, w by h, or where it grows as high as its lines stacked if taller: the top block and
+-- the bottom block with the free height between them, inside featured.column_padding_y. When they don't fit,
+-- the chapter, then the authors, are left out, and then the title takes one line.
 local function book_column(book, w, h, ctx)
     local look = ctx.look
     local scale = Paint.scaler(ctx)
@@ -336,6 +342,9 @@ local function book_column(book, w, h, ctx)
         { Featured.bar(Featured.shown_percent(book), w, scale(progress.height), progress.outline_width, ctx), 0 },
         { caption(book, w, ctx), scale(BAR_GAP) },
     }
+    if grows(ctx) then
+        h = math.max(h, 2 * pad + stacked_height(top) + stacked_height(bottom))
+    end
     local room = h - 2 * pad - stacked_height(bottom)
     while #top > 2 and stacked_height(top) > room do
         table.remove(top)[1]:free()
@@ -354,9 +363,10 @@ local function book_column(book, w, h, ctx)
     }, w, h)
 end
 
--- The first run's column, w by h, centred vertically: the label, "Nothing open yet.", the body in the lines
--- that fit, and the button. In a column too short for them the title takes one line and the body is left out.
--- Returns the column and the button.
+-- The first run's column, w by h, or where it grows as high as its label, title and button stacked if taller,
+-- centred vertically: the label, "Nothing open yet.", the body in the lines that fit, and the button. In a
+-- column too short for them the title takes one line and the body is left out. Returns the column and the
+-- button.
 local function empty_column(w, h, ctx)
     local scale = Paint.scaler(ctx)
     local pad = scale(ctx.look.featured.column_padding_y)
@@ -368,6 +378,9 @@ local function empty_column(w, h, ctx)
     }
     local function room()
         return h - 2 * pad - stacked_height(items) - scale(BUTTON_GAP) - the_button:getSize().h
+    end
+    if grows(ctx) then
+        h = math.max(h, h - room())
     end
     if room() < 0 then
         items[2][1]:free()
@@ -388,16 +401,10 @@ local function empty_column(w, h, ctx)
     }, w, h), the_button
 end
 
--- The cover box's height plus the cover shadow's y, so the shadow is never cut.
-function Featured.height(width, ctx)
-    local _, h = FeaturedCover.box(width, ctx)
-    return h + ctx.screen:scaleBySize(ctx.look.shadow.cover.y)
-end
-
--- The cover box, the gap and the text column, exactly width wide and height(width) high. The
--- built widget keeps the book (nil on the first run), the cover box's size and the first run's
--- button for tap and after_show.
-function Featured.build(width, ctx)
+-- The cover box, the gap and the text column, exactly width wide; as high as the cover box and the cover
+-- shadow's y, so the shadow is never cut, or as the text column where taller. The built widget keeps the book
+-- (nil on the first run), the cover box's size and the first run's button for tap and after_show.
+local function make(width, ctx)
     local book = FeaturedBook.current()
     local w, h = FeaturedCover.box(width, ctx)
     local cover = FeaturedCover.build(book, w, h, ctx)
@@ -411,7 +418,8 @@ function Featured.build(width, ctx)
     end
     return WidgetContainer:new{
         name = "kopanda_featured",
-        dimen = Geom:new{ w = width, h = Featured.height(width, ctx) },
+        dimen = Geom:new{ w = width, h = math.max(h + ctx.screen:scaleBySize(ctx.look.shadow.cover.y),
+            text:getSize().h) },
         book = book,
         box_w = w,
         box_h = h,
@@ -424,6 +432,8 @@ function Featured.build(width, ctx)
         },
     }
 end
+
+Featured.height, Featured.build = Typeset.measured(make)
 
 -- A tap in the slot (ges the gesture, built what build returned): opens the book through KOReader's own path
 -- to the reader (frontend/apps/filemanager/filemanager.lua:1616-1639), which closes the file manager and the

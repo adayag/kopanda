@@ -693,8 +693,6 @@ describe("Layout", function()
         end)
 
         -- Page 2's insights with a year of reading, every hour of the day used and a featured book in progress.
-        -- At large the nav label follows the text size, which on the Paperwhite makes Toybox's bar push one
-        -- page-2 row out.
         it("fits the page-2 default on the Colorsoft and the Paperwhite at every text size in every look", function()
             local FeaturedBook = require("featured_book")
             local Looks = require("looks")
@@ -734,7 +732,7 @@ describe("Layout", function()
                         }
                         local key = table.concat({ profile, id, size }, " ")
                         counts[key] = require("layout").overflow(rows, ctx)
-                        expected[key] = key == "paperwhite toybox large" and 1 or 0
+                        expected[key] = 0
                         cases = cases + 1
                     end
                 end
@@ -747,6 +745,70 @@ describe("Layout", function()
             assert(ok, err)
             -- Two profiles, three text sizes, every look.
             assert.equals(6 * #Looks.ids(), cases)
+            assert.same(expected, counts)
+        end)
+
+        -- Page 1 with the populated and the empty content, page 2 with a year of insights.
+        it("fits each page's extra_large default on every profile in every look", function()
+            local FeaturedBook = require("featured_book")
+            local Looks = require("looks")
+            local ReadingStats = require("reading_stats")
+            local Schema = require("schema")
+            local Settings = require("settings")
+            local Weather = require("weather")
+            local pages, entries = {}, nil
+            for _, key in ipairs(Schema.keys) do
+                if key.id == "layout.rows" or key.id == "layout.rows_2" then
+                    pages[key.id] = key.defaults_by_text_size.extra_large
+                elseif key.id == "launcher.entries" then
+                    entries = key.default
+                end
+            end
+            local days, hours = {}, {}
+            for i = 1, ReadingStats.INSIGHT_DAYS do
+                days[i] = i % 6 == 0 and 0 or 1200 + (i * 397) % 3600
+            end
+            for h = 1, 24 do
+                hours[h] = 600 + (h * 731) % 5400
+            end
+            local insights = { state = "ok", days = days, hours = hours,
+                sessions = { count = 312, longest = 6480, average = 1440, pages_per_hour = 41 } }
+            local real_insights, real_current, real_reading =
+                ReadingStats.insights, FeaturedBook.current, Weather.reading
+            ReadingStats.insights = function() return insights end
+            local counts, expected, cases = {}, {}, 0
+            local function count(profile)
+                for _, content in ipairs({ "populated", "empty" }) do
+                    local c = CONTENT[content]
+                    FeaturedBook.current = function() return c.book end
+                    Weather.reading = function() return c.reading end
+                    assert.is_true(Settings.set("launcher.entries", c.entries or entries))
+                    for _, id in ipairs(Looks.ids()) do
+                        local ctx = {
+                            look = Looks.get(id),
+                            variant = "day",
+                            text_size = "extra_large",
+                            now = NOW,
+                            screen = Screen,
+                        }
+                        for key, rows in pairs(pages) do
+                            local case = table.concat({ profile, id, content, key }, " ")
+                            counts[case] = require("layout").overflow(rows, ctx)
+                            expected[case] = 0
+                            cases = cases + 1
+                        end
+                    end
+                end
+            end
+            local ok, err = pcall(function()
+                harness.at_colorsoft(function() count("colorsoft") end)
+                harness.at_paperwhite(function() count("paperwhite") end)
+                harness.at_screen(1072, 1448, function() count("paperwhite7") end)
+            end)
+            ReadingStats.insights, FeaturedBook.current, Weather.reading = real_insights, real_current, real_reading
+            assert(ok, err)
+            -- Three profiles, two contents, two pages, every look.
+            assert.equals(12 * #Looks.ids(), cases)
             assert.same(expected, counts)
         end)
     end)

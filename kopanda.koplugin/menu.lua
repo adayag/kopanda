@@ -39,9 +39,9 @@ local function network()
 end
 
 -- Stores value under entry's key unless it is already stored. A refused write is logged and noted; a done
--- one re-lays the file browser out for a new look, then refreshes a shown home once, after one weather
--- fetch when the weather's place or units changed while connected. home and fm_nav are required here: home
--- reaches home_gestures, which requires settings_menu, which requires this module.
+-- one re-lays the file browser out for a new look or text size, then refreshes a shown home once, after one
+-- weather fetch when the weather's place or units changed while connected. home and fm_nav are required here:
+-- home reaches home_gestures, which requires settings_menu, which requires this module.
 local function write(entry, value)
     if util.tableEquals(Settings.get(entry.id), value) then
         return
@@ -52,7 +52,7 @@ local function write(entry, value)
         Helpers.note("Couldn't save " .. entry.label .. ".")
         return
     end
-    if entry.id == "look" then
+    if entry.id == "look" or entry.id == "text_size" then
         require("fm_nav").relayout()
     end
     local home = require("home").shown

@@ -249,6 +249,15 @@ describe("library tiles", function()
                     assert.is_true(big.badge:getSize().w > small.badge:getSize().w, id)
                     assert.equals(Layout.size_at(scale(large.look.library.badge.size), "extra_large"),
                         big.badge:getSize().w, id)
+                    -- The grown badge keeps its corner: its right edge and its inset from the edge it aligns to.
+                    local at, grown_at = small:place(small.badge), big:place(big.badge)
+                    local size, grown_size = small.badge:getSize().w, big.badge:getSize().w
+                    assert.equals(at.x + size, grown_at.x + grown_size, id)
+                    if large.look.library.badge.align == "bottom" then
+                        assert.equals(at.y + size, grown_at.y + grown_size, id)
+                    else
+                        assert.equals(at.y, grown_at.y, id)
+                    end
                     small:free()
                     big:free()
                 end
