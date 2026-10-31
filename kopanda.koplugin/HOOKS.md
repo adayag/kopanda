@@ -60,7 +60,7 @@ Upgrading KOReader walks this list.
   `frontend/apps/filemanager/filemanager.lua:819-826` (`onClose`, on quit), `:842-849`
   (`onShowingReader`, when a book opens).
 - Reaches the plugin instance as an array child; the instance closes the home and the chrome
-  window (the library, Series, Authors or the search), either of which would otherwise keep
+  window (the library, Series, Authors, Subjects or the search), either of which would otherwise keep
   KOReader from quitting.
 
 ### `CloseDocument`, the mark on book close
@@ -72,7 +72,7 @@ Upgrading KOReader walks this list.
 - A reader instance's `onCloseDocument` first records the book's chapter for the featured book
   (the featured book entry below), then, when a return is recorded, leaves it as the open
   recorded it: the library's `Library.return_to` (the library's return entry below), or the
-  Series or Authors window's view and page in `LibraryChrome.return_to`, recorded from the same
+  Series, Authors or Subjects window's view and page in `LibraryChrome.return_to`, recorded from the same
   `caller_pre_callback`; or else sets `Home.just_closed`; and returns nothing, so the event
   reaches later modules. The return is checked first, so a close with one sets no mark. It
   builds no window and no home: the close, `showFileManager`, `showFiles`, `UIManager:show` and
@@ -1253,7 +1253,7 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   file of the batch in one call; the featured cover asks through `FeaturedCover.after_show`, the
   library for its page (`library_covers.lua`), the library's Refresh covers for every book with a
   file directly in its folder, in place of the page's request (`Library:refresh_covers`, the
-  empty-space sheet's entry below), and the Series, Authors and search windows, once per show,
+  empty-space sheet's entry below), and the Series, Authors, Subjects and search windows, once per show,
   for every book of the library at the library grid's cover box (`LibraryChrome.request_records`,
   `library_chrome.lua`), each from the next tick after a paint, never from `build` or `paintTo`.
 - `isExtractingInBackground()` (`:685-687`), the only completion signal, counts CoverBrowser's own
@@ -1830,8 +1830,8 @@ guard (`sheet.lua`).
   its `openFile` (`:500-502`), which runs at once or from the "Open this file?" confirm's OK when
   `file_ask_to_open` is set (`:523-528`), so a cancelled confirm runs no callback; in the file
   manager it then calls `ui:openFile` (`:519`). `library_chrome.lua`'s `Window:open`, the library's,
-  Series', Authors' and the search's own, passes the file manager as `ui` and a callback running the window's
-  `on_open(view, page)`. The module is required at call time, as `books.lua` requires it.
+  Series', Authors', Subjects' and the search's own, passes the file manager as `ui` and a callback
+  running the window's `on_open(view, page)`. The module is required at call time, as `books.lua` requires it.
 - The page keys, the swipes and the metadata events below are the chrome's
   (`library_chrome.lua`'s `LibraryChrome.Window`, which the library extends).
 - The page keys, as `Menu:registerKeyEvents` sets them (`frontend/ui/widget/menu.lua:984-992`):
@@ -1856,8 +1856,8 @@ guard (`sheet.lua`).
   cover change (`frontend/apps/filemanager/filemanagerbookinfo.lua:276-277`, `:556-557`), to every
   window, a handler's true return stopping none (`frontend/ui/uimanager.lua:1042-1061`). One change
   sends two or three (`filemanagerbookinfo.lua:276-280`), so each of the chrome's windows (the
-  library, Series, Authors and the search; `library_chrome.lua`) marks itself stale on each, returns nothing,
-  and re-lists once from one `nextTick` (`frontend/ui/uimanager.lua:431-433`) if it is still shown. The book-info page broadcasts from its close callback after
+  library, Series, Authors, Subjects and the search; `library_chrome.lua`) marks itself stale on each,
+  returns nothing, and re-lists once from one `nextTick` (`frontend/ui/uimanager.lua:431-433`) if it is still shown. The book-info page broadcasts from its close callback after
   `UIManager:close` (`frontend/ui/widget/keyvaluepage.lua:841-846`), inside the input dispatch at
   the end of `handleInput` (`uimanager.lua:1607-1620`, run again from `:1663`), so that tick runs at
   the next pass's `_checkTasks`, before the `_repaint` that paints the close (`:1537-1564`).
@@ -1911,7 +1911,7 @@ guard (`sheet.lua`).
   closed (the Home tab, say), so a book then opened from the home closes to the home. Accepted
   residual: with such a stale return and the library still up, a book opened from History over it
   still closes to the library.
-- The Series and Authors windows' return (`LibraryChrome.return_to`) follows the same paths: a
+- The Series, Authors and Subjects windows' return (`LibraryChrome.return_to`) follows the same paths: a
   failed open builds the window at the return, and the file manager's `CloseWidget` drops a
   return whose window has already closed.
 - A book opened from the search window records the library's return (`Library.return_to`, the

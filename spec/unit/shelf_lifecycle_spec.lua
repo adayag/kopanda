@@ -1,7 +1,7 @@
--- The Series and Authors windows' covers: after its first paint each asks, once per show, for every record of the
--- library at the library grid's cover box; an arrival re-reads the arrived records and rebuilds the index, and
+-- The Series, Authors and Subjects windows' covers: after its first paint each asks, once per show, for every record
+-- of the library at the library grid's cover box; an arrival re-reads the arrived records and rebuilds the index, and
 -- repaints only when the page shown changes; closing cancels the check. These are the chrome's extraction helper's
--- cases (LibraryChrome.request_records), which both windows share. BookCovers.request and cancel are stubbed.
+-- cases (LibraryChrome.request_records), which the three windows share. BookCovers.request and cancel are stubbed.
 local harness = require("plugin_harness")
 local fixture = require("shelf_fixture")
 local UIManager = require("ui/uimanager")
@@ -223,6 +223,86 @@ local SHELVES = {
                 return titles(screen.tiles)
             end,
             fields = { authors = { "Bo Many" } },
+            after = "^9 books$",
+        },
+    },
+    {
+        name = "Subjects",
+        one = "subject",
+        module = "subjects_screen",
+        -- Thirty subjects of one book each, "Subject 01" to "Subject 30", more than one page; Many's eight books,
+        -- the first row and two pages of tiles; then an untagged book.
+        shelf = function()
+            local records = {}
+            for i = 1, 30 do
+                records[i] = fixture.book(("Book %02d"):format(i), { subjects = { ("Subject %02d"):format(i) } })
+            end
+            for i = 1, 8 do
+                records[#records + 1] = fixture.book("Many " .. i, { subjects = { "Many" } })
+            end
+            records[#records + 1] = fixture.book("Untagged")
+            return records
+        end,
+        detail = { kind = "subject", name = "Many" },
+        -- The untagged book joins Many, which still sorts first, and Aardvark, first of the one-book subjects.
+        joins = {
+            fields = { subjects = { "Many", "Aardvark" } },
+            first = "Many",
+            check = function(screen, fresh)
+                local books = screen.rows[1].entry.books
+                assert.equals(9, #books)
+                assert.equals(fresh, books[#books])
+                assert.equals("Aardvark", screen.rows[2].entry.name)
+                assert.same({ fresh }, screen.rows[2].entry.books)
+            end,
+        },
+        -- Many's six tiles on the first page; Many 8 on the second, and another subject's book.
+        one_page = {
+            view = { kind = "subject", name = "Many" },
+            off = function(records, screen)
+                assert.equals(6, #screen.tiles)
+                for _, record in ipairs(records) do
+                    if record.title == "Many 8" then
+                        return { record, records[1] }
+                    end
+                end
+            end,
+            on = function(_, screen)
+                return screen.tiles[1].record
+            end,
+        },
+        -- Five subject rows fill a page here, so twenty-four subjects take five pages, the last with room: the
+        -- untagged book's new subject sorts after them, off the page shown.
+        list_count = {
+            records = function()
+                local records = {}
+                for i = 1, 24 do
+                    records[i] = fixture.book(("Book %02d"):format(i), { subjects = { ("Subject %02d"):format(i) } })
+                end
+                records[#records + 1] = fixture.book("Untagged")
+                return records, records[#records]
+            end,
+            fields = { subjects = { "Subject 99" } },
+            pages = 5,
+            before = "24 subjects",
+            after = "^25 subjects$",
+        },
+        -- Many's eight books take two pages of tiles; a ninth fits the second.
+        one_count = {
+            records = function()
+                local records = {}
+                for i = 1, 8 do
+                    records[i] = fixture.book("Many " .. i, { subjects = { "Many" } })
+                end
+                records[#records + 1] = fixture.book("Zed")
+                return records, records[#records]
+            end,
+            view = { kind = "subject", name = "Many" },
+            shown = function(screen)
+                return titles(screen.tiles)
+            end,
+            fields = { subjects = { "Many" } },
+            before = "8 books",
             after = "^9 books$",
         },
     },
@@ -481,6 +561,36 @@ describe("the Authors window's lifecycle", function()
         assert.equals(0, n)
         assert.equals(frame, screen[1])
     end)
+end)
+
+describe("the Subjects window's lifecycle", function()
+    before_each(function()
+        load()
+    end)
+
+    after_each(function()
+        harness.teardown()
+    end)
+
+    it("repaints for an arrival of a book in a row's cover stack on the page, and leaves it clean for one off it",
+        function()
+            local records = SHELVES[3].shelf()
+            fixture.install(records)
+            local screen = show_in("subjects_screen")
+            assert.equals("Many", screen.rows[1].entry.name)
+            local shown = screen.rows[1].entry.books[1]
+            local frame = screen[1]
+            local n = dirties(screen, function()
+                requests[1].on_arrival({ records[30], records[#records] })
+            end)
+            assert.equals(0, n, "an arrival off the page leaves the window clean")
+            assert.equals(frame, screen[1])
+            n = dirties(screen, function()
+                requests[1].on_arrival({ shown })
+            end)
+            assert.is_true(n > 0, "an arrival on the page repaints it")
+            assert.is_not.equals(frame, screen[1])
+        end)
 end)
 
 -- The ways into the two windows and the return after a book opened from one closes. KOReader's open is stubbed at

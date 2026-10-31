@@ -1,9 +1,10 @@
--- The cases the Series and Authors windows share, which series_screen_spec.lua and authors_screen_spec.lua run for
--- their window inside their own describe blocks, each passing its window's row (w) of what the cases differ in:
--- shown full-screen one window at a time, the pager in each look's words with its dead arrows, the nav bar, the
--- empty note, the list for a gone view, the rebuild on a variant or size change, the re-listing on the metadata
--- events, the sort kept between page turns, and the settled signal. A module required from a spec file doesn't see
--- the spec's globals: it and after_each come from Busted's API, assert from luassert, the same table.
+-- The cases the Series, Authors and Subjects windows share, which series_screen_spec.lua, authors_screen_spec.lua and
+-- subjects_screen_spec.lua run for their window inside their own describe blocks, each passing its window's row (w)
+-- of what the cases differ in: shown full-screen one window at a time, the pager in each look's words with its dead
+-- arrows, the nav bar, the empty note, the list for a gone view, the rebuild on a variant or size change, the
+-- re-listing on the metadata events, the sort kept between page turns, and the settled signal. A module required
+-- from a spec file doesn't see the spec's globals: it and after_each come from Busted's API, assert from luassert,
+-- the same table.
 local assert = require("luassert")
 local busted = require("busted")
 local fixture = require("shelf_fixture")
@@ -37,11 +38,12 @@ function M.each_look(fn)
 end
 local each_look = M.each_look
 
--- Wraps ShelfOrder.authors and ShelfOrder.series to count their calls from here.
-function M.count_sorts()
+-- Wraps the ShelfOrder sorts names lists (default: authors and series) to count their calls from here.
+function M.count_sorts(names)
     local ShelfOrder = package.loaded["shelf_order"]
-    local sorts = { authors = 0, series = 0 }
-    for _, name in ipairs({ "authors", "series" }) do
+    local sorts = {}
+    for _, name in ipairs(names or { "authors", "series" }) do
+        sorts[name] = 0
         local sort = ShelfOrder[name]
         ShelfOrder[name] = function(...)
             sorts[name] = sorts[name] + 1
@@ -52,7 +54,11 @@ function M.count_sorts()
 end
 
 local function times(sorts, n)
-    return { authors = sorts.authors * n, series = sorts.series * n }
+    local out = {}
+    for name, count in pairs(sorts) do
+        out[name] = count * n
+    end
+    return out
 end
 
 -- Inside "the window".
@@ -139,7 +145,7 @@ function M.list(w)
                 assert.equals(height(screen.ctx.look, Screen, "extra_large"), screen.nav.dimen.h, id)
                 local last = screen.rows[#screen.rows].rect
                 local foot = screen.nav.dimen.y - pager_h(screen.ctx)
-                    - reserve(w.id == "series" and "series" or "author", screen.ctx)
+                    - reserve(w.id == "authors" and "author" or "series", screen.ctx)
                 assert.is_true(last.y + last.h <= foot, id)
                 harness.teardown()
             end)
@@ -287,22 +293,28 @@ function M.kept_current(w)
 end
 
 -- Inside "kept sorted": w.sorted's shelf installed, each view's sorts counted (the list's and one
--- entry's), and whether a refresh there reads progress again.
+-- entry's; w.sorted.sorts names the sorts, count_sorts' default without it), whether a refresh there
+-- reads progress again, and whether a page turn there reads its own page's (reads_per_page).
 function M.kept_sorted(w)
     -- Returns the calls (fixture.install's) and the sorts counted.
     local function install()
         local calls = fixture.install(w.sorted.install())
-        return calls, M.count_sorts()
+        return calls, M.count_sorts(w.sorted.sorts)
     end
 
     for _, case in ipairs(w.sorted.cases) do
         local where, view, once = case[1], case[2], case[3]
 
-        it("sorts once at a show and not at a page turn, nor reads progress, in " .. where, function()
+        it("sorts once at a show and not at a page turn" .. (case.reads_per_page and "" or ", nor reads progress")
+            .. ", in " .. where, function()
             local calls, sorts = install()
             local screen = w.show(view)
             assert.same(once, sorts)
             assert.is_true(screen.pages > 1)
+            local first_page = {}
+            for _, tile in ipairs(case.reads_per_page and screen.tiles or {}) do
+                first_page[tile.record.id] = true
+            end
             calls.progress = {}
             screen:turn(1)
             assert.equals(2, screen.page)
@@ -311,7 +323,17 @@ function M.kept_sorted(w)
             screen:turn(-1)
             assert.equals(1, screen.page)
             assert.same(once, sorts)
-            assert.same({}, calls.progress)
+            if not case.reads_per_page then
+                assert.same({}, calls.progress)
+            else
+                -- Each book's progress is read once per sort: page 1's at the show, a page turned back to not again.
+                local seen = {}
+                for _, id in ipairs(calls.progress) do
+                    assert.is_nil(seen[id], id .. " read twice")
+                    assert.is_nil(first_page[id], id .. " read again on page 1")
+                    seen[id] = true
+                end
+            end
         end)
 
         it("sorts " .. (case.reads and "and reads progress " or "") .. "again once at refresh() and at a metadata "

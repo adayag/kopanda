@@ -1,7 +1,7 @@
--- Helpers shared by the Series and Authors windows' specs: records given to Books.all in place of the disk, under a
--- root that exists nowhere, and the window shown over a file manager. Each reads the plugin's modules at call time,
--- so it sees the ones the spec's harness.load() left loaded. Busted gives a spec file its assert; a module required
--- from one takes luassert, the same table.
+-- Helpers shared by the Series, Authors and Subjects windows' specs: records given to Books.all in place of the disk,
+-- under a root that exists nowhere, and the window shown over a file manager. Each reads the plugin's modules at call
+-- time, so it sees the ones the spec's harness.load() left loaded. Busted gives a spec file its assert; a module
+-- required from one takes luassert, the same table.
 local assert = require("luassert")
 local harness = require("plugin_harness")
 
@@ -91,6 +91,11 @@ end
 -- The Authors window shown at view (default: the list) and page.
 function M.show_authors(view, page)
     return show("authors_screen", view, page)
+end
+
+-- The Subjects window shown at view (default: the list) and page.
+function M.show_subjects(view, page)
+    return show("subjects_screen", view, page)
 end
 
 -- The series names of the window's rows on its page, or the titles of its book rows.

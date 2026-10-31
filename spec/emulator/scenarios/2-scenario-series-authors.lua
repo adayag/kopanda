@@ -22,23 +22,26 @@
 --     (library_tiles.lua, LibraryTiles.geometry), the box the windows' own request asks at
 --     (library_chrome.lua, LibraryChrome.request_records), so the request finds every row
 --     present and asks for none (book_covers.lua, BookCovers.wants);
---   - then gives each copy its scripted title, authors (newline-joined, as crengine joins them
---     and books.lua splits them), series and series_index through
+--   - then gives each copy its scripted title, authors and subjects (keywords; both newline-joined,
+--     as crengine joins them and books.lua splits them), series and series_index through
 --     BookInfoManager:setBookInfoProperties (plugins/coverbrowser.koplugin/bookinfomanager.lua:572-588,
 --     which updates the row the extraction wrote, keyed by directory and file name), with
 --     ignore_cover = "Y" (bookinfomanager.lua:47), so a copy's tile draws its scripted title's
 --     placeholder rather than the copied book's cover (books.lua, cover_state); the originals keep
 --     their real covers, and A Christmas Carol is also given its place in Dickens' Christmas
---     Books, so one series stack draws a real cover;
+--     Books, so one series stack draws a real cover, and each original its subjects in place of
+--     its EPUB's own;
 --   - wraps BookInfoManager:extractInBackground to log each batch asked for, so the spec can
 --     prove the windows asked for no extraction and nothing arrived to repaint them.
 -- On the first home's settled signal, from the next tick, it shows, per KOPANDA_SHELF_VIEW, the
 -- window directly at its view through the plugin (KoPanda:showSeries, KoPanda:showAuthors,
--- KoPanda:showSearch), so that window's one settled signal is the capture's:
+-- KoPanda:showSubjects, KoPanda:showSearch), so that window's one settled signal is the capture's:
 --   - series-list: the Series list at its first page;
 --   - series-books: the series SERIES at its first page;
 --   - authors-list: the Authors list at its first page;
 --   - author-books: the author AUTHOR at its first page;
+--   - subjects-list: the Subjects list at its first page;
+--   - subject-books: the subject SUBJECT at its first page;
 --   - search-books: the library search's results for QUERY at their first page, started from the
 --     capture library.
 -- A failure before the UI runs exits with status 4, as the home fixture does, since a half-made
@@ -50,6 +53,7 @@ local logger = require("logger")
 -- it is shown with under the capture library root.
 local SERIES = "Sherlock Holmes"
 local AUTHOR = "Arthur Conan Doyle"
+local SUBJECT = "Adventure"
 local QUERY = "the"
 local VIEWS = {
     ["series-list"] = { screen = "series", module = "series_screen", show = "showSeries", view = { kind = "list" } },
@@ -59,6 +63,10 @@ local VIEWS = {
         view = { kind = "list" } },
     ["author-books"] = { screen = "authors", module = "authors_screen", show = "showAuthors",
         view = { kind = "author", name = AUTHOR } },
+    ["subjects-list"] = { screen = "subjects", module = "subjects_screen", show = "showSubjects",
+        view = { kind = "list" } },
+    ["subject-books"] = { screen = "subjects", module = "subjects_screen", show = "showSubjects",
+        view = { kind = "subject", name = SUBJECT } },
     ["search-books"] = { screen = "search", module = "search_screen", show = "showSearch",
         opts = function(root)
             return { query = QUERY, from = { dir = root }, page = 1 }
@@ -76,44 +84,54 @@ local ORIGINALS = { "a-christmas-carol.epub", "frankenstein.epub", "the-time-mac
 -- Arthur Conan Doyle has six books, three in Sherlock Holmes (one of them the path-less source
 -- book) and three outside it, two rows of three on his own grid. The Wrong Box has two authors.
 -- Authors' surnames start with B, C, D, O, S, T and W.
+-- Nine subjects with the originals' (ORIGINAL_PROPS), so the Subjects list runs to two pages of five: Adventure's
+-- seven books, two pages on its own grid, then Historical fiction's five, Fantasy's four, four subjects of three
+-- and two of one.
 local CATALOGUE = {
     ["a-study-in-scarlet.epub"] = { title = "A Study in Scarlet", authors = "Arthur Conan Doyle",
-        series = "Sherlock Holmes", series_index = 1 },
+        series = "Sherlock Holmes", series_index = 1, keywords = "Mystery" },
     ["the-sign-of-the-four.epub"] = { title = "The Sign of the Four", authors = "Arthur Conan Doyle",
-        series = "Sherlock Holmes", series_index = 2 },
-    ["the-lost-world.epub"] = { title = "The Lost World", authors = "Arthur Conan Doyle" },
-    ["micah-clarke.epub"] = { title = "Micah Clarke", authors = "Arthur Conan Doyle" },
-    ["the-white-company.epub"] = { title = "The White Company", authors = "Arthur Conan Doyle" },
+        series = "Sherlock Holmes", series_index = 2, keywords = "Mystery" },
+    ["the-lost-world.epub"] = { title = "The Lost World", authors = "Arthur Conan Doyle",
+        keywords = "Adventure\nScience fiction" },
+    ["micah-clarke.epub"] = { title = "Micah Clarke", authors = "Arthur Conan Doyle",
+        keywords = "Adventure\nHistorical fiction" },
+    ["the-white-company.epub"] = { title = "The White Company", authors = "Arthur Conan Doyle",
+        keywords = "Adventure\nHistorical fiction" },
     ["the-chimes.epub"] = { title = "The Chimes", authors = "Charles Dickens",
-        series = "Christmas Books", series_index = 2 },
+        series = "Christmas Books", series_index = 2, keywords = "Christmas" },
     ["the-cricket-on-the-hearth.epub"] = { title = "The Cricket on the Hearth", authors = "Charles Dickens",
-        series = "Christmas Books", series_index = 3 },
+        series = "Christmas Books", series_index = 3, keywords = "Christmas" },
     ["the-pioneers.epub"] = { title = "The Pioneers", authors = "James Fenimore Cooper",
-        series = "The Leatherstocking Tales", series_index = 1 },
+        series = "The Leatherstocking Tales", series_index = 1, keywords = "Adventure" },
     ["the-last-of-the-mohicans.epub"] = { title = "The Last of the Mohicans", authors = "James Fenimore Cooper",
-        series = "The Leatherstocking Tales", series_index = 2 },
+        series = "The Leatherstocking Tales", series_index = 2, keywords = "Adventure\nHistorical fiction" },
     ["alices-adventures-in-wonderland.epub"] = { title = "Alice's Adventures in Wonderland",
-        authors = "Lewis Carroll", series = "Alice", series_index = 1 },
+        authors = "Lewis Carroll", series = "Alice", series_index = 1, keywords = "Fantasy" },
     ["through-the-looking-glass.epub"] = { title = "Through the Looking-Glass", authors = "Lewis Carroll",
-        series = "Alice", series_index = 2 },
+        series = "Alice", series_index = 2, keywords = "Fantasy" },
     ["the-warden.epub"] = { title = "The Warden", authors = "Anthony Trollope",
-        series = "Chronicles of Barsetshire", series_index = 1 },
+        series = "Chronicles of Barsetshire", series_index = 1, keywords = "Comedy" },
     ["barchester-towers.epub"] = { title = "Barchester Towers", authors = "Anthony Trollope",
-        series = "Chronicles of Barsetshire", series_index = 2 },
+        series = "Chronicles of Barsetshire", series_index = 2, keywords = "Comedy" },
     ["the-three-musketeers.epub"] = { title = "The Three Musketeers", authors = "Alexandre Dumas",
-        series = "The d'Artagnan Romances", series_index = 1 },
+        series = "The d'Artagnan Romances", series_index = 1, keywords = "Adventure\nHistorical fiction" },
     ["twenty-years-after.epub"] = { title = "Twenty Years After", authors = "Alexandre Dumas",
-        series = "The d'Artagnan Romances", series_index = 2 },
+        series = "The d'Artagnan Romances", series_index = 2, keywords = "Adventure\nHistorical fiction" },
     ["the-wonderful-wizard-of-oz.epub"] = { title = "The Wonderful Wizard of Oz", authors = "L. Frank Baum",
-        series = "Oz", series_index = 1 },
+        series = "Oz", series_index = 1, keywords = "Fantasy" },
     ["the-marvelous-land-of-oz.epub"] = { title = "The Marvelous Land of Oz", authors = "L. Frank Baum",
-        series = "Oz", series_index = 2 },
-    ["the-wrong-box.epub"] = { title = "The Wrong Box", authors = "Robert Louis Stevenson\nLloyd Osbourne" },
+        series = "Oz", series_index = 2, keywords = "Fantasy" },
+    ["the-wrong-box.epub"] = { title = "The Wrong Box", authors = "Robert Louis Stevenson\nLloyd Osbourne",
+        keywords = "Comedy\nMystery" },
 }
 
--- The original's place in a series, its title, authors and cover its own.
-local ORIGINAL_SERIES = {
-    ["a-christmas-carol.epub"] = { series = "Christmas Books", series_index = 1 },
+-- The originals' places in a series and their subjects, their titles, authors and covers their own.
+local ORIGINAL_PROPS = {
+    ["a-christmas-carol.epub"] = { series = "Christmas Books", series_index = 1,
+        keywords = "Christmas\nGhost stories" },
+    ["frankenstein.epub"] = { keywords = "Science fiction\nHorror" },
+    ["the-time-machine.epub"] = { keywords = "Science fiction" },
 }
 
 -- The sidecars: { status, percent }. Every other book is new.
@@ -142,8 +160,8 @@ local ok, err = pcall(function()
     local Screen = require("device").screen
 
     if not VIEW then
-        error("KOPANDA_SHELF_VIEW must be series-list, series-books, authors-list, author-books or search-books, "
-            .. "not " .. tostring(view_name))
+        error("KOPANDA_SHELF_VIEW must be series-list, series-books, authors-list, author-books, subjects-list, "
+            .. "subject-books or search-books, not " .. tostring(view_name))
     end
     local library_dir = os.getenv("KOPANDA_SHELF_DIR")
     local root = library_dir and library_dir ~= "" and ffiutil.realpath(library_dir)
@@ -214,7 +232,7 @@ local ok, err = pcall(function()
                 if not BookInfoManager:extractBookInfo(path, specs) then
                     error("CoverBrowser could not read " .. path)
                 end
-                local props = CATALOGUE[name] or ORIGINAL_SERIES[name]
+                local props = CATALOGUE[name] or ORIGINAL_PROPS[name]
                 if props then
                     local fields = {}
                     for k, v in pairs(props) do

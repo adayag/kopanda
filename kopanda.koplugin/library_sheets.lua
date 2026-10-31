@@ -246,7 +246,7 @@ local SHEETS = {
     end,
 }
 
--- The sheets only the library's own holds open (on the Series and Authors windows only a book's opens).
+-- The sheets only the library's own holds open (on the other windows only a book's opens).
 local LIBRARY_SHEETS = {
     folder = function(window, hit, opts)
         LibrarySheets.folder(window, hit.folder, tile_counts(window, hit.folder), opts)

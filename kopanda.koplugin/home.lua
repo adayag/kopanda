@@ -234,10 +234,10 @@ local function settle(home, opts)
     finish(opts, home.painted_at ~= nil and not home.paint_failed)
 end
 
--- Builds a home and shows it, closing the chrome window shown first (the library, Series or Authors), as
--- a window's show closes the home: one of them is up at a time. opts: started (a PaintClock stamp),
--- finished (called once: true after the first paint, false when the home closes before painting or
--- fails). On any error the home is taken off the stack and the file browser beneath is left as it is.
+-- Builds a home and shows it, closing the chrome window shown first (the library, Series, Authors, Subjects
+-- or the search), as a window's show closes the home: one of them is up at a time. opts: started (a
+-- PaintClock stamp), finished (called once: true after the first paint, false when the home closes before
+-- painting or fails). On any error the home is taken off the stack and the file browser beneath is left as it is.
 function Home.show(opts)
     local home
     local ok, err = pcall(function()

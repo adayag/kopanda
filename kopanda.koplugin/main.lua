@@ -21,6 +21,7 @@ local SearchScreen = require("search_screen")
 local SeriesScreen = require("series_screen")
 local State = require("state")
 local StudioMenu = require("studio_menu")
+local SubjectsScreen = require("subjects_screen")
 local Swatch = require("swatch")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -214,12 +215,12 @@ function KoPanda:showLibrary(opts)
     fm.file_chooser:changeToPath(opts.dir or require("library_view").root())
 end
 
--- The Series and Authors windows, by the screen a return names.
-local SHELVES = { series = SeriesScreen, authors = AuthorsScreen }
+-- The Series, Authors and Subjects windows, by the screen a return names.
+local SHELVES = { series = SeriesScreen, authors = AuthorsScreen, subjects = SubjectsScreen }
 
--- Shows a window of cls (SeriesScreen, AuthorsScreen or SearchScreen) with opts unless the file manager has gone since
--- the show was asked for; the window's show closes the home. Like the library's, it takes no part in the
--- boot guard; one that fails to build is logged by the chrome and the file browser left up.
+-- Shows a window of cls (SeriesScreen, AuthorsScreen, SubjectsScreen or SearchScreen) with opts unless the file
+-- manager has gone since the show was asked for; the window's show closes the home. Like the library's, it takes
+-- no part in the boot guard; one that fails to build is logged by the chrome and the file browser left up.
 local function show_shelf(cls, opts)
     local FileManager = package.loaded["apps/filemanager/filemanager"]
     if FileManager and FileManager.instance then
@@ -237,13 +238,19 @@ function KoPanda:showAuthors(opts)
     show_shelf(AuthorsScreen, opts)
 end
 
+-- The Subjects window with opts (SubjectsScreen.show's), as show_shelf.
+function KoPanda:showSubjects(opts)
+    show_shelf(SubjectsScreen, opts)
+end
+
 -- The library search's results with opts (SearchScreen.show's), as show_shelf.
 function KoPanda:showSearch(opts)
     show_shelf(SearchScreen, opts)
 end
 
 -- The window a book's close returns to and the fields it is built with: the library at the folder and page
--- a book was opened from, or the Series or Authors window at the view and page; nil with no return recorded.
+-- a book was opened from, or the Series, Authors or Subjects window at the view and page; nil with no return
+-- recorded.
 local function return_window()
     local back = Library.return_to
     if back then

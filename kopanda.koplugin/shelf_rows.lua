@@ -1,4 +1,4 @@
--- The series and authors screens' rows: a series row (stacked covers, name, sub-line, state chip),
+-- The series, authors and subjects screens' rows: a series row (stacked covers, name, sub-line, state chip),
 -- a one-series book row (index, cover, title, bar or note, chip) and an author letter group, from the
 -- look's shelf tokens. Lengths are scaled by ctx.screen; the text and the badge follow ctx.text_size, as the
 -- library's tiles do. Each widget has a fixed height for its kind, so the screens page by ShelfRows.height.

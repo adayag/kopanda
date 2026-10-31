@@ -332,6 +332,7 @@ return {
     shelf = {
         series_fill_color = "pink",
         authors_fill_color = "teal",
+        subjects_fill_color = "mustard",
         detail = { padding = { top = 22, bottom = 18 } },
         list = {
             padding_top = 22,

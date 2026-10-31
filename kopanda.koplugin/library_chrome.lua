@@ -32,8 +32,8 @@ local Screen = Device.screen
 local LibraryChrome = {}
 
 LibraryChrome.shown = nil
--- { screen, view, page }: where the next file manager's show returns to after a book opened from the Series or
--- Authors window; in memory only.
+-- { screen, view, page }: where the next file manager's show returns to after a book opened from the Series,
+-- Authors or Subjects window; in memory only.
 LibraryChrome.return_to = nil
 
 -- A box w by h in fill (a colour or nil) with an outline wide in outline_color, its children
@@ -578,10 +578,10 @@ function Window:refresh()
     end
 end
 
--- A re-list of window's books, keeping the title, authors, series and series_index of each book
+-- A re-list of window's books, keeping the title, authors, series, series_index and subjects of each book
 -- window:downloaded was given whose CoverBrowser row hasn't come back (cover "missing"): cwngsync's
--- broadcast had CoverBrowser delete the row (plugins/coverbrowser.koplugin/main.lua:800-803), and the series
--- and authors come only from it, so the book stays in its place until the arrival re-reads it. A book whose
+-- broadcast had CoverBrowser delete the row (plugins/coverbrowser.koplugin/main.lua:800-803), and the series,
+-- authors and subjects come only from it, so the book stays in its place until the arrival re-reads it. A book whose
 -- row is back is listed by it and forgotten. Returns records.
 function LibraryChrome.keep_downloaded(window, records)
     local downloads = window.downloads or {}
@@ -590,6 +590,7 @@ function LibraryChrome.keep_downloaded(window, records)
         if listed and record.cover == "missing" then
             record.title, record.authors = listed.title, listed.authors
             record.series, record.series_index = listed.series, listed.series_index
+            record.subjects = listed.subjects
         elseif listed then
             downloads[record.id] = nil
         end

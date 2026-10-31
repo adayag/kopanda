@@ -762,11 +762,12 @@ return {
         },
     },
 
-    -- The series and authors screens: the library's header, rows and groups, chips and the up-next
-    -- book.
+    -- The series, authors and subjects screens: the library's header, rows and groups, chips and the
+    -- up-next book.
     shelf = {
         series_fill_color = false,
         authors_fill_color = false,
+        subjects_fill_color = false,
         detail = {
             padding = { top = 26, side = 40, bottom = 16 },
             back_gap = 10,

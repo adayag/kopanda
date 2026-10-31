@@ -95,8 +95,8 @@ describe("LibrarySheets.hold", function()
         assert_book_sheet(library, hit, record)
     end)
 
-    -- The Series and Authors windows: a book held on one series or one author opens its sheet; their own rows, empty
-    -- space, no hit and a folder hit open nothing.
+    -- The Series, Authors and Subjects windows: a book held on one series, author or subject opens its sheet; their own
+    -- rows, empty space, no hit and a folder hit open nothing.
     local SHELVES = {
         {
             name = "Series",
@@ -135,6 +135,25 @@ describe("LibrarySheets.hold", function()
                 return screen.tiles[1]
             end,
             folder = { name = "Ann", path = "/ann" },
+        },
+        {
+            name = "Subjects",
+            module = "subjects_screen",
+            one = "subject",
+            an = "a subject",
+            show = shelf_fixture.show_subjects,
+            -- Gothic's one book, a file.
+            install = function()
+                local record = shelf_fixture.book("Held", { subjects = { "Gothic" } })
+                record.path = file("subjects.epub")
+                shelf_fixture.install({ record })
+                return record
+            end,
+            detail = { kind = "subject", name = "Gothic" },
+            book = function(screen)
+                return screen.tiles[1]
+            end,
+            folder = { name = "Gothic", path = "/gothic" },
         },
     }
 

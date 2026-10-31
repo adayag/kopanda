@@ -637,6 +637,15 @@ describe("Download on a placeholder's sheet", function()
             assert.is_nil(gone.series)
         end)
 
+        it("keeps a downloaded book's subjects while its row is gone", function()
+            local LibraryChrome = package.loaded["library_chrome"]
+            local listed = { id = held, title = "Held 7", authors = {}, subjects = { "Gothic" } }
+            local window = { downloads = { [held] = listed } }
+            local gone = { id = held, title = "held-7", authors = {}, cover = "missing", subjects = {} }
+            LibraryChrome.keep_downloaded(window, { gone })
+            assert.same({ "Gothic" }, gone.subjects)
+        end)
+
         for _, kind in ipairs({ "one series", "one author" }) do
             it("logs a raising keep of the downloaded books on the " .. kind .. "'s deferred re-list, its page "
                 .. "kept", function()
