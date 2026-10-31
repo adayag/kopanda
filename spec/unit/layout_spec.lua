@@ -766,5 +766,28 @@ describe("Layout", function()
                 end
             end
         end)
+
+        it("scales by 1.4 at extra_large, lifting a size under 14 to 14 first", function()
+            local wanted = { [11] = 20, [12] = 20, [14] = 20, [18] = 25, [36] = 50 }
+            for size, expected in pairs(wanted) do
+                assert.equals(expected, Layout.font_size(size, "extra_large"), size)
+            end
+        end)
+
+        it("lifts no size at large", function()
+            assert.equals(14, Layout.font_size(12, "large"))
+        end)
+    end)
+
+    describe("size_at", function()
+        it("scales a length by the step's factor, rounded, with no floor", function()
+            assert.equals(36, Layout.size_at(26, "extra_large"))
+            assert.equals(26, Layout.size_at(26, "medium"))
+            assert.equals(14, Layout.size_at(10, "extra_large"))
+        end)
+
+        it("leaves a length as it is at an unknown step", function()
+            assert.equals(26, Layout.size_at(26, "huge"))
+        end)
     end)
 end)

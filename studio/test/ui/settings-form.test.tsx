@@ -156,7 +156,7 @@ describe("the form's controls", () => {
     );
 
     const size = within(control("text_size"));
-    expect(size.getAllByRole("button").map((b) => b.textContent)).toEqual(["Small", "Medium", "Large"]);
+    expect(size.getAllByRole("button").map((b) => b.textContent)).toEqual(["Small", "Medium", "Large", "Extra large"]);
     expect(size.getByRole("button", { name: "Large" })).toHaveAttribute("aria-pressed", "true");
     expect(size.getByRole("button", { name: "Medium" })).toHaveAttribute("aria-pressed", "false");
   });

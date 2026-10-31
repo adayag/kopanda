@@ -26,6 +26,7 @@ return {
                 { value = "small", label = "Small" },
                 { value = "medium", label = "Medium" },
                 { value = "large", label = "Large" },
+                { value = "extra_large", label = "Extra large" },
             },
             default = "medium",
             label = "Text size",

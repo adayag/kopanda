@@ -306,11 +306,20 @@ function Layout.overflow(rows, ctx)
     return #arrange(rows, ctx, place).dropped
 end
 
-local TEXT_SCALE = { small = 0.85, medium = 1, large = 1.15 }
+local TEXT_SCALE = { small = 0.85, medium = 1, large = 1.15, extra_large = 1.4 }
 
--- A look's font size at the text_size setting, rounded to a whole size.
+-- A look's font size at the text_size setting, rounded to a whole size; at extra_large a size
+-- under 14 is lifted to 14 first.
 function Layout.font_size(size, text_size)
+    if text_size == "extra_large" and size < 14 then
+        size = 14
+    end
     return math.floor(size * (TEXT_SCALE[text_size] or 1) + 0.5)
+end
+
+-- A length that grows with the text, such as an icon or a cover, at the text_size setting, rounded.
+function Layout.size_at(px, text_size)
+    return math.floor(px * (TEXT_SCALE[text_size] or 1) + 0.5)
 end
 
 return Layout
