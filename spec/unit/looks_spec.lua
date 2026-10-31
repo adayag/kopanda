@@ -236,7 +236,7 @@ describe("looks", function()
                     elseif key == "fill_grey" then
                         assert.equals("hatch_135", value, where)
                     elseif key == "free_space" then
-                        assert.truthy(value == "before_last_row" or value == "before_footer", where .. " = " .. value)
+                        assert.truthy(value == "between_rows" or value == "before_footer", where .. " = " .. value)
                     elseif key == "align" then
                         assert.truthy(value == "top" or value == "bottom", where .. " = " .. value)
                     elseif path == "home." .. tostring(key) and HOME_CHOICES[key] then

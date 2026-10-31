@@ -10,6 +10,9 @@ local Layout = {}
 -- The screen lengths are scaled for; a spec puts a screen of another size here.
 Layout.screen = require("device").screen
 
+-- The share of a look's row gap the home's rows keep at Extra large, so its taller rows fit.
+local ROW_GAP_EXTRA_LARGE = 0.75
+
 local function scale(px)
     return Layout.screen:scaleBySize(px)
 end
@@ -76,22 +79,32 @@ local function place(row_heights, avail_h, margins, row_gap, free_space, footer_
         dropped[#dropped + 1] = i
     end
 
-    local ys, y, last, tall = {}, top, nil, 0
+    -- Each row with a height whose gap above takes a share of the free height: every one after the first,
+    -- but the one first_gap holds under row 1.
+    local ys, y, last, opened = {}, top, nil, {}
     for i = 1, kept do
         local h = row_heights[i]
         if h > 0 then
             y = y + gap_after(last)
-            tall = tall + 1
+            if last and not (last == 1 and first_gap) then
+                opened[#opened + 1] = i
+            end
             last = i
         end
         ys[i] = y
         y = y + h
     end
-    -- The last row with a height, and any empty rows after it, moved down onto the bottom
-    -- margin (above the footer).
-    if free_space == "before_last_row" and tall >= 2 then
-        local shift = avail_h - bottom - footer - (ys[last] + row_heights[last])
-        for i = last, kept do
+    -- The free height split over those gaps, the last taking the remainder, so the last row with a
+    -- height (and any empty rows after it) sits on the bottom margin above the footer.
+    if free_space == "between_rows" and #opened > 0 then
+        local free = avail_h - bottom - footer - (ys[last] + row_heights[last])
+        local share = math.floor(free / #opened)
+        local shift, k = 0, 1
+        for i = 1, kept do
+            if opened[k] == i then
+                shift = shift + (k == #opened and free - share * (#opened - 1) or share)
+                k = k + 1
+            end
             ys[i] = ys[i] + shift
         end
     end
@@ -100,9 +113,9 @@ end
 
 -- The y of each row that fits and the indexes of those that don't. Rows stack from the top margin with
 -- row_gap between rows that have a height; when they overflow avail_h less the margins and footer_h,
--- rows are dropped from the end, each logged. free_space "before_last_row" moves the last row down onto
--- the bottom margin; "before_footer" leaves the rows at the top. first_gap, when given, replaces row_gap
--- below row 1. row_heights and avail_h are device pixels, the rest board pixels.
+-- rows are dropped from the end, each logged. free_space "between_rows" spreads the free height over the
+-- gaps so the last row sits on the bottom margin; "before_footer" leaves the rows at the top. first_gap,
+-- when given, replaces row_gap below row 1. row_heights and avail_h are device pixels, the rest board pixels.
 function Layout.place(row_heights, avail_h, margins, row_gap, free_space, footer_h, first_gap)
     local ys, dropped = place(row_heights, avail_h, margins, row_gap, free_space, footer_h, first_gap)
     for _, i in ipairs(dropped) do
@@ -224,7 +237,8 @@ local function arrange(rows, ctx, placer)
     end
 
     local first_gap = header.rule_color and 0 or nil
-    local ys, dropped = placer(heights, above, home.margin, home.row_gap, home.free_space, footer_height(home),
+    local row_gap = ctx.text_size == "extra_large" and home.row_gap * ROW_GAP_EXTRA_LARGE or home.row_gap
+    local ys, dropped = placer(heights, above, home.margin, row_gap, home.free_space, footer_height(home),
         first_gap)
     local arranged = {
         width = width,

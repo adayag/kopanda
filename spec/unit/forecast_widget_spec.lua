@@ -129,6 +129,15 @@ describe("the forecast widget", function()
                 assert.equals(tile_h(ctx, { "insight_value", "insight_note" }, { tokens.value_gap }),
                     Forecast.height(520, ctx))
             end)
+            with_data(book(7560), insights_summing(31920), function()
+                local ctx = ctx_for(look_id)
+                ctx.text_size = "extra_large"
+                assert.equals(tile_h(ctx, { "insight_value", "insight_note", "featured_authors" },
+                    { tokens.value_gap, tokens.label_gap }), Forecast.height(520, ctx), look_id)
+                local widget = Forecast.build(520, ctx)
+                assert.equals(3, #widget.lines)
+                widget:free()
+            end)
         end
     end)
 

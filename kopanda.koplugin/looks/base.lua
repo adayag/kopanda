@@ -130,6 +130,11 @@ return {
             stats = { x = 0, y = 0, radius = 0 },
             quote = { x = 0, y = 0, radius = 0 },
             featured = { x = 0, y = 0, radius = 0 },
+            reading = { x = 0, y = 0, radius = 0 },
+            streak = { x = 0, y = 0, radius = 0 },
+            forecast = { x = 0, y = 0, radius = 0 },
+            hours = { x = 0, y = 0, radius = 0 },
+            records = { x = 0, y = 0, radius = 0 },
             launcher = false, -- no plate round the launcher: its tiles are its own
         },
     },
@@ -277,7 +282,7 @@ return {
         margin = { top = 33, side = 40, bottom = 20 }, -- bottom: below the last row, above the nav bar
         row_gap = 21,
         column_gap = 16,
-        free_space = "before_last_row", -- where the free height goes, or before_footer
+        free_space = "between_rows", -- where the free height goes, or before_footer
         header = {
             band_color = false,
             edge_width = 0,
@@ -323,6 +328,7 @@ return {
         today_ring = 10, -- the diameter of the ring on this week's point
         today_ring_color = "ink", -- round today's streak dot
         reading_column = 0.36, -- the reading tile's figures' share of its width
+        reading_column_extra_large = 0.6, -- that share at Extra large, each caption on its value's line
         streak_scale = 2, -- the streak's count at this many times insight_value's size
         dot = 14, -- a streak day's diameter
         dot_gap = 8,

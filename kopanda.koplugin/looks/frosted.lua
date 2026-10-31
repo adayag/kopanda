@@ -89,6 +89,12 @@ return {
             stats = { x = 14, y = 8, radius = 999 },
             quote = { x = 18, y = 12, radius = 12 },
             featured = { x = 14, y = 14, radius = 12 },
+            -- The insight tiles', tighter than the featured tile's so page 2 holds its rows.
+            reading = { x = 10, y = 4, radius = 12 },
+            streak = { x = 10, y = 4, radius = 12 },
+            forecast = { x = 10, y = 4, radius = 12 },
+            hours = { x = 10, y = 4, radius = 12 },
+            records = { x = 10, y = 4, radius = 12 },
         },
     },
 

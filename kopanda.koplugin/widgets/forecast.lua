@@ -1,6 +1,6 @@
--- The finish-by forecast: the day the featured book ends at the last fourteen days' pace, its title and the time
--- left, in an insight tile, or what is missing for it. Weekday and month names from KOReader's translation tables
--- (frontend/datetime.lua:29-42 month names, :54-62 long day names).
+-- The finish-by forecast: the day the featured book ends at the last fourteen days' pace, its title and, but at
+-- Extra large, the time left, in an insight tile, or what is missing for it. Weekday and month names from
+-- KOReader's translation tables (frontend/datetime.lua:29-42 month names, :54-62 long day names).
 local FeaturedBook = require("featured_book")
 local Helpers = require("helpers")
 local InsightTile = require("insight_tile")
@@ -61,6 +61,9 @@ local function compose(width, ctx)
     local scale = Paint.scaler(ctx)
     local inner_w = InsightTile.inner_width(width, ctx)
     local texts = Forecast.lines(FeaturedBook.current(), ReadingStats.insights(ctx.now), ctx.now)
+    if ctx.text_size == "extra_large" then
+        texts[4] = nil
+    end
     local lines, ys = {}, {}
     local content_h = 0
     for i, text in ipairs(texts) do

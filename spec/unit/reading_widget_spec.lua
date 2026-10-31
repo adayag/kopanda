@@ -211,6 +211,28 @@ describe("the reading widget", function()
         widget:free()
     end)
 
+    it("moves a month caption left of its week, whole, when the room right of it is too short", function()
+        require("plugin_harness").at_colorsoft(function()
+            for _, look_id in ipairs(Looks.ids()) do
+                local ctx = ctx_for(look_id)
+                ctx.text_size = "extra_large"
+                local scale = Paint.scaler(ctx)
+                local look = ctx.look
+                local width = Screen:getWidth() - 2 * scale(look.home.margin.side)
+                local inner_w = InsightTile.inner_width(width, ctx)
+                local chart_w = inner_w - math.floor(inner_w * look.insights.reading_column_extra_large)
+                    - scale(look.insights.padding)
+                local widget = Reading.build(width, ctx)
+                assert.equals(3, #widget.captions, look_id)
+                for _, caption in ipairs(widget.captions) do
+                    assert.is_false(caption.line.isTruncated and caption.line:isTruncated() or false, look_id)
+                    assert.is_true(caption.x + caption.line:getSize().w <= chart_w, look_id)
+                end
+                widget:free()
+            end
+        end)
+    end)
+
     it("is the chrome, the label line and the taller of the figures and the captioned chart tall", function()
         local ctx = ctx_for("diner")
         local scale = Paint.scaler(ctx)
@@ -232,6 +254,33 @@ describe("the reading widget", function()
         assert.equals(520, widget:getSize().w)
         tile:free()
         widget:free()
+    end)
+
+    -- A tile across the Colorsoft's full home width, where the figures and captions fit at their size.
+    it("sets each caption on its value's line at extra_large, the captioned chart setting the height", function()
+        fixture = insights_with({ ["10-1"] = 6480, ["10-2"] = 37800 })
+        require("plugin_harness").at_colorsoft(function()
+            for _, look_id in ipairs(Looks.ids()) do
+                local ctx = ctx_for(look_id)
+                ctx.text_size = "extra_large"
+                local scale = Paint.scaler(ctx)
+                local look = ctx.look
+                local width = Screen:getWidth() - 2 * scale(look.home.margin.side)
+                local widget = Reading.build(width, ctx)
+                assert.equals(look.type.insight_value.size, widget.value_size, look_id)
+                local caption_h = Typeset.line_height(look.type.insight_caption, ctx)
+                local chart = scale(look.insights.chart_height) + scale(look.insights.label_gap) + caption_h
+                local tile = InsightTile.compose(width, ctx, "Reading", "hours a week, last 12 weeks", chart,
+                    function() end)
+                assert.equals(tile:getSize().h, widget:getSize().h, look_id)
+                for _, figure in ipairs(widget.figures) do
+                    assert.is_false(figure.value.isTruncated and figure.value:isTruncated() or false, look_id)
+                    assert.is_false(figure.caption.isTruncated and figure.caption:isTruncated() or false, look_id)
+                end
+                tile:free()
+                widget:free()
+            end
+        end)
     end)
 
     it("sets the figures smaller until they fit the column", function()

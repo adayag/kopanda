@@ -111,19 +111,32 @@ describe("Layout", function()
             assert.same({}, dropped)
         end)
 
-        it("puts the free height before the last row, its bottom on the bottom margin", function()
-            local ys, dropped = Layout.place({ 100, 0, 50, 80 }, 800, margins, 28, "before_last_row", 0)
-            assert.same({ 44, 144, 172, 800 - 36 - 80 }, ys)
+        it("spreads the free height over the gaps between rows with a height, the last on the bottom margin",
+            function()
+            -- 800 - 36 - 330 = 434 free, 217 in each of the two gaps; the empty row 2 stays under row 1.
+            local ys, dropped = Layout.place({ 100, 0, 50, 80 }, 800, margins, 28, "between_rows", 0)
+            assert.same({ 44, 144, 172 + 217, 800 - 36 - 80 }, ys)
             assert.same({}, dropped)
         end)
 
-        it("puts the free height before the last row that has a height", function()
-            local ys = Layout.place({ 100, 80, 0 }, 800, margins, 28, "before_last_row", 0)
+        it("gives the last gap the remainder of a free height the gaps can't share evenly", function()
+            -- 433 free: 216, then 217.
+            local ys = Layout.place({ 100, 50, 81 }, 800, margins, 28, "between_rows", 0)
+            assert.same({ 44, 172 + 216, 800 - 36 - 81 }, ys)
+        end)
+
+        it("moves the empty rows after the last row with a height down with it", function()
+            local ys = Layout.place({ 100, 80, 0 }, 800, margins, 28, "between_rows", 0)
             assert.same({ 44, 800 - 36 - 80, 800 - 36 }, ys)
         end)
 
+        it("keeps first_gap below row 1, spreading the free height over the gaps after it", function()
+            local ys = Layout.place({ 100, 50, 80 }, 800, margins, 28, "between_rows", 0, 0)
+            assert.same({ 44, 144, 800 - 36 - 80 }, ys)
+        end)
+
         it("leaves a single row at the top margin", function()
-            local ys = Layout.place({ 100 }, 800, margins, 28, "before_last_row", 0)
+            local ys = Layout.place({ 100 }, 800, margins, 28, "between_rows", 0)
             assert.same({ 44 }, ys)
         end)
 
@@ -145,9 +158,9 @@ describe("Layout", function()
 
         it("fits rows that exactly fill the height and drops one pixel more", function()
             -- 800 - 44 - 36 = 720 = 346 + 28 + 346.
-            local _, dropped = Layout.place({ 346, 346 }, 800, margins, 28, "before_last_row", 0)
+            local _, dropped = Layout.place({ 346, 346 }, 800, margins, 28, "between_rows", 0)
             assert.same({}, dropped)
-            _, dropped = Layout.place({ 346, 347 }, 800, margins, 28, "before_last_row", 0)
+            _, dropped = Layout.place({ 346, 347 }, 800, margins, 28, "between_rows", 0)
             assert.same({ 2 }, dropped)
         end)
 
@@ -161,7 +174,7 @@ describe("Layout", function()
         end)
 
         it("puts the last kept row on the bottom margin after a drop", function()
-            local ys, dropped = Layout.place({ 300, 300, 300 }, 800, margins, 28, "before_last_row", 0)
+            local ys, dropped = Layout.place({ 300, 300, 300 }, 800, margins, 28, "between_rows", 0)
             assert.same({ 3 }, dropped)
             assert.same({ 44, 800 - 36 - 300 }, ys)
         end)
@@ -180,7 +193,7 @@ describe("Layout", function()
             local s = function(px) return Layout.screen:scaleBySize(px) end
             local ys = Layout.place({ 100, 0, 50 }, 1680, margins, 28, "before_footer", 26)
             assert.same({ s(44), s(44) + 100, s(44) + 100 + s(28) }, ys)
-            ys = Layout.place({ 100, 50 }, 1680, margins, 28, "before_last_row", 0)
+            ys = Layout.place({ 100, 50 }, 1680, margins, 28, "between_rows", 0)
             assert.same({ s(44), 1680 - s(36) - 50 }, ys)
         end)
     end)
@@ -278,7 +291,7 @@ describe("Layout", function()
                     assert.truthy(row.y + row.h <= floor, i)
                 end
                 local last = arranged.rows[3]
-                if look.home.free_space == "before_last_row" then
+                if look.home.free_space == "between_rows" then
                     -- Editorial's last row sits on the bottom margin above the band.
                     assert.equals(floor, last.y + last.h)
                 end
@@ -404,8 +417,11 @@ describe("Layout", function()
                 local arranged = Layout.arrange(default, ctx(frosted, 1264, 1680))
                 local header, quote = arranged.header.plate, arranged.rows[2].slots[1].plate
                 assert.equals(s(26), header.y)
-                assert.equals(s(12), quote.y - (header.y + header.h))
                 local weather, stats = arranged.rows[3].slots[1].plate, arranged.rows[3].slots[2].plate
+                -- The free height spread over the two gutters, each at least the row gap.
+                local above, below = quote.y - (header.y + header.h), weather.y - (quote.y + quote.h)
+                assert.is_true(above >= s(12) and below >= s(12))
+                assert.is_true(math.abs(above - below) <= 1)
                 assert.equals(s(24), weather.x)
                 assert.equals(s(12), stats.x - (weather.x + weather.w))
                 assert.equals(1264 - s(24), stats.x + stats.w)
@@ -538,6 +554,17 @@ describe("Layout", function()
             end
             assert.same(positions.medium, positions.small)
             assert.same(positions.medium, positions.large)
+        end)
+
+        it("takes three quarters of the row gap at extra_large, the margins as they are", function()
+            heights = { date = 60, clock = 60, quote = 100, weather = 20, stats = 20 }
+            local four = { default[1], default[2], { { widget = "weather", share = 1 } }, default[3] }
+            local s = function(px) return Layout.screen:scaleBySize(px) end
+            local arranged = Layout.arrange(four, ctx(diner, 1264, 1680, "extra_large"))
+            local rows = arranged.rows
+            assert.equals(s(diner.home.margin.top), rows[1].y)
+            assert.equals(s(diner.home.row_gap * 0.75), rows[3].y - rows[2].y - rows[2].h)
+            assert.equals(s(diner.home.row_gap * 0.75), rows[4].y - rows[3].y - rows[3].h)
         end)
 
         it("leaves the layout it is given unchanged", function()
@@ -748,10 +775,9 @@ describe("Layout", function()
             assert.same(expected, counts)
         end)
 
-        -- Page 1 with the populated and the empty content, page 2 with a year of insights. Page 2's four rows
-        -- are more than some looks hold at this size, so it may lose its last row, streak and forecast; the
-        -- quote above it stays.
-        it("fits page 1's extra_large default on every profile in every look, and page 2's but its last row",
+        -- Page 1 with the populated and the empty content, page 2 with a year of insights on every day of
+        -- the builtin quotes, whose length sets the quote's height.
+        it("fits page 1's and page 2's extra_large defaults on every profile in every look, every quote's day",
             function()
             local FeaturedBook = require("featured_book")
             local Looks = require("looks")
@@ -796,9 +822,13 @@ describe("Layout", function()
                         }
                         for key, rows in pairs(pages) do
                             local case = table.concat({ profile, id, content, key }, " ")
-                            local out = require("layout").overflow(rows, ctx)
+                            local out = 0
+                            for day = 0, #require("quotes") - 1 do
+                                ctx.now = NOW + day * 86400
+                                out = out + require("layout").overflow(rows, ctx)
+                            end
                             counts[case] = out
-                            expected[case] = key == "layout.rows_2" and math.min(out, 1) or 0
+                            expected[case] = 0
                             cases = cases + 1
                         end
                     end

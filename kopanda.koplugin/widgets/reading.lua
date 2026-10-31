@@ -1,5 +1,6 @@
 -- This month's hours and days read beside an area chart of the last 12 weeks' hours in an insight tile, from
 -- ReadingStats.insights, the months' abbreviations from KOReader's translation table (frontend/datetime.lua:14-27).
+-- Each figure's caption sits under its value, or at Extra large on its value's line.
 local Helpers = require("helpers")
 local InsightTile = require("insight_tile")
 local Looks = require("looks")
@@ -60,7 +61,7 @@ local function weeks_of(days, now)
 end
 
 -- The month captions under ctx, one at the x of each week from 2 on whose Monday falls in another month than the
--- week before's, each cut to the room right of its x.
+-- week before's, moved left to end at the chart's right when the room right of its x is too short.
 local function month_captions(now, xs, chart_w, ctx)
     local today_row = row_of(now)
     local captions = {}
@@ -69,10 +70,11 @@ local function month_captions(now, xs, chart_w, ctx)
         local abbreviation = os.date("%b", day_before(now, (WEEKS - k) * 7 + today_row - 1))
         if abbreviation ~= month then
             month = abbreviation
+            local line = Typeset.line(ctx.look.type.insight_caption, datetime.shortMonthTranslation[abbreviation],
+                chart_w, ctx)
             captions[#captions + 1] = {
-                x = xs[k],
-                line = Typeset.line(ctx.look.type.insight_caption, datetime.shortMonthTranslation[abbreviation],
-                    chart_w - xs[k], ctx),
+                x = math.max(0, math.min(xs[k], chart_w - line:getSize().w)),
+                line = line,
             }
         end
     end
@@ -121,16 +123,38 @@ local function compose(width, ctx)
     local padding, label_gap = scale(tokens.padding), scale(tokens.label_gap)
     local value_gap, record_gap = scale(tokens.value_gap), scale(tokens.record_gap)
     local inner_w = InsightTile.inner_width(width, ctx)
-    local column_w = math.floor(inner_w * tokens.reading_column)
+    local beside = ctx.text_size == "extra_large"
+    local column_w = math.floor(inner_w * (beside and tokens.reading_column_extra_large or tokens.reading_column))
 
     local texts = Reading.figures(insights, ctx.now)
-    local lines, value_part = InsightTile.values(look.type.insight_value, { texts[1].value, texts[2].value },
-        column_w, ctx)
-    local value_h = Typeset.line_height(value_part, ctx)
-    local figure_h = value_h + value_gap + caption_h
+    local captions_w, value_w = 0, column_w
     local figures = {}
     for i, text in ipairs(texts) do
-        figures[i] = { value = lines[i], caption = Typeset.line(caption_part, text.caption, column_w, ctx) }
+        figures[i] = { caption = Typeset.line(caption_part, text.caption, column_w, ctx) }
+        captions_w = math.max(captions_w, figures[i].caption:getSize().w)
+    end
+    if beside then
+        value_w = math.max(1, column_w - captions_w - label_gap)
+    end
+    local lines, value_part = InsightTile.values(look.type.insight_value, { texts[1].value, texts[2].value },
+        value_w, ctx)
+    local value_h = Typeset.line_height(value_part, ctx)
+    local figure_h = value_h + value_gap + caption_h
+    for i, figure in ipairs(figures) do
+        figure.value = lines[i]
+        figure.caption_x, figure.caption_y = 0, value_h + value_gap
+        if beside then
+            local caption_y = Typeset.baseline(figure.value) - Typeset.baseline(figure.caption)
+            figure.value_y = math.max(0, -caption_y)
+            figure.caption_x = figure.value:getSize().w + label_gap
+            figure.caption_y = figure.value_y + caption_y
+        end
+    end
+    if beside then
+        figure_h = 0
+        for _, figure in ipairs(figures) do
+            figure_h = math.max(figure_h, (figure.value_y or 0) + value_h, figure.caption_y + caption_h)
+        end
     end
 
     local chart_x = column_w + padding
@@ -155,8 +179,8 @@ local function compose(width, ctx)
     local function paint(bb, x, y)
         for i, figure in ipairs(figures) do
             local fy = y + (i - 1) * (figure_h + record_gap)
-            figure.value:paintTo(bb, x, fy)
-            figure.caption:paintTo(bb, x, fy + value_h + value_gap)
+            figure.value:paintTo(bb, x, fy + (figure.value_y or 0))
+            figure.caption:paintTo(bb, x + figure.caption_x, fy + figure.caption_y)
         end
         local left, bottom = x + chart_x, y + chart
         -- The top of the line's stroke at column cx.
