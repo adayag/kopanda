@@ -181,7 +181,7 @@ describe("library tiles", function()
                     local ctx = ctx_for(id)
                     local cover_h = ctx.look.shelf.author_grid.cover_h
                     local plain = LibraryTiles.geometry(Screen:getWidth(), ctx)
-                    local own = LibraryTiles.geometry(Screen:getWidth(), ctx, cover_h)
+                    local own = LibraryTiles.geometry(Screen:getWidth(), ctx, { cover_h = cover_h })
                     local label = id .. " at " .. where
                     assert.equals(scale(cover_h), own.cover_h, label)
                     assert.equals(scale(ctx.look.library.grid.cover_h), plain.cover_h, label)
@@ -189,6 +189,75 @@ describe("library tiles", function()
                     assert.equals(plain.cover_w, own.cover_w, label)
                     assert.equals(plain.strip_y - plain.cover_h, own.strip_y - own.cover_h, label)
                     assert.equals(plain.height - plain.cover_h, own.height - own.cover_h, label)
+                end
+            end)
+        end)
+
+        -- The room between the header and the pager on the Colorsoft at medium, where two rows of the token
+        -- cover fit exactly in Editorial and Diner.
+        local ROOM = { editorial = 1087, diner = 1077 }
+        local COVER = { editorial = { 336, 439 }, diner = { 333, 411 } }
+
+        it("measures the room for the rows: the window less the header, the top padding, pager and nav bar", function()
+            harness.at_colorsoft(function()
+                for _, id in ipairs({ "diner", "editorial" }) do
+                    local ctx = ctx_for(id, "day", "medium")
+                    assert.equals(ROOM[id], LibraryTiles.room(Screen:getHeight(), ctx), id)
+                    assert.equals(ROOM[id] - 100, LibraryTiles.room(Screen:getHeight(),
+                        ctx, LibraryTiles.header_height(ctx) + 100), id)
+                end
+            end)
+        end)
+
+        it("keeps the token cover where two rows fit the room, not a pixel shaved at an exact fit", function()
+            harness.at_colorsoft(function()
+                for _, id in ipairs({ "diner", "editorial" }) do
+                    local ctx = ctx_for(id, "day", "medium")
+                    local w = Screen:getWidth()
+                    local box = LibraryTiles.geometry(w, ctx, { room = ROOM[id] })
+                    assert.same(COVER[id], { box.cover_w, box.cover_h }, id)
+                    assert.equals(ROOM[id], 2 * box.height + scale(ctx.look.library.grid.row_gap), id)
+                    assert.equals(2, box.rows, id)
+                    local roomy = LibraryTiles.geometry(w, ctx, { room = ROOM[id] + box.height + 200 })
+                    assert.same({ COVER[id][2], 3 }, { roomy.cover_h, roomy.rows }, id)
+                    assert.equals(COVER[id][2] - 1, LibraryTiles.geometry(w, ctx, { room = ROOM[id] - 2 }).cover_h, id)
+                end
+            end)
+        end)
+
+        it("shortens the cover to the tallest that lets two rows fit, the tile's other parts the same", function()
+            each_profile(function(where)
+                for _, id in ipairs({ "diner", "editorial" }) do
+                    local ctx = ctx_for(id, "day", "medium")
+                    local w, gap = Screen:getWidth(), scale(ctx.look.library.grid.row_gap)
+                    local label = id .. " at " .. where
+                    local plain = LibraryTiles.geometry(w, ctx)
+                    local room = 2 * plain.height + gap - 100
+                    local short = LibraryTiles.geometry(w, ctx, { room = room })
+                    assert.equals(plain.cover_h - 50, short.cover_h, label)
+                    assert.same({ plain.columns, plain.cover_w, plain.strip_h }, { short.columns, short.cover_w,
+                        short.strip_h }, label)
+                    for _, part in ipairs({ "strip_y", "title_y", "height" }) do
+                        assert.equals(plain[part] - plain.cover_h, short[part] - short.cover_h, label .. " " .. part)
+                    end
+                    assert.equals(2, short.rows, label)
+                    assert.is_true(2 * short.height + gap <= room, label)
+                    local own = LibraryTiles.geometry(w, ctx, { cover_h = ctx.look.shelf.author_grid.cover_h,
+                        room = room - 40 })
+                    assert.equals(room - 40, 2 * own.height + gap, label)
+                end
+            end)
+        end)
+
+        -- Half the token height keeps a cover a cover; a room too short for two rows of it pages one.
+        it("never shortens the cover below half the token height", function()
+            each_profile(function(where)
+                for _, id in ipairs({ "diner", "editorial" }) do
+                    local ctx = ctx_for(id, "day", "extra_large")
+                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx, { room = 300 })
+                    local label = id .. " at " .. where
+                    assert.equals(math.ceil(scale(ctx.look.library.grid.cover_h) / 2), box.cover_h, label)
+                    assert.equals(1, box.rows, label)
                 end
             end)
         end)
@@ -613,7 +682,8 @@ describe("library tiles", function()
                 for _, id in ipairs({ "diner", "editorial" }) do
                     local ctx = ctx_for(id)
                     local label = id .. " at " .. where
-                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx, ctx.look.shelf.author_grid.cover_h)
+                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx,
+                        { cover_h = ctx.look.shelf.author_grid.cover_h })
                     local plain = LibraryTiles.book(record(), { status = "new" }, box, ctx)
                     local plain_h = plain:getSize().h
                     plain:free()

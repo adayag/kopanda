@@ -11,7 +11,6 @@ local Icons = require("icons")
 local LibraryChrome = require("library_chrome")
 local LibraryOrder = require("library_order")
 local LibraryTiles = require("library_tiles")
-local NavBar = require("nav_bar")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
 local ffiutil = require("ffi/util")
@@ -189,15 +188,12 @@ local function fill(built, frame, w)
     header_box, built.header = header(built, w, #items - #listing.folders, choice)
     add(frame, header_box, 0, 0)
     local grid = look.library.grid
-    local box = LibraryTiles.geometry(w, ctx)
+    local box = LibraryTiles.geometry(w, ctx, { room = LibraryTiles.room(built.dimen.h, ctx) })
     built.box = box
     local top = built.header.rect.h + scale(grid.padding_top)
     local gap = scale(grid.row_gap)
-    local available = built.dimen.h - NavBar.height(look, Screen, ctx.text_size) - LibraryTiles.pager_height(ctx)
-        - top
-    local rows = math.max(1, math.floor((available + gap) / (box.height + gap)))
     local slice
-    slice, built.pages, built.page = LibraryOrder.page(items, built.page, rows * #box.columns)
+    slice, built.pages, built.page = LibraryOrder.page(items, built.page, box.rows * #box.columns)
     built.tiles = {}
     for i, item in ipairs(slice) do
         local x = box.columns[(i - 1) % #box.columns + 1].x

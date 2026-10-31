@@ -391,9 +391,10 @@ local function arrive(window, arrived, alive)
 end
 
 -- Asks once per window, while it is the one shown, for the covers of every one of window.records at the
--- library grid's cover box, the largest these windows draw. An arrival re-reads each arrived record
--- (Books.get) and rebuilds the view, repainting, only when window:page_keys(view, page) differs from
--- window.keys or the page draws an arrived record (window.drawn). A failure is logged with the page as it was.
+-- cover box the library grid draws on a window this size, the largest these windows draw. An arrival
+-- re-reads each arrived record (Books.get) and rebuilds the view, repainting, only when
+-- window:page_keys(view, page) differs from window.keys or the page draws an arrived record (window.drawn).
+-- A failure is logged with the page as it was.
 function LibraryChrome.request_records(window)
     if window.records_asked or LibraryChrome.shown ~= window then
         return
@@ -403,7 +404,8 @@ function LibraryChrome.request_records(window)
         return LibraryChrome.shown == window
     end
     local ok, err = pcall(function()
-        local box = LibraryTiles.geometry(window.dimen.w, window.ctx)
+        local box = LibraryTiles.geometry(window.dimen.w, window.ctx,
+            { room = LibraryTiles.room(window.dimen.h, window.ctx) })
         BookCovers.request(window.records, { max_cover_w = box.cover_w, max_cover_h = box.cover_h },
             function(arrived)
                 arrive(window, arrived, alive)

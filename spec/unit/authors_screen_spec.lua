@@ -400,7 +400,8 @@ describe("the Authors window", function()
                 local screen = fixture.show_authors({ kind = "author", name = JEMISIN })
                 local ctx = screen.ctx
                 local grid = ctx.look.library.grid
-                local box = LibraryTiles.geometry(Screen:getWidth(), ctx, ctx.look.shelf.author_grid.cover_h)
+                local box = LibraryTiles.geometry(Screen:getWidth(), ctx,
+                    { cover_h = ctx.look.shelf.author_grid.cover_h })
                 local top = LibraryChrome.detail_header_height(ctx) + Screen:scaleBySize(grid.padding_top)
                 assert.same({ "The Fifth Season", "The Obelisk Gate", "The Stone Sky", "The Killing Moon",
                     "Dreamblood 2", "Emergency Skin" }, titles(screen), id)
@@ -416,6 +417,37 @@ describe("the Authors window", function()
                 assert.is_true(screen.tiles[3].rect.y + screen.tiles[3].rect.h <= screen.pager.prev.rect.y, id)
                 harness.teardown()
             end)
+        end)
+
+        it("holds six above the pager at extra large on every profile in every look", function()
+            fixture.install(fixture.series("Saga", 13, JEMISIN))
+            local Settings = package.loaded["settings"]
+            for _, profile in ipairs({ { "colorsoft", harness.at_colorsoft }, { "paperwhite", harness.at_paperwhite },
+                { "paperwhite7", function(fn) harness.at_screen(1072, 1448, fn) end } }) do
+                profile[2](function()
+                    for _, id in ipairs(Looks.ids()) do
+                        local where = profile[1] .. " " .. id
+                        assert.is_true(Settings.set("look", id))
+                        assert.is_true(Settings.set("text_size", "extra_large"))
+                        local asked
+                        package.loaded["book_covers"].request = function(_, specs)
+                            asked = specs
+                        end
+                        local screen = fixture.show_authors({ kind = "author", name = JEMISIN })
+                        -- CoverBrowser refuses a thumbnail for a box larger than the one it was asked at
+                        -- (bookinfomanager.lua:1013-1030).
+                        local cover = screen.tiles[1].widget.cover
+                        assert.is_true(cover.box_w <= asked.max_cover_w and cover.box_h <= asked.max_cover_h, where)
+                        local pager_top = screen.nav.dimen.y - LibraryTiles.pager_height(screen.ctx)
+                        assert.equals(6, #screen.tiles, where)
+                        local last = screen.tiles[6].rect
+                        assert.is_true(last.y + last.h <= pager_top, ("%s: the last tile's bottom %d below the "
+                            .. "pager's top %d"):format(where, last.y + last.h, pager_top))
+                        assert.equals(3, screen.pages, where)
+                        harness.teardown()
+                    end
+                end)
+            end
         end)
 
         it("chips each series' next unread Up next, a path-less one keeping its badge", function()

@@ -83,6 +83,22 @@ describe("the library's lifecycle", function()
             assert.equals(fm, harness.top(2))
         end)
 
+        -- CoverBrowser keeps one thumbnail a book and refuses it for a taller box (bookinfomanager.lua:1013-1030),
+        -- so the request is at the box the grid draws, shortened at extra large.
+        it("are asked for at the drawn cover box at extra large, where the cover is shortened", function()
+            fixture.install({ [ROOT] = { books = fixture.books(8) } })
+            assert.is_true(package.loaded["settings"].set("text_size", "extra_large"))
+            harness.at_colorsoft(function()
+                local library = show()
+                local box = library.box
+                local Screen = require("device").screen
+                assert.is_true(box.cover_h < Screen:scaleBySize(library.ctx.look.library.grid.cover_h))
+                assert.equals(box.cover_h, library.tiles[1].widget.cover.box_h)
+                assert.equals(1, #requests)
+                assert.same({ max_cover_w = box.cover_w, max_cover_h = box.cover_h }, requests[1].specs)
+            end)
+        end)
+
         it("rebuild only an arrived tile with its re-read title and set the library dirty, not re-sorted", function()
             local books = fixture.books(4)
             fixture.install({ [ROOT] = { books = books } })

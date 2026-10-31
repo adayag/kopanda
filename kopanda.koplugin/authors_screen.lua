@@ -70,9 +70,9 @@ local function sorted(self)
 end
 
 -- One author's part of the plan: their books in order and the up-next set from the whole library's
--- series, the finished count, the grid at the one-author cover height and view's page of six
--- (LibraryOrder.page).
-local function plan_author(self, p, page, w, ctx)
+-- series, the finished count, the grid at the one-author cover height in the room under the detail
+-- header, and view's page of the rows that fit (LibraryOrder.page).
+local function plan_author(self, p, page, w, h, ctx)
     local kept = sorted(self)
     local progress = kept.progress
     kept.series = kept.series or ShelfOrder.series(kept.records, progress)
@@ -86,9 +86,10 @@ local function plan_author(self, p, page, w, ctx)
         end
     end
     p.header_h = LibraryChrome.detail_header_height(ctx)
-    p.box = LibraryTiles.geometry(w, ctx, ctx.look.shelf.author_grid.cover_h)
+    p.box = LibraryTiles.geometry(w, ctx, { cover_h = ctx.look.shelf.author_grid.cover_h,
+        room = LibraryTiles.room(h, ctx, p.header_h) })
     p.top = p.header_h + scale(ctx.look.library.grid.padding_top)
-    p.slice, p.pages, p.page = LibraryOrder.page(p.books, page, 6)
+    p.slice, p.pages, p.page = LibraryOrder.page(p.books, page, p.box.rows * #p.box.columns)
 end
 
 -- The list's part of the plan: a row per author, each a letter group's member with that group's cost
@@ -129,7 +130,7 @@ local function plan(self, view, page, w, h, ctx)
     end
     local p = { view = view, entry = entry, entries = entries }
     if entry then
-        plan_author(self, p, page, w, ctx)
+        plan_author(self, p, page, w, h, ctx)
     else
         plan_list(p, page, w, h, ctx)
     end

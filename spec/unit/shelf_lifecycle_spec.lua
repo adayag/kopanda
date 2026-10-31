@@ -284,6 +284,24 @@ for _, w in ipairs(SHELVES) do
             assert.equals(1, #requests, "a new show asks again")
         end)
 
+        -- CoverBrowser keeps one thumbnail a book (bookinfomanager.lua:1013-1030): the library grid's, shortened
+        -- at extra large, is the one asked for.
+        it("asks at the cover box the library grid draws at extra large", function()
+            local library_fixture, Library = require("library_fixture"), package.loaded["library"]
+            library_fixture.install({ [library_fixture.ROOT] = { books = library_fixture.books(1) } })
+            fixture.install(w.shelf())
+            assert.is_true(package.loaded["settings"].set("text_size", "extra_large"))
+            show()
+            assert.equals(1, #requests)
+            Window.close()
+            local library = Library.show{ dir = library_fixture.ROOT }
+            harness.tick(2)
+            local box = library.box
+            Library.close()
+            library_fixture.restore()
+            assert.same({ max_cover_w = box.cover_w, max_cover_h = box.cover_h }, requests[1].specs)
+        end)
+
         it("adds to the list the " .. w.one .. " an arrival gives a book, and repaints", function()
             local records = w.shelf()
             fixture.install(records)

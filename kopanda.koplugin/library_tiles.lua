@@ -1,8 +1,9 @@
 -- The library grid's tiles: the grid's geometry (three columns inside the side padding, the cover box, a
--- tile's height), the header's and the pager's heights the two-row fit adds up, and one widget per book or
--- folder, from the look's library tokens. Lengths are board pixels scaled by ctx.screen; the text and the
--- badge follow ctx.text_size, the cover box doesn't. A tile is the cover box's width and the geometry's height
--- whatever it holds; what reaches past the box (the cover's shadow, Diner's badge) is painted into the gaps.
+-- tile's height, the rows that fit), the header's and the pager's heights and the room they leave the rows, and
+-- one widget per book or folder, from the look's library tokens. Lengths are board pixels scaled by ctx.screen;
+-- the text and the badge follow ctx.text_size, and the cover box is shortened where two rows wouldn't fit. A tile
+-- is the cover box's width and the geometry's height whatever it holds; what reaches past the box (the cover's
+-- shadow, Diner's badge) is painted into the gaps.
 local FeaturedCover = require("featured_cover")
 local Featured = require("widgets/featured")
 local Geom = require("ui/geometry")
@@ -10,6 +11,7 @@ local Helpers = require("helpers")
 local Icons = require("icons")
 local Layout = require("layout")
 local Looks = require("looks")
+local NavBar = require("nav_bar")
 local Paint = require("paint")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
@@ -32,9 +34,13 @@ end
 
 -- The grid across a screen screen_w wide under ctx, in device pixels: columns (three { x, w } inside
 -- grid.side at grid.column_gap, Layout.columns), cover_w (the narrowest column's), cover_h, the strip's
--- strip_y and strip_h, the title's title_y from a tile's top, and the tile's height. cover_h, in board
--- pixels, overrides the grid's (shelf.author_grid.cover_h). Raises when the title's face won't load.
-function LibraryTiles.geometry(screen_w, ctx, cover_h)
+-- strip_y and strip_h, the title's title_y from a tile's top, the tile's height and, given opts.room
+-- (LibraryTiles.room), the rows that fit in it, at least one. opts.cover_h, in board pixels, overrides the
+-- grid's (shelf.author_grid.cover_h). In a room, the cover is the tallest up to that height that lets two
+-- rows fit, never below half of it, short of which it no longer reads as a cover. Raises when the title's
+-- face won't load.
+function LibraryTiles.geometry(screen_w, ctx, opts)
+    opts = opts or {}
     local scale = Paint.scaler(ctx)
     local library = ctx.look.library
     local grid = library.grid
@@ -49,19 +55,33 @@ function LibraryTiles.geometry(screen_w, ctx, cover_h)
         column.x = column.x + side
         cover_w = math.min(cover_w, column.w)
     end
-    cover_h = scale(cover_h or grid.cover_h)
-    local strip_y = cover_h + scale(grid.strip_gap)
+    local strip_gap = scale(grid.strip_gap)
     local strip_h = scale(library.strip.height)
-    local title_y = strip_y + strip_h + scale(grid.title_gap)
+    local below = strip_gap + strip_h + scale(grid.title_gap) + Typeset.line_height(ctx.look.type.tile_title, ctx)
+    local cover_h = scale(opts.cover_h or grid.cover_h)
+    local gap = scale(grid.row_gap)
+    if opts.room then
+        local fit = math.floor((opts.room - gap) / 2) - below
+        cover_h = math.max(math.ceil(cover_h / 2), math.min(cover_h, fit))
+    end
+    local height = cover_h + below
     return {
         columns = columns,
         cover_w = cover_w,
         cover_h = cover_h,
-        strip_y = strip_y,
+        strip_y = cover_h + strip_gap,
         strip_h = strip_h,
-        title_y = title_y,
-        height = title_y + Typeset.line_height(ctx.look.type.tile_title, ctx),
+        title_y = cover_h + strip_gap + strip_h + scale(grid.title_gap),
+        height = height,
+        rows = opts.room and math.max(1, math.floor((opts.room + gap) / (height + gap))) or nil,
     }
+end
+
+-- The room the grid's rows have on a window h tall under ctx, in device pixels: h less the header (header_h,
+-- by default the library's, LibraryTiles.header_height), the grid's top padding, the pager and the nav bar.
+function LibraryTiles.room(h, ctx, header_h)
+    return h - (header_h or LibraryTiles.header_height(ctx)) - Paint.scaler(ctx)(ctx.look.library.grid.padding_top)
+        - LibraryTiles.pager_height(ctx) - NavBar.height(ctx.look, ctx.screen, ctx.text_size)
 end
 
 -- The header's height under ctx, in device pixels: its padding, the taller of the count over the
