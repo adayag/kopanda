@@ -681,7 +681,7 @@ describe("Layout", function()
                     Weather.reading = function() return c.reading end
                     assert.is_true(Settings.set("launcher.entries", c.entries or defaults["launcher.entries"]))
                     for _, look in ipairs({ "diner", "editorial" }) do
-                        for _, size in ipairs({ "small", "medium", "large" }) do
+                        for _, size in ipairs({ "small", "medium" }) do
                             local ctx = {
                                 look = Looks.get(look),
                                 variant = "day",
@@ -705,22 +705,20 @@ describe("Layout", function()
         end
 
         -- The looks' home spacing is tightened until this holds (looks/diner.lua, looks/editorial.lua).
-        -- At large, every case still leaves out the last row, the weather and the stats; that is
-        -- reported, not tightened further.
-        it("leaves no row out at small and medium on either profile, populated or empty, and one at large", function()
+        it("leaves no row out at small and medium on either profile, populated or empty", function()
             local counts = overflows()
             local expected, cases = {}, 0
             for key in pairs(counts) do
-                expected[key] = key:match(" large$") and 1 or 0
+                expected[key] = 0
                 cases = cases + 1
             end
-            -- Two profiles, two looks, two contents, three text sizes.
-            assert.equals(24, cases)
+            -- Two profiles, two looks, two contents, two text sizes.
+            assert.equals(16, cases)
             assert.same(expected, counts)
         end)
 
         -- Page 2's insights with a year of reading, every hour of the day used and a featured book in progress.
-        it("fits the page-2 default on the Colorsoft and the Paperwhite at every text size in every look", function()
+        it("fits the page-2 default on the Colorsoft and the Paperwhite at small and medium in every look", function()
             local FeaturedBook = require("featured_book")
             local Looks = require("looks")
             local ReadingStats = require("reading_stats")
@@ -749,7 +747,7 @@ describe("Layout", function()
             local counts, expected, cases = {}, {}, 0
             local function count(profile)
                 for _, id in ipairs(Looks.ids()) do
-                    for _, size in ipairs({ "small", "medium", "large" }) do
+                    for _, size in ipairs({ "small", "medium" }) do
                         local ctx = {
                             look = Looks.get(id),
                             variant = "day",
@@ -770,14 +768,14 @@ describe("Layout", function()
             end)
             ReadingStats.insights, FeaturedBook.current = real_insights, real_current
             assert(ok, err)
-            -- Two profiles, three text sizes, every look.
-            assert.equals(6 * #Looks.ids(), cases)
+            -- Two profiles, two text sizes, every look.
+            assert.equals(4 * #Looks.ids(), cases)
             assert.same(expected, counts)
         end)
 
         -- Page 1 with the populated and the empty content, page 2 with a year of insights on every day of
         -- the builtin quotes, whose length sets the quote's height.
-        it("fits page 1's and page 2's extra_large defaults on every profile in every look, every quote's day",
+        it("fits page 1's and page 2's large and extra_large defaults on every profile and look, every quote's day",
             function()
             local FeaturedBook = require("featured_book")
             local Looks = require("looks")
@@ -785,10 +783,13 @@ describe("Layout", function()
             local Schema = require("schema")
             local Settings = require("settings")
             local Weather = require("weather")
+            local SIZES = { "large", "extra_large" }
             local pages, entries = {}, nil
             for _, key in ipairs(Schema.keys) do
                 if key.id == "layout.rows" or key.id == "layout.rows_2" then
-                    pages[key.id] = key.defaults_by_text_size.extra_large
+                    for _, size in ipairs(SIZES) do
+                        pages[size .. " " .. key.id] = key.defaults_by_text_size[size]
+                    end
                 elseif key.id == "launcher.entries" then
                     entries = key.default
                 end
@@ -813,14 +814,14 @@ describe("Layout", function()
                     Weather.reading = function() return c.reading end
                     assert.is_true(Settings.set("launcher.entries", c.entries or entries))
                     for _, id in ipairs(Looks.ids()) do
-                        local ctx = {
-                            look = Looks.get(id),
-                            variant = "day",
-                            text_size = "extra_large",
-                            now = NOW,
-                            screen = Screen,
-                        }
                         for key, rows in pairs(pages) do
+                            local ctx = {
+                                look = Looks.get(id),
+                                variant = "day",
+                                text_size = key:match("^%S+"),
+                                now = NOW,
+                                screen = Screen,
+                            }
                             local case = table.concat({ profile, id, content, key }, " ")
                             local out = 0
                             for day = 0, #require("quotes") - 1 do
@@ -841,8 +842,8 @@ describe("Layout", function()
             end)
             ReadingStats.insights, FeaturedBook.current, Weather.reading = real_insights, real_current, real_reading
             assert(ok, err)
-            -- Three profiles, two contents, two pages, every look.
-            assert.equals(12 * #Looks.ids(), cases)
+            -- Three profiles, two contents, two text sizes, two pages, every look.
+            assert.equals(24 * #Looks.ids(), cases)
             assert.same(expected, counts)
         end)
     end)

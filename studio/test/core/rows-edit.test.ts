@@ -150,14 +150,14 @@ describe("defaultRows", () => {
   const s = (widget: string) => ({ widget, share: 1 });
   const page2 = entryFor("layout.rows_2");
 
-  it("answers each key's four rows at extra_large", () => {
-    expect(defaultRows(entry, { text_size: "extra_large" })).toEqual([
+  it.each([["large"], ["extra_large"]])("answers each key's four rows at %s", (textSize) => {
+    expect(defaultRows(entry, { text_size: textSize })).toEqual([
       [s("date"), s("clock")],
       [s("featured")],
       [s("launcher")],
       [s("weather"), s("stats")],
     ]);
-    expect(defaultRows(page2, { text_size: "extra_large" })).toEqual([
+    expect(defaultRows(page2, { text_size: textSize })).toEqual([
       [s("date"), s("clock")],
       [s("quote")],
       [s("reading")],
@@ -165,7 +165,7 @@ describe("defaultRows", () => {
     ]);
   });
 
-  it.each([["medium"], ["large"], ["huge"], ["constructor"], [7]])(
+  it.each([["medium"], ["huge"], ["constructor"], [7]])(
     "answers the plain default at the text size %s, which has none of its own",
     (textSize) => {
       expect(defaultRows(entry, { text_size: textSize })).toBe(entry.default);

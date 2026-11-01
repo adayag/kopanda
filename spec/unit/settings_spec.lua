@@ -378,11 +378,14 @@ describe("Settings", function()
         local PAGE_2 = { { slot("date"), slot("clock") }, { slot("quote") }, { slot("reading") },
             { slot("streak"), slot("forecast") } }
 
-        it("reads four rows a page at extra_large with no rows stored, the launcher third and the quote on page 2",
+        it("reads four rows a page at large and extra_large with no rows stored, the quote on page 2",
             function()
-            store('return { text_size = "extra_large" }')
-            assert.same(PAGE_1, Settings.get("layout.rows"))
-            assert.same(PAGE_2, Settings.get("layout.rows_2"))
+            for _, size in ipairs({ "large", "extra_large" }) do
+                Settings._reset()
+                store('return { text_size = "' .. size .. '" }')
+                assert.same(PAGE_1, Settings.get("layout.rows"), size)
+                assert.same(PAGE_2, Settings.get("layout.rows_2"), size)
+            end
         end)
 
         it("reads the plain default at medium, with no text size stored and with an invalid one", function()

@@ -85,6 +85,12 @@ describe("schema.lua", function()
                     { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
                 },
                 defaults_by_text_size = {
+                    large = {
+                        { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                        { { widget = "featured", share = 1 } },
+                        { { widget = "launcher", share = 1 } },
+                        { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
+                    },
                     extra_large = {
                         { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
                         { { widget = "featured", share = 1 } },
@@ -108,6 +114,12 @@ describe("schema.lua", function()
                     { { widget = "hours", share = 1 }, { widget = "records", share = 1 } },
                 },
                 defaults_by_text_size = {
+                    large = {
+                        { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+                        { { widget = "quote", share = 1 } },
+                        { { widget = "reading", share = 1 } },
+                        { { widget = "streak", share = 1 }, { widget = "forecast", share = 1 } },
+                    },
                     extra_large = {
                         { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
                         { { widget = "quote", share = 1 } },
@@ -254,7 +266,7 @@ describe("schema.lua", function()
                     entry.id .. "'s " .. tostring(step) .. " default is not allowed")
             end
         end
-        assert.equals(2, found)
+        assert.equals(4, found)
     end)
 
     it("lists each choice with a value and a label, and the default among the values", function()
