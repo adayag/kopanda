@@ -86,22 +86,14 @@ describe("fonts", function()
         "fonts/newsreader/Newsreader16pt-MediumItalic.ttf",
     }
 
-    -- The faces for looks that no look names yet, each with the family and style its name table gives FreeType.
-    local new_look_faces = {
+    -- Frosted's faces, each with the family and style its name table gives FreeType.
+    local frosted_faces = {
         { file = "fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Bold.ttf",
           family = "Atkinson Hyperlegible", style = "Bold" },
         { file = "fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Italic.ttf",
           family = "Atkinson Hyperlegible", style = "Italic" },
         { file = "fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Regular.ttf",
           family = "Atkinson Hyperlegible", style = "Regular" },
-        { file = "fonts/baloo-2/Baloo2-ExtraBold.ttf", family = "Baloo 2", style = "ExtraBold" },
-        { file = "fonts/big-shoulders-display/BigShouldersDisplay-Black.ttf",
-          family = "Big Shoulders Display", style = "Black" },
-        { file = "fonts/nunito/Nunito-Bold.ttf", family = "Nunito", style = "Bold" },
-        { file = "fonts/nunito/Nunito-ExtraBold.ttf", family = "Nunito", style = "ExtraBold" },
-        { file = "fonts/nunito/Nunito-SemiBoldItalic.ttf", family = "Nunito", style = "SemiBold Italic" },
-        { file = "fonts/work-sans/WorkSans-Bold.ttf", family = "Work Sans", style = "Bold" },
-        { file = "fonts/work-sans/WorkSans-Medium.ttf", family = "Work Sans", style = "Medium" },
     }
 
     local Fonts
@@ -110,12 +102,12 @@ describe("fonts", function()
         Fonts = package.loaded["fonts"]
     end)
 
-    it("ships the eight faces the looks use and the ten for the new looks", function()
+    it("ships the seven faces Editorial and Diner use and Frosted's three", function()
         local expected = {}
         for _, file in ipairs(look_faces) do
             expected[#expected + 1] = file
         end
-        for _, face in ipairs(new_look_faces) do
+        for _, face in ipairs(frosted_faces) do
             expected[#expected + 1] = face.file
         end
         table.sort(expected)
@@ -250,7 +242,7 @@ describe("fonts", function()
     -- its family and style are FreeType's reading of that file, so a wrong or fallback file fails.
     it("renders a glyph from each face for the new looks through Fonts.face", function()
         local ffi = require("ffi")
-        for _, expected in ipairs(new_look_faces) do
+        for _, expected in ipairs(frosted_faces) do
             local face = Fonts.face(expected.file, 20)
             assert.truthy(face, expected.file)
             local ft_face = face.ftsize.face

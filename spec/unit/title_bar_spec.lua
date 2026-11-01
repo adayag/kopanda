@@ -484,7 +484,7 @@ describe("the title bar", function()
                         local look = Looks.get(look_id)
                         local palette = Looks.palette(look, mode[3])
                         local fill = Looks.color(palette[look.title_bar.fill_color]):getColorRGB32()
-                        -- A bar with no edge (Riso's) is its fill to its foot.
+                        -- A bar with no edge (Frosted's) is its fill to its foot.
                         local edge_role = look.title_bar.edge_width > 0 and look.title_bar.edge_color
                             or look.title_bar.fill_color
                         local edge_color = Looks.color(palette[edge_role]):getColorRGB32()
@@ -626,10 +626,9 @@ describe("the title bar", function()
             end
         end)
 
-        -- Toybox's file browser takes the library's pickers: 2 px ink pills on paper.
-        it("draws Toybox's pickers as ink pills on paper, their corners the bar's paper", function()
+        it("draws Frosted's pickers as ink pills on paper, their corners the bar's paper", function()
             for _, variant in ipairs({ "day", "grey" }) do
-                painted("toybox", variant, function(bar, holds)
+                painted("frosted", variant, function(bar, holds)
                     for _, name in ipairs({ "sort", "status" }) do
                         local box = bar.boxes[name]
                         local mid = box.y + math.floor(box.h / 2)

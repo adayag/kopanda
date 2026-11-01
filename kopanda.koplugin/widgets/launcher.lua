@@ -1,8 +1,8 @@
 -- The launcher: launcher.entries as a grid on the home, in list order, each entry drawn from
 -- LauncherEntries.resolve. Editorial draws text rows (icon, label, a hairline); Diner outlined tiles with the
--- hard tile shadow, the first three on the look's accents; Toybox rounded blocks, each its icon in a ringed
--- round badge of the next of six fills; a look with plates draws each tile as a plate (plate.lua). A tap on
--- an entry runs it; a tap between entries falls through to the home; a hold anywhere opens launcher management.
+-- hard tile shadow, the first three on the look's accents; a look with plates draws each tile as a plate
+-- (plate.lua). A tap on an entry runs it; a tap between entries falls through to the home; a hold anywhere opens
+-- launcher management.
 local Geom = require("ui/geometry")
 local Icons = require("icons")
 local LauncherEntries = require("launcher_entries")
@@ -23,8 +23,8 @@ local Launcher = {
 }
 
 -- One entry, dimen its rectangle: its shadow, fill and rule, its children (icon and lines) at self.places, then
--- its outline, as widgets/quote.lua paints its tile. The shadow, fill and outline are rounded by radius, square
--- without one (paint.lua). With a plate (Plate.spec's tokens), it paints the plate, then its children.
+-- its outline, as widgets/quote.lua paints its tile. With a plate (Plate.spec's tokens), it paints the plate,
+-- then its children.
 local Entry = WidgetContainer:extend{
     name = "kopanda_launcher_entry",
     fill_color = nil,
@@ -35,7 +35,6 @@ local Entry = WidgetContainer:extend{
     shadow_y = 0,
     rule = 0,
     rule_color = nil,
-    radius = nil,
 }
 
 function Entry:paintTo(bb, x, y)
@@ -48,10 +47,10 @@ function Entry:paintTo(bb, x, y)
         return
     end
     if self.shadow_color then
-        Paint.fill(bb, x + self.shadow_x, y + self.shadow_y, w, h, self.shadow_color, self.radius)
+        Paint.fill(bb, x + self.shadow_x, y + self.shadow_y, w, h, self.shadow_color)
     end
     if self.fill_color then
-        Paint.fill(bb, x, y, w, h, self.fill_color, self.radius)
+        Paint.fill(bb, x, y, w, h, self.fill_color)
     end
     if self.rule_color and self.rule > 0 then
         Paint.fill(bb, x, y + h - self.rule, w, self.rule, self.rule_color)
@@ -60,30 +59,7 @@ function Entry:paintTo(bb, x, y)
         child:paintTo(bb, x + self.places[i].x, y + self.places[i].y)
     end
     if self.outline > 0 then
-        Paint.border(bb, x, y, w, h, self.outline, self.outline_color, self.radius)
-    end
-end
-
--- A tile's badge, dimen a square: a disc of fill_color, its icon (self[1]) at icon_place, then a
--- ring wide in ring_color round its edge.
-local Badge = WidgetContainer:extend{
-    name = "kopanda_launcher_badge",
-    fill_color = nil,
-    ring = 0,
-    ring_color = nil,
-}
-
-function Badge:paintTo(bb, x, y)
-    local size = self.dimen.w
-    local radius = math.floor(size / 2)
-    if self.fill_color then
-        Paint.fill(bb, x, y, size, size, self.fill_color, radius)
-    end
-    if self[1] then
-        self[1]:paintTo(bb, x + self.icon_place.x, y + self.icon_place.y)
-    end
-    if self.ring > 0 and self.ring_color then
-        Paint.border(bb, x, y, size, size, self.ring, self.ring_color, radius)
+        Paint.border(bb, x, y, w, h, self.outline, self.outline_color)
     end
 end
 
@@ -196,10 +172,6 @@ local function make(width, ctx)
     local plate = box and ctx.plate or nil
     local outline = box and (plate and plate.keyline or scale(look.stroke.outline)) or 0
     local rule = box and 0 or scale(look.stroke.hairline)
-    local radius = box and look.radius.box > 0 and scale(look.radius.box) or nil
-    -- A boxed tile with a badge sets its icon in the badge and its label beside it.
-    local badge = tokens.badge
-    local badge_px = box and badge.size > 0 and scale(badge.size) or 0
     local unknown = {}
 
     -- Each entry's icon and text block, laid out in its column.
@@ -207,9 +179,7 @@ local function make(width, ctx)
     for i, view in ipairs(views) do
         local col = cols[(i - 1) % columns + 1]
         local inner_w
-        if box and badge_px > 0 then
-            inner_w = col.w - shadow_x - 2 * (outline + pad_x) - badge_px - scale(tokens.icon_gap)
-        elseif box then
+        if box then
             inner_w = col.w - shadow_x - 2 * (outline + pad_x)
         else
             inner_w = col.w - 2 * pad_x - icon_px - scale(tokens.icon_gap)
@@ -244,34 +214,11 @@ local function make(width, ctx)
             entry[#entry + 1] = widget
             entry.places[#entry] = { x = x, y = y }
         end
-        if box and badge_px > 0 then
-            entry.plate = plate
-            entry.fill_color = color(look.tile.fill_color)
-            entry.outline, entry.outline_color = outline, color(look.tile.outline_color)
-            entry.shadow_color, entry.shadow_x, entry.shadow_y = color(shadow.color), shadow_x, shadow_y
-            entry.radius = radius
-            local inset = part.icon and math.floor((badge_px - part.icon.size) / 2) or 0
-            local disc = Badge:new{
-                dimen = Geom:new{ w = badge_px, h = badge_px },
-                fill_color = color(badge["fill_" .. ((i - 1) % 6 + 1) .. "_color"]),
-                ring = scale(badge.outline_width),
-                ring_color = color(badge.outline_color),
-                icon_place = { x = inset, y = inset },
-                part.icon,
-            }
-            local inner, inner_h = outline + pad_x, entry_h - 2 * outline
-            add(disc, inner, outline + math.floor((inner_h - badge_px) / 2))
-            local text_x = inner + badge_px + scale(tokens.icon_gap)
-            local text_y = outline + math.floor((inner_h - part.h) / 2)
-            for _, p in ipairs(part.placed) do
-                add(p.widget, text_x + p.x, text_y + p.y)
-            end
-        elseif box then
+        if box then
             entry.plate = plate
             entry.fill_color = (i <= 3 and color(tokens["accent_" .. i .. "_color"])) or color(look.tile.fill_color)
             entry.outline, entry.outline_color = outline, color(look.tile.outline_color)
             entry.shadow_color, entry.shadow_x, entry.shadow_y = color(shadow.color), shadow_x, shadow_y
-            entry.radius = radius
             local inner = outline + pad_x
             if part.icon then
                 add(part.icon, inner, outline + pad_y)

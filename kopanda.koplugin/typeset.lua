@@ -7,8 +7,7 @@
 -- (base/ffi/blitbuffer.lua:1405-1407, :489-491). So each TextWidget a line holds paints its shaped glyphs
 -- itself, as TextWidget:paintTo does (textwidget.lua:338-378), through colorblitFromRGB32
 -- (base/ffi/blitbuffer.lua:1422-1437). A paint that raises is logged once and falls back to TextWidget:paintTo
--- in the colour's grey. A look with a misregister token prints a display-face part twice, offset by
--- misregister.x and .y in that colour first, then in its own colour on top, the size grown by the offset.
+-- in the colour's grey.
 local Blitbuffer = require("ffi/blitbuffer")
 local Fonts = require("fonts")
 local Geom = require("ui/geometry")
@@ -46,23 +45,6 @@ local function forced(part, face)
     local height = math.floor((1 + part.line_height) * face.size + 0.5)
     local face_height, face_ascender = face.ftsize:getHeightAndAscender()
     return height, math.floor(face_ascender + (height - face_height) / 2)
-end
-
--- The offset and colour part is misregistered by under ctx, { x, y, color } in device pixels and
--- a KOReader colour, or nil: a part in the display face of a look whose misregister token names a
--- colour the variant has.
-local function misregistration(part, ctx)
-    local tokens = ctx.look.misregister
-    if part.face ~= "display" or not (tokens and tokens.color) then
-        return nil
-    end
-    local hex = Looks.palette(ctx.look, ctx.variant)[tokens.color]
-    local color = hex and Looks.color(hex)
-    if not color then
-        return nil
-    end
-    local screen = ctx.screen or require("device").screen
-    return { x = screen:scaleBySize(tokens.x), y = screen:scaleBySize(tokens.y), color = color }
 end
 
 -- A colour through a mask: a grey, an RGB one with equal channels included, through colorblitFrom,
@@ -131,70 +113,26 @@ local function warn_once(err)
     end
 end
 
--- A TextWidget's paintTo: its glyphs in its print_color or fgcolor, and first, when it has a misregistration
--- of its own, in that offset and colour. When Typeset.paint_glyphs fails, TextWidget:paintTo paints the line
--- once, in that colour's grey.
+-- A TextWidget's paintTo: its glyphs in its fgcolor. When Typeset.paint_glyphs fails, TextWidget:paintTo
+-- paints the line in that colour's grey.
 local function paint_text(self, bb, x, y)
-    local ok, err = pcall(function()
-        local offset = self.misregistration
-        if offset then
-            Typeset.paint_glyphs(self, bb, x + offset.x, y + offset.y, offset.color)
-        end
-        Typeset.paint_glyphs(self, bb, x, y, self.print_color or self.fgcolor)
-    end)
+    local ok, err = pcall(Typeset.paint_glyphs, self, bb, x, y, self.fgcolor)
     if ok then
         return
     end
     warn_once(err)
-    local fgcolor = self.fgcolor
-    self.fgcolor = self.print_color or fgcolor
-    local painted, paint_err = pcall(TextWidget.paintTo, self, bb, x, y)
-    self.fgcolor = fgcolor
-    if not painted then
-        error(paint_err, 0)
-    end
+    TextWidget.paintTo(self, bb, x, y)
 end
 
--- A misregistered TextWidget's size, its text's grown by the offset.
-local function grown_text_size(self)
-    local size = TextWidget.getSize(self)
-    size.w, size.h = size.w + self.misregistration.x, size.h + self.misregistration.y
-    return size
-end
-
--- A misregistered tracked line's paintTo: every glyph in the offset colour at the offset, then
--- every glyph in its own, so no glyph's offset copy lands on another's ink. An offset pass that
--- fails is logged and left out; the glyphs lose the offset colour and print in their own.
-local function paint_group(self, bb, x, y)
-    local offset = self.misregistration
-    for _, child in ipairs(self) do
-        child.print_color = offset.color
-    end
-    local ok, err = pcall(HorizontalGroup.paintTo, self, bb, x + offset.x, y + offset.y)
-    for _, child in ipairs(self) do
-        child.print_color = nil
-    end
-    if not ok then
-        warn_once(err)
-    end
-    HorizontalGroup.paintTo(self, bb, x, y)
-end
-
-local function grown_group_size(self)
-    local size = HorizontalGroup.getSize(self)
-    return { w = size.w + self.misregistration.x, h = size.h + self.misregistration.y }
-end
-
--- The text widget self[1], made black on white, printed through its mask: in self.offset.color at its x and y
--- first when it has an offset, then in self.color; dimen is the text's size plus the offset. The mask is the
+-- The text widget self[1], made black on white, printed through its mask in self.color. The mask is the
 -- text painted on white and inverted, so its ink is white (base/ffi/blitbuffer.lua:1506, :1567), made at the
--- first paint and freed with the widget. Used for a misregistered TextBoxWidget and one on a plate
--- (Typeset.printed), whose ground must show between its glyphs.
-local Misregistered = WidgetContainer:extend{
-    name = "kopanda_misregistered",
+-- first paint and freed with the widget. Used for a TextBoxWidget on a plate (Typeset.printed), whose ground
+-- must show between its glyphs.
+local Masked = WidgetContainer:extend{
+    name = "kopanda_masked",
 }
 
-function Misregistered:paintTo(bb, x, y)
+function Masked:paintTo(bb, x, y)
     if not self.mask then
         local size = self[1]:getSize()
         if size.w <= 0 or size.h <= 0 then
@@ -206,14 +144,10 @@ function Misregistered:paintTo(bb, x, y)
         mask:invertRect(0, 0, size.w, size.h)
         self.mask = mask
     end
-    local w, h = self.mask:getWidth(), self.mask:getHeight()
-    if self.offset then
-        blit(bb, self.mask, x + self.offset.x, y + self.offset.y, w, h, self.offset.color)
-    end
-    blit(bb, self.mask, x, y, w, h, self.color)
+    blit(bb, self.mask, x, y, self.mask:getWidth(), self.mask:getHeight(), self.color)
 end
 
-function Misregistered:free()
+function Masked:free()
     if self.mask then
         self.mask:free()
         self.mask = nil
@@ -229,21 +163,18 @@ end
 
 -- The widget make(width, fgcolor, bgcolor) builds for part under ctx, at most max_width wide: a TextBoxWidget,
 -- which keeps a colour itself and fills its box with bgcolor (frontend/ui/widget/textboxwidget.lua:854-906),
--- made in part's colour on paper; a misregistered part or one on a plate is made black on white and printed
--- through Misregistered, so a plate's ground shows between its glyphs.
+-- made in part's colour on paper; a part on a plate is made black on white and printed through Masked, so the
+-- plate's ground shows between its glyphs.
 function Typeset.printed(part, max_width, ctx, make)
     local palette = Looks.palette(ctx.look, ctx.variant)
     local color = Looks.color(palette[part.color])
-    local offset = misregistration(part, ctx)
-    if not offset and not Typeset.on_plate(ctx) then
+    if not Typeset.on_plate(ctx) then
         return make(max_width, color, Looks.color(palette.paper))
     end
-    local offset_x, offset_y = offset and offset.x or 0, offset and offset.y or 0
-    local text = make(math.max(1, max_width - offset_x), Blitbuffer.COLOR_BLACK, Blitbuffer.COLOR_WHITE)
+    local text = make(max_width, Blitbuffer.COLOR_BLACK, Blitbuffer.COLOR_WHITE)
     local size = text:getSize()
-    return Misregistered:new{
-        dimen = Geom:new{ w = size.w + offset_x, h = size.h + offset_y },
-        offset = offset,
+    return Masked:new{
+        dimen = Geom:new{ w = size.w, h = size.h },
         color = color,
         text,
     }
@@ -295,29 +226,18 @@ local function plain_line(part, text, max_width, ctx, color)
 end
 
 -- text in part under ctx, at most max_width wide: plain_line's line in part's colour, each of its
--- TextWidgets painting its glyphs in their own colour (paint_text); a misregistered part's line
--- set at max_width less the offset, grown by it and painted twice.
+-- TextWidgets painting its glyphs in their own colour (paint_text).
 function Typeset.line(part, text, max_width, ctx)
     local color = Looks.color(Looks.palette(ctx.look, ctx.variant)[part.color])
-    local offset = misregistration(part, ctx)
-    local line = plain_line(part, text, math.max(1, max_width - (offset and offset.x or 0)), ctx, color)
+    local line = plain_line(part, text, max_width, ctx, color)
     if getmetatable(line) == TextWidget then
         line.paintTo = paint_text
-        if offset then
-            line.misregistration = offset
-            line.getSize = grown_text_size
-        end
         return line
     end
     for _, child in ipairs(line) do
         if getmetatable(child) == TextWidget then
             child.paintTo = paint_text
         end
-    end
-    if offset then
-        line.misregistration = offset
-        line.paintTo = paint_group
-        line.getSize = grown_group_size
     end
     return line
 end
@@ -333,7 +253,7 @@ end
 
 -- The y of the baseline of a line from Typeset.line, from the line's top. TextWidget:getBaseline
 -- gives the face's baseline, not a forced one (textwidget.lua:312); a tracked line's glyphs share
--- one height and sit on the line's bottom, a misregistered one's above its offset.
+-- one height and sit on the line's bottom.
 function Typeset.baseline(line)
     if getmetatable(line) == TextWidget then
         return line.forced_baseline or line:getBaseline()

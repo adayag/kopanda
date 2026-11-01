@@ -317,7 +317,7 @@ function KoTitleBar:paintBuilt(bb, x, y)
     for _, name in ipairs({ "count", "title" }) do
         built.lines[name]:paintTo(bb, x + boxes[name].x, y + boxes[name].y)
     end
-    -- Pills where the look rounds its pickers (Toybox), square boxes otherwise.
+    -- Pills where the look rounds its pickers (Frosted), square boxes otherwise.
     local radius = tokens.picker_radius > 0 and Screen:scaleBySize(tokens.picker_radius) or nil
     for name, fill in pairs({ sort = tokens.sort_fill_color, status = tokens.status_fill_color }) do
         local box = boxes[name]

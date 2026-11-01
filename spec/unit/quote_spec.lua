@@ -244,8 +244,8 @@ describe("the quote of the day", function()
                 assert.equals(4, box.line_with_ellipsis)
                 assert.is_true(box.vertical_string_list[4].ellipsis_added)
                 assert.equals(4 * box.line_height_px, box.height)
-                -- A line is 1 + the quote part's line height em (Editorial's and Diner's 1.4, Riso's 1.35), rounded
-                -- as TextBoxWidget rounds it (frontend/ui/widget/textboxwidget.lua:151).
+                -- A line is 1 + the quote part's line height em, rounded as TextBoxWidget rounds it
+                -- (frontend/ui/widget/textboxwidget.lua:151).
                 local line_height = 1 + ctx.look.type.quote.line_height
                 assert.equals(require("optmath").round(line_height * box.face.size), box.line_height_px, look_id)
                 built:free()
@@ -271,7 +271,7 @@ describe("the quote of the day", function()
             end
         end)
 
-        -- A face whose glyphs stand taller than the line (Toybox's Nunito) adds their overhang
+        -- A face whose glyphs stand taller than the line adds their overhang
         -- below it (frontend/ui/widget/textboxwidget.lua:154-163, :850-851).
         it("shrinks to one line for a short text, its height that line and the chrome", function()
             Quote.sources.builtin = { { text = "Read.", author = "A", work = "W" } }
@@ -342,8 +342,7 @@ describe("the quote of the day", function()
                     assert.equals(width, built:getSize().w)
                     assert.equals(Quote.height(width, ctx), built:getSize().h)
                     -- A look with plates draws the quote plain, its plate's padding the home's;
-                    -- a quote with padding or rules is taller than its text; Toybox's plain quote
-                    -- has no chrome to add.
+                    -- a quote with padding or rules is taller than its text.
                     if ctx.look.plate.fill_color then
                         assert.equals(built.text_box:getSize().h, built:getSize().h, look_id)
                     elseif quote.padding > 0 or quote.rule_width > 0 then
@@ -355,10 +354,10 @@ describe("the quote of the day", function()
                     built:free()
                 end
             end
-            assert.same({ diner = true, editorial = true, riso = true }, chromed)
+            assert.same({ diner = true, editorial = true }, chromed)
         end)
 
-        it("draws Editorial and Riso between rules and Diner in its tile with a hard shadow", function()
+        it("draws Editorial between rules and Diner in its tile with a hard shadow", function()
             local function painted(look_id)
                 local ctx = ctx_for(look_id)
                 local built = Quote.build(400, ctx)
@@ -385,16 +384,6 @@ describe("the quote of the day", function()
             assert.equals(palette.shadow, rgb(bb, size.w - 1, size.h - 1))
             assert.equals("#ffffff", rgb(bb, size.w - 1, 0))
             assert.equals(palette.paper, rgb(bb, size.w - shadow - 10, size.h - shadow - 10))
-            bb:free()
-
-            -- Riso: 2 px pink rules above and below, though its tiles are boxes (riso.md).
-            bb, size, palette = painted("riso")
-            local rule = Screen:scaleBySize(2)
-            for _, y in ipairs({ 0, rule - 1, size.h - rule, size.h - 1 }) do
-                assert.equals(palette.hairline_light, rgb(bb, size.w - 1, y), "y " .. y)
-            end
-            assert.equals("#ffffff", rgb(bb, size.w - 1, rule))
-            assert.equals("#ffffff", rgb(bb, size.w - 1, size.h - rule - 1))
             bb:free()
         end)
 

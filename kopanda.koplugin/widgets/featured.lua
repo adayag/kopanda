@@ -129,7 +129,7 @@ end
 
 -- text in the type part named part_name, wrapped at width in at most max_lines lines, the last ending in an
 -- ellipsis when it runs over; a single line is one line high (frontend/ui/widget/textboxwidget.lua:54,
--- :256-260). Printed as Typeset prints a line, so a misregistered look prints its display type twice.
+-- :256-260). Printed through Typeset.printed, so on a plate its ground shows between the glyphs.
 local function text_box(part_name, text, width, max_lines, ctx)
     local part, face, line_px = face_of(part_name, ctx)
     return Typeset.printed(part, width, ctx, function(box_w, fgcolor, bgcolor)
@@ -158,7 +158,7 @@ local function label(width, ctx)
     end
     local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local outline = scale(tokens.chip_outline)
-    -- A pill where the look rounds its chips (Toybox), square otherwise.
+    -- A pill where the look rounds its chips (Frosted), square otherwise.
     local radius = look.chip.radius > 0 and scale(look.chip.radius) or nil
     local pad_x, pad_y = scale(tokens.chip_padding.x), scale(tokens.chip_padding.y)
     local line = Typeset.line(look.type.featured_label, text, width - 2 * (outline + pad_x), ctx)

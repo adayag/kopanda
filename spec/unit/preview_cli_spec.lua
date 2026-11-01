@@ -116,7 +116,7 @@ describe("bin/preview", function()
     -- isn't); the script passes any id-shaped look on.
     it("passes on any look id, a look it has never heard of included", function()
         local emulator = fake_emulator()
-        for _, look in ipairs({ "riso", "frosted_2" }) do
+        for _, look in ipairs({ "editorial", "frosted_2" }) do
             os.remove(scratch .. "/record")
             local _, stderr, status = run("1264 1680 300 color " .. look .. " day '" .. scratch .. "/out.png'",
                 "KOPANDA_EMULATOR='" .. emulator .. "' FAKE_MODE=success")

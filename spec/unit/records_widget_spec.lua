@@ -135,7 +135,7 @@ describe("the records widget", function()
     it("sets the values smaller, together, until each fits a quarter-width column on the Colorsoft", function()
         stub({ state = "read", sessions = fixture })
         harness.at_colorsoft(function()
-            local ctx = ctx_for("toybox")
+            local ctx = ctx_for("diner")
             ctx.text_size = "large"
             local home = ctx.look.home
             local columns = Layout.columns(Screen:getWidth() - 2 * Paint.scaler(ctx)(home.margin.side),
@@ -151,7 +151,7 @@ describe("the records widget", function()
 
     it("keeps the values at the part's size when they fit, the rows that tall", function()
         stub({ state = "read", sessions = fixture })
-        local ctx = ctx_for("toybox")
+        local ctx = ctx_for("diner")
         local widget = Records.build(520, ctx)
         assert.equals(ctx.look.type.insight_value.size, widget.value_size)
         widget:free()
@@ -160,7 +160,7 @@ describe("the records widget", function()
     it("is shorter by the smaller values' line height when they shrink", function()
         stub({ state = "read", sessions = fixture })
         harness.at_colorsoft(function()
-            local ctx = ctx_for("toybox")
+            local ctx = ctx_for("diner")
             local widget = Records.build(300, ctx)
             local part = {}
             for k, v in pairs(ctx.look.type.insight_value) do

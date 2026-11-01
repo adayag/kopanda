@@ -51,7 +51,7 @@ end
 local new_box, add, tools = LibraryChrome.box, LibraryChrome.add, LibraryChrome.tools
 
 -- A header chip: widgets side by side, top-aligned, inside the header's picker padding and outline, on fill,
--- rounded by the header's picker radius where it has one (Toybox's pills).
+-- rounded by the header's picker radius where it has one (Frosted's pills).
 local function chip(widgets, fill, ctx)
     local scale, color = tools(ctx)
     local tokens = ctx.look.library.header

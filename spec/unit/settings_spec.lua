@@ -70,6 +70,14 @@ describe("Settings", function()
             assert.equals("diner", Settings.get("look"))
         end)
 
+        it("reads a retired look as the default, so a device that stored one still boots", function()
+            for _, retired in ipairs({ "riso", "toybox" }) do
+                Settings._reset()
+                store('return { look = "' .. retired .. '" }')
+                assert.equals("diner", Settings.get("look"), retired)
+            end
+        end)
+
         it("returns the stored value when it is valid", function()
             store('return { look = "editorial" }')
             assert.equals("editorial", Settings.get("look"))

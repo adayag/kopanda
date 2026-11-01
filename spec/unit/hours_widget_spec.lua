@@ -45,6 +45,15 @@ describe("the hours widget", function()
         }
     end
 
+    -- Diner's ctx with its bars unoutlined.
+    local function unoutlined()
+        local ctx = ctx_for("diner")
+        local look = ctx.look
+        ctx.look = setmetatable({ insights = setmetatable({ bar_outline_width = 0 }, { __index = look.insights }) },
+            { __index = look })
+        return ctx
+    end
+
     local function same_color(bb, x, y, color)
         local c = bb:getPixel(x, y):getColorRGB32()
         local want = color:getColorRGB32()
@@ -106,7 +115,7 @@ describe("the hours widget", function()
 
     it("draws an hour read for a second 2 px tall", function()
         fixture = insights_with({ [0] = 1, [21] = 1500 })
-        local ctx = ctx_for("toybox")
+        local ctx = unoutlined()
         local color = Looks.colorer(ctx)
         local fill, paper = color(ctx.look.insights.bar_fill_color), color(ctx.look.tile.fill_color)
         local bb, g, widget = painted(520, ctx)
@@ -130,7 +139,7 @@ describe("the hours widget", function()
         assert.is_true(same_color(bb, g.x(12) + 1, g.bottom - 1, outline))
         widget:free()
 
-        local plain = ctx_for("toybox")
+        local plain = unoutlined()
         assert.equals(0, plain.look.insights.bar_outline_width)
         local bare_bb, bare, bare_widget = painted(520, plain)
         assert.is_true(same_color(bare_bb, bare.x(12), bare.bottom - 5,

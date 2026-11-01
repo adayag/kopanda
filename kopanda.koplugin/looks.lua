@@ -9,7 +9,7 @@ local Settings = require("settings")
 local Looks = {}
 
 -- The look ids in the swatch's column order.
-local ids = { "editorial", "diner", "riso", "toybox", "frosted" }
+local ids = { "editorial", "diner", "frosted" }
 
 -- A fresh copy of a token value, its tables copied all the way down.
 local function deep_copy(value)

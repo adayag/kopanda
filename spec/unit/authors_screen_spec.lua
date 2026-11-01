@@ -430,10 +430,8 @@ describe("the Authors window", function()
             for _, profile in ipairs({ { "colorsoft", harness.at_colorsoft }, { "paperwhite", harness.at_paperwhite },
                 { "paperwhite7", function(fn) harness.at_screen(1072, 1448, fn) end } }) do
                 profile[2](function()
-                    for _, case in ipairs({ { "medium", "editorial" }, { "medium", "diner" }, { "medium", "riso" },
-                        { "medium", "toybox" }, { "medium", "frosted" }, { "extra_large", "editorial" },
-                        { "extra_large", "diner" }, { "extra_large", "riso" }, { "extra_large", "toybox" },
-                        { "extra_large", "frosted" } }) do
+                    for _, case in ipairs({ { "medium", "editorial" }, { "medium", "diner" }, { "medium", "frosted" },
+                        { "extra_large", "editorial" }, { "extra_large", "diner" }, { "extra_large", "frosted" } }) do
                         local size, id = case[1], case[2]
                         local where = profile[1] .. " " .. id .. " " .. size
                         assert.is_true(Settings.set("look", id))

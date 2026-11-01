@@ -111,65 +111,57 @@ describe("the sheet", function()
             assert.is_true(near(rgb(palette.mustard), pixel(bb, header.x + 2, header.y + 2), 1), "home band")
         end)
 
-        -- toybox.md: inset 16, a 3 px ink outline rounded 24 on an 8 px ink edge straight below,
-        -- the mint band rounded with the box at its top only, and the chips mint pills.
-        it("rounds Toybox's panel, its edge and its band's top, and draws its chips as pills", function()
-            local sheet, look, palette = painted("toybox")
-            local panel, inset = sheet.panel, scale(16)
-            assert.same({ inset, 1264 - inset, 1680 - inset }, { panel.x, panel.x + panel.w, panel.y + panel.h })
+        it("rounds Frosted's panel and its shadow, and draws its chips as pills", function()
+            local sheet, look, palette = painted("frosted")
+            local panel = sheet.panel
+            local side, bottom = scale(look.sheet.inset.side), scale(look.sheet.inset.bottom)
+            assert.same({ side, 1264 - side, 1680 - bottom }, { panel.x, panel.x + panel.w, panel.y + panel.h })
             local white = { 255, 255, 255 }
             local cx, mid = centre(panel)
             assert.is_true(near(white, pixel(bb, panel.x, panel.y), 1), "the box's corner is round")
             assert.is_true(near(rgb(palette.outline), pixel(bb, panel.x, mid), 1), "left border")
             assert.is_true(near(rgb(palette.outline), pixel(bb, cx, panel.y), 1), "top border")
-            local edge = scale(look.shadow.sheet.y)
-            assert.equals(0, look.shadow.sheet.x)
-            assert.is_true(near(rgb(palette.shadow), pixel(bb, cx, panel.y + panel.h + edge - 1), 1), "the edge")
-            assert.is_true(near(white, pixel(bb, panel.x, panel.y + panel.h + edge - 1), 1), "the edge's corner")
-            assert.same({ panel.x, panel.y, panel.w, panel.h + edge },
-                { sheet.rect.x, sheet.rect.y, sheet.rect.w, sheet.rect.h })
-            local header = sheet.header_rect
-            assert.is_true(near(rgb(palette.mint), pixel(bb, cx, header.y + 1), 1), "the band at its top")
-            assert.is_false(near(rgb(palette.mint), pixel(bb, header.x + 1, header.y + 1), 1),
-                "the band's top corner is round")
-            assert.is_true(near(rgb(palette.mint), pixel(bb, header.x, header.y + header.h - 1), 1),
-                "the band's foot is square")
+            local right = panel.x + panel.w + scale(look.shadow.sheet.x) - 1
+            local foot = panel.y + panel.h + scale(look.shadow.sheet.y) - 1
+            assert.is_true(near(rgb(palette.shadow), pixel(bb, cx, foot), 1), "the shadow under the box")
+            assert.is_true(near(white, pixel(bb, right, foot), 1), "the shadow's corner is round")
             local chip = sheet.rows[2].detail
             local _, chip_mid = centre(chip)
+            local fill = rgb(palette[look.sheet.status_chip_color])
             assert.is_true(near(rgb(palette.outline), pixel(bb, chip.x, chip_mid), 1), "the chip's outline")
             assert.is_false(near(rgb(palette.outline), pixel(bb, chip.x, chip.y), 1), "the chip's corner is round")
-            assert.is_true(near(rgb(palette.mint), pixel(bb, chip.x + math.floor(chip.w / 2),
+            assert.is_true(near(fill, pixel(bb, chip.x + math.floor(chip.w / 2),
                 chip.y + scale(look.sheet.chip_outline_width)), 1), "the chip's fill")
         end)
 
-        -- A selected last row's sun stops short of the box's 24 px bottom corners: the padding below
-        -- it keeps the fill's corners inside the outer curve, where the ring covers them, so no sun
+        -- A selected last row's fill stops short of the box's round bottom corners: the padding below
+        -- it keeps the fill's corners inside the outer curve, where the ring covers them, so no fill
         -- shows in the ring or past its inner edge on either side.
-        it("keeps Toybox's selected last row inside the box's round bottom corners", function()
+        it("keeps Frosted's selected last row inside the box's round bottom corners", function()
             local spec = three_rows()
             spec.rows[3].muted, spec.rows[3].selected = nil, true
-            Sheet.show(spec, ctx_for("toybox", colorsoft))
-            local sheet, look = Sheet.shown, Looks.get("toybox")
+            Sheet.show(spec, ctx_for("frosted", colorsoft))
+            local sheet, look = Sheet.shown, Looks.get("frosted")
             bb = buffer(1264, 1680)
             sheet:paintTo(bb, 0, 0)
-            local sun = rgb(Looks.palette(look, "day")[look.sheet.selected_fill_color])
+            local lit = rgb(Looks.palette(look, "day")[look.sheet.selected_fill_color])
             local panel, r = sheet.panel, scale(look.sheet.radius)
             local inner = r - scale(look.sheet.outline_width)
             local foot = panel.y + panel.h
             local row = sheet.rows[3].rect
-            assert.is_true(near(sun, pixel(bb, row.x + math.floor(row.w / 2), row.y + 2), 1), "the row is lit")
+            assert.is_true(near(lit, pixel(bb, row.x + math.floor(row.w / 2), row.y + 2), 1), "the row is lit")
             for _, side in ipairs({ { panel.x, panel.x + r }, { panel.x + panel.w - r, panel.x + panel.w - r } }) do
                 local x0, cx = side[1], side[2]
                 local outside = 0
                 for y = foot - r, foot - 1 do
                     for x = x0, x0 + r - 1 do
                         local dx, dy = x + 0.5 - cx, y + 0.5 - (foot - r)
-                        if dx * dx + dy * dy > inner * inner and near(sun, pixel(bb, x, y), 1) then
+                        if dx * dx + dy * dy > inner * inner and near(lit, pixel(bb, x, y), 1) then
                             outside = outside + 1
                         end
                     end
                 end
-                assert.equals(0, outside, "sun in the corner's ring at x " .. x0)
+                assert.equals(0, outside, "the fill in the corner's ring at x " .. x0)
             end
         end)
 

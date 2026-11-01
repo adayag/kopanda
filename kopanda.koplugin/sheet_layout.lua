@@ -85,7 +85,7 @@ function SheetLayout.build(spec, ctx, variant)
     end
 
     local box_w = size.w - 2 * scale(tokens.inset.side)
-    -- The box's corners, round where the look rounds its sheet (Toybox), square otherwise; its
+    -- The box's corners, round where the look rounds its sheet (Frosted), square otherwise; its
     -- chips pills where the look rounds its chips.
     local radius = tokens.radius > 0 and scale(tokens.radius) or nil
     local chip_radius = look.chip.radius > 0 and scale(look.chip.radius) or nil
@@ -202,16 +202,7 @@ function SheetLayout.build(spec, ctx, variant)
         end
         local header_h = scale(pad.top) + inner_h + scale(pad.bottom)
         if tokens.header_band and spec.band then
-            local band_role = tokens[spec.band .. "_band_color"]
-            -- A band at the top of a round box is round at its top inside the outline: a rounded
-            -- fill, then a square one over its lower corners.
-            local inner_radius = radius and y <= outline and math.max(0, radius - outline)
-            if inner_radius and inner_radius > 0 and header_h > inner_radius then
-                add_fill(content_x, y, content_w, header_h, band_role, inner_radius)
-                add_fill(content_x, y + inner_radius, content_w, header_h - inner_radius, band_role)
-            else
-                add_fill(content_x, y, content_w, header_h, band_role)
-            end
+            add_fill(content_x, y, content_w, header_h, tokens[spec.band .. "_band_color"])
         end
         header_rect = { x = content_x, y = y, w = content_w, h = header_h }
         y = y + header_h

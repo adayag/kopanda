@@ -165,17 +165,15 @@ describe("the settings menu's rows", function()
             local look = row(SchemaMenu.items(), "look")
             assert.equals("Look · Diner", look.text_func())
             local sub = look.sub_item_table_func()
-            assert.equals(5, #sub)
+            assert.equals(3, #sub)
             assert.equals("Diner", sub[1].text)
             assert.equals("Editorial", sub[2].text)
-            assert.equals("Riso", sub[3].text)
-            assert.equals("Toybox", sub[4].text)
-            assert.equals("Frosted", sub[5].text)
-            for i = 1, 5 do
+            assert.equals("Frosted", sub[3].text)
+            for i = 1, 3 do
                 assert.is_true(sub[i].radio, sub[i].text)
             end
             assert.is_true(sub[1].checked_func())
-            for i = 2, 5 do
+            for i = 2, 3 do
                 assert.is_false(sub[i].checked_func(), sub[i].text)
             end
         end)

@@ -285,7 +285,7 @@ describe("the reading widget", function()
 
     it("sets the figures smaller until they fit the column", function()
         fixture = insights_with({ ["10-1"] = 6480, ["10-2"] = 6480 })
-        local ctx = ctx_for("toybox")
+        local ctx = ctx_for("diner")
         ctx.text_size = "large"
         local widget = Reading.build(300, ctx)
         assert.is_true(widget.value_size < ctx.look.type.insight_value.size)

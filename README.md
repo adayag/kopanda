@@ -10,7 +10,7 @@ The repo is public so the work can be read. The plugin is built for its owner's 
 |---|---|
 | `kopanda.koplugin/` | The plugin: Lua on KOReader's LuaJIT. `schema.lua` is the only list of settings; `HOOKS.md` lists every KOReader internal it reads or patches. |
 | `kopanda.koplugin/widgets/` | The home's widgets: date, clock, weather, quote, featured book, launcher, and the reading insights (reading, streak, forecast, hours, records). |
-| `kopanda.koplugin/looks/` | The looks, each a token table inheriting from `base.lua`: Diner (the default), Editorial, Riso, Toybox, Frosted. |
+| `kopanda.koplugin/looks/` | The looks, each a token table inheriting from `base.lua`: Diner (the default), Editorial, Frosted. |
 | `studio/` | The studio: TypeScript on Node 22, Express, React and Vite. A form over the schema, a preview rendered by the emulator, and a push of a profile's settings and the working-tree plugin to a device over the LAN. |
 | `spec/` | Busted unit specs and emulator capture specs, with a fixture library of three public-domain EPUBs. |
 | `bin/` | `check` (the test gate), `schema-json`, `catalog-json`, `layout-fit`, `preview`, `bundle`. |

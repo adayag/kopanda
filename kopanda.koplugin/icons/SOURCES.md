@@ -1,6 +1,6 @@
 # Vendored icon sets
 
-Each new look draws its own icon set, one file per registry id (`icons.lua`) under
+A look may draw its own icon set, one file per registry id (`icons.lua`) under
 `icons/<set id>/<registry id>.svg`, beside the pack's licence as `LICENSE.txt`. The default
 set is the Lucide files at the top of `icons/` (`LICENSE-lucide.txt`).
 
@@ -8,59 +8,6 @@ Files were recoloured to explicit black and nothing else changed: NanoSVG render
 colours and turns `currentColor` into mid-grey, and `TintedIcon` colours an icon through its
 black ink. Each set's section says what its files changed. The hash is the SHA-256 of the file
 as shipped here, not the pack's.
-
-## phosphor-fill
-
-- Set: Phosphor Fill, for Riso
-- Pack: `@phosphor-icons/core` 2.1.1 (https://github.com/phosphor-icons/core), the `fill` weight, `assets/fill/<name>-fill.svg`
-- Source: `https://cdn.jsdelivr.net/npm/@phosphor-icons/core@2.1.1/<pack file>`
-- Tarball: https://registry.npmjs.org/@phosphor-icons/core/-/core-2.1.1.tgz, SHA-256 `313332be6190b724da24107addd781799b48bf76b13963f24501112ffe1baadd`
-- Licence: MIT, `phosphor-fill/LICENSE.txt` (the pack's `LICENSE`)
-- Changes: The root's `fill="currentColor"` became `fill="#000000"`; nothing else changed.
-
-| Registry id | Pack file | SHA-256 |
-|---|---|---|
-| action | `assets/fill/lightning-fill.svg` | 5d930611736398e3439ef50fca64dbe156b489ecccef75f655ce1c0612d37354 |
-| authors | `assets/fill/user-fill.svg` | 369b7757410a08d60fe88bcc4919c64192f3bc1c05ca5f7cbec5342d233cb165 |
-| back | `assets/fill/caret-left-fill.svg` | 3d430443491cc4a2676499e78f1c39bdebf6cde2a9181fdf223fe2e150e80e55 |
-| bookmark | `assets/fill/bookmark-simple-fill.svg` | 4d173414926b69276e1313f9ddde5d4083694a9a23fa1077ea74ecaac6c0ff2f |
-| check | `assets/fill/check-fill.svg` | 2933a64866df83209d2b2ab82e79e173b81dfdf3fdc94a3e9a024f5b241c1840 |
-| chevron_down | `assets/fill/caret-down-fill.svg` | 812fd2819b2ecd41508b99eaaaf17b9967fa362b321a4e21f3a4f9d199dfd92f |
-| chevron_up | `assets/fill/caret-up-fill.svg` | 8c5245072d5d1db22e9e1ffd7bb5b49ca6e022fdbe55464305aa50256315041e |
-| close | `assets/fill/x-fill.svg` | c38cbe97f588240353c30cfab06997a2c74e77b7db440f47e9237daf432d04af |
-| download | `assets/fill/arrow-line-down-fill.svg` | d7e1235ea71f875f5bc46897ecf382639fa3abff55d1a2edd5014aa7483ddbcf |
-| eye_off | `assets/fill/eye-slash-fill.svg` | 8057b1591f3deec5aa40842b4943ca993bf46ba1720c42cb2a80f56ad55c54b3 |
-| filter | `assets/fill/funnel-fill.svg` | 93318058196472dea21f23940e0c208523e6dbfd6cda73ef4d4e4765af514473 |
-| folder | `assets/fill/folder-fill.svg` | aaac9770baebb628162b0b4f3cc431eab6f9e74e15c06ad8215c7c42ed7b5013 |
-| folder_open | `assets/fill/folder-open-fill.svg` | 3c1de3dfd226202c8057c863a3115a92251018a56405520c57604f7ec9b01ff6 |
-| forward | `assets/fill/caret-right-fill.svg` | 8bab7941e5e6cdfdbae8930215de293f2dd93d5be2f8a06c3fe5a9937c25930a |
-| history | `assets/fill/clock-counter-clockwise-fill.svg` | 7b045eaf09f98940f72e2a331d6365bf7fbb258722b32a6ff44cd4651d463aac |
-| home | `assets/fill/house-fill.svg` | 8f12446bfbdec35b1173d017b533d8931684c54ad021dbbae0324f22580f4257 |
-| home_plus | `assets/fill/push-pin-fill.svg` | 5cef9b52c9c3aab26b9cc3b28df25649c6725b6e65964425eecd8ce2e93fb1b0 |
-| info | `assets/fill/info-fill.svg` | cb37cf5bfba85cd6fc5f7237a0cf5f74184a273587ef9343e33d550bdd8c085f |
-| layout | `assets/fill/layout-fill.svg` | 3f6e8094ae9031325cba7b16b831ff8b61df5beae34c3934db1c71fe15b371af |
-| library | `assets/fill/books-fill.svg` | 2eed56a1d8752987c3b34034acfa824f0823672c520df24955d89631e906cf86 |
-| list | `assets/fill/list-bullets-fill.svg` | 4134edeb323a154e13bf9bc1fc825518c32018d24b422ddc646c8421179780ec |
-| moon | `assets/fill/moon-fill.svg` | 22d65a5c123d3e515d19756488a1958d1874930bf9c11f5dd033ff91ef7b0058 |
-| open_book | `assets/fill/book-open-fill.svg` | a218cc9897333e84438df2f7c81347f6eb71ddf121f63efeab551e16482a014e |
-| plugin_missing | `assets/fill/question-fill.svg` | 22248820000e1f5fcd5c9a26a7c07c9e672ffd5cb03af4e0d6afe04058048943 |
-| plus | `assets/fill/plus-fill.svg` | b21c16cd793ebcfe80fd06c102c8fd7abf4a56309749a3ba3ba5cea6fad21e7c |
-| power | `assets/fill/power-fill.svg` | 4c2915ec6fe73cc71801c90237dea28930fc862f0b7f9db9d297e672ef2cdb0c |
-| quick_settings | `assets/fill/sliders-horizontal-fill.svg` | 089fdedcdbd0c712201a7ac3dcc553b1da0e9908a5a9a8cec1897cae0ee4c08a |
-| refresh | `assets/fill/arrow-clockwise-fill.svg` | 3bd547af1e2f86de299c20cfb484079cdb8be69a9894503ca58c859688a4b690 |
-| rotation_lock | `assets/fill/device-rotate-fill.svg` | 763726c9113887516d3346db3f4a61dffe1db0db8f2c98d8d10991b61fa39063 |
-| screenshot | `assets/fill/camera-fill.svg` | 7dfb177061eb3d870a6b972c3b4cc18824296300b4a30014d27823826c88ba76 |
-| search | `assets/fill/magnifying-glass-fill.svg` | 6886e8f8b32bd173bf4297bbacce9c08e191681e4d403749312bdacf793fca53 |
-| series | `assets/fill/stack-fill.svg` | 36218018848bc80ed1bb7239ed26d8b6b4208355068d3285b8c510fd5596b3a4 |
-| settings | `assets/fill/gear-six-fill.svg` | fb7988bcc52bc8f4d2229d7365d37c3d1a4d98f703b690684325af32f863635a |
-| sort | `assets/fill/sort-ascending-fill.svg` | 8d49f3dca28158f1182e9c7821f7404cfbb6c348f4fd534c4d5874521375ca0a |
-| subjects | `assets/fill/tag-fill.svg` | e0bd0bee016deb33bd3855634e076aad830d1ec568a310139b29a0d6fccb44c2 |
-| sun | `assets/fill/sun-fill.svg` | 1019ae02cdb08886da9a9bd06d367ff97cfd0834844135cf4b2adb856e95406c |
-| sync | `assets/fill/cloud-arrow-down-fill.svg` | 18d12311cd77cfb5c8a2b5c423d9b1fb8472c8e0b43ff73bb45eca996c195992 |
-| terminal | `assets/fill/terminal-window-fill.svg` | df9620f1b3f811d4efd0d286f50945ae1f30abed82496c584541177af4d34001 |
-| trash | `assets/fill/trash-fill.svg` | b6e0674122719343f02049e52e63d47df84c87d41139a16bcaed07a8873fa93e |
-| wifi | `assets/fill/wifi-high-fill.svg` | b3791fe9d178408f328ddf43a2e4d7c2d6838310bbbd3e99fc5bea5872fde11e |
-| wifi_off | `assets/fill/wifi-slash-fill.svg` | bb153857f168275651add73d2b114752c5ce78c4fdb5b76503045f0f1c85e12b |
 
 ## phosphor-bold
 
@@ -114,56 +61,3 @@ as shipped here, not the pack's.
 | trash | `assets/bold/trash-bold.svg` | ecbe3b7ce4d8edf1e08e295b4800afcf1e42e4dfa965a74a44e819f7ac43c3b3 |
 | wifi | `assets/bold/wifi-high-bold.svg` | 754e3f2e3173f56045c6c51ccd8c77f1594f0ef6eddefdcec2a13c210d6e9f40 |
 | wifi_off | `assets/bold/wifi-slash-bold.svg` | 5a72353f80a7e092c9da235bf3eed21dadf50c2739b254f1342cb448ef77aa71 |
-
-## mingcute-line
-
-- Set: MingCute Line, for Toybox
-- Pack: `mingcute_icon` 2.9.6 (https://github.com/Richard9394/MingCute), the line style, `svg/<group>/<name>_line.svg`
-- Source: `https://cdn.jsdelivr.net/npm/mingcute_icon@2.9.6/<pack file>`
-- Tarball: https://registry.npmjs.org/mingcute_icon/-/mingcute_icon-2.9.6.tgz, SHA-256 `5acc721d0326646e7ce60af28e020a47befc35f8d1a3983c260f33601debb73e`
-- Licence: Apache-2.0, `mingcute-line/LICENSE.txt` (the pack's `LICENSE`)
-- Changes: Each drawn path's `fill="#09244B"` became `fill="#000000"`, and the pack's first path, unfilled (it sits in the file's `<g fill="none">`) and drawing the 24 × 24 bounding square with a few sub-pixel marks, was dropped from every file; nothing else changed. The files keep the pack's `width="24" height="24"` and, like the pack, carry no viewBox.
-
-| Registry id | Pack file | SHA-256 |
-|---|---|---|
-| action | `svg/device/flash_line.svg` | d0dbb847a903cb389a4061eea88dcb4c160680ab8057e1da93bd5c2d5a193b08 |
-| authors | `svg/user/user_3_line.svg` | f65e74405906915ffcc74f967230d0455b9550cb9d3fb37baa30f66113940b04 |
-| back | `svg/arrow/left_line.svg` | 21fc6455ec8f1a983c6d4f29e4f8596a38e5f92a1a43e3474fdf8c7506ab8c3e |
-| bookmark | `svg/education/bookmark_line.svg` | b98bb0ca0a62864e8b0bb5c07357af21e946dd74d4f4ae080199c476f7b97f2e |
-| check | `svg/system/check_line.svg` | b4046cadcd95d36ee78e8483993feb64a40104ac321963fc18eb7333ea53f527 |
-| chevron_down | `svg/arrow/down_line.svg` | 119a1489593c9b8b4734c2cd9f6d4ad8fecc836b75a260184dee02c0f21a3733 |
-| chevron_up | `svg/arrow/up_line.svg` | a02723d222c745cad5fa056ed046d474d702c57ffe6fd5d6627568adb56d9cfb |
-| close | `svg/system/close_line.svg` | 1df696de405d227e55903d9e0a9993498e2ade56b753e721a07b1f546fcf9356 |
-| download | `svg/arrow/arrow_to_down_line.svg` | e900789d498fa09dcbc44d3cfb8a83d5620ea2ee34b87aa3b3349d8a44e32870 |
-| eye_off | `svg/system/eye_close_line.svg` | 16d86efac4e506390ed874428c44bd94fc838290d652683fcf4ddc8ab8817747 |
-| filter | `svg/business/filter_line.svg` | 1b400d824025eee330cea0de4e507e34d4a7419a2dd71426156bfad7e46b9617 |
-| folder | `svg/file/folder_2_line.svg` | 44b3344eacbd44ffeb25a44c56319ea06375dd3f4159c5c86e0a73dfa2bc6653 |
-| folder_open | `svg/file/folder_open_line.svg` | f2d7c33a2b1b74bc242342071c6891d75ee61b920cb8bfc5ca3449cd2aee88fc |
-| forward | `svg/arrow/right_line.svg` | f6c3944adb3e0a38318d37847be68aa483fe7bcff92a10259e76c36f05d755c3 |
-| history | `svg/system/history_line.svg` | a8931865ced101b5e36acaed72f87ed2b3615e0664b79298694b6f4177f01f00 |
-| home | `svg/building/home_3_line.svg` | 94ace508cea12bcbc5dc915635c9b2bd79f96e53eabfd8e4d1fc924f9b3fd551 |
-| home_plus | `svg/file/pin_line.svg` | 9a30ac2e16b99049a996b60e7ee33544c6dab93ca4a1bbe48d6cb05a6c2ee8ee |
-| info | `svg/system/information_line.svg` | 25fda94cd35fb5212a76f89877528101e5cc232b2c32197155967322f010db73 |
-| layout | `svg/design/layout_2_line.svg` | bc428356441461834b9dd47581a6a3c507c4257100e8c623bfd5174d9e89bbc2 |
-| library | `svg/education/book_2_line.svg` | 138e4c8e6ff26e2eebb2e6502c4bdf2a9b5a296c72aba98a3c649aaf537600e1 |
-| list | `svg/editor/list_check_line.svg` | 9c5d07040d11f066514fd693daac7f399625afca7fa1f525d17e057bea4f510e |
-| moon | `svg/weather/moon_line.svg` | 10fa027cf055bb860f75bfe9517dc2645c1a38c1d0471df9759f159fc750e4d1 |
-| open_book | `svg/education/book_6_line.svg` | fc12ec86722b2aa8bada494dcc2773ebccbcc922794eb3c0f9d00f9d0a72cd9f |
-| plugin_missing | `svg/design/border_blank_line.svg` | e53f82c65338cef62aed2b15c4e91b05e123de270a09966440bc948fc8ae5dc6 |
-| plus | `svg/system/add_line.svg` | 070176b6dcebe8da0f462c65be1cbcd4a6b0530ed4a42c5810e41ce769e9a547 |
-| power | `svg/system/power_line.svg` | 38ee1bb1690f55dd19012fae197c6bc76d1177b1b63b64914797d52aae3e23c0 |
-| quick_settings | `svg/system/settings_6_line.svg` | aaf6d81476785b2c02bbec5b40fe9f3460948dc83accd5378d1a567e8ccd8759 |
-| refresh | `svg/system/refresh_1_line.svg` | 557bc1d00ba9174a05ad3ed559f78bd819fb381d4aba6f7a3f00543a10e787e4 |
-| rotation_lock | `svg/media/rotate_to_vertical_line.svg` | 4fc45c920b065decec47870cd9dd44ee3eef30773d69906789e65605627213f5 |
-| screenshot | `svg/media/camera_2_line.svg` | 77d2a86ef119f1c02ba718972a92766a959c4c5a4e91c4b2653efe23530e137c |
-| search | `svg/file/search_line.svg` | 45f5e30ac6453abcb52c4ff596842beb202c1801f21ed40bc96d9ba70dd097f9 |
-| series | `svg/design/layer_line.svg` | 2ed9381ec7e00be3e260efc49d2338a8ee75d9ce231f20ebcfa6bdc9de1c8684 |
-| settings | `svg/system/settings_3_line.svg` | 5e785a13c6a2fd98c41153d1ea68bc12c531f2eb476e7e9509c23397bd2ef584 |
-| sort | `svg/editor/sort_descending_line.svg` | 64ccb1dfad92c897ed6d2b5dfb49b04c9188f7a2a90802a6739f2cf7eb4679d2 |
-| subjects | `svg/business/tag_line.svg` | 711d0d6a95fca1b3c3d413ccc4655fee755690056733ddb1b276cfc2784d51ed |
-| sun | `svg/weather/sun_line.svg` | 1ba4a67eaf199777990db225e6f4f30688d2cbc00dbcbfad7e45e6d90a4a0b5f |
-| sync | `svg/file/download_3_line.svg` | bf4fe330db2a0102f0b5ffc259933857a7a12cfe1bac3120f38cd362b752d928 |
-| terminal | `svg/development/terminal_box_line.svg` | dfedad0bf8c773649792af2791e0e6ee075f1e3560d7491924020f7c43103eb6 |
-| trash | `svg/system/delete_2_line.svg` | 3c400ece68be0be1d7600790c7271ebc5a32afe95005a5f4e1fde98efc61f266 |
-| wifi | `svg/device/wifi_line.svg` | 8e253c13814b7571fb583f9b4ece4d8811b4b4040b83a862fc627c04b6d11a25 |
-| wifi_off | `svg/device/wifi_off_line.svg` | f3961ea2ccaa5e8174873f46ca2c06528e5684bd0c9be8515eecd49f41558ba4 |

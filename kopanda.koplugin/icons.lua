@@ -10,11 +10,9 @@ local logger = require("logger")
 
 local Icons = {}
 
--- The vendored sets by id: Riso draws Phosphor Fill, Frosted Phosphor Bold and Toybox MingCute Line.
+-- The vendored sets by id: Frosted draws Phosphor Bold.
 Icons.sets = {
-    ["phosphor-fill"] = { label = "Phosphor Fill", licence = "MIT", dir = "icons/phosphor-fill" },
     ["phosphor-bold"] = { label = "Phosphor Bold", licence = "MIT", dir = "icons/phosphor-bold" },
-    ["mingcute-line"] = { label = "MingCute Line", licence = "Apache-2.0", dir = "icons/mingcute-line" },
 }
 
 Icons.entries = {

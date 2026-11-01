@@ -427,10 +427,9 @@ describe("the featured widget", function()
             built:free()
         end)
 
-        -- toybox.md: the chip a mint pill in a 2 px ink outline.
-        it("draws Toybox's chip as a mint pill in its outline", function()
+        it("draws Frosted's chip as a yellow pill in its outline", function()
             calls.book = record()
-            local ctx = ctx_for("toybox")
+            local ctx = ctx_for("frosted")
             local built = Featured.build(1264, ctx)
             local bb = paint(built)
             local chip = find(built, "kopanda_featured_chip")
@@ -446,10 +445,10 @@ describe("the featured widget", function()
             end
             assert.same(rgb("outline"), at(rect.x, rect.y + math.floor(rect.h / 2)), "the outline round its left end")
             assert.same(rgb("outline"), at(rect.x + math.floor(rect.w / 2), rect.y), "the outline along its top")
-            assert.same(rgb("mint"), at(rect.x + math.floor(rect.w / 2), rect.y + outline), "the fill")
+            assert.same(rgb("yellow"), at(rect.x + math.floor(rect.w / 2), rect.y + outline), "the fill")
             local corner = at(rect.x, rect.y)
             assert.is_not.same(rgb("outline"), corner, "the corner is round")
-            assert.is_not.same(rgb("mint"), corner, "the corner is round")
+            assert.is_not.same(rgb("yellow"), corner, "the corner is round")
             bb:free()
             built:free()
         end)
@@ -637,7 +636,7 @@ describe("the featured widget", function()
         end
 
         it("fills to the shown percent of its inner width in each look", function()
-            for _, id in ipairs({ "editorial", "diner", "toybox" }) do
+            for _, id in ipairs({ "editorial", "diner", "frosted" }) do
                 local n = filled(id, { percent = 0 })
                 assert.equals(0, n, id .. " at 0")
                 local inner
@@ -660,11 +659,11 @@ describe("the featured widget", function()
             assert.equals(Screen:scaleBySize(Looks.get("editorial").progress.height), bar:getSize().h)
         end)
 
-        -- toybox.md: an 18 px pill, its ends round: the bar's corners stay as they were, its outline
-        -- runs round its ends and its fill starts inside it.
-        it("rounds Toybox's bar into a pill, its fill inside its outline", function()
+        -- A pill, its ends round: the bar's corners stay as they were, its outline runs round its ends
+        -- and its fill starts inside it.
+        it("rounds Frosted's bar into a pill, its fill inside its outline", function()
             calls.book = record({ percent = 0.62 })
-            local ctx = ctx_for("toybox")
+            local ctx = ctx_for("frosted")
             local built = Featured.build(1264, ctx)
             local bar = find(built, "kopanda_featured_bar")
             local size = bar:getSize()
@@ -687,9 +686,10 @@ describe("the featured widget", function()
             assert.same(rgb("outline"), rgb_at(0, mid), "the outline round the left end")
             assert.same(rgb("outline"), rgb_at(math.floor(size.w / 2), 0), "the outline along the top")
             local outline = Screen:scaleBySize(ctx.look.progress.outline_width)
-            assert.same(rgb("coral"), rgb_at(outline, mid), "the fill inside the outline")
-            assert.same(rgb("paper"), rgb_at(size.w - outline - 1, mid), "the track at the right end")
-            assert.equals(size.h, Screen:scaleBySize(12) + 2 * outline)
+            assert.same(rgb(ctx.look.progress.fill_color), rgb_at(outline, mid), "the fill inside the outline")
+            assert.same(rgb(ctx.look.progress.track_color), rgb_at(size.w - outline - 1, mid),
+                "the track at the right end")
+            assert.equals(size.h, Screen:scaleBySize(ctx.look.progress.height) + 2 * outline)
             bb:free()
             built:free()
         end)

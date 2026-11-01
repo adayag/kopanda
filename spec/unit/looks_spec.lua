@@ -303,27 +303,6 @@ describe("looks", function()
             end
         end)
 
-        it("give a launcher badge room for its icon and an outline", function()
-            for _, id in ipairs(ids) do
-                local launcher = looks[id].launcher
-                if launcher.badge.size > 0 then
-                    assert.is_true(launcher.badge.size >= launcher.icon_size, id .. ": the icon overruns its badge")
-                    assert.is_true(launcher.badge.outline_width > 0, id)
-                end
-            end
-        end)
-
-        -- nav_bar.lua:173-177 draws the pill's shadow inside its bottom margin.
-        it("give a floating nav margins with room for its shadow", function()
-            for _, id in ipairs(ids) do
-                local nav = looks[id].nav
-                if nav.float then
-                    assert.is_true(nav.margin.side > 0 and nav.margin.bottom > 0, id .. " margin")
-                    assert.is_true(nav.margin.bottom >= nav.shadow.y, id .. ": the shadow runs off the screen")
-                end
-            end
-        end)
-
         -- A plate's lightening is lightenRect's opacity.
         it("lighten plates by false or a number above 0 and up to 1", function()
             for _, id in ipairs(ids) do
@@ -334,34 +313,11 @@ describe("looks", function()
             end
         end)
 
-        it("offset a misregistration that has a colour", function()
-            for _, id in ipairs(ids) do
-                local m = looks[id].misregister
-                if m.color then
-                    assert.is_true(m.x > 0 or m.y > 0, id .. ": a misregistration with no offset")
-                end
-            end
-        end)
-
-        -- A shadow is a fill, or with an outline width an outline of that width at the offset.
-        it("give every shadow an outline width of false or a positive number", function()
-            for _, id in ipairs(ids) do
-                local look = looks[id]
-                local shadows = { cover = look.shadow.cover, tile = look.shadow.tile, sheet = look.shadow.sheet,
-                    library_cover = look.library.cover.shadow }
-                for name, shadow in pairs(shadows) do
-                    local width = shadow.outline_width
-                    assert.is_true(width == false or (type(width) == "number" and width > 0),
-                        id .. " " .. name .. " outline_width = " .. tostring(width))
-                end
-            end
-        end)
-
         it("give every radius as a number of 0 or more", function()
             for _, id in ipairs(ids) do
                 local look = looks[id]
-                local radii = { cover = look.radius.cover, box = look.radius.box, progress = look.progress.radius,
-                    chip = look.chip.radius, sheet = look.sheet.radius, nav = look.nav.radius,
+                local radii = { cover = look.radius.cover, progress = look.progress.radius,
+                    chip = look.chip.radius, sheet = look.sheet.radius,
                     title_bar_picker = look.title_bar.picker_radius,
                     library_picker = look.library.header.picker_radius, library_cover = look.library.cover.radius }
                 for name, radius in pairs(radii) do
@@ -469,22 +425,22 @@ describe("looks", function()
             end)
 
             it("replaces a list whole", function()
-                local Fresh = reload({ dash = { 6, 4, 2 } }, { riso = { dash = { 3 } } })
-                assert.same({ 3 }, Fresh.get("riso").dash)
+                local Fresh = reload({ dash = { 6, 4, 2 } }, { frosted = { dash = { 3 } } })
+                assert.same({ 3 }, Fresh.get("frosted").dash)
             end)
 
             it("lays a look file over the base at every depth", function()
-                local Fresh = reload({ a = { b = { c = 1, d = 2 } } }, { riso = { a = { b = { c = 9 } } } })
-                assert.same({ a = { b = { c = 9, d = 2 } } }, Fresh.get("riso"))
+                local Fresh = reload({ a = { b = { c = 1, d = 2 } } }, { frosted = { a = { b = { c = 9 } } } })
+                assert.same({ a = { b = { c = 9, d = 2 } } }, Fresh.get("frosted"))
             end)
 
             it("leaves the look's own file as it was", function()
                 local Fresh = reload({ plate = { radius = 4 }, dash = { 6 } },
-                    { riso = { plate = { radius = 7 }, dash = { 3 } } })
-                local riso = Fresh.get("riso")
-                riso.plate.radius = 9
-                riso.dash[1] = 5
-                assert.same({ plate = { radius = 7 }, dash = { 3 } }, package.loaded["looks/riso"])
+                    { frosted = { plate = { radius = 7 }, dash = { 3 } } })
+                local frosted = Fresh.get("frosted")
+                frosted.plate.radius = 9
+                frosted.dash[1] = 5
+                assert.same({ plate = { radius = 7 }, dash = { 3 } }, package.loaded["looks/frosted"])
             end)
 
             it("gives each look its own tables, the same ones each time, and leaves the base as it was", function()
@@ -497,10 +453,9 @@ describe("looks", function()
             end)
         end)
 
-        it("lists the looks in the swatch's order, Editorial, Diner, Riso, Toybox then Frosted first", function()
+        it("lists the looks in the swatch's order, Editorial, Diner then Frosted first", function()
             local listed = Looks.ids()
-            assert.same({ "editorial", "diner", "riso", "toybox", "frosted" },
-                { listed[1], listed[2], listed[3], listed[4], listed[5] })
+            assert.same({ "editorial", "diner", "frosted" }, { listed[1], listed[2], listed[3] })
         end)
 
         it("lists a fresh copy each time", function()

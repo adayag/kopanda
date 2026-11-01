@@ -571,35 +571,9 @@ describe("the swatch screen", function()
         end
     end)
 
-    -- Five looks: the four and a fifth stubbed with Toybox's tokens, the most roles of any look.
-    local function five_looks()
-        local toybox, real_get = Looks.get("toybox"), Looks.get
-        local ids_stub = stub(Looks, "ids", function()
-            return { "editorial", "diner", "riso", "toybox", "fifth" }
-        end)
-        local get_stub = stub(Looks, "get", function(id)
-            if id == "fifth" then
-                return toybox
-            end
-            return real_get(id)
-        end)
-        finally(function()
-            ids_stub:revert()
-            get_stub:revert()
-        end)
-    end
-
-    -- The capture profiles' sizes (spec/emulator/profiles.lua), with five looks, a page each: every panel's content,
-    -- Diner's 14 chips and Toybox's 16 among them, ends inside its panel, and the page on the screen.
-    it("fits every panel's content inside its panel on each of five looks' pages at both devices' sizes", function()
-        local roles = 0
-        for _, hex in pairs(Looks.get("toybox").palettes.day) do
-            if hex then
-                roles = roles + 1
-            end
-        end
-        assert.equals(16, roles)
-        five_looks()
+    -- The capture profiles' sizes (spec/emulator/profiles.lua), a page per look: every panel's content, Diner's 14
+    -- chips among them, ends inside its panel, and the page on the screen.
+    it("fits every panel's content inside its panel on each look's page at both devices' sizes", function()
         color_enabled(true)
         local stubbed = { "getWidth", "getHeight", "getSize" }
         local saved = {}
@@ -617,7 +591,7 @@ describe("the swatch screen", function()
             rawset(Screen, "getHeight", function() return h end)
             rawset(Screen, "getSize", function() return Geom:new{ x = 0, y = 0, w = w, h = h } end)
             local swatch = Swatch:new{}
-            for page = 1, 5 do
+            for page = 1, #Looks.ids() do
                 swatch:show_page(page)
                 local panels = collect(swatch, named("kopanda_swatch_panel"))
                 assert.equals(3, #panels)
@@ -635,16 +609,16 @@ describe("the swatch screen", function()
         end
     end)
 
-    -- A fifth look is a fifth page: each page holds the look's three variants across, sharing the
-    -- width between the margins with a gap between panels, and a tap on the fifth closes it.
-    it("turns through five looks a page at a time, each page's three panels sharing the width", function()
-        five_looks()
+    -- A look a page: each page holds the look's three variants across, sharing the width between the
+    -- margins with a gap between panels, and a tap on the last closes it.
+    it("turns through the looks a page at a time, each page's three panels sharing the width", function()
         color_enabled(true)
         local swatch = Swatch:new{}
         local gap = Screen:scaleBySize(4)
         local inner_w = Screen:getWidth() - 2 * Screen:scaleBySize(8)
         local panel_w = math.floor((inner_w - 2 * gap) / 3)
-        for page, id in ipairs({ "editorial", "diner", "riso", "toybox", "fifth" }) do
+        local ids = Looks.ids()
+        for page, id in ipairs(ids) do
             assert.same({ page, id }, { swatch.page, swatch.look })
             local order = {}
             for _, panel in ipairs(collect(swatch, named("kopanda_swatch_panel"))) do
@@ -659,7 +633,7 @@ describe("the swatch screen", function()
             assert.equals(1, #rows)
             assert.equals(5, #rows[1])
             assert.equals(3 * panel_w + 2 * gap, rows[1]:getSize().w)
-            if page < 5 then
+            if page < #ids then
                 swatch:turn()
             end
         end
@@ -669,7 +643,7 @@ describe("the swatch screen", function()
         end
         swatch:turn()
         assert.equals(1, closed)
-        assert.equals(5, swatch.page)
+        assert.equals(#ids, swatch.page)
         swatch:free()
     end)
 
@@ -782,11 +756,11 @@ describe("the swatch screen", function()
         end
 
         it("goes in the empty last cell, from its chip x, for an odd chip count when it fits", function()
-            local placed = editorial_day(12)
+            local placed = editorial_day(8)
             assert.equals(1, placed.chips % 2)
             local col = columns(placed.labels)
             local lacks = placed.lacks
-            assert.equals("lacks: violet, yellow", lacks.text)
+            assert.equals("lacks: yellow", lacks.text)
             -- The cell's left edge: the right column's chip x, and the whole cell's width.
             local chip_x = math.max(unpack(placed.chip_xs))
             assert.equals(chip_x, lacks.dimen.x)
@@ -808,11 +782,11 @@ describe("the swatch screen", function()
         end)
 
         it("goes on the heading's line, from the right column's chip x, for an even chip count when it fits", function()
-            local placed = editorial_day(11)
+            local placed = editorial_day(7)
             assert.equals(0, placed.chips % 2)
             local col = columns(placed.labels)
             local lacks = placed.lacks
-            assert.equals("lacks: tint, violet, yellow", lacks.text)
+            assert.equals("lacks: violet, yellow", lacks.text)
             local chip_x = math.max(unpack(placed.chip_xs))
             assert.equals(chip_x, lacks.dimen.x)
             assert.equals(col.right_x - chip_x + col.right_w, lacks.width)

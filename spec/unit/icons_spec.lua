@@ -1,5 +1,5 @@
 -- The icon files shipped under kopanda.koplugin/icons/ and icons.lua, the registry that names them:
--- the default Lucide files at the top of icons/, and one vendored set per new look under
+-- the default Lucide files at the top of icons/, and each vendored set a look draws under
 -- icons/<set id>/, recorded in icons/SOURCES.md.
 describe("icons", function()
     local harness = require("plugin_harness")
@@ -8,7 +8,7 @@ describe("icons", function()
     local sha256 = require("ffi/sha2").sha256
     local RenderImage = require("ui/renderimage")
     local icons_dir = harness.plugin_dir .. "/icons"
-    local SETS = { "mingcute-line", "phosphor-bold", "phosphor-fill" }
+    local SETS = { "phosphor-bold" }
 
     local function read(path)
         local f = assert(io.open(path, "rb"))
@@ -260,9 +260,8 @@ describe("icons", function()
         end
     end)
 
-    -- Riso draws Phosphor Fill, Frosted Phosphor Bold and Toybox MingCute Line (new-looks design,
-    -- Icons row), each under icons/<set id>/.
-    it("registers the three vendored sets with a label, a licence and their folder", function()
+    -- Frosted draws Phosphor Bold, under icons/<set id>/.
+    it("registers the vendored sets with a label, a licence and their folder", function()
         local ids = {}
         for id, set in pairs(Icons.sets) do
             ids[#ids + 1] = id
@@ -272,9 +271,7 @@ describe("icons", function()
         end
         table.sort(ids)
         assert.same(SETS, ids)
-        assert.equals("MIT", Icons.sets["phosphor-fill"].licence)
         assert.equals("MIT", Icons.sets["phosphor-bold"].licence)
-        assert.equals("Apache-2.0", Icons.sets["mingcute-line"].licence)
     end)
 
     it("vendors one file per registry id in every set, beside the pack's licence", function()
@@ -286,12 +283,7 @@ describe("icons", function()
         for _, set in ipairs(SETS) do
             assert.same(expected, set_entries(set), set)
         end
-        local mit = read(icons_dir .. "/phosphor-fill/LICENSE.txt")
-        assert.truthy(mit:find("MIT License", 1, true))
-        assert.equals(mit, read(icons_dir .. "/phosphor-bold/LICENSE.txt"))
-        local apache = read(icons_dir .. "/mingcute-line/LICENSE.txt")
-        assert.truthy(apache:find("Apache License", 1, true))
-        assert.truthy(apache:find("END OF TERMS AND CONDITIONS", 1, true))
+        assert.truthy(read(icons_dir .. "/phosphor-bold/LICENSE.txt"):find("MIT License", 1, true))
     end)
 
     it("keeps no currentColor and no style in any set file", function()
@@ -363,9 +355,9 @@ describe("icons", function()
         end)
 
         it("resolves an id to a named set's file", function()
-            assert.equals(harness.plugin_dir .. "/icons/phosphor-fill/home.svg", Icons.path("home", "phosphor-fill"))
-            assert.equals(harness.plugin_dir .. "/icons/mingcute-line/wifi_off.svg",
-                Icons.path("wifi_off", "mingcute-line"))
+            assert.equals(harness.plugin_dir .. "/icons/phosphor-bold/home.svg", Icons.path("home", "phosphor-bold"))
+            assert.equals(harness.plugin_dir .. "/icons/phosphor-bold/wifi_off.svg",
+                Icons.path("wifi_off", "phosphor-bold"))
             assert.is_nil(Icons.path("no_such_icon", "phosphor-bold"))
         end)
 
@@ -376,7 +368,7 @@ describe("icons", function()
             lfs.mkdir(harness.state_dir)
             lfs.mkdir(dir)
             local f = assert(io.open(dir .. "/home.svg", "wb"))
-            f:write(read(icons_dir .. "/phosphor-fill/home.svg"))
+            f:write(read(icons_dir .. "/phosphor-bold/home.svg"))
             f:close()
             local _, depth = harness.plugin_dir:gsub("/[^/]+", "")
             Icons.sets.stub = { label = "Stub", licence = "MIT", dir = ("../"):rep(depth) .. dir:sub(2) }
@@ -406,8 +398,8 @@ describe("icons", function()
         it("resolves through the active look's icon set when no set is asked for", function()
             local look
             package.loaded["looks"] = { active = function() return look end }
-            look = { icons = { set = "phosphor-fill" } }
-            assert.equals(harness.plugin_dir .. "/icons/phosphor-fill/home.svg", Icons.path("home"))
+            look = { icons = { set = "phosphor-bold" } }
+            assert.equals(harness.plugin_dir .. "/icons/phosphor-bold/home.svg", Icons.path("home"))
             assert.equals(harness.plugin_dir .. "/icons/home.svg", Icons.path("home", false))
             look = { icons = { set = false } }
             assert.equals(harness.plugin_dir .. "/icons/home.svg", Icons.path("home"))

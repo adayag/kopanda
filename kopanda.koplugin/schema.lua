@@ -11,8 +11,6 @@ return {
             choices = {
                 { value = "diner", label = "Diner" },
                 { value = "editorial", label = "Editorial" },
-                { value = "riso", label = "Riso" },
-                { value = "toybox", label = "Toybox" },
                 { value = "frosted", label = "Frosted" },
             },
             default = "diner",

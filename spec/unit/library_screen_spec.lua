@@ -521,10 +521,9 @@ describe("the library window", function()
             bb:free()
         end)
 
-        -- toybox.md: the pickers 2 px ink pills on paper, their corners the page's.
-        it("draws Toybox's pickers as ink pills on paper", function()
+        it("draws Frosted's pickers as ink pills on paper", function()
             fixture.install({ [ROOT] = { books = fixture.books(2) } })
-            assert.is_true(Settings.set("look", "toybox"))
+            assert.is_true(Settings.set("look", "frosted"))
             local library = fixture.show()
             local bb = painted(library)
             local palette = Looks.palette(library.ctx.look, library.ctx.variant)

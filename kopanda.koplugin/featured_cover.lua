@@ -177,7 +177,6 @@ function FeaturedCover.framed(record, w, h, ctx, frame)
         shadow_color = color(shadow.color),
         shadow_x = shadow_x,
         shadow_y = shadow_y,
-        shadow_outline = shadow.outline_width and scale(shadow.outline_width) or nil,
         outline = outline,
         outline_color = outline_color,
         radius = radius,

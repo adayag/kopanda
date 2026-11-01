@@ -32,11 +32,6 @@ return {
             mustard = false,
             violet = false,
             yellow = false,
-            tint = false,
-            sun = false,
-            coral = false,
-            mint = false,
-            die = false,
             band = false,
             outline = false,
             shadow = false,
@@ -57,11 +52,6 @@ return {
             mustard = false,
             violet = false,
             yellow = false,
-            tint = false,
-            sun = false,
-            coral = false,
-            mint = false,
-            die = false,
             band = false,
             outline = false,
             shadow = false,
@@ -82,11 +72,6 @@ return {
             mustard = false,
             violet = false,
             yellow = false,
-            tint = false,
-            sun = false,
-            coral = false,
-            mint = false,
-            die = false,
             band = false,
             outline = "#000000",
             shadow = false,
@@ -106,15 +91,12 @@ return {
         band = false,
     },
 
-    -- A shadow is a fill at its offset, or with an outline_width an outline that wide.
+    -- A shadow is a fill at its offset.
     shadow = {
-        cover = { x = 6, y = 6, color = "shadow", outline_width = false },
-        tile = { x = 0, y = 0, color = false, outline_width = false },
-        sheet = { x = 0, y = 8, color = "shadow", outline_width = false },
+        cover = { x = 6, y = 6, color = "shadow" },
+        tile = { x = 0, y = 0, color = false },
+        sheet = { x = 0, y = 8, color = "shadow" },
     },
-
-    -- Display type printed twice, an offset copy in color under the part's own; 0, 0, false prints once.
-    misregister = { x = 0, y = 0, color = false },
 
     -- The plates a look sets its home rows on; fill_color false draws none (layout.lua, home_rows.lua).
     plate = {
@@ -144,10 +126,9 @@ return {
         enabled = false,
     },
 
-    -- Corner radii: the cover's and the launcher's boxed tiles'; 0 is square.
+    -- Corner radii: the cover's; 0 is square.
     radius = {
         cover = 0,
-        box = 0,
     },
 
     -- A tile: a box (box true) with its fill and outline, or a text row with a rule under it.
@@ -552,7 +533,7 @@ return {
         },
     },
 
-    -- The launcher: a grid of tiles or text rows, its gaps, icons, accents, suffix and badges.
+    -- The launcher: a grid of tiles or text rows, its gaps, icons, accents and suffix.
     launcher = {
         columns = 3,
         column_gap = 16,
@@ -566,18 +547,6 @@ return {
         accent_3_color = false,
         suffix_gap = 6,
         suffix_below = false, -- false: the suffix on the label's line
-        -- A badge behind the tile's icon; size 0 draws none, the icon bare.
-        badge = {
-            size = 0,
-            outline_width = 0,
-            outline_color = false,
-            fill_1_color = false,
-            fill_2_color = false,
-            fill_3_color = false,
-            fill_4_color = false,
-            fill_5_color = false,
-            fill_6_color = false,
-        },
     },
 
     -- The quote: in the tile (no rule colour) with the tile's outline and shadow, or between rules
@@ -642,8 +611,7 @@ return {
         kind_columns = 2,
     },
 
-    -- The nav bar: five tabs of an icon over a label, a bar across the screen's bottom or a
-    -- floating pill.
+    -- The nav bar: five tabs of an icon over a label, a bar across the screen's bottom.
     nav = {
         fill_color = "paper",
         edge_width = 3,
@@ -660,16 +628,6 @@ return {
         active_fill_color = false,
         divider_width = 0,
         divider_color = false,
-        -- false: a bar across the screen's bottom; true: a floating pill, with the margin, radius,
-        -- fill, shadow, tab gap and lit tab outline below.
-        float = false,
-        margin = { side = 0, bottom = 0 },
-        radius = 0,
-        float_fill_color = false,
-        shadow = { x = 0, y = 0, color = false },
-        tab_gap = 0,
-        active_outline_width = 0,
-        active_outline_color = false,
     },
 
     -- The file browser's title bar: a count over a title, and the sort and status pickers.
@@ -721,7 +679,7 @@ return {
             outline_width = 3,
             outline_color = "outline",
             radius = 0,
-            shadow = { x = 0, y = 6, color = "shadow", outline_width = false },
+            shadow = { x = 0, y = 6, color = "shadow" },
             padding = { x = 10, y = 10 },
         },
         strip = {
