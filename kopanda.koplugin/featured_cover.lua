@@ -11,6 +11,7 @@ local Looks = require("looks")
 local Math = require("optmath")
 local Paint = require("paint")
 local TextBoxWidget = require("ui/widget/textboxwidget")
+local TextWidget = require("ui/widget/textwidget")
 local Typeset = require("typeset")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
@@ -103,8 +104,44 @@ local function split_shown(box)
     return false
 end
 
--- The placeholder's title (at most four lines, at the top) and authors (one line, at the foot, or none)
--- in a box inner_w by inner_h; returns the widgets and their places from the inner box's top left.
+-- Whether a line from Typeset.line shows its whole text: a tracked line is a group only when it fits, and a
+-- TextWidget says when it cut its text (frontend/ui/widget/textwidget.lua:307).
+local function whole(line)
+    return getmetatable(line) ~= TextWidget or not line:isTruncated()
+end
+
+-- authors set in part at most inner_w wide on one line, or on two when they don't fit: as many words as fit
+-- whole on the first and the rest on the second, cut there if they still don't fit.
+local function author_lines(part, authors, inner_w, ctx)
+    local line = Typeset.line(part, authors, inner_w, ctx)
+    if whole(line) then
+        return { line }
+    end
+    local words = {}
+    for word in authors:gmatch("%S+") do
+        words[#words + 1] = word
+    end
+    local first, n
+    for i = 1, #words - 1 do
+        local candidate = Typeset.line(part, table.concat(words, " ", 1, i), inner_w, ctx)
+        if not whole(candidate) then
+            candidate:free()
+            break
+        end
+        if first then
+            first:free()
+        end
+        first, n = candidate, i
+    end
+    if not first then
+        return { line }
+    end
+    line:free()
+    return { first, Typeset.line(part, table.concat(words, " ", n + 1), inner_w, ctx) }
+end
+
+-- The placeholder's title (at most four lines, at the top) and authors (one or two lines, at the foot, or
+-- none) in a box inner_w by inner_h; returns the widgets and their places from the inner box's top left.
 local function placeholder_text(record, inner_w, inner_h, ctx, background, frame)
     local look = ctx.look
     local palette = Looks.palette(look, ctx.variant)
@@ -112,10 +149,16 @@ local function placeholder_text(record, inner_w, inner_h, ctx, background, frame
     local authors_h = 0
     local authors = record.authors and table.concat(record.authors, ", ") or ""
     if frame.authors and authors ~= "" then
-        local line = Typeset.line(frame.authors, authors, inner_w, ctx)
-        authors_h = line:getSize().h
-        widgets[#widgets + 1] = line
-        places[#places + 1] = { x = 0, y = inner_h - authors_h }
+        local lines = author_lines(frame.authors, authors, inner_w, ctx)
+        for _, line in ipairs(lines) do
+            authors_h = authors_h + line:getSize().h
+        end
+        local y = inner_h - authors_h
+        for _, line in ipairs(lines) do
+            widgets[#widgets + 1] = line
+            places[#places + 1] = { x = 0, y = y }
+            y = y + line:getSize().h
+        end
     end
     local part = frame.title
     local title = record.title or ""

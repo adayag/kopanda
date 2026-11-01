@@ -1,8 +1,8 @@
 -- The quote of the day: one entry of the quote source a day, changing at local midnight, drawn in curly quotes
--- with no attribution in at most four lines (three at Extra large), a longer text ending in an ellipsis. A look
--- with plates draws it plain, its plate drawn under it by the home (home_rows.lua) and the text printed through
--- its mask (Typeset.printed); otherwise a look with a quote rule colour draws it between rules, one without in
--- its tile.
+-- with no attribution in at most four lines, a longer text ending in an ellipsis, at Large's size at Extra
+-- large so the longest entry stays whole. A look with plates draws it plain, its plate drawn under it by the
+-- home (home_rows.lua) and the text printed through its mask (Typeset.printed); otherwise a look with a quote
+-- rule colour draws it between rules, one without in its tile.
 -- State: the memo of the text box last composed, which every build of the day draws.
 local Device = require("device")
 local Font = require("ui/font")
@@ -19,7 +19,6 @@ local Widget = require("ui/widget/widget")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 local LINES = 4
-local LINES_EXTRA_LARGE = 3
 
 local Quote = {
     id = "quote",
@@ -144,7 +143,7 @@ local function compose(width, ctx)
     local scale = Paint.scaler(ctx)
 
     local style = look.type.quote
-    local size = Layout.font_size(style.size, ctx.text_size)
+    local size = Layout.font_size(style.size, ctx.text_size == "extra_large" and "large" or ctx.text_size)
     local face = Fonts.face(look.faces[style.face].file, size) or Font:getFace("cfont", size)
     local tokens = look.quote
     local padding = scale(tokens.padding)
@@ -180,7 +179,6 @@ local function compose(width, ctx)
 
     -- TextBoxWidget's line is (1 + line_height) em, rounded (frontend/ui/widget/textboxwidget.lua:151).
     local line_px = Math.round((1 + style.line_height) * face.size)
-    local lines = ctx.text_size == "extra_large" and LINES_EXTRA_LARGE or LINES
     local text = "“" .. list[index].text .. "”"
     local key = {
         text = text,
@@ -198,7 +196,7 @@ local function compose(width, ctx)
             line_height = style.line_height,
             fgcolor = fgcolor,
             bgcolor = bgcolor,
-            height = lines * line_px,
+            height = LINES * line_px,
             height_adjust = true,
             height_overflow_show_ellipsis = true,
         }

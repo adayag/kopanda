@@ -1,10 +1,13 @@
 -- The streak in an insight tile: the run of consecutive days read to today, the best run in ReadingStats.insights'
--- days, and this week's days as dots, Monday first, each day read filled and today ringed.
+-- days, and this week's days as dots, Monday first, each day read filled and today ringed, captioned beside them.
 local InsightTile = require("insight_tile")
 local Looks = require("looks")
 local Paint = require("paint")
 local ReadingStats = require("reading_stats")
 local Typeset = require("typeset")
+
+-- The least share of their size the week's dots shrink to to fit the caption beside them; past it the caption goes.
+local MIN_DOT_SHARE = 2 / 3
 
 local Streak = {
     id = "streak",
@@ -69,8 +72,15 @@ local function compose(width, ctx)
     local caption_part = look.type.insight_caption
     local caption_h = Typeset.line_height(caption_part, ctx)
     local row_h = math.max(dot, caption_h)
+    local caption = Typeset.line(caption_part, "this week", math.huge, ctx)
+    local share = (inner_w - label_gap - caption:getSize().w) / (7 * dot + 6 * dot_gap)
+    if share < MIN_DOT_SHARE then
+        caption:free()
+        caption = nil
+    elseif share < 1 then
+        dot, dot_gap = math.floor(dot * share), math.floor(dot_gap * share)
+    end
     local dots_w = 7 * dot + 6 * dot_gap
-    local caption = Typeset.line(caption_part, "this week", math.max(1, inner_w - dots_w - label_gap), ctx)
     local today = row_of(ctx.now)
     local fill, ring, empty = color(tokens.dot_fill_color), color(tokens.today_ring_color),
         color(tokens.dot_empty_color)
@@ -98,11 +108,13 @@ local function compose(width, ctx)
                 Paint.border(bb, dx, dot_y, dot, dot, outline_w, empty, r)
             end
         end
-        caption:paintTo(bb, x + dots_w + label_gap, row_y + math.floor((row_h - caption_h) / 2))
+        if caption then
+            caption:paintTo(bb, x + dots_w + label_gap, row_y + math.floor((row_h - caption_h) / 2))
+        end
     end
 
     local tile = InsightTile.compose(width, ctx, "Streak", "best " .. best, line_h + record_gap + row_h, paint)
-    tile.count, tile.note, tile.caption = count, note, caption
+    tile.count, tile.note, tile.caption, tile.dot, tile.dot_gap = count, note, caption, dot, dot_gap
     local free_tile = tile.free
     function tile:free()
         for _, name in ipairs({ "count", "note", "caption" }) do

@@ -252,22 +252,22 @@ describe("the quote of the day", function()
             end
         end)
 
-        it("ends a longer text in an ellipsis on its third line at extra_large", function()
-            Quote.sources.builtin = {
-                {
-                    text = string.rep("Reading is a long and pleasant thing. ", 11):sub(1, 400),
-                    author = "A",
-                    work = "W",
-                },
-            }
-            for _, look_id in ipairs(Looks.ids()) do
-                local built = Quote.build(600, ctx_for(look_id, "extra_large"))
-                local box = box_of(built)
-                assert.truthy(#box.vertical_string_list > 3, look_id)
-                assert.equals(3, box.lines_per_page, look_id)
-                assert.equals(3, box.line_with_ellipsis, look_id)
-                assert.equals(3 * box.line_height_px, box.height, look_id)
-                built:free()
+        it("sets the quote at large's size at extra_large, the longest entry whole in four lines", function()
+            local entry = longest(dofile(quotes_path))
+            Quote.sources.builtin = { entry }
+            for name, profile in pairs(profiles) do
+                on_screen(profile.width, profile.height, function()
+                    for _, look_id in ipairs(Looks.ids()) do
+                        local ctx = ctx_for(look_id, "extra_large")
+                        local built = Quote.build(full_row_width(ctx), ctx)
+                        local box = box_of(built)
+                        local where = name .. " " .. look_id
+                        assert.equals(Layout.font_size(ctx.look.type.quote.size, "large"), box.face.orig_size, where)
+                        assert.truthy(#box.vertical_string_list <= 4, where)
+                        assert.is_nil(box.line_with_ellipsis, where)
+                        built:free()
+                    end
+                end)
             end
         end)
 

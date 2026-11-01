@@ -196,6 +196,55 @@ describe("the streak widget", function()
         widget:free()
     end)
 
+    -- Whether a line from Typeset.line shows its whole text.
+    local function whole(line)
+        return not (line.isTruncated and line:isTruncated())
+    end
+
+    it("shrinks the week's dots and their gaps until the caption fits whole beside them", function()
+        require("plugin_harness").at_colorsoft(function()
+            local ctx = ctx_for("diner")
+            local scale = Paint.scaler(ctx)
+            local look = ctx.look
+            local tokens = look.insights
+            local width = math.floor((Screen:getWidth() - 2 * scale(look.home.margin.side)
+                - scale(look.home.column_gap)) / 2)
+            local inner_w = InsightTile.inner_width(width, ctx)
+            ctx.text_size = "extra_large"
+            local widget = Streak.build(width, ctx)
+            assert.is_true(whole(widget.caption))
+            assert.equals("this week", text_of(widget.caption))
+            assert.is_true(widget.dot < scale(tokens.dot))
+            assert.is_true(widget.dot >= math.floor(scale(tokens.dot) * 2 / 3))
+            assert.is_true(7 * widget.dot + 6 * widget.dot_gap + scale(tokens.label_gap)
+                + widget.caption:getSize().w <= inner_w)
+            widget:free()
+            ctx.text_size = "medium"
+            widget = Streak.build(width, ctx)
+            assert.equals(scale(tokens.dot), widget.dot)
+            assert.equals(scale(tokens.dot_gap), widget.dot_gap)
+            widget:free()
+        end)
+    end)
+
+    it("leaves the caption out, the dots whole, when they would shrink past two thirds", function()
+        require("plugin_harness").at_colorsoft(function()
+            local ctx = ctx_for("diner")
+            local scale = Paint.scaler(ctx)
+            local tokens = ctx.look.insights
+            local dots_w = 7 * scale(tokens.dot) + 6 * scale(tokens.dot_gap)
+            local chrome = 400 - InsightTile.inner_width(400, ctx)
+            local widget = Streak.build(dots_w + 2 + chrome, ctx)
+            assert.is_nil(widget.caption)
+            assert.equals(scale(tokens.dot), widget.dot)
+            local size = widget:getSize()
+            local bb = Blitbuffer.new(size.w, size.h, Blitbuffer.TYPE_BBRGB32)
+            widget:paintTo(bb, 0, 0)
+            bb:free()
+            widget:free()
+        end)
+    end)
+
     it("draws in every look, read, empty and off", function()
         for _, look_id in ipairs(Looks.ids()) do
             for _, insights in ipairs({ insights_with({ [0] = 60, [1] = 60 }), insights_with({}),

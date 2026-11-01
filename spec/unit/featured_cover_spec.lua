@@ -304,6 +304,60 @@ describe("the featured cover", function()
             end
         end)
 
+        it("sets placeholder authors too wide for one line on two at the foot, each whole, one line otherwise",
+            function()
+            stub(false)
+            local Paint = require("paint")
+            local TextWidget = require("ui/widget/textwidget")
+            local Typeset = require("typeset")
+            -- The text of a line from Typeset.line, a tracked one's from its characters.
+            local function text_of(line)
+                if line.text then
+                    return line.text
+                end
+                local chars = {}
+                for _, child in ipairs(line) do
+                    chars[#chars + 1] = child.text
+                end
+                return table.concat(chars)
+            end
+            local function whole(line)
+                return getmetatable(line) ~= TextWidget or not line:isTruncated()
+            end
+            local authors = "Mary Shelley"
+            for _, id in ipairs({ "editorial", "diner", "frosted" }) do
+                local ctx = ctx_for(id)
+                ctx.text_size = "extra_large"
+                local look = ctx.look
+                local scale = Paint.scaler(ctx)
+                local part = look.type.cover_authors
+                -- Untracked, as Typeset.line sets a tracked line that doesn't fit.
+                local untracked = {}
+                for k, v in pairs(part) do
+                    untracked[k] = v
+                end
+                untracked.tracking = 0
+                local probe = Typeset.line(untracked, authors, math.huge, ctx)
+                -- A cover whose inner width is nine tenths of the authors on one line, each word narrower.
+                local inset = scale(look.stroke.outline) + scale(look.featured.cover_padding.x)
+                local w = math.floor(probe:getSize().w * 0.9) + 2 * inset
+                probe:free()
+                local frame = FeaturedCover.frame(look)
+                local built = FeaturedCover.framed({ path = BOOK, title = "Frankenstein", authors = { authors } }, w,
+                    math.floor(w * 1.5), ctx, frame)
+                assert.equals(3, #built, id)
+                assert.is_true(whole(built[1]) and whole(built[2]), id)
+                local want = part.uppercase and authors:upper() or authors
+                assert.equals(want, text_of(built[1]) .. " " .. text_of(built[2]), id)
+                assert.is_true(built.places[1].y < built.places[2].y, id)
+                built:free()
+                built = FeaturedCover.framed({ path = BOOK, title = "Frankenstein", authors = { "Ann Li" } }, w,
+                    math.floor(w * 1.5), ctx, frame)
+                assert.equals(2, #built, id)
+                built:free()
+            end
+        end)
+
         it("sets a placeholder title word too wide for a narrow box smaller, never split", function()
             stub(false)
             local util = require("util")
