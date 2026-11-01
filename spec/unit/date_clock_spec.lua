@@ -135,6 +135,23 @@ describe("the date and clock widgets", function()
             assert.same({ "Tuesday", "October 13" }, Date.lines(diner, TUESDAY_0842))
         end)
 
+        it("reads KOReader's short weekday and month names when asked for short", function()
+            local t = at(2026, 9, 30, 12, 0)
+            assert.same({ "Wed", "Sep 30" }, Date.lines(Looks.get("editorial"), t, true))
+            assert.same({ "Wed, Sep 30" }, Date.lines(Looks.get("diner"), t, true))
+        end)
+
+        it("draws the short names only where the long ones don't fit whole at the smallest size", function()
+            harness.at_colorsoft(function()
+                local ctx = ctx_for("diner", { text_size = "extra_large", now = at(2026, 9, 30, 12, 0) })
+                local slot = Layout.arrange({ { { widget = "date", share = 1 }, { widget = "clock", share = 1 } } },
+                    ctx).rows[1].slots[1]
+                assert.same({ "WED, SEP 30" }, drawn(Date.build(slot.w, ctx)))
+                ctx.now = at(2026, 5, 3, 12, 0)
+                assert.same({ "SUNDAY, MAY 3" }, drawn(Date.build(slot.w, ctx)))
+            end)
+        end)
+
         it("has no leading zero on the day", function()
             local fifth = at(2026, 11, 5, 12, 0)
             assert.same({ "Thursday", "November 5" }, Date.lines(Looks.get("editorial"), fifth))
@@ -155,10 +172,24 @@ describe("the date and clock widgets", function()
             end
         end)
 
-        it("is truncated with an ellipsis in a narrow column, never wider than it", function()
+        it("sets a date too wide for its column smaller, a step at a time, until it fits whole", function()
             local ctx = ctx_for("diner", { now = at(2026, 9, 30, 12, 0) })
-            assert.same({ "Wednesday, September 30" }, Date.lines(ctx.look, ctx.now))
-            local width = third(ctx.look)
+            local part = ctx.look.type.date
+            local whole = require("typeset").line(part, "WEDNESDAY, SEPTEMBER 30", math.huge, ctx)
+            local width = math.floor(whole:getSize().w * 0.85)
+            whole:free()
+            local built = Date.build(width, ctx)
+            assert.equals(width, built:getSize().w)
+            local line = lines(built)[1]
+            assert.equals("WEDNESDAY, SEPTEMBER 30", line.text)
+            assert.truthy(line.glyphs[1].face.orig_size < Layout.font_size(part.size, ctx.text_size))
+            assert.truthy(line.widget:getSize().w <= width)
+        end)
+
+        it("is cut with an ellipsis where even the short names don't fit at the smallest size, never wider than its "
+            .. "column", function()
+            local ctx = ctx_for("diner", { now = at(2026, 9, 30, 12, 0) })
+            local width = math.floor(third(ctx.look) / 3)
             local built = Date.build(width, ctx)
             assert.equals(width, built:getSize().w)
             local line = lines(built)[1]
@@ -166,6 +197,52 @@ describe("the date and clock widgets", function()
             assert.truthy(line.text:match("…$"), line.text)
             assert.truthy(line.glyphs[1]:getSize().w <= width)
         end)
+    end)
+
+    -- Each look's header row on each profile at large and extra_large: every day of a year's date and the
+    -- widest times, 23:58 and, on the 12-hour clock, 12:58.
+    it("fits every date of the year and the widest times whole in the header row", function()
+        local Schema = require("schema")
+        local header
+        for _, key in ipairs(Schema.keys) do
+            if key.id == "layout.rows" then
+                header = key.default[1]
+            end
+        end
+        local cut = {}
+        local function check(profile)
+            for _, id in ipairs(Looks.ids()) do
+                for _, size in ipairs({ "large", "extra_large" }) do
+                    local ctx = ctx_for(id, { text_size = size })
+                    local slots = Layout.arrange({ header }, ctx).rows[1].slots
+                    local function whole(module, now, where)
+                        for _, slot in ipairs(slots) do
+                            if slot.widget == module.id then
+                                ctx.now = now
+                                local built = module.build(slot.w - 2 * slot.pad_x, ctx)
+                                for _, line in ipairs(lines(built)) do
+                                    if line.text:match("…$") then
+                                        cut[#cut + 1] = table.concat({ profile, id, size, where, line.text }, " ")
+                                    end
+                                end
+                                built:free()
+                            end
+                        end
+                    end
+                    for day = 0, 364 do
+                        whole(Date, at(2026, 1, 1 + day, 12, 0), "date")
+                    end
+                    whole(Clock, at(2026, 10, 13, 23, 58), "24-hour")
+                    G_reader_settings:saveSetting("twelve_hour_clock", true)
+                    whole(Clock, at(2026, 10, 13, 12, 58), "12-hour")
+                    G_reader_settings:delSetting("twelve_hour_clock")
+                end
+            end
+        end
+        harness.at_colorsoft(function() check("colorsoft") end)
+        harness.at_paperwhite(function() check("paperwhite") end)
+        harness.at_screen(1072, 1448, function() check("paperwhite7") end)
+        assert.same({}, cut)
     end)
 
     describe("the clock", function()

@@ -18,6 +18,10 @@ local Looks = require("looks")
 local RenderText = require("ui/rendertext")
 local TextWidget = require("ui/widget/textwidget")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+
+-- Typeset.fitted's step down in size and the size it stops at.
+local FIT_STEP = 2
+local FIT_MIN_SIZE = 14
 local logger = require("logger")
 local util = require("util")
 
@@ -240,6 +244,35 @@ function Typeset.line(part, text, max_width, ctx)
         end
     end
     return line
+end
+
+-- Whether a line from Typeset.line shows its whole text: a tracked line is a group only when it fits, and a
+-- TextWidget says when it cut its text (frontend/ui/widget/textwidget.lua:307).
+function Typeset.whole(line)
+    return getmetatable(line) ~= TextWidget or not line:isTruncated()
+end
+
+-- texts set in part, at its size or the largest smaller one, a step at a time down to FIT_MIN_SIZE, that sets
+-- every text whole in max_width, so they read at one size; and that part.
+function Typeset.fitted(part, texts, max_width, ctx)
+    local sized = {}
+    for k, v in pairs(part) do
+        sized[k] = v
+    end
+    while true do
+        local lines, fits = {}, true
+        for i, text in ipairs(texts) do
+            lines[i] = Typeset.line(sized, text, max_width, ctx)
+            fits = fits and Typeset.whole(lines[i])
+        end
+        if fits or sized.size <= FIT_MIN_SIZE then
+            return lines, sized
+        end
+        for _, line in ipairs(lines) do
+            line:free()
+        end
+        sized.size = math.max(FIT_MIN_SIZE, sized.size - FIT_STEP)
+    end
 end
 
 -- The height of part's line under ctx: its face's or its forced one, whatever its text

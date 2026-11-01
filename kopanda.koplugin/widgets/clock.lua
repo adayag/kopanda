@@ -1,6 +1,6 @@
 -- The home's clock: the time of the home's last build, following KOReader's own 12-hour clock
 -- setting, read as frontend/datetime.lua:298-300 reads it (unset is 24-hour). Right-aligned in
--- its column.
+-- its column, set smaller until it fits there (Typeset.fitted).
 local Geom = require("ui/geometry")
 local RightContainer = require("ui/widget/container/rightcontainer")
 local Typeset = require("typeset")
@@ -22,7 +22,7 @@ function Clock.text(t)
 end
 
 local function make(width, ctx)
-    local content = Typeset.line(ctx.look.type.clock, Clock.text(ctx.now), width, ctx)
+    local content = Typeset.fitted(ctx.look.type.clock, { Clock.text(ctx.now) }, width, ctx)[1]
     return RightContainer:new{
         dimen = Geom:new{ w = width, h = content:getSize().h },
         allow_mirroring = false,

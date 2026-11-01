@@ -67,7 +67,7 @@ local function compose(width, ctx)
     for i, cell in ipairs(records) do
         values[i] = cell.value
     end
-    local lines, value_part = InsightTile.values(look.type.insight_value, values, column_w, ctx)
+    local lines, value_part = Typeset.fitted(look.type.insight_value, values, column_w, ctx)
     local value_h = Typeset.line_height(value_part, ctx)
     local cell_h = value_h + value_gap + Typeset.line_height(caption_part, ctx)
     local cells = {}

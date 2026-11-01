@@ -136,7 +136,7 @@ local function compose(width, ctx)
     if beside then
         value_w = math.max(1, column_w - captions_w - label_gap)
     end
-    local lines, value_part = InsightTile.values(look.type.insight_value, { texts[1].value, texts[2].value },
+    local lines, value_part = Typeset.fitted(look.type.insight_value, { texts[1].value, texts[2].value },
         value_w, ctx)
     local value_h = Typeset.line_height(value_part, ctx)
     local figure_h = value_h + value_gap + caption_h

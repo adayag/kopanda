@@ -1,7 +1,8 @@
--- The home's date, from KOReader's translation tables so it follows its language (frontend/datetime.lua:29-42
--- month names, :54-62 long day names), with no leading zero on the day and no year. The look's
--- home.date_lines chooses: 2 draws the weekday as a label over the month and day, 1 draws one line.
--- Left-aligned.
+-- The home's date, from KOReader's translation tables so it follows its language (frontend/datetime.lua:14-27
+-- short and :29-42 long month names, :44-52 short and :54-62 long day names), with no leading zero on the day
+-- and no year. The look's home.date_lines chooses: 2 draws the weekday as a label over the month and day, 1
+-- draws one line. Left-aligned; a line too wide for its column is set smaller until it fits (Typeset.fitted),
+-- in the short names when the long ones don't fit at the smallest size.
 local Geom = require("ui/geometry")
 local LeftContainer = require("ui/widget/container/leftcontainer")
 local Typeset = require("typeset")
@@ -22,11 +23,15 @@ local function one_line(look)
 end
 
 -- The date's lines at time t in look, before the type's case: the weekday and "October 13" in
--- Editorial, "Tuesday, October 13" in Diner. os.date's %a and %B are the C locale's English
--- names, the keys of KOReader's tables.
-function Date.lines(look, t)
+-- Editorial, "Tuesday, October 13" in Diner, or with short true "Tue" and "Oct 13". os.date's %a,
+-- %b and %B are the C locale's English names, the keys of KOReader's tables.
+function Date.lines(look, t, short)
     local weekday = datetime.shortDayOfWeekToLongTranslation[os.date("%a", t)]
     local month = datetime.longMonthTranslation[os.date("%B", t)]
+    if short then
+        weekday = datetime.shortDayOfWeekTranslation[os.date("%a", t)]
+        month = datetime.shortMonthTranslation[os.date("%b", t)]
+    end
     local day = month .. " " .. tonumber(os.date("%d", t))
     if one_line(look) then
         return { weekday .. ", " .. day }
@@ -37,13 +42,18 @@ end
 local function make(width, ctx)
     local styles = ctx.look.type
     local lines = Date.lines(ctx.look, ctx.now)
-    local last = Typeset.line(styles.date, lines[#lines], width, ctx)
+    local last = Typeset.fitted(styles.date, { lines[#lines] }, width, ctx)[1]
+    if not Typeset.whole(last) then
+        last:free()
+        lines = Date.lines(ctx.look, ctx.now, true)
+        last = Typeset.fitted(styles.date, { lines[#lines] }, width, ctx)[1]
+    end
     local content = last
     if #lines == 2 then
         content = VerticalGroup:new{
             align = "left",
             allow_mirroring = false,
-            Typeset.line(styles.date_label, lines[1], width, ctx),
+            Typeset.fitted(styles.date_label, { lines[1] }, width, ctx)[1],
             VerticalSpan:new{ width = ctx.screen:scaleBySize(LABEL_GAP) },
             last,
         }

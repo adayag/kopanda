@@ -11,7 +11,6 @@ local Looks = require("looks")
 local Math = require("optmath")
 local Paint = require("paint")
 local TextBoxWidget = require("ui/widget/textboxwidget")
-local TextWidget = require("ui/widget/textwidget")
 local Typeset = require("typeset")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
@@ -104,17 +103,11 @@ local function split_shown(box)
     return false
 end
 
--- Whether a line from Typeset.line shows its whole text: a tracked line is a group only when it fits, and a
--- TextWidget says when it cut its text (frontend/ui/widget/textwidget.lua:307).
-local function whole(line)
-    return getmetatable(line) ~= TextWidget or not line:isTruncated()
-end
-
 -- authors set in part at most inner_w wide on one line, or on two when they don't fit: as many words as fit
 -- whole on the first and the rest on the second, cut there if they still don't fit.
 local function author_lines(part, authors, inner_w, ctx)
     local line = Typeset.line(part, authors, inner_w, ctx)
-    if whole(line) then
+    if Typeset.whole(line) then
         return { line }
     end
     local words = {}
@@ -124,7 +117,7 @@ local function author_lines(part, authors, inner_w, ctx)
     local first, n
     for i = 1, #words - 1 do
         local candidate = Typeset.line(part, table.concat(words, " ", 1, i), inner_w, ctx)
-        if not whole(candidate) then
+        if not Typeset.whole(candidate) then
             candidate:free()
             break
         end
