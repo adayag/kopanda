@@ -1614,7 +1614,34 @@ its own `pcall`, and acts through the reader's own events below, each inside the
   own `DeviceListener` (`readerui.lua:452`).
 - Bookmark: `ReaderBookmark:isPageBookmarked()` for the current page (`readerbookmark.lua:403-406`);
   `ToggleBookmark` to `ReaderBookmark:onToggleBookmark` (`:347-359`), which toggles the dogear too.
-- Go to: `ShowToc` to `ReaderToc:onShowToc` (`readertoc.lua:807`).
+- Go to opens KoPanda's Go to screen (`goto_screen.lua`); when that isn't shown or raises, the fallback is
+  `ShowToc` to `ReaderToc:onShowToc` (`readertoc.lua:807`), so the reader always gets a contents list.
+  The screen is a library window over the reader: the reader closes the file manager as it shows
+  (`readerui.lua:792-795`), so the window's forward step has no `FileManager.instance` to offer a gesture to and
+  takes only page swipes (`home_gestures.lua`), and the chrome's close of the home finds none shown.
+- The Go to screen's chapters (`goto_list.lua`): `ReaderToc:fillToc()` (`readertoc.lua:160-175`) fills
+  `ui.toc.toc`, items `{ title, page, depth, xpointer }` with depth from 1 and the xpointer only in a rolling
+  document, ordered and fixed by `validateAndFixToc` (`:176-213`); KOReader's own TOC list mutates the items
+  (`:1097-1145`), so the screen copies them. An item has children when the next item is deeper, as KOReader's TOC
+  list gives it an expand button (`:868-882`), and its parent is the nearest shallower item before it. Titles go through `ReaderToc:cleanUpTocTitle(title, true)`
+  (`:91-97`), as that list's (`:1103`). The current chapter is `getTocIndexByPage(pn_or_xp)` (`:383-406`) with no
+  `skip_ignored_ticks`, so every level counts, asked with `document:getXPointer()` in a rolling document (`:387-389`
+  goes on to `getAccurateTocIndexByXPointer`, `:408`) and `ReaderUI:getCurrentPage()` (`readerui.lua:1007-1009`) in
+  a paging one. The page label is the bookmarks', `ReaderBookmark:getBookmarkPageString` (`readerbookmark.lua:628-643`),
+  given the xpointer in a rolling document and the page in a paging one, so it matches the footer under page labels
+  and hidden flows, as the TOC list's does (`readertoc.lua:1130-1143`). A tap goes as the TOC list's does: `ui.link:addCurrentLocationToStack()`
+  (`frontend/apps/reader/modules/readerlink.lua:793-797`), then `GotoXPointer(xp, xp)` or `GotoPage(page)`
+  (`readertoc.lua:940-948`).
+- The Go to screen's bookmarks: the items of `ui.annotation.annotations` with no `drawer`, as
+  `ReaderBookmark:getDogearBookmarkIndex` tells them (`readerbookmark.lua:417-440`); `chapter` is nil outside any
+  chapter (`:378-381`); `datetime` is `"YYYY-MM-DD HH:MM:SS"` (`readerannotation.lua:519-520`), so newest first is a
+  descending string compare, as `getLatestBookmark` compares them (`readerbookmark.lua:604`). The page label is
+  `getBookmarkPageString(page)` (`:628-643`). A tap goes as the bookmark list's does:
+  `addCurrentLocationToStack()`, then `gotoBookmark(item.page, item.pos0)` (`:765-766`, `:487-492`). Remove bookmark
+  calls `removeItem(item, index)` (`:446-455`), which also resets the dogear, with the index from
+  `ReaderAnnotation:getItemIndex(item)` (`readerannotation.lua:479-503`), since `removeItem`'s own lookup without one
+  reads the bookmark list's filters (`readerbookmark.lua:1118-1127`). With no index (the bookmark already gone), it
+  removes nothing: `removeItemByIndex(nil)` would `table.remove` the last annotation (`readerbookmark.lua:456-457`).
 - Home: the reader menu's file browser icon's callback (`frontend/apps/reader/modules/readermenu.lua:65-73`):
   the file, then `ReaderUI:onClose()` (`readerui.lua:870-900`), then `showFileManager(file)` (`:581-596`).
 - KOReader's reader menu, the header's hold: `ShowConfigMenu`

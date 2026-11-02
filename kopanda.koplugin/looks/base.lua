@@ -660,6 +660,7 @@ return {
             line_gap = 4,
             picker_gap = 8,
             picker_padding = { x = 10, y = 7 },
+            tab_padding_x = 10, -- the Go to screen's tab chips' side padding
             picker_outline_width = 2,
             picker_outline_color = "outline",
             sort_fill_color = "paper",

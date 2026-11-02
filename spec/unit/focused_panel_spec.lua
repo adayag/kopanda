@@ -223,8 +223,33 @@ describe("the focused panel", function()
             assert.same({ { "close" }, { "showFileManager", "/books/frankenstein.epub" } }, ui.calls)
         end)
 
-        it("opens the table of contents for Go to", function()
+        it("shows the Go to screen over the book for Go to", function()
             local ui = fake_ui()
+            local shown = {}
+            set(require("goto_screen"), "show", function(opts)
+                shown[#shown + 1] = opts
+                return {}
+            end)
+            FocusedPanel.actions(ui).go_to()
+            assert.equals(1, #shown)
+            assert.equals(ui, shown[1].ui)
+            assert.same({}, ui.calls)
+        end)
+
+        it("opens KOReader's table of contents for Go to when the Go to screen isn't shown", function()
+            local ui = fake_ui()
+            set(require("goto_screen"), "show", function()
+                return nil
+            end)
+            FocusedPanel.actions(ui).go_to()
+            assert.same({ { "ShowToc" } }, ui.calls)
+        end)
+
+        it("opens KOReader's table of contents for Go to when the Go to screen raises", function()
+            local ui = fake_ui()
+            set(require("goto_screen"), "show", function()
+                error("no screen")
+            end)
             FocusedPanel.actions(ui).go_to()
             assert.same({ { "ShowToc" } }, ui.calls)
         end)
@@ -303,6 +328,9 @@ describe("the focused panel", function()
 
         it("runs each control's action on its tap", function()
             local ui = fake_ui{ configurable = { font_size = 22, font_gamma = 15 } }
+            set(require("goto_screen"), "show", function()
+                return nil
+            end)
             local made = FocusedPanel.body(bctx_for(ui), CONTENT_W)
             area(made.areas, "text_plus").tap()
             area(made.areas, "contrast_minus").tap()

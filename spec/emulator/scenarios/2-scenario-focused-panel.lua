@@ -16,6 +16,14 @@
 --                        those, panel_shown and menu_shown (KOReader's reader menu up); with the panel up, on
 --                        its settled signal holds its header and on the next tick reports menu_after_hold and
 --                        panel_after_hold.
+--   goto                 bookmarks the page shown and the next through ui.bookmark:onToggleBookmark(), opens the
+--                        panel and on its settled signal taps Go to; on the Go to screen's settled signal records
+--                        tab, rows, has_current, has_nav, page and pages; taps the Bookmarks chip, holds the first
+--                        bookmark row and on the sheet's settled signal taps Remove bookmark, recording
+--                        bookmarks_before and bookmarks_after; then taps the Chapters chip and the first closed
+--                        parent's toggle on the page, recording visible_before and visible_after (the rows
+--                        listed) and toggle_kept (the screen still shown), then the page's last chapter row that
+--                        starts off the current page, and on the next tick reports goto_closed and page_changed.
 local logger = require("logger")
 
 local POLL_S = 0.5
@@ -223,6 +231,123 @@ local ok, err = pcall(function()
         UIManager:nextTick(check_swipe)
     end)
 
+    -- The reader's bookmarks: its annotations with no drawer (readerbookmark.lua:417-440).
+    local function bookmark_count()
+        local n = 0
+        for _, item in ipairs(ReaderUI.instance.annotation.annotations) do
+            if not item.drawer then
+                n = n + 1
+            end
+        end
+        return n
+    end
+
+    local GotoScreen
+    local goto_opened = false
+    local goto_removing = false
+    local goto_window, page_before_jump
+
+    local check_jump = guarded(function()
+        result.goto_closed = GotoScreen.shown == nil and not UIManager:isWidgetShown(goto_window)
+        result.page_changed = ReaderUI.instance:getCurrentPage() ~= page_before_jump
+        reported = true
+        report(result)
+    end)
+
+    local jump = guarded(function()
+        local screen = GotoScreen.shown
+        gesture("tap", screen.chips.chapters)
+        local parent
+        for _, row in ipairs(screen.rows) do
+            if row.toggle and not screen.expanded[row.chapter.index] then
+                parent = parent or row
+            end
+        end
+        if not parent then
+            error("the Go to screen's Chapters page has no closed parent")
+        end
+        result.visible_before = screen.count
+        gesture("tap", parent.toggle)
+        result.visible_after = screen.count
+        result.toggle_kept = GotoScreen.shown == screen
+        local rows = screen.rows
+        if #rows == 0 then
+            error("the Go to screen's Chapters tab has no rows")
+        end
+        goto_window = screen
+        page_before_jump = ReaderUI.instance:getCurrentPage()
+        local target
+        for _, row in ipairs(rows) do
+            if row.chapter.page ~= page_before_jump then
+                target = row
+            end
+        end
+        if not target then
+            error("every chapter row on the Go to screen's page starts on the current page")
+        end
+        gesture("tap", target.rect)
+        UIManager:nextTick(check_jump)
+    end)
+
+    local check_removed = guarded(function()
+        result.bookmarks_after = bookmark_count()
+        result.sheet_closed = Sheet.shown == nil
+        result.tab_after_remove = GotoScreen.shown and GotoScreen.shown.tab
+        UIManager:nextTick(jump)
+    end)
+
+    local remove_bookmark = guarded(function()
+        local sheet = Sheet.shown
+        if not sheet or sheet.spec.name ~= "goto_bookmark" then
+            error("the Remove bookmark sheet is not shown at its settled signal")
+        end
+        gesture("tap", sheet.rows[1].rect)
+        UIManager:nextTick(check_removed)
+    end)
+
+    local measure_goto = guarded(function()
+        local screen = GotoScreen.shown
+        if not screen then
+            error("the Go to screen is not shown at its settled signal")
+        end
+        result.tab = screen.tab
+        result.rows = #screen.rows
+        result.has_current = false
+        for _, row in ipairs(screen.rows) do
+            result.has_current = result.has_current or row.current == true
+        end
+        result.has_nav = screen.nav ~= nil
+        result.page = screen.page
+        result.pages = screen.pages
+        result.bookmarks_before = bookmark_count()
+        gesture("tap", screen.chips.bookmarks)
+        if screen.tab ~= "bookmarks" or #screen.rows == 0 then
+            error("the Bookmarks chip did not show the bookmarks")
+        end
+        goto_removing = true
+        gesture("hold", screen.rows[1].rect)
+    end)
+
+    local tap_go_to = guarded(function()
+        local sheet = Sheet.shown
+        if not sheet or sheet.spec.name ~= "focused_panel" then
+            error("the focused panel is not shown at its settled signal")
+        end
+        goto_opened = true
+        gesture("tap", area("go_to").rect)
+    end)
+
+    local open_goto = guarded(function()
+        Sheet = loaded("sheet")
+        GotoScreen = loaded("goto_screen")
+        local reader = ReaderUI.instance
+        reader.bookmark:onToggleBookmark()
+        reader:handleEvent(Event:new("GotoViewRel", 1))
+        reader.bookmark:onToggleBookmark()
+        panel_opened = true
+        loaded("focused_panel").open(reader)
+    end)
+
     local open_panel = guarded(function()
         Sheet = loaded("sheet")
         panel_opened = true
@@ -253,7 +378,7 @@ local ok, err = pcall(function()
         tries = tries + 1
         local reader = ReaderUI.instance
         if reader and reader.document then
-            local steps = { panel = open_panel, hooks = swipe_up }
+            local steps = { panel = open_panel, hooks = swipe_up, ["goto"] = open_goto }
             UIManager:nextTick(steps[STEP] or show_probe)
         elseif tries >= POLL_TRIES then
             fail(string.format("the book did not open within %.0f s", POLL_S * POLL_TRIES))
@@ -280,7 +405,12 @@ local ok, err = pcall(function()
         elseif args.screen == "sheet" and args.name == "probe" and probe_shown then
             UIManager:nextTick(tap_row)
         elseif args.screen == "sheet" and args.name == "focused_panel" and panel_opened then
-            UIManager:nextTick(STEP == "hooks" and hold_header or measure_panel)
+            local next_step = { hooks = hold_header, ["goto"] = tap_go_to }
+            UIManager:nextTick(next_step[STEP] or measure_panel)
+        elseif args.screen == "goto" and goto_opened then
+            UIManager:nextTick(measure_goto)
+        elseif args.screen == "sheet" and args.name == "goto_bookmark" and goto_removing then
+            UIManager:nextTick(remove_bookmark)
         end
     end)
 end)

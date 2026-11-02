@@ -5,6 +5,7 @@ local Clock = require("widgets/clock")
 local Device = require("device")
 local Event = require("ui/event")
 local Geom = require("ui/geometry")
+local GotoScreen = require("goto_screen")
 local Looks = require("looks")
 local QuickSettings = require("quick_settings")
 local Sheet = require("sheet")
@@ -149,8 +150,15 @@ function FocusedPanel.actions(ui)
             ui:onClose()
             ui:showFileManager(file)
         end,
+        -- The Go to screen, else KOReader's own table of contents, so the reader always gets a contents list.
         go_to = function()
-            ui:handleEvent(Event:new("ShowToc"))
+            local ok, shown = pcall(GotoScreen.show, { ui = ui })
+            if not ok then
+                logger.err("KoPanda: the focused panel could not show the Go to screen:", shown)
+            end
+            if not (ok and shown) then
+                ui:handleEvent(Event:new("ShowToc"))
+            end
         end,
         -- As ReaderMenu:onTapShowMenu does, without its tab from the tap's place (readermenu.lua:495-503).
         admin = function()

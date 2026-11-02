@@ -1,7 +1,7 @@
--- The chrome the library's windows share: a full-screen KoPanda window over the file manager, its paint and settled
--- signal, the header frame, the pager, the nav bar and the gesture route. A window module extends
--- LibraryChrome.Window and supplies the fields and functions library.lua shows; LibraryChrome.shown is the
--- window on screen.
+-- The chrome the library's windows share: a full-screen KoPanda window over the file manager (the Go to screen's over
+-- the reader), its paint and settled signal, the header frame, the pager, the nav bar and the gesture route. A window
+-- module extends LibraryChrome.Window and supplies the fields and functions library.lua shows; LibraryChrome.shown is
+-- the window on screen.
 local BD = require("ui/bidi")
 local BookCovers = require("book_covers")
 local Books = require("books")
@@ -114,6 +114,33 @@ local function back_control(ctx, text)
     return box, label
 end
 
+-- A header chip: widgets side by side, top-aligned, inside the header's picker padding (its side padding
+-- pad_x where given) and outline, on fill, rounded by the header's picker radius where it has one (Frosted's pills).
+function LibraryChrome.chip(widgets, fill, ctx, pad_x)
+    local scale, color = tools(ctx)
+    local tokens = ctx.look.library.header
+    local outline_color = color(tokens.picker_outline_color)
+    local outline = outline_color and scale(tokens.picker_outline_width) or 0
+    local pad_y = outline + scale(tokens.picker_padding.y)
+    pad_x = outline + scale(pad_x or tokens.picker_padding.x)
+    local w, h = 0, 0
+    for _, widget in ipairs(widgets) do
+        local size = widget:getSize()
+        w, h = w + size.w, math.max(h, size.h)
+    end
+    local box = new_box(w + 2 * pad_x, h + 2 * pad_y, color(fill), outline, outline_color)
+    if tokens.picker_radius > 0 then
+        box.radius = scale(tokens.picker_radius)
+        box.fill_radius = box.radius
+    end
+    local x = pad_x
+    for _, widget in ipairs(widgets) do
+        add(box, widget, x, pad_y)
+        x = x + widget:getSize().w
+    end
+    return box
+end
+
 -- The header frame under ctx, w wide and spec.height tall: the band in spec.band's colour; spec.right's
 -- widgets laid right to left; the left column, spec.aside over spec.title, with the back mark before the
 -- title when spec.back; then the edge. With spec.back_label, the detail header (LibraryChrome.detail_header_height
@@ -223,21 +250,26 @@ local function pager(built, frame, w, y)
 end
 
 -- The foot of built: the nav bar for where ("library": Library active) at the bottom in its band,
--- and the pager above it from built.page and built.pages, which the window sets first. Adds the
--- pager to frame (the build adds the bar last) and sets built.nav and built.pager.
+-- and the pager above it from built.page and built.pages, which the window sets first; with no where,
+-- no nav bar and the pager at the screen's foot. Adds the pager to frame (the build adds the bar
+-- last) and sets built.nav and built.pager.
 function LibraryChrome.foot(built, frame, where)
     local w, h = built.dimen.w, built.dimen.h
     local ctx = built.ctx
-    local nav = NavBar.new{ look = ctx.look, variant = ctx.variant, width = w, where = where, listen = false,
-        text_size = ctx.text_size }
-    nav.dimen.x, nav.dimen.y = 0, h - nav.dimen.h
-    built.nav = nav
-    built.pager = pager(built, frame, w, nav.dimen.y)
+    built.nav = nil
+    if where then
+        local nav = NavBar.new{ look = ctx.look, variant = ctx.variant, width = w, where = where, listen = false,
+            text_size = ctx.text_size }
+        nav.dimen.x, nav.dimen.y = 0, h - nav.dimen.h
+        built.nav = nav
+        h = nav.dimen.y
+    end
+    built.pager = pager(built, frame, w, h)
 end
 
 -- Fills built (the window's view and page) at the screen's size in the active look and variant at the shell's
--- text size: dimen, ctx, frame, the paper, then fill(built, frame, w, h), then the nav bar. A failure frees what
--- was built and raises.
+-- text size: dimen, ctx, frame, the paper, then fill(built, frame, w, h), then the nav bar, if the foot built one.
+-- A failure frees what was built and raises.
 function LibraryChrome.build(built, fill)
     local size = Screen:getSize()
     built.dimen = Geom:new{ x = 0, y = 0, w = size.w, h = size.h }
@@ -248,7 +280,9 @@ function LibraryChrome.build(built, fill)
         local _, color = tools(built.ctx)
         built.frame.fill_color = color("paper")
         fill(built, built.frame, size.w, size.h)
-        add(built.frame, built.nav, 0, built.nav.dimen.y)
+        if built.nav then
+            add(built.frame, built.nav, 0, built.nav.dimen.y)
+        end
     end)
     if not ok then
         built.frame:free()
@@ -537,8 +571,8 @@ local function paint(window, bb, x, y)
 end
 
 -- A widget can't be closed from inside the repaint, so a failed paint closes the window from the
--- next tick, leaving the file browser beneath. A page's covers are asked for, and a show settles,
--- from the next tick after its first paint.
+-- next tick, leaving the file browser or the reader beneath. A page's covers are asked for, and a
+-- show settles, from the next tick after its first paint.
 function Window:paintTo(bb, x, y)
     local ok, err = pcall(paint, self, bb, x, y)
     if ok and not self.painted_at then
@@ -683,13 +717,18 @@ function Window:onCloseWidget()
     end
 end
 
--- The hold step: what lies at pos (window.hit) handed to LibrarySheets.hold, which opens its sheet over
--- the window. A hit or dispatch that raises is logged and the hold consumed.
+-- The hold step: what lies at pos (window.hit) handed to the window's own hold_sheet, else to
+-- LibrarySheets.hold, which opens its sheet over the window. A hit or dispatch that raises is logged and
+-- the hold consumed.
 local function hold_step(window, pos)
     local started = PaintClock.now()
     local ok, err = pcall(function()
         local hit = window.hit and window.hit(pos.x, pos.y)
-        LibrarySheets.hold(window, hit, started)
+        if window.hold_sheet then
+            window:hold_sheet(hit, started)
+        else
+            LibrarySheets.hold(window, hit, started)
+        end
     end)
     if not ok then
         logger.err("KoPanda: the " .. window.screen .. "'s hold failed:", err)
@@ -727,7 +766,8 @@ function Window:routeGesture(ges)
 end
 
 -- A window is not a plugin, so KOReader does not sandbox this handler: an error here would reach
--- the UI loop. A failure closes the window onto the file browser and consumes the gesture.
+-- the UI loop. A failure closes the window onto the file browser or the reader beneath it and
+-- consumes the gesture.
 function Window:onGesture(ges)
     local ok, consumed = pcall(self.routeGesture, self, ges)
     if ok then

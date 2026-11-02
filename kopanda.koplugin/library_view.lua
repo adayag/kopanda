@@ -48,33 +48,9 @@ local function name_of(dir)
     return dir:match("([^/]+)/*$") or dir
 end
 
-local new_box, add, tools = LibraryChrome.box, LibraryChrome.add, LibraryChrome.tools
+local add, tools = LibraryChrome.add, LibraryChrome.tools
 
--- A header chip: widgets side by side, top-aligned, inside the header's picker padding and outline, on fill,
--- rounded by the header's picker radius where it has one (Frosted's pills).
-local function chip(widgets, fill, ctx)
-    local scale, color = tools(ctx)
-    local tokens = ctx.look.library.header
-    local outline_color = color(tokens.picker_outline_color)
-    local outline = outline_color and scale(tokens.picker_outline_width) or 0
-    local pad_x, pad_y = outline + scale(tokens.picker_padding.x), outline + scale(tokens.picker_padding.y)
-    local w, h = 0, 0
-    for _, widget in ipairs(widgets) do
-        local size = widget:getSize()
-        w, h = w + size.w, math.max(h, size.h)
-    end
-    local box = new_box(w + 2 * pad_x, h + 2 * pad_y, color(fill), outline, outline_color)
-    if tokens.picker_radius > 0 then
-        box.radius = scale(tokens.picker_radius)
-        box.fill_radius = box.radius
-    end
-    local x = pad_x
-    for _, widget in ipairs(widgets) do
-        add(box, widget, x, pad_y)
-        x = x + widget:getSize().w
-    end
-    return box
-end
+local chip = LibraryChrome.chip
 
 -- A picker: a chip of its label in part, then the chevron_down mark sized to the label's line in the label's
 -- colour. Returns the chip and { label, mark }.
