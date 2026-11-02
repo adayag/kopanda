@@ -603,6 +603,29 @@ describe("the sheet", function()
             end)
         end
 
+        for _, id in ipairs({ "editorial", "diner" }) do
+            it("with hint_below sits whole on its own line under the heading and its label, at its left, in " .. id,
+                function()
+                local spec = three_rows()
+                spec.header = { aside = "Frankenstein · Letter 1", aside_above = true, heading = "Page 12 of 300 · 4%",
+                    label = "8:42 · 81%", hint = "Hold here for all settings", hint_below = true }
+                Sheet.show(spec, ctx_for(id, colorsoft))
+                local sheet = Sheet.shown
+                local tokens = Looks.get(id).sheet
+                local header, parts, hint = sheet.header_rect, sheet.header_parts, sheet.hint_rect
+                local line_bottom = math.max(parts.heading.y + parts.heading.h, parts.label.y + parts.label.h)
+                assert.equals(parts.heading.x, hint.x)
+                assert.equals(line_bottom + colorsoft:scaleBySize(tokens.aside_above_gap), hint.y)
+                local header_bottom = header.y + header.h - colorsoft:scaleBySize(tokens.header_padding.bottom)
+                assert.equals(header_bottom, hint.y + hint.h)
+                local Typeset = require("typeset")
+                local whole = Typeset.line(Looks.get(id).type.sheet_aside, spec.header.hint, math.huge,
+                    ctx_for(id, colorsoft))
+                assert.equals(whole:getSize().w, hint.w)
+                whole:free()
+            end)
+        end
+
         it("is absent without a hint", function()
             Sheet.show(three_rows(), ctx_for("editorial"))
             assert.is_nil(Sheet.shown.hint_rect)
@@ -1263,7 +1286,7 @@ describe("the sheet", function()
                     return {
                         widget = widget,
                         areas = {
-                            { rect = { x = 0, y = 0, w = 100, h = 50 },
+                            { id = "stay", rect = { x = 0, y = 0, w = 100, h = 50 },
                                 tap = spy_on(log.stay_tap, "stay_tap"), hold = spy_on(log.stay_hold, "stay_hold") },
                             { rect = { x = 0, y = 60, w = 100, h = 50 }, close_first = true,
                                 tap = spy_on(log.closer, "closer") },
@@ -1295,6 +1318,7 @@ describe("the sheet", function()
             assert.same({ at.x, at.y, 100, 50 }, { sheet.areas[1].rect.x, sheet.areas[1].rect.y,
                 sheet.areas[1].rect.w, sheet.areas[1].rect.h })
             assert.equals(at.y + 60, sheet.areas[2].rect.y)
+            assert.equals("stay", sheet.areas[1].id)
             assert.truthy(sheet.panel.y + sheet.panel.h >= at.y + 200)
             assert.equals(0, #sheet.rows)
             assert.equals(0, widget.frees)
@@ -1422,6 +1446,58 @@ describe("the sheet", function()
             assert.same({ false }, held)
             assert.is_nil(Sheet.shown)
             assert.equals(Home.shown, harness.top())
+        end)
+
+        describe("with header_hold", function()
+            -- body_spec with header_hold and a hold that records whether the sheet was still up when it ran.
+            local function header_hold_spec(log, held)
+                local spec = body_spec(log)
+                spec.header_hold = true
+                spec.hold = function()
+                    held[#held + 1] = Sheet.shown or false
+                end
+                return spec
+            end
+
+            it("runs the spec's hold once, after closing, on a hold on the header", function()
+                local log, held = {}, {}
+                Sheet.show(header_hold_spec(log, held), ctx_for("diner"))
+                send(harness.gesture("hold", centre(Sheet.shown.header_rect)))
+                assert.same({ false }, held)
+                assert.is_nil(Sheet.shown)
+                assert.equals(Home.shown, harness.top())
+            end)
+
+            it("runs nothing and keeps the sheet on a hold on an area without one or elsewhere below the header",
+                function()
+                    local log, held = {}, {}
+                    Sheet.show(header_hold_spec(log, held), ctx_for("editorial"))
+                    local sheet = Sheet.shown
+                    send(harness.gesture("hold", area(sheet, 3)))
+                    local beside = sheet.areas[3].rect
+                    local x, y = beside.x + beside.w + 50, beside.y + math.floor(beside.h / 2)
+                    local pos = Geom:new{ x = x, y = y, w = 0, h = 0 }
+                    for i, place in ipairs(sheet.areas) do
+                        assert.is_false(place.rect:contains(pos), "area " .. i)
+                    end
+                    assert.is_true(sheet.panel:contains(pos))
+                    assert.is_false(sheet.header_rect:contains(pos))
+                    send(harness.gesture("hold", x, y))
+                    assert.same({}, held)
+                    assert.same({}, log.stay_tap)
+                    assert.equals(sheet, Sheet.shown)
+                    assert.equals(sheet, harness.top())
+                end)
+
+            it("still runs an area's own hold with the sheet open", function()
+                local log, held = {}, {}
+                Sheet.show(header_hold_spec(log, held), ctx_for("diner"))
+                local sheet = Sheet.shown
+                send(harness.gesture("hold", area(sheet, 1)))
+                assert.same({ { shown = true, calls = 1 } }, log.stay_hold)
+                assert.same({}, held)
+                assert.equals(sheet, Sheet.shown)
+            end)
         end)
 
         it("consumes a tap on an area without tap or on the header, runs nothing and keeps the sheet", function()

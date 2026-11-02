@@ -279,7 +279,10 @@ describe("the home sheet", function()
             assert.spy(open).was.called_with()
             local menu = gestures.settings_menu()
             assert.is_not_nil(menu)
-            assert.equals(#require("schema").keys, #menu[1].tab_item_table[1])
+            -- Every setting, then the Updates section's update row; Storefront isn't loaded here.
+            local items = menu[1].tab_item_table[1]
+            assert.equals(#require("schema").keys + 1, #items)
+            assert.equals("Check for KoPanda update", items[#items].text)
         end)
     end)
 

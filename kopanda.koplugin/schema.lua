@@ -175,5 +175,14 @@ return {
             label = "Launcher",
             group = "launcher",
         },
+        {
+            -- KoPanda's panel in place of KOReader's reader menus, and the shell's doors into
+            -- KOReader's screens closed.
+            id = "focused.on",
+            type = "boolean",
+            default = true,
+            label = "Focused mode",
+            group = "focused",
+        },
     },
 }

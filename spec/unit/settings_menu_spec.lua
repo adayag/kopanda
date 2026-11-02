@@ -140,4 +140,136 @@ describe("the settings menu", function()
         end
         assert.is_true(found)
     end)
+    -- KoPanda's settings end with an Updates section: Check for KoPanda update, then Apps (Storefront) while
+    -- Storefront is loaded with its storefront_open action registered; a group's view has neither.
+    describe("the Updates section", function()
+        local Dispatcher = require("dispatcher")
+        local PluginLoader = require("pluginloader")
+        local StudioMenu
+
+        before_each(function()
+            StudioMenu = require("studio_menu")
+        end)
+
+        -- Storefront loaded with its action registered, for the rest of the test.
+        local function storefront()
+            Dispatcher:registerAction("storefront_open", {
+                category = "none",
+                event = "KoPandaSpecStorefront",
+                title = "Storefront",
+                general = true,
+            })
+            local s = stub(PluginLoader, "isPluginLoaded", function(_, name)
+                return name == "storefront"
+            end)
+            finally(function()
+                s:revert()
+                Dispatcher:removeAction("storefront_open")
+            end)
+        end
+
+        -- The items the settings menu shows for group over the home.
+        local function items_shown(group)
+            gestures.fm_with_home()
+            SettingsMenu.open(group)
+            return shown_menu()[1].item_table
+        end
+
+        local function settings_count()
+            local n = 0
+            for _ in ipairs(SchemaMenu.items()) do
+                n = n + 1
+            end
+            return n
+        end
+
+        it("ends the settings with Check for KoPanda update and Apps (Storefront), set apart from them", function()
+            storefront()
+            local items = items_shown()
+            local n = #items
+            assert.equals(settings_count() + 2, n)
+            assert.is_true(items[n - 2].separator)
+            assert.equals("Check for KoPanda update", items[n - 1].text)
+            assert.equals("Apps (Storefront)", items[n].text)
+        end)
+
+        it("leaves Apps (Storefront) out while Storefront isn't loaded", function()
+            local items = items_shown()
+            assert.equals(settings_count() + 1, #items)
+            assert.equals("Check for KoPanda update", items[#items].text)
+        end)
+
+        it("leaves the section out of a group's view", function()
+            storefront()
+            local items = items_shown("weather")
+            assert.equals(2, #items)
+            assert.equals("weather.units", items[2].kopanda_key)
+        end)
+
+        it("checks for an update of the plugin's own folder, from the tick after the tap", function()
+            local checked = {}
+            local s = stub(StudioMenu, "check_for_update", function(plugin)
+                checked[#checked + 1] = plugin
+            end)
+            finally(function()
+                s:revert()
+            end)
+            local items = items_shown()
+            items[#items].callback()
+            assert.equals(0, #checked)
+            harness.tick()
+            assert.equals(1, #checked)
+            assert.truthy(checked[1].path:match("kopanda%.koplugin$"), checked[1].path)
+        end)
+
+        it("names Settings, not the Studio menu, for a check that fails", function()
+            local NetworkMgr = require("ui/network/manager")
+            local ReleaseSource = require("release_source")
+            local logged = {}
+            local stubs = {
+                stub(NetworkMgr, "runWhenConnected", function(_, callback)
+                    callback()
+                end),
+                stub(ReleaseSource, "latest", function()
+                    error("kopanda-test: no network")
+                end),
+                stub(logger, "err", function(...)
+                    logged[#logged + 1] = table.concat({ ... }, " ")
+                end),
+            }
+            finally(function()
+                for _, s in ipairs(stubs) do
+                    s:revert()
+                end
+            end)
+            local items = items_shown()
+            items[#items].callback()
+            harness.tick()
+            local failure
+            for _, line in ipairs(logged) do
+                if line:find("kopanda-test: no network", 1, true) then
+                    failure = line
+                end
+            end
+            assert.truthy(failure, table.concat(logged, "\n"))
+            assert.truthy(failure:find("Settings › Check for KoPanda update failed", 1, true), failure)
+        end)
+
+        it("opens Storefront through the launcher's entry", function()
+            storefront()
+            local LauncherEntries = require("launcher_entries")
+            local ran = {}
+            local s = stub(LauncherEntries, "run", function(entry)
+                ran[#ran + 1] = entry
+            end)
+            finally(function()
+                s:revert()
+            end)
+            local items = items_shown()
+            items[#items].callback()
+            harness.tick()
+            local entry = { kind = "plugin", plugin = "storefront", action = "storefront_open", label = "Storefront" }
+            assert.same({ entry }, ran)
+        end)
+    end)
 end)

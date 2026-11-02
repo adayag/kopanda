@@ -64,6 +64,7 @@ const data = table([
       },
     ]),
   ],
+  ["focused.on", false],
   [
     "studio.note",
     table([

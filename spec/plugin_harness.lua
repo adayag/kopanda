@@ -57,18 +57,33 @@ end
 M.dispatcher_execute = require("dispatcher").execute
 -- FileManager.setupLayout as KOReader defines it, before fm_nav.lua wraps it.
 M.fm_setup_layout = require("apps/filemanager/filemanager").setupLayout
+-- The reader's menu, config and footer handlers as KOReader defines them, before focused_hooks.lua wraps them.
+M.reader_handlers = {}
+for _, handler in ipairs({
+    { "apps/reader/modules/readermenu", "onTapShowMenu" },
+    { "apps/reader/modules/readermenu", "onSwipeShowMenu" },
+    { "apps/reader/modules/readerconfig", "onTapShowConfigMenu" },
+    { "apps/reader/modules/readerconfig", "onSwipeShowConfigMenu" },
+    { "apps/reader/modules/readerfooter", "TapFooter" },
+    { "apps/reader/modules/readerfooter", "onHoldFooter" },
+}) do
+    M.reader_handlers[#M.reader_handlers + 1] = { require(handler[1]), handler[2], require(handler[1])[handler[2]] }
+end
 
 -- Loads the plugin as the only enabled one, with its modules' state, runtime state file and settings file fresh,
--- KOReader's require-cached file manager and reader menu orders fresh, and Dispatcher.execute and
--- FileManager.setupLayout unwrapped, as in a new process; returns the plugin module. PluginLoader:_load reads
--- main, meta, path and name (frontend/pluginloader.lua:231-271). The emulator's fake Wi-Fi is off, so
--- NetworkMgr:isConnected() is false (frontend/device/sdl/device.lua:478-500); a spec that wants a connection
--- stubs isConnected.
+-- KOReader's require-cached file manager and reader menu orders fresh, and Dispatcher.execute,
+-- FileManager.setupLayout and the reader handlers focused_hooks.lua wraps unwrapped, as in a new process; returns
+-- the plugin module. PluginLoader:_load reads main, meta, path and name (frontend/pluginloader.lua:231-271). The
+-- emulator's fake Wi-Fi is off, so NetworkMgr:isConnected() is false (frontend/device/sdl/device.lua:478-500); a
+-- spec that wants a connection stubs isConnected.
 function M.load()
     disable_plugins()
     G_reader_settings:saveSetting("emulator_fake_wifi_connected", false)
     require("dispatcher").execute = M.dispatcher_execute
     require("apps/filemanager/filemanager").setupLayout = M.fm_setup_layout
+    for _, handler in ipairs(M.reader_handlers) do
+        handler[1][handler[2]] = handler[3]
+    end
     for _, name in ipairs(M.module_names()) do
         package.unload(name) -- luacheck: ignore 143
     end

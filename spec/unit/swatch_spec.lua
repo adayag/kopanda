@@ -129,10 +129,11 @@ describe("the swatch screen", function()
     end
 
     -- The reader is on top with no swatch and takes a tap: one in the top menu zone opens its
-    -- menu (readermenu.lua:95-107, :495-502).
+    -- menu (readermenu.lua:95-107, :495-502), with focused mode off so the tap reaches it.
     local function reader_usable(reader)
         assert.equals(0, swatches_on_stack())
         assert.equals(reader, harness.top())
+        require("settings").set("focused.on", false)
         tap_top()
         assert.is_not_nil(reader.menu.menu_container)
         reader.menu:onCloseReaderMenu()

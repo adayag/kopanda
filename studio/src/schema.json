@@ -421,6 +421,13 @@
                 ]
             },
             "type": "launcher"
+        },
+        {
+            "default": true,
+            "group": "focused",
+            "id": "focused.on",
+            "label": "Focused mode",
+            "type": "boolean"
         }
     ],
     "version": 1

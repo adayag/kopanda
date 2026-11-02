@@ -35,6 +35,12 @@ return {
     { key = "stats.show", value = 1, valid = false, why = "a number" },
     { key = "stats.show", value = "true", valid = false, why = "a string" },
 
+    -- focused.on
+    { key = "focused.on", value = true, valid = true, why = "true" },
+    { key = "focused.on", value = false, valid = true, why = "false" },
+    { key = "focused.on", value = 0, valid = false, why = "a number" },
+    { key = "focused.on", value = "false", valid = false, why = "a string" },
+
     -- layout.rows
     {
         key = "layout.rows",

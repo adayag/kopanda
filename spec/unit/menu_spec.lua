@@ -113,7 +113,7 @@ describe("the settings menu's rows", function()
             end
             assert.same(ids, keys)
             assert.same({ "wallpaper.file", "layout.rows_2", "weather.units", "quote.source", "stats.show",
-                "featured.pinned" }, separated)
+                "featured.pinned", "launcher.entries" }, separated)
         end)
 
         it("cuts to a group's keys, with no separator", function()

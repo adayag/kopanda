@@ -455,6 +455,15 @@ describe("Settings", function()
         end)
     end)
 
+    describe("focused.on", function()
+        it("is true with nothing stored, takes false, and keeps it across a reopen", function()
+            assert.is_true(Settings.get("focused.on"))
+            assert.is_true(Settings.set("focused.on", false))
+            Settings._reset()
+            assert.is_false(Settings.get("focused.on"))
+        end)
+    end)
+
     describe("featured.pinned", function()
         local entry = require("schema").keys[10]
 

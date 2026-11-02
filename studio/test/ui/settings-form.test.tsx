@@ -130,6 +130,7 @@ describe("the form's controls", () => {
       "Stats",
       "Featured",
       "Launcher",
+      "Focused",
     ]);
     for (const key of schema.keys) {
       expect(within(control(key.id)).getAllByText(key.label, { exact: false }).length).toBeGreaterThan(0);

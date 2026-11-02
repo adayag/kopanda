@@ -2,13 +2,16 @@
 -- closed by a tap outside it, a tap on a row, KOReader's Back or the Back key. Its opener hands it a spec:
 --   name        what the settled signal reports
 --   band        picks the <band>_band_color token Diner's header takes
---   header      { heading, aside, aside_beside, aside_above, hint, label } or a book's { cover, title, author, meta }
+--   header      { heading, aside, aside_beside, aside_above, hint, hint_below, label } or a book's { cover, title,
+--               author, meta } (hint_below sets the hint on its own line under the heading's)
 --               (cover a built widget, the sheet's to free)
 --   rows        { icon, label, sublabel, detail, chip, muted, tick, selected, run } (selected fills the row)
 --   body        in place of rows: body(bctx, content_w) returns { widget, areas }
 --   refresh_on  events on which the sheet redraws
+--   close_on    events on which the sheet closes, leaving the event to the windows beneath
 --   stale       tells whether the sheet changed
 --   hold        called on a hold inside the panel, after the sheet has closed
+--   header_hold runs hold only for a hold on the header
 --   flush       sets labels without the icon's indent
 --   more        { label, run } for rows left out
 -- Every field but name and rows or body is optional. Sheet.shown is the one sheet on screen; showing one closes
@@ -56,8 +59,9 @@ local function lay_out(sheet, variant)
     end
 end
 
--- Redraws a shown sheet in place; defined with the failures it reaches, below.
-local redraw
+-- Redraws a shown sheet in place, and closes it for an event, leaving the event unhandled; defined with the
+-- failures they reach, below.
+local redraw, close_for
 
 function Sheet:init()
     -- A body is called at every layout; its widget (getSize, paintTo, free) is drawn under the header and freed
@@ -97,6 +101,11 @@ function Sheet:init()
                 end
             end
             redraw(self)
+        end
+    end
+    for _, event in ipairs(self.spec.close_on or {}) do
+        self["on" .. event] = function()
+            close_for(self, event)
         end
     end
     lay_out(self, self.ctx.variant)
@@ -171,6 +180,13 @@ redraw = function(sheet)
     end)
     if not ok then
         fail(sheet, "could not redraw:", err)
+    end
+end
+
+close_for = function(sheet, event)
+    local ok, err = pcall(close_sheet, sheet)
+    if not ok then
+        fail(sheet, "failed to close on " .. event .. ":", err)
     end
 end
 
@@ -264,7 +280,7 @@ local function area_at(sheet, pos)
     end
 end
 
--- Runs a body area's { rect, tap, hold, close_first } tap or hold (what) with the sheet open, then redraws it;
+-- Runs a body area's { id, rect, tap, hold, close_first } tap or hold (what) with the sheet open, then redraws it;
 -- with close_first, closes it
 -- first. One that raises is logged and leaves the sheet as it was otherwise.
 local function act(sheet, area, what)
@@ -315,12 +331,15 @@ function Sheet:onTapSheet(_, ges)
 end
 
 -- A hold inside the panel: in a body's area with hold, runs it as a tap runs an area's tap;
--- elsewhere, for a spec with hold, closes the sheet, then runs it; otherwise consumed.
+-- elsewhere, for a spec with hold, closes the sheet, then runs it, on the header only with
+-- header_hold; otherwise consumed.
 function Sheet:onHoldSheet(_, ges)
     local ok, err = pcall(function()
         local area = area_at(self, ges.pos)
         if area and area.hold then
             act(self, area, "hold")
+        elseif self.spec.header_hold and not (self.header_rect and self.header_rect:contains(ges.pos)) then
+            return
         elseif self.spec.hold then
             close_sheet(self)
             self.spec.hold()

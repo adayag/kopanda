@@ -4,7 +4,9 @@
 -- Back key or the up arrow at the top level, each through its default close_callback, which closes the
 -- container (frontend/ui/widget/touchmenu.lua:499-504).
 local CenterContainer = require("ui/widget/container/centercontainer")
+local Guards = require("guards")
 local SchemaMenu = require("menu")
+local StudioMenu = require("studio_menu")
 local TouchMenu = require("ui/widget/touchmenu")
 local UIManager = require("ui/uimanager")
 local logger = require("logger")
@@ -12,11 +14,46 @@ local Screen = require("device").screen
 
 local SettingsMenu = {}
 
--- Shows the rows for group (every row with none, or a group with no keys). A failure is logged
--- and shows nothing.
+-- The plugin folder, as fonts.lua finds it: as require found this file.
+local PLUGIN_DIR = debug.getinfo(1, "S").source:match("^@(.*)/[^/]*$")
+
+-- Storefront's dispatcher action, as the launcher runs a plugin's (launcher_entries.lua:61-80).
+local STOREFRONT = { kind = "plugin", plugin = "storefront", action = "storefront_open", label = "Storefront" }
+
+-- The Updates section: actions, not settings, after the last setting and a separator. Apps (Storefront) shows
+-- only while the launcher could run it; a check that raises reads as no.
+local function updates(items)
+    -- launcher_entries requires this module, so it is required here, at call time.
+    local LauncherEntries = require("launcher_entries")
+    if #items > 0 then
+        items[#items].separator = true
+    end
+    local check = "Settings › Check for KoPanda update"
+    items[#items + 1] = {
+        text = "Check for KoPanda update",
+        callback = Guards.after_menu(check, function()
+            StudioMenu.check_for_update({ path = PLUGIN_DIR }, check)
+        end),
+    }
+    local ok, available = pcall(LauncherEntries.available, STOREFRONT)
+    if ok and available then
+        items[#items + 1] = {
+            text = "Apps (Storefront)",
+            callback = Guards.after_menu("Settings › Apps (Storefront)", function()
+                LauncherEntries.run(STOREFRONT)
+            end),
+        }
+    end
+end
+
+-- Shows the rows for group (every row with none, or a group with no keys), and without a group the Updates
+-- section after them. A failure is logged and shows nothing.
 function SettingsMenu.open(group)
     local ok, err = pcall(function()
         local items = SchemaMenu.items(group)
+        if group == nil then
+            updates(items)
+        end
         -- The icon KOReader's own settings tab uses (filemanagermenu.lua:37).
         items.icon = "appbar.settings"
         local container = CenterContainer:new{ dimen = Screen:getSize(), ignore = "height" }

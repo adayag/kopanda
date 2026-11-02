@@ -186,10 +186,10 @@ local function pull(plugin)
     })
 end
 
--- Once connected, compares GitHub's latest release with the installed version and, when it is
--- newer, confirms and installs it: the plugin only, the settings file kept.
-local function check_for_update(plugin)
-    local what = "Tools › KoPanda › Studio › Check for update"
+-- Once connected, compares GitHub's latest release with the version installed in plugin.path and, when
+-- it is newer, confirms and installs it: the plugin only, the settings file kept. A failure is logged as
+-- what's, the menu path it ran from.
+function StudioMenu.check_for_update(plugin, what)
     network():runWhenConnected(Guards.guarded(what, function()
         -- Painted now, as the pull's note is: the request blocks the UI loop.
         local busy = InfoMessage:new{ text = "Checking for an update…" }
@@ -238,6 +238,8 @@ local function check_for_update(plugin)
     end))
 end
 
+local CHECK = "Tools › KoPanda › Studio › Check for update"
+
 -- The Studio sub-menu for the plugin instance plugin, whose path is its folder
 -- (frontend/pluginloader.lua:248). Item texts read the state each time the menu draws.
 function StudioMenu.item(plugin)
@@ -272,8 +274,8 @@ function StudioMenu.item(plugin)
             },
             {
                 text = "Check for update",
-                callback = Guards.after_menu("Tools › KoPanda › Studio › Check for update", function()
-                    check_for_update(plugin)
+                callback = Guards.after_menu(CHECK, function()
+                    StudioMenu.check_for_update(plugin, CHECK)
                 end),
             },
         },

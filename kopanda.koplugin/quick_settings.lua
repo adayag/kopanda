@@ -1,29 +1,22 @@
 -- The quick-settings sheet: the device's light and toggles, opened over the home or the bare file browser, read
 -- from the device when the sheet lays out; each area acts as KOReader's own menus do, and one that can't run or
--- whose read raised is inert. The minus and plus are "−" (U+2212) and "+" in the quick_button part: U+2212 draws
--- in both looks' faces, where U+0378, an unassigned code point, draws the missing-glyph box.
+-- whose read raised is inert. Its bars and cells are drawn by steppers.lua.
 local Device = require("device")
 local Event = require("ui/event")
 local Geom = require("ui/geometry")
-local Icons = require("icons")
 local LauncherEntries = require("launcher_entries")
-local Layout = require("layout")
 local Looks = require("looks")
 local NetworkMgr = require("ui/network/manager")
-local Paint = require("paint")
 local Settings = require("settings")
 local Sheet = require("sheet")
-local TintedIcon = require("tinted_icon")
-local Typeset = require("typeset")
+local Steppers = require("steppers")
 local UIManager = require("ui/uimanager")
-local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
 
 local Screen = Device.screen
 
 local QuickSettings = {}
 
-local MINUS, PLUS = "\u{2212}", "+"
 -- A bar whose read failed shows this in place of its value.
 local DASH = "\u{2013}"
 
@@ -86,23 +79,32 @@ local function reading(what, f)
     return value or nil
 end
 
--- The device's state as the sheet shows it: { battery, brightness, warmth, cells }. battery is a percent or
--- nil; brightness and warmth are nil when hidden, { greyed = true } when their read raised, else { value, min,
--- max } in native steps; cells are the six in order, each { id, label, icon, on, greyed, failed }. Each read
--- is guarded: one that raises is logged and greys its control.
-function QuickSettings.state()
+-- The light as the sheet shows it: { brightness, warmth }, each nil when hidden, { greyed = true } when its read
+-- raised, else { value, min, max } in native steps.
+function QuickSettings.light()
     local powerd = Device:getPowerDevice()
-    local brightness = reading("the frontlight", function()
-        if Device:hasFrontlight() then
-            return { value = powerd:frontlightIntensity(), min = 0, max = powerd.fl_max }
-        end
-    end)
-    local warmth = reading("the warmth", function()
-        if Device:hasFrontlight() and Device:hasNaturalLight() then
-            return { value = powerd:toNativeWarmth(powerd:frontlightWarmth()), min = powerd.fl_warmth_min,
-                max = powerd.fl_warmth_max }
-        end
-    end)
+    return {
+        brightness = reading("the frontlight", function()
+            if Device:hasFrontlight() then
+                return { value = powerd:frontlightIntensity(), min = 0, max = powerd.fl_max }
+            end
+        end),
+        warmth = reading("the warmth", function()
+            if Device:hasFrontlight() and Device:hasNaturalLight() then
+                return { value = powerd:toNativeWarmth(powerd:frontlightWarmth()), min = powerd.fl_warmth_min,
+                    max = powerd.fl_warmth_max }
+            end
+        end),
+    }
+end
+
+QuickSettings.battery = battery
+
+-- The device's state as the sheet shows it: { battery, brightness, warmth, cells }. battery is a percent or
+-- nil; brightness and warmth are QuickSettings.light()'s; cells are the six in order, each { id, label, icon,
+-- on, greyed, failed }. Each read is guarded: one that raises is logged and greys its control.
+function QuickSettings.state()
+    local light = QuickSettings.light()
     local wifi, wifi_failed = radio()
     local night, night_failed = read("night mode", function()
         return G_reader_settings:isTrue("night_mode")
@@ -112,8 +114,8 @@ function QuickSettings.state()
     end)
     return {
         battery = battery(),
-        brightness = brightness,
-        warmth = warmth,
+        brightness = light.brightness,
+        warmth = light.warmth,
         cells = {
             { id = "wifi", label = wifi and "Wi-Fi on" or "Wi-Fi off", icon = wifi and "wifi" or "wifi_off",
                 on = wifi == true, greyed = wifi_failed or not can_run(WIFI, "Wi-Fi"), failed = wifi_failed },
@@ -176,6 +178,8 @@ local BUTTONS = {
     },
 }
 
+QuickSettings.light_buttons = BUTTONS
+
 -- KOReader's Wi-Fi menu item's toggle, interactive (frontend/ui/network/manager.lua:899-915): off when fully
 -- connected, its prompt when on and not connected, else on. It passes no callback: NetworkMgr runs one only
 -- just after broadcasting NetworkConnected (:109, :116) or NetworkDisconnected (:408-410), on which the
@@ -237,172 +241,41 @@ local function cell_area(cell, rect)
     return { id = cell.id, rect = rect, tap = actions.tap, close_first = actions.close_first }
 end
 
--- The body: its fills and outlines ({ x, y, w, h, color, border }), then its lines and icons, the
--- array part, each at places[i], all from the body's top-left; free() reaches the array part.
-local Body = WidgetContainer:extend{
-    name = "kopanda_quick_settings",
-}
-
-function Body:paintTo(bb, x, y)
-    for _, part in ipairs(self.fills) do
-        if part.border then
-            Paint.border(bb, x + part.x, y + part.y, part.w, part.h, part.border, part.color)
-        else
-            Paint.fill(bb, x + part.x, y + part.y, part.w, part.h, part.color)
-        end
-    end
-    for i, widget in ipairs(self) do
-        widget:paintTo(bb, x + self.places[i].x, y + self.places[i].y)
-    end
-end
-
--- A copy of a type part in another palette role.
-local function in_role(part, role)
-    local copy = {}
-    for k, v in pairs(part) do
-        copy[k] = v
-    end
-    copy.color = role
-    return copy
-end
-
 -- The sheet's body under bctx (the sheet's build ctx) content_w wide, from look.quick_settings: { widget,
 -- areas }, areas { id, rect, tap, hold, close_first } with rect from the widget's top-left, the bars' minus
 -- and plus then the cells, in order.
 function QuickSettings.body(bctx, content_w)
     local look = bctx.look
     local qs = look.quick_settings
-    local palette = Looks.palette(look, bctx.variant)
-    local function color(role)
-        return role and Looks.color(palette[role])
-    end
-    local function scale(px)
-        return bctx.screen:scaleBySize(px)
-    end
     local state = QuickSettings.state()
     local wifi = state.cells[1]
     shown_radio = wifi.failed and "failed" or wifi.on
-    local body = Body:new{ fills = {}, places = {} }
-    local fills, areas = body.fills, {}
-    local function add(widget, x, y)
-        body[#body + 1] = widget
-        body.places[#body] = { x = x, y = y }
-    end
-    local function fill(x, y, w, h, role)
-        local c = color(role)
-        if c and w > 0 and h > 0 then
-            fills[#fills + 1] = { x = x, y = y, w = w, h = h, color = c }
-        end
-    end
-    -- An outline width wide inside the rectangle; its width, 0 without a colour.
-    local function outline(x, y, w, h, width, role)
-        local c = color(role)
-        if not c then
-            return 0
-        end
-        local px = scale(width)
-        if px > 0 then
-            fills[#fills + 1] = { x = x, y = y, w = w, h = h, border = px, color = c }
-        end
-        return px
-    end
-
-    local pad_x = scale(qs.padding_x)
-    local inner_w = content_w - 2 * pad_x
-    local y = 0
+    local body = Steppers.Body:new{ name = "kopanda_quick_settings", fills = {}, places = {} }
+    local scale = Steppers.pen(body, bctx).scale
 
     -- The bars, each a section closed by a rule.
     local bars = {}
-    if state.brightness then
-        bars[#bars + 1] = { id = "brightness", label = "Brightness", reading = state.brightness }
-    end
-    if state.warmth then
-        bars[#bars + 1] = { id = "warmth", label = "Warmth", reading = state.warmth }
-    end
-    local label_part, button_part = look.type.quick_label, look.type.quick_button
-    for i, bar in ipairs(bars) do
-        local pad = i == 1 and qs.first_section_padding or qs.section_padding
-        y = y + scale(pad.top)
-        local r = bar.reading
-        local value = Typeset.line(label_part, r.greyed and DASH or tostring(r.value), inner_w, bctx)
-        local value_size = value:getSize()
-        local label = Typeset.line(label_part, bar.label, math.max(1, inner_w - value_size.w), bctx)
-        local label_size = label:getSize()
-        local row_h = math.max(label_size.h, value_size.h)
-        add(label, pad_x, y + row_h - label_size.h)
-        add(value, pad_x + inner_w - value_size.w, y + row_h - value_size.h)
-        y = y + row_h + scale(qs.section_gap)
-
-        -- The control row: minus, the level bar centred on the buttons, plus.
-        local bw = Layout.size_at(scale(qs.button_w), bctx.text_size)
-        local bh = Layout.size_at(scale(qs.button_h), bctx.text_size)
-        local gap = scale(qs.control_gap)
-        for _, button in ipairs({ { "_minus", pad_x, MINUS }, { "_plus", pad_x + inner_w - bw, PLUS } }) do
-            local x = button[2]
-            fill(x, y, bw, bh, qs.button_fill_color)
-            outline(x, y, bw, bh, qs.button_outline_width, qs.button_outline_color)
-            local glyph = Typeset.line(button_part, button[3], bw, bctx)
-            local size = glyph:getSize()
-            add(glyph, x + math.floor((bw - size.w) / 2), y + math.floor((bh - size.h) / 2))
-            -- A greyed bar's buttons are inert: their touch is consumed.
-            local id = bar.id .. button[1]
-            local actions = r.greyed and {} or BUTTONS[id]
-            areas[#areas + 1] = { id = id, rect = { x = x, y = y, w = bw, h = bh }, tap = actions.tap,
-                hold = actions.hold }
+    for _, bar in ipairs({ { id = "brightness", label = "Brightness" }, { id = "warmth", label = "Warmth" } }) do
+        local r = state[bar.id]
+        if r then
+            bars[#bars + 1] = { id = bar.id, label = bar.label, value_text = r.greyed and DASH or tostring(r.value),
+                greyed = r.greyed, level = r, minus = BUTTONS[bar.id .. "_minus"], plus = BUTTONS[bar.id .. "_plus"] }
         end
-        local level_outline = qs.level_outline_color and scale(qs.level_outline_width) or 0
-        local level_h = Layout.size_at(scale(qs.level_h), bctx.text_size) + 2 * level_outline
-        local level_x, level_w = pad_x + bw + gap, inner_w - 2 * (bw + gap)
-        local level_y = y + math.floor((bh - level_h) / 2)
-        fill(level_x, level_y, level_w, level_h, qs.level_track_color)
-        if not r.greyed and r.max > r.min then
-            local share = math.min(1, math.max(0, (r.value - r.min) / (r.max - r.min)))
-            fill(level_x + level_outline, level_y + level_outline,
-                math.floor((level_w - 2 * level_outline) * share), level_h - 2 * level_outline, qs.level_fill_color)
-        end
-        outline(level_x, level_y, level_w, level_h, qs.level_outline_width, qs.level_outline_color)
-        y = y + bh + scale(pad.bottom)
-        local rule = qs.section_rule_color and scale(qs.section_rule_width) or 0
-        fill(0, y, content_w, rule, qs.section_rule_color)
-        y = y + rule
     end
+    local y, areas = Steppers.draw(body, bctx, content_w, 0, bars)
 
-    -- The grid: three columns, two rows, each row as tall as its tallest cell.
+    -- The grid: three columns, two rows.
     y = y + scale(qs.grid_padding.top)
-    local columns = Layout.columns(inner_w, { { share = 1 }, { share = 1 }, { share = 1 } }, qs.grid_gap)
-    local icon_size = Layout.size_at(scale(qs.cell_icon_size), bctx.text_size)
-    local cell_outline = qs.cell_outline_color and scale(qs.cell_outline_width) or 0
-    local cell_top = cell_outline + scale(qs.cell_padding.top)
-    local cell_bottom = scale(qs.cell_padding.bottom) + cell_outline
     for row = 0, 1 do
         if row > 0 then
             y = y + scale(qs.grid_gap)
         end
-        local built, row_h = {}, 0
-        for c = 1, 3 do
-            local cell = state.cells[row * 3 + c]
-            local w = columns[c].w
-            local filled = cell.on and not cell.greyed
-            local role = cell.greyed and "muted" or filled and qs.on_text_color or look.type.quick_cell.color
-            local label = Typeset.line(in_role(look.type.quick_cell, role), cell.label,
-                math.max(1, w - 2 * cell_outline), bctx)
-            local file = Icons.path(cell.icon)
-            local icon = file and TintedIcon:new{ file = file, size = icon_size, color = color(role) }
-            built[c] = { cell = cell, label = label, icon = icon, filled = filled }
-            row_h = math.max(row_h, cell_top + icon_size + scale(qs.cell_gap) + label:getSize().h + cell_bottom)
+        local cells = { state.cells[row * 3 + 1], state.cells[row * 3 + 2], state.cells[row * 3 + 3] }
+        local rects
+        y, rects = Steppers.cells(body, bctx, content_w, y, cells)
+        for c, rect in ipairs(rects) do
+            areas[#areas + 1] = cell_area(cells[c], rect)
         end
-        for c, b in ipairs(built) do
-            local x, w = pad_x + columns[c].x, columns[c].w
-            fill(x, y, w, row_h, b.filled and qs.on_fill_color or qs.cell_fill_color)
-            outline(x, y, w, row_h, qs.cell_outline_width, qs.cell_outline_color)
-            if b.icon then
-                add(b.icon, x + math.floor((w - icon_size) / 2), y + cell_top)
-            end
-            local size = b.label:getSize()
-            add(b.label, x + math.floor((w - size.w) / 2), y + cell_top + icon_size + scale(qs.cell_gap))
-            areas[#areas + 1] = cell_area(b.cell, { x = x, y = y, w = w, h = row_h })
-        end
-        y = y + row_h
     end
     y = y + scale(qs.grid_padding.bottom)
 

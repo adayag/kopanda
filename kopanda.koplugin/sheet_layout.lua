@@ -172,8 +172,11 @@ function SheetLayout.build(spec, ctx, variant)
                     left_w = heading_w + gap + aside_w
                 end
             end
-            -- The hint at the header's right.
-            if header.hint then
+            -- The hint at the header's right, or with hint_below on its own line under the heading's.
+            local below
+            if header.hint and header.hint_below then
+                below = Typeset.line(look.type.sheet_aside, header.hint, inner_w, bctx)
+            elseif header.hint then
                 local hint = Typeset.line(look.type.sheet_aside, header.hint,
                     math.max(1, inner_w - left_w - gap), bctx)
                 local hint_size = hint:getSize()
@@ -199,6 +202,14 @@ function SheetLayout.build(spec, ctx, variant)
                 local hint_size = hint_rect.widget:getSize()
                 hint_rect = { x = hint_rect.x, y = hint_rect.y, w = hint_size.w, h = hint_size.h }
             end
+            if below then
+                local below_size = below:getSize()
+                local below_y = inner_y + inner_h + scale(tokens.aside_above_gap)
+                add(below, inner_x, below_y)
+                hint_rect = { x = inner_x, y = below_y, w = below_size.w, h = below_size.h }
+                header_parts.hint = hint_rect
+                inner_h = below_y + below_size.h - inner_y
+            end
         end
         local header_h = scale(pad.top) + inner_h + scale(pad.bottom)
         if tokens.header_band and spec.band then
@@ -220,7 +231,7 @@ function SheetLayout.build(spec, ctx, variant)
         add(made.widget, content_x, y)
         for i, area in ipairs(made.areas or {}) do
             local rect = area.rect
-            areas[i] = { rect = { x = content_x + rect.x, y = y + rect.y, w = rect.w, h = rect.h },
+            areas[i] = { id = area.id, rect = { x = content_x + rect.x, y = y + rect.y, w = rect.w, h = rect.h },
                 tap = area.tap, hold = area.hold, close_first = area.close_first }
         end
         y = y + made.widget:getSize().h

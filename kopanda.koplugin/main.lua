@@ -7,6 +7,7 @@ local AuthorsScreen = require("authors_screen")
 local DispatchBridge = require("dispatch_bridge")
 local Dispatcher = require("dispatcher")
 local FmNav = require("fm_nav")
+local FocusedHooks = require("focused_hooks")
 require("fonts") -- loaded now for the looks and swatch modules, which reach it later
 local Guards = require("guards")
 local Home = require("home")
@@ -41,6 +42,7 @@ require("entries_edit")
 require("entry_picker")
 require("featured_book")
 require("featured_cover")
+require("focused_panel")
 require("folder_sheet")
 require("helpers")
 require("home_gestures")
@@ -82,6 +84,7 @@ require("sheet")
 require("sheet_layout")
 require("shelf_order")
 require("shelf_rows")
+require("steppers")
 require("tinted_icon")
 require("title_bar")
 require("typeset")
@@ -140,6 +143,9 @@ function KoPanda:init()
         -- Once per process, before the file manager's first layout (filemanager.lua:418-431).
         if self.in_fm then
             FmNav.install()
+        else
+            -- Once per process; each gesture reads focused.on.
+            FocusedHooks.install()
         end
     end)
     if not ok then

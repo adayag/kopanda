@@ -1197,6 +1197,14 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   (`frontend/ui/widget/infomessage.lua:283-290`).
 - The Layout and Launcher rows open their screens from `UIManager:nextTick`, after the menu has
   closed itself (`touchmenu.lua:920-926`).
+- The Updates section, the whole menu's only: the last setting carries `separator = true`, which
+  TouchMenu draws as its split line under it (`touchmenu.lua:715`). "Check for KoPanda update" runs
+  the Studio menu's check (the check for update entry above) on the plugin folder as `require` found
+  `settings_menu.lua`, the folder the loader gave the plugin (`frontend/pluginloader.lua:242`, `:248`).
+  "Apps (Storefront)" runs the launcher's entry for Storefront's `storefront_open`, and shows only
+  while `LauncherEntries.available` passes it (the launcher's entries above): at `228de36` of
+  `ultimatejimmy/storefront.koplugin` the plugin is named `storefront` and registers that action
+  (`storefront.koplugin/main.lua:12032`), unchecked on the devices.
 
 ### Edit layout: `util.tableDeepCopy` and its notes
 
@@ -1569,6 +1577,101 @@ guard (`sheet.lua`).
   named `cwngsync` (`cwngsync.koplugin/main.lua:43`), registers the action with event
   `CWNGSyncSyncNow` (`:282-283`) and handles it with `onCWNGSyncSyncNow` (`:310-313`). A greyed
   Wi-Fi, Sync books or Sleep cell runs its entry after the close too, for the launcher's note.
+
+### The focused panel: the reader's page, chapter, bookmark and configurable, and its events
+
+`focused_panel.lua` reads these when the panel lays out, the title, page, chapter and bookmark each in
+its own `pcall`, and acts through the reader's own events below, each inside the sheet's area guard
+(`sheet.lua`). The light and battery are quick settings' reads (the entry above).
+
+- A paging document (PDF, comic) has `document.info.has_pages`; the reader registers its paging and
+  kopt modules for it, a rolling one (EPUB) its rolling and cre modules
+  (`frontend/apps/reader/readerui.lua:260`, `:288`). The font size actions are rolling only
+  (`frontend/dispatcher.lua:245-246`), so a paging document gets no Text size.
+- The page: `ReaderUI:getCurrentPage()` (`readerui.lua:1007-1009`); the count:
+  `document:getPageCount()` (`frontend/document/document.lua:208-210`,
+  `frontend/document/credocument.lua:381-383`). The title: `doc_props.display_title`, the book's title
+  or its file name (`readerui.lua:495`, `frontend/apps/filemanager/filemanagerbookinfo.lua:329`). The
+  chapter: `ReaderToc:getTocTitleByPage(page)`, `""` outside any chapter
+  (`frontend/apps/reader/modules/readertoc.lua:446-453`).
+- `document.configurable`, the table `ReaderFont` and the option listeners share
+  (`readerui.lua:254`, `:363-364`): `font_size` (set by `ReaderFont:onSetFontSize`,
+  `frontend/apps/reader/modules/readerfont.lua:217-224`), `font_gamma` and `contrast`.
+- Text size: `IncreaseFontSize` and `DecreaseFontSize` with the number 1, which `gesToFontSize` takes as the
+  step itself (`readerfont.lua:377-380`), handled by `onIncreaseFontSize` and `onDecreaseFontSize`
+  (`:400-411`), which show KOReader's "Increasing font size…" notice and set the size through
+  `onChangeSize` (`:212-215`), clamped to 12-255 (`:218`).
+- Contrast: an EPUB's `font_gamma` steps `{10, 15, 25, 30, 36, 43, 49, 56}` with event `SetFontGamma`
+  (`frontend/ui/data/creoptions.lua:571-579`), handled by `ReaderFont:onSetFontGamma`
+  (`readerfont.lua:291-297`); a PDF's or comic's `contrast` steps `{0.8, 1.0, 1.5, 2.0, 4.0, 6.0, 10.0, 50.0}`
+  with event `GammaUpdate` (`frontend/ui/data/koptoptions.lua:489-498`), handled by
+  `ReaderView:onGammaUpdate` (`frontend/apps/reader/modules/readerview.lua:1091-1099`). Each step sends
+  `ConfigChange(name, value)` and then the event with the value, as `ConfigDialog:onConfigChoose` does
+  (`frontend/ui/widget/configdialog.lua:981-1016`); `ConfigChange` stores the value in `configurable`
+  (`frontend/apps/reader/modules/readercoptlistener.lua:228-234`,
+  `frontend/apps/reader/modules/readerkoptlistener.lua:91-98`).
+- Night: `ToggleNightMode`, broadcast as quick settings does (the entry above); the reader registers its
+  own `DeviceListener` (`readerui.lua:452`).
+- Bookmark: `ReaderBookmark:isPageBookmarked()` for the current page (`readerbookmark.lua:403-406`);
+  `ToggleBookmark` to `ReaderBookmark:onToggleBookmark` (`:347-359`), which toggles the dogear too.
+- Go to: `ShowToc` to `ReaderToc:onShowToc` (`readertoc.lua:807`).
+- Home: the reader menu's file browser icon's callback (`frontend/apps/reader/modules/readermenu.lua:65-73`):
+  the file, then `ReaderUI:onClose()` (`readerui.lua:870-900`), then `showFileManager(file)` (`:581-596`).
+- KOReader's reader menu, the header's hold: `ShowConfigMenu`
+  (`frontend/apps/reader/modules/readerconfig.lua:134`) while `G_reader_settings` key
+  `show_bottom_menu` reads `nilOrTrue`, then `ReaderMenu:onShowMenu()` (`readermenu.lua:396`), as
+  `ReaderMenu:onTapShowMenu` does without the tab its tap picks (`:495-503`).
+- Text size repaginates before its event returns: `onSetFontSize` sends `UpdatePos` (`readerfont.lua:217-224`),
+  and `ReaderRolling:onUpdatePos` re-renders through `getCurrentPos` and then `updatePos`
+  (`frontend/apps/reader/modules/readerrolling.lua:993-1019`), so the panel rebuilds its header, page count and
+  all, before the sheet redraws it. With partial rerendering the count can lag until the page draws (`:1039-1045`).
+  A contrast step changes no pages: `onSetFontGamma` only redraws the view (`readerfont.lua:291-297`).
+- A turned screen closes the panel, through the sheet's `close_on`, and leaves the event unhandled. An unlocked
+  G-sensor returns `SetRotationMode` from `Input:handleMiscGyroEv` (`frontend/device/input.lua:1466-1471`), which
+  the main loop hands to `UIManager:sendEvent` (`frontend/ui/uimanager.lua:58-60`): the top window gets it first
+  (`:988`), and beneath it only active widgets and `is_always_active` windows (`:991-1027`). The reader registers
+  only its screenshot module as active (`frontend/apps/reader/readerui.lua:240-245`), so with any window over the
+  book KOReader drops the rotation, the panel included: it closes, and the book turns at the next rotation. A
+  locked G-sensor's same-orientation flip only sets the rotation and repaints everything (`input.lua:1459-1465`,
+  `uimanager.lua:1638-1641`), the screen's size unchanged. A window resize broadcasts `SetDimensions` and
+  `ScreenResize` (`frontend/device/sdl/device.lua:313-314`). The reader's own rotation, from `DeviceListener`
+  (`frontend/device/devicelistener.lua:261-289`) through `ReaderView:onSetRotationMode`
+  (`readerview.lua:895-923`), goes to the reader alone, and starts from a gesture or key sent to the reader, which with the panel on top
+  reaches the panel first and goes no further.
+
+### Focused mode's reader hooks: the menu, config and status bar handlers
+
+`focused_hooks.lua` wraps six handlers on their classes, `apps/reader/modules/readermenu`,
+`apps/reader/modules/readerconfig` and `apps/reader/modules/readerfooter`, once per process, from the
+first reader instance's `init`; each reader module is an instance of its class, and every touch
+zone's handler is a closure calling the method on `self` at gesture time, so the wrap reaches zones
+registered before it.
+`focused.on` is read at each gesture; with it off, or when the check or the panel raises, the original
+runs with the same arguments, so KOReader's menu opens.
+
+- `ReaderMenu:onTapShowMenu(ges)` (`frontend/apps/reader/modules/readermenu.lua:495-503`), the handler of
+  the `readermenu_tap` and `readermenu_ext_tap` zones (`:96-122`), acts while `self.activation_menu ~= "swipe"`;
+  `ReaderMenu:onSwipeShowMenu(ges)` (`:484-493`), the handler of the swipe and pan zones (`:123-170`), while
+  `activation_menu ~= "tap"` and `ges.direction == "south"`, then sends `HandledAsSwipe` (`:490`).
+  `activation_menu` is `G_reader_settings`' `activate_menu` or `"swipe_tap"` (`:29`).
+- `ReaderConfig:onTapShowConfigMenu()` (`frontend/apps/reader/modules/readerconfig.lua:154-159`), the handler
+  of `readerconfigmenu_tap` and `_ext_tap` (`:57-80`), while `activation_menu ~= "swipe"`;
+  `ReaderConfig:onSwipeShowConfigMenu(ges)` (`:161-166`), the swipe and pan zones' (`:81-130`), while
+  `activation_menu ~= "tap"` and `ges.direction == "north"`; `onShowConfigMenu` sends `HandledAsSwipe`
+  (`:150`). `activation_menu` is read as `ReaderMenu`'s (`:24-28`).
+- `ReaderFooter:TapFooter(ges)` (`frontend/apps/reader/modules/readerfooter.lua:2517-2530`), the handler of
+  `readerfooter_tap`, which overrides `readerconfigmenu_tap` and `_ext_tap` over the status bar's strip,
+  `DTAP_ZONE_MINIBAR` (`:898-916`, `defaults.lua:63`): with the mode on it always opens the panel.
+- `ReaderFooter:onHoldFooter(ges)` (`readerfooter.lua:2647-2663`), the handler of `readerfooter_hold`
+  (`:918-926`), opens the skim dialog only for a hold inside `footer_content.dimen` while
+  `view.footer_visible`, and returns nothing otherwise so the hold falls through to `readerhighlight_hold`.
+  With the mode on the wrap consumes a hold inside the shown status bar and hands any other to the
+  original, so a word hold beside the status bar is unchanged.
+- A wrap that opens the panel returns true, which stops the zone walk; one that passes returns nil, as the
+  original does for that gesture, so the next zone gets it
+  (`frontend/ui/widget/container/inputcontainer.lua:266-271`).
+- The unit harness restores the six originals at each load (`spec/plugin_harness.lua`), as it restores
+  `Dispatcher.execute`.
 
 ### The hold on the home: the `hold` gesture, Gestures' hold corners and the home sheet's rows
 

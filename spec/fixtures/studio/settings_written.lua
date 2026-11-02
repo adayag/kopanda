@@ -1,6 +1,7 @@
 -- /mnt/us/koreader/settings/kopanda/settings.lua
 return {
     ["featured.pinned"] = "/mnt/us/documents/Frankenstein.epub",
+    ["focused.on"] = false,
     ["launcher.entries"] = {
         [1] = {
             ["kind"] = "koreader",
