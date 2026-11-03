@@ -1,7 +1,7 @@
 -- The chrome the library's windows share: a full-screen KoPanda window over the file manager (the Go to screen's over
--- the reader), its paint and settled signal, the header frame, the pager, the nav bar and the gesture route. A window
--- module extends LibraryChrome.Window and supplies the fields and functions library.lua shows; LibraryChrome.shown is
--- the window on screen.
+-- the reader), its paint and settled signal, the header frame, the pager, the nav bar, the gesture route and the
+-- library's books the windows share while one is up. A window module extends LibraryChrome.Window and supplies the
+-- fields and functions library.lua shows; LibraryChrome.shown is the window on screen.
 local BD = require("ui/bidi")
 local BookCovers = require("book_covers")
 local Books = require("books")
@@ -35,6 +35,34 @@ LibraryChrome.shown = nil
 -- { screen, view, page }: where the next file manager's show returns to after a book opened from the Series,
 -- Authors or Subjects window; in memory only.
 LibraryChrome.return_to = nil
+
+-- The library's books (LibraryChrome.books) while a window is up: { root, launched, running, records }, or nil until
+-- the next take.
+local books = nil
+-- Whether LibraryChrome.show is closing the window shown to put its own in its place, which leaves the books kept.
+local swapping = false
+
+-- The library's books as Books.all lists them, in a list of the caller's own, its records shared (keep_downloaded's
+-- patch stays in them, so a downloaded book keeps its place on the other windows): walked once while the library
+-- stays open under one root (filemanagerutil.lua:25-27). Books.all reads CoverBrowser's rows (books.lua:119-150), so
+-- a walk is trusted only while no extraction started since and none ran when it was taken (BookCovers.extractions).
+function LibraryChrome.books()
+    local root = require("apps/filemanager/filemanagerutil").getHomeFolder()
+    local launched, running = BookCovers.extractions()
+    if not books or books.root ~= root or books.launched ~= launched or books.running then
+        books = { root = root, launched = launched, running = running, records = Books.all() }
+    end
+    local list = {}
+    for i, record in ipairs(books.records) do
+        list[i] = record
+    end
+    return list
+end
+
+-- Drops the library's books, so the next take walks the library again.
+function LibraryChrome.forget_books()
+    books = nil
+end
 
 -- A box w by h in fill (a colour or nil) with an outline wide in outline_color, its children
 -- painted at their places.
@@ -528,14 +556,17 @@ local function settle(window, opts)
 end
 
 -- Shows a window of cls, built now as cls:new(fields). opts.started is time.monotonic() at the start of the
--- show path (default: now), so paint_ms includes the build. Closes the home and the window shown, shows this
--- one and returns it; on any error it is taken off the stack, nil returned and the screen beneath left alone.
+-- show path (default: now), so paint_ms includes the build. Closes the home and the window shown, the library's books
+-- kept, shows this one and returns it; on any error it is taken off the stack, nil returned and the screen beneath
+-- left alone, the books dropped.
 function LibraryChrome.show(cls, opts, fields)
     local started = opts.started or time.monotonic()
     local window
     local ok, err = pcall(function()
         Home.close()
+        swapping = true
         LibraryChrome.close()
+        swapping = false
         window = cls:new(fields)
         hold("shown", window)
         UIManager:show(window, "full")
@@ -545,6 +576,8 @@ function LibraryChrome.show(cls, opts, fields)
         return window
     end
     logger.err("KoPanda: could not show the " .. cls.screen .. ":", err)
+    swapping = false
+    books = nil
     if window and UIManager:isWidgetShown(window) then
         close_window(window)
     end
@@ -604,10 +637,15 @@ function Window:request_covers() end
 
 function Window:closing() end
 
--- Re-lists the view and rebuilds the page shown, its page clamped if items went. A failure is
--- logged and leaves the page as it was.
+-- The window's own re-read at a refresh, before its rebuild.
+function Window:relist() end
+
+-- Re-lists the view and rebuilds the page shown, its page clamped if items went: the library's books dropped, the
+-- window's re-read (relist), then the rebuild. A failure is logged and leaves the page as it was.
 function Window:refresh()
     if LibraryChrome.shown == self then
+        books = nil
+        self:relist()
         rebuild(self, self:view(), self.page)
     end
 end
@@ -636,8 +674,10 @@ end
 -- record kept in its place until its row is back (LibraryChrome.keep_downloaded), then every one of
 -- window.records' covers asked for again after the paint (BookCovers asks only for a file not yet asked,
 -- so on a page of cached covers that is the downloaded book alone). The re-list stands for the one
--- cwngsync's broadcasts left due (refresh_soon), which is dropped. Nothing while the window isn't shown.
+-- cwngsync's broadcasts left due (refresh_soon), which is dropped. The library's books are dropped either way;
+-- nothing else while the window isn't shown.
 function Window:downloaded(record)
+    books = nil
     if LibraryChrome.shown ~= self then
         return
     end
@@ -654,8 +694,10 @@ end
 -- the summary changed too (filemanagerbookinfo.lua:276-280, :556-557). The book-info page broadcasts after
 -- UIManager:close (frontend/ui/widget/keyvaluepage.lua:841-846), inside the input dispatch
 -- (frontend/ui/uimanager.lua:1607-1620), so the tick runs at the next pass's _checkTasks, before that
--- pass's _repaint paints the close (:431-433, :1537-1564, :1663). A window closed by then is not refreshed.
+-- pass's _repaint paints the close (:431-433, :1537-1564, :1663). A window closed by then is not refreshed. The
+-- library's books are dropped at once.
 local function refresh_soon(window)
+    books = nil
     if window.stale then
         return
     end
@@ -692,10 +734,14 @@ end
 
 -- KOReader may close the window itself; LibraryChrome.shown must not outlive it, nor its cover
 -- check, nor a sheet shown over it, as the home closes its own (home.lua:322-339). Then the
--- window's own part (closing), and its frame freed.
+-- window's own part (closing), and its frame freed. UIManager:close sends CloseWidget before it returns
+-- (frontend/ui/uimanager.lua:300), so a close that is no show's swap has left the library, and its books are dropped.
 function Window:onCloseWidget()
     if LibraryChrome.shown == self then
         hold("shown", nil)
+    end
+    if not swapping then
+        books = nil
     end
     self.settle_opts = nil
     local sheet_ok, sheet_err = pcall(Sheet.close)

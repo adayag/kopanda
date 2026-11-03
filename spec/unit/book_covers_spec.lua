@@ -562,6 +562,60 @@ describe("BookCovers", function()
     end)
 
     describe("cancel and replacement", function()
+        it("counts each extraction launched, none that wasn't needed or didn't start", function()
+            local bim = manager{ info = function() return nil end }
+            stub(bim)
+            assert.equals(0, (BookCovers.extractions()))
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            assert.equals(1, (BookCovers.extractions()))
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            assert.equals(1, (BookCovers.extractions()))
+            bim.extractInBackground = function()
+                return false
+            end
+            BookCovers.request({ { path = B } }, SPECS, function() end, always)
+            assert.equals(1, (BookCovers.extractions()))
+            bim.extractInBackground = function()
+                return true
+            end
+            BookCovers.request({ { path = C } }, SPECS, function() end, always)
+            assert.equals(2, (BookCovers.extractions()))
+        end)
+
+        it("tells that the extraction runs past the last check, its row never fitting, until it ends", function()
+            local bim
+            bim = manager{
+                info = function()
+                    return #bim.extracted > 0 and { cover_fetched = "Y", has_cover = false } or nil
+                end,
+                extracting = { true },
+            }
+            local queue = stub(bim)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            local checks = 0
+            while #queue > 0 do
+                run_next(queue)
+                checks = checks + 1
+            end
+            assert.equals(30, checks)
+            local launched, running = BookCovers.extractions()
+            assert.equals(1, launched)
+            assert.is_true(running)
+            bim.isExtractingInBackground = function()
+                return false
+            end
+            launched, running = BookCovers.extractions()
+            assert.equals(1, launched)
+            assert.is_false(running)
+        end)
+
+        it("tells no extraction without CoverBrowser", function()
+            stub(false)
+            local launched, running = BookCovers.extractions()
+            assert.equals(0, launched)
+            assert.is_false(running)
+        end)
+
         it("cancel leaves the queue empty and keeps the files asked", function()
             local bim = manager{ info = function() return nil end, extracting = { true } }
             local queue = stub(bim)

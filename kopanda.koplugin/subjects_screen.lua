@@ -29,9 +29,9 @@ function SubjectsScreen.on_open(view, page)
     LibraryChrome.return_to = { screen = "subjects", view = view, page = page }
 end
 
--- The books are read once per show, and again when the metadata events re-list.
+-- The library's books are taken once per show (LibraryChrome.books), and again when the metadata events re-list.
 function SubjectsScreen:init()
-    self.records = Books.all()
+    self.records = LibraryChrome.books()
     LibraryChrome.Window.init(self)
 end
 
@@ -300,23 +300,19 @@ function SubjectsScreen:request_covers()
     LibraryChrome.request_records(self)
 end
 
--- The metadata events and the sheets re-list: the kept sort dropped, the books read again (a book just
--- downloaded kept in its place, LibraryChrome.keep_downloaded), then the view rebuilt. A failed read
--- is logged and the view rebuilt from the books as they were.
-function SubjectsScreen:refresh()
-    if SubjectsScreen.shown ~= self then
-        return
-    end
+-- The re-read of a refresh (the metadata events', the sheets'), once the chrome dropped the library's books: the
+-- kept sort dropped, the books taken again (a book just downloaded kept in its place, LibraryChrome.keep_downloaded).
+-- A failed read is logged and the view rebuilt from the books as they were.
+function SubjectsScreen:relist()
     self.kept = nil
     local ok, records = pcall(function()
-        return LibraryChrome.keep_downloaded(self, Books.all())
+        return LibraryChrome.keep_downloaded(self, LibraryChrome.books())
     end)
     if ok then
         self.records = records
     else
         logger.err("KoPanda: could not re-read the subjects' books:", records)
     end
-    LibraryChrome.Window.refresh(self)
 end
 
 -- opts: view ({ kind = "list" }, the default, or { kind = "subject", name }), page and started

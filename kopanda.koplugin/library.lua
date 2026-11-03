@@ -166,8 +166,10 @@ end
 
 -- After cwngsync downloaded record's book over its placeholder: Refresh covers' re-list for that book
 -- alone, so the page is rebuilt with the book read again and its cover asked for after the paint; the
--- re-list stands for the one cwngsync's broadcasts left due (the chrome's refresh_soon), which is dropped.
+-- re-list stands for the one cwngsync's broadcasts left due (the chrome's refresh_soon), which is dropped. The
+-- library's books (LibraryChrome.books) are dropped either way.
 function Library:downloaded(record)
+    LibraryChrome.forget_books()
     if Library.shown ~= self then
         return
     end

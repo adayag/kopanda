@@ -2030,6 +2030,15 @@ row, the sidecar and the Statistics database is in the book records' and the Sta
   `UIManager:close` (`frontend/ui/widget/keyvaluepage.lua:841-846`), inside the input dispatch at
   the end of `handleInput` (`uimanager.lua:1607-1620`, run again from `:1663`), so that tick runs at
   the next pass's `_checkTasks`, before the `_repaint` that paints the close (`:1537-1564`).
+  The chrome's books (`LibraryChrome.books`, the one walk Series, Authors, Subjects and the search
+  share) are dropped at each of these events, not at the tick.
+- The chrome's books are kept under the root they were walked from,
+  `filemanagerutil.getHomeFolder()` (`frontend/apps/filemanager/filemanagerutil.lua:25-27`), read at
+  each take, walked again when an extraction started since the walk or CoverBrowser's
+  `isExtractingInBackground` (`plugins/coverbrowser.koplugin/bookinfomanager.lua:685-687`) was true at
+  it, and dropped when a chrome window closes other than for a show's swap: `UIManager:close`
+  sends `CloseWidget` before it returns (`frontend/ui/uimanager.lua:290-300`), so the window's
+  `onCloseWidget` runs inside `LibraryChrome.show`'s close of the window it replaces.
 - The library's touch zones, its `onGesture` and its paint, the chrome's, follow the home's (the
   `InputContainer`, touch lock, `covers_fullscreen` and `nextTick` entries above), and its covers
   the featured cover's bounded check (`book_covers.lua`, the featured cover's entry above).

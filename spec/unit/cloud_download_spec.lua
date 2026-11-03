@@ -550,8 +550,8 @@ describe("Download on a placeholder's sheet", function()
         end
 
         -- Books 9 to 20 written beside the eight, so a page of the kind is full; then, with k the
-        -- parts of its first page, every book past k + 1 removed and the held one made book k + 1,
-        -- the last, alone on the last page.
+        -- parts of its first page, the window closed, every book past k + 1 removed and the held one
+        -- made book k + 1, the last, alone on the last page.
         local function alone_on_last_page(kind)
             for i = COUNT + 1, 20 do
                 write(path_of(i), "book " .. i)
@@ -561,6 +561,8 @@ describe("Download on a placeholder's sheet", function()
             harness.tick(3)
             local k = #first[WINDOWS[kind].parts]
             assert.truthy(first.pages > 1 and k < 20, "a page of the " .. kind .. " holds every book")
+            -- The library left, so the next show walks the books as the disk now has them.
+            package.loaded[WINDOWS[kind].module].close()
             for i = k + 2, 20 do
                 os.remove(path_of(i))
                 bim.rows[path_of(i)] = nil

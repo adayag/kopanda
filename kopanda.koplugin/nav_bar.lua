@@ -78,6 +78,12 @@ local WINDOWS = { library = "library", series = "series_screen", authors = "auth
 -- logged with the tab's name and goes no further, so the screen under the bar stays as it was.
 function NavBar.run(id, where)
     local ok, err = pcall(function()
+        -- A screen that isn't the library's leaves its books to be walked again: History and Settings open over
+        -- the window, and History's Delete tells nothing (filemanager.lua:1169-1192). Required now, as it requires
+        -- this module.
+        if not WINDOWS[id] then
+            require("library_chrome").forget_books()
+        end
         if id == "home" then
             -- On the home, Home is the screen already. From the file browser, KoPanda's instance, registered under its
             -- name (frontend/apps/filemanager/filemanager.lua:379-389, :424); from a chrome window, the same once the

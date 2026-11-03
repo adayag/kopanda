@@ -7,7 +7,8 @@
 -- pcall(require, "bookinfomanager"): its folder joins package.path only when the plugin is enabled
 -- (frontend/pluginloader.lua:283-287), so a failed require means it is disabled.
 -- Module state: asked, by file, the box extraction was last asked for in this process; pending, the
--- records of the request in flight whose covers have not arrived; check, the scheduled check or nil.
+-- records of the request in flight whose covers have not arrived; check, the scheduled check or nil; launches, the
+-- extractions started in this process.
 local BookList = require("ui/widget/booklist")
 local Books = require("books")
 local UIManager = require("ui/uimanager")
@@ -21,6 +22,7 @@ local MAX_CHECKS = 30
 local asked = {}
 local pending = {}
 local check
+local launches = 0
 
 -- BookInfoManager, or nil when CoverBrowser is disabled.
 local function manager()
@@ -183,6 +185,7 @@ function BookCovers.request(records, specs, on_arrival, alive)
         logger.err("KoPanda: CoverBrowser's extraction didn't start:", launched)
         return
     end
+    launches = launches + 1
     pending = batch
     local runs = 0
     local this_check
@@ -248,6 +251,18 @@ function BookCovers.request(records, specs, on_arrival, alive)
     UIManager:scheduleIn(1, this_check)
 end
 
+-- The count of extractions started in this process, and whether CoverBrowser's still runs (bookinfomanager.lua:685-687,
+-- until it reaps the process): till then rows land in its cache that no check reports, a file still pending at the
+-- last check or a row with no cover. An answer that raises is a yes.
+function BookCovers.extractions()
+    local bim = manager()
+    if not bim then
+        return launches, false
+    end
+    local ok, running = pcall(bim.isExtractingInBackground, bim)
+    return launches, not ok or running == true
+end
+
 -- Forgets each of paths' cover as CoverBrowser's own refresh does (plugins/coverbrowser.koplugin/main.lua:533-546,
 -- :596-606): its row deleted, which drops its ignore flags, and BookList's cached entry reset; then
 -- it is no longer asked or pending. A delete that raises is logged and its path left as it was.
@@ -281,6 +296,7 @@ function BookCovers.reset()
     BookCovers.cancel()
     asked = {}
     pending = {}
+    launches = 0
 end
 
 return BookCovers
