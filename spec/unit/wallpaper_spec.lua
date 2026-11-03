@@ -1,7 +1,8 @@
 -- wallpaper.lua: the wallpaper.file setting's image behind a look that draws one, scaled to cover the screen and
 -- centred, rendered once per path, size and palette variant and kept until its holder lets go or the setting, size or
--- variant changes; pre-inverted at night; a missing or unrenderable file logged once and drawn as nothing. Rendered
--- from PNGs this spec writes under the scratch KO_HOME, and spec/fixtures/wallpaper.png.
+-- variant changes; pre-inverted at night; a missing or unrenderable file logged once and drawn as nothing; the scaled
+-- image kept on disk so a later home reads it back instead of decoding the file again. Rendered from PNGs this spec
+-- writes under the scratch KO_HOME, and spec/fixtures/wallpaper.png.
 describe("wallpaper", function()
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
@@ -10,6 +11,9 @@ describe("wallpaper", function()
     local Screen = require("device").screen
     local Settings, Wallpaper, frosted, diner, night_mode
     local dir = os.getenv("KO_HOME") .. "/wallpaper-spec"
+    local lfs = require("libs/libkoreader-lfs")
+    local cache_dir = require("datastorage"):getDataDir() .. "/cache/kopanda"
+    local cache_file = cache_dir .. "/wallpaper"
 
     local RED, BLUE, GREEN = { 220, 20, 30 }, { 20, 40, 220 }, { 0, 160, 0 }
 
@@ -128,6 +132,8 @@ describe("wallpaper", function()
         Wallpaper._reset()
         Settings._reset()
         os.remove(harness.settings_file)
+        os.remove(cache_file)
+        os.remove(cache_file .. ".part")
         harness.teardown()
     end)
 
@@ -141,21 +147,22 @@ describe("wallpaper", function()
         end
     end)
 
-    it("renders once per path, size and variant, and frees the one it replaces", function()
+    -- Day and night in colour are the same picture before night's inversion, so night reads day's from the cache.
+    it("renders once per path, size and buffer type, and frees the one it replaces", function()
         local renders = count_renders()
         Settings.set("wallpaper.file", wide_png("once.png"))
         local day = Wallpaper.get(frosted, "day", 10, 10, "home")
         assert.equals(tostring(day), tostring(Wallpaper.get(frosted, "day", 10, 10, "home")))
         assert.equals(1, renders.n)
         local night = Wallpaper.get(frosted, "night", 10, 10, "home")
-        assert.equals(2, renders.n)
+        assert.equals(1, renders.n)
         assert.equals(0, day:getAllocated())
         local bigger = Wallpaper.get(frosted, "night", 20, 20, "home")
-        assert.equals(3, renders.n)
+        assert.equals(2, renders.n)
         assert.equals(0, night:getAllocated())
         Settings.set("wallpaper.file", wide_png("other.png"))
         Wallpaper.get(frosted, "night", 20, 20, "home")
-        assert.equals(4, renders.n)
+        assert.equals(3, renders.n)
         assert.equals(0, bigger:getAllocated())
     end)
 
@@ -167,7 +174,8 @@ describe("wallpaper", function()
     end)
 
     -- Night mode on a grey screen keeps the grey variant (Looks.variant), but the screen still
-    -- inverts, so the image is inverted as at night and held apart from the day's.
+    -- inverts, so the image is inverted as at night and held apart from the day's, read from the
+    -- cache the day's image wrote.
     it("pre-inverts the grey image in night mode, held apart from the day's", function()
         local renders = count_renders()
         Settings.set("wallpaper.file", wide_png("grey-night.png"))
@@ -175,7 +183,7 @@ describe("wallpaper", function()
         local day = pixel(Wallpaper.current(day_key), 0, 5)
         Screen.night_mode = true
         local image, night_key = Wallpaper.get(frosted, "grey", 10, 10, "home")
-        assert.equals(2, renders.n)
+        assert.equals(1, renders.n)
         assert.are_not.equal(day_key, night_key)
         local got = pixel(image, 0, 5)
         assert.is_true(near({ 255 - day[1], 255 - day[2], 255 - day[3] }, got), table.concat(got, ","))
@@ -188,15 +196,12 @@ describe("wallpaper", function()
     end)
 
     it("frees the image when its holder lets go, and not for another holder", function()
-        local renders = count_renders()
         Settings.set("wallpaper.file", wide_png("held.png"))
         local image = Wallpaper.get(frosted, "day", 10, 10, "home")
         Wallpaper.release("another home")
         assert.equals(1, image:getAllocated())
         Wallpaper.release("home")
         assert.equals(0, image:getAllocated())
-        Wallpaper.get(frosted, "day", 10, 10, "home")
-        assert.equals(2, renders.n)
     end)
 
     it("renders nothing for a look that draws no wallpaper, freeing what it held", function()
@@ -298,6 +303,170 @@ describe("wallpaper", function()
         Settings.set("wallpaper.file", harness.root .. "/spec/fixtures/wallpaper.png")
         local image = Wallpaper.get(frosted, "day", 1264, 1680, "home")
         assert.same({ 1264, 1680 }, { image:getWidth(), image:getHeight() })
+    end)
+
+    -- The scaled image is written under KOReader's cache folder once, and a later home reads it
+    -- back instead of decoding the file; one file, rewritten whenever what it was scaled from changes.
+    describe("the disk cache", function()
+        local function read_file(path)
+            local f = assert(io.open(path, "rb"))
+            local bytes = f:read("*a")
+            f:close()
+            return bytes
+        end
+
+        -- A get for a home that has just opened, after the last one closed.
+        local function reopen(variant, w, h)
+            Wallpaper.release("home")
+            return Wallpaper.get(frosted, variant or "day", w or 10, h or 10, "home")
+        end
+
+        local function shows_the_picture(image)
+            assert.is_not_nil(image)
+            for y = 0, image:getHeight() - 1 do
+                assert.is_true(near(RED, pixel(image, 0, y)), "left " .. y)
+                assert.is_true(near(BLUE, pixel(image, image:getWidth() - 1, y)), "right " .. y)
+            end
+        end
+
+        before_each(function()
+            if lfs.attributes(cache_dir, "mode") == "file" then
+                os.remove(cache_dir)
+            end
+            os.remove(cache_file)
+        end)
+
+        it("reads a later home's image from the cache instead of decoding the file again", function()
+            local renders = count_renders()
+            Settings.set("wallpaper.file", wide_png("cached.png"))
+            shows_the_picture(Wallpaper.get(frosted, "day", 10, 10, "home"))
+            assert.equals("file", lfs.attributes(cache_file, "mode"))
+            local image = reopen()
+            assert.equals(1, renders.n)
+            shows_the_picture(image)
+            assert.equals(Blitbuffer.TYPE_BBRGB32, image:getType())
+        end)
+
+        it("rebuilds the cache when the file's time or size changes, or the screen's size", function()
+            local renders = count_renders()
+            local path = wide_png("changed.png")
+            Settings.set("wallpaper.file", path)
+            Wallpaper.get(frosted, "day", 10, 10, "home")
+            local mtime = lfs.attributes(path, "modification")
+            assert(lfs.touch(path, mtime + 10, mtime + 10))
+            shows_the_picture(reopen())
+            assert.equals(2, renders.n)
+            reopen()
+            assert.equals(2, renders.n)
+
+            local f = assert(io.open(path, "ab"))
+            f:write("\0\0\0\0")
+            f:close()
+            assert(lfs.touch(path, mtime + 10, mtime + 10))
+            shows_the_picture(reopen())
+            assert.equals(3, renders.n)
+
+            local taller = reopen("day", 10, 12)
+            assert.equals(4, renders.n)
+            assert.same({ 10, 12 }, { taller:getWidth(), taller:getHeight() })
+            reopen("day", 10, 12)
+            assert.equals(4, renders.n)
+            reopen("grey", 10, 12)
+            assert.equals(5, renders.n)
+        end)
+
+        it("ignores a truncated or corrupt cache, draws from the file and rewrites the cache", function()
+            local renders = count_renders()
+            Settings.set("wallpaper.file", wide_png("corrupt.png"))
+            Wallpaper.get(frosted, "day", 10, 10, "home")
+            local good = read_file(cache_file)
+            for i, bad in ipairs({ good:sub(1, #good - 7), "not a cache", good .. "extra" }) do
+                local f = assert(io.open(cache_file, "wb"))
+                f:write(bad)
+                f:close()
+                local warn = spy.on(logger, "warn")
+                local image = reopen()
+                logger.warn:revert()
+                assert.equals(1 + i, renders.n)
+                shows_the_picture(image)
+                assert.is_true(warned(warn, "cache"), "warned " .. i)
+                assert.equals(good, read_file(cache_file))
+            end
+        end)
+
+        it("draws the wallpaper when the cache can't be written", function()
+            local renders = count_renders()
+            os.remove(cache_dir)
+            local f = assert(io.open(cache_dir, "wb"))
+            f:close()
+            finally(function()
+                os.remove(cache_dir)
+            end)
+            local warn = spy.on(logger, "warn")
+            finally(function()
+                logger.warn:revert()
+            end)
+            Settings.set("wallpaper.file", wide_png("unwritable.png"))
+            shows_the_picture(Wallpaper.get(frosted, "day", 10, 10, "home"))
+            assert.is_true(warned(warn, "cache"))
+            shows_the_picture(reopen())
+            assert.equals(2, renders.n)
+        end)
+
+        it("pre-inverts an image read from the cache at night", function()
+            Settings.set("wallpaper.file", wide_png("cached-night.png"))
+            Wallpaper.get(frosted, "day", 10, 10, "home")
+            Screen.night_mode = true
+            local renders = count_renders()
+            local image = reopen("night")
+            assert.equals(0, renders.n)
+            assert.is_true(near({ 255 - RED[1], 255 - RED[2], 255 - RED[3] }, pixel(image, 0, 5)))
+        end)
+
+        it("a night first open caches the picture, not its inversion", function()
+            local renders = count_renders()
+            Settings.set("wallpaper.file", wide_png("night-first.png"))
+            Screen.night_mode = true
+            Wallpaper.get(frosted, "night", 10, 10, "home")
+            Screen.night_mode = false
+            local image = reopen("day")
+            assert.equals(1, renders.n)
+            shows_the_picture(image)
+            Screen.night_mode = true
+            image = reopen("night")
+            assert.equals(1, renders.n)
+            assert.is_true(near({ 255 - RED[1], 255 - RED[2], 255 - RED[3] }, pixel(image, 0, 5)))
+        end)
+
+        it("leaves no temporary file behind when the pixels can't be had", function()
+            local tostring_bb = Blitbuffer.tostring
+            Blitbuffer.tostring = function()
+                error("no pixels", 0)
+            end
+            finally(function()
+                Blitbuffer.tostring = tostring_bb
+            end)
+            Settings.set("wallpaper.file", wide_png("no-pixels.png"))
+            shows_the_picture(Wallpaper.get(frosted, "day", 10, 10, "home"))
+            assert.is_nil(lfs.attributes(cache_file .. ".part"))
+            assert.is_nil(lfs.attributes(cache_file))
+        end)
+
+        it("flushes the cache to the disk before closing it", function()
+            Settings.set("wallpaper.file", wide_png("synced.png"))
+            local ffiutil = require("ffi/util")
+            local fsync = ffiutil.fsyncOpenedFile
+            local open_at_sync = {}
+            ffiutil.fsyncOpenedFile = function(f, ...)
+                table.insert(open_at_sync, io.type(f))
+                return fsync(f, ...)
+            end
+            finally(function()
+                ffiutil.fsyncOpenedFile = fsync
+            end)
+            Wallpaper.get(frosted, "day", 10, 10, "home")
+            assert.same({ "file" }, open_at_sync)
+        end)
     end)
 
     describe("paint", function()

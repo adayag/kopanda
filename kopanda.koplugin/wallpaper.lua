@@ -8,12 +8,17 @@
 -- refused before it is read; a header that is neither, or can't be read, leaves the byte cap alone.
 -- Night mode inverts the whole screen, so the image is kept inverted, as ImageWidget
 -- inverts a cover at night (frontend/ui/widget/imagewidget.lua:583-593); in grey it is an 8-bit grey buffer, the
--- screen's own type, which blitFrom converts it to (base/ffi/blitbuffer.lua:1281). State: the image held, { key,
--- bb, holder }, and the files that failed, by key.
+-- screen's own type, which blitFrom converts it to (base/ffi/blitbuffer.lua:1281). The scaled image, before night's
+-- inversion, is also kept in one file under KOReader's cache folder (datastorage.lua:96-120), in a subfolder so the
+-- document cache doesn't take it for its own (frontend/cache.lua:68-77, frontend/fontlist.lua:12), as its raw pixels
+-- (base/ffi/blitbuffer.lua:2623-2639), so a later home reads it back instead of decoding the file again. State: the
+-- image held, { key, bb, holder }, and the files that failed, by key.
 local Blitbuffer = require("ffi/blitbuffer")
+local DataStorage = require("datastorage")
 local Device = require("device")
 local RenderImage = require("ui/renderimage")
 local Settings = require("settings")
+local ffiUtil = require("ffi/util")
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
 
@@ -27,6 +32,11 @@ local MAX_BYTES = 12 * 1024 * 1024
 local MAX_SIDE = 4000
 -- How many JPEG segments are read looking for the frame header before the header counts as unknown.
 local MAX_SEGMENTS = 64
+
+-- The cache file: CACHE_MAGIC, the key's length on a line of its own, the key, then the image's pixels.
+local CACHE_DIR = DataStorage:getDataDir() .. "/cache/kopanda"
+local CACHE_FILE = CACHE_DIR .. "/wallpaper"
+local CACHE_MAGIC = "KoPanda wallpaper 1\n"
 
 local function drop()
     if held then
@@ -94,10 +104,10 @@ local function refuse_large(path)
     end
 end
 
--- The file at path rendered for a w by h screen in variant: RenderImage:renderImageFile at the file's own size
--- (frontend/ui/renderimage.lua:28-37), scaled to cover by RenderImage:scaleBlitBuffer (:303-328, which frees
--- the render it scales), centred and cropped into a new buffer, inverted at night. Raises when it won't render.
-local function render(path, w, h, variant, night)
+-- The file at path rendered for a w by h screen into a buffer of bbtype: RenderImage:renderImageFile at the file's
+-- own size (frontend/ui/renderimage.lua:28-37), scaled to cover by RenderImage:scaleBlitBuffer (:303-328, which
+-- frees the render it scales), centred and cropped into a new buffer. Raises when it won't render.
+local function render(path, w, h, bbtype)
     local image = RenderImage:renderImageFile(path, false)
     if not image then
         error("it didn't render", 0)
@@ -106,13 +116,97 @@ local function render(path, w, h, variant, night)
     local scale = math.max(w / iw, h / ih)
     local sw, sh = math.max(w, math.ceil(iw * scale)), math.max(h, math.ceil(ih * scale))
     local scaled = RenderImage:scaleBlitBuffer(image, sw, sh)
-    local bb = Blitbuffer.new(w, h, variant == "grey" and Blitbuffer.TYPE_BB8 or Blitbuffer.TYPE_BBRGB32)
+    local bb = Blitbuffer.new(w, h, bbtype)
     bb:blitFrom(scaled, 0, 0, math.floor((sw - w) / 2), math.floor((sh - h) / 2), w, h)
     scaled:free()
-    if night then
-        bb:invertRect(0, 0, w, h)
-    end
     return bb
+end
+
+-- The image the cache holds for key, w by h in bbtype, or nil when there is none or it holds another key.
+-- Raises when the file is there but isn't a whole cache.
+local function read_cache(key, w, h, bbtype)
+    local f = io.open(CACHE_FILE, "rb")
+    if not f then
+        return nil
+    end
+    local ok, result = pcall(function()
+        if f:read(#CACHE_MAGIC) ~= CACHE_MAGIC then
+            error("it doesn't start as a cache", 0)
+        end
+        local length = tonumber(f:read("*l"))
+        if not length then
+            error("it has no key", 0)
+        end
+        if f:read(length) ~= key then
+            return nil
+        end
+        local size = w * h * Blitbuffer.TYPE_TO_BPP[bbtype] / 8
+        local pixels = f:read(size)
+        if not pixels or #pixels ~= size or f:read(1) then
+            error("its pixels aren't a " .. w .. " x " .. h .. " image", 0)
+        end
+        return Blitbuffer.fromstring(w, h, bbtype, pixels)
+    end)
+    f:close()
+    if not ok then
+        error(result, 0)
+    end
+    return result
+end
+
+-- Writes image to the cache for key through a temporary file renamed over the last, so a write cut short leaves
+-- the last cache or none. Raises when it can't.
+local function write_cache(key, image)
+    lfs.mkdir(CACHE_DIR)
+    local temp = CACHE_FILE .. ".part"
+    local pixels = Blitbuffer.tostring(image)
+    local f, err = io.open(temp, "wb")
+    if not f then
+        error(err, 0)
+    end
+    local written, write_err = f:write(CACHE_MAGIC, #key, "\n", key, pixels)
+    if written then
+        ffiUtil.fsyncOpenedFile(f)
+    end
+    local closed, close_err = f:close()
+    local renamed, rename_err
+    if written and closed then
+        renamed, rename_err = os.rename(temp, CACHE_FILE)
+    end
+    if not renamed then
+        os.remove(temp)
+        error(write_err or close_err or rename_err, 0)
+    end
+end
+
+-- The file at path, whose stamp is now, for a w by h screen in bbtype before night's inversion, from the cache
+-- when it holds the same, else rendered and cached; raises when the file is too large or won't render.
+local function load(path, now, w, h, bbtype)
+    local key = table.concat({
+        path,
+        now,
+        w,
+        h,
+        bbtype,
+        -- TurboJPEG decodes grey on a grey screen (frontend/ui/renderimage.lua:120), and legacy scaling is
+        -- nearest neighbour (:317).
+        tostring(Device:hasColorScreen()),
+        tostring(G_reader_settings:isTrue("legacy_image_scaling")),
+    }, "\0")
+    local read, cached = pcall(read_cache, key, w, h, bbtype)
+    if read and cached then
+        return cached
+    end
+    if not read then
+        logger.warn("KoPanda: could not read the wallpaper cache", CACHE_FILE, "so it is rebuilt:", cached)
+    end
+    refuse_large(path)
+    local image = render(path, w, h, bbtype)
+    local written, err = pcall(write_cache, key, image)
+    if not written then
+        logger.warn("KoPanda: could not write the wallpaper cache", CACHE_FILE, ":", err)
+    end
+    return image
 end
 
 -- What a failed file is remembered by: its size and modification time, so a file copied there
@@ -149,8 +243,11 @@ function Wallpaper.get(look, variant, w, h, holder)
         if now == "missing" then
             error("there is no such file", 0)
         end
-        refuse_large(path)
-        return render(path, w, h, variant, night)
+        local image = load(path, now, w, h, variant == "grey" and Blitbuffer.TYPE_BB8 or Blitbuffer.TYPE_BBRGB32)
+        if night then
+            image:invertRect(0, 0, w, h)
+        end
+        return image
     end)
     if not ok then
         failed[key] = now

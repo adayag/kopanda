@@ -2238,6 +2238,22 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
   then hands it to `scaleBlitBuffer` (`frontend/ui/renderimage.lua:115-134`), and MuPDF decodes a
   PNG at its own size likewise, so the peak is the full image and a kill for memory can't be
   caught; `wallpaper.lua` refuses an oversize file before reading it.
+- The wallpaper's disk cache: `datastorage`'s `getDataDir` (`datastorage.lua:16-20`) and the
+  `cache` folder `initDataDir` makes under it (`:96-120`). The file sits in `cache/kopanda/`, a
+  subfolder, because the document cache lists every file directly in `cache/` as its own and
+  removes them when it clears (`frontend/cache.lua:68-77`, `:184-193`), which is why `FontList`
+  keeps its cache in `cache/fontlist` (`frontend/fontlist.lua:12`). The pixels are written with
+  `Blitbuffer.tostring` (`base/ffi/blitbuffer.lua:2637-2639`, `stride * h` bytes) and read back
+  with `Blitbuffer.fromstring` (`:2623-2635`), sized by `Blitbuffer.TYPE_TO_BPP` (`:2757`); a
+  buffer `Blitbuffer.new` makes with no stride has `w * bpp / 8` bytes a row (`:2596-2597`). The
+  temporary file is flushed to the disk with `ffi/util`'s `fsyncOpenedFile` (`base/ffi/util.lua:588`)
+  before it is closed and renamed, as `persist.lua` (`frontend/persist.lua:285`) and
+  `util.writeToFile` (`frontend/util.lua:1136`) do, so a power cut can't leave a whole-sized file of
+  garbage behind the rename. The key
+  holds what changes the scaled result besides the file and the size: `Device:hasColorScreen()`
+  (`frontend/device/generic/device.lua:122`), since TurboJPEG decodes grey on a grey screen
+  (`frontend/ui/renderimage.lua:120`), and the `G_reader_settings` key `legacy_image_scaling`,
+  read with `isTrue`, which swaps MuPDF's scaling for nearest neighbour (`:317-319`).
 - The plates (`plate.lua`): `lightenRect(x, y, w, h, by)` (`base/ffi/blitbuffer.lua:2273-2283`;
   its note says it used to be called `dimRect`) blends white at `by` over the rectangle, through
   the C blitter's `BB_blend_rect` when it can; `darkenRect` (`:2295-2306`) blends black the same
