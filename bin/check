@@ -19,7 +19,8 @@
 #
 # Without --verbose each stage prints luacheck's total or Busted's suite summary, one per layer summing its shards,
 # plus each file with a failing test and Busted's failure blocks in full, and any line a test starts with
-# "[  NOTE    ] ".
+# "[  NOTE    ] ". With or without it, each layer and each named run then prints its 5 slowest tests, across its
+# shards, under "[  SLOWEST ] ".
 #
 # Exit 0 on success, 1 when a stage fails, 2 when the script refuses to run.
 set -euo pipefail
@@ -170,7 +171,47 @@ summarize() {
     '
 }
 
+# Passes Busted's gtest output through and writes each test that finished to the file times, a line apiece: its
+# milliseconds, a tab, then its file (from the checkout's root when under it), line and name.
+record_times() {
+    awk -v root="$KOPANDA_ROOT/" -v times="$1" '
+        BEGIN { printf "" >times }
+        { print }
+        /^\[----------\] Running tests from / {
+            file = $0
+            sub(/^\[----------\] Running tests from /, "", file)
+            if (index(file, root) == 1) file = substr(file, length(root) + 1)
+        }
+        /^\[(       OK |  FAILED  |  ERROR   )\] .*\.lua:[0-9]+: .* \([0-9.]+ ms\)$/ {
+            test = substr($0, 14)
+            ms = test
+            sub(/.* \(/, "", ms)
+            sub(/ ms\)$/, "", ms)
+            sub(/ \([0-9.]+ ms\)$/, "", test)
+            match(test, /\.lua:[0-9]+: /)
+            printf "%s\t%s:%s %s\n", ms, file, substr(test, RSTART + 5, RLENGTH - 7),
+                substr(test, RSTART + RLENGTH) >times
+        }
+    '
+}
+
+# Prints the five slowest tests the times files hold, slowest first, under a line that counts them.
+slowest() {
+    sort -t $'\t' -k1,1nr -k2,2 "$@" | awk -F '\t' '
+        NR <= 5 { line[NR] = sprintf("[  SLOWEST ] %d ms %s", $1 + 0.5, $2) }
+        END {
+            shown = NR < 5 ? NR : 5
+            if (shown == 0) exit
+            printf "[  SLOWEST ] %d slowest %s\n", shown, (shown == 1 ? "test" : "tests")
+            for (n = 1; n <= shown; n++) print line[n]
+        }
+    '
+}
+
+# Runs the specs in one Busted process, writing each test's time to the file named first.
 run_busted() {
+    local times="$1"
+    shift
     local lua_path="?.lua;common/?.lua;frontend/?.lua;spec/front/unit/?.lua"
     lua_path="$lua_path;spec/rocks/share/lua/5.1/?.lua;spec/rocks/share/lua/5.1/?/init.lua"
     lua_path="$lua_path;$KOPANDA_ROOT/spec/?.lua;$KOPANDA_ROOT/kopanda.koplugin/?.lua"
@@ -179,9 +220,9 @@ run_busted() {
     cd "$KOPANDA_EMULATOR"
     local lua_cpath='?.so;common/?.so;spec/rocks/lib/lua/5.1/?.so'
     if [[ $verbose -eq 1 ]]; then
-        LUA_PATH="$lua_path" LUA_CPATH="$lua_cpath" "${busted[@]}" -- "$@"
+        LUA_PATH="$lua_path" LUA_CPATH="$lua_cpath" "${busted[@]}" -- "$@" | record_times "$times"
     else
-        LUA_PATH="$lua_path" LUA_CPATH="$lua_cpath" "${busted[@]}" -- "$@" 2>&1 | summarize
+        LUA_PATH="$lua_path" LUA_CPATH="$lua_cpath" "${busted[@]}" -- "$@" 2>&1 | record_times "$times" | summarize
     fi
 }
 
@@ -213,7 +254,7 @@ run_shards() {
         (
             KO_HOME="$(mktemp -d "$KO_HOME/ko_home.XXXXXX")"
             export KO_HOME
-            run_busted "${shard[@]}"
+            run_busted "$out.$n.times" "${shard[@]}"
         ) >"$out.$n" 2>&1 &
         pids+=($!)
         outputs+=("$out.$n")
@@ -319,6 +360,7 @@ run_layer() {
         run_shards 1 "$KO_HOME/$layer-budget" "${budget[@]}" || status=1
     fi
     combine "${outputs[@]}"
+    slowest "${outputs[@]/%/.times}"
     return $status
 }
 
@@ -343,5 +385,8 @@ else
         [[ -f "$spec" ]] || refuse "bin/check: no such spec file: $spec"
         specs+=("$(absolute "$spec")")
     done
-    run_busted "${specs[@]}" || exit 1
+    status=0
+    run_busted "$KO_HOME/named.times" "${specs[@]}" || status=1
+    slowest "$KO_HOME/named.times"
+    exit $status
 fi

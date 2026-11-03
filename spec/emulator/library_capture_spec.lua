@@ -1,4 +1,4 @@
--- The library's paint budget: the library window over a capture library this spec builds in its scratch space, in
+-- The library on the emulator: the library window over a capture library this spec builds in its scratch space, in
 -- Diner on the Colorsoft, at its root, in its sub-folder and with the sort sheet over its root; and a book opened
 -- from the library closing back to the library, built at the file manager's Show. The capture library
 -- (capture_library.lua) is copies of the fixture books, so spec/fixtures/library/ is not changed. The home fixture
@@ -13,10 +13,6 @@ describe("the library on the emulator", function()
     local plugin = root .. "/kopanda.koplugin"
     local fixture = root .. "/spec/emulator/scenarios/2-scenario-home-fixture.lua"
     local scenario = root .. "/spec/emulator/scenarios/2-scenario-library.lua"
-    -- The library's paint budget: the library, or the sort sheet over it, paints within this many
-    -- ms of its show, in the emulator on this Mac, the home's tripwire (paint_budget.lua). A
-    -- regression tripwire, not a device figure.
-    local PAINT_BUDGET_MS = 250
 
     local scenarios = {
         { step = "root" },
@@ -57,16 +53,9 @@ describe("the library on the emulator", function()
         return n
     end
 
-    local function within_budget(paint_ms)
-        assert.is_number(paint_ms)
-        assert.truthy(paint_ms > 0)
-        assert.truthy(paint_ms <= PAINT_BUDGET_MS,
-            string.format("paint_ms %s over the %d ms budget", tostring(paint_ms), PAINT_BUDGET_MS))
-    end
-
     for _, scenario_opts in ipairs(scenarios) do
         local screen = scenario_opts.screen or "library"
-        it("settles at the " .. scenario_opts.step .. " step on colorsoft, within the paint budget", function()
+        it("settles at the " .. scenario_opts.step .. " step on colorsoft", function()
             local result = capture{ step = scenario_opts.step, screen = screen }
             local sidecar = result.sidecar
             assert.is_nil(sidecar.error, sidecar.error)
@@ -74,9 +63,6 @@ describe("the library on the emulator", function()
             if screen ~= "library" then
                 assert.equals("sort", sidecar.name)
             end
-            within_budget(sidecar.paint_ms)
-            print(string.format("library %s paint on colorsoft: paint_ms=%s", scenario_opts.step,
-                tostring(sidecar.paint_ms)))
             local log = read(result.log)
             assert.equals(1, count(log, "KOPANDA_SHOT: saved"))
             assert.equals(0, count(log, "settle cap"))
@@ -96,8 +82,5 @@ describe("the library on the emulator", function()
         assert.equals(0, sidecar.fm_paints)
         assert.is_true(sidecar.same_dir)
         assert.is_true(sidecar.same_page)
-        within_budget(sidecar.paint_ms)
-        print(string.format("library book close: fm_paints=%d paint_ms=%s", sidecar.fm_paints,
-            tostring(sidecar.paint_ms)))
     end)
 end)

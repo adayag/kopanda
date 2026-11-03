@@ -4,6 +4,7 @@
 -- draws its placeholder; FileManager.instance and Home.close are replaced by recorders. Each
 -- case restores them.
 describe("the featured widget", function()
+    local edges = require("edges")
     local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
     local FrameContainer = require("ui/widget/container/framecontainer")
@@ -515,16 +516,20 @@ describe("the featured widget", function()
             built:free()
         end)
 
-        -- The column's states as its height falls a pixel at a time from 600 to 20, the cover box's height replaced
-        -- so the column's height is free: each state names the lines under the title the column draws and the title's
-        -- lines; repeats are folded.
+        -- The column's states as its height falls from 600 to 20, the cover box's height replaced so the column's
+        -- height is free: each state names the lines under the title the column draws and the title's lines;
+        -- repeats are folded. A shorter column never draws a line back, so each change and the heights either
+        -- side of it give every state.
         local function overflow(id, width, book)
             local column_h
             FeaturedCover.box = function(w, ctx)
                 return (real_box(w, ctx)), column_h
             end
-            local states = {}
-            for h = 600, 20, -1 do
+            local seen = {}
+            local function state(h)
+                if seen[h] then
+                    return seen[h]
+                end
                 column_h = h
                 calls.book = book
                 local built = Featured.build(width, ctx_for(id, { text_size = "large" }))
@@ -551,11 +556,17 @@ describe("the featured widget", function()
                     parts[#parts + 1] = "chapter"
                 end
                 parts[#parts + 1] = "title " .. tostring(title_lines)
-                local state = table.concat(parts, ", ")
-                if states[#states] ~= state then
-                    states[#states + 1] = state
-                end
                 built:free()
+                seen[h] = table.concat(parts, ", ")
+                return seen[h]
+            end
+            local heights = edges.around_changes(20, 600, state)
+            local states = {}
+            for i = #heights, 1, -1 do
+                local at = state(heights[i])
+                if states[#states] ~= at then
+                    states[#states + 1] = at
+                end
             end
             return states
         end

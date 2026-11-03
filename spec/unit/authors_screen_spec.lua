@@ -4,6 +4,7 @@
 -- Books.progress are stubbed with records under a root that exists nowhere (spec/shelf_fixture.lua).
 describe("the Authors window", function()
     local cases = require("shelf_screen_cases")
+    local edges = require("edges")
     local harness = require("plugin_harness")
     local fixture = require("shelf_fixture")
     local text_of = require("library_fixture").text
@@ -287,21 +288,32 @@ describe("the Authors window", function()
         end)
 
         -- Whatever room a page leaves, the list keeps the gap: on screens from 1500 to 1800 px high, a
-        -- full first page's last group and its shadow end shelf.list.pager_gap above the pager.
+        -- full first page's last group and its shadow end shelf.list.pager_gap above the pager. A page's room is
+        -- tightest where its row count changes and loosest just before it; the count never falls as the screen
+        -- grows.
         it("keeps the pager gap on a full page at every screen height, in both looks", function()
             fixture.install(shelf(38))
             each_look(function(id)
-                for h = 1500, 1800, 5 do
-                    harness.at_screen(1264, h, function()
-                        local screen = AuthorsScreen.show{}
-                        assert.is_true(screen.pages >= 2, id)
-                        local gap = Screen:scaleBySize(screen.ctx.look.shelf.list.pager_gap)
-                        local last = screen.groups[#screen.groups]
-                        local foot = last.rect.y + last.rect.h + last.widget.shadow_y
-                        assert.is_true(foot + gap <= screen.pager.prev.rect.y,
-                            ("%s at %d px: %d px above the pager"):format(id, h, screen.pager.prev.rect.y - foot))
-                        AuthorsScreen.close()
-                    end)
+                -- Page 1's row count at h, its gap checked once.
+                local counted = {}
+                local function rows(h)
+                    if not counted[h] then
+                        harness.at_screen(1264, h, function()
+                            local screen = AuthorsScreen.show{}
+                            assert.is_true(screen.pages >= 2, id)
+                            local gap = Screen:scaleBySize(screen.ctx.look.shelf.list.pager_gap)
+                            local last = screen.groups[#screen.groups]
+                            local foot = last.rect.y + last.rect.h + last.widget.shadow_y
+                            assert.is_true(foot + gap <= screen.pager.prev.rect.y,
+                                ("%s at %d px: %d px above the pager"):format(id, h, screen.pager.prev.rect.y - foot))
+                            counted[h] = #screen.rows
+                            AuthorsScreen.close()
+                        end)
+                    end
+                    return counted[h]
+                end
+                for _, h in ipairs(edges.around_changes(1500, 1800, rows)) do
+                    rows(h)
                 end
             end)
         end)

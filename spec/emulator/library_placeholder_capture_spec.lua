@@ -1,4 +1,4 @@
--- The library over a cwngsync placeholder and its paint budget: the library window over the capture library
+-- The library over a cwngsync placeholder: the library window over the capture library
 -- (capture_library.lua) at its root, in Diner on the Colorsoft, at 2026-10-13 08:42 in Chicago, with a stub cwngsync
 -- naming a-christmas-carol.epub a placeholder. The home fixture patch (at empty) freezes the clock and stores the
 -- look; the library scenario patch stores the capture library as the home folder, writes the reading book's
@@ -9,7 +9,6 @@ describe("the library over a placeholder", function()
     require("commonrequire")
     local capture_library = require("emulator.capture_library")
     local driver = require("emulator.driver")
-    local paint_budget = require("emulator.paint_budget")
     local root = os.getenv("KOPANDA_ROOT")
     local plugin = root .. "/kopanda.koplugin"
     local scenarios_dir = root .. "/spec/emulator/scenarios/"
@@ -34,7 +33,7 @@ describe("the library over a placeholder", function()
         return n
     end
 
-    it("settles on colorsoft with the stub registered, within the paint budget", function()
+    it("settles on colorsoft with the stub registered", function()
         local library = capture_library.make()
         local result = driver.capture{
             profile = "colorsoft",
@@ -53,13 +52,6 @@ describe("the library over a placeholder", function()
         local sidecar = result.sidecar
         assert.is_nil(sidecar.error, sidecar.error)
         assert.equals("library", sidecar.screen)
-        -- The library's settled signal carries paint_ms and no cpu_ms (library_chrome.lua, settle),
-        -- so it is held to the budget as library_capture_spec.lua holds the library's.
-        assert.is_number(sidecar.paint_ms)
-        assert.truthy(sidecar.paint_ms > 0)
-        assert.truthy(sidecar.paint_ms <= paint_budget.MS,
-            string.format("paint_ms %s over the %d ms budget", tostring(sidecar.paint_ms), paint_budget.MS))
-        print(string.format("library placeholder paint on colorsoft: paint_ms=%s", tostring(sidecar.paint_ms)))
         local log = read(result.log)
         assert.equals(1, count(log, "KOPANDA_SHOT: saved"))
         assert.equals(0, count(log, "settle cap"))

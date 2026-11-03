@@ -815,6 +815,20 @@ describe("Layout", function()
                 names[rel] = names[rel] or real_face_name(rel)
                 return names[rel]
             end
+            -- rows with every row but the quote's left empty, or nil when no row holds the quote. Layout measures
+            -- each row on its own, so the quote's row is as high here as in rows.
+            local function quote_rows(rows)
+                local only, found = {}, false
+                for i, row in ipairs(rows) do
+                    only[i] = {}
+                    for _, slot in ipairs(row) do
+                        if slot.widget == "quote" then
+                            only[i], found = row, true
+                        end
+                    end
+                end
+                return found and only or nil
+            end
             local counts, expected, cases = {}, {}, 0
             local function count(profile)
                 for _, content in ipairs({ "populated", "empty" }) do
@@ -825,20 +839,29 @@ describe("Layout", function()
                     for _, id in ipairs(Looks.ids()) do
                         for key, rows in pairs(pages) do
                             local case = table.concat({ profile, id, content, key }, " ")
-                            local out = 0
-                            -- A ctx a day: a widget keeps what it measured for one ctx (Typeset.measured), so a
-                            -- ctx moved to the next day would measure the first day's quote again.
-                            for day = 0, #require("quotes") - 1 do
-                                local ctx = {
+                            -- A fresh ctx a day: a widget keeps what it measured for one ctx (Typeset.measured).
+                            local function on(day)
+                                return {
                                     look = Looks.get(id),
                                     variant = "day",
                                     text_size = key:match("^%S+"),
                                     now = NOW + day * 86400,
                                     screen = Screen,
                                 }
-                                out = out + require("layout").overflow(rows, ctx)
                             end
-                            counts[case] = out
+                            -- The page on the day of its tallest quote: a row only grows with its widget and the
+                            -- placement drops rows only as rows grow, and no other row's height changes with the day.
+                            local worst, only = 0, quote_rows(rows)
+                            if only then
+                                local tallest = -1
+                                for day = 0, #require("quotes") - 1 do
+                                    local h = math.max(unpack(Layout.arrange(only, on(day)).heights))
+                                    if h > tallest then
+                                        worst, tallest = day, h
+                                    end
+                                end
+                            end
+                            counts[case] = Layout.overflow(rows, on(worst))
                             expected[case] = 0
                             cases = cases + 1
                         end

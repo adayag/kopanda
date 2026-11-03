@@ -28,6 +28,11 @@ describe("bin/check", function()
         return select(2, text:gsub("\n", ""))
     end
 
+    -- The output without its slowest-tests lines, for the tests that read what surrounds them.
+    local function without_slowest(output)
+        return (output:gsub("%[  SLOWEST %] [^\n]*\n", ""))
+    end
+
     -- A scratch checkout holding only bin/, .luacheckrc, the spec helper and
     -- environment_spec.lua under both spec layers, so a full run stays small;
     -- at copy, an existing directory, when given.
@@ -71,6 +76,7 @@ describe("bin/check", function()
         local output, status = run("'" .. copy .. "/bin/check'")
         run("rm -rf '" .. copy .. "'")
         assert.equals(0, status, output)
+        output = without_slowest(output)
         assert.is_true(line_count(output) < 20, output)
         assert.truthy(output:find("\n== lint: luacheck\nTotal: 0 warnings / 0 errors in %d+ files\n== studio\n"),
             output)
@@ -91,7 +97,7 @@ describe("bin/check", function()
         assert.truthy(contains(output, "failing_spec.lua:3: Expected objects to be equal.\nPassed in:\n(number) 2\n"
             .. "Expected:\n(number) 1\n"), output)
         assert.truthy(contains(output, "failing_spec.lua:7: Expected objects to be the same."), output)
-        assert.falsy(contains(output, "environment_spec.lua"))
+        assert.falsy(contains(without_slowest(output), "environment_spec.lua"))
         assert.falsy(contains(output, "[ RUN"))
         assert.falsy(contains(output, "ffi.findlib"))
     end)
@@ -258,7 +264,7 @@ describe("bin/check", function()
             output)
         assert.truthy(output:find("\n== studio\n.*studio%-check%-passed\n.*== unit\n"), output)
         local layer = "%[==========%] 7 tests from 1 test file ran%.[^\n]*\n%[  PASSED  %] 7 tests%.\n"
-        assert.truthy(output:find("\n== unit\n" .. layer .. "$"), output)
+        assert.truthy(without_slowest(output):find("\n== unit\n" .. layer .. "$"), output)
         assert.falsy(contains(output, "== emulator"), output)
         assert.falsy(contains(output, "failing_spec.lua"), output)
     end)
@@ -357,9 +363,9 @@ describe("bin/check", function()
     end
 
     -- A spec named name that claims its KO_HOME, failing when another file already has, appends the KO_HOME to
-    -- $KOPANDA_CLAIM_LOG, then waits up to 10 s for the spec named other to start, failing when it hasn't: it passes
-    -- only beside other, each under a KO_HOME of its own.
-    local function rendezvous_spec(path, name, other)
+    -- $KOPANDA_CLAIM_LOG, then waits up to wait_s (default 10) s for the spec named other to start, failing when it
+    -- hasn't: it passes only beside other, each under a KO_HOME of its own.
+    local function rendezvous_spec(path, name, other, wait_s)
         write(path, table.concat({
             'describe("rendezvous ' .. name .. '", function()',
             '    it("meets ' .. other .. ' in its own KO_HOME", function()',
@@ -370,7 +376,7 @@ describe("bin/check", function()
             '        log:write(home, "\\n")',
             '        log:close()',
             '        io.open(dir .. "/' .. name .. '", "w"):close()',
-            '        for _ = 1, 100 do',
+            '        for _ = 1, ' .. math.ceil((wait_s or 10) * 10) .. ' do',
             '            local met = io.open(dir .. "/' .. other .. '", "r")',
             '            if met then met:close() return end',
             '            os.execute("sleep 0.1")',
@@ -399,7 +405,7 @@ describe("bin/check", function()
         run("rm -rf '" .. copy .. "'")
         assert.equals(0, status, output)
         local layer = "%[==========%] 9 tests from 3 test files ran%.[^\n]*\n%[  PASSED  %] 9 tests%.\n"
-        assert.truthy(output:find("\n== unit\n" .. layer .. "== emulator\n" .. layer .. "$"), output)
+        assert.truthy(without_slowest(output):find("\n== unit\n" .. layer .. "== emulator\n" .. layer .. "$"), output)
         assert.equals(4, #claims)
         local seen = {}
         for _, home in ipairs(claims) do
@@ -412,8 +418,8 @@ describe("bin/check", function()
     it("fails a spec that shares a layer's single shard with the spec it waits for", function()
         local copy = small_checkout()
         fake_studio(copy, "true")
-        rendezvous_spec(copy .. "/spec/unit/a_spec.lua", "a", "b")
-        rendezvous_spec(copy .. "/spec/unit/b_spec.lua", "b", "a")
+        rendezvous_spec(copy .. "/spec/unit/a_spec.lua", "a", "b", 1)
+        rendezvous_spec(copy .. "/spec/unit/b_spec.lua", "b", "a", 1)
         local env = "KOPANDA_RENDEZVOUS='" .. copy .. "' KOPANDA_CLAIM_LOG='" .. copy .. "/claims'"
         local output, status = run(env .. " KOPANDA_CHECK_JOBS=1 '" .. copy .. "/bin/check' --unit")
         run("rm -rf '" .. copy .. "'")
@@ -439,7 +445,8 @@ describe("bin/check", function()
         assert.truthy(contains(output, "failing_spec.lua:7: Expected objects to be the same."), output)
         assert.truthy(contains(output, "\n[  NOTE    ] wall time not judged\n"), output)
         assert.falsy(contains(output, "chatter"), output)
-        assert.truthy(output:find("\n%[==========%] 10 tests from 3 test files ran%.[^\n]*\n%[  PASSED  %] 8 tests%.\n"
+        assert.truthy(without_slowest(output):find("\n%[==========%] 10 tests from 3 test files ran%.[^\n]*\n"
+            .. "%[  PASSED  %] 8 tests%.\n"
             .. "%[  FAILED  %] 2 tests, listed below:\n%[  FAILED  %] [^\n]*fails on purpose the first time\n"
             .. "%[  FAILED  %] [^\n]*fails on purpose the second time\n\n 2 FAILED TESTS\n$"), output)
         assert.falsy(contains(output, "== emulator"), output)
@@ -482,7 +489,8 @@ describe("bin/check", function()
             .. "/bin/check'")
         run("rm -rf '" .. copy .. "'")
         assert.equals(0, status, output)
-        assert.truthy(output:find("\n== emulator\n%[==========%] 10 tests from 4 test files ran%.[^\n]*\n"
+        assert.truthy(without_slowest(output):find("\n== emulator\n"
+            .. "%[==========%] 10 tests from 4 test files ran%.[^\n]*\n"
             .. "%[  PASSED  %] 10 tests%.\n$"), output)
     end)
 
@@ -512,7 +520,8 @@ describe("bin/check", function()
         assert.equals(0, status, output)
         assert.equals("file", asked)
         assert.truthy(output:find("\n== emulator\nwaiting for the host's load 99%.00 to fall to %d+ cores\n"), output)
-        assert.truthy(output:find("%[==========%] 8 tests from 2 test files ran%.[^\n]*\n%[  PASSED  %] 8 tests%.\n$"),
+        assert.truthy(without_slowest(output):find("%[==========%] 8 tests from 2 test files ran%.[^\n]*\n"
+            .. "%[  PASSED  %] 8 tests%.\n$"),
             output)
     end)
 
@@ -607,7 +616,89 @@ describe("bin/check", function()
         run("rm -rf '" .. parent .. "'")
         assert.equals(0, named_status, named)
         assert.equals(0, unit_status, unit)
-        assert.truthy(unit:find("\n== unit\n%[==========%] 14 tests from 2 test files ran%.[^\n]*\n"
+        assert.truthy(without_slowest(unit):find("\n== unit\n%[==========%] 14 tests from 2 test files ran%.[^\n]*\n"
             .. "%[  PASSED  %] 14 tests%.\n$"), unit)
+    end)
+
+    -- A spec under header, when given, whose describe is name and whose tests each sleep their ms: { { "t1", 60 } }.
+    local function timed_spec(path, name, tests, header)
+        local lines = { header }
+        lines[#lines + 1] = 'describe("' .. name .. '", function()'
+        for _, test in ipairs(tests) do
+            lines[#lines + 1] = '    it("' .. test[1] .. '", function() os.execute("sleep ' .. test[2] / 1000
+                .. '") end)'
+        end
+        lines[#lines + 1] = "end)\n"
+        write(path, table.concat(lines, "\n"))
+    end
+
+    -- The output with each slowest-tests line's milliseconds read as N.
+    local function any_ms(output)
+        return (output:gsub("(%[  SLOWEST %] )%d+ ms ", "%1N ms "))
+    end
+
+    it("prints each layer's 5 slowest tests after its summary, across its shards and its paint-budget pass", function()
+        local copy = small_checkout()
+        fake_studio(copy, "true")
+        assert.equals(0, select(2, run("rm '" .. copy .. "/spec/unit/environment_spec.lua' '" .. copy
+            .. "/spec/emulator/environment_spec.lua'")))
+        timed_spec(copy .. "/spec/unit/a_spec.lua", "unit a", { { "t0", 0 }, { "t2", 120 }, { "t4", 240 } })
+        timed_spec(copy .. "/spec/unit/b_spec.lua", "unit b", { { "t1", 60 }, { "t3", 180 }, { "t5", 300 } })
+        timed_spec(copy .. "/spec/emulator/batch_spec.lua", "batch", { { "quick", 0 } })
+        timed_spec(copy .. "/spec/emulator/budget_spec.lua", "a paint budget", { { "waits", 100 } },
+            "-- Names paint_budget.")
+        -- A sysctl reporting load 0.5, so the paint-budget pass starts at once; anything else goes to the real one.
+        local bin = copy .. "/fake-bin"
+        assert.equals(0, select(2, run("mkdir '" .. bin .. "'")))
+        write(bin .. "/sysctl", '#!/bin/sh\nif [ "$2" = vm.loadavg ]; then echo "{ 0.50 0.50 0.50 }"; exit; fi\n'
+            .. 'exec /usr/sbin/sysctl "$@"\n')
+        assert.equals(0, select(2, run("chmod +x '" .. bin .. "/sysctl'")))
+        local output, status = run("PATH='" .. bin .. ":'\"$PATH\" KOPANDA_CHECK_JOBS=2 '" .. copy .. "/bin/check'")
+        run("rm -rf '" .. copy .. "'")
+        assert.equals(0, status, output)
+        assert.truthy(contains(any_ms(output), "[  PASSED  ] 6 tests.\n"
+            .. "[  SLOWEST ] 5 slowest tests\n"
+            .. "[  SLOWEST ] N ms spec/unit/b_spec.lua:4 unit b t5\n"
+            .. "[  SLOWEST ] N ms spec/unit/a_spec.lua:4 unit a t4\n"
+            .. "[  SLOWEST ] N ms spec/unit/b_spec.lua:3 unit b t3\n"
+            .. "[  SLOWEST ] N ms spec/unit/a_spec.lua:3 unit a t2\n"
+            .. "[  SLOWEST ] N ms spec/unit/b_spec.lua:2 unit b t1\n"
+            .. "== emulator\n"), output)
+        assert.truthy(any_ms(output):find("\n%[  PASSED  %] 2 tests%.\n"
+            .. "%[  SLOWEST %] 2 slowest tests\n"
+            .. "%[  SLOWEST %] N ms spec/emulator/budget_spec%.lua:3 a paint budget waits\n"
+            .. "%[  SLOWEST %] N ms spec/emulator/batch_spec%.lua:2 batch quick\n$"), output)
+        assert.is_true(tonumber(output:match("(%d+) ms spec/unit/b_spec.lua:4 ")) >= 300, output)
+    end)
+
+    it("prints a named run's slowest tests, only as many as ran, with or without --verbose", function()
+        local dir = run("mktemp -d"):gsub("\n$", "")
+        timed_spec(dir .. "/timed_spec.lua", "scratch", { { "quick", 0 }, { "slow", 60 } })
+        local quiet, quiet_status = run("'" .. check .. "' '" .. dir .. "/timed_spec.lua'")
+        local verbose, verbose_status = run("'" .. check .. "' --verbose '" .. dir .. "/timed_spec.lua'")
+        run("rm -rf '" .. dir .. "'")
+        local block = "[  PASSED  ] 2 tests.\n[  SLOWEST ] 2 slowest tests\n"
+            .. "[  SLOWEST ] N ms " .. dir .. "/timed_spec.lua:3 scratch slow\n"
+            .. "[  SLOWEST ] N ms " .. dir .. "/timed_spec.lua:2 scratch quick\n"
+        for _, pair in ipairs({ { quiet, quiet_status }, { verbose, verbose_status } }) do
+            local output, status = pair[1], pair[2]
+            assert.equals(0, status, output)
+            assert.equals(block, any_ms(output):sub(-#block), output)
+        end
+    end)
+
+    it("keeps a failing run's exit 1 and its listed failures, then prints the slowest tests", function()
+        local copy = small_checkout()
+        fake_studio(copy, "true")
+        assert.equals(0, select(2, run("cp '" .. root .. "/spec/fixtures/failing_spec.lua' '" .. copy
+            .. "/spec/unit/'")))
+        local output, status = run("KOPANDA_CHECK_JOBS=2 '" .. copy .. "/bin/check' --unit")
+        local named, named_status = run("cd '" .. copy .. "' && '" .. copy .. "/bin/check' spec/unit/failing_spec.lua")
+        run("rm -rf '" .. copy .. "'")
+        assert.equals(1, status, output)
+        assert.truthy(contains(output, "[  FAILED  ] in spec/unit/failing_spec.lua\n"), output)
+        assert.truthy(output:find("\n 2 FAILED TESTS\n%[  SLOWEST %] 5 slowest tests\n"), output)
+        assert.equals(1, named_status, named)
+        assert.truthy(named:find("\n 2 FAILED TESTS\n%[  SLOWEST %] 2 slowest tests\n"), named)
     end)
 end)

@@ -200,7 +200,7 @@ describe("pulling from the studio on the emulator", function()
                 {
                     -- KoPanda doesn't load, so no home settles: the capture patch's cap ends it.
                     shot = true,
-                    cap_s = 15,
+                    cap_s = 1,
                     accept = { 3 },
                     env = { KOPANDA_NOTICES = notices },
                     after = function()

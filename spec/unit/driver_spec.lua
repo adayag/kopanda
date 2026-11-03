@@ -1,6 +1,7 @@
 describe("the emulator capture driver", function()
     local lfs = require("libs/libkoreader-lfs")
     local driver = require("emulator.driver")
+    local time = require("ui/time")
     local root = os.getenv("KOPANDA_ROOT")
     local ko_home = os.getenv("KO_HOME")
     local probe = root .. "/spec/fixtures/probe.koplugin"
@@ -249,22 +250,22 @@ describe("the emulator capture driver", function()
 
     it("kills an emulator that outlives timeout_s and reports the timeout", function()
         local emu = fake_emulator()
-        local started = os.time()
-        local err = capture_error{ emulator_dir = emu, timeout_s = 2 }
-        local elapsed = os.time() - started
-        assert.truthy(contains(err, "timed out after 2 s"), err)
-        assert.truthy(elapsed >= 1 and elapsed <= 6, "took " .. elapsed .. " s")
+        local started = time.now()
+        local err = capture_error{ emulator_dir = emu, timeout_s = 0.5 }
+        local elapsed = time.to_s(time.since(started))
+        assert.truthy(contains(err, "timed out after 0.5 s"), err)
+        assert.truthy(elapsed >= 0.5 and elapsed <= 4.5, "took " .. elapsed .. " s")
         local pid = assert(io.open(emu .. "/pid")):read("*n")
         assert.not_equals(0, os.execute("kill -0 " .. pid .. " 2>/dev/null"))
     end)
 
     it("escalates to SIGKILL when the emulator ignores SIGTERM", function()
         local emu = fake_emulator{ ignore_term = true }
-        local started = os.time()
-        local err = capture_error{ emulator_dir = emu, timeout_s = 2 }
-        local elapsed = os.time() - started
-        assert.truthy(contains(err, "timed out after 2 s"), err)
-        assert.truthy(elapsed <= 12, "took " .. elapsed .. " s")
+        local started = time.now()
+        local err = capture_error{ emulator_dir = emu, timeout_s = 0.5, kill_grace_s = 0.5 }
+        local elapsed = time.to_s(time.since(started))
+        assert.truthy(contains(err, "timed out after 0.5 s"), err)
+        assert.truthy(elapsed >= 1 and elapsed <= 4, "took " .. elapsed .. " s")
         local pid = assert(io.open(emu .. "/pid")):read("*n")
         assert.not_equals(0, os.execute("kill -0 " .. pid .. " 2>/dev/null"))
     end)

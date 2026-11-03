@@ -1,4 +1,4 @@
--- The library's hold sheets and their paint budget: the sheet a hold on the library opens, over the capture library
+-- The library's hold sheets: the sheet a hold on the library opens, over the capture library
 -- (capture_library.lua) at its root, in Diner on the Colorsoft, at 2026-10-13 08:42 in Chicago: the book sheet of the
 -- reading book and of the path-less source book, the folder sheet of its sub-folder and the empty-space sheet of its
 -- sixth cell. The home fixture patch (at empty) freezes the clock and stores the look; the library scenario patch
@@ -10,7 +10,6 @@ describe("the library's hold sheets", function()
     require("commonrequire")
     local capture_library = require("emulator.capture_library")
     local driver = require("emulator.driver")
-    local paint_budget = require("emulator.paint_budget")
     local root = os.getenv("KOPANDA_ROOT")
     local plugin = root .. "/kopanda.koplugin"
     local scenarios_dir = root .. "/spec/emulator/scenarios/"
@@ -44,7 +43,7 @@ describe("the library's hold sheets", function()
 
     for _, scenario_opts in ipairs(scenarios) do
         it("open the " .. scenario_opts.sheet .. " sheet on a " .. scenario_opts.hold
-                .. " hold on colorsoft, within the paint budget", function()
+                .. " hold on colorsoft", function()
             local library = capture_library.make()
             local result = driver.capture{
                 profile = "colorsoft",
@@ -65,7 +64,6 @@ describe("the library's hold sheets", function()
             assert.is_nil(sidecar.error, sidecar.error)
             assert.equals("sheet", sidecar.screen)
             assert.equals(scenario_opts.sheet, sidecar.name)
-            paint_budget.check("library-hold-" .. scenario_opts.hold .. " paint on colorsoft", sidecar)
             local log = read(result.log)
             assert.equals(1, count(log, "KOPANDA_SHOT: saved"))
             assert.equals(0, count(log, "settle cap"))

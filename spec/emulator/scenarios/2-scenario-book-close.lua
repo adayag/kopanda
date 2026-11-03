@@ -1,5 +1,5 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
--- by spec/emulator/book_close_spec.lua. Once the home is up it opens the one book in the
+-- by spec/emulator/book_close_spec.lua and paint_budget_spec.lua. Once the home is up it opens the one book in the
 -- library, closes it from a scheduled task, and on the next home reports, as a "scenario"
 -- KoPandaSettled signal, how often the file manager was painted between the close and that
 -- home's settled signal, the home's share of the close from the file manager's Show to its

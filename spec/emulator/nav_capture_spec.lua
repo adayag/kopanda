@@ -1,4 +1,4 @@
--- The file browser's paint budget: KOReader's file browser on the populated fixture's library with the nav bar in
+-- The file browser under the nav bar: KOReader's file browser on the populated fixture's library with the nav bar in
 -- its band and Library active, in Diner on the Colorsoft, at 2026-10-13 08:42 in Chicago. The home fixture patch
 -- freezes the clock and writes the scenario; the file-browser scenario closes the home once it settles; the capture
 -- is taken on the file browser's own settled signal. The look is passed empty so a KOPANDA_HOME_LOOK in the
@@ -6,7 +6,6 @@
 describe("the file browser under the nav bar", function()
     require("commonrequire")
     local driver = require("emulator.driver")
-    local paint_budget = require("emulator.paint_budget")
     local root = os.getenv("KOPANDA_ROOT")
     local plugin = root .. "/kopanda.koplugin"
     local fixture = root .. "/spec/emulator/scenarios/2-scenario-home-fixture.lua"
@@ -27,7 +26,7 @@ describe("the file browser under the nav bar", function()
         return n
     end
 
-    it("settles on colorsoft once the home closes, within the paint budget", function()
+    it("settles on colorsoft once the home closes", function()
         local result = driver.capture{
             profile = "colorsoft",
             plugin_dir = plugin,
@@ -42,7 +41,6 @@ describe("the file browser under the nav bar", function()
         local sidecar = result.sidecar
         assert.is_nil(sidecar.error, sidecar.error)
         assert.equals("file_browser", sidecar.screen)
-        paint_budget.check("file browser paint on colorsoft", sidecar)
         local log = read(result.log)
         assert.equals(1, count(log, "KOPANDA_SHOT: saved"))
         assert.equals(0, count(log, "settle cap"))

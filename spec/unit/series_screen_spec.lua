@@ -4,6 +4,7 @@
 -- records under a root that exists nowhere (spec/shelf_fixture.lua).
 describe("the Series window", function()
     local cases = require("shelf_screen_cases")
+    local edges = require("edges")
     local harness = require("plugin_harness")
     local fixture = require("shelf_fixture")
     local text_of = require("library_fixture").text
@@ -308,6 +309,20 @@ describe("the Series window", function()
             end)
         end)
 
+        -- The screen heights from 1500 to 1800 px at which view's row count on page 1 changes, each with the
+        -- heights either side: a page's room is tightest at a change and loosest just before it. The count never
+        -- falls as the screen grows.
+        local function around_changes(view)
+            return edges.around_changes(1500, 1800, function(h)
+                local n
+                harness.at_screen(1264, h, function()
+                    n = #SeriesScreen.show{ view = view }.rows
+                    SeriesScreen.close()
+                end)
+                return n
+            end)
+        end
+
         -- Whatever room a page leaves, each list keeps the gap: on screens from 1500 to 1800 px high, a
         -- full first page's last row and its shadow end shelf.list.pager_gap above the pager.
         it("keeps the pager gap on a full page at every screen height, in both looks", function()
@@ -319,21 +334,20 @@ describe("the Series window", function()
             end
             fixture.install(records, progress)
             each_look(function(id)
-                for h = 1500, 1800, 5 do
-                    harness.at_screen(1264, h, function()
-                        local screen = SeriesScreen.show{}
-                        local gap = Screen:scaleBySize(screen.ctx.look.shelf.list.pager_gap)
-                        for _, view in ipairs({ LIST, { kind = "series", name = "Long" } }) do
-                            screen:go(view, 1)
+                for _, view in ipairs({ LIST, { kind = "series", name = "Long" } }) do
+                    for _, h in ipairs(around_changes(view)) do
+                        harness.at_screen(1264, h, function()
+                            local screen = SeriesScreen.show{ view = view }
+                            local gap = Screen:scaleBySize(screen.ctx.look.shelf.list.pager_gap)
                             assert.is_true(screen.pages >= 2, id)
                             local last = screen.rows[#screen.rows]
                             local foot = last.rect.y + last.rect.h + last.widget.shadow_y
                             assert.is_true(foot + gap <= screen.pager.prev.rect.y,
                                 ("%s %s at %d px: %d px above the pager"):format(id, view.kind, h,
                                     screen.pager.prev.rect.y - foot))
-                        end
-                        SeriesScreen.close()
-                    end)
+                            SeriesScreen.close()
+                        end)
+                    end
                 end
             end)
         end)
@@ -346,7 +360,8 @@ describe("the Series window", function()
             local long = fixture.series("Long", 12)
             local view = { kind = "series", name = "Long" }
             each_look(function(id)
-                for h = 1500, 1800 do
+                fixture.install(long)
+                for _, h in ipairs(around_changes(view)) do
                     harness.at_screen(1264, h, function()
                         fixture.install(long)
                         local screen = SeriesScreen.show{ view = view }

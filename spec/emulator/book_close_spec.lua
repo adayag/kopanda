@@ -1,12 +1,10 @@
 -- Closing a book in the emulator lands on the home, built at the file manager's Show, without the file browser
--- ever being painted, and the home's share of the close holds to 100 ms on this Mac, judged as the paint budget
--- judges its 250 ms. The book-close scenario patch opens the one book in the library, closes it from a scheduled
+-- ever being painted. The book-close scenario patch opens the one book in the library, closes it from a scheduled
 -- task, and reports what it counted on the "scenario" screen.
 describe("closing a book on the emulator", function()
     require("commonrequire")
     local lfs = require("libs/libkoreader-lfs")
     local driver = require("emulator.driver")
-    local paint_budget = require("emulator.paint_budget")
     local root = os.getenv("KOPANDA_ROOT")
     local plugin = root .. "/kopanda.koplugin"
     local scenario = root .. "/spec/emulator/scenarios/2-scenario-book-close.lua"
@@ -35,7 +33,6 @@ describe("closing a book on the emulator", function()
         assert.is_nil(sidecar.error)
         assert.equals("scenario", sidecar.screen)
         assert.equals(0, sidecar.fm_paints)
-        paint_budget.check("book close home on colorsoft", sidecar, nil, 100)
         assert.is_number(sidecar.settle_ms)
         assert.is_number(sidecar.close_to_paint_ms)
         print(string.format("book close: fm_paints=%d settle_ms=%s close_to_paint_ms=%s",

@@ -1,4 +1,4 @@
--- The sheet's paint budget: the book sheet and the home sheet a hold opens over the populated home, in Diner on the
+-- The sheets a hold opens: the book sheet and the home sheet a hold opens over the populated home, in Diner on the
 -- Colorsoft, at 2026-10-13 08:42 in Chicago. The home fixture patch freezes the clock and writes the scenario; the
 -- sheet-hold patch holds the featured slot or the side margin once the home settles; the capture is taken on the
 -- sheet's own settled signal. The look is passed empty so a KOPANDA_HOME_LOOK in the caller's environment cannot leak
@@ -6,7 +6,6 @@
 describe("the sheets a hold opens over the home", function()
     require("commonrequire")
     local driver = require("emulator.driver")
-    local paint_budget = require("emulator.paint_budget")
     local root = os.getenv("KOPANDA_ROOT")
     local plugin = root .. "/kopanda.koplugin"
     local fixture = root .. "/spec/emulator/scenarios/2-scenario-home-fixture.lua"
@@ -28,7 +27,7 @@ describe("the sheets a hold opens over the home", function()
     end
 
     for _, hold in ipairs({ "book", "home" }) do
-        it("open the " .. hold .. " sheet on colorsoft, within the paint budget", function()
+        it("open the " .. hold .. " sheet on colorsoft", function()
             local result = driver.capture{
                 profile = "colorsoft",
                 plugin_dir = plugin,
@@ -45,7 +44,6 @@ describe("the sheets a hold opens over the home", function()
             assert.is_nil(sidecar.error, sidecar.error)
             assert.equals("sheet", sidecar.screen)
             assert.equals(hold, sidecar.name)
-            paint_budget.check("sheet-" .. hold .. " paint on colorsoft", sidecar)
             local log = read(result.log)
             assert.equals(1, count(log, "KOPANDA_SHOT: saved"))
             assert.equals(0, count(log, "settle cap"))

@@ -223,15 +223,16 @@ end
 -- Runs the emulator in the background, killing it after timeout_s. The wrapper's last output line is the emulator's
 -- exit status; a "timeout" marker file records a kill. SIGTERM alone cannot stop a hung emulator: SDL3 turns it into
 -- SDL_EVENT_QUIT (base/ffi/SDL3.lua:719-723), serviced only by the input loop, so the killer follows it with SIGKILL
--- 5 s later. When the emulator exits first, the killer is stopped, its sleep reaped with pkill, and it is killed.
-local function run_emulator(emulator, vars, library_dir, log, timeout_s, marker)
+-- kill_grace_s (default 5) later. When the emulator exits first, the killer is stopped, its sleep reaped with pkill,
+-- and it is killed.
+local function run_emulator(emulator, vars, library_dir, log, timeout_s, marker, kill_grace_s)
     local script = table.concat({
         "cd " .. quote(emulator) .. " || exit 127",
         "env -u EMULATE_BB_TYPE " .. env_assignments(vars) .. " ./luajit reader.lua " .. quote(library_dir)
             .. " > " .. quote(log) .. " 2>&1 &",
         "pid=$!",
         "(sleep " .. timeout_s .. "; kill $pid 2>/dev/null && { : > " .. quote(marker)
-            .. "; sleep 5; kill -9 $pid 2>/dev/null; }) >/dev/null 2>&1 &",
+            .. "; sleep " .. (kill_grace_s or 5) .. "; kill -9 $pid 2>/dev/null; }) >/dev/null 2>&1 &",
         "killer=$!",
         "wait $pid",
         "s=$?",
@@ -318,7 +319,8 @@ local function read_shot(png, fail)
 end
 
 -- opts: profile (name), plugin_dir, library_dir (default: the fixture library; pass an empty dir for no books),
--- out_dir (default: a fresh dir under KO_HOME), cap_s (default 20), timeout_s (default 120), emulator_dir (default
+-- out_dir (default: a fresh dir under KO_HOME), cap_s (default 20), timeout_s (default 120), kill_grace_s (the wait
+-- between the timeout's SIGTERM and its SIGKILL, default 5), emulator_dir (default
 -- KOPANDA_EMULATOR), patches (extra userpatches, see write_profile), shot_screen (the KoPandaSettled screen the
 -- capture is taken on, default "home"), env (extra environment variables for the emulator, name to value, passed in
 -- name order so a scenario patch can read its options), night_mode (see write_profile), device ({ width, height, dpi,
@@ -338,7 +340,7 @@ function M.capture(opts)
     local marker = out_dir .. "/" .. profile_name .. ".timeout"
 
     local vars = emulator_vars(scratch, profile, png, cap_s, opts.shot_screen, opts.env)
-    local status = run_emulator(emulator, vars, library_dir, log, timeout_s, marker)
+    local status = run_emulator(emulator, vars, library_dir, log, timeout_s, marker, opts.kill_grace_s)
     local function fail(message)
         error(string.format("capture %s: %s\nscratch profile: %s\nlog %s, last lines:\n%s",
             profile_name, message, scratch, log, log_tail(log)))
