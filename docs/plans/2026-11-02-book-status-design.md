@@ -24,8 +24,9 @@ and the sleep screen stay KOReader's (design doc §4).
   (`plugins/statistics.koplugin/main.lua:464-477`); `page_stat_data` holds each page's `start_time`
   (`:406`). `ReadingStats.seconds_per_page(md5)` already reads a book's speed from it
   (`reading_stats.lua:399`).
-- Assumption, verified first: the sidecar's `summary.modified` is the date the status last changed,
-  so a finished book can show "Finished 28 Oct". If it isn't, the page shows no finished date.
+- The sidecar's `summary.modified` is written on every summary save, a status change or a note or rating
+  (`frontend/apps/filemanager/filemanagerutil.lua:111`, `frontend/apps/reader/modules/readerstatus.lua:215`).
+  The owner chose (2026-11-02) to show it as "Finished 28 Oct" anyway; without it, "Finished" alone.
 
 ## What the reader sees
 
