@@ -479,15 +479,19 @@ describe("cwngsync's placeholders", function()
             end)
 
             -- A window as the library's and the shelf screens' are to the sheet, as
-            -- book_sheet_spec.lua's: ctx, open(record), refresh() and close(), each recorded.
+            -- book_sheet_spec.lua's: ctx, view(), page, open(record), refresh() and close(), each recorded.
             local function window()
                 local w = {
                     screen = "library",
                     ctx = { look = Looks.active(), variant = Looks.variant(), screen = Screen },
+                    page = 1,
                     opened = {},
                     refreshes = 0,
                     closes = 0,
                 }
+                function w.view()
+                    return "/kopanda-spec/library"
+                end
                 function w:open(record)
                     self.opened[#self.opened + 1] = record
                 end
@@ -531,7 +535,7 @@ describe("cwngsync's placeholders", function()
 
             -- This stub has no openLibraryPlaceholder, so Download is greyed too
             -- (cloud_download_spec.lua has the row with it).
-            it("reads Not downloaded over a placeholder and greys Delete and Download alone", function()
+            it("reads Not downloaded over a placeholder and greys Book details, Delete and Download", function()
                 cwngsync({ ["1"] = placeholder(a) })
                 local record = Books.for_path(a)
                 open(record)
@@ -539,7 +543,7 @@ describe("cwngsync's placeholders", function()
                 assert.same({
                     { "Open", false, true },
                     { "Download", true, false },
-                    { "Book details", false, true },
+                    { "Book details", true, false },
                     { "Read status", false, true },
                     { "More by this author", false, true },
                     { "Add to the home", false, true },
@@ -558,15 +562,19 @@ describe("cwngsync's placeholders", function()
                 assert.same({ 0, 0 }, { w.refreshes, w.closes })
             end)
 
-            it("shows KOReader's book details for a placeholder's path", function()
+            it("closes the sheet and shows no details on a tap on a placeholder's Book details", function()
                 cwngsync({ ["1"] = placeholder(a) })
                 open(Books.for_path(a))
                 local shown = {}
                 FileManager.instance.bookinfo.show = function(_, file)
                     shown[#shown + 1] = file
                 end
+                local top = harness.top(2)
                 tap("Book details")
-                assert.same({ a }, shown)
+                assert.is_nil(Sheet.shown)
+                assert.equals(top, harness.top())
+                assert.is_nil(package.loaded["book_status_screen"].shown)
+                assert.same({}, shown)
             end)
 
             it("reads the same file as downloaded without cwngsync, Delete running", function()

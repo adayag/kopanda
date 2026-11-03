@@ -1,8 +1,8 @@
 -- Reading stats from KOReader's Statistics plugin: its database, read-only, for the streak, minutes today and
--- books this month, for a book's reading speed and for the reading history of the last year, and its settings,
--- for whether it records at all and its cap on one page's time. Days are local calendar days, bounded by
--- os.time. State: the last numbers and history read, which a busy database reads as, and the memo of the reads,
--- which a home build reads instead of the database while Statistics hasn't written.
+-- books this month, for a book's reading speed and history and for the reading history of the last year, and
+-- its settings, for whether it records at all and its cap on one page's time. Days are local calendar days,
+-- bounded by os.time. State: the last numbers and history read, which a busy database reads as, and the memo of
+-- the reads, which a home build reads instead of the database while Statistics hasn't written.
 local DataStorage = require("datastorage")
 local datetime = require("datetime")
 local lfs = require("libs/libkoreader-lfs")
@@ -29,8 +29,9 @@ local last_insights
 
 -- The last reads, each valid while the files' stamp is key: numbers, the result of read for the
 -- local date of now, kept with no key when the stamp is nil so that a refresh reads the latest
--- date read; rate, seconds_per_page's for md5 under the cap (nil when none is found); insights,
--- the result of insights for the local date of now, and for now itself while the stamp is nil.
+-- date read; rate, seconds_per_page's for md5 under the cap (nil when none is found); history,
+-- book_history's for md5; insights, the result of insights for the local date of now, and for now
+-- itself while the stamp is nil.
 local memo = {}
 
 -- The size and modification time of the database and of its WAL file, the two files Statistics writes, as one
@@ -295,6 +296,28 @@ local function refresh_rate(conn, key)
     end
 end
 
+-- The history of the book row for md5 that was opened last, as rate picks it: its total_read_time, the local
+-- dates and first start of its page rows (main.lua:405-419) and its last_open (:462-477); nil for no row.
+local function history(conn, md5)
+    local stmt = conn:prepare("SELECT id, total_read_time, last_open FROM book WHERE md5 = ? "
+        .. "ORDER BY last_open DESC LIMIT 1")
+    local book = stmt:bind(md5):step()
+    stmt:close()
+    if not book then
+        return nil
+    end
+    stmt = conn:prepare("SELECT count(DISTINCT strftime('%Y-%m-%d', start_time, 'unixepoch', 'localtime')), "
+        .. "min(start_time) FROM page_stat_data WHERE id_book = ?")
+    local row = stmt:bind(book[1]):step()
+    stmt:close()
+    return {
+        seconds = tonumber(book[2]) or 0,
+        days = row and tonumber(row[1]) or 0,
+        first = row and tonumber(row[2]),
+        last = tonumber(book[3]),
+    }
+end
+
 -- The reading stats at now (epoch seconds): { state, streak, minutes_today, books_month, month_name }. state
 -- is "off" when Statistics doesn't record, "empty" with no database or nothing read, "ok" otherwise. The
 -- database is opened read-only and only when it exists, since an open that creates it would leave an empty
@@ -432,6 +455,43 @@ function ReadingStats.seconds_per_page(md5)
         return result[1], result[2]
     end
     return nil
+end
+
+-- The Statistics plugin's history of the book whose partial md5 is md5: { seconds, days, first, last }, its time
+-- read in seconds, the local days it was read on, the start of its first page read (nil with none) and when it
+-- was last opened; nil when Statistics doesn't record, there is no database, the book has no row, or the read
+-- fails (logged). Opened read-only and only when the database exists. Kept for md5 while the files' stamp
+-- holds. Never raises.
+function ReadingStats.book_history(md5)
+    local ok, result = pcall(function()
+        if off() then
+            return nil
+        end
+        local path = db_path()
+        if not util.fileExists(path) then
+            return nil
+        end
+        local key = stamp(path)
+        local held = memo.history
+        if key and held and held.key == key and held.md5 == md5 then
+            return held.value
+        end
+        local read_ok, found = with_db(path, function(conn)
+            return history(conn, md5)
+        end)
+        if not read_ok then
+            return nil
+        end
+        if key then
+            memo.history = { key = key, md5 = md5, value = found }
+        end
+        return found
+    end)
+    if not ok then
+        logger.err("KoPanda: could not read the book's reading history:", result)
+        return nil
+    end
+    return result
 end
 
 return ReadingStats

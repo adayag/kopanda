@@ -94,3 +94,37 @@ and the sleep screen stay KOReader's (design doc §4).
 About 600 changed lines: one Opus builder and one reviewer. It reads files the plugin didn't write
 (the cache row, the Statistics database), so the full review applies: mutation checks on the five
 riskiest paths and a re-check after the fix.
+
+## Decided while building (2026-11-02)
+
+- **Where the finished date comes from.** `Books.details` returns `{ description, pages, modified }`: it
+  reads the sidecar for the page count already, so it reads `summary.modified` too; `Books.progress` and its
+  memo are unchanged. `BookStatus.sections` takes the date only as a calendar `%Y-%m-%d`.
+- **Dates in another year** carry the year: "Finished 31 Dec 2025", "Started 1 Dec 2025 · Last read 2 Jan".
+- **The time left** is the featured book's sum: seconds per page × (the Statistics row's pages − the pages
+  read), so `sections` takes the history with `seconds_per_page`'s rate and pages beside it. A finished book
+  shows its bar full and no time left; an abandoned one reads as one being read.
+- **The page reached** is `round(percent × pages)`, at least 1, over the details' pages (the cache row's,
+  then the sidecar's), else the progress's.
+- **A missing Statistics database** reads as no history without a log line, as `seconds_per_page` reads it;
+  a locked or corrupt one is logged. A progress read that fails leaves out the history too, its md5 being the
+  progress's.
+- **Header and foot.** The detail header: the back control labelled with the screen it returns to
+  ("Library", "Home", "Series", "Authors", "Subjects", "Search"), the book's title as the aside, "Book
+  details" as the title. No nav bar, as on the Go to screen; the pager sits at the foot.
+- **Book block.** Title and author two lines each at most; series and length one line each; subjects as
+  header chips (`LibraryChrome.chip`), two rows at most, the rest left out. No section labels; sections are
+  `book_status.section_gap` apart.
+- **Tokens.** `book_status.section_gap`, `book_status.paragraph_gap` and `type.book_description` join
+  `looks/base.lua`; everything else reuses the featured book's, the shelf's and the library header's.
+- **The description** is one paragraph per line after `htmlToPlainTextIfHtml` (a `<br>` starts one too),
+  each trimmed, empty ones dropped; a page never starts with a paragraph gap; page 1 may hold none of it when
+  its top leaves no room for a line.
+- **The cover** is asked of CoverBrowser at the page's box after the first paint, as the featured cover asks
+  for its own: one cached at the library grid's size is too small for a third of the width.
+- **A section that doesn't fit page 1** above the pager is left out and logged; none does at any text size on
+  the Colorsoft or the Paperwhite.
+- **A build that throws** is logged and the screen it was opened from is shown again (the chrome closed it
+  before building), then the row falls back to KOReader's own details page over it.
+- **A file gone between the hold and the tap** re-lists the screen beneath (the home's refresh, the window's
+  re-list), which then reads it as not downloaded; nothing opens.

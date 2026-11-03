@@ -119,7 +119,7 @@ describe("reading stats", function()
         os.remove(db_path .. "-shm")
     end
 
-    -- A Statistics database at db_path holding books { id, md5, pages, last_open } and page
+    -- A Statistics database at db_path holding books { id, md5, pages, last_open, total_read_time } and page
     -- rows { id_book, page, start_time, duration, total_pages }, in WAL mode or journal when given.
     local function make_books_db(books, rows, journal)
         remove_db()
@@ -128,9 +128,10 @@ describe("reading stats", function()
         for _, sql in ipairs(DDL) do
             conn:exec(sql)
         end
-        local book_stmt = conn:prepare("INSERT INTO book (id, title, md5, pages, last_open) VALUES (?, ?, ?, ?, ?);")
+        local book_stmt = conn:prepare("INSERT INTO book (id, title, md5, pages, last_open, total_read_time) "
+            .. "VALUES (?, ?, ?, ?, ?, ?);")
         for _, book in ipairs(books) do
-            book_stmt:reset():bind(book[1], "Book " .. book[1], book[2], book[3], book[4]):step()
+            book_stmt:reset():bind(book[1], "Book " .. book[1], book[2], book[3], book[4], book[5]):step()
         end
         book_stmt:close()
         local stmt = conn:prepare("INSERT INTO page_stat_data VALUES (?, ?, ?, ?, ?);")
@@ -568,6 +569,109 @@ describe("reading stats", function()
         end)
     end)
 
+    describe("book_history", function()
+        it("reads the most recently opened book row of an md5: its time, its days, its first page and last open",
+            function()
+                local first = at(2026, 10, 3, 9, 15)
+                make_books_db({
+                    { 1, "abc", 100, at(2026, 9, 1), 60 },
+                    { 2, "abc", 100, at(2026, 10, 12, 21), 27600 },
+                }, {
+                    { 1, 1, at(2026, 9, 1), 60, 100 },
+                    { 2, 1, first, 60, 100 },
+                    { 2, 2, at(2026, 10, 3, 10), 60, 100 },
+                    { 2, 3, at(2026, 10, 5, 22), 60, 100 },
+                    { 2, 4, at(2026, 10, 12, 20), 60, 100 },
+                })
+                assert.same({ seconds = 27600, days = 3, first = first, last = at(2026, 10, 12, 21) },
+                    ReadingStats.book_history("abc"))
+            end)
+
+        it("counts two local days for two reads either side of local midnight", function()
+            make_books_db({ { 1, "abc", 100, at(2026, 10, 13, 1), 120 } }, {
+                { 1, 1, at(2026, 10, 12, 23, 50), 60, 100 },
+                { 1, 2, at(2026, 10, 13, 0, 10), 60, 100 },
+            })
+            assert.equals(2, ReadingStats.book_history("abc").days)
+        end)
+
+        it("reads a book row with no page times as no days, no first and a time of 0 where it holds none",
+            function()
+                make_books_db({ { 1, "abc", 100, at(2026, 10, 12) } }, {})
+                assert.same({ seconds = 0, days = 0, last = at(2026, 10, 12) }, ReadingStats.book_history("abc"))
+            end)
+
+        it("gives nil for an unknown md5", function()
+            make_books_db({ { 1, "abc", 100, 100, 60 } }, { { 1, 1, 1000, 20, 100 } })
+            assert.is_nil(ReadingStats.book_history("zzz"))
+        end)
+
+        it("gives nil for a missing file without creating it or logging an error", function()
+            assert.is_nil(ReadingStats.book_history("abc"))
+            assert.is_nil(lfs.attributes(db_path, "mode"))
+            assert.is_false(logged_error())
+        end)
+
+        it("gives nil with the plugin disabled or not recording", function()
+            make_books_db({ { 1, "abc", 100, 100, 60 } }, { { 1, 1, 1000, 20, 100 } })
+            assert.equals(60, ReadingStats.book_history("abc").seconds)
+            G_reader_settings:saveSetting("plugins_disabled", { statistics = true })
+            assert.is_nil(ReadingStats.book_history("abc"))
+            G_reader_settings:delSetting("plugins_disabled")
+            G_reader_settings:saveSetting("statistics", { is_enabled = false })
+            assert.is_nil(ReadingStats.book_history("abc"))
+        end)
+
+        it("gives nil for a corrupt file, and logs it", function()
+            local f = assert(io.open(db_path, "wb"))
+            f:write(string.rep("not a database ", 100))
+            f:close()
+            assert.is_nil(ReadingStats.book_history("abc"))
+            assert.is_true(logged_error())
+        end)
+
+        it("gives nil for a locked database, and logs it", function()
+            make_books_db({ { 1, "abc", 100, 100, 60 } }, { { 1, 1, 1000, 20, 100 } }, "DELETE")
+            local locker = SQ3.open(db_path)
+            locker:exec("BEGIN EXCLUSIVE;")
+            local ok, history = pcall(ReadingStats.book_history, "abc")
+            locker:exec("ROLLBACK;")
+            locker:close()
+            assert(ok, history)
+            assert.is_nil(history)
+            assert.is_true(logged_error())
+        end)
+
+        it("gives nil, and logs it, when the read itself raises", function()
+            make_books_db({ { 1, "abc", 100, 100, 60 } }, { { 1, 1, 1000, 20, 100 } })
+            local real_open = SQ3.open
+            SQ3.open = function()
+                error("boom")
+            end
+            local ok, history = pcall(ReadingStats.book_history, "abc")
+            SQ3.open = real_open
+            assert(ok, history)
+            assert.is_nil(history)
+            assert.is_true(logged_error())
+        end)
+
+        it("opens the database read-only and closes it", function()
+            make_books_db({ { 1, "abc", 100, 100, 60 } }, { { 1, 1, 1000, 20, 100 } })
+            local real_open = SQ3.open
+            local calls, conn = {}, nil
+            SQ3.open = function(...)
+                calls[#calls + 1] = { ... }
+                conn = real_open(...)
+                return conn
+            end
+            local ok, err = pcall(ReadingStats.book_history, "abc")
+            SQ3.open = real_open
+            assert(ok, err)
+            assert.same({ { db_path, "ro" } }, calls)
+            assert.is_true(conn._closed)
+        end)
+    end)
+
     describe("the memo", function()
         local real_open, opened
         local real_time = os.time
@@ -726,6 +830,27 @@ describe("reading stats", function()
             date_back(db_path, 30)
             assert.equals(10, (ReadingStats.seconds_per_page("def")))
             assert.equals(5, opened)
+        end)
+
+        it("reads a book's history again only when the files or the md5 change, and every time unsettled", function()
+            make_books_db({ { 1, "abc", 100, 100, 60 }, { 2, "def", 100, 200, 90 } },
+                { { 1, 1, 1000, 20, 100 }, { 2, 1, 1000, 40, 100 } })
+            settle()
+            assert.equals(60, ReadingStats.book_history("abc").seconds)
+            assert.equals(60, ReadingStats.book_history("abc").seconds)
+            assert.equals(1, opened)
+            assert.is_nil(ReadingStats.book_history("zzz"))
+            assert.is_nil(ReadingStats.book_history("zzz"))
+            assert.equals(2, opened)
+            assert.equals(90, ReadingStats.book_history("def").seconds)
+            assert.equals(3, opened)
+            date_back(db_path, 30)
+            assert.equals(90, ReadingStats.book_history("def").seconds)
+            assert.equals(4, opened)
+            date_back(db_path, 0)
+            ReadingStats.book_history("def")
+            ReadingStats.book_history("def")
+            assert.equals(6, opened)
         end)
 
         it("opens the database once when the numbers and the rate both miss", function()

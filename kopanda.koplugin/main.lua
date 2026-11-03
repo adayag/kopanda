@@ -4,6 +4,7 @@
 -- prepends the plugin root to package.path only while it dofile()s this file (frontend/pluginloader.lua:242,
 -- :269-270), so a later require could resolve to another plugin's same-named file (:283-286).
 local AuthorsScreen = require("authors_screen")
+local BookStatusScreen = require("book_status_screen")
 local DispatchBridge = require("dispatch_bridge")
 local Dispatcher = require("dispatcher")
 local FmNav = require("fm_nav")
@@ -34,6 +35,7 @@ require("book_covers")
 require("book_index")
 require("book_search")
 require("book_sheet")
+require("book_status")
 require("books")
 require("cloud_books")
 require("edit_layout")
@@ -254,6 +256,42 @@ end
 -- The library search's results with opts (SearchScreen.show's), as show_shelf.
 function KoPanda:showSearch(opts)
     show_shelf(SearchScreen, opts)
+end
+
+-- The screen opener names shown again: the home for { screen = "home" }; the library at its folder (view) and
+-- page; the Series, Authors or Subjects window at its view and page; the search's results for its query and
+-- start (from) at their page.
+local function show_opener(kopanda, opener)
+    local screen = opener and opener.screen
+    if screen == "library" then
+        kopanda:showLibrary{ dir = opener.view, page = opener.page }
+    elseif screen == "search" then
+        show_shelf(SearchScreen, { query = opener.view.query, from = opener.from, page = opener.page })
+    elseif SHELVES[screen] then
+        show_shelf(SHELVES[screen], { view = opener.view, page = opener.page })
+    else
+        kopanda:showHome()
+    end
+end
+
+-- The book status page with opts (BookStatusScreen.show's) unless the file manager has gone; like the library's,
+-- it takes no part in the boot guard. One that fails to show is logged by the chrome, which closed the screen it
+-- was opened from, so that is shown again. Returns the window shown, or nil.
+function KoPanda:showBookStatus(opts)
+    local FileManager = package.loaded["apps/filemanager/filemanager"]
+    if not (FileManager and FileManager.instance) then
+        return nil
+    end
+    local screen = BookStatusScreen.show(opts)
+    if not screen then
+        show_opener(self, opts.opener)
+    end
+    return screen
+end
+
+-- The screen a book status page was opened from (its opener), shown again by the page's back control.
+function KoPanda:showOpener(opener)
+    show_opener(self, opener)
 end
 
 -- The window a book's close returns to and the fields it is built with: the library at the folder and page

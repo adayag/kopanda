@@ -1,9 +1,9 @@
--- A book's sheet: a header of its small cover, title, author and meta line, then Open, Book details,
--- Read status and More by this author. The featured book's (BookSheet.open, held on the home) adds
--- Feature a different book and This widget's settings; a library record's (BookSheet.open_record) adds
--- Add to the home, Delete, and Download for cwngsync's placeholder. Read status opens KOReader's own
--- status buttons, which write the sidecar themselves; only the picker and Add to the home write
--- (featured.pinned).
+-- A book's sheet: a header of its small cover, title, author and meta line, then Open, Book details
+-- (KoPanda's book status page, KOReader's own details page when it fails), Read status and More by this
+-- author. The featured book's (BookSheet.open, held on the home) adds Feature a different book and This
+-- widget's settings; a library record's (BookSheet.open_record) adds Add to the home, Delete, and Download
+-- for cwngsync's placeholder. Read status opens KOReader's own status buttons, which write the sidecar
+-- themselves; only the picker and Add to the home write (featured.pinned).
 local BookCovers = require("book_covers")
 local BookList = require("ui/widget/booklist")
 local Books = require("books")
@@ -23,6 +23,7 @@ local ffiutil = require("ffi/util")
 local filemanagerutil = require("apps/filemanager/filemanagerutil")
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
+local time = require("ui/time")
 
 local BookSheet = {}
 
@@ -103,14 +104,25 @@ local function record_meta(record, now)
     return #parts > 0 and table.concat(parts, JOIN) or nil
 end
 
--- KOReader's page of the book's details, over the home (filemanagerbookinfo.lua:71-87).
-local function show_details(file)
+-- The book status page of the book at file, its record read by on.record(), over the screen on.opener names; a
+-- file gone since the sheet was built re-lists that screen (on.refresh) instead. When the page fails to show,
+-- KOReader's own details page of file (filemanagerbookinfo.lua:71-87) opens over the screen shown again.
+local function show_status(file, on)
     local fm = file_manager()
     if not fm then
         logger.warn("KoPanda: no file manager to show the book's details from")
         return
     end
-    fm.bookinfo:show(file)
+    if lfs.attributes(file, "mode") ~= "file" then
+        on.refresh()
+        return
+    end
+    local record = on.record()
+    local shown = record and fm.kopanda
+        and fm.kopanda:showBookStatus{ record = record, opener = on.opener, started = time.monotonic() }
+    if not shown then
+        fm.bookinfo:show(file)
+    end
 end
 
 -- The read status sub-sheet: KOReader's own status buttons for the book, with the sidecar when the
@@ -222,9 +234,10 @@ local function show_authors(name)
 end
 
 -- The rows every book's sheet starts with: Open, Book details, Read status and More by this author,
--- for the book at file under ctx. on holds the caller's callbacks (open, refresh, author); beneath is
--- the screen the sub-sheet is shown over. With no file (a book not downloaded), Open, Book details
--- and Read status are greyed and a tap closes the sheet.
+-- for the book at file under ctx. on holds the caller's callbacks (open, refresh, author, record) and the
+-- opener the book status page goes back to; beneath is the screen the sub-sheet is shown over. With no file (a
+-- book not downloaded), Open, Book details and Read status are greyed and a tap closes the sheet; Book details
+-- is greyed too for cwngsync's placeholder (on.placeholder).
 local function book_rows(file, title, on, ctx, beneath)
     local rows = {
         { icon = "open_book", label = "Open" },
@@ -246,8 +259,12 @@ local function book_rows(file, title, on, ctx, beneath)
         return rows
     end
     rows[1].run = on.open
-    rows[2].run = function()
-        show_details(file)
+    if on.placeholder then
+        rows[2].muted = true
+    else
+        rows[2].run = Guards.guarded("the book details", function()
+            show_status(file, on)
+        end)
     end
     -- KOReader's label: New with no sidecar (frontend/ui/widget/booklist.lua:366-389).
     rows[3].detail = BookList.getBookStatusString(BookList.getBookStatus(file), false, true) .. " ›"
@@ -383,6 +400,10 @@ function BookSheet.open(ctx, built, opts)
             local record = Books.for_path(book.file)
             return record and record.authors[1]
         end,
+        record = function()
+            return Books.for_path(book.file)
+        end,
+        opener = { screen = "home" },
     }, ctx, nil)
     rows[#rows + 1] = {
         icon = "list",
@@ -425,6 +446,11 @@ function BookSheet.open_record(record, window, ctx, opts)
         author = function()
             return record.authors[1]
         end,
+        record = function()
+            return record
+        end,
+        opener = { screen = window.screen, view = window:view(), page = window.page, from = window.from },
+        placeholder = record.placeholder == true,
     }, ctx, opts and opts.beneath)
     if record.placeholder == true then
         table.insert(rows, 2, download_row(record, window))

@@ -230,6 +230,36 @@ describe("BookCovers", function()
             assert.equals(0, queue.unscheduled)
         end)
 
+        it("asks again for a file at a box bigger than the one its cover arrived for", function()
+            local small, big = { max_cover_w = 280, max_cover_h = 420 }, { max_cover_w = 400, max_cover_h = 600 }
+            local rows = {}
+            local bim = manager{ info = function(file) return rows[file] end, extracting = { false } }
+            local queue = stub(bim)
+            local calls, on_arrival = recorder()
+            BookCovers.request({ { path = A } }, small, on_arrival, always)
+            rows[A] = { has_cover = "Y", cover_fetched = "Y", cover_w = 280, cover_h = 420, cover_sizetag = "600x900" }
+            run_next(queue)
+            assert.same({ { check = 0, paths = { A } } }, calls)
+            assert.equals(0, #queue)
+            BookCovers.request({ { path = A } }, big, function() end, always)
+            assert.same({ { { filepath = A, cover_specs = small } }, { { filepath = A, cover_specs = big } } },
+                bim.extracted)
+        end)
+
+        it("asks again for a file in flight at a bigger box, never at the same or a smaller one", function()
+            local small, big = { max_cover_w = 280, max_cover_h = 420 }, { max_cover_w = 400, max_cover_h = 600 }
+            local bim = manager{ info = function() return nil end, extracting = { true } }
+            stub(bim)
+            BookCovers.request({ { path = A } }, small, function() end, always)
+            BookCovers.request({ { path = A } }, small, function() end, always)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            assert.same({ { { filepath = A, cover_specs = small } } }, bim.extracted)
+            BookCovers.request({ { path = A } }, big, function() end, always)
+            BookCovers.request({ { path = A } }, small, function() end, always)
+            assert.same({ { { filepath = A, cover_specs = small } }, { { filepath = A, cover_specs = big } } },
+                bim.extracted)
+        end)
+
         it("schedules nothing when no file is wanted", function()
             local bim = manager{ info = function() return usable(nil) end }
             local queue = stub(bim)

@@ -466,6 +466,117 @@ describe("Books", function()
         end)
     end)
 
+    describe("details", function()
+        local a
+
+        before_each(function()
+            a = book("a.epub")
+        end)
+
+        it("reads the description and the pages from CoverBrowser's row, in one getBookInfo call without a cover",
+            function()
+                local calls = coverbrowser({ [a] = { title = "A", description = "<p>A tale.</p>", pages = 412 } })
+                assert.same({ description = "<p>A tale.</p>", pages = 412 }, Books.details(Books.for_path(a)))
+                calls.get = {}
+                Books.details({ path = a })
+                assert.equals(1, #calls.get)
+                assert.is_false(calls.get[1].get_cover)
+                assert.same({}, calls.writes)
+            end)
+
+        it("takes the sidecar's pages where the row has none, or none above 0", function()
+            sidecar(a, '{ doc_pages = 300 }')
+            coverbrowser({ [a] = { description = "A tale." } })
+            assert.same({ description = "A tale.", pages = 300 }, Books.details({ path = a }))
+            coverbrowser({ [a] = { pages = 0 } })
+            assert.same({ pages = 300 }, Books.details({ path = a }))
+        end)
+
+        it("takes the sidecar's pages in BookList's order, page labels first", function()
+            sidecar(a, '{ pagemap_use_page_labels = true, pagemap_doc_pages = 280, doc_pages = 300 }')
+            assert.equals(280, Books.details({ path = a }).pages)
+            sidecar(a, '{ stats = { pages = 250 } }')
+            assert.equals(250, Books.details({ path = a }).pages)
+        end)
+
+        it("leaves out an empty or missing description", function()
+            coverbrowser({ [a] = { description = "", pages = 10 } })
+            assert.same({ pages = 10 }, Books.details({ path = a }))
+            coverbrowser({ [a] = { title = "A" } })
+            assert.same({}, Books.details({ path = a }))
+        end)
+
+        it("is empty with CoverBrowser disabled, a row missing and no sidecar", function()
+            assert.same({}, Books.details({ path = a }))
+            coverbrowser({})
+            assert.same({}, Books.details({ path = a }))
+        end)
+
+        it("is empty for a book with no path", function()
+            local calls = coverbrowser({})
+            assert.same({}, Books.details({ id = "remote:1", title = "Far away" }))
+            assert.same({}, calls.get)
+        end)
+
+        it("reads the sidecar's summary.modified as it is written, a string", function()
+            sidecar(a, '{ summary = { status = "complete", modified = "2026-10-28" } }')
+            assert.same({ modified = "2026-10-28" }, Books.details({ path = a }))
+            sidecar(a, '{ summary = { status = "complete", modified = 20261028 } }')
+            assert.same({}, Books.details({ path = a }))
+            sidecar(a, '{ summary = "complete" }')
+            assert.same({}, Books.details({ path = a }))
+        end)
+
+        it("logs a raising getBookInfo and still reads the sidecar", function()
+            sidecar(a, '{ doc_pages = 300, summary = { modified = "2026-10-28" } }')
+            package.loaded["bookinfomanager"] = {
+                getBookInfo = function()
+                    error("CoverBrowser broke on purpose")
+                end,
+            }
+            assert.same({ pages = 300, modified = "2026-10-28" }, Books.details({ path = a }))
+            assert.is_true(was_logged("CoverBrowser broke on purpose"))
+        end)
+
+        it("logs a raising sidecar read and still reads CoverBrowser's row", function()
+            coverbrowser({ [a] = { description = "A tale.", pages = 412 } })
+            DocSettings.findSidecarFile = function()
+                error("sidecar broke on purpose")
+            end
+            assert.same({ description = "A tale.", pages = 412 }, Books.details({ path = a }))
+            assert.is_true(was_logged("sidecar broke on purpose"))
+        end)
+
+        it("logs a sidecar whose settings raise and still reads CoverBrowser's row", function()
+            coverbrowser({ [a] = { description = "A tale." } })
+            sidecar(a, '{ doc_pages = 300 }')
+            local open_file = DocSettings.openSettingsFile
+            DocSettings.openSettingsFile = function(file)
+                local doc = open_file(file)
+                doc.readSetting = function()
+                    error("settings broke on purpose")
+                end
+                return doc
+            end
+            local ok, details = pcall(Books.details, { path = a })
+            DocSettings.openSettingsFile = open_file
+            assert(ok, details)
+            assert.same({ description = "A tale." }, details)
+            assert.is_true(was_logged("settings broke on purpose"))
+        end)
+
+        it("leaves the description out of the library's listings", function()
+            local b = book("b.epub")
+            coverbrowser({ [a] = { title = "A", description = "A tale." }, [b] = { title = "B", description = "B" } })
+            for _, records in ipairs({ Books.folder(lib).books, Books.all(), { Books.for_path(a) } }) do
+                assert.is_true(#records > 0)
+                for _, record in ipairs(records) do
+                    assert.is_nil(record.description)
+                end
+            end
+        end)
+    end)
+
     describe("progress", function()
         local a
 

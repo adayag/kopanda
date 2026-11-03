@@ -369,6 +369,43 @@ local function sidecar_pages(doc)
     return tonumber(pages)
 end
 
+local function positive(value)
+    local n = tonumber(value)
+    if n and n > 0 then
+        return n
+    end
+end
+
+-- The pages and summary.modified (filemanagerutil.lua:111) of a sidecar's settings doc.
+local function sidecar_details(doc)
+    local summary = doc:readSetting("summary")
+    return { pages = positive(sidecar_pages(doc)), modified = type(summary) == "table" and text(summary.modified) }
+end
+
+-- What the book status page shows of book (a record) beyond its listing, read when the page opens, so a listing
+-- holds no description: { description, pages, modified }, the description and pages from its CoverBrowser row
+-- (bookinfomanager.lua:50,59), the pages falling back to the sidecar's, and the sidecar's summary.modified,
+-- each nil when unknown; {} for a record with no path. A failed read is logged and leaves out its fields.
+function Books.details(book)
+    local path = book.path
+    if not path then
+        return {}
+    end
+    local info = row(path)
+    local details = {}
+    if type(info) == "table" then
+        details.description = text(info.description)
+        details.pages = positive(info.pages)
+    end
+    local doc = sidecar(path)
+    local read = doc and try("the details in the sidecar of " .. path, sidecar_details, doc)
+    if read then
+        details.pages = details.pages or read.pages
+        details.modified = read.modified or nil
+    end
+    return details
+end
+
 -- The progress of a book whose sidecar's settings are doc, exists whether a sidecar file was found,
 -- as sidecar() gives them.
 local function sidecar_progress(doc, exists)

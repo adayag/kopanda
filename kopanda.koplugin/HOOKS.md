@@ -956,6 +956,12 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
   `:422-452`). `seconds_per_page` runs the plugin's capped-average query on it
   (`STATISTICS_SQL_BOOK_CAPPED_TOTALS_QUERY`, `main.lua:40-49`) with the cap bound as a parameter;
   the time left is the stats popup's sum over the book row's pages (`main.lua:1579`).
+- A book's history, `book_history` (the book status page): of the book row `seconds_per_page` takes, its
+  `total_read_time` and `last_open` (`main.lua:470`, `:476`), which `insertDB` rewrites with the book's
+  summed time and the session's end on each write (`main.lua:912`, `:966-979`); and, from that row's
+  `page_stat_data` rows, the count of distinct local dates of `start_time` (SQLite's
+  `strftime('%Y-%m-%d', …, 'unixepoch', 'localtime')`, the C library's zone, as `insights` groups by)
+  and the smallest `start_time` (`main.lua:405-410`). Kept while the files' stamp holds, as the rate is.
 - `max_sec`, the cap on one page's time: a field of the plugin's `statistics` settings table,
   default `DEFAULT_MAX_READ_SEC` 120 (`main.lua:30`, `:83`, the read `:143`); `reading_stats.lua`
   reads the table without a default and takes 120 when `max_sec` is absent.
@@ -1017,6 +1023,13 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   keywords (`epubfmt.cpp:1201-1219`), which `Document:getProps` passes on as `keywords`
   (`frontend/document/document.lua:187,196`). `books.lua` splits them into a record's `subjects` as
   it splits authors.
+- `Books.details`, read only when the book status page opens, so a listing holds no description: the
+  row's `description` and `pages` (`plugins/coverbrowser.koplugin/bookinfomanager.lua:59`, `:50`) from
+  the same `getBookInfo(path, false)` call, the pages falling back to the sidecar's in `BookList`'s
+  order, and the sidecar's `summary.modified`, a `%Y-%m-%d` date written on every summary save, a
+  status change or a note or rating (`frontend/apps/filemanager/filemanagerutil.lua:111`,
+  `frontend/apps/reader/modules/readerstatus.lua:215`, `frontend/ui/widget/bookstatuswidget.lua:199`);
+  the page reads it as the day a finished book was finished.
 - The series split: `Document:getProps` splits a trailing `" #N"` off the series into a number
   (`frontend/document/document.lua:169-185`), so the column holds the name alone.
 - `docsettings`: `DocSettings:findSidecarFile` (`frontend/docsettings.lua:159-175`) and
@@ -1249,7 +1262,7 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   (`:695`), closes the database connection (`:699`), forks the extraction (`:721`) and returns
   `true` (`:744`), or `false` when the fork fails (`:724`). One subprocess walks the batch's
   files in order, extracting each (`:702-711`). Asked only from `BookCovers.request`, at most once
-  per file per process unless a later request replaced the one that asked for it (its
+  per file per process for a box no bigger than one already asked for it unless a later request replaced the one that asked for it (its
   extraction terminated, `:695`) or the check gave up on it at its cap (below), with every wanted
   file of the batch in one call; the featured cover asks through `FeaturedCover.after_show`, the
   library for its page (`library_covers.lua`), the library's Refresh covers for every book with a
@@ -1768,6 +1781,22 @@ touch lock still holds.
   has no U+2011 (`face.ftsize:hasGlyph(0x2011)` false, `base/ffi/freetype.lua:75`), so the
   boards' non-breaking hyphen would come from a fallback font.
 
+### The book status page: `TextBoxWidget`'s lines and `util.htmlToPlainTextIfHtml`
+
+`book_status.lua` and `book_status_screen.lua` draw a book's page; what they read of CoverBrowser's
+row, the sidecar and the Statistics database is in the book records' and the Statistics entries.
+
+- `util.htmlToPlainTextIfHtml` (`frontend/util.lua:1295`), which KOReader's details page runs on a
+  description (`frontend/apps/filemanager/filemanagerbookinfo.lua:450`): `<p>` becomes `"\n\t"`,
+  `</p>` and `<br>` `"\n"`, tags are dropped and entities decoded (`util.lua:1266-1286`). The page
+  then trims each line and drops the empty ones, one paragraph a line.
+- `TextBoxWidget` (`frontend/ui/widget/textboxwidget.lua`): its line is `(1 + line_height)` em,
+  rounded (`:151`), with `height` its lines are `floor(height / line)` (`:173-182`); `getAllLineCount`
+  (`:1174`) counts every wrapped line, measured on a box one line high, so `_updateLayout` renders one
+  line (`:969-987`), and flagged `for_measurement_only`, as `frontend/ui/widget/dictquicklookup.lua:515`
+  flags its own; `scrollLines(n)` (`:1443-1468`) shows a paragraph's lines from a later one, clamped to
+  its last full page, which a box exactly its share's lines high never reaches.
+
 ### The book sheet: KOReader's status buttons, `BookList`, book details and the history's times
 
 - `apps/filemanager/filemanagerutil`, required by `book_sheet.lua`:
@@ -1808,10 +1837,11 @@ touch lock still holds.
   covers that module only.
 - `FileManager.instance.bookinfo:show(file)` (the module registered at
   `frontend/apps/filemanager/filemanager.lua:406`; `frontend/apps/filemanager/filemanagerbookinfo.lua:71-87`
-  takes a path and opens the sidecar itself when the book has one) shows KOReader's book details
-  page over the home, or over the library or the shelf screen the book was held on
-  (`BookSheet.open_record`, reached from `library_sheets.lua`), which re-list on the broadcasts
-  below. Its `close_callback` broadcasts `InvalidateMetadataCache` and
+  takes a path and opens the sidecar itself when the book has one) is Book details' fallback: the row
+  opens KoPanda's book status page, and only when that fails to show does KOReader's book details
+  page open, over the home, or over the library or the shelf screen the book was held on
+  (`BookSheet.open_record`, reached from `library_sheets.lua`), shown again, which re-list on the
+  broadcasts below. Its `close_callback` broadcasts `InvalidateMetadataCache` and
   `BookMetadataChanged` when a property was edited, and `BookMetadataChanged` when the summary was
   (`filemanagerbookinfo.lua:267-285`); the home handles neither, so an edit shows on the next
   rebuild; the library's windows re-list on both (the library's gestures entry below). Read

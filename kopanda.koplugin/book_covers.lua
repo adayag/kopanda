@@ -6,8 +6,8 @@
 -- A path-less book's cover comes from its source, through Books. CoverBrowser is reached through
 -- pcall(require, "bookinfomanager"): its folder joins package.path only when the plugin is enabled
 -- (frontend/pluginloader.lua:283-287), so a failed require means it is disabled.
--- Module state: asked, the files extraction was asked for in this process; pending, the records of
--- the request in flight whose covers have not arrived; check, the scheduled check or nil.
+-- Module state: asked, by file, the box extraction was last asked for in this process; pending, the
+-- records of the request in flight whose covers have not arrived; check, the scheduled check or nil.
 local BookList = require("ui/widget/booklist")
 local Books = require("books")
 local UIManager = require("ui/uimanager")
@@ -121,9 +121,15 @@ function BookCovers.cancel()
     end
 end
 
+-- Whether path was asked for in this process at a box specs fits inside.
+local function covered(path, specs)
+    local box = asked[path]
+    return box ~= nil and specs.max_cover_w <= box.max_cover_w and specs.max_cover_h <= box.max_cover_h
+end
+
 -- The records CoverBrowser should extract a cover for in a box of specs: each with a path not asked
--- for in this process, or still pending, whose row wants says yes to. A failing test is logged and
--- its record left out.
+-- for in this process at a box specs fits inside, or still pending, whose row wants says yes to. A
+-- failing test is logged and its record left out.
 local function wanted(bim, records, specs)
     local in_flight = {}
     for _, record in ipairs(pending) do
@@ -132,13 +138,14 @@ local function wanted(bim, records, specs)
     local list, new = {}, false
     for _, record in ipairs(records) do
         local path = record.path
-        if path and (not asked[path] or in_flight[path]) then
+        local done = path and covered(path, specs)
+        if path and (not done or in_flight[path]) then
             local ok, wants = pcall(BookCovers.wants, book_info(bim, path, false), specs)
             if not ok then
                 logger.err("KoPanda: the cover extraction test failed:", wants)
             elseif wants then
                 list[#list + 1] = record
-                new = new or not in_flight[path]
+                new = new or not done
             end
         end
     end
@@ -146,12 +153,12 @@ local function wanted(bim, records, specs)
 end
 
 -- Asks CoverBrowser to extract, in one batch, the covers of the records that want one, once per file
--- per process, then checks each second while the extraction runs, at most 30 times (CoverBrowser has
--- no completion event and polls the same way, covermenu.lua:164-175). Each check calls
--- on_arrival(records) with those that arrived since the last, and stops when alive() is false. One
--- request is in flight at a time: extractInBackground terminates the one before
--- (bookinfomanager.lua:695), so a new request, or the 30th check, forgets the files that hadn't
--- arrived and a later request asks for them again.
+-- per process for a box no bigger than one asked, then checks each second while the extraction runs,
+-- at most 30 times (CoverBrowser has no completion event and polls the same way,
+-- covermenu.lua:164-175). Each check calls on_arrival(records) with those that arrived since the
+-- last, and stops when alive() is false. One request is in flight at a time: extractInBackground
+-- terminates the one before (bookinfomanager.lua:695), so a new request, or the 30th check, forgets
+-- the files that hadn't arrived and a later request asks for them again.
 function BookCovers.request(records, specs, on_arrival, alive)
     local bim = manager()
     if not bim then
@@ -168,7 +175,7 @@ function BookCovers.request(records, specs, on_arrival, alive)
     pending = {}
     local files = {}
     for i, record in ipairs(batch) do
-        asked[record.path] = true
+        asked[record.path] = specs
         files[i] = { filepath = record.path, cover_specs = specs }
     end
     local started, launched = pcall(bim.extractInBackground, bim, files)

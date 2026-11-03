@@ -531,6 +531,10 @@ return {
         shelf_label = {
             face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "muted",
         },
+        -- The book status page's description.
+        book_description = {
+            face = "text", size = 16, uppercase = false, tracking = 0, line_height = 0.35, color = "text",
+        },
     },
 
     -- The launcher: a grid of tiles or text rows, its gaps, icons, accents and suffix.
@@ -725,6 +729,12 @@ return {
             next_icon_color = "ink",
             label_in_words = true, -- "Page 1 of 24"
         },
+    },
+
+    -- The book status page: the gap between its sections and between its description's paragraphs.
+    book_status = {
+        section_gap = 28,
+        paragraph_gap = 10,
     },
 
     -- The series, authors and subjects screens: the library's header, rows and groups, chips and the

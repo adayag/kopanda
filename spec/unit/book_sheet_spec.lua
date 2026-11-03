@@ -407,17 +407,73 @@ describe("the book sheet", function()
             assert.is_nil(Sheet.shown)
         end)
 
-        it("shows KOReader's book details for the file on Book details, once", function()
-            history({ { a } })
-            local fm = fm_with_home()
-            local shown = {}
-            fm.bookinfo.show = function(_, file)
-                shown[#shown + 1] = file
+        describe("on Book details", function()
+            local BookStatus, BookStatusScreen
+
+            before_each(function()
+                BookStatus = require("book_status")
+                BookStatusScreen = require("book_status_screen")
+            end)
+
+            -- Counts KOReader's own details page's shows, by file.
+            local function count_bookinfo(fm)
+                local shown = {}
+                replace(fm.bookinfo, "show", function(_, file)
+                    shown[#shown + 1] = file
+                end)
+                return shown
             end
-            hold_book()
-            tap("Book details")
-            assert.same({ a }, shown)
-            assert.is_nil(Sheet.shown)
+
+            it("opens the book status page of the featured book over the home, once, and back shows the home",
+                function()
+                    history({ { a } })
+                    local fm = fm_with_home()
+                    local shown = count_bookinfo(fm)
+                    hold_book()
+                    tap("Book details")
+                    harness.tick(2)
+                    local screen = BookStatusScreen.shown
+                    assert.is_not_nil(screen)
+                    assert.equals(screen, harness.top())
+                    assert.equals(a, screen.record.path)
+                    assert.same({ screen = "home" }, screen.opener)
+                    assert.is_nil(Home.shown)
+                    assert.is_nil(Sheet.shown)
+                    assert.same({}, shown)
+                    screen:back()
+                    assert.is_nil(BookStatusScreen.shown)
+                    assert.is_not_nil(Home.shown)
+                end)
+
+            it("opens KOReader's details page over the home again when the page fails to show", function()
+                history({ { a } })
+                local fm = fm_with_home()
+                local shown = count_bookinfo(fm)
+                local has_error = spy_errors()
+                replace(BookStatus, "split", function()
+                    error("split broke on purpose")
+                end)
+                hold_book()
+                tap("Book details")
+                assert.is_nil(BookStatusScreen.shown)
+                assert.same({ a }, shown)
+                assert.is_not_nil(Home.shown)
+                assert.is_true(has_error("split broke on purpose"))
+            end)
+
+            it("refreshes the home and opens nothing when the book's file went between the hold and the tap",
+                function()
+                    history({ { a } })
+                    local fm = fm_with_home()
+                    local shown = count_bookinfo(fm)
+                    hold_book()
+                    local refreshes = count_refreshes()
+                    os.remove(a)
+                    tap("Book details")
+                    assert.is_nil(BookStatusScreen.shown)
+                    assert.same({}, shown)
+                    assert.equals(1, refreshes.n)
+                end)
         end)
 
         -- The first-listed author's own books, read from the book's record on the tap, or the Authors list for a book
@@ -944,10 +1000,14 @@ describe("the book sheet", function()
             local w = {
                 screen = "library",
                 ctx = { look = Looks.active(), variant = Looks.variant(), screen = Screen },
+                page = 3,
                 opened = {},
                 refreshes = 0,
                 closes = 0,
             }
+            function w.view()
+                return books_dir
+            end
             function w:open(record)
                 self.opened[#self.opened + 1] = record
             end
@@ -1135,15 +1195,92 @@ describe("the book sheet", function()
             assert.is_nil(Sheet.shown)
         end)
 
-        it("shows KOReader's book details for the record's path on Book details, once", function()
-            local _, fm = open(Books.for_path(a))
-            local shown = {}
-            fm.bookinfo.show = function(_, file)
-                shown[#shown + 1] = file
+        describe("on Book details", function()
+            local BookStatus, BookStatusScreen
+
+            before_each(function()
+                BookStatus = require("book_status")
+                BookStatusScreen = require("book_status_screen")
+            end)
+
+            local function count_bookinfo(fm)
+                local shown = {}
+                replace(fm.bookinfo, "show", function(_, file)
+                    shown[#shown + 1] = file
+                end)
+                return shown
             end
-            tap("Book details")
-            assert.same({ a }, shown)
-            assert.is_nil(Sheet.shown)
+
+            it("opens the book status page of the record, from the window's screen, view and page, once", function()
+                local record = Books.for_path(a)
+                local w, fm = open(record)
+                local shown = count_bookinfo(fm)
+                tap("Book details")
+                local screen = BookStatusScreen.shown
+                assert.is_not_nil(screen)
+                assert.equals(screen, harness.top())
+                assert.equals(record, screen.record)
+                assert.same({ screen = "library", view = books_dir, page = 3 }, screen.opener)
+                assert.is_nil(Sheet.shown)
+                assert.same({}, shown)
+                assert.same({ 0, 0 }, { w.refreshes, #w.opened })
+            end)
+
+            it("passes the search's start on with its view", function()
+                local record = Books.for_path(a)
+                local fm = fm_with_home()
+                local w = window()
+                w.screen, w.from = "search", { dir = books_dir, page = 2 }
+                w.view = function()
+                    return { query = "fr" }
+                end
+                count_bookinfo(fm)
+                BookSheet.open_record(record, w, w.ctx, { beneath = w })
+                tap("Book details")
+                assert.same({ screen = "search", view = { query = "fr" }, page = 3,
+                    from = { dir = books_dir, page = 2 } }, BookStatusScreen.shown.opener)
+            end)
+
+            it("opens KOReader's details page for the record's path when the page fails to show", function()
+                local _, fm = open(Books.for_path(a))
+                local shown = count_bookinfo(fm)
+                local has_error = spy_errors()
+                replace(BookStatus, "split", function()
+                    error("split broke on purpose")
+                end)
+                tap("Book details")
+                assert.is_nil(BookStatusScreen.shown)
+                assert.same({ a }, shown)
+                assert.is_true(has_error("split broke on purpose"))
+            end)
+
+            it("re-lists the window and opens nothing when the record's file went between the hold and the tap",
+                function()
+                    local w, fm = open(Books.for_path(a))
+                    local shown = count_bookinfo(fm)
+                    os.remove(a)
+                    tap("Book details")
+                    assert.is_nil(BookStatusScreen.shown)
+                    assert.same({}, shown)
+                    assert.equals(1, w.refreshes)
+                end)
+
+            it("is greyed for cwngsync's placeholder, and a tap closes the sheet and opens nothing", function()
+                local record = Books.for_path(a)
+                record.placeholder = true
+                local w, fm = open(record)
+                local shown = count_bookinfo(fm)
+                local row = place_of("Book details").row
+                assert.is_true(row.muted)
+                assert.is_nil(row.run)
+                local top = harness.top(2)
+                tap("Book details")
+                assert.is_nil(Sheet.shown)
+                assert.equals(top, harness.top())
+                assert.is_nil(BookStatusScreen.shown)
+                assert.same({}, shown)
+                assert.same({ 0, 0 }, { w.refreshes, #w.opened })
+            end)
         end)
 
         it("re-lists the window once, and refreshes no home, when the status sub-sheet writes", function()
