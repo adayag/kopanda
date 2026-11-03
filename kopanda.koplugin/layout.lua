@@ -10,9 +10,6 @@ local Layout = {}
 -- The screen lengths are scaled for; a spec puts a screen of another size here.
 Layout.screen = require("device").screen
 
--- The share of a look's row gap the home's rows keep at Extra large, so its taller rows fit.
-local ROW_GAP_EXTRA_LARGE = 0.75
-
 local function scale(px)
     return Layout.screen:scaleBySize(px)
 end
@@ -237,8 +234,7 @@ local function arrange(rows, ctx, placer)
     end
 
     local first_gap = header.rule_color and 0 or nil
-    local row_gap = ctx.text_size == "extra_large" and home.row_gap * ROW_GAP_EXTRA_LARGE or home.row_gap
-    local ys, dropped = placer(heights, above, home.margin, row_gap, home.free_space, footer_height(home),
+    local ys, dropped = placer(heights, above, home.margin, home.row_gap, home.free_space, footer_height(home),
         first_gap)
     local arranged = {
         width = width,
@@ -320,13 +316,13 @@ function Layout.overflow(rows, ctx)
     return #arrange(rows, ctx, place).dropped
 end
 
-local TEXT_SCALE = { small = 0.85, medium = 1, large = 1.15, extra_large = 1.4 }
+local TEXT_SCALE = { small = 0.85, medium = 1, large = 1.15, extra_large = 1.3 }
 
 -- A look's font size at the text_size setting, rounded to a whole size; at extra_large a size
--- under 14 is lifted to 14 first.
+-- under 12 is lifted to 12 first.
 function Layout.font_size(size, text_size)
-    if text_size == "extra_large" and size < 14 then
-        size = 14
+    if text_size == "extra_large" and size < 12 then
+        size = 12
     end
     return math.floor(size * (TEXT_SCALE[text_size] or 1) + 0.5)
 end

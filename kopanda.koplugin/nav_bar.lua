@@ -41,10 +41,16 @@ local function content_top(nav, screen)
     return edge + math.max(0, screen:scaleBySize(nav.active_rule_width) - edge) + screen:scaleBySize(nav.padding_top)
 end
 
+-- The text size the labels are set at for the shell's text_size: Large's at Extra large, so five labels still
+-- fit across the bar with space between them while the icons grow.
+local function label_size(text_size)
+    return text_size == "extra_large" and "large" or text_size
+end
+
 -- The taller of the two label parts' lines at text_size; the variant colours the line and doesn't
 -- change it.
 local function label_height(look, screen, text_size)
-    local ctx = { look = look, variant = "day", text_size = text_size }
+    local ctx = { look = look, variant = "day", text_size = label_size(text_size) }
     local height = 0
     for _, part in ipairs({ look.type.nav_label, look.type.nav_label_active }) do
         local line = Typeset.line(part, "Home", screen:getWidth(), ctx)
@@ -121,7 +127,7 @@ function Bar:init()
     end
     self.columns = Layout.columns(self.width - 2 * self.padding_x, shares, 0)
     local palette = Looks.palette(look, self.variant)
-    local ctx = { look = look, variant = self.variant, text_size = self.text_size }
+    local ctx = { look = look, variant = self.variant, text_size = label_size(self.text_size) }
     self.icon_size = Layout.size_at(Screen:scaleBySize(nav.icon_size), self.text_size)
     self.tabs = {}
     for i, tab in ipairs(NavBar.TABS) do

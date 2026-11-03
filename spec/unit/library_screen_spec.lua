@@ -342,7 +342,8 @@ describe("the library window", function()
                 end)
         end)
 
-        it("holds six above the pager at extra large, the cover shortened to fit two rows", function()
+        it("holds six above the pager at extra large, the cover no taller than its look's, shortened where two rows "
+            .. "need it", function()
             fixture.install({ [ROOT] = { books = fixture.books(40) } })
             assert.is_true(Settings.set("text_size", "extra_large"))
             each_profile_look({ { "colorsoft", harness.at_colorsoft }, { "paperwhite", harness.at_paperwhite },
@@ -354,7 +355,7 @@ describe("the library window", function()
                 local bottom = last.y + last.h
                 assert.is_true(bottom <= pager_top,
                     ("%s: the last tile's bottom %d below the pager's top %d"):format(where, bottom, pager_top))
-                assert.is_true(library.box.cover_h < scale(library.ctx.look.library.grid.cover_h), where)
+                assert.is_true(library.box.cover_h <= scale(library.ctx.look.library.grid.cover_h), where)
                 assert.equals(math.ceil(40 / 6), library.pages, where)
                 Library.close()
             end)

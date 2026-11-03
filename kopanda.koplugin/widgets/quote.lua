@@ -1,14 +1,13 @@
 -- The quote of the day: one entry of the quote source a day, changing at local midnight, drawn in curly quotes
--- with no attribution in at most four lines, a longer text ending in an ellipsis, at Large's size at Extra
--- large so the longest entry stays whole. A look with plates draws it plain, its plate drawn under it by the
--- home (home_rows.lua) and the text printed through its mask (Typeset.printed); otherwise a look with a quote
--- rule colour draws it between rules, one without in its tile.
+-- with no attribution in at most four lines, a longer text ending in an ellipsis, at the look's own size at
+-- every text size so the longest entry stays whole. A look with plates draws it plain, its plate drawn under
+-- it by the home (home_rows.lua) and the text printed through its mask (Typeset.printed); otherwise a look
+-- with a quote rule colour draws it between rules, one without in its tile.
 -- State: the memo of the text box last composed, which every build of the day draws.
 local Device = require("device")
 local Font = require("ui/font")
 local Fonts = require("fonts")
 local Geom = require("ui/geometry")
-local Layout = require("layout")
 local Looks = require("looks")
 local Math = require("optmath")
 local Paint = require("paint")
@@ -143,7 +142,7 @@ local function compose(width, ctx)
     local scale = Paint.scaler(ctx)
 
     local style = look.type.quote
-    local size = Layout.font_size(style.size, ctx.text_size == "extra_large" and "large" or ctx.text_size)
+    local size = style.size
     local face = Fonts.face(look.faces[style.face].file, size) or Font:getFace("cfont", size)
     local tokens = look.quote
     local padding = scale(tokens.padding)

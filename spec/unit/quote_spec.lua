@@ -1,6 +1,7 @@
 -- The quote of the day: quotes.lua as pure data held to its limits, the day's entry by
 -- local calendar day, and the widget's text in curly quotes, at most four lines, with an
--- ellipsis past them, fitting the longest entry in a full-width row at large on both profiles.
+-- ellipsis past them, at the look's own size at every text size, fitting the longest entry in a full-width
+-- row on both profiles.
 describe("the quote of the day", function()
     local harness = require("plugin_harness")
     local ffi = require("ffi")
@@ -206,22 +207,25 @@ describe("the quote of the day", function()
             error("the widget never read quote.source")
         end)
 
-        it("fits the longest entry in four lines at large in a full-width row on both profiles", function()
+        it("sets the quote at the look's own size at every text size, the longest entry whole in four lines in a "
+            .. "full-width row on both profiles", function()
             local entry = longest(dofile(quotes_path))
             Quote.sources.builtin = { entry }
             for name, profile in pairs(profiles) do
                 on_screen(profile.width, profile.height, function()
                     for _, look_id in ipairs(Looks.ids()) do
-                        local ctx = ctx_for(look_id, "large")
-                        local width = full_row_width(ctx)
-                        assert.truthy(width > 0)
-                        local built = Quote.build(width, ctx)
-                        local box = box_of(built)
-                        local where = name .. " " .. look_id .. ": " .. entry.text
-                        assert.equals(Layout.font_size(18, "large"), box.face.orig_size, where)
-                        assert.truthy(#box.vertical_string_list <= 4, where)
-                        assert.is_nil(box.line_with_ellipsis, where)
-                        built:free()
+                        for _, size in ipairs({ "small", "medium", "large", "extra_large" }) do
+                            local ctx = ctx_for(look_id, size)
+                            local width = full_row_width(ctx)
+                            assert.truthy(width > 0)
+                            local built = Quote.build(width, ctx)
+                            local box = box_of(built)
+                            local where = name .. " " .. look_id .. " " .. size .. ": " .. entry.text
+                            assert.equals(ctx.look.type.quote.size, box.face.orig_size, where)
+                            assert.truthy(#box.vertical_string_list <= 4, where)
+                            assert.is_nil(box.line_with_ellipsis, where)
+                            built:free()
+                        end
                     end
                 end)
             end
@@ -249,25 +253,6 @@ describe("the quote of the day", function()
                 local line_height = 1 + ctx.look.type.quote.line_height
                 assert.equals(require("optmath").round(line_height * box.face.size), box.line_height_px, look_id)
                 built:free()
-            end
-        end)
-
-        it("sets the quote at large's size at extra_large, the longest entry whole in four lines", function()
-            local entry = longest(dofile(quotes_path))
-            Quote.sources.builtin = { entry }
-            for name, profile in pairs(profiles) do
-                on_screen(profile.width, profile.height, function()
-                    for _, look_id in ipairs(Looks.ids()) do
-                        local ctx = ctx_for(look_id, "extra_large")
-                        local built = Quote.build(full_row_width(ctx), ctx)
-                        local box = box_of(built)
-                        local where = name .. " " .. look_id
-                        assert.equals(Layout.font_size(ctx.look.type.quote.size, "large"), box.face.orig_size, where)
-                        assert.truthy(#box.vertical_string_list <= 4, where)
-                        assert.is_nil(box.line_with_ellipsis, where)
-                        built:free()
-                    end
-                end)
             end
         end)
 
@@ -322,7 +307,7 @@ describe("the quote of the day", function()
                     local ctx = ctx_for(look_id, "large")
                     local built = Quote.build(500, ctx)
                     local face = box_of(built).face
-                    local size = Layout.font_size(18, ctx.text_size)
+                    local size = ctx.look.type.quote.size
                     assert.equals(Font:getFace("cfont", size).hash, face.hash, look_id)
                     assert.equals(size, face.orig_size, look_id)
                     built:free()
@@ -469,16 +454,20 @@ describe("the quote of the day", function()
                 end
             end)
 
-        it("shapes the text again for another look, variant, text size or colour rendering", function()
+        it("shapes the text again for another look, variant or colour rendering, not for another text size", function()
             two_days("inputs")
             local night = ctx_for("editorial", "large")
             night.variant = "night"
-            local ctxs = { ctx_for("diner"), ctx_for("editorial"), ctx_for("editorial", "large"), night }
+            local ctxs = { ctx_for("diner"), ctx_for("editorial"), night }
             local built = {}
             for i, ctx in ipairs(ctxs) do
                 built[i] = Quote.build(500, ctx)
                 assert.equals(i, constructed)
             end
+            local larger = ctx_for("editorial", "extra_large")
+            larger.variant = "night"
+            built[#built + 1] = Quote.build(500, larger)
+            assert.equals(#ctxs, constructed)
             local own = rawget(Screen, "isColorEnabled")
             local colour = Screen:isColorEnabled()
             Screen.isColorEnabled = function() return not colour end
@@ -487,7 +476,7 @@ describe("the quote of the day", function()
             end)
             Screen.isColorEnabled = own
             assert(ok, err)
-            assert.equals(#built, constructed)
+            assert.equals(#ctxs + 1, constructed)
             for _, quote in ipairs(built) do
                 quote:free()
             end

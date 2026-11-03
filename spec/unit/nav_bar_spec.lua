@@ -42,10 +42,11 @@ describe("the nav bar", function()
     end
 
     -- The bar's height at text_size (none when nil): edge, the active rule's overhang, the tab's padding,
-    -- icon and gap and the taller of the two label lines, each length scaled, the icon at the step's factor.
+    -- icon and gap and the taller of the two label lines, each length scaled, the icon at the step's factor,
+    -- the labels at large's size at extra_large.
     local function formula(look, text_size)
         local nav = look.nav
-        local ctx = { look = look, variant = "day", text_size = text_size }
+        local ctx = { look = look, variant = "day", text_size = text_size == "extra_large" and "large" or text_size }
         local label = 0
         for _, part in ipairs({ look.type.nav_label, look.type.nav_label_active }) do
             local line = Typeset.line(part, "Home", Screen:getWidth(), ctx)
@@ -215,6 +216,36 @@ describe("the nav bar", function()
                 local last = bar.columns[5]
                 assert.equals(inner, last.x + last.w, id)
                 bar:free()
+            end
+        end)
+
+        -- Each label centred in its column, as the paint sets it.
+        it("hold each label whole, neighbours at least a label's height apart, on every profile and text size",
+            function()
+            local profiles = { { 1264, 1680 }, { 1236, 1648 }, { 1072, 1448 } }
+            for _, profile in ipairs(profiles) do
+                harness.at_screen(profile[1], profile[2], function()
+                    for _, id in ipairs(Looks.ids()) do
+                        for _, size in ipairs({ "small", "medium", "large", "extra_large" }) do
+                            local bar = NavBar.new{ look = Looks.get(id), variant = "day", width = Screen:getWidth(),
+                                where = "home", text_size = size }
+                            local where = table.concat({ profile[1], profile[2], id, size }, " ")
+                            local edges = {}
+                            for i, tab in ipairs(bar.tabs) do
+                                assert.is_true(Typeset.whole(tab.label), where .. " " .. NavBar.TABS[i].label)
+                                local col, w = bar.columns[i], tab.label:getSize().w
+                                local left = col.x + math.floor((col.w - w) / 2)
+                                edges[i] = { left = left, right = left + w, h = tab.label:getSize().h }
+                            end
+                            for i = 1, #edges - 1 do
+                                local space = edges[i + 1].left - edges[i].right
+                                assert.is_true(space >= math.max(edges[i].h, edges[i + 1].h),
+                                    where .. " " .. NavBar.TABS[i].label .. ": " .. space)
+                            end
+                            bar:free()
+                        end
+                    end
+                end)
             end
         end)
 

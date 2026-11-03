@@ -556,15 +556,15 @@ describe("Layout", function()
             assert.same(positions.medium, positions.large)
         end)
 
-        it("takes three quarters of the row gap at extra_large, the margins as they are", function()
+        it("keeps the look's row gap and margins at extra_large", function()
             heights = { date = 60, clock = 60, quote = 100, weather = 20, stats = 20 }
             local four = { default[1], default[2], { { widget = "weather", share = 1 } }, default[3] }
             local s = function(px) return Layout.screen:scaleBySize(px) end
             local arranged = Layout.arrange(four, ctx(diner, 1264, 1680, "extra_large"))
             local rows = arranged.rows
             assert.equals(s(diner.home.margin.top), rows[1].y)
-            assert.equals(s(diner.home.row_gap * 0.75), rows[3].y - rows[2].y - rows[2].h)
-            assert.equals(s(diner.home.row_gap * 0.75), rows[4].y - rows[3].y - rows[3].h)
+            assert.equals(s(diner.home.row_gap), rows[3].y - rows[2].y - rows[2].h)
+            assert.equals(s(diner.home.row_gap), rows[4].y - rows[3].y - rows[3].h)
         end)
 
         it("leaves the layout it is given unchanged", function()
@@ -774,7 +774,8 @@ describe("Layout", function()
         end)
 
         -- Page 1 with the populated and the empty content, page 2 with a year of insights on every day of
-        -- the builtin quotes, whose length sets the quote's height.
+        -- the builtin quotes, whose length sets the quote's height. Each page's default at a size is the one
+        -- Settings falls back to: the key's default at that size when it has one, its plain default otherwise.
         it("fits page 1's and page 2's large and extra_large defaults on every profile and look, every quote's day",
             function()
             local FeaturedBook = require("featured_book")
@@ -788,7 +789,8 @@ describe("Layout", function()
             for _, key in ipairs(Schema.keys) do
                 if key.id == "layout.rows" or key.id == "layout.rows_2" then
                     for _, size in ipairs(SIZES) do
-                        pages[size .. " " .. key.id] = key.defaults_by_text_size[size]
+                        local by_size = key.defaults_by_text_size
+                        pages[size .. " " .. key.id] = by_size and by_size[size] or key.default
                     end
                 elseif key.id == "launcher.entries" then
                     entries = key.default
@@ -815,17 +817,18 @@ describe("Layout", function()
                     assert.is_true(Settings.set("launcher.entries", c.entries or entries))
                     for _, id in ipairs(Looks.ids()) do
                         for key, rows in pairs(pages) do
-                            local ctx = {
-                                look = Looks.get(id),
-                                variant = "day",
-                                text_size = key:match("^%S+"),
-                                now = NOW,
-                                screen = Screen,
-                            }
                             local case = table.concat({ profile, id, content, key }, " ")
                             local out = 0
+                            -- A ctx a day: a widget keeps what it measured for one ctx (Typeset.measured), so a
+                            -- ctx moved to the next day would measure the first day's quote again.
                             for day = 0, #require("quotes") - 1 do
-                                ctx.now = NOW + day * 86400
+                                local ctx = {
+                                    look = Looks.get(id),
+                                    variant = "day",
+                                    text_size = key:match("^%S+"),
+                                    now = NOW + day * 86400,
+                                    screen = Screen,
+                                }
                                 out = out + require("layout").overflow(rows, ctx)
                             end
                             counts[case] = out
@@ -866,8 +869,8 @@ describe("Layout", function()
             end
         end)
 
-        it("scales by 1.4 at extra_large, lifting a size under 14 to 14 first", function()
-            local wanted = { [11] = 20, [12] = 20, [14] = 20, [18] = 25, [36] = 50 }
+        it("scales by 1.3 at extra_large, lifting a size under 12 to 12 first", function()
+            local wanted = { [10] = 16, [11] = 16, [12] = 16, [13] = 17, [14] = 18, [18] = 23, [24] = 31, [36] = 47 }
             for size, expected in pairs(wanted) do
                 assert.equals(expected, Layout.font_size(size, "extra_large"), size)
             end
@@ -879,9 +882,9 @@ describe("Layout", function()
     end)
 
     describe("size_at", function()
-        it("scales a length by 1.4 at extra_large, rounded, with no floor", function()
-            assert.equals(36, Layout.size_at(26, "extra_large"))
-            assert.equals(14, Layout.size_at(10, "extra_large"))
+        it("scales a length by 1.3 at extra_large, rounded, with no floor", function()
+            assert.equals(34, Layout.size_at(26, "extra_large"))
+            assert.equals(13, Layout.size_at(10, "extra_large"))
         end)
 
         it("leaves a length as it is at every other step, nil and an unknown step", function()
