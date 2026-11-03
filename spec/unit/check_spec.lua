@@ -29,9 +29,10 @@ describe("bin/check", function()
     end
 
     -- A scratch checkout holding only bin/, .luacheckrc, the spec helper and
-    -- environment_spec.lua under both spec layers, so a full run stays small.
-    local function small_checkout()
-        local copy = run("mktemp -d"):gsub("\n$", "")
+    -- environment_spec.lua under both spec layers, so a full run stays small;
+    -- at copy, an existing directory, when given.
+    local function small_checkout(copy)
+        copy = copy or run("mktemp -d"):gsub("\n$", "")
         local _, setup = run("cp -R '" .. root .. "/bin' '" .. root .. "/.luacheckrc' '" .. copy .. "'"
             .. " && mkdir -p '" .. copy .. "/spec/unit' '" .. copy .. "/spec/emulator'"
             .. " && cp '" .. root .. "/spec/helper.lua' '" .. copy .. "/spec/'"
@@ -349,13 +350,264 @@ describe("bin/check", function()
         assert.equals(0, status, output)
     end)
 
-    it("runs from a checkout whose path contains a space", function()
-        local copy = run("mktemp -d"):gsub("\n$", "") .. "/with space"
-        local _, setup = run("mkdir '" .. copy .. "' && cp -R '" .. root .. "/bin' '" .. root .. "/spec' '"
-            .. root .. "/.luacheckrc' '" .. copy .. "'")
-        assert.equals(0, setup)
-        local output, status = run("cd '" .. copy .. "' && '" .. copy .. "/bin/check' spec/unit/environment_spec.lua")
+    local function write(path, text)
+        local f = assert(io.open(path, "w"))
+        f:write(text)
+        f:close()
+    end
+
+    -- A spec named name that claims its KO_HOME, failing when another file already has, appends the KO_HOME to
+    -- $KOPANDA_CLAIM_LOG, then waits up to 10 s for the spec named other to start, failing when it hasn't: it passes
+    -- only beside other, each under a KO_HOME of its own.
+    local function rendezvous_spec(path, name, other)
+        write(path, table.concat({
+            'describe("rendezvous ' .. name .. '", function()',
+            '    it("meets ' .. other .. ' in its own KO_HOME", function()',
+            '        local home, dir = os.getenv("KO_HOME"), os.getenv("KOPANDA_RENDEZVOUS")',
+            '        assert.is_nil(io.open(home .. "/claimed", "r"), "KO_HOME already claimed: " .. home)',
+            '        io.open(home .. "/claimed", "w"):close()',
+            '        local log = io.open(os.getenv("KOPANDA_CLAIM_LOG"), "a")',
+            '        log:write(home, "\\n")',
+            '        log:close()',
+            '        io.open(dir .. "/' .. name .. '", "w"):close()',
+            '        for _ = 1, 100 do',
+            '            local met = io.open(dir .. "/' .. other .. '", "r")',
+            '            if met then met:close() return end',
+            '            os.execute("sleep 0.1")',
+            '        end',
+            '        error("' .. other .. ' never started")',
+            '    end)',
+            'end)',
+            '',
+        }, "\n"))
+    end
+
+    it("runs each layer's spec files in parallel shards, each under its own KO_HOME, removed afterwards", function()
+        local copy = small_checkout()
+        fake_studio(copy, "true")
+        for _, layer in ipairs({ "unit", "emulator" }) do
+            rendezvous_spec(copy .. "/spec/" .. layer .. "/a_spec.lua", layer .. "_a", layer .. "_b")
+            rendezvous_spec(copy .. "/spec/" .. layer .. "/b_spec.lua", layer .. "_b", layer .. "_a")
+        end
+        local env = "KOPANDA_RENDEZVOUS='" .. copy .. "' KOPANDA_CLAIM_LOG='" .. copy .. "/claims'"
+        local output, status = run(env .. " KOPANDA_CHECK_JOBS=3 KOPANDA_CHECK_EMULATOR_JOBS=3 '" .. copy
+            .. "/bin/check'")
+        local claims = {}
+        for line in io.lines(copy .. "/claims") do
+            claims[#claims + 1] = line
+        end
         run("rm -rf '" .. copy .. "'")
         assert.equals(0, status, output)
+        local layer = "%[==========%] 9 tests from 3 test files ran%.[^\n]*\n%[  PASSED  %] 9 tests%.\n"
+        assert.truthy(output:find("\n== unit\n" .. layer .. "== emulator\n" .. layer .. "$"), output)
+        assert.equals(4, #claims)
+        local seen = {}
+        for _, home in ipairs(claims) do
+            assert.is_nil(seen[home], home)
+            seen[home] = true
+            assert.is_nil(lfs.attributes(home, "mode"), home)
+        end
+    end)
+
+    it("fails a spec that shares a layer's single shard with the spec it waits for", function()
+        local copy = small_checkout()
+        fake_studio(copy, "true")
+        rendezvous_spec(copy .. "/spec/unit/a_spec.lua", "a", "b")
+        rendezvous_spec(copy .. "/spec/unit/b_spec.lua", "b", "a")
+        local env = "KOPANDA_RENDEZVOUS='" .. copy .. "' KOPANDA_CLAIM_LOG='" .. copy .. "/claims'"
+        local output, status = run(env .. " KOPANDA_CHECK_JOBS=1 '" .. copy .. "/bin/check' --unit")
+        run("rm -rf '" .. copy .. "'")
+        assert.equals(1, status, output)
+        assert.truthy(contains(output, "[  FAILED  ] in spec/unit/a_spec.lua"), output)
+        assert.truthy(contains(output, "b never started"), output)
+    end)
+
+    it("sums the shards into one total, prints each failing file in full and every note, and stops there", function()
+        local copy = small_checkout()
+        fake_studio(copy, "true")
+        local _, setup = run("cp '" .. root .. "/spec/fixtures/failing_spec.lua' '" .. copy .. "/spec/unit/'")
+        assert.equals(0, setup)
+        write(copy .. "/spec/unit/noting_spec.lua", 'describe("scratch", function()\n'
+            .. '    it("notes", function() print("chatter"); print("[  NOTE    ] wall time not judged") end)\n'
+            .. 'end)\n')
+        local output, status = run("KOPANDA_CHECK_JOBS=3 '" .. copy .. "/bin/check'")
+        run("rm -rf '" .. copy .. "'")
+        assert.equals(1, status, output)
+        assert.truthy(contains(output, "\n[  FAILED  ] in spec/unit/failing_spec.lua\n"), output)
+        assert.truthy(contains(output, "failing_spec.lua:3: Expected objects to be equal.\nPassed in:\n(number) 2\n"
+            .. "Expected:\n(number) 1\n"), output)
+        assert.truthy(contains(output, "failing_spec.lua:7: Expected objects to be the same."), output)
+        assert.truthy(contains(output, "\n[  NOTE    ] wall time not judged\n"), output)
+        assert.falsy(contains(output, "chatter"), output)
+        assert.truthy(output:find("\n%[==========%] 10 tests from 3 test files ran%.[^\n]*\n%[  PASSED  %] 8 tests%.\n"
+            .. "%[  FAILED  %] 2 tests, listed below:\n%[  FAILED  %] [^\n]*fails on purpose the first time\n"
+            .. "%[  FAILED  %] [^\n]*fails on purpose the second time\n\n 2 FAILED TESTS\n$"), output)
+        assert.falsy(contains(output, "== emulator"), output)
+    end)
+
+    -- A spec that opens with header, which names paint_budget in some case and sets pause_ms, so bin/check holds it
+    -- for the serial pass: it fails when the other emulator specs haven't all finished, or when another such spec is
+    -- running beside it.
+    local function budget_spec(path, header)
+        write(path, table.concat({
+            header,
+            'describe("a paint budget", function()',
+            '    it("runs alone, after the batch", function()',
+            '        local dir = os.getenv("KOPANDA_RENDEZVOUS")',
+            '        assert.truthy(io.open(dir .. "/batch_done", "r"), "the batch is still running")',
+            '        assert.is_nil(io.open(dir .. "/budget_running", "r"), "another budget spec is running")',
+            '        io.open(dir .. "/budget_running", "w"):close()',
+            '        os.execute("sleep " .. pause_ms / 1000)',
+            '        os.remove(dir .. "/budget_running")',
+            '    end)',
+            'end)',
+            '',
+        }, "\n"))
+    end
+
+    it("runs the emulator specs that name paint_budget in any case one at a time, after the others", function()
+        local copy = small_checkout()
+        fake_studio(copy, "true")
+        budget_spec(copy .. "/spec/emulator/a_budget_spec.lua",
+            "-- Stands in for a spec that holds a capture to emulator.paint_budget.\nlocal pause_ms = 500")
+        budget_spec(copy .. "/spec/emulator/b_budget_spec.lua",
+            "local PAINT_BUDGET_MS = 1\nlocal pause_ms = 500 * PAINT_BUDGET_MS")
+        write(copy .. "/spec/emulator/z_batch_spec.lua", 'describe("the batch", function()\n'
+            .. '    it("finishes", function()\n'
+            .. '        os.execute("sleep 1")\n'
+            .. '        io.open(os.getenv("KOPANDA_RENDEZVOUS") .. "/batch_done", "w"):close()\n'
+            .. '    end)\n'
+            .. 'end)\n')
+        local output, status = run("KOPANDA_RENDEZVOUS='" .. copy .. "' KOPANDA_CHECK_EMULATOR_JOBS=4 '" .. copy
+            .. "/bin/check'")
+        run("rm -rf '" .. copy .. "'")
+        assert.equals(0, status, output)
+        assert.truthy(output:find("\n== emulator\n%[==========%] 10 tests from 4 test files ran%.[^\n]*\n"
+            .. "%[  PASSED  %] 10 tests%.\n$"), output)
+    end)
+
+    it("waits for the host's load to fall to its core count before the paint-budget specs", function()
+        local copy = small_checkout()
+        fake_studio(copy, "true")
+        write(copy .. "/spec/emulator/budget_spec.lua", "-- Names paint_budget.\n"
+            .. 'describe("a paint budget", function() it("runs", function() end) end)\n')
+        local bin = copy .. "/fake-bin"
+        local _, setup = run("mkdir '" .. bin .. "'")
+        assert.equals(0, setup)
+        -- A sysctl reporting load 99 the first time it is asked, 0.5 after; anything else goes to the real one.
+        write(bin .. "/sysctl", table.concat({
+            "#!/bin/sh",
+            'if [ "$2" = vm.loadavg ]; then',
+            '    if [ -e "$0.asked" ]; then echo "{ 0.50 0.50 0.50 }"; exit; fi',
+            '    touch "$0.asked"; echo "{ 99.00 0.50 0.50 }"',
+            "else",
+            '    exec /usr/sbin/sysctl "$@"',
+            "fi",
+            "",
+        }, "\n"))
+        assert.equals(0, select(2, run("chmod +x '" .. bin .. "/sysctl'")))
+        local output, status = run("PATH='" .. bin .. ":'\"$PATH\" '" .. copy .. "/bin/check'")
+        local asked = lfs.attributes(bin .. "/sysctl.asked", "mode")
+        run("rm -rf '" .. copy .. "'")
+        assert.equals(0, status, output)
+        assert.equals("file", asked)
+        assert.truthy(output:find("\n== emulator\nwaiting for the host's load 99%.00 to fall to %d+ cores\n"), output)
+        assert.truthy(output:find("%[==========%] 8 tests from 2 test files ran%.[^\n]*\n%[  PASSED  %] 8 tests%.\n$"),
+            output)
+    end)
+
+    it("refuses with exit 2 when a job count isn't a positive whole number, naming the variable", function()
+        for _, setting in ipairs({ "KOPANDA_CHECK_JOBS=0", "KOPANDA_CHECK_EMULATOR_JOBS=four" }) do
+            local output, status = run(setting .. " '" .. check .. "' --lint")
+            assert.equals(2, status, output)
+            assert.truthy(contains(output, setting:match("^[%w_]+")), output)
+        end
+    end)
+
+    local quitting_spec = 'describe("scratch", function() it("quits", function() os.exit(0) end) end)\n'
+
+    it("fails a shard whose test ends the process with exit 0, naming the file, with or without --verbose", function()
+        local copy = small_checkout()
+        fake_studio(copy, "true")
+        write(copy .. "/spec/unit/quitting_spec.lua", quitting_spec)
+        local output, status = run("KOPANDA_CHECK_JOBS=2 '" .. copy .. "/bin/check' --unit")
+        local verbose, verbose_status = run("KOPANDA_CHECK_JOBS=2 '" .. copy .. "/bin/check' --unit --verbose")
+        run("rm -rf '" .. copy .. "'")
+        assert.equals(1, status, output)
+        assert.truthy(contains(output, "[  FAILED  ] in spec/unit/quitting_spec.lua"), output)
+        assert.equals(1, verbose_status, verbose)
+        assert.truthy(contains(verbose, "quitting_spec.lua"), verbose)
+    end)
+
+    it("fails a named spec whose test ends the process with exit 0", function()
+        local dir = run("mktemp -d"):gsub("\n$", "")
+        write(dir .. "/quitting_spec.lua", quitting_spec)
+        local output, status = run("'" .. check .. "' '" .. dir .. "/quitting_spec.lua'")
+        run("rm -rf '" .. dir .. "'")
+        assert.equals(1, status, output)
+        assert.truthy(contains(output, "scratch quits"), output)
+    end)
+
+    -- Polls a shell condition every 0.1 s for at most seconds, returning whether it came true.
+    local function eventually(condition, seconds)
+        for _ = 1, seconds * 10 do
+            if select(2, run(condition)) == 0 then
+                return true
+            end
+            os.execute("sleep 0.1")
+        end
+        return false
+    end
+
+    it("stops every process it started and removes its KO_HOME when terminated or interrupted", function()
+        for _, signal in ipairs({ "TERM", "INT" }) do
+            local copy = small_checkout()
+            fake_studio(copy, "true")
+            -- The sleep ignores SIGINT as a background job's luajit does; macOS's system() would reset it.
+            write(copy .. "/spec/unit/sleeper_spec.lua", 'describe("a sleeper", function()\n'
+                .. '    it("sleeps", function()\n'
+                .. '        os.execute("trap \'\' INT; echo $$ > \\"$KOPANDA_SLEEPER\\"; exec sleep 30")\n'
+                .. '    end)\n'
+                .. 'end)\n')
+            -- In a process group of its own, with the SIGINT the shell's & ignores restored, as at a terminal.
+            local started = run("KOPANDA_SLEEPER='" .. copy .. "/sleeper' perl -e '$SIG{INT} = q(DEFAULT); setpgrp;"
+                .. " exec @ARGV' '" .. copy
+                .. "/bin/check' --unit >'" .. copy .. "/out' 2>&1 </dev/null & echo $!")
+            local pid = started:match("(%d+)")
+            local slept = eventually("test -s '" .. copy .. "/sleeper'", 60)
+            local sleeper = slept and run("cat '" .. copy .. "/sleeper'"):match("(%d+)")
+            -- The sole job, the INT case's whole process group: the ignored SIGINT background jobs inherit.
+            run(signal == "TERM" and "kill -TERM " .. pid or "kill -INT -- -" .. pid)
+            local stopped = eventually("! kill -0 " .. pid, 10)
+            local slept_on = sleeper and not eventually("! kill -0 " .. sleeper, 2)
+            local output = run("cat '" .. copy .. "/out'")
+            local home = inner_ko_home(output)
+            local left = home and lfs.attributes(home, "mode")
+            run("kill -KILL -- -" .. pid .. (sleeper and " " .. sleeper or "") .. " 2>/dev/null; rm -rf '" .. copy
+                .. "'" .. (home and " '" .. home .. "'" or ""))
+            assert.is_true(slept, output)
+            assert.is_true(stopped, signal .. ": bin/check still running\n" .. output)
+            assert.is_false(slept_on, signal .. ": the spec's sleep outlived bin/check\n" .. output)
+            assert.is_string(home, output)
+            assert.is_nil(left, signal .. ": KO_HOME left behind")
+        end
+    end)
+
+    it("runs named specs and --unit's shards from a checkout whose path contains a space", function()
+        local parent = run("mktemp -d"):gsub("\n$", "")
+        local copy = parent .. "/with space"
+        assert.equals(0, select(2, run("mkdir '" .. copy .. "'")))
+        small_checkout(copy)
+        fake_studio(copy, "true")
+        assert.equals(0, select(2, run("cp '" .. root .. "/spec/unit/environment_spec.lua' '" .. copy
+            .. "/spec/unit/second_spec.lua'")))
+        local named, named_status = run("cd '" .. copy .. "' && '" .. copy
+            .. "/bin/check' spec/unit/environment_spec.lua")
+        local unit, unit_status = run("KOPANDA_CHECK_JOBS=2 '" .. copy .. "/bin/check' --unit")
+        run("rm -rf '" .. parent .. "'")
+        assert.equals(0, named_status, named)
+        assert.equals(0, unit_status, unit)
+        assert.truthy(unit:find("\n== unit\n%[==========%] 14 tests from 2 test files ran%.[^\n]*\n"
+            .. "%[  PASSED  %] 14 tests%.\n$"), unit)
     end)
 end)
