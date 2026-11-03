@@ -33,8 +33,14 @@ end
 -- frontend/ui/font.lua:306) joins every name onto FontList.fontdir, a path included; the pinned build
 -- takes a name starting with / or ./ as a path (font.lua:307-312). One name works under both: a
 -- relative path that climbs out of the fonts folder to the file's absolute path. A file realpath
--- can't resolve gets the plain plugin path.
+-- can't resolve gets the plain plugin path, and is resolved again on the next call; a resolved name is
+-- kept for the process, since the plugin folder and the fonts folder don't move within it.
+local face_names = {}
+
 function Fonts.face_name(rel)
+    if face_names[rel] then
+        return face_names[rel]
+    end
     local path = Fonts.path(rel)
     local absolute = ffiUtil.realpath(path)
     local font_dir = ffiUtil.realpath(FontList.fontdir)
@@ -42,7 +48,8 @@ function Fonts.face_name(rel)
         return path
     end
     local _, depth = font_dir:gsub("[^/]+", "")
-    return string.rep("../", depth) .. absolute:sub(2)
+    face_names[rel] = string.rep("../", depth) .. absolute:sub(2)
+    return face_names[rel]
 end
 
 -- The KOReader face for the font file at rel at size (unscaled; getFace scales it, font.lua:276),

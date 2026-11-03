@@ -203,6 +203,51 @@ describe("fonts", function()
         assert.equals(Fonts.path("fonts/nope/missing.ttf"), Fonts.face_name("fonts/nope/missing.ttf"))
     end)
 
+    describe("face_name's memo", function()
+        local ffiUtil = require("ffi/util")
+        local realpath = ffiUtil.realpath
+        local rel = "fonts/caveat/Caveat-Regular.ttf"
+        local fresh
+
+        before_each(function()
+            harness.load()
+            fresh = package.loaded["fonts"]
+        end)
+
+        after_each(function()
+            ffiUtil.realpath = realpath
+        end)
+
+        it("resolves a file once per process", function()
+            local calls = 0
+            ffiUtil.realpath = function(...)
+                calls = calls + 1
+                return realpath(...)
+            end
+            local name = fresh.face_name(rel)
+            assert.is_true(calls > 0)
+            calls = 0
+            assert.equals(name, fresh.face_name(rel))
+            assert.equals(0, calls)
+        end)
+
+        it("retries a file realpath couldn't resolve", function()
+            local path = fresh.path(rel)
+            local exists = false
+            ffiUtil.realpath = function(p)
+                if p == path and not exists then
+                    return nil
+                end
+                return realpath(p)
+            end
+            assert.equals(path, fresh.face_name(rel))
+            exists = true
+            local name = fresh.face_name(rel)
+            assert.is_not.equals(path, name)
+            assert.equals(realpath(path), realpath(require("fontlist").fontdir .. "/" .. name))
+        end)
+    end)
+
     it("returns a face for a shipped file", function()
         local face = Fonts.face("fonts/caveat/Caveat-Regular.ttf", 20)
         assert.truthy(face)
