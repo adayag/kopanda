@@ -20,6 +20,12 @@ describe("gestures on the KoPanda home", function()
         Home = require("home")
     end)
 
+    -- Focused mode off, for the cases whose holds land in the top menu zones, where with it on a hold opens the file
+    -- manager's menu (gesture_routing_spec.lua).
+    local function mode_off()
+        assert.is_true(package.loaded["settings"].set("focused.on", false))
+    end
+
     after_each(function()
         harness.teardown()
     end)
@@ -78,11 +84,11 @@ describe("gestures on the KoPanda home", function()
             return count
         end
 
-        -- A point on the shown home outside every slot's rectangle and outside the corners,
-        -- scanned for in 10 px steps.
-        local function empty_point()
+        -- A point on the shown home outside every slot's rectangle and outside the corners, from
+        -- top down (default the top eighth's foot), scanned for in 10 px steps.
+        local function empty_point(top)
             local size = Screen:getSize()
-            for y = math.floor(size.h / 8), math.floor(size.h * 7 / 8), 10 do
+            for y = top or math.floor(size.h / 8), math.floor(size.h * 7 / 8), 10 do
                 for x = math.floor(size.w / 8), math.floor(size.w * 7 / 8), 10 do
                     local inside = false
                     for _, slot in ipairs(Home.shown.slots) do
@@ -115,6 +121,7 @@ describe("gestures on the KoPanda home", function()
         end)
 
         it("opens the home sheet over the home on a hold outside every slot", function()
+            mode_off()
             stubs_with({})
             fm_with_home()
             local home = Home.shown
@@ -126,7 +133,21 @@ describe("gestures on the KoPanda home", function()
             assert.is_nil(settings_menu())
         end)
 
+        it("opens the home sheet on a hold outside every slot below the top menu zones, with focused mode on",
+            function()
+            stubs_with({})
+            fm_with_home()
+            local home = Home.shown
+            local size = Screen:getSize()
+            local x, y = empty_point(math.floor(size.h / 5) + 1)
+            hold(x, y)
+            assert.is_true(sheet_shown())
+            assert.equals("home", Sheet.shown.spec.name)
+            assert.equals(home, harness.top(2))
+        end)
+
         it("opens the home sheet on a hold in a blank slot that has no widget module", function()
+            mode_off()
             -- A slot with no module measures 0 (layout.lua:163-166), so the blank one shares a
             -- row whose other slot gives it its height.
             local stubs = stubs_with({})
@@ -140,6 +161,7 @@ describe("gestures on the KoPanda home", function()
         end)
 
         it("runs the held slot's hold once with the home's ctx, the gesture and the built widget", function()
+            mode_off()
             local quote_hold, calls = recording(nil)
             stubs_with({ quote = quote_hold })
             fm_with_home()
@@ -155,6 +177,7 @@ describe("gestures on the KoPanda home", function()
         end)
 
         it("opens the home sheet when the held slot's hold returns false", function()
+            mode_off()
             local quote_hold, calls = recording(false)
             stubs_with({ quote = quote_hold })
             fm_with_home()
@@ -218,6 +241,7 @@ describe("gestures on the KoPanda home", function()
         end
 
         it("lets a hold zone on the file manager that consumes the hold win", function()
+            mode_off()
             local clock_hold, calls = recording(nil)
             stubs_with({ clock = clock_hold })
             local fm = fm_with_home()
@@ -232,6 +256,7 @@ describe("gestures on the KoPanda home", function()
         end)
 
         it("passes a hold to the home's step when the file manager's zone returns nothing", function()
+            mode_off()
             local clock_hold, calls = recording(nil)
             stubs_with({ clock = clock_hold })
             local fm = fm_with_home()
@@ -268,7 +293,9 @@ describe("gestures on the KoPanda home", function()
         end)
 
         -- The Settings hold opens the quick-settings sheet over the home.
-        it("opens the quick-settings sheet over the home and no home sheet on a hold on Settings", function()
+        it("opens the quick-settings sheet over the home and no home sheet on a hold on Settings, with focused mode "
+            .. "off", function()
+            mode_off()
             local held, calls = recording(nil)
             stubs_with({ date = held, clock = held, quote = held, weather = held, stats = held })
             fm_with_home()
@@ -281,6 +308,20 @@ describe("gestures on the KoPanda home", function()
             assert.equals(1, sheets_on_stack())
             assert.equals(0, #calls)
             assert.is_nil(settings_menu())
+        end)
+
+        -- With the mode on, the Settings hold opens KoPanda's settings over the home.
+        it("opens the full settings list over the home and no sheet on a hold on Settings, with focused mode on",
+            function()
+            local held, calls = recording(nil)
+            stubs_with({ date = held, clock = held, quote = held, weather = held, stats = held })
+            fm_with_home()
+            local home = Home.shown
+            hold(tab_centre(home.nav, 5))
+            assert.equals(settings_menu(), harness.top())
+            assert.equals(home, harness.top(2))
+            assert.equals(0, sheets_on_stack())
+            assert.equals(0, #calls)
         end)
 
         it("opens nothing on a hold under KOReader's touch lock", function()
@@ -299,6 +340,7 @@ describe("gestures on the KoPanda home", function()
         end)
 
         it("changes nothing on the hold_release after the home sheet shows", function()
+            mode_off()
             stubs_with({})
             fm_with_home()
             local home = Home.shown
@@ -315,6 +357,7 @@ describe("gestures on the KoPanda home", function()
         end)
 
         it("takes its sheet with it when the home is closed", function()
+            mode_off()
             stubs_with({})
             local fm = fm_with_home()
             hold(empty_point())
@@ -348,6 +391,7 @@ describe("gestures on the KoPanda home", function()
         end
 
         it("starts the home sheet's paint_ms at the hold, before the sheet is built", function()
+            mode_off()
             stubs_with({})
             fm_with_home()
             local seen = timings()
@@ -359,6 +403,7 @@ describe("gestures on the KoPanda home", function()
         end)
 
         it("starts the paint_ms at the hold when the held slot's hold returns false", function()
+            mode_off()
             -- The held slot's hold notes the clock on entry and spins until it moves on, so a
             -- start taken after that hold is later than the entry.
             local hold_entered

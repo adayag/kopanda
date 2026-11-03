@@ -739,8 +739,9 @@ end
 -- The window's gestures, in order, each step stopping at the first that consumes: a tap or hold in the nav
 -- bar's band; a tap on a part of the window that acts on taps (window:tap); a west or east swipe outside the
 -- edge bands turns the page, mirrored as Menu:onSwipe reads it (frontend/ui/widget/menu.lua:1518-1523);
--- the home's forward step (HomeGestures.forward), so a hold corner bound on the file manager wins over the
--- hold, as on the home; then the hold step. Whatever none of them takes is consumed.
+-- the home's top-edge step (HomeGestures.focused_top) for a gesture the window's own zones named; the home's
+-- forward step (HomeGestures.forward), so a hold corner bound on the file manager wins over the hold, as on the
+-- home; then the hold step. Whatever none of them takes is consumed.
 function Window:routeGesture(ges)
     self.own_step = nil
     InputContainer.onGesture(self, ges)
@@ -754,6 +755,9 @@ function Window:routeGesture(ges)
     end
     if own_step == "swipe" and HomeGestures.is_page_swipe(ges) then
         self:turn(BD.flipDirectionIfMirroredUILayout(ges.direction) == "west" and 1 or -1)
+        return true
+    end
+    if own_step and HomeGestures.focused_top(ges, self.nav and self.nav.where or self.screen) then
         return true
     end
     if HomeGestures.forward(ges) then

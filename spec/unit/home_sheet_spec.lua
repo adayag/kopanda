@@ -1,6 +1,7 @@
 -- The home sheet, on a shown home over a real file manager: its header, its seven
--- rows in order with their icons and details, and what a tap on each does, never writing the
--- settings file. Each row is tapped where the sheet laid it out.
+-- rows in order with their icons and details (six with focused mode on, Open the file browser left out), and what
+-- a tap on each does. Only the cases that turn the mode off write the settings file. Each row is tapped where the
+-- sheet laid it out.
 describe("the home sheet", function()
     local harness = require("plugin_harness")
     -- spec/home_gestures.lua, required before harness.load() puts the plugin's own home_gestures in
@@ -85,7 +86,15 @@ describe("the home sheet", function()
         end
     end
 
+    -- Focused mode off, written to the settings file, which after_each then expects.
+    local wrote_settings = false
+    local function mode_off()
+        assert.is_true(require("settings").set("focused.on", false))
+        wrote_settings = true
+    end
+
     before_each(function()
+        wrote_settings = false
         harness.load()
         Home = require("home")
         HomeSheet = require("home_sheet")
@@ -99,11 +108,15 @@ describe("the home sheet", function()
         cleanups = {}
         harness.teardown()
         set_wifi(false)
-        -- No case writes the settings file: harness.load removed it, and it is still absent.
-        assert.is_nil(lfs.attributes(harness.settings_file, "mode"))
+        -- No case but one turning the mode off writes the settings file: harness.load removed it.
+        if not wrote_settings then
+            assert.is_nil(lfs.attributes(harness.settings_file, "mode"))
+        end
     end)
 
-    it("is headed Home with KoPanda aside, in the home's band, and lists its seven rows in order", function()
+    it("is headed Home with KoPanda aside, in the home's band, and lists its seven rows in order, with focused mode "
+        .. "off", function()
+        mode_off()
         open_sheet()
         local spec = Sheet.shown.spec
         assert.equals("home", spec.name)
@@ -130,6 +143,16 @@ describe("the home sheet", function()
             "Sleep" }) do
             assert.is_nil(row(label).detail, label)
         end
+    end)
+
+    it("leaves out Open the file browser with focused mode on, listing the other six in order", function()
+        open_sheet()
+        local rows = {}
+        for i, r in ipairs(Sheet.shown.spec.rows) do
+            rows[i] = r.label
+        end
+        assert.same({ "Edit layout", "Edit page 2", "Refresh weather", "Wi-Fi", "KoPanda settings", "Sleep" }, rows)
+        assert.equals(6, #Sheet.shown.rows)
     end)
 
     describe("Edit layout", function()
@@ -168,7 +191,8 @@ describe("the home sheet", function()
     end)
 
     describe("Open the file browser", function()
-        it("closes the sheet and the home, leaving the file manager on top", function()
+        it("closes the sheet and the home, leaving the file manager on top, with focused mode off", function()
+            mode_off()
             local fm = open_sheet()
             tap("Open the file browser")
             assert.is_nil(Sheet.shown)

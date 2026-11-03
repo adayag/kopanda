@@ -202,6 +202,7 @@ for _, w in ipairs(SHELVES) do
         after_each(reset)
 
         it("in the nav bar's band runs the tapped tab first, with where " .. w.where, function()
+            assert.is_true(package.loaded["settings"].set("focused.on", false))
             w.install()
             local screen, fm = w.show()
             local got = bind(fm, "kopanda_spec_bar_tap", "tap", FULL)
@@ -272,7 +273,9 @@ for _, w in ipairs(SHELVES) do
                 assert.equals(screen, harness.top())
             end)
 
-            it("on " .. w.label .. " is the header's empty space and opens the file manager's menu", function()
+            it("on " .. w.label .. " is the header's empty space and opens the file manager's menu, with focused mode "
+                .. "off", function()
+                assert.is_true(package.loaded["settings"].set("focused.on", false))
                 w.install()
                 local screen, fm = w.show()
                 tap_on(screen.header.right[1])
@@ -280,6 +283,18 @@ for _, w in ipairs(SHELVES) do
                 assert.is_not_nil(fm.menu.menu_container)
                 assert.equals(fm.menu.menu_container, harness.top())
                 assert.equals(screen, harness.top(2))
+            end)
+
+            it("on " .. w.label .. " is the header's empty space and opens the quick-settings sheet, with focused "
+                .. "mode on", function()
+                w.install()
+                local screen, fm = w.show()
+                tap_on(screen.header.right[1])
+                local Sheet = package.loaded["sheet"]
+                assert.same(LIST, screen.showing)
+                assert.equals("quick_settings", Sheet.shown and Sheet.shown.spec.name)
+                assert.equals(screen, harness.top(2))
+                assert.is_nil(fm.menu.menu_container)
             end)
 
             it("on a live pager arrow turns the page" .. (w.detail_pages and ", in the list and one " .. w.one or "")
@@ -333,6 +348,9 @@ for _, w in ipairs(SHELVES) do
 
         -- The fixture's books are no files, so a held book's sheet re-lists instead.
         it("runs no open on a hold, and consumes it", function()
+            -- The back control lies in the top menu zones, where with focused mode on a hold opens the file manager's
+            -- menu.
+            assert.is_true(package.loaded["settings"].set("focused.on", false))
             w.install()
             local screen = w.show()
             send(harness.gesture("hold", centre(screen.rows[1].rect)))
@@ -415,6 +433,7 @@ describe("gestures on the Series window", function()
 
     describe("a tap", function()
         it("it doesn't take reaches a corner zone on the file manager, and one in the bar doesn't", function()
+            assert.is_true(package.loaded["settings"].set("focused.on", false))
             SHELVES[1].install()
             local screen, fm = fixture.show()
             local got = bind(fm, "kopanda_spec_corner", "tap",

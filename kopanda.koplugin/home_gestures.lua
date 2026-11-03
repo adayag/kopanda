@@ -1,9 +1,12 @@
 -- The home's gestures: its own touch zones and the order a gesture on the home runs in, a page
 -- swipe, one of its own zones, turning the home's page. The home's onGesture (home.lua) calls route
--- through a pcall.
+-- through a pcall. With focused mode on, a hold in the top zone opens FileManagerMenu:onShowMenu
+-- (frontend/apps/filemanager/filemanagermenu.lua:1006); a tap or swipe there reads its activation_menu (:51).
 local BD = require("ui/bidi")
+local Focused = require("focused")
 local Geom = require("ui/geometry")
 local InputContainer = require("ui/widget/container/inputcontainer")
+local NavBar = require("nav_bar")
 local PaintClock = require("paint_clock")
 local SettingsMenu = require("settings_menu")
 local Screen = require("device").screen
@@ -50,7 +53,7 @@ end
 -- touch lock swaps it for _onGestureFiltered, which runs only the zones isGestureAlwaysActive approves
 -- (frontend/ui/widget/container/inputcontainer.lua:297-350). A zone's handler only names its step, which
 -- route runs in order. The zones cover the whole screen; their handlers test the bands against the
--- screen's size now.
+-- screen's size now. A tap or swipe in the top menu zones names the "top" step.
 local FULL_SCREEN = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = 1 }
 
 -- The zones the home registers on itself at init.
@@ -72,10 +75,8 @@ function HomeGestures.own_zones(home)
             ges = "tap",
             screen_zone = FULL_SCREEN,
             handler = function(ges)
-                if not in_menu_zone(ges.pos) then
-                    home.own_step = "tap"
-                    return true
-                end
+                home.own_step = in_menu_zone(ges.pos) and "top" or "tap"
+                return true
             end,
         },
         {
@@ -85,6 +86,17 @@ function HomeGestures.own_zones(home)
             handler = function(ges)
                 if HomeGestures.is_page_swipe(ges) then
                     home.own_step = "page"
+                    return true
+                end
+            end,
+        },
+        {
+            id = "kopanda_home_top_swipe",
+            ges = "swipe",
+            screen_zone = FULL_SCREEN,
+            handler = function(ges)
+                if in_menu_zone(ges.pos) then
+                    home.own_step = "top"
                     return true
                 end
             end,
@@ -123,6 +135,32 @@ local function hold(home, ges)
     return true
 end
 
+-- The top-edge step, shared by the home and the library (library_chrome.lua): with focused mode on and a file
+-- manager up, a tap or a swipe down in the top menu zones opens the quick-settings sheet over where (a nav bar's
+-- where), each only as KOReader's activate_menu lets the file manager's menu open on it
+-- (filemanagermenu.lua:1102-1114), and a hold there opens that menu. Whether one consumed ges.
+function HomeGestures.focused_top(ges, where)
+    if not in_menu_zone(ges.pos) or not Focused.on() then
+        return false
+    end
+    local FileManager = package.loaded["apps/filemanager/filemanager"]
+    local menu = FileManager and FileManager.instance and FileManager.instance.menu
+    if not menu then
+        return false
+    end
+    if ges.ges == "hold" then
+        menu:onShowMenu()
+        return true
+    end
+    local activation = menu.activation_menu
+    if (ges.ges == "tap" and activation ~= "swipe")
+        or (ges.ges == "swipe" and ges.direction == "south" and activation ~= "tap") then
+        NavBar.open_quick_settings(where, "the top edge")
+        return true
+    end
+    return false
+end
+
 -- The forward step, shared by the home and the library (library_chrome.lua): the file manager's menu
 -- zones (filemanagermenu.lua:71-124, :1102-1114); a page swipe, consumed; then the zones on the file
 -- manager itself, the Gestures plugin's among them (gestures main.lua:1287-1288). With a KoPanda window
@@ -145,10 +183,10 @@ end
 
 -- The home's gestures, in order, each step stopping at the first that consumes: its own swipe up; a
 -- tap or hold in the nav bar's band; its own page swipe, turning the home's page, mirrored as
--- FileManager:onSwipeFM reads it (filemanager.lua:475); the forward step, so a hold corner bound on the
--- file manager wins over the hold (gestures main.lua:1124-1139); the hold step; a tap outside the top
--- menu zones runs the tapped slot's widget, and otherwise, or on false, closes the home onto the file
--- browser via close(home).
+-- FileManager:onSwipeFM reads it (filemanager.lua:475); the top-edge step (focused_top); the forward
+-- step, so a hold corner bound on the file manager wins over the hold (gestures main.lua:1124-1139);
+-- the hold step; a tap outside the top menu zones runs the tapped slot's widget, and otherwise, or on
+-- false, closes the home onto the file browser via close(home), or with focused mode on is consumed.
 function HomeGestures.route(home, ges, close)
     home.own_step = nil
     -- The home's own zones, under KOReader's touch lock (see own_zones).
@@ -166,6 +204,9 @@ function HomeGestures.route(home, ges, close)
         home:turn(BD.flipDirectionIfMirroredUILayout(ges.direction) == "west" and 1 or -1)
         return true
     end
+    if (own_step == "top" or own_step == "hold") and HomeGestures.focused_top(ges, "home") then
+        return true
+    end
     if HomeGestures.forward(ges) then
         return true
     end
@@ -177,7 +218,9 @@ function HomeGestures.route(home, ges, close)
         if slot and slot.module.tap(home.ctx, ges, slot.built) ~= false then
             return true
         end
-        close(home)
+        if not Focused.on() then
+            close(home)
+        end
         return true
     end
     return false

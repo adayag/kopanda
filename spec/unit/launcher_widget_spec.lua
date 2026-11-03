@@ -692,6 +692,7 @@ describe("the launcher widget", function()
         for _, look in ipairs({ "editorial", "diner" }) do
             it("returns false on a tap in a column gap, so the home closes onto the file browser, in " .. look,
                     function()
+                assert.is_true(Settings.set("focused.on", false))
                 assert.is_true(Settings.set("look", look))
                 assert.is_true(Settings.set("layout.rows", ROWS))
                 local fm, home = show_home()

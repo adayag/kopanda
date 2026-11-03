@@ -203,6 +203,7 @@ describe("KoPanda failing safe", function()
     end)
 
     it("logs a nav bar tab whose run throws on the home and keeps the home up", function()
+        assert.is_true(package.loaded["settings"].set("focused.on", false))
         harness.show_fm()
         harness.tick(2)
         local home = Home.shown
@@ -214,6 +215,26 @@ describe("KoPanda failing safe", function()
         local x = bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2)
         local y = bar.dimen.y + math.floor(bar.dimen.h / 2)
         local ok, consumed = pcall(home.handleEvent, home, Event:new("Gesture", harness.gesture("tap", x, y)))
+        assert.is_true(ok)
+        assert.is_true(consumed)
+        assert.is_true(logged_error("kopanda-test: settings tab failed"))
+        assert.equals(home, Home.shown)
+        assert.equals(home, harness.top())
+    end)
+
+    it("logs a nav bar Settings hold whose run throws on the home and keeps the home up, with focused mode on",
+        function()
+        harness.show_fm()
+        harness.tick(2)
+        local home = Home.shown
+        package.loaded["settings_menu"].open = function()
+            error("kopanda-test: settings tab failed")
+        end
+        local bar = home.nav
+        local column = bar.columns[5]
+        local x = bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2)
+        local y = bar.dimen.y + math.floor(bar.dimen.h / 2)
+        local ok, consumed = pcall(home.handleEvent, home, Event:new("Gesture", harness.gesture("hold", x, y)))
         assert.is_true(ok)
         assert.is_true(consumed)
         assert.is_true(logged_error("kopanda-test: settings tab failed"))
@@ -249,6 +270,7 @@ describe("KoPanda failing safe", function()
     end)
 
     it("closes the home onto the file browser, with no sheet, when a widget's hold throws", function()
+        assert.is_true(package.loaded["settings"].set("focused.on", false))
         local Geom = require("ui/geometry")
         local Widget = require("ui/widget/widget")
         local quote = {
@@ -784,6 +806,7 @@ describe("KoPanda failing safe", function()
         end)
 
         it("leaves the file manager usable when a tab's run raises", function()
+            assert.is_true(package.loaded["settings"].set("focused.on", false))
             local fm = file_manager()
             package.loaded["launcher_entries"].run = function()
                 error("kopanda-test: tab failed")
@@ -1532,8 +1555,10 @@ describe("KoPanda failing safe", function()
                 error("no row " .. label)
             end
 
-            -- Holds the header, empty space, then taps the empty-space sheet's row labelled label.
+            -- Holds the header, empty space, then taps the empty-space sheet's row labelled label. The header lies in
+            -- the top menu zones, where with focused mode on a hold opens the file manager's menu.
             local function tap_row(library, label)
+                assert.is_true(package.loaded["settings"].set("focused.on", false))
                 hold_on(library, library.header.rect)
                 assert.equals("library_empty", Sheet.shown.spec.name)
                 tap(label)
@@ -1912,9 +1937,10 @@ describe("KoPanda failing safe", function()
             return count
         end
 
-        -- Closes the home with a mid-screen tap, outside every tappable slot, and opens the file
-        -- manager's menu.
+        -- The file manager's menu over the file browser, the home closed by a mid-screen tap, which closes it with
+        -- focused mode off.
         local function menu_without_home()
+            assert.is_true(package.loaded["settings"].set("focused.on", false))
             local fm = harness.show_fm()
             harness.tick(2)
             local size = Screen:getSize()

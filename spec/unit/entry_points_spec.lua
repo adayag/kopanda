@@ -23,8 +23,10 @@ describe("KoPanda's entry points", function()
         return count
     end
 
-    -- Shows the file manager with its home, then closes the home with a mid-screen tap.
+    -- Shows the file manager with its home, then closes the home with a mid-screen tap, which closes it with
+    -- focused mode off.
     local function fm_without_home()
+        assert.is_true(package.loaded["settings"].set("focused.on", false))
         local fm = harness.show_fm()
         harness.tick(2)
         local size = Screen:getSize()

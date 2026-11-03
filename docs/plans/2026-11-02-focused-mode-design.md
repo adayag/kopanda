@@ -72,11 +72,11 @@ filtering them: the reader gets a panel of big controls, not a shorter list of K
 | Reader: other states | The panel lays out when it opens and closes on rotation. It stays open across sleep and resume. KOReader's own `activate_menu` choice (tap, swipe or both, `readermenu.lua:29`) still applies to the wrapped hooks. In a PDF or comic, Text size is hidden, Contrast steps `contrast`, Light as usual. |
 | Reader: word hold | Unchanged: dictionary and highlight work as in KOReader. |
 | Go to screen | A KoPanda window with two tabs, built like the series and authors screens (fixed-height rows, a page at a time, the ‹ › pager). Chapters: every level in one list, indented one step per level, no expand arrows, page at the right (in an EPUB the numbers move when the text size changes), the current chapter marked "you are here", opening on the pager page that holds it. Bookmarks: newest first, each with chapter and page; a hold offers Remove bookmark. A tap jumps and closes the screen. No chapters: it opens on Bookmarks. Neither: it says so. Built in release 2 (2026-11-02): the header reads "Go to" with the book's title above it, the two tabs at its right with the active one inverted (ink fill, paper text), and a "Book" back control that closes the screen without a jump; the current chapter's row carries a second line, "You are here"; Chapters is collapsible after all (the owner's choice on seeing the flat list): the top level shows with the current chapter's branch open, and a parent row's large ▸ / ▾ toggle before its title, as in KOReader's own table of contents, opens or closes it while a tap on its title jumps; chapter and bookmark pages are KOReader's page labels, as the footer shows them; the screen follows `text_size` like the library's lists. |
-| Outside: top edge | A tap on the home's or the library's top edge opens the quick-settings sheet. A hold opens KOReader's file-manager menu (admin). |
-| Outside: empty tap | A tap on an empty spot on the home stays on the home. |
+| Outside: top edge | A tap on the home's or the library's top edge opens the quick-settings sheet, and so does a swipe down from it (the owner's choice, 2026-11-02), each as KOReader's `activate_menu` allows. A hold opens KOReader's file-manager menu (admin), anywhere in the top menu zones, the home's date and clock and the library's header controls included (the owner's choice, 2026-11-02, after the build). |
+| Outside: empty tap | A tap on an empty spot on the home stays on the home. The home sheet's "Open the file browser" row is hidden with the mode on, so a reader has no route to KOReader's file browser; the owner turns the mode off to use it. |
 | Outside: Settings tab | A tap opens the quick-settings sheet; a hold opens KoPanda's full settings. Swapped from today, with the mode on only. Quick settings also holds Sleep, Rotation lock and Wi-Fi (`quick_settings.lua:118-130`): more than "Settings" suggests, harmless. |
 | Admin routes | Two rules. A hold on the top (the panel's header in a book, the top edge on the home and library) opens KOReader's menu for where you are. A hold on Settings opens KoPanda's settings, where Updates and Focused mode itself (to turn it off) live. |
-| Outside: file browser | A hold on a book or folder opens KoPanda's book or folder sheet, the library's, in place of KOReader's file dialog. |
+| Outside: file browser | Dropped (the owner's choice, 2026-11-02): with the empty tap and the home sheet's row gone a reader can't reach the file browser, so its holds stay KOReader's file dialog. |
 | Delete | The library's book sheet keeps Delete… behind KOReader's confirmation (`book_sheet.lua:287-303`), with the mode on too. The confirmation is the guard; it is KOReader's dialog, not scaled by `text_size`. |
 | Outside: home folder | KOReader's own Lock home folder, turned on once per device by the owner. No code. |
 | Updates section | KoPanda's settings screen gains an Updates section at its end: "KoPanda: Check for update" (the Studio menu's action) and "Apps (Storefront)", which runs `storefront_open` and is hidden when Storefront isn't loaded. Actions, not settings: no schema key. The owner's update route: hold Settings › Updates. |
@@ -95,7 +95,7 @@ release 3 swaps the tab, a hold after.
 |---|---|---|
 | 1 | The setting, the reader panel and its four hooks, the Updates section | 1.5–2 days |
 | 2 | The Go to screen | 1–1.5 days |
-| 3 | Outside the reader: top edge, empty tap, Settings tab, file browser holds | about 1 day |
+| 3 | Outside the reader: top edge, empty tap, Settings tab, the home sheet's file browser row | about 1 day |
 
 Each is a release of its own, panel first. Release 2's Go to row opens KOReader's own table of contents
 (`ShowToc`, `readertoc.lua:807`) until release 2 ships.
@@ -126,5 +126,5 @@ Each written first and seen failing.
   KOReader's menus; a hold on the header opens KOReader's reader menu; with the mode off both open
   KOReader's menus as before. A tap on A+ leaves the panel open. The panel captures on the Colorsoft and
   the Paperwhite, keeps one size at every text size, and leaves no row out on the Paperwhite 7th gen or the Colorsoft.
-- Emulator (release 3): with the mode on, a top-edge tap on the home opens the quick-settings sheet, an
-  empty tap leaves the home shown, and a hold on a file in the file browser opens the book sheet.
+- Emulator (release 3): with the mode on, a top-edge tap on the home opens the quick-settings sheet and an
+  empty tap leaves the home shown.

@@ -229,6 +229,8 @@ describe("the library's pickers", function()
     -- Editorial draws its pickers with no padding, so each one's tap target reaches into the header's bottom padding
     -- and halfway across the gap between them.
     it("open a picker's sheet on a tap in the header's padding under it, in Editorial", function()
+        -- With focused mode on, the tap above the pickers, in the top menu zones, opens the quick-settings sheet.
+        assert.is_true(Settings.set("focused.on", false))
         assert.is_true(Settings.set("look", "editorial"))
         local library = fixture.show()
         local tokens = library.ctx.look.library.header

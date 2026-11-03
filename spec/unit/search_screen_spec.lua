@@ -400,6 +400,35 @@ describe("the search window", function()
             assert.same({ Home.shown }, windows)
         end)
 
+        it("gives quick settings opened by a top tap the Library beneath, as its Settings tab does, so a failure "
+            .. "closes neither the home nor the search", function()
+            fixture.install(gaiman())
+            local screen = show("gaiman")
+            local Home = package.loaded["home"]
+            local Sheet = package.loaded["sheet"]
+            local home_closes = {}
+            local home_close = Home.close
+            replace(Home, "close", function(...)
+                home_closes[#home_closes + 1] = true
+                return home_close(...)
+            end)
+            replace(package.loaded["quick_settings"], "body", function()
+                error("kopanda-test: quick settings failed")
+            end)
+            local bar = screen.nav
+            local column = bar.columns[5]
+            UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap",
+                bar.dimen.x + bar.padding_x + column.x + math.floor(column.w / 2),
+                bar.dimen.y + math.floor(bar.dimen.h / 2))))
+            assert.is_nil(Sheet.shown)
+            assert.same({}, home_closes)
+            assert.equals(screen, harness.top())
+            UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", Screen:getWidth() - 2, 2)))
+            assert.is_nil(Sheet.shown)
+            assert.same({}, home_closes)
+            assert.equals(screen, harness.top())
+        end)
+
         it("answers book on a tile and empty elsewhere, nil with no search shown", function()
             fixture.install(gaiman())
             local screen = show("gaiman")

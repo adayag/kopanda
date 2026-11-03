@@ -144,6 +144,7 @@ describe("the KoPanda home over the file browser", function()
     end)
 
     it("closes on a tap outside every tappable slot, leaving the file manager on top", function()
+        assert.is_true(package.loaded["settings"].set("focused.on", false))
         local fm = harness.show_fm()
         harness.tick(2)
         local size = Screen:getSize()
@@ -156,6 +157,7 @@ describe("the KoPanda home over the file browser", function()
     end)
 
     it("stays up, under the file manager's menu, on a tap in KOReader's top menu zone", function()
+        assert.is_true(package.loaded["settings"].set("focused.on", false))
         harness.show_fm()
         harness.tick(2)
         local home = Home.shown

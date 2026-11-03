@@ -1,7 +1,8 @@
--- The home's gestures: its own swipe up from the bottom edge, the file manager's menu from
--- the top zone, its page turned with nothing paged under it, and every other gesture passed to the
--- zones registered on the file manager; none of it in the file browser or the reader. Holds are
--- in hold_routing_spec.lua.
+-- The home's gestures: its own swipe up from the bottom edge, the top zone (with focused mode on, the
+-- quick-settings sheet on a tap or swipe down and the file manager's menu on a hold; with it off, that menu on a
+-- tap or swipe down), its page turned with nothing paged under it, and every other gesture passed to the zones
+-- registered on the file manager; none of it in the file browser or the reader. Holds elsewhere are in
+-- hold_routing_spec.lua.
 describe("gestures on the KoPanda home", function()
     local harness = require("plugin_harness")
     local gestures = require("home_gestures")
@@ -52,6 +53,17 @@ describe("gestures on the KoPanda home", function()
         Home = require("home")
     end)
 
+    -- Focused mode off, for the cases that keep today's home: the top zone's menu and the closing tap.
+    local function mode_off()
+        assert.is_true(package.loaded["settings"].set("focused.on", false))
+    end
+
+    -- The quick-settings sheet's spec name while one is shown, else nil.
+    local function quick_settings()
+        local Sheet = package.loaded["sheet"]
+        return Sheet.shown and Sheet.shown.spec.name == "quick_settings" and Sheet.shown or nil
+    end
+
     after_each(function()
         harness.teardown()
     end)
@@ -100,7 +112,9 @@ describe("gestures on the KoPanda home", function()
             assert.same({ "stats.show" }, gestures.settings_keys())
         end)
 
-        it("opens the full list from the date, whose group has no keys", function()
+        it("opens the full list from the date, whose group has no keys, with focused mode off", function()
+            -- The date sits in the top menu zones, where with the mode on a hold opens the file manager's menu.
+            mode_off()
             fm_with_home()
             hold_on("date")
             assert.same(all_keys(), gestures.settings_keys())
@@ -134,7 +148,8 @@ describe("gestures on the KoPanda home", function()
         assert.equals(home, harness.top())
     end)
 
-    it("opens the file manager's menu over the home on a tap at the top centre", function()
+    it("opens the file manager's menu over the home on a tap at the top centre, with focused mode off", function()
+        mode_off()
         local fm = fm_with_home()
         local home = Home.shown
         local size = Screen:getSize()
@@ -145,7 +160,9 @@ describe("gestures on the KoPanda home", function()
         assert.equals(home, Home.shown)
     end)
 
-    it("opens the file manager's menu over the home on a swipe down from the top centre", function()
+    it("opens the file manager's menu over the home on a swipe down from the top centre, with focused mode off",
+        function()
+        mode_off()
         local fm = fm_with_home()
         local home = Home.shown
         local size = Screen:getSize()
@@ -155,7 +172,8 @@ describe("gestures on the KoPanda home", function()
         assert.equals(home, harness.top(2))
     end)
 
-    it("honours activate_menu = swipe: a tap at the top centre opens no menu", function()
+    it("honours activate_menu = swipe: a tap at the top centre opens no menu, with focused mode off", function()
+        mode_off()
         -- Read once, in FileManagerMenu:init (filemanagermenu.lua:51).
         G_reader_settings:saveSetting("activate_menu", "swipe")
         finally(function()
@@ -169,6 +187,99 @@ describe("gestures on the KoPanda home", function()
         assert.equals(home, harness.top())
         send(swipe(size.w / 2, size.h / 16, "south"))
         assert.is_not_nil(fm.menu.menu_container)
+    end)
+
+    describe("with focused mode on, the top zone", function()
+        it("opens the quick-settings sheet over the home on a tap or a swipe down at the top centre", function()
+            local fm = fm_with_home()
+            local home = Home.shown
+            local size = Screen:getSize()
+            send(harness.gesture("tap", size.w / 2, size.h / 16))
+            assert.is_not_nil(quick_settings())
+            assert.equals(quick_settings(), harness.top())
+            assert.equals(home, harness.top(2))
+            assert.is_nil(fm.menu.menu_container)
+            package.loaded["sheet"].close()
+            assert.equals(home, harness.top())
+            send(swipe(size.w / 2, size.h / 16, "south"))
+            assert.is_not_nil(quick_settings())
+            assert.equals(home, harness.top(2))
+            assert.is_nil(fm.menu.menu_container)
+            assert.equals(home, Home.shown)
+        end)
+
+        it("opens the file manager's menu over the home on a hold at the top centre, and no sheet", function()
+            local fm = fm_with_home()
+            local home = Home.shown
+            local size = Screen:getSize()
+            send(harness.gesture("hold", size.w / 2, size.h / 16))
+            assert.is_not_nil(fm.menu.menu_container)
+            assert.equals(fm.menu.menu_container, harness.top())
+            assert.equals(home, harness.top(2))
+            assert.is_nil(package.loaded["sheet"].shown)
+        end)
+
+        it("honours activate_menu: swipe leaves a top tap opening nothing, tap a swipe down", function()
+            -- Read once, in FileManagerMenu:init (filemanagermenu.lua:51).
+            G_reader_settings:saveSetting("activate_menu", "swipe")
+            finally(function()
+                G_reader_settings:delSetting("activate_menu")
+            end)
+            local fm = fm_with_home()
+            local home = Home.shown
+            local size = Screen:getSize()
+            send(harness.gesture("tap", size.w / 2, size.h / 16))
+            assert.is_nil(package.loaded["sheet"].shown)
+            assert.is_nil(fm.menu.menu_container)
+            assert.equals(home, harness.top())
+            send(swipe(size.w / 2, size.h / 16, "south"))
+            assert.is_not_nil(quick_settings())
+            package.loaded["sheet"].close()
+            G_reader_settings:saveSetting("activate_menu", "tap")
+            fm.menu.activation_menu = "tap"
+            send(swipe(size.w / 2, size.h / 16, "south"))
+            assert.is_nil(package.loaded["sheet"].shown)
+            assert.is_nil(fm.menu.menu_container)
+            send(harness.gesture("tap", size.w / 2, size.h / 16))
+            assert.is_not_nil(quick_settings())
+        end)
+
+        it("leaves a swipe up or across the top centre to the file manager's zones", function()
+            local fm = fm_with_home()
+            local received = {}
+            fm:registerTouchZones{ {
+                id = "kopanda_spec_top_swipe",
+                ges = "swipe",
+                screen_zone = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = 1 / 8 },
+                handler = function(ges)
+                    received[#received + 1] = ges.direction
+                    return true
+                end,
+                overrides = { "filemanager_swipe" },
+            } }
+            local size = Screen:getSize()
+            send(swipe(size.w / 2, size.h / 16, "north"))
+            send(swipe(size.w / 2, size.h / 16, "east"))
+            assert.same({ "north", "east" }, received)
+            assert.is_nil(package.loaded["sheet"].shown)
+            assert.equals(Home.shown, harness.top())
+        end)
+
+        it("opens nothing on a tap, a swipe down or a hold there under KOReader's touch lock", function()
+            local fm = fm_with_home()
+            local home = Home.shown
+            UIManager:setIgnoreTouchInput(true)
+            finally(function()
+                UIManager:setIgnoreTouchInput(false)
+            end)
+            local size = Screen:getSize()
+            send(harness.gesture("tap", size.w / 2, size.h / 16))
+            send(swipe(size.w / 2, size.h / 16, "south"))
+            send(harness.gesture("hold", size.w / 2, size.h / 16))
+            assert.is_nil(package.loaded["sheet"].shown)
+            assert.is_nil(fm.menu.menu_container)
+            assert.equals(home, harness.top())
+        end)
     end)
 
     it("turns the page on a west or east swipe mid-screen, leaving the file chooser's page", function()
@@ -254,7 +365,8 @@ describe("gestures on the KoPanda home", function()
         send(ges)
         assert.equals(ges, received)
         assert.equals(home, harness.top())
-        -- The other corners are unbound: a tap there closes the home.
+        -- The other corners are unbound: a tap there closes the home with focused mode off.
+        mode_off()
         send(untapped(10, y))
         assert.is_nil(Home.shown)
         assert.equals(fm, harness.top())
@@ -287,7 +399,9 @@ describe("gestures on the KoPanda home", function()
                 bar.dimen.y + math.floor(bar.dimen.h / 2)
         end
 
-        it("runs the Settings tab, not a corner zone, on a tap at the bottom-right corner", function()
+        it("runs the Settings tab, not a corner zone, on a tap at the bottom-right corner, with focused mode off",
+            function()
+            mode_off()
             local fm = fm_with_home()
             local home = Home.shown
             local got = bind_corner(fm, 7 / 8)
@@ -297,6 +411,20 @@ describe("gestures on the KoPanda home", function()
             assert.equals(settings_menu(), harness.top())
             assert.equals(home, harness.top(2))
             assert.same(all_keys(), gestures.settings_keys())
+        end)
+
+        it("opens the quick-settings sheet, not a corner zone, on a tap at the bottom-right corner, with focused mode "
+            .. "on", function()
+            local fm = fm_with_home()
+            local home = Home.shown
+            local got = bind_corner(fm, 7 / 8)
+            local size = Screen:getSize()
+            send(harness.gesture("tap", size.w - 10, size.h - 10))
+            assert.same({}, got)
+            assert.is_not_nil(quick_settings())
+            assert.equals(quick_settings(), harness.top())
+            assert.equals(home, harness.top(2))
+            assert.is_nil(settings_menu())
         end)
 
         it("runs the Home tab, which does nothing, not Gestures' frontlight corner, at the bottom-left", function()
@@ -404,7 +532,9 @@ describe("gestures on the KoPanda home", function()
         end
     end
 
-    it("opens the file manager's menu on a tap in the top menu zone over a tappable slot", function()
+    it("opens the file manager's menu on a tap in the top menu zone over a tappable slot, with focused mode off",
+        function()
+        mode_off()
         local taps = tappable_stubs({})
         local fm = fm_with_home()
         local home = Home.shown
@@ -419,6 +549,23 @@ describe("gestures on the KoPanda home", function()
         assert.is_not_nil(fm.menu.menu_container)
         assert.equals(fm.menu.menu_container, harness.top())
         assert.equals(home, harness.top(2))
+    end)
+
+    it("opens the quick-settings sheet, not the slot's tap, on a tap in the top menu zone over a tappable slot",
+        function()
+        local taps = tappable_stubs({})
+        local fm = fm_with_home()
+        local home = Home.shown
+        local size = Screen:getSize()
+        local rect = slot_of("date").rect
+        local x, y = rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2)
+        assert.is_true(rect:contains(point(x, y)))
+        assert.truthy(y < size.h / 8)
+        send(harness.gesture("tap", x, y))
+        assert.equals(0, taps())
+        assert.is_not_nil(quick_settings())
+        assert.equals(home, harness.top(2))
+        assert.is_nil(fm.menu.menu_container)
     end)
 
     it("lets a corner zone on the file manager win over a tappable slot under it", function()
@@ -456,7 +603,19 @@ describe("gestures on the KoPanda home", function()
         assert.equals(home, harness.top())
     end)
 
-    it("still closes on a tap outside every tappable slot", function()
+    it("stays on a tap outside every tappable slot, with focused mode on", function()
+        local fm = fm_with_home()
+        local home = Home.shown
+        local size = Screen:getSize()
+        send(untapped(size.w / 2, size.h / 2))
+        assert.equals(home, Home.shown)
+        assert.equals(home, harness.top())
+        assert.is_nil(fm.menu.menu_container)
+        assert.is_nil(package.loaded["sheet"].shown)
+    end)
+
+    it("still closes on a tap outside every tappable slot, with focused mode off", function()
+        mode_off()
         local fm = fm_with_home()
         local size = Screen:getSize()
         send(untapped(size.w / 2, size.h / 2))
@@ -465,6 +624,7 @@ describe("gestures on the KoPanda home", function()
     end)
 
     it("passes a tap to the file manager's zones only, not to the file chooser beneath", function()
+        mode_off()
         -- A layout with no featured row, so the file chooser's items lie under no slot that acts
         -- on a tap: the featured book under one would open.
         assert.is_true(package.loaded["settings"].set("layout.rows", {
@@ -542,6 +702,7 @@ describe("gestures on the KoPanda home", function()
     end)
 
     it("opens no settings on a swipe up from the bottom edge in the file browser", function()
+        mode_off()
         local fm = fm_with_home()
         local size = Screen:getSize()
         send(harness.gesture("tap", size.w / 2, size.h / 2))
@@ -592,6 +753,7 @@ describe("gestures on the KoPanda home", function()
         end)
 
         it("go straight through with no home up", function()
+            mode_off()
             local fm = fm_with_home()
             local size = Screen:getSize()
             send(harness.gesture("tap", size.w / 2, size.h / 2))

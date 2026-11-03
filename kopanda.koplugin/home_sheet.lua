@@ -1,7 +1,9 @@
 -- The home's own sheet, opened by a hold on empty space (home_gestures.lua): Edit layout, Edit page 2, Open
--- the file browser, Refresh weather, Wi-Fi, KoPanda settings and Sleep. Wi-Fi and Sleep are launcher entries,
--- resolved and run as the launcher runs them. Each row's detail is read when the sheet opens.
+-- the file browser (left out with focused mode on), Refresh weather, Wi-Fi, KoPanda settings and Sleep. Wi-Fi and
+-- Sleep are launcher entries, resolved and run as the launcher runs them. Each row's detail is read when the sheet
+-- opens.
 local EditLayout = require("edit_layout")
+local Focused = require("focused")
 local Home = require("home")
 local LauncherEntries = require("launcher_entries")
 local PaintClock = require("paint_clock")
@@ -45,52 +47,55 @@ end
 
 -- The spec of the home sheet under ctx (the home's).
 local function spec(ctx)
+    local rows = {
+        {
+            icon = "layout",
+            label = "Edit layout",
+            run = function()
+                EditLayout.open{ started = PaintClock.now() }
+            end,
+        },
+        {
+            icon = "layout",
+            label = "Edit page 2",
+            run = function()
+                EditLayout.open{ key = "layout.rows_2", started = PaintClock.now() }
+            end,
+        },
+        {
+            icon = "sun",
+            label = "Refresh weather",
+            -- os.time() rather than ctx.now, the home's build time, so an old home shows the
+            -- true age.
+            detail = Weather.age(Weather.reading(), os.time()),
+            run = function()
+                Weather.tap(ctx.home)
+            end,
+        },
+        wifi_row(ctx),
+        {
+            icon = "settings",
+            label = "KoPanda settings",
+            run = function()
+                SettingsMenu.open()
+            end,
+        },
+        (entry_row(SLEEP, "Sleep", ctx)),
+    }
+    if not Focused.on() then
+        table.insert(rows, 3, {
+            icon = "folder",
+            label = "Open the file browser",
+            run = function()
+                Home.close()
+            end,
+        })
+    end
     return {
         name = "home",
         band = "home",
         header = { heading = "Home", aside = "KoPanda" },
-        rows = {
-            {
-                icon = "layout",
-                label = "Edit layout",
-                run = function()
-                    EditLayout.open{ started = PaintClock.now() }
-                end,
-            },
-            {
-                icon = "layout",
-                label = "Edit page 2",
-                run = function()
-                    EditLayout.open{ key = "layout.rows_2", started = PaintClock.now() }
-                end,
-            },
-            {
-                icon = "folder",
-                label = "Open the file browser",
-                run = function()
-                    Home.close()
-                end,
-            },
-            {
-                icon = "sun",
-                label = "Refresh weather",
-                -- os.time() rather than ctx.now, the home's build time, so an old home shows the
-                -- true age.
-                detail = Weather.age(Weather.reading(), os.time()),
-                run = function()
-                    Weather.tap(ctx.home)
-                end,
-            },
-            wifi_row(ctx),
-            {
-                icon = "settings",
-                label = "KoPanda settings",
-                run = function()
-                    SettingsMenu.open()
-                end,
-            },
-            (entry_row(SLEEP, "Sleep", ctx)),
-        },
+        rows = rows,
     }
 end
 

@@ -4,26 +4,16 @@
 -- ReaderConfig:onTapShowConfigMenu and :onSwipeShowConfigMenu (readerconfig.lua:154-166) and ReaderFooter:TapFooter
 -- and :onHoldFooter (readerfooter.lua:2517-2530, :2647-2663); with the mode off, or on a failure, the original runs.
 local Event = require("ui/event")
+local Focused = require("focused")
 local FocusedPanel = require("focused_panel")
 local ReaderConfig = require("apps/reader/modules/readerconfig")
 local ReaderFooter = require("apps/reader/modules/readerfooter")
 local ReaderMenu = require("apps/reader/modules/readermenu")
-local Settings = require("settings")
 local logger = require("logger")
 
 local FocusedHooks = {}
 
 local installed = false
-
--- Read at each gesture, so turning the mode off takes effect at once; a read that raises reads as off.
-local function focused()
-    local ok, on = pcall(Settings.get, "focused.on")
-    if not ok then
-        logger.err("KoPanda: could not read focused.on:", on)
-        return false
-    end
-    return on == true
-end
 
 -- Cancels a pan scroll the swipe made, as the originals do (readermenu.lua:490, readerconfig.lua:150).
 local function handled_as_swipe(self)
@@ -41,7 +31,7 @@ end
 local function wrap(class, name, wants, after)
     local original = class[name]
     class[name] = function(self, ...)
-        if not focused() then
+        if not Focused.on() then
             return original(self, ...)
         end
         local ok, opened = pcall(function(...)
@@ -85,7 +75,7 @@ end
 local function wrap_hold_footer()
     local original = ReaderFooter.onHoldFooter
     ReaderFooter.onHoldFooter = function(self, ges, ...)
-        if not focused() then
+        if not Focused.on() then
             return original(self, ges, ...)
         end
         local ok, on_footer = pcall(function()

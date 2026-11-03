@@ -72,8 +72,9 @@ describe("the swatch screen", function()
         UIManager:sendEvent(Event:new("Gesture", harness.gesture("tap", size.w / 2, size.h / 16)))
     end
 
-    -- The file manager with its home closed by a mid-screen tap.
+    -- The file manager with its home closed by a mid-screen tap, which closes it with focused mode off.
     local function fm_without_home()
+        assert.is_true(package.loaded["settings"].set("focused.on", false))
         local fm = harness.show_fm()
         harness.tick(2)
         tap_mid()

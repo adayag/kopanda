@@ -516,8 +516,8 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
   `frontend/ui/uimanager.lua:142-145` (`UIManager:setIgnoreTouchInput`), `:268-271` (`show`
   lifts the lock for the widget shown).
 - The home overrides `onGesture`, so its own steps, the swipe up to the settings menu, the
-  closing tap and the hold, are touch zones on the home (`kopanda_home_swipe_up`,
-  `kopanda_home_tap`, `kopanda_home_hold`, made in `home_gestures.lua`) run through
+  closing tap, the top zone and the hold, are touch zones on the home (`kopanda_home_swipe_up`,
+  `kopanda_home_tap`, `kopanda_home_top_swipe`, `kopanda_home_hold`, made in `home_gestures.lua`) run through
   `InputContainer.onGesture(home, ges)`: under the lock they match nothing and the settings
   message or sheet, whose `show` would lift the lock, never shows. A zone's handler only records
   its step; `HomeGestures.route` runs it in place, the closing tap and the hold after the
@@ -1700,6 +1700,25 @@ runs with the same arguments, so KOReader's menu opens.
 - The unit harness restores the six originals at each load (`spec/plugin_harness.lua`), as it restores
   `Dispatcher.execute`.
 
+### Focused mode outside the reader: the top zone, the empty tap and the Settings tab
+
+`focused.lua` reads `focused.on` at each gesture for `focused_hooks.lua`, `home_gestures.lua` and `nav_bar.lua`,
+and when the home sheet opens for `home_sheet.lua`. With it on, `HomeGestures.focused_top` takes the top menu zones (`DTAP_ZONE_MENU`,
+`DTAP_ZONE_MENU_EXT`, read as the home's own zones read them) on the home and on every library window, after the
+library's own taps and before the forward step, and only for a gesture the window's own zones named, so KOReader's
+touch lock still holds.
+
+- `FileManagerMenu:onShowMenu(tab_index)` (`frontend/apps/filemanager/filemanagermenu.lua:1006`): a hold in the top
+  zones calls `fm.menu:onShowMenu()` with no tab index, so the menu opens on the tab it was last closed on
+  (`filemanagermenu_tab_index`, `:1021`); the location-to-tab helper (`:1083-1100`) is private and not called.
+- `activation_menu` (`filemanagermenu.lua:51`, `G_reader_settings`' `activate_menu` or `"swipe_tap"`, kept current
+  by `frontend/ui/elements/menu_activate.lua:16`, `:30`): a top tap opens the quick-settings sheet unless it is
+  `"swipe"`, a top swipe south unless it is `"tap"`, as `onTapShowMenu` and `onSwipeShowMenu` open the file
+  manager's menu (`:1102-1114`); what it rules out passes on to the forward step.
+- With no file manager the rule takes nothing: opening a book closes it (`frontend/apps/reader/readerui.lua:793-794`,
+  `FileManager.instance` cleared at `frontend/apps/filemanager/filemanager.lua:834-839`), so the Go to screen over
+  the reader keeps its top edge.
+
 ### The hold on the home: the `hold` gesture, Gestures' hold corners and the home sheet's rows
 
 - The `hold` gesture fires while the finger is still down, after `HOLD_INTERVAL_MS`, 500 ms
@@ -1711,9 +1730,10 @@ runs with the same arguments, so KOReader's menu opens.
   (`frontend/ui/widget/menu.lua:124-128`, `frontend/apps/filemanager/filemanager.lua:171-177`),
   which `InputContainer.onGesture(fm, ges)` never visits, since it runs the file manager's own
   zones and `ges_events` only (`frontend/ui/widget/container/inputcontainer.lua:266-285`).
-- The hold step runs after the zones registered on the file manager, so the Gestures plugin's
-  four hold-corner zones win when bound: their rectangles come from `DTAP_ZONE_TOP_LEFT` and the
-  other corners (`plugins/gestures.koplugin/main.lua:971-998`; `defaults.lua:66-69` in the
+- With focused mode off, the hold step runs after the zones registered on the file manager, so the Gestures
+  plugin's four hold-corner zones win when bound (with it on, a hold in the top menu zones opens the file manager's
+  menu first, so the two top corners lose to it; the focused-mode section above): their rectangles come from
+  `DTAP_ZONE_TOP_LEFT` and the other corners (`plugins/gestures.koplugin/main.lua:971-998`; `defaults.lua:66-69` in the
   KOReader root, each corner an eighth of each side), `hold_top_left_corner` to
   `hold_bottom_left_corner` are `ges = "hold"` (`main.lua:1124-1139`) with `overrides_hold_corner`
   (`:1044`), registered through `registerGesture` on the file manager (`:1287-1305`). Unbound, or
@@ -1724,14 +1744,15 @@ runs with the same arguments, so KOReader's menu opens.
   (`frontend/dispatcher.lua:162`, `RefreshContent`) reaches `FileManager.onRefreshContent`, the
   file chooser's `refreshPath` (`frontend/apps/filemanager/filemanager.lua:857-862`). That corner
   (`DTAP_ZONE_TOP_RIGHT`, `defaults.lua:67`: x from 1106 and y under 210 on the Colorsoft) covers
-  the right end of both looks' clock, so a hold there refreshes the hidden file chooser and opens
-  no sheet.
+  the right end of both looks' clock, so with focused mode off a hold there refreshes the hidden file chooser and
+  opens no sheet; with it on, the hold opens `FileManagerMenu:onShowMenu` (the focused-mode section above).
 - A hold in the nav bar's band is the bar's, before the zones on the file manager (gestures
   under the home, above): Gestures' bottom hold corners (`hold_bottom_left_corner`,
   `hold_bottom_right_corner`, `plugins/gestures.koplugin/main.lua:1124-1139`) don't fire there,
-  and neither a slot's hold nor the home sheet runs. A hold on the Settings tab opens the
+  and neither a slot's hold nor the home sheet runs. With focused mode off, a hold on the Settings tab opens the
   quick-settings sheet over the home, and over the bare file browser through the bar's own
-  `ges_events`; a hold anywhere else on the bar runs nothing.
+  `ges_events`; with it on, a tap there opens the sheet and a hold runs the tab. A hold anywhere else on the bar
+  runs nothing.
 - The home sheet's Sleep row is the dispatcher's `suspend` (`frontend/dispatcher.lua:94`, listed
   only with `Device:canSuspend()`), run through `LauncherEntries.run` and the dispatch bridge as
   the launcher's action entries are: its `RequestSuspend` reaches the file manager's
@@ -1966,9 +1987,10 @@ runs with the same arguments, so KOReader's menu opens.
   (`ui/bidi`, `frontend/ui/bidi.lua:162`), outside the top and bottom edge bands (the `G_defaults`
   entry above); a swipe in a band goes to the home's forward step (the gestures entry above).
 - A hold outside the nav bar's band goes to the home's forward step before the chrome's hold step
-  (`library_sheets.lua`), as on the home, so the Gestures plugin's hold corners win when bound
-  (`plugins/gestures.koplugin/main.lua:1124-1139`) and carry on to the hold step when unbound
-  (`:1317-1320`, returning nothing; the home's hold entry above).
+  (`library_sheets.lua`), as on the home, so with focused mode off the Gestures plugin's hold corners win when
+  bound (`plugins/gestures.koplugin/main.lua:1124-1139`) and carry on to the hold step when unbound
+  (`:1317-1320`, returning nothing; the home's hold entry above); with it on, a hold in the top menu zones opens the
+  file manager's menu before either (the focused-mode section above).
 - `BookMetadataChanged` and `InvalidateMetadataCache` are broadcast when book details or a custom
   cover change (`frontend/apps/filemanager/filemanagerbookinfo.lua:276-277`, `:556-557`), to every
   window, a handler's true return stopping none (`frontend/ui/uimanager.lua:1042-1061`). One change

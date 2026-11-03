@@ -309,6 +309,7 @@ describe("the home's rows", function()
     end)
 
     it("falls through to closing the home when a slot's tap returns false", function()
+        assert.is_true(package.loaded["settings"].set("focused.on", false))
         stubs.quote.tap = function()
             taps = taps + 1
             return false
@@ -318,6 +319,18 @@ describe("the home's rows", function()
         assert.equals(1, taps)
         assert.is_nil(Home.shown)
         assert.equals(fm, harness.top())
+    end)
+
+    it("stays up when a slot's tap returns false, with focused mode on", function()
+        stubs.quote.tap = function()
+            taps = taps + 1
+            return false
+        end
+        local _, home = show_home()
+        tap_at(centre(slot_of(home, "quote").rect))
+        assert.equals(1, taps)
+        assert.equals(home, Home.shown)
+        assert.equals(home, harness.top())
     end)
 
     it("calls each slot's after_show once, with the ctx and its built widget, after the settled signal", function()
@@ -359,6 +372,7 @@ describe("the home's rows", function()
     end)
 
     it("closes on a tap in a slot whose widget has no tap", function()
+        assert.is_true(package.loaded["settings"].set("focused.on", false))
         local fm, home = show_home()
         local rect = slot_of(home, "stats").rect
         tap_at(centre(rect))

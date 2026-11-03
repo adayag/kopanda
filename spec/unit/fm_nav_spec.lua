@@ -252,6 +252,7 @@ describe("the file browser's nav bar", function()
         end)
 
         it("runs Authors, History and Settings through the launcher's entries", function()
+            assert.is_true(package.loaded["settings"].set("focused.on", false))
             local fm = fm_on_top()
             local runs = record_runs()
             for i = 3, 5 do
@@ -262,6 +263,20 @@ describe("the file browser's nav bar", function()
                 { kind = "koreader", target = "history" },
                 { kind = "kopanda", target = "settings" },
             }, runs)
+        end)
+
+        it("with focused mode on, opens the quick-settings sheet over the file manager on a tap on Settings and "
+            .. "runs Settings' entry on a hold there", function()
+            local fm = fm_on_top()
+            local runs = record_runs()
+            local Sheet = package.loaded["sheet"]
+            send(harness.gesture("hold", tab_centre(fm[1].bar, 5)))
+            assert.same({ { kind = "kopanda", target = "settings" } }, runs)
+            send(harness.gesture("tap", tab_centre(fm[1].bar, 5)))
+            assert.equals(1, #runs)
+            assert.equals("quick_settings", Sheet.shown and Sheet.shown.spec.name)
+            assert.equals(Sheet.shown, harness.top())
+            assert.equals(fm, harness.top(2))
         end)
 
         -- Authors' entry shows the Authors list over the file browser.
@@ -278,6 +293,7 @@ describe("the file browser's nav bar", function()
         end)
 
         it("runs Settings and not a corner zone bound on the file manager", function()
+            assert.is_true(package.loaded["settings"].set("focused.on", false))
             local fm = fm_on_top()
             local runs = record_runs()
             local zone = zone_on(fm, "tap", { ratio_x = 7 / 8, ratio_y = 7 / 8, ratio_w = 1 / 8, ratio_h = 1 / 8 })
@@ -308,6 +324,7 @@ describe("the file browser's nav bar", function()
         -- Over the bare file browser, the Settings hold opens the quick-settings sheet, whose Night cell (its sixth
         -- area, quick_settings_spec.lua, "the areas") then toggles night mode.
         it("opens the quick-settings sheet over the file manager on a hold on Settings", function()
+            assert.is_true(package.loaded["settings"].set("focused.on", false))
             local night_mode = rawget(Screen, "night_mode")
             local had, setting = G_reader_settings:has("night_mode"), G_reader_settings:readSetting("night_mode")
             restores[#restores + 1] = function()
@@ -589,6 +606,7 @@ describe("the file browser's nav bar", function()
         end)
 
         it("logs a raising tab and consumes its tap", function()
+            assert.is_true(package.loaded["settings"].set("focused.on", false))
             local fm = fm_on_top()
             package.loaded["launcher_entries"].run = function()
                 error("kopanda-test: tab failed")

@@ -2,7 +2,7 @@
 -- the current chapter, the top level shown and the current chapter's parents open, or on Bookmarks without chapters,
 -- with a note for an empty tab; a chip switches the tab; a parent's toggle opens or closes it in place; a tap
 -- elsewhere on a row closes the screen, then jumps; a hold on a bookmark offers Remove bookmark, and nothing on a
--- chapter; and it never builds a nav bar.
+-- chapter; its top edge opens nothing; and it never builds a nav bar.
 describe("the Go to screen", function()
     local harness = require("plugin_harness")
     local text_of = require("library_fixture").text
@@ -394,6 +394,26 @@ describe("the Go to screen", function()
         harness.tick(2)
         assert.is_nil(Sheet.shown)
         assert.equals(screen, GotoScreen.shown)
+    end)
+
+    -- In the reader the file manager is closed (readerui.lua:793-794), so focused mode's top-edge rule takes nothing.
+    it("opens no sheet and no KOReader menu on a tap, a swipe down or a hold at its top centre", function()
+        assert.is_nil(require("apps/filemanager/filemanager").instance)
+        assert.is_true(package.loaded["settings"].get("focused.on"))
+        local ui = fake_ui(5, 1)
+        local screen = show(ui)
+        local x = Screen:getWidth() / 2
+        send("tap", x, 2)
+        local swipe = harness.gesture("swipe", x, 2)
+        swipe.direction = "south"
+        swipe.distance = Screen:scaleBySize(300)
+        UIManager:sendEvent(Event:new("Gesture", swipe))
+        send("hold", x, 2)
+        harness.tick(2)
+        assert.is_nil(Sheet.shown)
+        assert.equals(screen, GotoScreen.shown)
+        assert.equals(screen, harness.top())
+        assert.same({}, ui.calls)
     end)
 
     it("never builds a nav bar", function()

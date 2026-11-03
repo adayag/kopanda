@@ -247,6 +247,8 @@ describe("the library window", function()
         end)
 
         it("opens no sheet on a hold on the search chip, and the empty-space sheet on a picker", function()
+            -- With focused mode on, a hold in the header, in the top menu zones, opens the file manager's menu.
+            assert.is_true(package.loaded["settings"].set("focused.on", false))
             fixture.install({ [ROOT] = { books = fixture.books(2) } })
             local library = fixture.show()
             local Sheet = package.loaded["sheet"]

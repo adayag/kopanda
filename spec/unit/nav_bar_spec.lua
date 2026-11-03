@@ -1,5 +1,6 @@
 -- NavBar: its five tabs, its height per look at the shell size of the text size it is handed, its five
--- columns, its paint in each look and variant, and what a tap, a hold and anything else on it do.
+-- columns, its paint in each look and variant, and what a tap, a hold and anything else on it do, the Settings
+-- tab's tap and hold swapped with focused mode on.
 -- Nothing here places the bar on a screen; each case sets the bar's dimen as a screen would.
 describe("the nav bar", function()
     local harness = require("plugin_harness")
@@ -33,6 +34,11 @@ describe("the nav bar", function()
 
     local function scale(px)
         return Screen:scaleBySize(px)
+    end
+
+    -- Focused mode off, for the cases that keep today's Settings tab.
+    local function mode_off()
+        assert.is_true(Settings.set("focused.on", false))
     end
 
     -- The bar's height at text_size (none when nil): edge, the active rule's overhang, the tab's padding,
@@ -421,7 +427,8 @@ describe("the nav bar", function()
     end)
 
     describe("a tap", function()
-        it("in a column runs that tab once with the bar's place and is consumed", function()
+        it("in a column runs that tab once with the bar's place and is consumed, with focused mode off", function()
+            mode_off()
             for _, id in ipairs(Looks.ids()) do
                 for _, where in ipairs({ "home", "file_browser" }) do
                     local bar = bar_for(id, where)
@@ -430,6 +437,33 @@ describe("the nav bar", function()
                         assert.is_true(bar:handle(harness.gesture("tap", centre(bar, i))), tab.id)
                         assert.same({ { tab.id, where } }, calls, id .. " " .. where .. " " .. tab.id)
                     end
+                    bar:free()
+                end
+            end
+        end)
+
+        it("with focused mode on, on Settings opens the quick-settings sheet once, and on another tab runs it",
+            function()
+            local QuickSettings = require("quick_settings")
+            local time = require("ui/time")
+            for _, id in ipairs(Looks.ids()) do
+                for _, where in ipairs({ "home", "file_browser" }) do
+                    local bar = bar_for(id, where)
+                    local calls = spy(NavBar, "run")
+                    local opens = spy(QuickSettings, "open")
+                    for i = 1, 4 do
+                        assert.is_true(bar:handle(harness.gesture("tap", centre(bar, i))))
+                    end
+                    local before = time.monotonic()
+                    assert.is_true(bar:handle(harness.gesture("tap", centre(bar, 5))))
+                    local after = time.monotonic()
+                    local label = id .. " " .. where
+                    assert.same({ { "home", where }, { "library", where }, { "authors", where }, { "history", where } },
+                        calls, label)
+                    assert.equals(1, #opens, label)
+                    local started = opens[1][1].started
+                    assert.is_true(started.wall >= before and started.wall <= after, label)
+                    assert.is_nil(opens[1][1].beneath, label)
                     bar:free()
                 end
             end
@@ -615,7 +649,9 @@ describe("the nav bar", function()
         local time = require("ui/time")
 
         -- The Settings hold opens the sheet, its start taken at the hold.
-        it("a hold in the Settings column opens the quick-settings sheet once and is consumed", function()
+        it("a hold in the Settings column opens the quick-settings sheet once and is consumed, with focused mode off",
+            function()
+            mode_off()
             local QuickSettings = require("quick_settings")
             for _, id in ipairs(Looks.ids()) do
                 for _, where in ipairs({ "home", "file_browser" }) do
@@ -631,6 +667,22 @@ describe("the nav bar", function()
                     assert.is_number(started.cpu, id .. " " .. where)
                     assert.is_true(started.wall >= before and started.wall <= after, id .. " " .. where)
                     assert.same({}, runs, id .. " " .. where)
+                    bar:free()
+                end
+            end
+        end)
+
+        it("with focused mode on, a hold in the Settings column runs the Settings tab once and opens no sheet",
+            function()
+            local QuickSettings = require("quick_settings")
+            for _, id in ipairs(Looks.ids()) do
+                for _, where in ipairs({ "home", "file_browser" }) do
+                    local bar = bar_for(id, where)
+                    local runs = spy(NavBar, "run")
+                    local opens = spy(QuickSettings, "open")
+                    assert.is_true(bar:handle(harness.gesture("hold", centre(bar, 5))), id .. " " .. where)
+                    assert.same({ { "settings", where } }, runs, id .. " " .. where)
+                    assert.same({}, opens, id .. " " .. where)
                     bar:free()
                 end
             end
@@ -660,11 +712,28 @@ describe("the nav bar", function()
             bar:free()
         end)
 
-        it("a Settings hold whose open raises is logged with the tab's name and still consumed", function()
+        it("a Settings hold whose open raises is logged with the tab's name and still consumed, with focused mode off",
+            function()
+            mode_off()
             spy(require("quick_settings"), "open", "boom")
             local logged = spy(logger, "err")
             local bar = bar_for("diner", "file_browser")
             assert.is_true(bar:handle(harness.gesture("hold", centre(bar, 5))))
+            local found = false
+            for _, call in ipairs(logged) do
+                local text = table.concat({ tostring(call[1]), tostring(call[2]), tostring(call[3]) }, " ")
+                found = found or (text:find("Settings", 1, true) ~= nil and text:find("boom", 1, true) ~= nil)
+            end
+            assert.is_true(found, "no log names the Settings tab and its error")
+            bar:free()
+        end)
+
+        it("with focused mode on, a Settings tap whose open raises is logged with the tab's name and still consumed",
+            function()
+            spy(require("quick_settings"), "open", "boom")
+            local logged = spy(logger, "err")
+            local bar = bar_for("diner", "file_browser")
+            assert.is_true(bar:handle(harness.gesture("tap", centre(bar, 5))))
             local found = false
             for _, call in ipairs(logged) do
                 local text = table.concat({ tostring(call[1]), tostring(call[2]), tostring(call[3]) }, " ")

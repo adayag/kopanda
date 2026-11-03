@@ -1,5 +1,6 @@
 -- The library's gestures: the nav bar's band; a tap on a book, a folder, the title, a picker or a pager arrow; a west
--- or east swipe, but not one in the top or bottom edge band; the page keys; a hold; and everything else to the file
+-- or east swipe, but not one in the top or bottom edge band; the page keys; with focused mode on, the top zone's tap
+-- or swipe down (the quick-settings sheet) and hold (the file manager's menu); a hold; and everything else to the file
 -- manager's menu zones and the zones on the file manager, the rest consumed. Library.hit names what lies under a
 -- point. KOReader's touch lock filters the library's own zones.
 describe("gestures on the library", function()
@@ -65,6 +66,11 @@ describe("gestures on the library", function()
         UIManager:sendEvent(Event:new("Gesture", ges))
     end
 
+    -- Focused mode off, for the cases that keep today's top zone.
+    local function mode_off()
+        assert.is_true(package.loaded["settings"].set("focused.on", false))
+    end
+
     local function swipe(x, y, direction)
         local ges = harness.gesture("swipe", x, y)
         ges.direction = direction
@@ -114,7 +120,8 @@ describe("gestures on the library", function()
         end
 
         it("runs the tapped tab first, opens quick settings on a hold on Settings, and runs nothing on another "
-            .. "hold, all consumed", function()
+            .. "hold, all consumed, with focused mode off", function()
+            mode_off()
             install()
             local library, fm = fixture.show()
             local got = bind(fm, "kopanda_spec_bar_corner", "tap", { ratio_x = 7 / 8, ratio_y = 7 / 8, ratio_w = 1 / 8,
@@ -143,8 +150,43 @@ describe("gestures on the library", function()
             assert.equals(library, Library.shown)
         end)
 
+        it("opens quick settings over the library on a tap on Settings and runs the tab on a hold there, with focused "
+            .. "mode on", function()
+            install()
+            local library = fixture.show()
+            local runs = spy(NavBar, "run")
+            local Sheet = package.loaded["sheet"]
+            local x, y = column_centre(library.nav, 5)
+            send(harness.gesture("hold", x, y))
+            assert.same({ { "settings", "library" } }, runs)
+            assert.is_nil(Sheet.shown)
+            send(harness.gesture("tap", x, y))
+            assert.same({ { "settings", "library" } }, runs)
+            assert.equals("quick_settings", Sheet.shown and Sheet.shown.spec.name)
+            assert.equals(Library, Sheet.shown.beneath)
+            assert.equals(library, harness.top(2))
+        end)
+
+        it("closes the library onto the file browser, not the home, when quick settings tapped open over it fails, "
+            .. "with focused mode on", function()
+            install()
+            local library, fm = fixture.show()
+            local Home = package.loaded["home"]
+            local Sheet = package.loaded["sheet"]
+            local home_closes = spy(Home, "close")
+            spy(package.loaded["quick_settings"], "body", function()
+                error("kopanda-test: quick settings failed")
+            end)
+            send(harness.gesture("tap", column_centre(library.nav, 5)))
+            assert.is_nil(Sheet.shown)
+            assert.is_nil(Library.shown)
+            assert.same({}, home_closes)
+            assert.equals(fm, harness.top())
+        end)
+
         it("closes the library onto the file browser, not the home, when quick settings held open over it fails",
             function()
+            mode_off()
             install()
             local library, fm = fixture.show()
             local Home = package.loaded["home"]
@@ -260,7 +302,8 @@ describe("gestures on the library", function()
             assert.equals(library, harness.top())
         end)
 
-        it("at the top centre outside the pickers opens the file manager's menu", function()
+        it("at the top centre outside the pickers opens the file manager's menu, with focused mode off", function()
+            mode_off()
             install()
             local library, fm = fixture.show()
             send(harness.gesture("tap", Screen:getWidth() / 2, 2))
@@ -269,7 +312,9 @@ describe("gestures on the library", function()
             assert.equals(library, harness.top(2))
         end)
 
-        it("it doesn't take reaches a corner zone on the file manager, and one in the bar doesn't", function()
+        it("it doesn't take reaches a corner zone on the file manager, and one in the bar doesn't, with focused mode "
+            .. "off", function()
+            mode_off()
             install()
             local library, fm = fixture.show()
             local corner = { ratio_x = 7 / 8, ratio_y = 7 / 8, ratio_w = 1 / 8, ratio_h = 1 / 8 }
@@ -286,6 +331,82 @@ describe("gestures on the library", function()
             send(harness.gesture("tap", size.w - 2, size.h - 2))
             assert.equals(1, #got)
             assert.equals(1, #runs)
+        end)
+    end)
+
+    describe("with focused mode on, the top zone", function()
+        local Sheet
+
+        before_each(function()
+            Sheet = package.loaded["sheet"]
+        end)
+
+        it("opens the quick-settings sheet over the library on a tap or a swipe down at the top centre", function()
+            install()
+            local library, fm = fixture.show()
+            local x = Screen:getWidth() / 2
+            send(harness.gesture("tap", x, 2))
+            assert.equals("quick_settings", Sheet.shown and Sheet.shown.spec.name)
+            assert.equals(Sheet.shown, harness.top())
+            assert.equals(library, harness.top(2))
+            -- Over the library, the sheet's failure closes the library (nav_bar.lua's quick settings opener).
+            assert.equals(Library, Sheet.shown.beneath)
+            assert.is_nil(fm.menu.menu_container)
+            Sheet.close()
+            send(swipe(x, 2, "south"))
+            assert.equals("quick_settings", Sheet.shown and Sheet.shown.spec.name)
+            assert.equals(library, harness.top(2))
+            assert.is_nil(fm.menu.menu_container)
+            assert.equals(library, Library.shown)
+        end)
+
+        it("opens the file manager's menu over the library on a hold at the top centre, and no sheet", function()
+            install()
+            local library, fm = fixture.show()
+            local held = spy(package.loaded["library_sheets"], "hold")
+            send(harness.gesture("hold", Screen:getWidth() / 2, 2))
+            assert.is_not_nil(fm.menu.menu_container)
+            assert.equals(fm.menu.menu_container, harness.top())
+            assert.equals(library, harness.top(2))
+            assert.is_nil(Sheet.shown)
+            assert.same({}, held)
+        end)
+
+        it("still runs a header picker's tap there", function()
+            install()
+            local library = fixture.show()
+            local picked = spy(Library, "on_picker")
+            local x, y = fixture.centre(library.header.sort.rect)
+            assert.truthy(y < Screen:getHeight() / 8)
+            send(harness.gesture("tap", x, y))
+            assert.same({ { "sort" } }, picked)
+            assert.is_nil(Sheet.shown)
+            assert.equals(library, harness.top())
+        end)
+
+        it("honours activate_menu = swipe: a top tap opens nothing", function()
+            G_reader_settings:saveSetting("activate_menu", "swipe")
+            finally(function()
+                G_reader_settings:delSetting("activate_menu")
+            end)
+            install()
+            local library, fm = fixture.show()
+            send(harness.gesture("tap", Screen:getWidth() / 2, 2))
+            assert.is_nil(Sheet.shown)
+            assert.is_nil(fm.menu.menu_container)
+            assert.equals(library, harness.top())
+        end)
+
+        it("opens nothing under KOReader's touch lock", function()
+            install()
+            local library, fm = fixture.show()
+            InputContainer:setIgnoreTouchInput(true)
+            send(harness.gesture("tap", Screen:getWidth() / 2, 2))
+            send(swipe(Screen:getWidth() / 2, 2, "south"))
+            send(harness.gesture("hold", Screen:getWidth() / 2, 2))
+            assert.is_nil(Sheet.shown)
+            assert.is_nil(fm.menu.menu_container)
+            assert.equals(library, harness.top())
         end)
     end)
 
@@ -353,7 +474,8 @@ describe("gestures on the library", function()
     describe("a hold", function()
         -- A hold the nav bar's band and the file manager's zones leave goes to
         -- LibrarySheets.hold. The fixture's books are no files, so their sheet re-lists instead.
-        it("runs no open and no picker, and is consumed", function()
+        it("runs no open and no picker, and is consumed, with focused mode off", function()
+            mode_off()
             install()
             local library = fixture.show()
             local opened = spy(require("apps/filemanager/filemanagerutil"), "openFile")
@@ -371,7 +493,9 @@ describe("gestures on the library", function()
             assert.equals(library, harness.top())
         end)
 
-        it("hands the library and what lies under it to the dispatch, with the stamp of the hold", function()
+        it("hands the library and what lies under it to the dispatch, with the stamp of the hold, with focused mode "
+            .. "off", function()
+            mode_off()
             install()
             local library = fixture.show()
             local held = spy(package.loaded["library_sheets"], "hold")
@@ -388,6 +512,19 @@ describe("gestures on the library", function()
                 assert.equals(library, call[1])
                 assert.truthy(call[3].wall >= before.wall)
             end
+        end)
+
+        it("hands a tile held mid-screen to the dispatch with focused mode on", function()
+            install()
+            local library = fixture.show()
+            local held = spy(package.loaded["library_sheets"], "hold")
+            send(harness.gesture("hold", fixture.centre(library.tiles[2].rect)))
+            send(harness.gesture("hold", fixture.centre(library.tiles[1].rect)))
+            assert.equals(2, #held)
+            assert.same({ kind = "book", record = library.tiles[2].record }, held[1][2])
+            assert.same({ kind = "folder", folder = SUB }, held[2][2])
+            assert.equals(library, held[1][1])
+            assert.equals(library, held[2][1])
         end)
 
         it("runs no dispatch in the nav bar's band", function()

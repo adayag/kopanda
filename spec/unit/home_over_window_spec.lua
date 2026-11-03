@@ -63,8 +63,9 @@ describe("the home brought up over a chrome window", function()
     }
 
     -- The file manager with the window of open shown, then the home brought up over it through the
-    -- top menu's Home tab. Returns the file manager and the window.
+    -- top menu's Home tab, which a top tap opens with focused mode off. Returns the file manager and the window.
     local function home_over(open)
+        assert.is_true(package.loaded["settings"].set("focused.on", false))
         local fm = harness.show_fm()
         harness.tick(2)
         Home.close()
