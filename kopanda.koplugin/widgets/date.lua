@@ -1,24 +1,25 @@
 -- The home's date, from KOReader's translation tables so it follows its language (frontend/datetime.lua:14-27
 -- short and :29-42 long month names, :44-52 short and :54-62 long day names), with no leading zero on the day
 -- and no year. The look's home.date_lines chooses: 2 draws the weekday as a label over the month and day, 1
--- draws one line. Left-aligned; a line too wide for its column is set smaller until it fits (Typeset.fitted),
--- in the short names when the long ones don't fit at the smallest size.
+-- draws one line under the weather's (WeatherWidget.header_line). Left-aligned; a date too wide for its column
+-- is set smaller until it fits (Typeset.fitted), in the short names when the long ones don't fit at the
+-- smallest size.
 local Geom = require("ui/geometry")
 local LeftContainer = require("ui/widget/container/leftcontainer")
 local Typeset = require("typeset")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
+local WeatherWidget = require("widgets/weather")
 local datetime = require("datetime")
-
-local LABEL_GAP = 2 -- between the weekday and the date
 
 local Date = {
     id = "date",
     settings_prefix = "date",
+    LABEL_GAP = 2, -- under the label line over the date or the time: the weekday's or the weather's
 }
 
--- Whether look draws the date as one line.
-local function one_line(look)
+-- Whether look draws the date as one line, under the weather's.
+function Date.one_line(look)
     return look.home.date_lines == 1
 end
 
@@ -33,7 +34,7 @@ function Date.lines(look, t, short)
         month = datetime.shortMonthTranslation[os.date("%b", t)]
     end
     local day = month .. " " .. tonumber(os.date("%d", t))
-    if one_line(look) then
+    if Date.one_line(look) then
         return { weekday .. ", " .. day }
     end
     return { weekday, day }
@@ -48,16 +49,19 @@ local function make(width, ctx)
         lines = Date.lines(ctx.look, ctx.now, true)
         last = Typeset.fitted(styles.date, { lines[#lines] }, width, ctx)[1]
     end
-    local content = last
+    local label
     if #lines == 2 then
-        content = VerticalGroup:new{
-            align = "left",
-            allow_mirroring = false,
-            Typeset.fitted(styles.date_label, { lines[1] }, width, ctx)[1],
-            VerticalSpan:new{ width = ctx.screen:scaleBySize(LABEL_GAP) },
-            last,
-        }
+        label = Typeset.fitted(styles.date_label, { lines[1] }, width, ctx)[1]
+    else
+        label = WeatherWidget.header_line(width, ctx)
     end
+    local content = VerticalGroup:new{
+        align = "left",
+        allow_mirroring = false,
+        label,
+        VerticalSpan:new{ width = ctx.screen:scaleBySize(Date.LABEL_GAP) },
+        last,
+    }
     -- The last line is the content's bottom.
     local h = content:getSize().h
     return LeftContainer:new{

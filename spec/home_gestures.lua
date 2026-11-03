@@ -38,6 +38,16 @@ function M.settings_keys()
     return keys
 end
 
+-- Stores page 1 as the header, the quote and a last row of the weather and the stats, so a spec can hold or tap
+-- them; the default has neither.
+function M.store_weather_row()
+    local function slot(widget)
+        return { widget = widget, share = 1 }
+    end
+    assert.is_true(package.loaded["settings"].set("layout.rows", { { slot("date"), slot("clock") },
+        { slot("quote") }, { slot("weather"), slot("stats") } }))
+end
+
 -- A file manager with its home up.
 function M.fm_with_home(dir)
     local fm = harness.show_fm(dir)

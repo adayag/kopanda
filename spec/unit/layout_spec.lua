@@ -776,15 +776,16 @@ describe("Layout", function()
         -- Page 1 with the populated and the empty content, page 2 with a year of insights on every day of
         -- the builtin quotes, whose length sets the quote's height. Each page's default at a size is the one
         -- Settings falls back to: the key's default at that size when it has one, its plain default otherwise.
-        it("fits page 1's and page 2's large and extra_large defaults on every profile and look, every quote's day",
+        it("fits page 1's and page 2's defaults at every text size on every profile and look, every quote's day",
             function()
             local FeaturedBook = require("featured_book")
+            local Fonts = require("fonts")
             local Looks = require("looks")
             local ReadingStats = require("reading_stats")
             local Schema = require("schema")
             local Settings = require("settings")
             local Weather = require("weather")
-            local SIZES = { "large", "extra_large" }
+            local SIZES = { "small", "medium", "large", "extra_large" }
             local pages, entries = {}, nil
             for _, key in ipairs(Schema.keys) do
                 if key.id == "layout.rows" or key.id == "layout.rows_2" then
@@ -805,9 +806,15 @@ describe("Layout", function()
             end
             local insights = { state = "ok", days = days, hours = hours,
                 sessions = { count = 312, longest = 6480, average = 1440, pages_per_hour = 41 } }
-            local real_insights, real_current, real_reading =
-                ReadingStats.insights, FeaturedBook.current, Weather.reading
+            local real_insights, real_current, real_reading, real_face_name =
+                ReadingStats.insights, FeaturedBook.current, Weather.reading, Fonts.face_name
             ReadingStats.insights = function() return insights end
+            -- The same names Fonts.face_name gives, each font's realpath resolved once: no font file moves mid-test.
+            local names = {}
+            Fonts.face_name = function(rel)
+                names[rel] = names[rel] or real_face_name(rel)
+                return names[rel]
+            end
             local counts, expected, cases = {}, {}, 0
             local function count(profile)
                 for _, content in ipairs({ "populated", "empty" }) do
@@ -843,10 +850,11 @@ describe("Layout", function()
                 harness.at_paperwhite(function() count("paperwhite") end)
                 harness.at_screen(1072, 1448, function() count("paperwhite7") end)
             end)
-            ReadingStats.insights, FeaturedBook.current, Weather.reading = real_insights, real_current, real_reading
+            ReadingStats.insights, FeaturedBook.current, Weather.reading, Fonts.face_name =
+                real_insights, real_current, real_reading, real_face_name
             assert(ok, err)
-            -- Three profiles, two contents, two text sizes, two pages, every look.
-            assert.equals(24 * #Looks.ids(), cases)
+            -- Three profiles, two contents, four text sizes, two pages, every look.
+            assert.equals(48 * #Looks.ids(), cases)
             assert.same(expected, counts)
         end)
     end)

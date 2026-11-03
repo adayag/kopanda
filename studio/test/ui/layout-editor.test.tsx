@@ -32,7 +32,6 @@ const DEFAULT: Rows = [
   [s("featured")],
   [s("quote")],
   [s("launcher")],
-  [s("weather"), s("stats")],
 ];
 
 /** Four rows without weather, stats and the five insight widgets, so seven widgets are unused. */
@@ -214,16 +213,16 @@ describe("the layout editor's screen", () => {
 
     expect(within(editor()).getByText("Home")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Done" })).toHaveAttribute("href", "#/profiles/colorsoft");
-    expect(cards()).toHaveLength(5);
+    expect(cards()).toHaveLength(4);
     expect(card(1).getByRole("button", { name: "Row 1 · two columns" })).toBeInTheDocument();
     expect(card(1).getByRole("button", { name: "Date 1/2" })).toBeInTheDocument();
     expect(card(1).getByRole("button", { name: "Clock 1/2" })).toBeInTheDocument();
     expect(card(2).getByRole("button", { name: "Featured book full" })).toBeInTheDocument();
-    expect(card(5).getByRole("button", { name: "Reading stats 1/2" })).toBeInTheDocument();
+    expect(card(4).getByRole("button", { name: "Launcher full" })).toBeInTheDocument();
     expect(card(1).getByRole("button", { name: "Move row 1 up" })).toBeDisabled();
     expect(card(1).getByRole("button", { name: "Move row 1 down" })).toBeEnabled();
-    expect(card(5).getByRole("button", { name: "Move row 5 up" })).toBeEnabled();
-    expect(card(5).getByRole("button", { name: "Move row 5 down" })).toBeDisabled();
+    expect(card(4).getByRole("button", { name: "Move row 4 up" })).toBeEnabled();
+    expect(card(4).getByRole("button", { name: "Move row 4 down" })).toBeDisabled();
     expect(fits()).toEqual([]);
   });
 
@@ -309,7 +308,7 @@ describe("the layout editor's screen", () => {
     fireEvent.click(screen.getByRole("link", { name: "Done" }));
 
     await waitFor(() => expect(location.hash).toBe("#/profiles/colorsoft"));
-    expect(await screen.findByRole("link", { name: "Layout · 5 rows" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Layout · 4 rows" })).toBeInTheDocument();
   });
 });
 
@@ -376,7 +375,7 @@ describe("a change", () => {
       },
       [[s("date"), s("clock")], [s("featured")], [s("quote")], [s("launcher")], [s("weather")]],
     ],
-    ["reset", FOUR, () => click("Reset to the look's default"), DEFAULT],
+    ["reset", EVERY, () => click("Reset to the look's default"), DEFAULT],
     ["reset of the default", DEFAULT, () => click("Reset to the look's default"), DEFAULT],
   ])("%s checks fit once, then writes layout.rows once and shows it", async (_name, start, act, expected) => {
     await open(withRows(start));
@@ -557,7 +556,7 @@ describe("a change", () => {
     await open(settings({ invalid: [{ key: "layout.rows" }] }));
 
     expect(screen.getByText("The stored value isn't allowed, so this shows the default.")).toBeInTheDocument();
-    expect(cards()).toHaveLength(5);
+    expect(cards()).toHaveLength(4);
     click("Move row 2 up");
 
     await waitFor(() => expect(puts()).toEqual([[DEFAULT[1], DEFAULT[0], ...DEFAULT.slice(2)]]));
@@ -629,10 +628,10 @@ describe("at the extra_large text size", () => {
     return answer;
   }
 
-  it("shows the four rows of the default at that size when the values hold no rows", async () => {
+  it("shows the three rows of the default at that size when the values hold no rows", async () => {
     await open(noRows());
 
-    expect(cards()).toHaveLength(4);
+    expect(cards()).toHaveLength(3);
     expect(card(3).getByRole("button", { name: "Launcher full" })).toBeInTheDocument();
   });
 
@@ -642,7 +641,7 @@ describe("at the extra_large text size", () => {
     click("Reset to the look's default");
 
     await waitFor(() =>
-      expect(puts()).toEqual([[[s("date"), s("clock")], [s("featured")], [s("launcher")], [s("weather"), s("stats")]]]),
+      expect(puts()).toEqual([[[s("date"), s("clock")], [s("featured")], [s("launcher")]]]),
     );
   });
 });
@@ -695,7 +694,7 @@ describe("a file the studio won't write", () => {
     await open(answer);
 
     expect(screen.getByText(line)).toBeInTheDocument();
-    expect(cards()).toHaveLength(5);
+    expect(cards()).toHaveLength(4);
     expect(enabled()).toEqual([]);
     expect(screen.getByRole("link", { name: "Done" })).toHaveAttribute("href", "#/profiles/colorsoft");
   });

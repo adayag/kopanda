@@ -373,19 +373,23 @@ describe("Settings", function()
             return { widget = widget, share = 1 }
         end
 
-        local PAGE_1 = { { slot("date"), slot("clock") }, { slot("featured") }, { slot("launcher") },
-            { slot("weather"), slot("stats") } }
+        local PAGE_1 = { { slot("date"), slot("clock") }, { slot("featured") }, { slot("launcher") } }
         local PAGE_2 = { { slot("date"), slot("clock") }, { slot("quote") }, { slot("reading") },
             { slot("streak"), slot("forecast") } }
 
-        it("reads four rows a page at large and extra_large with no rows stored, the quote on page 2",
-            function()
-            for _, size in ipairs({ "large", "extra_large" }) do
-                Settings._reset()
-                store('return { text_size = "' .. size .. '" }')
-                assert.same(PAGE_1, Settings.get("layout.rows"), size)
-                assert.same(PAGE_2, Settings.get("layout.rows_2"), size)
-            end
+        it("reads page 1 without the quote at extra_large with no rows stored, the quote on page 2", function()
+            Settings._reset()
+            store('return { text_size = "extra_large" }')
+            assert.same(PAGE_1, Settings.get("layout.rows"))
+            assert.same(PAGE_2, Settings.get("layout.rows_2"))
+        end)
+
+        it("reads page 1's plain default at large with no rows stored, and page 2 without the quote", function()
+            Settings._reset()
+            store('return { text_size = "large" }')
+            assert.equals(entries["layout.rows"].default, Settings.get("layout.rows"))
+            assert.same({ { slot("date"), slot("clock") }, { slot("reading") }, { slot("streak"), slot("forecast") } },
+                Settings.get("layout.rows_2"))
         end)
 
         it("reads the plain default at medium, with no text size stored and with an invalid one", function()

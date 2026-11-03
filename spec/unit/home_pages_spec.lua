@@ -126,7 +126,7 @@ describe("the home's pages", function()
         assert.equals(home, harness.top())
         assert.truthy(slot_of(home, "reading"))
         assert.is_nil(slot_of(home, "launcher"))
-        assert.same({ date = 2, clock = 2, quote = 1, weather = 1, stats = 1, featured = 1, launcher = 1,
+        assert.same({ date = 2, clock = 2, quote = 1, featured = 1, launcher = 1,
             reading = 1, streak = 1, forecast = 1, hours = 1, records = 1 }, builds)
     end)
 
@@ -147,7 +147,7 @@ describe("the home's pages", function()
         local record = record_repaint(home)
         turn("east")
         assert.equals(1, home.page)
-        assert.same({ date = 1, clock = 1, quote = 1, weather = 1, stats = 1, featured = 1, launcher = 1 }, builds)
+        assert.same({ date = 1, clock = 1, quote = 1, featured = 1, launcher = 1 }, builds)
         assert.is_false(record.repainted)
         turn("west")
         record.repainted = false

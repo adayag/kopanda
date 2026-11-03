@@ -225,7 +225,7 @@ describe("the form's controls", () => {
     delete answer.values["layout.rows_2"];
     render(<SettingsForm profileId="colorsoft" settings={answer} {...idle} />);
 
-    expect(within(control("layout.rows")).getByRole("link")).toHaveTextContent("Layout · 4 rows");
+    expect(within(control("layout.rows")).getByRole("link")).toHaveTextContent("Layout · 3 rows");
     expect(within(control("layout.rows_2")).getByRole("link")).toHaveTextContent("Page 2 · 4 rows");
   });
 });
@@ -537,7 +537,7 @@ describe("the reports", () => {
 
 describe("the editors", () => {
   it.each([
-    ["Layout · 5 rows", "#/profiles/colorsoft/layout", "Layout"],
+    ["Layout · 4 rows", "#/profiles/colorsoft/layout", "Layout"],
     ["Page 2 · 4 rows", "#/profiles/colorsoft/layout-2", "Page 2"],
     ["Launcher · 6 entries", "#/profiles/colorsoft/launcher", "Launcher"],
   ])("opens %s at its route, and Done returns to the form", async (link, hash, heading) => {

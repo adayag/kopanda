@@ -148,7 +148,7 @@ return {
     },
 
     type = {
-        -- Not drawn: Diner's date is one line. The look's label style, on the band.
+        -- The weather's line over the one-line date. The look's label style, on the band.
         date_label = { face = "display", color = "on_band" },
         date = { size = 16, uppercase = true, tracking = 0.04, line_height = 0, color = "on_band" },
         clock = { size = 56, line_height = -0.1, color = "on_band" },

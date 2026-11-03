@@ -196,10 +196,10 @@ describe("edit layout", function()
     end)
 
     describe("cards", function()
-        it("show the default's five rows with captions, labelled boxes with shares, and arrows greyed at the ends",
+        it("show the default's four rows with captions, labelled boxes with shares, and arrows greyed at the ends",
             function()
                 open()
-                assert.equals(5, #find({ kind = "card" }))
+                assert.equals(4, #find({ kind = "card" }))
                 assert.equals("Row 1 · two columns", one({ kind = "card", row = 1 }).control.caption)
                 assert.equals("Row 2 · one column", one({ kind = "card", row = 2 }).control.caption)
                 local date = one({ kind = "box", row = 1, column = 1 }).control
@@ -207,9 +207,9 @@ describe("edit layout", function()
                 local featured = one({ kind = "box", row = 2, column = 1 }).control
                 assert.same({ "Featured book", "full" }, { featured.label, featured.share })
                 assert.is_true(one({ kind = "arrow", row = 1, direction = "up" }).control.disabled)
-                assert.is_true(one({ kind = "arrow", row = 5, direction = "down" }).control.disabled)
+                assert.is_true(one({ kind = "arrow", row = 4, direction = "down" }).control.disabled)
                 assert.is_falsy(one({ kind = "arrow", row = 1, direction = "down" }).control.disabled)
-                assert.is_falsy(one({ kind = "arrow", row = 5, direction = "up" }).control.disabled)
+                assert.is_falsy(one({ kind = "arrow", row = 4, direction = "up" }).control.disabled)
                 assert.same({}, button_labels(1))
             end)
 
@@ -218,7 +218,7 @@ describe("edit layout", function()
             assert.equals("Row 2 · one column · selected", one({ kind = "card", row = 2 }).control.caption)
         end)
 
-        it("show all five of the default's rows on the Colorsoft in both looks, row 2 selected", function()
+        it("show all four of the default's rows on the Colorsoft in both looks, row 2 selected", function()
             for _, id in ipairs({ "diner", "editorial" }) do
                 assert.is_true(Settings.set("look", id))
                 harness.show_fm()
@@ -227,7 +227,7 @@ describe("edit layout", function()
                     EditLayout.open({ selected = 2 })
                 end)
                 assert.is_not_nil(Editor.shown, id)
-                assert.same({ 0, 5 }, { Editor.shown.left_out, #find({ kind = "card" }) }, id)
+                assert.same({ 0, 4 }, { Editor.shown.left_out, #find({ kind = "card" }) }, id)
                 Editor.close()
                 harness.teardown()
             end

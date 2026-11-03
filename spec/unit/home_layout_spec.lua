@@ -100,6 +100,14 @@ describe("the home's rows", function()
         Widgets.get = function(id)
             return stubs[id]
         end
+        -- Five rows, the last two half-width widgets with no tap, stored so the cases don't follow the default.
+        assert.is_true(package.loaded["settings"].set("layout.rows", {
+            { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+            { { widget = "featured", share = 1 } },
+            { { widget = "quote", share = 1 } },
+            { { widget = "launcher", share = 1 } },
+            { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
+        }))
         warned = spy.on(logger, "warn")
         errored = spy.on(logger, "err")
     end)
@@ -110,7 +118,7 @@ describe("the home's rows", function()
         harness.teardown()
     end)
 
-    it("builds one slot per entry of the default layout at its column width", function()
+    it("builds one slot per entry of the stored layout at its column width", function()
         local _, home = show_home()
         -- Diner on the harness's 600 px screen at scale 1: the band's padding and the side
         -- margin are both 40, so each row is 520 wide; two columns share it less a 14 px gap.
@@ -141,6 +149,9 @@ describe("the home's rows", function()
                 entry = e
             end
         end
+        -- With nothing stored, the home reads the default.
+        os.remove(harness.settings_file)
+        package.loaded["settings"]._reset()
         local before = copy(entry.default)
         show_home()
         assert.same(before, entry.default)
@@ -199,8 +210,20 @@ describe("the home's rows", function()
             end
             local date, clock = baselines("date"), baselines("clock")
             assert.truthy(#date > 0 and #clock > 0, id)
-            assert.equals(clock[1], clock[#clock], id .. " clock glyphs on one baseline")
-            assert.equals(date[#date], clock[1], id .. " date's last line and clock")
+            -- The weather's line lies over a one-line date, over the time beside a two-line one.
+            local function count(baselines_)
+                local seen, n = {}, 0
+                for _, baseline in ipairs(baselines_) do
+                    if not seen[baseline] then
+                        seen[baseline], n = true, n + 1
+                    end
+                end
+                return n
+            end
+            assert.equals(2, count(date), id .. " date glyphs on two baselines")
+            local one_line = require("looks").get(case[1]).home.date_lines == 1
+            assert.equals(one_line and 1 or 2, count(clock), id .. " clock glyphs' baselines")
+            assert.equals(date[#date], clock[#clock], id .. " date's last line and the time")
             -- The lower of the two sits on the header row's bottom.
             local bottom = 0
             for _, id_ in ipairs({ "date", "clock" }) do

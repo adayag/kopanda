@@ -204,6 +204,7 @@ return {
     },
 
     quote = {
+        padding = 16, -- so Large's four rows fit the 1236×1648 Paperwhite
         rule_width = 2,
         rule_color = "hairline",
     },

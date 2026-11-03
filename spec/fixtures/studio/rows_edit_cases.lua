@@ -276,7 +276,6 @@ return {
             { { widget = "featured", share = 1 } },
             { { widget = "quote", share = 1 } },
             { { widget = "launcher", share = 1 } },
-            { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
         },
     },
 

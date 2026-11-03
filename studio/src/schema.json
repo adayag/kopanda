@@ -87,16 +87,6 @@
                         "share": 1,
                         "widget": "launcher"
                     }
-                ],
-                [
-                    {
-                        "share": 1,
-                        "widget": "weather"
-                    },
-                    {
-                        "share": 1,
-                        "widget": "stats"
-                    }
                 ]
             ],
             "defaults_by_text_size": {
@@ -121,50 +111,6 @@
                         {
                             "share": 1,
                             "widget": "launcher"
-                        }
-                    ],
-                    [
-                        {
-                            "share": 1,
-                            "widget": "weather"
-                        },
-                        {
-                            "share": 1,
-                            "widget": "stats"
-                        }
-                    ]
-                ],
-                "large": [
-                    [
-                        {
-                            "share": 1,
-                            "widget": "date"
-                        },
-                        {
-                            "share": 1,
-                            "widget": "clock"
-                        }
-                    ],
-                    [
-                        {
-                            "share": 1,
-                            "widget": "featured"
-                        }
-                    ],
-                    [
-                        {
-                            "share": 1,
-                            "widget": "launcher"
-                        }
-                    ],
-                    [
-                        {
-                            "share": 1,
-                            "widget": "weather"
-                        },
-                        {
-                            "share": 1,
-                            "widget": "stats"
                         }
                     ]
                 ]
@@ -272,12 +218,6 @@
                         {
                             "share": 1,
                             "widget": "clock"
-                        }
-                    ],
-                    [
-                        {
-                            "share": 1,
-                            "widget": "quote"
                         }
                     ],
                     [

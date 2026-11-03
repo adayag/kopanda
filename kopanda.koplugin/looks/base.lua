@@ -326,7 +326,8 @@ return {
     -- em, line height as KOReader's TextBoxWidget counts it (extra space in em,
     -- frontend/ui/widget/textboxwidget.lua:48, so CSS 1.4 is 0.4) and a palette role.
     type = {
-        -- The weekday's label, unused while the date is one line (home.date_lines).
+        -- The header's label line (home.date_lines): the weekday over a two-line date and the weather over the
+        -- clock, or the weather over a one-line date.
         date_label = { face = "strong", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
         date = { face = "strong", size = 18, uppercase = false, tracking = 0, line_height = 0.1, color = "ink" },
         clock = { face = "display", size = 36, uppercase = false, tracking = -0.02, line_height = -0.2, color = "ink" },

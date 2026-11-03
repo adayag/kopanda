@@ -51,6 +51,7 @@ describe("gestures on the KoPanda home", function()
     before_each(function()
         harness.load()
         Home = require("home")
+        gestures.store_weather_row()
     end)
 
     -- Focused mode off, for the cases that keep today's home: the top zone's menu and the closing tap.
@@ -502,7 +503,7 @@ describe("gestures on the KoPanda home", function()
         end)
     end)
 
-    -- Registers a stub widget with tap for every id of the default layout, each slot height
+    -- Registers a stub widget with tap for every id of the stored layout, each slot height
     -- tall[id] (60 when unset) as the table holds it at each build, and returns a function giving
     -- the taps so far.
     local function tappable_stubs(tall)

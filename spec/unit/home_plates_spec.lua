@@ -109,6 +109,10 @@ describe("the home on plates", function()
 
     it("lightens the wallpaper under each plate by 0.82 inside its solid ink keyline", function()
         Settings.set("wallpaper.file", fixture)
+        -- The stats' pill under the featured book and the quote; the default has none.
+        local slot = function(widget) return { widget = widget, share = 1 } end
+        assert.is_true(Settings.set("layout.rows", { { slot("date"), slot("clock") }, { slot("featured") },
+            { slot("quote") }, { slot("weather"), slot("stats") } }))
         painted(false, function(home, bb, image)
             local keyline = Screen:scaleBySize(2)
             for _, id in ipairs({ "featured", "quote", "stats" }) do

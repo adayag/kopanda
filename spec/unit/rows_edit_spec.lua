@@ -206,10 +206,10 @@ describe("RowsEdit", function()
 
     it("lists the schema's widgets not on the home, in schema order", function()
         local insights = { "reading", "streak", "forecast", "hours", "records" }
-        assert.same(insights, RowsEdit.unused(entry.default))
-        local without_stats = copy(entry.default)
-        without_stats[5] = { slot("weather") }
-        assert.same({ "stats", unpack(insights) }, RowsEdit.unused(without_stats))
+        assert.same({ "weather", "stats", unpack(insights) }, RowsEdit.unused(entry.default))
+        local with_weather = copy(entry.default)
+        with_weather[5] = { slot("weather") }
+        assert.same({ "stats", unpack(insights) }, RowsEdit.unused(with_weather))
         assert.same({ "weather", "stats", unpack(insights) }, RowsEdit.unused(four_rows()))
     end)
 

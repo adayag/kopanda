@@ -150,16 +150,20 @@ describe("defaultRows", () => {
   const s = (widget: string) => ({ widget, share: 1 });
   const page2 = entryFor("layout.rows_2");
 
-  it.each([["large"], ["extra_large"]])("answers each key's four rows at %s", (textSize) => {
-    expect(defaultRows(entry, { text_size: textSize })).toEqual([
-      [s("date"), s("clock")],
-      [s("featured")],
-      [s("launcher")],
-      [s("weather"), s("stats")],
-    ]);
-    expect(defaultRows(page2, { text_size: textSize })).toEqual([
+  it("answers each key's rows at extra_large", () => {
+    expect(defaultRows(entry, { text_size: "extra_large" })).toEqual([[s("date"), s("clock")], [s("featured")], [s("launcher")]]);
+    expect(defaultRows(page2, { text_size: "extra_large" })).toEqual([
       [s("date"), s("clock")],
       [s("quote")],
+      [s("reading")],
+      [s("streak"), s("forecast")],
+    ]);
+  });
+
+  it("answers page 1's plain default at large, and page 2's rows without the quote", () => {
+    expect(defaultRows(entry, { text_size: "large" })).toBe(entry.default);
+    expect(defaultRows(page2, { text_size: "large" })).toEqual([
+      [s("date"), s("clock")],
       [s("reading")],
       [s("streak"), s("forecast")],
     ]);
@@ -189,7 +193,7 @@ describe("defaultRows", () => {
     first.rows[0]![0]!.share = 3;
 
     expect(reset(entry, { text_size: "extra_large" })).toEqual({
-      rows: [[s("date"), s("clock")], [s("featured")], [s("launcher")], [s("weather"), s("stats")]],
+      rows: [[s("date"), s("clock")], [s("featured")], [s("launcher")]],
     });
     expect(reset(page2, { text_size: "extra_large" })).toEqual({
       rows: [[s("date"), s("clock")], [s("quote")], [s("reading")], [s("streak"), s("forecast")]],

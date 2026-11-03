@@ -27,15 +27,26 @@ describe("the date and clock widgets", function()
 
     -- The lines a built widget draws, top to bottom: each { text, glyphs, widget }, where glyphs
     -- are the TextWidgets drawing it (one, or one per character for a tracked line), text what
-    -- they draw together, a truncated TextWidget's ellipsis included, and widget the line.
+    -- they draw together, a truncated TextWidget's ellipsis included, and widget the line. A group of
+    -- TextWidgets and the spans between them is a tracked line; any other group is walked.
     local function lines(widget)
         local out = {}
+        local HorizontalSpan = require("ui/widget/horizontalspan")
+        local function tracked(w)
+            for _, child in ipairs(w) do
+                local mt = getmetatable(child)
+                if mt ~= TextWidget and mt ~= HorizontalSpan then
+                    return false
+                end
+            end
+            return #w > 1
+        end
         local function walk(w)
             local mt = getmetatable(w)
             if mt == TextWidget then
                 local fitted, ellipsis = w:getFittedText()
                 out[#out + 1] = { text = fitted .. (ellipsis and "…" or ""), glyphs = { w }, widget = w }
-            elseif mt == HorizontalGroup then
+            elseif mt == HorizontalGroup and tracked(w) then
                 local line = { text = "", glyphs = {}, widget = w }
                 for _, child in ipairs(w) do
                     if getmetatable(child) == TextWidget then
@@ -52,6 +63,12 @@ describe("the date and clock widgets", function()
         end
         walk(widget)
         return out
+    end
+
+    -- The last line a built widget draws: the date's date, the clock's time.
+    local function last(widget)
+        local out = lines(widget)
+        return out[#out]
     end
 
     local function drawn(widget)
@@ -121,7 +138,7 @@ describe("the date and clock widgets", function()
 
         it("reads one line in Diner, drawn uppercase", function()
             assert.same({ "Tuesday, October 13" }, Date.lines(Looks.get("diner"), TUESDAY_0842))
-            assert.same({ "TUESDAY, OCTOBER 13" }, drawn(Date.build(520, ctx_for("diner"))))
+            assert.equals("TUESDAY, OCTOBER 13", last(Date.build(520, ctx_for("diner"))).text)
         end)
 
         -- The line count is the look's home.date_lines, not which look it is.
@@ -146,9 +163,9 @@ describe("the date and clock widgets", function()
                 local ctx = ctx_for("diner", { text_size = "extra_large", now = at(2026, 9, 30, 12, 0) })
                 local slot = Layout.arrange({ { { widget = "date", share = 1 }, { widget = "clock", share = 1 } } },
                     ctx).rows[1].slots[1]
-                assert.same({ "WED, SEP 30" }, drawn(Date.build(slot.w, ctx)))
+                assert.equals("WED, SEP 30", last(Date.build(slot.w, ctx)).text)
                 ctx.now = at(2026, 5, 3, 12, 0)
-                assert.same({ "SUNDAY, MAY 3" }, drawn(Date.build(slot.w, ctx)))
+                assert.equals("SUNDAY, MAY 3", last(Date.build(slot.w, ctx)).text)
             end)
         end)
 
@@ -180,7 +197,7 @@ describe("the date and clock widgets", function()
             whole:free()
             local built = Date.build(width, ctx)
             assert.equals(width, built:getSize().w)
-            local line = lines(built)[1]
+            local line = last(built)
             assert.equals("WEDNESDAY, SEPTEMBER 30", line.text)
             assert.truthy(line.glyphs[1].face.orig_size < Layout.font_size(part.size, ctx.text_size))
             assert.truthy(line.widget:getSize().w <= width)
@@ -192,7 +209,7 @@ describe("the date and clock widgets", function()
             local width = math.floor(third(ctx.look) / 3)
             local built = Date.build(width, ctx)
             assert.equals(width, built:getSize().w)
-            local line = lines(built)[1]
+            local line = last(built)
             assert.equals(1, #line.glyphs)
             assert.truthy(line.text:match("…$"), line.text)
             assert.truthy(line.glyphs[1]:getSize().w <= width)
@@ -215,12 +232,17 @@ describe("the date and clock widgets", function()
                 for _, size in ipairs({ "large", "extra_large" }) do
                     local ctx = ctx_for(id, { text_size = size })
                     local slots = Layout.arrange({ header }, ctx).rows[1].slots
+                    -- The weather's line is cut with an ellipsis by design, so only the date and the time are checked.
                     local function whole(module, now, where)
                         for _, slot in ipairs(slots) do
                             if slot.widget == module.id then
                                 ctx.now = now
                                 local built = module.build(slot.w - 2 * slot.pad_x, ctx)
-                                for _, line in ipairs(lines(built)) do
+                                local drawn_lines = lines(built)
+                                if module == Clock or ctx.look.home.date_lines == 1 then
+                                    drawn_lines = { drawn_lines[#drawn_lines] }
+                                end
+                                for _, line in ipairs(drawn_lines) do
                                     if line.text:match("…$") then
                                         cut[#cut + 1] = table.concat({ profile, id, size, where, line.text }, " ")
                                     end
@@ -247,7 +269,7 @@ describe("the date and clock widgets", function()
 
     describe("the clock", function()
         local function reads(t)
-            return Clock.text(t), drawn(Clock.build(260, ctx_for("editorial", { now = t })))[1]
+            return Clock.text(t), drawn(Clock.build(260, ctx_for("editorial", { now = t })))[2]
         end
 
         local cases = {
@@ -281,6 +303,268 @@ describe("the date and clock widgets", function()
         end)
     end)
 
+    -- The header's weather: the cached reading's line in the weekday label's part, over the date where the look's
+    -- date is one line (home.date_lines), over the time otherwise.
+    describe("the header's weather line", function()
+        local Typeset, Weather, WeatherWidget
+        -- 61.4 °F, partly cloudy, by day, fetched 20 minutes before 08:42.
+        local READING = { fetched_at = TUESDAY_0842 - 20 * 60, temperature = 61.4, weather_code = 2, is_day = 1,
+            units = "fahrenheit" }
+        local ROW = { { widget = "date", share = 1 }, { widget = "clock", share = 1 } }
+
+        before_each(function()
+            Typeset = require("typeset")
+            Weather = require("weather")
+            WeatherWidget = require("widgets/weather")
+        end)
+
+        -- Runs fn with Weather.reading answering reading, and Weather.line text when given.
+        local function with_weather(reading, fn, text)
+            local real_reading, real_line = Weather.reading, Weather.line
+            Weather.reading = function() return reading end
+            if text then
+                Weather.line = function() return text end
+            end
+            local ok, err = pcall(fn)
+            Weather.reading, Weather.line = real_reading, real_line
+            assert(ok, err)
+        end
+
+        -- The icons drawn under widget.
+        local function icons(widget, found)
+            found = found or {}
+            if type(widget) == "table" then
+                if widget.is_icon == true then
+                    found[#found + 1] = widget
+                end
+                for _, child in ipairs(widget) do
+                    icons(child, found)
+                end
+            end
+            return found
+        end
+
+        local function one_line(ctx)
+            return ctx.look.home.date_lines == 1
+        end
+
+        -- The widget the weather's line sits in under ctx, and the column module it's built by.
+        local function holder(ctx)
+            return one_line(ctx) and Date or Clock
+        end
+
+        -- The weather's line in a built date or clock: the whole line, icon and text, as it's placed.
+        local function weather_of(built)
+            return built[1][1]
+        end
+
+        it("draws the reading's line in the weekday label's part over the date where it's one line, over the time "
+            .. "otherwise, in every look", function()
+            with_weather(READING, function()
+                for _, id in ipairs(Looks.ids()) do
+                    for _, text_size in ipairs({ "small", "medium", "large", "extra_large" }) do
+                        local ctx = ctx_for(id, { text_size = text_size })
+                        local where = id .. " " .. text_size
+                        local date, clock = lines(Date.build(520, ctx)), lines(Clock.build(520, ctx))
+                        local line = Weather.line(READING, ctx.now, ctx.look):upper()
+                        assert.equals(2, #date, where)
+                        if one_line(ctx) then
+                            assert.same({ line, "TUESDAY, OCTOBER 13" }, { date[1].text, date[2].text }, where)
+                            assert_styled(date[1], "date_label", ctx)
+                            assert.same({ "8:42" }, drawn(Clock.build(520, ctx)), where)
+                        else
+                            assert.equals("TUESDAY", date[1].text, where)
+                            assert.same({ line, "8:42" }, { clock[1].text, clock[2].text }, where)
+                            assert_styled(clock[1], "date_label", ctx)
+                        end
+                    end
+                end
+            end)
+        end)
+
+        -- The placement follows the look's home.date_lines, not which look it is.
+        it("follows the look's date_lines", function()
+            local editorial, diner = Looks.get("editorial"), Looks.get("diner")
+            finally(function()
+                editorial.home.date_lines, diner.home.date_lines = 2, 1
+            end)
+            editorial.home.date_lines, diner.home.date_lines = 1, 2
+            with_weather(READING, function()
+                local line = Weather.line(READING, TUESDAY_0842, editorial):upper()
+                assert.same({ line, "Tuesday, October 13" }, drawn(Date.build(520, ctx_for("editorial"))))
+                assert.same({ "8:42" }, drawn(Clock.build(520, ctx_for("editorial"))))
+                assert.same({ "TUESDAY", "OCTOBER 13" }, drawn(Date.build(520, ctx_for("diner"))))
+                assert.equals(2, #drawn(Clock.build(520, ctx_for("diner"))))
+            end)
+        end)
+
+        it("draws the Wi-Fi line, with no icon, when nothing is cached", function()
+            with_weather(nil, function()
+                for _, id in ipairs(Looks.ids()) do
+                    local ctx = ctx_for(id)
+                    local built = holder(ctx).build(520, ctx)
+                    assert.equals("WEATHER NEEDS WI-FI", lines(built)[1].text, id)
+                    assert.same({}, icons(built), id)
+                end
+            end)
+        end)
+
+        it("puts Diner's sun by day and moon by night before the line, as tall as the label; none in the others",
+            function()
+            local Icons = require("icons")
+            with_weather(READING, function()
+                for _, text_size in ipairs({ "medium", "extra_large" }) do
+                    local ctx = ctx_for("diner", { text_size = text_size })
+                    local found = icons(Date.build(520, ctx))
+                    assert.equals(1, #found)
+                    assert.equals(Icons.path("sun"), found[1].file)
+                    local h = Typeset.line_height(ctx.look.type.date_label, ctx)
+                    assert.equals(h, found[1].width)
+                    assert.equals(h, found[1].height)
+                    assert.same({}, icons(Clock.build(520, ctx)))
+                end
+                for _, id in ipairs({ "editorial", "frosted" }) do
+                    assert.same({}, icons(Clock.build(520, ctx_for(id))), id)
+                    assert.same({}, icons(Date.build(520, ctx_for(id))), id)
+                end
+            end)
+            with_weather({ fetched_at = READING.fetched_at, temperature = 50, weather_code = 0, is_day = 0 },
+                function()
+                assert.equals(Icons.path("moon"), icons(Date.build(520, ctx_for("diner")))[1].file)
+            end)
+        end)
+
+        -- The labels' tops and the date's and the time's baselines each meet across the header row.
+        it("shares the weekday's line in Editorial, the time on the date's baseline, at every text size", function()
+            with_weather(READING, function()
+                harness.at_colorsoft(function()
+                    for _, text_size in ipairs({ "small", "medium", "large", "extra_large" }) do
+                        local ctx = ctx_for("editorial", { text_size = text_size })
+                        local slots = Layout.arrange({ ROW }, ctx).rows[1].slots
+                        local date, clock = slots[1], slots[2]
+                        assert.equals(date.offset, clock.offset, text_size)
+                        assert.equals(date.offset + Date.baseline(date.w, ctx),
+                            clock.offset + Clock.baseline(clock.w, ctx), text_size)
+                        local weekday = lines(Date.build(date.w, ctx))[1].widget
+                        local weather = weather_of(Clock.build(clock.w, ctx))
+                        assert.equals(weekday:getSize().h, weather:getSize().h, text_size)
+                    end
+                end)
+            end)
+        end)
+
+        -- Against the same row with a date and a clock that each draw their one line alone, with no weather.
+        it("leaves the header of a look with a one-line date as tall as with no weather line, on every profile "
+            .. "and text size", function()
+            local Widgets_get = Widgets.get
+            local plain = {}
+            for id, text in pairs({
+                date = function(ctx) return Date.lines(ctx.look, ctx.now)[1] end,
+                clock = function(ctx) return Clock.text(ctx.now) end,
+            }) do
+                local function make(width, ctx)
+                    local line = Typeset.fitted(ctx.look.type[id], { text(ctx) }, width, ctx)[1]
+                    return line, Typeset.baseline(line)
+                end
+                local height, build, baseline = Typeset.measured(make)
+                plain[id] = { id = id, height = height, build = build, baseline = baseline }
+            end
+            local function plain_date(id)
+                return plain[id] or Widgets_get(id)
+            end
+            local taller, checked = {}, 0
+            local function check(profile)
+                for _, id in ipairs(Looks.ids()) do
+                    for _, text_size in ipairs({ "small", "medium", "large", "extra_large" }) do
+                        local ctx = ctx_for(id, { text_size = text_size })
+                        if one_line(ctx) then
+                            local with = Layout.arrange({ ROW }, ctx).heights[1]
+                            Widgets.get = plain_date
+                            local ok, without = pcall(function()
+                                return Layout.arrange({ ROW }, ctx_for(id, { text_size = text_size })).heights[1]
+                            end)
+                            Widgets.get = Widgets_get
+                            assert(ok, without)
+                            if with ~= without then
+                                taller[#taller + 1] = table.concat({ profile, id, text_size, with, without }, " ")
+                            end
+                            checked = checked + 1
+                        end
+                    end
+                end
+            end
+            with_weather(READING, function()
+                harness.at_colorsoft(function() check("colorsoft") end)
+                harness.at_paperwhite(function() check("paperwhite") end)
+                harness.at_screen(1072, 1448, function() check("paperwhite7") end)
+            end)
+            assert.truthy(checked >= 12)
+            assert.same({}, taller)
+        end)
+
+        -- The longest reading the cache can hold, and a longer line than any reading gives: the gap from the weather
+        -- to the weekday beside it, or, over a one-line date, to the time beside it.
+        it("keeps a gap of the look's column gap from the other column on every profile, text size and look",
+            function()
+            local long = { fetched_at = TUESDAY_0842 - 47 * 3600, temperature = 104, weather_code = 2, is_day = 1 }
+            local too_close, checked = {}, 0
+            local function check(profile)
+                for _, id in ipairs(Looks.ids()) do
+                    for _, text_size in ipairs({ "small", "medium", "large", "extra_large" }) do
+                        local ctx = ctx_for(id, { text_size = text_size })
+                        local slots = Layout.arrange({ ROW }, ctx).rows[1].slots
+                        local date, clock = slots[1], slots[2]
+                        local gap
+                        if one_line(ctx) then
+                            local weather = weather_of(Date.build(date.w, ctx))
+                            local clock_lines = lines(Clock.build(clock.w, ctx))
+                            local time = clock_lines[#clock_lines].widget
+                            gap = (clock.x + clock.w - time:getSize().w) - (date.x + weather:getSize().w)
+                        else
+                            local weekday = lines(Date.build(date.w, ctx))[1].widget
+                            local weather = weather_of(Clock.build(clock.w, ctx))
+                            gap = (clock.x + clock.w - weather:getSize().w) - (date.x + weekday:getSize().w)
+                        end
+                        if gap < Screen:scaleBySize(ctx.look.home.column_gap) then
+                            too_close[#too_close + 1] = table.concat({ profile, id, text_size, gap }, " ")
+                        end
+                        checked = checked + 1
+                    end
+                end
+            end
+            for _, case in ipairs({ { long }, { long, "Thunderstorm with heavy hail, 104° · 47 h ago" } }) do
+                with_weather(case[1], function()
+                    harness.at_colorsoft(function() check("colorsoft") end)
+                    harness.at_paperwhite(function() check("paperwhite") end)
+                    harness.at_screen(1072, 1448, function() check("paperwhite7") end)
+                end, case[2])
+            end
+            assert.equals(2 * 3 * 4 * #Looks.ids(), checked)
+            assert.same({}, too_close)
+        end)
+
+        it("cuts a line too long for its column with an ellipsis, never wider than the column", function()
+            with_weather(READING, function()
+                for _, id in ipairs(Looks.ids()) do
+                    local ctx = ctx_for(id)
+                    local built = holder(ctx).build(120, ctx)
+                    assert.equals(120, built:getSize().w, id)
+                    assert.truthy(weather_of(built):getSize().w <= 120, id)
+                    assert.truthy(lines(built)[1].text:match("…$"), id)
+                end
+            end, "Thunderstorm with heavy hail, 104° · 47 h ago")
+        end)
+
+        it("leaves the weather widget its own line and tap", function()
+            with_weather(READING, function()
+                assert.is_function(WeatherWidget.tap)
+                local built = WeatherWidget.build(520, ctx_for("editorial"))
+                assert.equals("PARTLY CLOUDY, 61°", lines(built)[1].text)
+                assert_styled(lines(built)[1], "weather", ctx_for("editorial"))
+            end)
+        end)
+    end)
+
     describe("in each look", function()
         local function each_ctx(f)
             for _, id in ipairs({ "editorial", "diner" }) do
@@ -294,18 +578,17 @@ describe("the date and clock widgets", function()
 
         it("draw each line in the look's face, size and colour for its part", function()
             each_ctx(function(ctx)
+                -- The weekday or the weather over the date; the weather over the time beside a two-line date.
                 local date = lines(Date.build(520, ctx))
-                if ctx.look == Looks.get("editorial") then
-                    assert.equals(2, #date)
-                    assert_styled(date[1], "date_label", ctx)
-                    assert_styled(date[2], "date", ctx)
-                else
-                    assert.equals(1, #date)
-                    assert_styled(date[1], "date", ctx)
-                end
+                assert.equals(2, #date)
+                assert_styled(date[1], "date_label", ctx)
+                assert_styled(date[2], "date", ctx)
                 local clock = lines(Clock.build(260, ctx))
-                assert.equals(1, #clock)
-                assert_styled(clock[1], "clock", ctx)
+                assert.equals(ctx.look.home.date_lines == 1 and 1 or 2, #clock)
+                if #clock == 2 then
+                    assert_styled(clock[1], "date_label", ctx)
+                end
+                assert_styled(clock[#clock], "clock", ctx)
             end)
         end)
 
@@ -343,12 +626,12 @@ describe("the date and clock widgets", function()
             local a = ctx_for("editorial")
             local b = ctx_for("editorial", { now = at(2026, 10, 13, 20, 42) })
             Clock.height(width, a)
-            assert.same({ "20:42" }, drawn(Clock.build(width, b)))
+            assert.equals("20:42", drawn(Clock.build(width, b))[2])
             local large = ctx_for("editorial", { now = at(2026, 10, 13, 20, 42), text_size = "large" })
             Clock.height(width, a)
             local built = Clock.build(width, large)
-            assert.same({ "20:42" }, drawn(built))
-            assert_styled(lines(built)[1], "clock", large)
+            assert.equals("20:42", drawn(built)[2])
+            assert_styled(lines(built)[2], "clock", large)
             local h_large = Clock.build(width, ctx_for("editorial", { text_size = "large" })):getSize().h
             assert.is_not.equals(Clock.height(width, a), h_large)
             Clock.height(width, a)
@@ -357,13 +640,12 @@ describe("the date and clock widgets", function()
 
         it("set the clock at its part's line height: Diner's CSS 0.9, Editorial's the face's own", function()
             for _, text_size in ipairs({ "small", "medium", "large" }) do
-                local diner = Clock.build(260, ctx_for("diner", { text_size = text_size }))
-                local face = lines(diner)[1].glyphs[1].face
-                assert.equals(math.floor(0.9 * face.size + 0.5), diner:getSize().h, text_size)
-                local editorial = Clock.build(260, ctx_for("editorial", { text_size = text_size }))
-                local line = lines(editorial)[1]
+                local diner = lines(Clock.build(260, ctx_for("diner", { text_size = text_size })))[1]
+                local face = diner.glyphs[1].face
+                assert.equals(math.floor(0.9 * face.size + 0.5), diner.widget:getSize().h, text_size)
+                local line = lines(Clock.build(260, ctx_for("editorial", { text_size = text_size })))[2]
                 local plain = TextWidget:new{ text = line.text, face = line.glyphs[1].face }
-                assert.equals(plain:getSize().h, editorial:getSize().h, text_size)
+                assert.equals(plain:getSize().h, line.widget:getSize().h, text_size)
             end
         end)
 

@@ -18,6 +18,7 @@ describe("gestures on the KoPanda home", function()
     before_each(function()
         harness.load()
         Home = require("home")
+        gestures.store_weather_row()
     end)
 
     -- Focused mode off, for the cases whose holds land in the top menu zones, where with it on a hold opens the file
@@ -206,6 +207,7 @@ describe("gestures on the KoPanda home", function()
         end)
 
         it("opens the quote's settings, cut to its group, on a hold on the quote", function()
+            mode_off()
             fm_with_home()
             assert.is_nil(slot_of("quote").module.hold)
             hold(centre_of("quote"))
