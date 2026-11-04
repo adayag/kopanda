@@ -35,12 +35,13 @@ describe("Settings", function()
         write(file, text)
     end
 
+    -- The whole folder, with what any spec before this one left in it.
     local function clear()
-        os.remove(file)
-        os.remove(file .. ".old")
-        os.remove(dir .. "/state.lua")
-        os.remove(dir .. "/state.lua.old")
-        os.remove(dir)
+        if lfs.attributes(dir, "mode") == "directory" then
+            require("ffi/util").purgeDir(dir)
+        else
+            os.remove(dir)
+        end
     end
 
     before_each(function()
