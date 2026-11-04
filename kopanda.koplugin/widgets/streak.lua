@@ -11,7 +11,6 @@ local MIN_DOT_SHARE = 2 / 3
 
 local Streak = {
     id = "streak",
-    settings_prefix = "stats",
 }
 
 -- The current and the best run of days read in days (seconds per day, today last): the current one ends today,

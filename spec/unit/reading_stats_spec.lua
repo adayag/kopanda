@@ -1,5 +1,5 @@
--- Reading stats from KOReader's Statistics database: the three numbers read from fixture databases under a fixed TZ,
--- the off and empty states, the wording per look, the fit to the column and stats.show. The lj-sqlite3 binding
+-- Reading stats from KOReader's Statistics database: a book's speed and history and the last year's reading, read from
+-- fixture databases under a fixed TZ, the off and empty states, and the memo of the reads. The lj-sqlite3 binding
 -- ffi.cdef()s on load (spec/emulator/driver.lua:87-88), so a Busted process loads it once:
 -- books_coverbrowser_spec.lua's expose block requires it and keeps it loaded, and runs before this file in
 -- bin/check's sorted files.
@@ -9,14 +9,12 @@ describe("reading stats", function()
     require("ffi/posix_h")
     local SQ3 = require("lua-ljsqlite3/init")
     local DataStorage = require("datastorage")
-    local Screen = require("device").screen
     local lfs = require("libs/libkoreader-lfs")
     local logger = require("logger")
-    local util = require("util")
     pcall(ffi.cdef, "void tzset(void);")
 
     local db_path = DataStorage:getSettingsDir() .. "/statistics.sqlite3"
-    local ReadingStats, Stats, Settings, Looks, Fonts, Typeset, errored
+    local ReadingStats, errored
 
     -- The plugin's own DDL (plugins/statistics.koplugin/main.lua:405-419, :462-480) and schema
     -- version (:35).
@@ -153,73 +151,6 @@ describe("reading stats", function()
         return false
     end
 
-    -- The text of widget when it is a line typeset.lua set tracked (a group of one-character
-    -- TextWidgets with spans between), nil otherwise.
-    local function tracked_text(widget)
-        local chars = {}
-        for _, child in ipairs(widget) do
-            if child.text then
-                if #util.splitToChars(child.text) ~= 1 then
-                    return nil
-                end
-                chars[#chars + 1] = child.text
-            elseif #child > 0 then
-                return nil
-            end
-        end
-        if #chars > 0 then
-            return table.concat(chars)
-        end
-    end
-
-    -- Every line of text drawn in widget, in drawing order.
-    local function texts(widget, out)
-        out = out or {}
-        if type(widget) ~= "table" then
-            return out
-        end
-        local tracked = tracked_text(widget)
-        if widget.text or tracked then
-            out[#out + 1] = widget.text or tracked
-            return out
-        end
-        for _, child in ipairs(widget) do
-            texts(child, out)
-        end
-        return out
-    end
-
-    -- The first TextWidget in widget.
-    local function first_text_widget(widget)
-        if widget.text then
-            return widget
-        end
-        for _, child in ipairs(widget) do
-            local found = first_text_widget(child)
-            if found then
-                return found
-            end
-        end
-    end
-
-    local function ctx_for(look_id, now)
-        return {
-            look = Looks.get(look_id),
-            variant = "day",
-            text_size = "medium",
-            now = now or NOW,
-            screen = Screen,
-        }
-    end
-
-    -- The width text takes set uncut in the look's stats type.
-    local function measure(look_id, text)
-        local widget = Typeset.line(Looks.get(look_id).type.stats, text, math.huge, ctx_for(look_id))
-        local w = widget:getSize().w
-        widget:free()
-        return w
-    end
-
     local saved_tz
 
     setup(function()
@@ -241,11 +172,6 @@ describe("reading stats", function()
     before_each(function()
         harness.load()
         ReadingStats = package.loaded["reading_stats"]
-        Stats = package.loaded["widgets/stats"]
-        Settings = package.loaded["settings"]
-        Looks = package.loaded["looks"]
-        Fonts = package.loaded["fonts"]
-        Typeset = package.loaded["typeset"]
         errored = spy.on(logger, "err")
         remove_db()
     end)
@@ -258,223 +184,8 @@ describe("reading stats", function()
         harness.teardown()
     end)
 
-    describe("read", function()
-        it("runs at 20:42 on 13 October 2026 in Chicago", function()
-            assert.equals("2026-10-13 20:42 CDT", os.date("%Y-%m-%d %H:%M %Z", NOW))
-        end)
-
-        it("floors today's summed durations over 60, leaving out yesterday", function()
-            local t = os.date("*t", NOW)
-            make_db({
-                { 1, at(t.year, t.month, t.day, 0, 0), 600 },
-                { 2, at(t.year, t.month, t.day, 9), 780 },
-                { 1, at(t.year, t.month, t.day, 20), 59 },
-                { 1, at(t.year, t.month, t.day - 1, 23, 59), 3000 },
-            })
-            local stats = ReadingStats.read(NOW)
-            assert.equals("ok", stats.state)
-            assert.equals(23, stats.minutes_today)
-        end)
-
-        it("counts a streak of consecutive local days ending today", function()
-            make_db({ on_day(0), on_day(-1), on_day(-2), on_day(-3), on_day(-5) })
-            assert.equals(4, ReadingStats.read(NOW).streak)
-        end)
-
-        it("keeps the streak the next morning before any reading", function()
-            make_db({ on_day(0), on_day(-1), on_day(-2), on_day(-3), on_day(-5) })
-            local t = os.date("*t", NOW)
-            local stats = ReadingStats.read(at(t.year, t.month, t.day + 1, 7))
-            assert.equals("ok", stats.state)
-            assert.equals(4, stats.streak)
-            assert.equals(0, stats.minutes_today)
-        end)
-
-        it("resets the streak after a gap two days ago", function()
-            make_db({ on_day(0), on_day(-1), on_day(-3), on_day(-4) })
-            assert.equals(2, ReadingStats.read(NOW).streak)
-        end)
-
-        it("counts a streak across local midnight by local days, not 24-hour spans", function()
-            local t = os.date("*t", NOW)
-            make_db({
-                { 1, at(t.year, t.month, t.day, 0, 1), 600 },
-                { 1, at(t.year, t.month, t.day - 1, 23, 58), 600 },
-            })
-            assert.equals(2, ReadingStats.read(NOW).streak)
-        end)
-
-        it("counts a streak by local days across the end of daylight saving time", function()
-            -- Chicago falls back at 02:00 on Sunday 1 November 2026: that day has 25 hours.
-            make_db({
-                { 1, at(2026, 10, 31, 0, 30), 600 },
-                { 1, at(2026, 11, 1, 0, 30), 600 },
-                { 1, at(2026, 11, 2, 9), 600 },
-            })
-            assert.equals(3, ReadingStats.read(at(2026, 11, 2, 20, 42)).streak)
-        end)
-
-        it("counts a streak by local days across the start of daylight saving time", function()
-            -- Chicago springs forward at 02:00 on Sunday 8 March 2026: that day has 23 hours.
-            make_db({
-                { 1, at(2026, 3, 7, 23, 30), 600 },
-                { 1, at(2026, 3, 8, 23, 30), 600 },
-                { 1, at(2026, 3, 9, 0, 30), 600 },
-            })
-            assert.equals(3, ReadingStats.read(at(2026, 3, 9, 20, 42)).streak)
-        end)
-
-        it("reads a streak of 450 days as 400, from today or from yesterday", function()
-            local rows = {}
-            for offset = -450, -1 do
-                rows[#rows + 1] = on_day(offset)
-            end
-            make_db(rows)
-            assert.equals(400, ReadingStats.read(NOW).streak)
-            rows[#rows + 1] = on_day(0)
-            make_db(rows)
-            assert.equals(400, ReadingStats.read(NOW).streak)
-        end)
-
-        -- About a year of heavy reading: 100 page turns a day for 400 days. The streak is read
-        -- once per book close, at the show, inside the home's share of the budget.
-        it("reads a year of page turns quickly", function()
-            local t = os.date("*t", NOW)
-            local rows = {}
-            for offset = 0, 399 do
-                for turn = 1, 100 do
-                    rows[#rows + 1] = { 1 + turn % 7, at(t.year, t.month, t.day - offset, 8, 0) + turn * 30, 30 }
-                end
-            end
-            make_db(rows)
-            assert.equals(400, ReadingStats.read(NOW).streak)
-            local best = math.huge
-            for _ = 1, 3 do
-                local started = os.clock()
-                ReadingStats.read(NOW)
-                best = math.min(best, os.clock() - started)
-            end
-            assert.truthy(best < 0.010, string.format("%.2f ms", best * 1000))
-        end)
-
-        it("reads reading only 401 days ago as no streak and empty", function()
-            make_db({ on_day(-401, 3600) })
-            local stats = ReadingStats.read(NOW)
-            assert.equals(0, stats.streak)
-            assert.equals("empty", stats.state)
-        end)
-
-        it("counts distinct books read since the first of the local month", function()
-            make_db({
-                { 5, at(2026, 10, 1, 0, 0), 600 },
-                { 1, at(2026, 10, 5), 600 },
-                { 2, at(2026, 10, 9), 600 },
-                { 1, at(2026, 10, 11), 600 },
-                { 3, at(2026, 10, 13), 600 },
-                { 4, at(2026, 9, 30, 23, 59), 600 },
-            })
-            local stats = ReadingStats.read(NOW)
-            assert.equals(4, stats.books_month)
-            assert.equals("October", stats.month_name)
-        end)
-
-        it("reads a missing file as empty without creating it or logging an error", function()
-            local stats = ReadingStats.read(NOW)
-            assert.equals("empty", stats.state)
-            assert.is_nil(lfs.attributes(db_path, "mode"))
-            assert.is_false(logged_error())
-        end)
-
-        it("is off when statistics is in plugins_disabled", function()
-            make_db({ on_day(0) })
-            G_reader_settings:saveSetting("plugins_disabled", { statistics = true })
-            assert.equals("off", ReadingStats.read(NOW).state)
-        end)
-
-        it("is off when the plugin's own settings say is_enabled false", function()
-            make_db({ on_day(0) })
-            G_reader_settings:saveSetting("statistics", { is_enabled = false, min_sec = 5 })
-            assert.equals("off", ReadingStats.read(NOW).state)
-            G_reader_settings:saveSetting("statistics", { is_enabled = true })
-            assert.equals("ok", ReadingStats.read(NOW).state)
-        end)
-
-        it("leaves both settings unset when it reads them", function()
-            make_db({ on_day(0) })
-            ReadingStats.read(NOW)
-            assert.is_nil(G_reader_settings:readSetting("plugins_disabled"))
-            assert.is_nil(G_reader_settings:readSetting("statistics"))
-        end)
-
-        it("reads a corrupt file as empty, not as the last numbers read, and logs it", function()
-            make_db({ on_day(0) })
-            assert.equals("ok", ReadingStats.read(NOW).state)
-            remove_db()
-            local f = assert(io.open(db_path, "wb"))
-            f:write(string.rep("not a database ", 100))
-            f:close()
-            local stats = ReadingStats.read(NOW)
-            assert.equals("empty", stats.state)
-            assert.is_true(logged_error())
-        end)
-
-        it("reads a busy database as the previous numbers, or empty with none, and logs it", function()
-            make_db({ on_day(0), on_day(-1) }, "DELETE")
-            local locker = SQ3.open(db_path)
-            locker:exec("BEGIN EXCLUSIVE;")
-            local first = ReadingStats.read(NOW)
-            locker:exec("ROLLBACK;")
-            assert.equals("empty", first.state)
-            assert.is_true(logged_error())
-
-            local before = ReadingStats.read(NOW)
-            assert.equals(2, before.streak)
-            locker:exec("BEGIN EXCLUSIVE;")
-            local busy = ReadingStats.read(NOW)
-            locker:exec("ROLLBACK;")
-            locker:close()
-            assert.equals("ok", busy.state)
-            assert.equals(2, busy.streak)
-            assert.equals(before.minutes_today, busy.minutes_today)
-        end)
-
-        it("opens the database read-only", function()
-            make_db({ on_day(0) })
-            local open = spy.on(SQ3, "open")
-            ReadingStats.read(NOW)
-            SQ3.open:revert()
-            assert.spy(open).was.called_with(db_path, "ro")
-        end)
-
-        it("closes the database after a good read and after a failed one", function()
-            -- The connection ReadingStats.read opens, and the read.
-            local function read_capturing()
-                local real_open = SQ3.open
-                local conn
-                SQ3.open = function(...)
-                    conn = real_open(...)
-                    return conn
-                end
-                local ok, stats = pcall(ReadingStats.read, NOW)
-                SQ3.open = real_open
-                assert(ok, stats)
-                return conn, stats
-            end
-            make_db({ on_day(0) })
-            local good, stats = read_capturing()
-            assert.equals("ok", stats.state)
-            -- The binding's own flag, set only once sqlite3_close succeeds (lua-ljsqlite3/init.lua:352-364).
-            assert.is_true(good._closed)
-
-            remove_db()
-            local f = assert(io.open(db_path, "wb"))
-            f:write(string.rep("not a database ", 100))
-            f:close()
-            local corrupt
-            corrupt, stats = read_capturing()
-            assert.equals("empty", stats.state)
-            assert.is_true(corrupt._closed)
-        end)
+    it("runs at 20:42 on 13 October 2026 in Chicago", function()
+        assert.equals("2026-10-13 20:42 CDT", os.date("%Y-%m-%d %H:%M %Z", NOW))
     end)
 
     describe("seconds_per_page", function()
@@ -558,6 +269,23 @@ describe("reading stats", function()
             SQ3.open = real_open
             assert(ok, err)
             assert.same({ { db_path, "ro" } }, calls)
+            -- The binding's own flag, set only once sqlite3_close succeeds (lua-ljsqlite3/init.lua:352-364).
+            assert.is_true(conn._closed)
+        end)
+
+        it("closes the database after a failed read", function()
+            local f = assert(io.open(db_path, "wb"))
+            f:write(string.rep("not a database ", 100))
+            f:close()
+            local real_open = SQ3.open
+            local conn
+            SQ3.open = function(...)
+                conn = real_open(...)
+                return conn
+            end
+            local ok, err = pcall(ReadingStats.seconds_per_page, "abc")
+            SQ3.open = real_open
+            assert(ok, err)
             assert.is_true(conn._closed)
         end)
 
@@ -701,14 +429,6 @@ describe("reading stats", function()
             end
         end
 
-        -- A page_stat_data row { id_book, page, start_time, duration, total_pages } written as
-        -- Statistics writes, its connection closed after.
-        local function insert(row)
-            local conn = real_open(db_path)
-            conn:exec(string.format("INSERT INTO page_stat_data VALUES (%d, %d, %d, %d, %d);", unpack(row)))
-            conn:close()
-        end
-
         -- Counts the read-only opens, which are ReadingStats's.
         before_each(function()
             real_open = SQ3.open
@@ -726,42 +446,31 @@ describe("reading stats", function()
             os.time = real_time -- luacheck: ignore 122
         end)
 
-        it("reads the numbers again only when the database or its WAL file changes, or the date", function()
-            make_db({ on_day(0), on_day(-1) })
+        it("reads a book's history again when the database or its WAL file changes", function()
+            make_books_db({ { 1, "abc", 100, 100, 60 } }, { { 1, 1, 1000, 20, 100 } })
             -- A connection Statistics holds open, its last write still in the WAL file.
             local writer = real_open(db_path)
-            local t = os.date("*t", NOW)
-            writer:exec(string.format("INSERT INTO page_stat_data VALUES (1, 99, %d, 780, 300);",
-                at(t.year, t.month, t.day, 9)))
+            writer:exec("UPDATE book SET total_read_time = 90 WHERE id = 1;")
             assert.equals("file", lfs.attributes(db_path .. "-wal", "mode"))
             settle()
-            local first = ReadingStats.read(NOW)
-            assert.equals(23, first.minutes_today)
-            assert.same(first, ReadingStats.read(NOW))
+            assert.equals(90, ReadingStats.book_history("abc").seconds)
+            ReadingStats.book_history("abc")
             assert.equals(1, opened)
 
             date_back(db_path .. "-wal", 30)
-            assert.same(first, ReadingStats.read(NOW))
+            ReadingStats.book_history("abc")
             assert.equals(2, opened)
             date_back(db_path, 30)
-            ReadingStats.read(NOW)
+            ReadingStats.book_history("abc")
             assert.equals(3, opened)
-
-            local after_midnight = at(t.year, t.month, t.day + 1, 0, 5)
-            local next_day = ReadingStats.read(after_midnight)
-            assert.equals(4, opened)
-            assert.equals(0, next_day.minutes_today)
-            assert.equals(2, next_day.streak)
-            assert.same(next_day, ReadingStats.read(after_midnight))
-            assert.equals(4, opened)
             writer:close()
         end)
 
         it("reads again a database dated this second or later", function()
-            make_db({ on_day(0) })
+            make_books_db({ { 1, "abc", 100, 100, 60 } }, {})
             date_back(db_path, -5)
-            ReadingStats.read(NOW)
-            ReadingStats.read(NOW)
+            ReadingStats.book_history("abc")
+            ReadingStats.book_history("abc")
             assert.equals(2, opened)
         end)
 
@@ -771,12 +480,12 @@ describe("reading stats", function()
             local now = real_time()
             now = now - now % 2 + 1
             freeze(now)
-            make_db({ on_day(0) })
+            make_books_db({ { 1, "abc", 100, 100, 60 } }, {})
             for _, dated in ipairs{ now - 1, now } do
                 assert(lfs.touch(db_path, dated, dated))
                 opened = 0
-                ReadingStats.read(NOW)
-                ReadingStats.read(NOW)
+                ReadingStats.book_history("abc")
+                ReadingStats.book_history("abc")
                 assert.equals(2, opened)
             end
         end)
@@ -785,31 +494,11 @@ describe("reading stats", function()
             local now = real_time()
             now = now - now % 2 + 1
             freeze(now)
-            make_db({ on_day(0) })
+            make_books_db({ { 1, "abc", 100, 100, 60 } }, {})
             assert(lfs.touch(db_path, now - 2, now - 2))
-            ReadingStats.read(NOW)
-            ReadingStats.read(NOW)
+            ReadingStats.book_history("abc")
+            ReadingStats.book_history("abc")
             assert.equals(1, opened)
-        end)
-
-        it("reads a busy database as the last numbers read, untouched or touched", function()
-            make_db({ on_day(0), on_day(-1) }, "DELETE")
-            settle()
-            local before = ReadingStats.read(NOW)
-            assert.equals("ok", before.state)
-            local locker = real_open(db_path)
-            locker:exec("BEGIN EXCLUSIVE;")
-            local untouched = ReadingStats.read(NOW)
-            local opened_untouched = opened
-            date_back(db_path, 30)
-            local touched = ReadingStats.read(NOW)
-            locker:exec("ROLLBACK;")
-            locker:close()
-            assert.equals(1, opened_untouched)
-            assert.same(before, untouched)
-            assert.equals(2, opened)
-            assert.same(before, touched)
-            assert.is_true(logged_error())
         end)
 
         it("reads a book's rate again only when the files, the md5 or max_sec change", function()
@@ -851,55 +540,6 @@ describe("reading stats", function()
             ReadingStats.book_history("def")
             ReadingStats.book_history("def")
             assert.equals(6, opened)
-        end)
-
-        it("opens the database once when the numbers and the rate both miss", function()
-            local start = on_day(0)[2]
-            make_books_db({ { 1, "abc", 100, 100 } }, { { 1, 1, start, 600, 100 } })
-            settle()
-            assert.equals(10, ReadingStats.read(NOW).minutes_today)
-            assert.equals(120, (ReadingStats.seconds_per_page("abc")))
-            assert.equals(2, opened)
-
-            insert({ 1, 2, start + 60, 60, 100 })
-            date_back(db_path, 30)
-            assert.equals(11, ReadingStats.read(NOW).minutes_today)
-            assert.equals(3, opened)
-            assert.equals((120 + 60) / 2, (ReadingStats.seconds_per_page("abc")))
-            assert.equals(3, opened)
-
-            insert({ 1, 3, start + 120, 120, 100 })
-            date_back(db_path, 20)
-            assert.equals((120 + 60 + 120) / 3, (ReadingStats.seconds_per_page("abc")))
-            assert.equals(4, opened)
-            assert.equals(13, ReadingStats.read(NOW).minutes_today)
-            assert.equals(4, opened)
-        end)
-
-        it("keeps today's numbers as a busy database's when a book's rate reads them again", function()
-            local t = os.date("*t", NOW)
-            local yesterday = at(t.year, t.month, t.day - 1, 20, 42)
-            local start = on_day(0)[2]
-            make_books_db({ { 1, "abc", 100, 100 } }, { { 1, 1, on_day(-1)[2], 600, 100 } }, "DELETE")
-            settle()
-            assert.equals(10, ReadingStats.read(yesterday).minutes_today)
-            -- Today's read lands while Statistics' last write is dated too recently to keep.
-            insert({ 1, 2, start, 1200, 100 })
-            date_back(db_path, -5)
-            assert.equals(20, ReadingStats.read(NOW).minutes_today)
-
-            insert({ 1, 3, start + 60, 60, 100 })
-            date_back(db_path, 30)
-            assert.equals((120 + 120 + 60) / 3, (ReadingStats.seconds_per_page("abc")))
-
-            local locker = real_open(db_path)
-            locker:exec("BEGIN EXCLUSIVE;")
-            date_back(db_path, 20)
-            local busy = ReadingStats.read(NOW)
-            locker:exec("ROLLBACK;")
-            locker:close()
-            assert.equals(21, busy.minutes_today)
-            assert.equals(2, busy.streak)
         end)
     end)
 
@@ -950,6 +590,17 @@ describe("reading stats", function()
             assert.equals(600 + 300, hours[8])
             assert.equals(120, hours[23])
             assert.equals(600 + 300 + 120, total(hours))
+        end)
+
+        it("starts the 90 days on a calendar date across a change of the clocks", function()
+            -- Chicago's clocks went forward on 8 March 2026, so 89 days back from 15 March is 89 days less an hour.
+            local at_ = at(2026, 3, 15, 12)
+            local t = os.date("*t", at_)
+            make_db({
+                { 1, at(t.year, t.month, t.day - 89, 0, 30), 300 },
+                { 1, at(t.year, t.month, t.day - 90, 23, 30), 120 },
+            })
+            assert.equals(300, total(ReadingStats.insights(at_).hours))
         end)
 
         it("folds page rows into sessions split by a gap over 30 minutes, over the last 365 days", function()
@@ -1020,11 +671,14 @@ describe("reading stats", function()
             assert.same({ state = "off" }, ReadingStats.insights(NOW))
         end)
 
-        it("reads a corrupt file as empty and logs it", function()
+        it("reads a corrupt file as empty, not as the last history read, and logs it", function()
+            make_db({ on_day(0) })
+            assert.equals("ok", ReadingStats.insights(NOW).state)
             local f = assert(io.open(db_path, "wb"))
             f:write(string.rep("not a database ", 100))
             f:close()
-            assert.equals("empty", ReadingStats.insights(NOW).state)
+            -- The file is unsettled, so NOW itself would return the memo.
+            assert.equals("empty", ReadingStats.insights(NOW + 1).state)
             assert.is_true(logged_error())
         end)
 
@@ -1100,128 +754,6 @@ describe("reading stats", function()
                 assert.equals(3, opened)
                 assert.same(before, busy)
             end)
-        end)
-    end)
-
-    describe("the widget", function()
-        local WIDE = 4000
-
-        it("words the numbers per look, in the look's case", function()
-            make_db({
-                on_day(0, 1380), on_day(-1), on_day(-2), on_day(-3),
-                on_day(-1, 600, 2), on_day(-2, 600, 3),
-            })
-            assert.same({ "STREAK 4 DAYS", "23 MIN TODAY", "3 BOOKS IN OCTOBER" },
-                texts(Stats.build(WIDE, ctx_for("editorial"))))
-            assert.same({ "4-DAY STREAK · 23 MIN TODAY · 3 BOOKS IN OCTOBER" },
-                texts(Stats.build(WIDE, ctx_for("diner"))))
-        end)
-
-        -- The wording is the look's home.stats_streak and the line its home.stats_line, each on
-        -- its own, not which look it is.
-        it("words the streak by the look's stats_streak and lays out the line by its stats_line", function()
-            make_db({ on_day(0, 1380), on_day(-1), on_day(-2), on_day(-3) })
-            local editorial, diner = Looks.get("editorial"), Looks.get("diner")
-            finally(function()
-                editorial.home.stats_streak, editorial.home.stats_line = "word_first", "spread"
-                diner.home.stats_streak, diner.home.stats_line = "count_first", "joined"
-            end)
-            editorial.home.stats_streak = "count_first"
-            assert.same({ "4-DAY STREAK", "23 MIN TODAY", "1 BOOK IN OCTOBER" },
-                texts(Stats.build(WIDE, ctx_for("editorial"))))
-            editorial.home.stats_streak, editorial.home.stats_line = "word_first", "joined"
-            assert.same({ "STREAK 4 DAYS · 23 MIN TODAY · 1 BOOK IN OCTOBER" },
-                texts(Stats.build(WIDE, ctx_for("editorial"))))
-            diner.home.stats_streak, diner.home.stats_line = "word_first", "spread"
-            assert.same({ "STREAK 4 DAYS", "23 MIN TODAY", "1 BOOK IN OCTOBER" },
-                texts(Stats.build(WIDE, ctx_for("diner"))))
-        end)
-
-        it("uses the singular for one day and one book", function()
-            make_db({ on_day(0, 1380) })
-            assert.same({ "STREAK 1 DAY", "23 MIN TODAY", "1 BOOK IN OCTOBER" },
-                texts(Stats.build(WIDE, ctx_for("editorial"))))
-            assert.same({ "1-DAY STREAK · 23 MIN TODAY · 1 BOOK IN OCTOBER" },
-                texts(Stats.build(WIDE, ctx_for("diner"))))
-        end)
-
-        it("words nothing read, and no database, as the empty state", function()
-            assert.same({ "NO STREAK YET", "0 MIN TODAY", "READ SOMETHING AND THIS FILLS IN" },
-                texts(Stats.build(WIDE, ctx_for("editorial"))))
-            assert.same({ "NO STREAK YET · 0 MIN TODAY · READ SOMETHING AND THIS FILLS IN" },
-                texts(Stats.build(WIDE, ctx_for("diner"))))
-        end)
-
-        it("says the stats are off in one part", function()
-            G_reader_settings:saveSetting("plugins_disabled", { statistics = true })
-            assert.same({ "READING STATS ARE OFF" }, texts(Stats.build(WIDE, ctx_for("editorial"))))
-            assert.same({ "READING STATS ARE OFF" }, texts(Stats.build(WIDE, ctx_for("diner"))))
-        end)
-
-        it("draws in the look's stats face, size and colour", function()
-            make_db({ on_day(0) })
-            for _, id in ipairs({ "editorial", "diner" }) do
-                local look = Looks.get(id)
-                local token = look.type.stats
-                local text = first_text_widget(Stats.build(WIDE, ctx_for(id)))
-                assert.equals(Fonts.face_name(look.faces[token.face].file), text.face.realname, id)
-                assert.equals(token.size, text.face.orig_size, id)
-                assert.equals(Looks.color(look.palettes.day[token.color]), text.fgcolor, id)
-            end
-        end)
-
-        it("is exactly the column wide, whatever it draws", function()
-            make_db({ on_day(0, 1380) })
-            for _, id in ipairs({ "editorial", "diner" }) do
-                for _, width in ipairs({ 80, 300, WIDE }) do
-                    assert.equals(width, Stats.build(width, ctx_for(id)):getSize().w, id .. " at " .. width)
-                end
-            end
-        end)
-
-        it("drops Diner's parts from the end to fit the column", function()
-            make_db({ on_day(0, 1380), on_day(-1), on_day(-2), on_day(-3) })
-            local full = measure("diner", "4-DAY STREAK · 23 MIN TODAY · 1 BOOK IN OCTOBER")
-            local two = measure("diner", "4-DAY STREAK · 23 MIN TODAY")
-            assert.same({ "4-DAY STREAK · 23 MIN TODAY · 1 BOOK IN OCTOBER" },
-                texts(Stats.build(full, ctx_for("diner"))))
-            assert.same({ "4-DAY STREAK · 23 MIN TODAY" }, texts(Stats.build(full - 1, ctx_for("diner"))))
-            assert.same({ "4-DAY STREAK" }, texts(Stats.build(two - 1, ctx_for("diner"))))
-        end)
-
-        it("drops Editorial's parts from the end to fit the column", function()
-            make_db({ on_day(0, 1380), on_day(-1), on_day(-2), on_day(-3) })
-            local w1 = measure("editorial", "STREAK 4 DAYS")
-            local w2 = measure("editorial", "23 MIN TODAY")
-            local w3 = measure("editorial", "1 BOOK IN OCTOBER")
-            assert.same({ "STREAK 4 DAYS", "23 MIN TODAY" },
-                texts(Stats.build(w1 + w2 + w3, ctx_for("editorial"))))
-            assert.same({ "STREAK 4 DAYS" }, texts(Stats.build(w1 + 1, ctx_for("editorial"))))
-        end)
-
-        it("keeps the first part, ending in an ellipsis, when it alone is too wide", function()
-            make_db({ on_day(0, 1380), on_day(-1), on_day(-2), on_day(-3) })
-            for _, id in ipairs({ "editorial", "diner" }) do
-                local built = Stats.build(40, ctx_for(id))
-                local text = first_text_widget(built)
-                assert.equals(1, #texts(built), id)
-                assert.truthy(text:getSize().w <= 40, id)
-                assert.is_true(text:isTruncated(), id)
-            end
-        end)
-
-        it("has its line's height when shown, and height 0 and nothing drawn when stats.show is false", function()
-            make_db({ on_day(0) })
-            local ctx = ctx_for("diner")
-            local h = Stats.height(300, ctx)
-            assert.truthy(h > 0)
-            assert.equals(h, Stats.build(300, ctx):getSize().h)
-            assert.is_true(Settings.set("stats.show", false))
-            assert.equals(0, Stats.height(300, ctx))
-            local built = Stats.build(300, ctx)
-            assert.equals(300, built:getSize().w)
-            assert.equals(0, built:getSize().h)
-            assert.same({}, texts(built))
         end)
     end)
 end)

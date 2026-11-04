@@ -16,7 +16,7 @@ describe("the schema type", () => {
 
   it("rejects a key of a type the studio does not declare, naming the key's index", () => {
     const copy = readCheckedIn();
-    const index = copy.keys.findIndex((key) => key.id === "stats.show");
+    const index = copy.keys.findIndex((key) => key.id === "focused.on");
     copy.keys[index]!.type = "slider";
 
     const result = Schema.safeParse(copy);
@@ -27,7 +27,7 @@ describe("the schema type", () => {
 
   it("rejects a key carrying a field the studio does not declare, naming the key's index", () => {
     const copy = readCheckedIn();
-    const index = copy.keys.findIndex((key) => key.id === "stats.show");
+    const index = copy.keys.findIndex((key) => key.id === "focused.on");
     Object.assign(copy.keys[index]!, { hint: "x" });
 
     const result = Schema.safeParse(copy);

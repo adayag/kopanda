@@ -159,9 +159,9 @@ function rerender(): HTMLButtonElement {
   return within(pane()).getByRole("button", { name: "Re-render" });
 }
 
-/** Lands a write through the form: the stats toggle flipped. */
+/** Lands a write through the form: the Focused mode toggle flipped. */
 async function write(): Promise<void> {
-  const box = screen.getByRole("checkbox", { name: "Show reading stats" });
+  const box = screen.getByRole("checkbox", { name: "Focused mode" });
   fireEvent.click(box);
   await tick();
 }

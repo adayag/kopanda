@@ -227,9 +227,9 @@ describe("typeset", function()
         for _, look_id in ipairs({ "diner", "editorial" }) do
             local ctx = ctx_for(look_id)
             local plain = Typeset.line(ctx.look.type.quote, "Library", Screen:getWidth(), ctx)
-            local tracked = Typeset.line(ctx.look.type.stats, "Library", Screen:getWidth(), ctx)
+            local tracked = Typeset.line(ctx.look.type.featured_label, "Library", Screen:getWidth(), ctx)
             assert.equals(TextWidget, getmetatable(plain), look_id .. ": the quote part is a plain line")
-            assert.is_not_equal(TextWidget, getmetatable(tracked), look_id .. ": the stats part is tracked")
+            assert.is_not_equal(TextWidget, getmetatable(tracked), look_id .. ": the featured label is tracked")
             for _, line in ipairs({ plain, tracked }) do
                 local widgets = text_widgets(line)
                 assert.is_true(#widgets > 0)

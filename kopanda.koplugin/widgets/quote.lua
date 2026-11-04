@@ -1,4 +1,4 @@
--- The quote of the day: one entry of the quote source a day, changing at local midnight, drawn in curly quotes
+-- The quote of the day: one entry of quotes.lua a day, changing at local midnight, drawn in curly quotes
 -- with no attribution in at most four lines, a longer text ending in an ellipsis, at the look's own size at
 -- every text size so the longest entry stays whole. A look with plates draws it plain, its plate drawn under
 -- it by the home (home_rows.lua) and the text printed through its mask (Typeset.printed); otherwise a look
@@ -11,7 +11,6 @@ local Geom = require("ui/geometry")
 local Looks = require("looks")
 local Math = require("optmath")
 local Paint = require("paint")
-local Settings = require("settings")
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local Typeset = require("typeset")
 local Widget = require("ui/widget/widget")
@@ -21,16 +20,14 @@ local LINES = 4
 
 local Quote = {
     id = "quote",
-    settings_prefix = "quote",
 }
 
--- The entry lists by quote.source value; a spec puts lists of its own here.
-Quote.sources = {
-    builtin = require("quotes"),
-}
+-- The entry list; a spec puts a list of its own here.
+Quote.entries = require("quotes")
 
-local function entries()
-    return Quote.sources[Settings.get("quote.source")] or {}
+-- A hold opens the home's sheet: the quote has no settings.
+function Quote.hold()
+    return false
 end
 
 -- Local calendar days from 1970-01-01 to t's day. Counted from the day's noon, so a DST change
@@ -40,9 +37,9 @@ local function local_days(t)
     return math.floor(os.time{ year = day.year, month = day.month, day = day.day, hour = 12 } / 86400)
 end
 
--- The index of the entry for the day of t, or nil when the source has none.
+-- The index of the entry for the day of t, or nil when the list has none.
 function Quote.index(t)
-    local count = #entries()
+    local count = #Quote.entries
     if count == 0 then
         return nil
     end
@@ -126,10 +123,10 @@ function QuoteBox:paintTo(bb, x, y)
     self.text_box:paintTo(bb, x + self.text_x, y + self.text_y)
 end
 
--- The quote laid out at width under ctx: a QuoteBox, or a blank box of height 0 when the source
+-- The quote laid out at width under ctx: a QuoteBox, or a blank box of height 0 when the list
 -- has no entry.
 local function compose(width, ctx)
-    local list = entries()
+    local list = Quote.entries
     local index = Quote.index(ctx.now)
     if not index then
         return Widget:new{ dimen = Geom:new{ w = width, h = 0 } }

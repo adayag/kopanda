@@ -933,7 +933,7 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
   creating open would leave an empty file the plugin then fails to open (`main.lua:292-317`).
 - When the plugin writes it: `insertDB` (`main.lua:912`, on its own connection opened `:929` and
   closed `:981`) on `CloseDocument`, `SaveSettings` and `Suspend` (`main.lua:2672-2695`).
-  `reading_stats.lua` keeps its last numbers and its last book's rate while the size and mtime of
+  `reading_stats.lua` keeps its last book's rate and history and its reading history while the size and mtime of
   `statistics.sqlite3` and of its WAL file `statistics.sqlite3-wal` stay unchanged (the WAL file's
   name is SQLite's, not the plugin's), and keeps no read while either is dated within the last two
   seconds: lfs's `modification` is whole seconds, and `/mnt/us` on the Kindle is a fuse overlay over
@@ -979,8 +979,7 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
   the emulator KoPanda's handler ran first (module 37 against 64) with the closing session not yet
   in `page_stat_data`. Statistics' handler closes the page and inserts the session
   (`plugins/statistics.koplugin/main.lua:2672-2675`); the home is built at the file manager's
-  `Show`, after it ran, so the stats widget reads the closing session.
-- `datetime`: `frontend/datetime.lua:29-42` (`longMonthTranslation`, the month name).
+  `Show`, after it ran, so the home reads the closing session.
 
 ### Book records: the home folder, the file browser's filters, CoverBrowser's rows and the sidecar
 

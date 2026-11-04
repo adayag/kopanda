@@ -1,10 +1,8 @@
--- Reading stats from KOReader's Statistics plugin: its database, read-only, for the streak, minutes today and
--- books this month, for a book's reading speed and history and for the reading history of the last year, and
--- its settings, for whether it records at all and its cap on one page's time. Days are local calendar days,
--- bounded by os.time. State: the last numbers and history read, which a busy database reads as, and the memo of
--- the reads, which a home build reads instead of the database while Statistics hasn't written.
+-- Reading stats from KOReader's Statistics plugin: its database, read-only, for a book's reading speed and history
+-- and for the reading history of the last year, and its settings, for whether it records at all and its cap on one
+-- page's time. Days are local calendar days, bounded by os.time. State: the last history read, which a busy database
+-- reads as, and the memo of the reads, which a build reads instead of the database while Statistics hasn't written.
 local DataStorage = require("datastorage")
-local datetime = require("datetime")
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
 local util = require("util")
@@ -16,22 +14,11 @@ local function db_path()
     return DataStorage:getSettingsDir() .. "/statistics.sqlite3"
 end
 
--- The streak scan's reach in days; a longer streak reads as this.
-local MAX_STREAK = 400
-
-local MONTHS = {
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-}
-
-local last
 local last_insights
 
--- The last reads, each valid while the files' stamp is key: numbers, the result of read for the
--- local date of now, kept with no key when the stamp is nil so that a refresh reads the latest
--- date read; rate, seconds_per_page's for md5 under the cap (nil when none is found); history,
--- book_history's for md5; insights, the result of insights for the local date of now, and for now
--- itself while the stamp is nil.
+-- The last reads, each valid while the files' stamp is key: rate, seconds_per_page's for md5 under the cap (nil when
+-- none is found); history, book_history's for md5; insights, the result of insights for the local date of now, and
+-- for now itself while the stamp is nil.
 local memo = {}
 
 -- The size and modification time of the database and of its WAL file, the two files Statistics writes, as one
@@ -75,36 +62,6 @@ local function day_start(t, offset)
     return os.time{ year = t.year, month = t.month, day = t.day - offset, hour = 0 }
 end
 
--- The run of consecutive local days with any reading, ending today, or yesterday when nothing
--- is read yet today, up to MAX_STREAK. One indexed probe per day, newest first, stopping at the
--- first day without reading.
-local function streak(conn, t)
-    local stmt = conn:prepare("SELECT 1 FROM page_stat_data WHERE start_time >= ? AND start_time < ? LIMIT 1")
-    local function read_on(offset)
-        return stmt:reset():bind(day_start(t, offset), day_start(t, offset - 1)):step() ~= nil
-    end
-    local start = read_on(0) and 0 or 1
-    local days = 0
-    while days < MAX_STREAK and read_on(start + days) do
-        days = days + 1
-    end
-    stmt:close()
-    return days
-end
-
--- The first column of each row of sql run with the one value bound.
-local function column(conn, sql, value)
-    local stmt = conn:prepare(sql)
-    local values = {}
-    local row = stmt:bind(value):step()
-    while row do
-        values[#values + 1] = row[1]
-        row = stmt:step()
-    end
-    stmt:close()
-    return values
-end
-
 -- f(conn) run on the database at path, opened read-only and closed after: true and f's result,
 -- or false and the error's first line, logged.
 local function with_db(path, f)
@@ -125,22 +82,6 @@ local function with_db(path, f)
         logger.err("KoPanda: could not read the Statistics database:", result)
     end
     return ok, result
-end
-
-local function query(conn, now)
-    local t = os.date("*t", now)
-    local month = os.time{ year = t.year, month = t.month, day = 1, hour = 0 }
-
-    local seconds = tonumber(column(conn,
-        "SELECT coalesce(sum(duration), 0) FROM page_stat_data WHERE start_time >= ?", day_start(t, 0))[1])
-    local books = tonumber(column(conn,
-        "SELECT count(DISTINCT id_book) FROM page_stat_data WHERE start_time >= ?", month)[1])
-    return {
-        streak = streak(conn, t),
-        minutes_today = math.floor(seconds / 60),
-        books_month = books,
-        month_name = datetime.longMonthTranslation[MONTHS[t.month]],
-    }
 end
 
 ReadingStats.INSIGHT_DAYS = 371
@@ -214,41 +155,6 @@ local function insight_query(conn, now)
     return { state = "ok", days = days, hours = hours, sessions = summary }
 end
 
-local function empty(now)
-    return {
-        state = "empty",
-        streak = 0,
-        minutes_today = 0,
-        books_month = 0,
-        month_name = datetime.longMonthTranslation[MONTHS[os.date("*t", now).month]],
-    }
-end
-
--- What query read at now, as read gives it: empty with no streak and no minutes today.
-local function finish(numbers, now)
-    if numbers.streak == 0 and numbers.minutes_today == 0 then
-        return empty(now)
-    end
-    numbers.state = "ok"
-    last = numbers
-    return numbers
-end
-
--- The numbers again, on a connection opened for a book's rate, when the memo holds them for an older stamp or
--- none: a home build after a Statistics write opens the database once when the files are settled. With no
--- stamp, as right after a book closes, nothing is refreshed and read and seconds_per_page each open it. They
--- are read for the latest date read, so a busy database's last numbers stay that date's. A failure leaves
--- them stale.
-local function refresh_numbers(conn, key)
-    local held = memo.numbers
-    if key and held and held.key ~= key then
-        local ok, numbers = pcall(query, conn, held.now)
-        if ok then
-            memo.numbers = { key = key, date = held.date, now = held.now, value = finish(numbers, held.now) }
-        end
-    end
-end
-
 -- The Statistics plugin's cap on one page's reading time, in seconds: max_sec from its settings,
 -- read without a default, else its default of 120 (plugins/statistics.koplugin/main.lua:30,
 -- :83, :143).
@@ -283,19 +189,6 @@ local function rate(conn, md5, cap)
     return { tonumber(row[2]) / count, pages }
 end
 
--- The book's rate again, on a connection opened for the numbers, when the memo holds it for an
--- older stamp, as refresh_numbers reads the numbers again.
-local function refresh_rate(conn, key)
-    local held = memo.rate
-    if key and held and held.key ~= key then
-        local cap = max_sec()
-        local ok, found = pcall(rate, conn, held.md5, cap)
-        if ok then
-            memo.rate = { key = key, md5 = held.md5, cap = cap, value = found }
-        end
-    end
-end
-
 -- The history of the book row for md5 that was opened last, as rate picks it: its total_read_time, the local
 -- dates and first start of its page rows (main.lua:405-419) and its last_open (:462-477); nil for no row.
 local function history(conn, md5)
@@ -318,49 +211,6 @@ local function history(conn, md5)
     }
 end
 
--- The reading stats at now (epoch seconds): { state, streak, minutes_today, books_month, month_name }. state
--- is "off" when Statistics doesn't record, "empty" with no database or nothing read, "ok" otherwise. The
--- database is opened read-only and only when it exists, since an open that creates it would leave an empty
--- file the plugin then fails to open (main.lua:292-317). A failed read is logged and reads as empty, or, when
--- the database is busy, as the last numbers read. Kept for now's local date while the files' stamp holds.
--- Never raises.
-function ReadingStats.read(now)
-    local ok, result = pcall(function()
-        if off() then
-            return { state = "off" }
-        end
-        local path = db_path()
-        if not util.fileExists(path) then
-            return empty(now)
-        end
-        local key = stamp(path)
-        local date = os.date("%Y-%m-%d", now)
-        local held = memo.numbers
-        if key and held and held.key == key and held.date == date then
-            return held.value
-        end
-        local read_ok, numbers = with_db(path, function(conn)
-            local numbers = finish(query(conn, now), now)
-            refresh_rate(conn, key)
-            return numbers
-        end)
-        if not read_ok then
-            local busy = numbers:find("ljsqlite3%[busy%]") or numbers:find("ljsqlite3%[locked%]")
-            if busy and last then
-                return last
-            end
-            return empty(now)
-        end
-        memo.numbers = { key = key, date = date, now = now, value = numbers }
-        return numbers
-    end)
-    if not ok then
-        logger.err("KoPanda: could not read the reading stats:", result)
-        return empty(now)
-    end
-    return result
-end
-
 local function empty_insights()
     local days, hours = {}, {}
     for i = 1, ReadingStats.INSIGHT_DAYS do
@@ -372,9 +222,12 @@ local function empty_insights()
     return { state = "empty", days = days, hours = hours }
 end
 
--- The reading history at now (epoch seconds): { state, days, hours, sessions }, as insight_query reads them, with
--- state as read gives it, "empty" (zeros, no sessions) also when the days hold no reading. Opened, kept and read
--- when busy as read does. Never raises.
+-- The reading history at now (epoch seconds): { state, days, hours, sessions }, as insight_query reads them. state
+-- is "off" when Statistics doesn't record, "empty" (zeros, no sessions) with no database or no reading in the days,
+-- "ok" otherwise. The database is opened read-only and only when it exists, since an open that creates it would leave
+-- an empty file the plugin then fails to open (main.lua:292-317). A failed read is logged and reads as empty, or, when
+-- the database is busy, as the last history read. Kept for now's local date while the files' stamp holds. Never
+-- raises.
 function ReadingStats.insights(now)
     local ok, result = pcall(function()
         if off() then
@@ -435,9 +288,7 @@ function ReadingStats.seconds_per_page(md5)
             return held.value
         end
         local read_ok, found = with_db(path, function(conn)
-            local found = rate(conn, md5, cap)
-            refresh_numbers(conn, key)
-            return found
+            return rate(conn, md5, cap)
         end)
         if not read_ok then
             return nil

@@ -40,15 +40,16 @@ end
 
 local home_rows
 
--- Puts the header, the quote and a last row of the weather and the stats in Layout.rows, so a spec can hold or tap
--- them; the home's own rows have neither. M.restore_rows puts Layout.rows back.
-function M.use_weather_row()
+-- Puts the header, the quote and a last row of the reading and streak tiles in Layout.rows, two half-width widgets with
+-- neither a tap nor a hold of their own, which the home's own rows don't have, so a spec can hold or tap them.
+-- M.restore_rows puts Layout.rows back.
+function M.use_tile_row()
     local function slot(widget)
         return { widget = widget, share = 1 }
     end
     local Layout = package.loaded["layout"]
     home_rows = Layout.rows
-    Layout.rows = { { slot("date"), slot("clock") }, { slot("quote") }, { slot("weather"), slot("stats") } }
+    Layout.rows = { { slot("date"), slot("clock") }, { slot("quote") }, { slot("reading"), slot("streak") } }
 end
 
 function M.restore_rows()

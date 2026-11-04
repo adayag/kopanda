@@ -207,7 +207,7 @@ describe("Layout", function()
         local function stub_widgets()
             heights = {}
             local stubs = {}
-            for _, id in ipairs({ "date", "clock", "weather", "quote", "stats", "featured", "launcher" }) do
+            for _, id in ipairs({ "date", "clock", "reading", "quote", "streak", "featured", "launcher" }) do
                 stubs[id] = {
                     id = id,
                     height = function()
@@ -229,7 +229,7 @@ describe("Layout", function()
         local default = {
             { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
             { { widget = "quote", share = 1 } },
-            { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
+            { { widget = "reading", share = 1 }, { widget = "streak", share = 1 } },
         }
 
         before_each(function()
@@ -240,7 +240,7 @@ describe("Layout", function()
         end)
 
         it("adds Editorial's rule under row 1 and Diner's band to row 1's height", function()
-            heights = { date = 60, clock = 50, quote = 100, weather = 20, stats = 30 }
+            heights = { date = 60, clock = 50, quote = 100, reading = 20, streak = 30 }
             local c = ctx(editorial, 1264, 1680)
             local s = function(px) return Layout.screen:scaleBySize(px) end
             local arranged = Layout.arrange(default, c)
@@ -251,7 +251,7 @@ describe("Layout", function()
         end)
 
         it("lays row 1's slots inside the band's padding for Diner and the margins for Editorial", function()
-            heights = { date = 60, clock = 50, quote = 100, stats = 30 }
+            heights = { date = 60, clock = 50, quote = 100, streak = 30 }
             local s = function(px) return Layout.screen:scaleBySize(px) end
             local arranged = Layout.arrange(default, ctx(diner, 1264, 1680))
             local row = arranged.rows[1]
@@ -278,7 +278,7 @@ describe("Layout", function()
         end)
 
         it("places the rows above the bar's band and reports the band as nav", function()
-            heights = { date = 60, clock = 50, quote = 100, weather = 20, stats = 30 }
+            heights = { date = 60, clock = 50, quote = 100, reading = 20, streak = 30 }
             for _, look in ipairs({ editorial, diner }) do
                 local c = ctx(look, 1264, 1680)
                 local s = function(px) return Layout.screen:scaleBySize(px) end
@@ -303,14 +303,14 @@ describe("Layout", function()
                 local c = ctx(look, 1264, 1680)
                 local home = look.home
                 local first_gap = home.header.rule_color and 0 or nil
-                heights = { date = 60, clock = 60, quote = 300, weather = 20, stats = 20 }
+                heights = { date = 60, clock = 60, quote = 300, reading = 20, streak = 20 }
                 local fixed = Layout.arrange(default, c).heights
-                -- The weather row's height that fills the full height exactly, and so overflows
+                -- The last row's height that fills the full height exactly, and so overflows
                 -- the height less the band.
                 local probe = { fixed[1], fixed[2], 0 }
                 local ys = Layout.place(probe, 1680, home.margin, home.row_gap, "before_footer", 0, first_gap)
                 local s = function(px) return Layout.screen:scaleBySize(px) end
-                heights.weather = 1680 - s(home.margin.bottom) - ys[3] - s(home.row_gap)
+                heights.reading = 1680 - s(home.margin.bottom) - ys[3] - s(home.row_gap)
                 local _, full = Layout.place(Layout.arrange(default, c).heights, 1680, home.margin, home.row_gap,
                     home.free_space, 0, first_gap)
                 assert.same({}, full, "the rows fit the full height")
@@ -370,7 +370,7 @@ describe("Layout", function()
             end
 
             it("puts row 1 on one header plate between the side margins, its slots inside its keyline", function()
-                heights = { date = 60, clock = 50, quote = 100, weather = 20, stats = 30 }
+                heights = { date = 60, clock = 50, quote = 100, reading = 20, streak = 30 }
                 local arranged = Layout.arrange(default, ctx(frosted, 1264, 1680))
                 local row = arranged.rows[1]
                 local inset = s(2) + s(14)
@@ -385,7 +385,7 @@ describe("Layout", function()
 
             it("puts every other widget on its own plate, padded inside its keyline", function()
                 local widths = {}
-                heights = { date = 60, clock = 50, quote = 100, weather = 20, stats = 30 }
+                heights = { date = 60, clock = 50, quote = 100, reading = 20, streak = 30 }
                 local get = Widgets.get
                 Widgets.get = function(id)
                     local stub = get(id)
@@ -402,33 +402,33 @@ describe("Layout", function()
                 assert.same({ x = s(24), y = quote.y, w = 1264 - 2 * s(24), h = 100 + 2 * pad_y, radius = s(12) },
                     quote.plate)
                 assert.equals(1264 - 2 * s(24) - 2 * pad_x, widths.quote)
-                local stats = arranged.rows[3].slots[2]
-                assert.same({ s(2) + s(14), s(2) + s(8) }, { stats.pad_x, stats.pad_y })
-                assert.equals(s(999), stats.plate.radius)
+                local streak = arranged.rows[3].slots[2]
+                assert.same({ s(2) + s(10), s(2) + s(4) }, { streak.pad_x, streak.pad_y })
+                assert.equals(s(12), streak.plate.radius)
                 -- The row's plates share its height, the taller widget's and its padding.
-                assert.equals(30 + 2 * (s(2) + s(8)), arranged.heights[3])
+                assert.equals(30 + 2 * (s(2) + s(4)), arranged.heights[3])
                 assert.equals(arranged.heights[3], arranged.rows[3].slots[1].plate.h)
             end)
 
             it("keeps the margins and gutters between plates", function()
-                heights = { date = 60, clock = 50, quote = 100, weather = 20, stats = 30 }
+                heights = { date = 60, clock = 50, quote = 100, reading = 20, streak = 30 }
                 local arranged = Layout.arrange(default, ctx(frosted, 1264, 1680))
                 local header, quote = arranged.header.plate, arranged.rows[2].slots[1].plate
                 assert.equals(s(26), header.y)
-                local weather, stats = arranged.rows[3].slots[1].plate, arranged.rows[3].slots[2].plate
+                local reading, streak = arranged.rows[3].slots[1].plate, arranged.rows[3].slots[2].plate
                 -- The free height spread over the two gutters, each at least the row gap.
-                local above, below = quote.y - (header.y + header.h), weather.y - (quote.y + quote.h)
+                local above, below = quote.y - (header.y + header.h), reading.y - (quote.y + quote.h)
                 assert.is_true(above >= s(12) and below >= s(12))
                 assert.is_true(math.abs(above - below) <= 1)
-                assert.equals(s(24), weather.x)
-                assert.equals(s(12), stats.x - (weather.x + weather.w))
-                assert.equals(1264 - s(24), stats.x + stats.w)
+                assert.equals(s(24), reading.x)
+                assert.equals(s(12), streak.x - (reading.x + reading.w))
+                assert.equals(1264 - s(24), streak.x + streak.w)
                 -- The last row sits on the bottom margin above the bar.
-                assert.equals(1680 - BAR - s(14), stats.y + stats.h)
+                assert.equals(1680 - BAR - s(14), streak.y + streak.h)
             end)
 
             it("puts no plate under a widget that measures 0", function()
-                heights = { date = 60, clock = 50, quote = 100, weather = 20 }
+                heights = { date = 60, clock = 50, quote = 100, reading = 20 }
                 local arranged = Layout.arrange(default, ctx(frosted, 1264, 1680))
                 assert.is_table(arranged.rows[3].slots[1].plate)
                 assert.is_nil(arranged.rows[3].slots[2].plate)
@@ -438,7 +438,7 @@ describe("Layout", function()
             end)
 
             it("gives a look without plates none, and no padding", function()
-                heights = { date = 60, clock = 50, quote = 100, weather = 20, stats = 30 }
+                heights = { date = 60, clock = 50, quote = 100, reading = 20, streak = 30 }
                 for _, look in ipairs({ editorial, diner }) do
                     local arranged = Layout.arrange(default, ctx(look, 1264, 1680))
                     assert.is_nil(arranged.header.plate)
@@ -475,7 +475,7 @@ describe("Layout", function()
             for _, look in ipairs({ editorial, diner }) do
                 local previous
                 for quote = 1000, 1600, 10 do
-                    heights = { date = 60, clock = 60, quote = quote, weather = 20, stats = 20 }
+                    heights = { date = 60, clock = 60, quote = quote, reading = 20, streak = 20 }
                     local c = ctx(look, 1264, 1680)
                     local arranged = Layout.arrange(default, c)
                     local home = look.home
@@ -495,7 +495,7 @@ describe("Layout", function()
         end)
 
         it("lays out a landscape screen, dropping what doesn't fit", function()
-            heights = { date = 60, clock = 60, quote = 700, weather = 300, stats = 20 }
+            heights = { date = 60, clock = 60, quote = 700, reading = 300, streak = 20 }
             local c = ctx(diner, 1680, 1264)
             local ok, arranged = pcall(Layout.arrange, default, c)
             assert.is_true(ok, tostring(arranged))
@@ -645,7 +645,7 @@ describe("Layout", function()
         end)
 
         it("leaves margins and gaps alone at every text size", function()
-            heights = { date = 60, clock = 60, quote = 100, weather = 20, stats = 20 }
+            heights = { date = 60, clock = 60, quote = 100, reading = 20, streak = 20 }
             local positions = {}
             for _, size in ipairs({ "small", "medium", "large" }) do
                 local arranged = Layout.arrange(default, ctx(editorial, 1264, 1680, size))
@@ -662,8 +662,8 @@ describe("Layout", function()
         end)
 
         it("keeps the look's row gap and margins at extra_large", function()
-            heights = { date = 60, clock = 60, quote = 100, weather = 20, stats = 20 }
-            local four = { default[1], default[2], { { widget = "weather", share = 1 } }, default[3] }
+            heights = { date = 60, clock = 60, quote = 100, reading = 20, streak = 20 }
+            local four = { default[1], default[2], { { widget = "reading", share = 1 } }, default[3] }
             local s = function(px) return Layout.screen:scaleBySize(px) end
             local arranged = Layout.arrange(four, ctx(diner, 1264, 1680, "extra_large"))
             local rows = arranged.rows

@@ -300,7 +300,7 @@ describe("the date and clock widgets", function()
     -- The header's weather: the cached reading's line in the weekday label's part, over the date where the look's
     -- date is one line (home.date_lines), over the time otherwise.
     describe("the header's weather line", function()
-        local Typeset, Weather, WeatherWidget
+        local Typeset, Weather
         -- 61.4 °F, partly cloudy, by day, fetched 20 minutes before 08:42.
         local READING = { fetched_at = TUESDAY_0842 - 20 * 60, temperature = 61.4, weather_code = 2, is_day = 1,
             units = "fahrenheit" }
@@ -309,7 +309,6 @@ describe("the date and clock widgets", function()
         before_each(function()
             Typeset = require("typeset")
             Weather = require("weather")
-            WeatherWidget = require("widgets/weather")
         end)
 
         -- Runs fn with Weather.reading answering reading, and Weather.line text when given.
@@ -549,12 +548,12 @@ describe("the date and clock widgets", function()
             end, "Thunderstorm with heavy hail, 104° · 47 h ago")
         end)
 
-        it("leaves the weather widget its own line and tap", function()
+        it("is the home's only weather, with no weather or stats widget beside it", function()
+            assert.is_nil(Widgets.get("weather"))
+            assert.is_nil(Widgets.get("stats"))
             with_weather(READING, function()
-                assert.is_function(WeatherWidget.tap)
-                local built = WeatherWidget.build(520, ctx_for("editorial"))
-                assert.equals("PARTLY CLOUDY, 61°", lines(built)[1].text)
-                assert_styled(lines(built)[1], "weather", ctx_for("editorial"))
+                local ctx = ctx_for("editorial")
+                assert.equals("PARTLY CLOUDY, 61°", lines(holder(ctx).build(520, ctx))[1].text)
             end)
         end)
     end)

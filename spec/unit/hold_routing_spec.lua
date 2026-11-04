@@ -10,7 +10,6 @@ describe("gestures on the KoPanda home", function()
 
     local send = gestures.send
     local settings_menu = gestures.settings_menu
-    local settings_keys = gestures.settings_keys
     local fm_with_home = gestures.fm_with_home
     local slot_of = gestures.slot_of
     local point = gestures.point
@@ -18,7 +17,7 @@ describe("gestures on the KoPanda home", function()
     before_each(function()
         harness.load()
         Home = require("home")
-        gestures.use_weather_row()
+        gestures.use_tile_row()
     end)
 
     -- Focused mode off, for the cases whose holds land in the top menu zones, where with it on a hold opens the file
@@ -39,13 +38,13 @@ describe("gestures on the KoPanda home", function()
         local time = require("ui/time")
         local Sheet
 
-        -- Registers a stub widget for date, clock, quote, weather and stats, each 60 tall; one
+        -- Registers a stub widget for date, clock, quote, reading and streak, each 60 tall; one
         -- whose id is in holds gets holds[id] as its hold. featured and launcher get no module,
         -- so their slots are blank. Returns the stubs by id.
         local function stubs_with(holds)
             local Widget = require("ui/widget/widget")
             local stubs = {}
-            for _, id in ipairs({ "date", "clock", "quote", "weather", "stats" }) do
+            for _, id in ipairs({ "date", "clock", "quote", "reading", "streak" }) do
                 stubs[id] = {
                     id = id,
                     height = function()
@@ -199,7 +198,7 @@ describe("gestures on the KoPanda home", function()
             finally(function()
                 open:revert()
             end)
-            local x, y = centre_of("weather")
+            local x, y = centre_of("reading")
             assert.is_true(Home.shown:onGesture(harness.gesture("hold", x, y)))
             assert.spy(open).was.called(1)
             assert.equals(0, sheets_on_stack())
@@ -207,13 +206,14 @@ describe("gestures on the KoPanda home", function()
             assert.equals(home, harness.top(2))
         end)
 
-        it("opens the quote's settings, cut to its group, on a hold on the quote", function()
-            mode_off()
+        it("opens the home's sheet and no settings menu on a hold on the quote", function()
+            gestures.restore_rows()
             fm_with_home()
-            assert.is_nil(slot_of("quote").module.hold)
             hold(centre_of("quote"))
-            assert.same({ "quote.source" }, settings_keys())
-            assert.equals(0, sheets_on_stack())
+            assert.is_nil(settings_menu())
+            assert.equals(1, sheets_on_stack())
+            assert.is_true(sheet_shown())
+            assert.equals("home", Sheet.shown.spec.name)
         end)
 
         -- As the Gestures plugin registers hold_top_right_corner (gestures main.lua:1128-1131,
@@ -278,7 +278,7 @@ describe("gestures on the KoPanda home", function()
         -- A hold on the nav bar outside its Settings column is consumed and runs nothing.
         it("opens no sheet and runs no slot's hold on a hold in the nav bar's band", function()
             local held, calls = recording(nil)
-            stubs_with({ date = held, clock = held, quote = held, weather = held, stats = held })
+            stubs_with({ date = held, clock = held, quote = held, reading = held, streak = held })
             fm_with_home()
             local home = Home.shown
             local bar = home.nav
@@ -300,7 +300,7 @@ describe("gestures on the KoPanda home", function()
             .. "off", function()
             mode_off()
             local held, calls = recording(nil)
-            stubs_with({ date = held, clock = held, quote = held, weather = held, stats = held })
+            stubs_with({ date = held, clock = held, quote = held, reading = held, streak = held })
             fm_with_home()
             local home = Home.shown
             hold(tab_centre(home.nav, 5))
@@ -317,7 +317,7 @@ describe("gestures on the KoPanda home", function()
         it("opens the full settings list over the home and no sheet on a hold on Settings, with focused mode on",
             function()
             local held, calls = recording(nil)
-            stubs_with({ date = held, clock = held, quote = held, weather = held, stats = held })
+            stubs_with({ date = held, clock = held, quote = held, reading = held, streak = held })
             fm_with_home()
             local home = Home.shown
             hold(tab_centre(home.nav, 5))
@@ -336,7 +336,7 @@ describe("gestures on the KoPanda home", function()
                 UIManager:setIgnoreTouchInput(false)
             end)
             hold(empty_point())
-            hold(centre_of("weather"))
+            hold(centre_of("reading"))
             assert.equals(0, sheets_on_stack())
             assert.is_nil(settings_menu())
             assert.equals(home, harness.top())

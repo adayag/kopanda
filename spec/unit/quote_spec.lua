@@ -14,8 +14,7 @@ describe("the quote of the day", function()
     local Quote = require("widgets/quote")
     local profiles = dofile(harness.root .. "/spec/emulator/profiles.lua")
     local quotes_path = harness.plugin_dir .. "/quotes.lua"
-    local builtin = Quote.sources.builtin
-    local real_get = Settings.get
+    local builtin = Quote.entries
 
     pcall(ffi.cdef, "void tzset(void);")
 
@@ -87,8 +86,7 @@ describe("the quote of the day", function()
     end)
 
     after_each(function()
-        Quote.sources.builtin = builtin
-        Settings.get = real_get
+        Quote.entries = builtin
     end)
 
     describe("quotes.lua", function()
@@ -129,8 +127,8 @@ describe("the quote of the day", function()
             end
         end)
 
-        it("is the builtin source", function()
-            assert.same(dofile(quotes_path), Quote.sources.builtin)
+        it("is the widget's list", function()
+            assert.same(dofile(quotes_path), Quote.entries)
         end)
     end)
 
@@ -173,12 +171,7 @@ describe("the quote of the day", function()
             return built.text_box[1] or built.text_box
         end
 
-        it("reads quote.source and draws the day's builtin entry in curly quotes, with no author", function()
-            local read = {}
-            Settings.get = function(key)
-                read[#read + 1] = key
-                return real_get(key)
-            end
+        it("draws the day's entry in curly quotes, with no author", function()
             for _, look_id in ipairs(Looks.ids()) do
                 local ctx = ctx_for(look_id)
                 local entry = dofile(quotes_path)[Quote.index(ctx.now)]
@@ -188,19 +181,25 @@ describe("the quote of the day", function()
                 assert.is_nil(text:find(entry.author, 1, true))
                 built:free()
             end
-            assert.truthy(#read > 0)
-            for _, key in ipairs(read) do
-                if key == "quote.source" then
-                    return
-                end
-            end
-            error("the widget never read quote.source")
+        end)
+
+        it("draws an entry of a list a spec puts in Quote.entries", function()
+            Quote.entries = { { text = "A list of the spec's own.", author = "A", work = "W" } }
+            local ctx = ctx_for("editorial")
+            local built = Quote.build(500, ctx)
+            assert.equals("“A list of the spec's own.”", box_of(built).text)
+            built:free()
+        end)
+
+        it("has no settings, so a hold falls through to the home's sheet", function()
+            assert.is_nil(Quote.settings_prefix)
+            assert.is_false(Quote.hold())
         end)
 
         it("sets the quote at the look's own size at every text size, the longest entry whole in four lines in a "
             .. "full-width row on both profiles", function()
             local entry = longest(dofile(quotes_path))
-            Quote.sources.builtin = { entry }
+            Quote.entries = { entry }
             for name, profile in pairs(profiles) do
                 on_screen(profile.width, profile.height, function()
                     for _, look_id in ipairs(Looks.ids()) do
@@ -222,7 +221,7 @@ describe("the quote of the day", function()
         end)
 
         it("ends a longer text in an ellipsis on its fourth line", function()
-            Quote.sources.builtin = {
+            Quote.entries = {
                 {
                     text = string.rep("Reading is a long and pleasant thing. ", 11):sub(1, 400),
                     author = "A",
@@ -249,7 +248,7 @@ describe("the quote of the day", function()
         -- A face whose glyphs stand taller than the line adds their overhang
         -- below it (frontend/ui/widget/textboxwidget.lua:154-163, :850-851).
         it("shrinks to one line for a short text, its height that line and the chrome", function()
-            Quote.sources.builtin = { { text = "Read.", author = "A", work = "W" } }
+            Quote.entries = { { text = "Read.", author = "A", work = "W" } }
             for _, look_id in ipairs(Looks.ids()) do
                 local ctx = ctx_for(look_id)
                 local look = ctx.look
@@ -362,8 +361,8 @@ describe("the quote of the day", function()
             bb:free()
         end)
 
-        it("is a blank box of height 0 for an empty source", function()
-            Quote.sources.builtin = {}
+        it("is a blank box of height 0 for an empty list", function()
+            Quote.entries = {}
             local ctx = ctx_for("editorial")
             assert.is_nil(Quote.index(ctx.now))
             assert.equals(0, Quote.height(400, ctx))
@@ -392,10 +391,10 @@ describe("the quote of the day", function()
             TextBoxWidget.new = own_new
         end)
 
-        -- A source of two entries no other test draws, so a test's first build finds no box kept
+        -- A list of two entries no other test draws, so a test's first build finds no box kept
         -- from before it.
         local function two_days(tag)
-            Quote.sources.builtin = {
+            Quote.entries = {
                 { text = "The words for one day, " .. tag .. ".", author = "A", work = "W" },
                 { text = "The words for the next day, " .. tag .. ".", author = "A", work = "W" },
             }

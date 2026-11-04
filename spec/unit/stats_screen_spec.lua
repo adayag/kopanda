@@ -23,7 +23,6 @@ describe("the Stats window", function()
     local function stub(id, heights)
         return {
             id = id,
-            settings_prefix = "stats",
             height = function(width, ctx)
                 seen.measured[#seen.measured + 1] = { id = id, width = width, ctx = ctx }
                 return heights[id]

@@ -307,12 +307,12 @@ return {
 
     await Promise.all([
       request(app).put("/api/profiles/kobo/settings/look").send({ value: "editorial" }),
-      request(app).put("/api/profiles/kobo/settings/stats.show").send({ value: false }),
+      request(app).put("/api/profiles/kobo/settings/focused.on").send({ value: false }),
       request(app).put("/api/profiles/kobo/settings/text_size").send({ value: "large" }),
     ]);
     const res = await request(app).get("/api/profiles/kobo/settings");
 
-    expect(res.body.values).toMatchObject({ look: "editorial", "stats.show": false, text_size: "large" });
+    expect(res.body.values).toMatchObject({ look: "editorial", "focused.on": false, text_size: "large" });
   });
 
   it("writes a value equal to the stored one, naming this file in the header in place of the device's", async () => {

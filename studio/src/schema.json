@@ -87,26 +87,6 @@
             "type": "choice"
         },
         {
-            "choices": [
-                {
-                    "label": "Built-in",
-                    "value": "builtin"
-                }
-            ],
-            "default": "builtin",
-            "group": "quote",
-            "id": "quote.source",
-            "label": "Quote source",
-            "type": "choice"
-        },
-        {
-            "default": true,
-            "group": "stats",
-            "id": "stats.show",
-            "label": "Show reading stats",
-            "type": "boolean"
-        },
-        {
             "default": false,
             "group": "featured",
             "id": "featured.pinned",

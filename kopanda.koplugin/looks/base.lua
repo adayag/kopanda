@@ -108,8 +108,6 @@ return {
         slots = {
             date = { x = 0, y = 0, radius = 0 },
             clock = { x = 0, y = 0, radius = 0 },
-            weather = { x = 0, y = 0, radius = 0 },
-            stats = { x = 0, y = 0, radius = 0 },
             quote = { x = 0, y = 0, radius = 0 },
             featured = { x = 0, y = 0, radius = 0 },
             reading = { x = 0, y = 0, radius = 0 },
@@ -283,15 +281,12 @@ return {
             edge_width = 0,
             edge_color = false,
         },
-        weather_icon = { size = 0, gap = 0 }, -- size 0: no icon
+        weather_icon = { shown = false, gap = 0 }, -- the sun or moon before the header's weather line
         -- The home widgets' shapes: "61° Partly cloudy" (degrees_first) or condition_first; the
-        -- weekday over the date (2) or one line (1); the stats on one line (joined) or spread;
-        -- "3-day streak" (count_first) or word_first; "Now reading" or continue_reading; the
+        -- weekday over the date (2) or one line (1); "Now reading" or continue_reading; the
         -- featured authors and chapter, and its caption's parts, joined on one line each or split.
         weather_order = "degrees_first",
         date_lines = 2,
-        stats_line = "joined",
-        stats_streak = "count_first",
         featured_label = "now_reading",
         featured_details = "joined",
     },
@@ -333,9 +328,7 @@ return {
         date_label = { face = "strong", size = 11, uppercase = true, tracking = 0.1, line_height = 0, color = "muted" },
         date = { face = "strong", size = 18, uppercase = false, tracking = 0, line_height = 0.1, color = "ink" },
         clock = { face = "display", size = 36, uppercase = false, tracking = -0.02, line_height = -0.2, color = "ink" },
-        weather = { face = "text", size = 14, uppercase = false, tracking = 0, line_height = 0, color = "text" },
         quote = { face = "quote", size = 18, uppercase = false, tracking = 0, line_height = 0.35, color = "ink" },
-        stats = { face = "strong", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "text" },
         insight_label = {
             face = "strong", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "ink",
         },

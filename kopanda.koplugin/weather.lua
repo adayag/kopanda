@@ -1,5 +1,5 @@
 -- The weather: Open-Meteo's current conditions for the weather.location setting in its units, kept in
--- settings/kopanda/weather.lua, and the line the weather widget draws from it. The cache is runtime state like
+-- settings/kopanda/weather.lua, and the line the header draws from it. The cache is runtime state like
 -- state.lua: not a setting, never read by the studio. A fetch blocks the UI, so it runs only after the home's
 -- first paint, once per process when connected, on NetworkConnected until one succeeds, and on a tap. State:
 -- whether a fetch was attempted in this process, and how many have succeeded.
@@ -151,7 +151,7 @@ function Weather.reading()
     return data
 end
 
--- The line the widget draws for reading at now in the look whose tokens are look, in its home.weather_order:
+-- The line the header draws for reading at now in the look whose tokens are look, in its home.weather_order:
 -- "Partly cloudy, 61°" condition first, "61° partly cloudy" degrees first, the temperature alone for an unknown
 -- code, then " · 3 h ago" once the reading is an hour old (" · 2 d ago" from two days); with no reading,
 -- "Weather needs Wi-Fi".
@@ -230,8 +230,8 @@ function Weather.on_connected(home)
     run(home)
 end
 
--- A tap on the weather: a fetch now when connected; otherwise once online, which may ask to turn Wi-Fi on as
--- wifi_enable_action says (frontend/ui/network/manager.lua:605-618, :698-709). NetworkMgr broadcasts
+-- The home sheet's Refresh weather row: a fetch now when connected; otherwise once online, which may ask to turn
+-- Wi-Fi on as wifi_enable_action says (frontend/ui/network/manager.lua:605-618, :698-709). NetworkMgr broadcasts
 -- NetworkConnected before it runs the callback (:109, :116), so the callback skips its fetch when one has
 -- succeeded since the tap. A failed fetch says so for 3 s.
 function Weather.tap(home)

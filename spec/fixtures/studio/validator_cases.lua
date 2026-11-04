@@ -23,18 +23,6 @@ return {
     { key = "weather.units", value = "kelvin", valid = false, why = "an unlisted string" },
     { key = "weather.units", value = 0, valid = false, why = "a number" },
 
-    -- quote.source
-    { key = "quote.source", value = "builtin", valid = true, why = "a listed choice" },
-    { key = "quote.source", value = "web", valid = false, why = "an unlisted string" },
-    { key = "quote.source", value = 1, valid = false, why = "a number" },
-    { key = "quote.source", value = { "builtin" }, valid = false, why = "a table holding a choice" },
-
-    -- stats.show
-    { key = "stats.show", value = true, valid = true, why = "true" },
-    { key = "stats.show", value = false, valid = true, why = "false" },
-    { key = "stats.show", value = 1, valid = false, why = "a number" },
-    { key = "stats.show", value = "true", valid = false, why = "a string" },
-
     -- focused.on
     { key = "focused.on", value = true, valid = true, why = "true" },
     { key = "focused.on", value = false, valid = true, why = "false" },

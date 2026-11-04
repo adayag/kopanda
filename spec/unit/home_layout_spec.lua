@@ -94,8 +94,8 @@ describe("the home's rows", function()
             quote = stub("quote", 120, function()
                 taps = taps + 1
             end),
-            weather = stub("weather", 20),
-            stats = stub("stats", 20),
+            reading = stub("reading", 20),
+            streak = stub("streak", 20),
             featured = stub("featured", 100),
             launcher = stub("launcher", 80),
         }
@@ -108,7 +108,7 @@ describe("the home's rows", function()
             { { widget = "featured", share = 1 } },
             { { widget = "quote", share = 1 } },
             { { widget = "launcher", share = 1 } },
-            { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
+            { { widget = "reading", share = 1 }, { widget = "streak", share = 1 } },
         }
         warned = spy.on(logger, "warn")
         errored = spy.on(logger, "err")
@@ -127,9 +127,9 @@ describe("the home's rows", function()
         -- margin are both 40, so each row is 520 wide; two columns share it less a 14 px gap.
         assert.equals(1, Screen:scaleBySize(1))
         assert.equals(600, Screen:getWidth())
-        assert.same({ date = 253, clock = 253, featured = 520, quote = 520, launcher = 520, weather = 253,
-            stats = 253 }, widths)
-        assert.same({ date = 1, clock = 1, featured = 1, quote = 1, launcher = 1, weather = 1, stats = 1 }, builds)
+        assert.same({ date = 253, clock = 253, featured = 520, quote = 520, launcher = 520, reading = 253,
+            streak = 253 }, widths)
+        assert.same({ date = 1, clock = 1, featured = 1, quote = 1, launcher = 1, reading = 1, streak = 1 }, builds)
         assert.equals(7, #home.slots)
     end)
 
@@ -174,7 +174,7 @@ describe("the home's rows", function()
         local Settings = package.loaded["settings"]
         stubs.date = require("widgets/date")
         stubs.clock = require("widgets/clock")
-        stubs.stats = stub("stats", 30)
+        stubs.streak = stub("streak", 30)
         -- Typeset paints a line's glyphs through Typeset.paint_glyphs (typeset.lua).
         local Typeset = package.loaded["typeset"]
         local paint = Typeset.paint_glyphs
@@ -242,8 +242,8 @@ describe("the home's rows", function()
             end
             local header = slot_of(home, "date").rect
             assert.equals(header.y + header.h, bottom, id)
-            -- Row 3's shorter weather stays at its row's top.
-            for _, id_ in ipairs({ "weather", "stats" }) do
+            -- Row 3's shorter tile stays at its row's top.
+            for _, id_ in ipairs({ "reading", "streak" }) do
                 local at, slot = place(id_)
                 assert.equals(slot.rect.y, at.y, id .. " " .. id_)
             end
@@ -293,7 +293,7 @@ describe("the home's rows", function()
         assert.equals(520, slot.built:getSize().w)
         assert.is_nil(slot.built.stub)
         assert.is_true(logged("quote"))
-        assert.same({ date = 1, clock = 1, featured = 1, launcher = 1, weather = 1, stats = 1 }, builds)
+        assert.same({ date = 1, clock = 1, featured = 1, launcher = 1, reading = 1, streak = 1 }, builds)
     end)
 
     it("leaves a blank slot, logged, for a widget whose height raises", function()
@@ -309,14 +309,14 @@ describe("the home's rows", function()
     end)
 
     it("leaves a blank slot, logged, for a widget whose build raises", function()
-        stubs.weather.build = function()
+        stubs.reading.build = function()
             error("kopanda-test: build failed")
         end
         local _, home = show_home()
         assert.equals(home, harness.top())
-        assert.equals(253, slot_of(home, "weather").built:getSize().w)
+        assert.equals(253, slot_of(home, "reading").built:getSize().w)
         assert.is_true(logged("kopanda-test: build failed"))
-        assert.equals(1, builds.stats)
+        assert.equals(1, builds.streak)
     end)
 
     it("runs a slot's tap once on a tap inside it, and stays up", function()
@@ -407,7 +407,7 @@ describe("the home's rows", function()
     it("closes on a tap in a slot whose widget has no tap", function()
         assert.is_true(package.loaded["settings"].set("focused.on", false))
         local fm, home = show_home()
-        local rect = slot_of(home, "stats").rect
+        local rect = slot_of(home, "streak").rect
         tap_at(centre(rect))
         assert.equals(0, taps)
         assert.is_nil(Home.shown)
@@ -536,7 +536,7 @@ describe("the home's rows", function()
     it("rebuilds on refresh", function()
         local _, home = show_home()
         home:refresh()
-        assert.equals(2, builds.stats)
+        assert.equals(2, builds.streak)
     end)
 
     it("frees the old rows on refresh and takes a new frame", function()
@@ -568,9 +568,9 @@ describe("the home's rows", function()
         finally(function()
             UIManager.setDirty = set_dirty
         end)
-        local built = builds.stats
+        local built = builds.streak
         home:refresh()
-        assert.equals(built, builds.stats)
+        assert.equals(built, builds.streak)
         assert.is_false(repainted)
     end)
 
@@ -623,13 +623,13 @@ describe("the home's rows", function()
             return { c:getR(), c:getG(), c:getB() }
         end
 
-        -- The weather's widget paints red from its top to the screen's bottom, over the band.
-        local function overreaching_weather()
+        -- The reading tile paints red from its top to the screen's bottom, over the band.
+        local function overreaching_tile()
             local Overreach = Widget:extend{}
             function Overreach:paintTo(bb, x, y)
                 bb:paintRectRGB32(x, y, self.dimen.w, Screen:getHeight() - y, RED)
             end
-            stubs.weather.build = function(width)
+            stubs.reading.build = function(width)
                 return Overreach:new{ dimen = Geom:new{ w = width, h = 20 } }
             end
         end
@@ -644,7 +644,7 @@ describe("the home's rows", function()
         end
 
         it("is drawn with Home active in the band under the rows, painted over them", function()
-            overreaching_weather()
+            overreaching_tile()
             local _, home = show_home()
             local look = Looks.active()
             local bar = home.nav
@@ -660,11 +660,11 @@ describe("the home's rows", function()
             for _, slot in ipairs(home.slots) do
                 assert.truthy(slot.rect.y + slot.rect.h <= bar.dimen.y, slot.widget)
             end
-            -- Column 2 under the edge, above its icon, and under the weather's red.
+            -- Column 2 under the edge, above its icon, and under the tile's red.
             local x = bar.padding_x + bar.columns[2].x + 2
             local y = bar.dimen.y + Screen:scaleBySize(look.nav.edge_width) + 1
-            local weather = slot_of(home, "weather").rect
-            assert.truthy(x >= weather.x and x < weather.x + weather.w)
+            local tile = slot_of(home, "reading").rect
+            assert.truthy(x >= tile.x and x < tile.x + tile.w)
             local fill = Looks.color(Looks.palette(look, home.ctx.variant)[look.nav.fill_color])
             assert.same(rgb(fill), painted_at(home, x, y))
         end)
@@ -677,7 +677,7 @@ describe("the home's rows", function()
             assert.equals(home, harness.top())
             assert.is_nil(home.nav)
             assert.is_true(logged("kopanda-test: bar failed"))
-            assert.same({ date = 1, clock = 1, featured = 1, quote = 1, launcher = 1, weather = 1, stats = 1 }, builds)
+            assert.same({ date = 1, clock = 1, featured = 1, quote = 1, launcher = 1, reading = 1, streak = 1 }, builds)
             local look = Looks.active()
             local paper = Looks.color(Looks.palette(look, home.ctx.variant).paper)
             local h = package.loaded["nav_bar"].height(look, Screen)

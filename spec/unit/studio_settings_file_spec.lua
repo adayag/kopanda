@@ -51,7 +51,7 @@ describe("a studio-written settings file", function()
         assert.equals(expected, expected:match("^[^\n]*\n") .. body)
     end)
 
-    it("reads through Settings.get as written, every key but quote.source off its default", function()
+    it("reads through Settings.get as written, every key off its default", function()
         local data = dofile(fixture)
         lfs.mkdir(harness.state_dir)
         write(harness.settings_file, read(fixture))
@@ -59,11 +59,7 @@ describe("a studio-written settings file", function()
         for _, entry in ipairs(Schema.keys) do
             local value = Settings.get(entry.id)
             assert.same(data[entry.id], value)
-            if entry.id == "quote.source" then
-                assert.same(entry.default, value)
-            else
-                assert.are_not.same(entry.default, value)
-            end
+            assert.are_not.same(entry.default, value)
         end
     end)
 end)

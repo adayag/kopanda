@@ -14,7 +14,6 @@ local MIN_PER_DAY = 300
 
 local Forecast = {
     id = "forecast",
-    settings_prefix = "stats",
 }
 
 -- The type part each line is set in, and the token of the gap above it.

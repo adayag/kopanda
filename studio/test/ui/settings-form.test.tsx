@@ -125,8 +125,6 @@ describe("the form's controls", () => {
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
       "Appearance",
       "Weather",
-      "Quote",
-      "Stats",
       "Featured",
       "Launcher",
       "Focused",
@@ -159,15 +157,6 @@ describe("the form's controls", () => {
     expect(size.getAllByRole("button").map((b) => b.textContent)).toEqual(["Small", "Medium", "Large", "Extra large"]);
     expect(size.getByRole("button", { name: "Large" })).toHaveAttribute("aria-pressed", "true");
     expect(size.getByRole("button", { name: "Medium" })).toHaveAttribute("aria-pressed", "false");
-  });
-
-  it("shows quote.source's one choice as one button, already selected", () => {
-    render(<SettingsForm profileId="colorsoft" settings={settings()} {...idle} />);
-
-    const buttons = within(control("quote.source")).getAllByRole("button");
-    expect(buttons).toHaveLength(1);
-    expect(buttons[0]).toHaveTextContent("Built-in");
-    expect(buttons[0]).toHaveAttribute("aria-pressed", "true");
   });
 
   it("shows a key the settings answer lacks at its schema default", () => {
@@ -246,15 +235,15 @@ describe("writing a key", () => {
 
   it("sends one PUT for the toggle", async () => {
     await open(settings(), {
-      "PUT /api/profiles/colorsoft/settings/stats.show": () => json(settings({}, { "stats.show": false })),
+      "PUT /api/profiles/colorsoft/settings/focused.on": () => json(settings({}, { "focused.on": false })),
     });
-    const toggle = within(control("stats.show")).getByRole("checkbox", { name: "Show reading stats" });
+    const toggle = within(control("focused.on")).getByRole("checkbox", { name: "Focused mode" });
     expect(toggle).toBeChecked();
 
     fireEvent.click(toggle);
 
     await waitFor(() => expect(toggle).not.toBeChecked());
-    expect(puts()).toEqual([["/api/profiles/colorsoft/settings/stats.show", { value: false }]]);
+    expect(puts()).toEqual([["/api/profiles/colorsoft/settings/focused.on", { value: false }]]);
   });
 
   it.each(["books/a.epub", "/"])("refuses the pin %s with the note and sends nothing", async (typed) => {

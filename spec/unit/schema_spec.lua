@@ -43,7 +43,7 @@ describe("schema.lua", function()
         assert.same({ "schema.keys.1.check" }, functions_in({ keys = { { check = print } } }, "schema"))
     end)
 
-    it("is version 1 with the eleven keys of the Keys tables, in order", function()
+    it("is version 1 with the eight keys of the Keys tables, in order", function()
         local schema = load_bare()
         assert.equals(1, schema.version)
         assert.same({
@@ -97,23 +97,6 @@ describe("schema.lua", function()
                 default = "fahrenheit",
                 label = "Units",
                 group = "weather",
-            },
-            {
-                id = "quote.source",
-                type = "choice",
-                choices = {
-                    { value = "builtin", label = "Built-in" },
-                },
-                default = "builtin",
-                label = "Quote source",
-                group = "quote",
-            },
-            {
-                id = "stats.show",
-                type = "boolean",
-                default = true,
-                label = "Show reading stats",
-                group = "stats",
             },
             {
                 id = "featured.pinned",

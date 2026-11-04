@@ -84,9 +84,6 @@ return {
             -- The header plate's padding.
             date = { x = 18, y = 14, radius = 12 },
             clock = { x = 18, y = 14, radius = 12 },
-            -- The stats' pill.
-            weather = { x = 14, y = 8, radius = 999 },
-            stats = { x = 14, y = 8, radius = 999 },
             quote = { x = 18, y = 12, radius = 12 },
             featured = { x = 14, y = 14, radius = 12 },
             -- The insight tiles', tighter than the featured tile's.

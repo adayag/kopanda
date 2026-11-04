@@ -51,7 +51,7 @@ describe("gestures on the KoPanda home", function()
     before_each(function()
         harness.load()
         Home = require("home")
-        gestures.use_weather_row()
+        gestures.use_tile_row()
     end)
 
     -- Focused mode off, for the cases that keep today's home: the top zone's menu and the closing tap.
@@ -98,19 +98,19 @@ describe("gestures on the KoPanda home", function()
             send(harness.gesture("hold", rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2)))
         end
 
-        it("opens the weather's two settings over the home", function()
+        it("opens the settings of its group over the home", function()
+            local streak = package.loaded["widgets"].get("streak")
+            local prefix = streak.settings_prefix
+            streak.settings_prefix = "weather"
+            finally(function()
+                streak.settings_prefix = prefix
+            end)
             fm_with_home()
             local home = Home.shown
-            hold_on("weather")
+            hold_on("streak")
             assert.equals(settings_menu(), harness.top())
             assert.equals(home, harness.top(2))
             assert.same({ "weather.location", "weather.units" }, gestures.settings_keys())
-        end)
-
-        it("opens the stats' one setting", function()
-            fm_with_home()
-            hold_on("stats")
-            assert.same({ "stats.show" }, gestures.settings_keys())
         end)
 
         it("opens the full list from the date, whose group has no keys, with focused mode off", function()
@@ -519,7 +519,7 @@ describe("gestures on the KoPanda home", function()
         local Geom = require("ui/geometry")
         local taps = 0
         local stubs = {}
-        for _, id in ipairs({ "date", "clock", "quote", "weather", "stats" }) do
+        for _, id in ipairs({ "date", "clock", "quote", "reading", "streak" }) do
             stubs[id] = {
                 id = id,
                 height = function()
@@ -578,14 +578,14 @@ describe("gestures on the KoPanda home", function()
 
     it("lets a corner zone on the file manager win over a tappable slot under it", function()
         local size = Screen:getSize()
-        local tall = { quote = 20, weather = 20, stats = 20 }
+        local tall = { quote = 20, reading = 20, streak = 20 }
         local taps = tappable_stubs(tall)
         local fm = fm_with_home()
         -- The last row grown to end on the nav bar's band, which takes its own taps first,
         -- so its bottom-right corner lies in the corner eighth just above the bar.
-        local stats = slot_of("stats").rect
-        tall.weather = Home.shown.nav.dimen.y - stats.y
-        tall.stats = tall.weather
+        local streak = slot_of("streak").rect
+        tall.reading = Home.shown.nav.dimen.y - streak.y
+        tall.streak = tall.reading
         Home.shown:refresh()
         local received
         fm:registerTouchZones{ {
@@ -598,7 +598,7 @@ describe("gestures on the KoPanda home", function()
             end,
         } }
         local home = Home.shown
-        local rect = slot_of("stats").rect
+        local rect = slot_of("streak").rect
         local x, y = rect.x + rect.w - 5, rect.y + rect.h - 5
         assert.is_true(rect:contains(point(x, y)))
         assert.truthy(x >= size.w * 7 / 8 and y >= size.h * 7 / 8)
@@ -638,7 +638,7 @@ describe("gestures on the KoPanda home", function()
         package.loaded["layout"].rows = {
             { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
             { { widget = "quote", share = 1 } },
-            { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
+            { { widget = "reading", share = 1 }, { widget = "streak", share = 1 } },
         }
         local fm = fm_with_home()
         local size = Screen:getSize()

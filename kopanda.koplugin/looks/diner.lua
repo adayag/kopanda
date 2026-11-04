@@ -135,7 +135,7 @@ return {
             edge_width = 4,
             edge_color = "ink",
         },
-        weather_icon = { size = 20, gap = 8 },
+        weather_icon = { shown = true, gap = 8 },
         date_lines = 1,
     },
 
@@ -152,10 +152,8 @@ return {
         date_label = { face = "display", color = "on_band" },
         date = { size = 16, uppercase = true, tracking = 0.04, line_height = 0, color = "on_band" },
         clock = { size = 56, line_height = -0.1, color = "on_band" },
-        weather = { face = "strong", size = 13, uppercase = true, tracking = 0.06, color = "ink" },
         -- The quote face at Editorial's size and line height.
         quote = { line_height = 0.4 },
-        stats = { size = 13, tracking = 0.06, color = "ink" },
         insight_label = { face = "display" },
         insight_note = { face = "accent", size = 18 },
         -- The display face stands in for the cover title's serif.

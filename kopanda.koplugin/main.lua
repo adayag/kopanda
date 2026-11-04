@@ -106,7 +106,6 @@ require("widgets/months")
 require("widgets/quote")
 require("widgets/reading")
 require("widgets/records")
-require("widgets/stats")
 require("widgets/streak")
 require("widgets/weather")
 

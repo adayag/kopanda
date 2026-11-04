@@ -13,7 +13,6 @@ local LABEL = "Last 12 months"
 
 local Months = {
     id = "months",
-    settings_prefix = "stats",
 }
 
 -- Each of the COUNT months ending at now's as { month, seconds }, oldest first, from days (seconds per local day,

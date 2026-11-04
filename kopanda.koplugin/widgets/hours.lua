@@ -8,7 +8,6 @@ local Typeset = require("typeset")
 
 local Hours = {
     id = "hours",
-    settings_prefix = "stats",
 }
 
 -- The captions under hours 0, 6, 12 and 18.

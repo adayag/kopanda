@@ -12,13 +12,11 @@ describe("looks", function()
     local looks = {}
 
     -- The home widgets' shapes a look chooses, each token under home with its values: the weather line's order, the
-    -- date's line count, the stats joined or spread, the streak word-first or count-first, the featured label, and
-    -- the featured authors and chapter and the caption's parts, joined on one line each or split.
+    -- date's line count, the featured label, and the featured authors and chapter and the caption's parts, joined on
+    -- one line each or split.
     local HOME_CHOICES = {
         weather_order = { "degrees_first", "condition_first" },
         date_lines = { 1, 2 },
-        stats_line = { "joined", "spread" },
-        stats_streak = { "count_first", "word_first" },
         featured_label = { "now_reading", "continue_reading" },
         featured_details = { "joined", "split" },
     }

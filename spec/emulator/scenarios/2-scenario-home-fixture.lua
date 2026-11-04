@@ -300,7 +300,7 @@ local ok, err = pcall(function()
     -- 2025-01-01, and ten pages of 90 s each that day, under the plugin's 120 s max_sec
     -- (main.lua:30) and with total_pages equal to pages, so the page_stat view keeps each row as
     -- it is (main.lua:438-451). 90 s a page over 220 - round(0.62 * 220) = 84 pages left is
-    -- 2 h 6 min. 2025 is outside this month and the stats widget's 400-day streak window.
+    -- 2 h 6 min. 2025 is outside this month and the year the Stats window reads.
     local featured_day = real_time{ year = 2025, month = 1, day = 1, hour = 10, min = 0 }
     local book_stmt = conn:prepare("INSERT INTO book (id, title, authors, last_open, pages, md5)"
         .. " VALUES (5, 'Frankenstein', 'Mary Shelley', ?, ?, ?);")

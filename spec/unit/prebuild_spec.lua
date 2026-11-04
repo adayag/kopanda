@@ -61,10 +61,10 @@ describe("closing a book shows the home at the file manager's Show", function()
 
     it("reads the reading stats once across a close and the Show after it", function()
         local ReadingStats = package.loaded["reading_stats"]
-        Layout.rows = { { { widget = "stats", share = 1 } } }
+        Layout.rows = { { { widget = "streak", share = 1 } } }
         local reader = harness.open_reader()
         harness.tick(2)
-        local reads = spy.on(ReadingStats, "read")
+        local reads = spy.on(ReadingStats, "insights")
         local ok, err = pcall(function()
             reader:onClose()
             harness.show_fm()

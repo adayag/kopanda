@@ -10,7 +10,6 @@ local Widget = require("ui/widget/widget")
 
 local Records = {
     id = "records",
-    settings_prefix = "stats",
 }
 
 -- The four { value, caption } cells in reading order for insights (ReadingStats.insights's shape), zeros when it

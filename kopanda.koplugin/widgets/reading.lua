@@ -14,7 +14,6 @@ local WEEKS = 12
 
 local Reading = {
     id = "reading",
-    settings_prefix = "stats",
 }
 
 -- The row of t's weekday, Monday first.
