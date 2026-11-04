@@ -7,10 +7,13 @@ describe("the library's books", function()
     local fixture = require("shelf_fixture")
     local Event = require("ui/event")
     local UIManager = require("ui/uimanager")
-    local NavBar, SeriesScreen, SubjectsScreen, SearchScreen
+    local ReadHistory = require("readhistory")
+    local NavBar, SeriesScreen, SubjectsScreen, SearchScreen, history
 
     before_each(function()
         harness.load()
+        -- No featured book, whose cover request would count among the extractions.
+        history, ReadHistory.hist = ReadHistory.hist, {}
         NavBar = package.loaded["nav_bar"]
         SeriesScreen = package.loaded["series_screen"]
         SubjectsScreen = package.loaded["subjects_screen"]
@@ -18,6 +21,7 @@ describe("the library's books", function()
     end)
 
     after_each(function()
+        ReadHistory.hist = history
         harness.teardown()
     end)
 
