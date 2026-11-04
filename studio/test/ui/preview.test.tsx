@@ -100,9 +100,6 @@ function stub(): void {
     if (url === "/api/profiles/paperwhite") return Promise.resolve(json(paperwhite));
     const settingsGet = /^\/api\/profiles\/([^/]+)\/settings$/.exec(url);
     if (settingsGet && stored[settingsGet[1]!]) return Promise.resolve(json(stored[settingsGet[1]!]));
-    if (url === "/api/health") return Promise.resolve(json({ ok: true, host: "127.0.0.1", port: 4490, addresses: [] }));
-    if (url.startsWith("/api/push/"))
-      return Promise.resolve(json({ format: 1, profile: "x", hash: "0".repeat(64), files: [] }));
     return Promise.reject(new Error(`unexpected fetch ${method} ${url}`));
   });
 }

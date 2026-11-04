@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { buildBundle, DEFAULT_PLUGIN_DIR, hashTree } from "../../src/server/bundle.js";
+import { buildReleaseBundle, DEFAULT_PLUGIN_DIR, hashTree, sha256Hex, type Tree } from "../../src/server/bundle.js";
 
 const repo = path.join(import.meta.dirname, "..", "..", "..");
 const vectors = path.join(repo, "spec", "fixtures", "push");
@@ -30,41 +30,40 @@ function writeFiles(dir: string, files: Record<string, string>): void {
 /** A plugin folder holding main.lua and _meta.lua, plus any further files given. */
 function pluginDir(extra: Record<string, string> = {}): string {
   const dir = path.join(tempDir(), "kopanda.koplugin");
-  writeFiles(dir, { "main.lua": "return {}\n", "_meta.lua": "return {}\n", ...extra });
+  writeFiles(dir, { "main.lua": "return {}\n", "_meta.lua": 'return {\n    version = "0.0.0-dev",\n}\n', ...extra });
   return dir;
 }
 
-const text = (bytes: Uint8Array | undefined) => Buffer.from(bytes ?? []).toString("utf8");
-
 describe("the shared vectors", () => {
-  it("build the manifest in spec/fixtures/push/manifest.json byte for byte", async () => {
-    const bundle = await buildBundle({
-      pluginDir: path.join(vectors, "tree", "plugin"),
-      settingsPath: path.join(vectors, "tree", "settings.lua"),
-    });
+  const tree = path.join(vectors, "tree");
+  const manifest = JSON.parse(fs.readFileSync(path.join(vectors, "manifest.json"), "utf8")) as {
+    hash: string;
+    files: { path: string; size: number; sha256: string }[];
+  };
 
-    const written = `${JSON.stringify(bundle.manifestFor("vector"), null, 2)}\n`;
+  function read(rel: string): Buffer {
+    return fs.readFileSync(path.join(tree, rel));
+  }
 
-    expect(written).toBe(fs.readFileSync(path.join(vectors, "manifest.json"), "utf8"));
+  it("hash to the manifest in spec/fixtures/push/manifest.json, as the device computes them", () => {
+    const files: Tree = new Map(manifest.files.map((file) => [file.path, read(file.path)]));
+
+    expect(hashTree(files)).toBe(manifest.hash);
+    for (const file of manifest.files) {
+      const bytes = read(file.path);
+      expect({ size: bytes.length, sha256: sha256Hex(bytes) }, file.path).toEqual({ size: file.size, sha256: file.sha256 });
+    }
   });
 
-  it("hold each file's bytes under its bundle path, and the manifest's hash", async () => {
-    const tree = path.join(vectors, "tree");
-    const bundle = await buildBundle({
-      pluginDir: path.join(tree, "plugin"),
-      settingsPath: path.join(tree, "settings.lua"),
-    });
+  it("list each plugin file as a release's manifest lists it", async () => {
+    const dir = pluginDir();
+    fs.cpSync(path.join(tree, "plugin", "icons"), path.join(dir, "icons"), { recursive: true });
+    fs.copyFileSync(path.join(tree, "plugin", "main.lua"), path.join(dir, "main.lua"));
 
-    expect([...bundle.files.keys()].sort()).toEqual([
-      "plugin/_meta.lua",
-      "plugin/icons/a.svg",
-      "plugin/main.lua",
-      "settings.lua",
-    ]);
-    for (const [rel, bytes] of bundle.files) {
-      expect(Buffer.from(bytes).equals(fs.readFileSync(path.join(tree, rel))), rel).toBe(true);
-    }
-    expect(bundle.hash).toBe(bundle.manifestFor("vector").hash);
+    const release = await buildReleaseBundle({ pluginDir: dir, version: "1.2.3" });
+
+    const vectorFiles = manifest.files.filter((file) => file.path.startsWith("plugin/") && file.path !== "plugin/_meta.lua");
+    expect(release.manifest().files.filter((file) => file.path !== "plugin/_meta.lua")).toEqual(vectorFiles);
   });
 });
 
@@ -102,13 +101,13 @@ describe("hashTree", () => {
   });
 });
 
-describe("buildBundle's plugin folder", () => {
+describe("buildReleaseBundle's plugin folder", () => {
   it("leaves out a dot-entry and everything under a dot-folder", async () => {
     const dir = pluginDir({ ".DS_Store": "junk", ".git/x": "junk", "icons/.hidden/y.svg": "junk" });
 
-    const bundle = await buildBundle({ pluginDir: dir, settingsPath: path.join(dir, "..", "none.lua") });
+    const bundle = await buildReleaseBundle({ pluginDir: dir, version: "1.2.3" });
 
-    expect([...bundle.files.keys()].sort()).toEqual(["plugin/_meta.lua", "plugin/main.lua", "settings.lua"]);
+    expect([...bundle.files.keys()].sort()).toEqual(["plugin/_meta.lua", "plugin/main.lua"]);
   });
 
   it("refuses a symlink, naming its path", async () => {
@@ -116,56 +115,16 @@ describe("buildBundle's plugin folder", () => {
     fs.mkdirSync(path.join(dir, "icons"));
     fs.symlinkSync(path.join(dir, "main.lua"), path.join(dir, "icons", "link.svg"));
 
-    await expect(buildBundle({ pluginDir: dir, settingsPath: path.join(dir, "..", "none.lua") })).rejects.toMatchObject({
-      status: 500,
-      message: expect.stringContaining("plugin/icons/link.svg") as unknown,
-    });
+    await expect(buildReleaseBundle({ pluginDir: dir, version: "1.2.3" })).rejects.toThrow("plugin/icons/link.svg");
   });
 
   it("refuses a name outside [A-Za-z0-9._-], naming its path", async () => {
     const dir = pluginDir({ "a b.lua": "return 1\n" });
 
-    await expect(buildBundle({ pluginDir: dir, settingsPath: path.join(dir, "..", "none.lua") })).rejects.toMatchObject({
-      status: 500,
-      message: expect.stringContaining("plugin/a b.lua") as unknown,
-    });
+    await expect(buildReleaseBundle({ pluginDir: dir, version: "1.2.3" })).rejects.toThrow("plugin/a b.lua");
   });
 
   it("defaults to the repo's kopanda.koplugin", () => {
     expect(DEFAULT_PLUGIN_DIR).toBe(path.join(repo, "kopanda.koplugin"));
-  });
-});
-
-describe("buildBundle's settings file", () => {
-  const body = 'return {\n    ["look"] = "diner",\n}\n';
-
-  async function served(firstLine: string | undefined): Promise<string> {
-    const dir = tempDir();
-    const settingsPath = path.join(dir, "settings", "kopanda", "settings.lua");
-    if (firstLine !== undefined) {
-      writeFiles(dir, { "settings/kopanda/settings.lua": `${firstLine.replace("<own>", settingsPath)}\n${body}` });
-    }
-    const bundle = await buildBundle({ pluginDir: pluginDir(), settingsPath });
-    return text(bundle.files.get("settings.lua"));
-  }
-
-  it.each(["-- <own>", "-- /Users/other/p/settings/kopanda/settings.lua"])(
-    "rewrites the absolute-path header %s and keeps the rest byte for byte",
-    async (header) => {
-      expect(await served(header)).toBe(`-- settings/kopanda/settings.lua\n${body}`);
-    },
-  );
-
-  it.each(["-- settings/kopanda/settings.lua", "-- /a/settings/kopanda/settings.lua.bak", "return {"])(
-    "keeps the first line %s as it is",
-    async (line) => {
-      const answer = await served(line);
-      expect(answer).toBe(`${line}\n${body}`);
-      expect(answer).not.toBe("-- settings/kopanda/settings.lua\nreturn {}\n");
-    },
-  );
-
-  it("serves a missing file as every key at its default", async () => {
-    expect(await served(undefined)).toBe("-- settings/kopanda/settings.lua\nreturn {}\n");
   });
 });

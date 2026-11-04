@@ -20,6 +20,15 @@ function tempUiDir(): string {
   return dir;
 }
 
+describe("GET /api/health", () => {
+  it("answers the bound host and port", async () => {
+    const res = await request(createApp(loadConfig({ KOPANDA_STUDIO_PORT: "5000" }))).get("/api/health");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true, host: "127.0.0.1", port: 5000 });
+  });
+});
+
 describe("unknown API paths", () => {
   it("answer 404 JSON with an error", async () => {
     const res = await request(createApp(loadConfig({}))).get("/api/x");

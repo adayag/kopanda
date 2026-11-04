@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { HttpError } from "./http-error.js";
 
 /**
  * The repo's kopanda.koplugin/. src/server/bundle.ts and dist/server/bundle.js both sit three
@@ -18,25 +17,17 @@ export interface ManifestFile {
   sha256: string;
 }
 
-/** What `GET /api/push/:id/manifest` answers; the device refuses any other `format`. */
-export interface Manifest {
+/**
+ * A release's manifest: the plugin's files only, so the device leaves its settings file alone. The
+ * device refuses any other `format`.
+ */
+export interface ReleaseManifest {
   format: 1;
-  profile: string;
+  profile: "release";
   hash: string;
+  settings: false;
   /** Every file, in the hash's order. */
   files: ManifestFile[];
-}
-
-/** A release's manifest: the plugin's files only, so the device leaves its settings file alone. */
-export interface ReleaseManifest extends Manifest {
-  profile: "release";
-  settings: false;
-}
-
-export interface Bundle {
-  manifestFor(profileId: string): Manifest;
-  files: Tree;
-  hash: string;
 }
 
 /** What a plugin entry's name, and so each segment of a bundle path, must match; the device refuses the rest. */
@@ -44,14 +35,6 @@ const SEGMENT = /^[A-Za-z0-9._-]+$/;
 
 /** `_meta.lua`'s version line: the key at the start of its line, then its quoted value. */
 const VERSION_LINE = /^([ \t]*version[ \t]*=[ \t]*)"[^"\n]*"/gm;
-
-/** A settings file's header naming an absolute path ending in the settings file's name. */
-const ABSOLUTE_HEADER = /^-- \/.+\/settings\/kopanda\/settings\.lua$/;
-
-const HEADER = "-- settings/kopanda/settings.lua";
-
-/** The settings file of a profile that has none: every key at its default. */
-const DEFAULT_SETTINGS = `${HEADER}\nreturn {}\n`;
 
 export function sha256Hex(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
@@ -95,7 +78,7 @@ async function readFolder(dir: string, prefix: string, tree: Tree): Promise<void
     if (name.startsWith(".")) continue;
     const rel = `${prefix}${name}`;
     if (!SEGMENT.test(name)) {
-      throw new HttpError(500, `cannot bundle ${rel}: each name must match ${SEGMENT.source}`);
+      throw new Error(`cannot bundle ${rel}: each name must match ${SEGMENT.source}`);
     }
     const full = path.join(dir, name);
     const stat = await fs.lstat(full);
@@ -104,7 +87,7 @@ async function readFolder(dir: string, prefix: string, tree: Tree): Promise<void
     } else if (stat.isFile()) {
       tree.set(rel, await fs.readFile(full));
     } else {
-      throw new HttpError(500, `cannot bundle ${rel}: it is not a regular file or folder`);
+      throw new Error(`cannot bundle ${rel}: it is not a regular file or folder`);
     }
   }
 }
@@ -115,47 +98,6 @@ function listFiles(tree: Tree): ManifestFile[] {
     const bytes = tree.get(rel) as Uint8Array;
     return { path: rel, size: bytes.length, sha256: sha256Hex(bytes) };
   });
-}
-
-/**
- * The settings file as served: a first line naming an absolute path ending in the settings file's
- * name becomes HEADER, so no Mac path leaves the machine; any other first line is kept.
- */
-async function readSettings(settingsPath: string): Promise<Uint8Array> {
-  let bytes: Buffer;
-  try {
-    bytes = await fs.readFile(settingsPath);
-  } catch (err) {
-    if ((err as { code?: unknown }).code === "ENOENT") return Buffer.from(DEFAULT_SETTINGS, "utf8");
-    throw err;
-  }
-  const newline = bytes.indexOf(0x0a);
-  const end = newline === -1 ? bytes.length : newline;
-  if (!ABSOLUTE_HEADER.test(bytes.subarray(0, end).toString("utf8"))) return bytes;
-  return Buffer.concat([Buffer.from(HEADER, "utf8"), bytes.subarray(end)]);
-}
-
-/**
- * A profile's bundle as it is on disk now: every regular file under the plugin folder as
- * `plugin/<rel>` and the profile's settings file as `settings.lua`.
- */
-export async function buildBundle({
-  pluginDir = DEFAULT_PLUGIN_DIR,
-  settingsPath,
-}: {
-  pluginDir?: string;
-  settingsPath: string;
-}): Promise<Bundle> {
-  const files: Tree = new Map();
-  await readFolder(pluginDir, "plugin/", files);
-  files.set("settings.lua", await readSettings(settingsPath));
-  const hash = hashTree(files);
-  const listed = listFiles(files);
-  return {
-    files,
-    hash,
-    manifestFor: (profile) => ({ format: 1, profile, hash, files: listed.map((file) => ({ ...file })) }),
-  };
 }
 
 /**

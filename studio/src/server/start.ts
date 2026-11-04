@@ -1,5 +1,5 @@
 import type { Server } from "node:http";
-import { createApp, lanAddresses, type AppOptions } from "./app.js";
+import { createApp, type AppOptions } from "./app.js";
 import type { Config } from "./config.js";
 
 export interface RunningServer {
@@ -39,12 +39,4 @@ export function startServer(config: Config, options: AppOptions = {}): Promise<R
     server.once("error", onError);
     server.once("listening", onListening);
   });
-}
-
-/** What the server prints once it listens: the bound address and, on a LAN host, each address the Kindle can use. */
-export function startLines(host: string, port: number): string[] {
-  return [
-    `listening on http://${host}:${port}`,
-    ...lanAddresses(host).map((address) => `pull from the Kindle at http://${address}:${port}`),
-  ];
 }

@@ -3,7 +3,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { buildBundle, buildReleaseBundle, hashTree, sha256Hex } from "../../src/server/bundle.js";
+import { buildReleaseBundle, hashTree, sha256Hex } from "../../src/server/bundle.js";
 
 const repo = path.join(import.meta.dirname, "..", "..", "..");
 const tsx = path.join(repo, "studio", "node_modules", ".bin", "tsx");
@@ -101,16 +101,6 @@ describe("buildReleaseBundle", () => {
         { path: "plugin/main.lua", size: 10, sha256: sha256Hex(Buffer.from("return {}\n")) },
       ],
     });
-  });
-
-  it("lists every other plugin file as the LAN route's manifest does", async () => {
-    const dir = pluginDir();
-    const release = await buildReleaseBundle({ pluginDir: dir, version: "1.2.3" });
-    const lan = await buildBundle({ pluginDir: dir, settingsPath: path.join(dir, "..", "none.lua") });
-
-    const others = (files: { path: string }[]) =>
-      files.filter((file) => file.path !== "plugin/_meta.lua" && file.path !== "settings.lua");
-    expect(others(release.manifest().files)).toEqual(others(lan.manifestFor("release").files));
   });
 });
 
