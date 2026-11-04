@@ -452,6 +452,17 @@ describe("bin/check", function()
         assert.falsy(contains(output, "== emulator"), output)
     end)
 
+    -- A sysctl reporting load 0.5, so the paint-budget pass starts at once whatever else the host is running; anything
+    -- else goes to the real one. Returns the PATH assignment that puts it first.
+    local function quiet_host(copy)
+        local bin = copy .. "/fake-bin"
+        assert.equals(0, select(2, run("mkdir '" .. bin .. "'")))
+        write(bin .. "/sysctl", '#!/bin/sh\nif [ "$2" = vm.loadavg ]; then echo "{ 0.50 0.50 0.50 }"; exit; fi\n'
+            .. 'exec /usr/sbin/sysctl "$@"\n')
+        assert.equals(0, select(2, run("chmod +x '" .. bin .. "/sysctl'")))
+        return "PATH='" .. bin .. ":'\"$PATH\""
+    end
+
     -- A spec that opens with header, which names paint_budget in some case and sets pause_ms, so bin/check holds it
     -- for the serial pass: it fails when the other emulator specs haven't all finished, or when another such spec is
     -- running beside it.
@@ -485,8 +496,8 @@ describe("bin/check", function()
             .. '        io.open(os.getenv("KOPANDA_RENDEZVOUS") .. "/batch_done", "w"):close()\n'
             .. '    end)\n'
             .. 'end)\n')
-        local output, status = run("KOPANDA_RENDEZVOUS='" .. copy .. "' KOPANDA_CHECK_EMULATOR_JOBS=4 '" .. copy
-            .. "/bin/check'")
+        local output, status = run(quiet_host(copy) .. " KOPANDA_RENDEZVOUS='" .. copy
+            .. "' KOPANDA_CHECK_EMULATOR_JOBS=4 '" .. copy .. "/bin/check'")
         run("rm -rf '" .. copy .. "'")
         assert.equals(0, status, output)
         assert.truthy(without_slowest(output):find("\n== emulator\n"
@@ -647,13 +658,7 @@ describe("bin/check", function()
         timed_spec(copy .. "/spec/emulator/batch_spec.lua", "batch", { { "quick", 0 } })
         timed_spec(copy .. "/spec/emulator/budget_spec.lua", "a paint budget", { { "waits", 100 } },
             "-- Names paint_budget.")
-        -- A sysctl reporting load 0.5, so the paint-budget pass starts at once; anything else goes to the real one.
-        local bin = copy .. "/fake-bin"
-        assert.equals(0, select(2, run("mkdir '" .. bin .. "'")))
-        write(bin .. "/sysctl", '#!/bin/sh\nif [ "$2" = vm.loadavg ]; then echo "{ 0.50 0.50 0.50 }"; exit; fi\n'
-            .. 'exec /usr/sbin/sysctl "$@"\n')
-        assert.equals(0, select(2, run("chmod +x '" .. bin .. "/sysctl'")))
-        local output, status = run("PATH='" .. bin .. ":'\"$PATH\" KOPANDA_CHECK_JOBS=2 '" .. copy .. "/bin/check'")
+        local output, status = run(quiet_host(copy) .. " KOPANDA_CHECK_JOBS=2 '" .. copy .. "/bin/check'")
         run("rm -rf '" .. copy .. "'")
         assert.equals(0, status, output)
         assert.truthy(contains(any_ms(output), "[  PASSED  ] 6 tests.\n"
