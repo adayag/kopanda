@@ -1,8 +1,8 @@
 -- The paint budget (paint_budget.lua) on the screens it holds to it, one capture each, in Diner on the Colorsoft at
--- 2026-10-13 08:42 in Chicago: the populated home, the library at its root over the capture library
--- (capture_library.lua), the Series list over the shelf library (shelf_library.lua), the book status page opened
--- from a library hold and the Stats window; and, held to 100 ms, the home's share of a book's close
--- (book_close_spec.lua's scenario).
+-- 2026-10-13 08:42 in Chicago: the populated home at the default text size and at Extra large, the library at its
+-- root over the capture library (capture_library.lua), the Series list over the shelf library (shelf_library.lua), the
+-- book status page opened from a library hold and the Stats window; and, held to 100 ms, the home's share of a book's
+-- close (book_close_spec.lua's scenario).
 -- Each screen's own spec judges what it shows; this one judges only its time, so bin/check runs it alone, after the
 -- others, on a settled host. The look is passed empty so a KOPANDA_HOME_LOOK in the caller's environment cannot leak
 -- in.
@@ -18,9 +18,21 @@ describe("the paint budget on the emulator", function()
     local scenarios_dir = root .. "/spec/emulator/scenarios/"
     local fixture = scenarios_dir .. "2-scenario-home-fixture.lua"
 
+    -- A settings file holding text_size, removed after the test.
+    local function settings_at(text_size)
+        local path = os.tmpname()
+        local f = assert(io.open(path, "w"))
+        f:write(string.format('return { schema_version = 1, text_size = %q }\n', text_size))
+        f:close()
+        finally(function()
+            os.remove(path)
+        end)
+        return path
+    end
+
     -- The settled signal of a capture shot on screen, with library (nil: the fixture library), patches after the home
-    -- fixture and env beside the frozen clock and the empty look.
-    local function settled(screen, library, patches, env)
+    -- fixture, env beside the frozen clock and the empty look, and settings_file (nil: none).
+    local function settled(screen, library, patches, env, settings_file)
         env.TZ = "America/Chicago"
         env.KOPANDA_HOME_LOOK = ""
         table.insert(patches, 1, fixture)
@@ -30,6 +42,7 @@ describe("the paint budget on the emulator", function()
             library_dir = library,
             patches = patches,
             shot_screen = screen,
+            settings_file = settings_file,
             env = env,
         }
         local where = "\npng " .. result.png .. "\nlog " .. result.log
@@ -57,6 +70,11 @@ describe("the paint budget on the emulator", function()
     it("paints the populated home within the budget", function()
         local sidecar = settled("home", nil, {}, { KOPANDA_HOME_FIXTURE = "populated" })
         paint_budget.check("home paint on colorsoft", sidecar)
+    end)
+
+    it("paints the populated home at Extra large within the budget", function()
+        local sidecar = settled("home", nil, {}, { KOPANDA_HOME_FIXTURE = "populated" }, settings_at("extra_large"))
+        paint_budget.check("extra-large home paint on colorsoft", sidecar)
     end)
 
     it("paints the library at its root within the budget", function()
