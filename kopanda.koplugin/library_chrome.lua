@@ -403,7 +403,10 @@ function Window:onBookMetadataChanged()
     refresh_soon(self)
 end
 
+-- The row went with the event (plugins/coverbrowser.koplugin/main.lua:800-803), so it is asked for after the paint.
 function Window:onInvalidateMetadataCache()
+    self.records_asked = nil
+    self.covers_due = true
     refresh_soon(self)
 end
 

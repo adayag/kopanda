@@ -230,6 +230,25 @@ describe("BookCovers", function()
             assert.equals(0, queue.unscheduled)
         end)
 
+        -- cwngsync replacing a placeholder has CoverBrowser delete the row
+        -- (plugins/coverbrowser.koplugin/main.lua:800-803), which is all a book's subjects, series and authors
+        -- come from.
+        it("asks again for a file that arrived and whose row has gone since, once", function()
+            local rows = {}
+            local bim = manager{ info = function(file) return rows[file] end, extracting = { false } }
+            local queue = stub(bim)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            rows[A] = usable(nil)
+            run_next(queue)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            assert.same({ files(A) }, bim.extracted)
+            rows[A] = nil
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            assert.same({ files(A), files(A) }, bim.extracted)
+            BookCovers.request({ { path = A } }, SPECS, function() end, always)
+            assert.same({ files(A), files(A) }, bim.extracted)
+        end)
+
         it("asks again for a file at a box bigger than the one its cover arrived for", function()
             local small, big = { max_cover_w = 280, max_cover_h = 420 }, { max_cover_w = 400, max_cover_h = 600 }
             local rows = {}

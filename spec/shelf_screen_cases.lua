@@ -249,6 +249,30 @@ function M.kept_current(w)
         assert.equals(screen, harness.top())
     end)
 
+    -- InvalidateMetadataCache drops the book's row (plugins/coverbrowser.koplugin/main.lua:800-803), which a shown
+    -- window must ask for again: its subjects, series and authors go with it. BookMetadataChanged drops no row.
+    it("asks for the books' covers again after InvalidateMetadataCache, not after BookMetadataChanged", function()
+        fixture.install(w.shelf(2))
+        w.show()
+        harness.tick(3)
+        local BookCovers = package.loaded["book_covers"]
+        local request = BookCovers.request
+        local asks = 0
+        BookCovers.request = function()
+            asks = asks + 1
+        end
+        local ok, err = pcall(function()
+            UIManager:broadcastEvent(Event:new("BookMetadataChanged"))
+            harness.tick(3)
+            assert.equals(0, asks)
+            UIManager:broadcastEvent(Event:new("InvalidateMetadataCache"))
+            harness.tick(3)
+            assert.equals(1, asks)
+        end)
+        BookCovers.request = request
+        assert.is_true(ok, tostring(err))
+    end)
+
     -- The window's build counted from after the show; a metadata change's events, as the book-info
     -- editor broadcasts them (filemanagerbookinfo.lua:276-280, :556-557), sent to the shown window,
     -- then between() if given, then the UI loop run twice.

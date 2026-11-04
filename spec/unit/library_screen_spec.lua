@@ -618,6 +618,28 @@ describe("the library window", function()
             assert.equals(library, harness.top())
         end)
 
+        -- InvalidateMetadataCache drops the book's row (plugins/coverbrowser.koplugin/main.lua:800-803).
+        it("asks for the page's covers again after InvalidateMetadataCache, not after BookMetadataChanged", function()
+            fixture.install({ [ROOT] = { books = fixture.books(2) } })
+            fixture.show()
+            harness.tick(3)
+            local LibraryCovers = package.loaded["library_covers"]
+            local request = LibraryCovers.request
+            local asks = 0
+            LibraryCovers.request = function()
+                asks = asks + 1
+            end
+            finally(function()
+                LibraryCovers.request = request
+            end)
+            UIManager:broadcastEvent(Event:new("BookMetadataChanged"))
+            harness.tick(3)
+            assert.equals(0, asks)
+            UIManager:broadcastEvent(Event:new("InvalidateMetadataCache"))
+            harness.tick(3)
+            assert.equals(1, asks)
+        end)
+
         -- LibraryView.build counted from after the show; a metadata change's events, as the book-info
         -- editor broadcasts them (filemanagerbookinfo.lua:276-280, :556-557), sent to the shown
         -- library, then between(library) if given, then the UI loop run twice.

@@ -20,6 +20,8 @@ local BookCovers = {}
 local MAX_CHECKS = 30
 
 local asked = {}
+-- The files whose row arrived since they were asked: one whose row has gone since was invalidated, not failed.
+local came = {}
 local pending = {}
 local check
 local launches = 0
@@ -130,8 +132,9 @@ local function covered(path, specs)
 end
 
 -- The records CoverBrowser should extract a cover for in a box of specs: each with a path not asked
--- for in this process at a box specs fits inside, or still pending, whose row wants says yes to. A
--- failing test is logged and its record left out.
+-- for in this process at a box specs fits inside, or still pending, or whose row arrived and has gone
+-- since (InvalidateMetadataCache, plugins/coverbrowser.koplugin/main.lua:800-803), whose row wants says
+-- yes to. A failing test is logged and its record left out.
 local function wanted(bim, records, specs)
     local in_flight = {}
     for _, record in ipairs(pending) do
@@ -141,6 +144,10 @@ local function wanted(bim, records, specs)
     for _, record in ipairs(records) do
         local path = record.path
         local done = path and covered(path, specs)
+        if done and came[path] and not book_info(bim, path, false) then
+            came[path] = nil
+            done = false
+        end
         if path and (not done or in_flight[path]) then
             local ok, wants = pcall(BookCovers.wants, book_info(bim, path, false), specs)
             if not ok then
@@ -154,13 +161,14 @@ local function wanted(bim, records, specs)
     return new and list or {}
 end
 
--- Asks CoverBrowser to extract, in one batch, the covers of the records that want one, once per file
--- per process for a box no bigger than one asked, then checks each second while the extraction runs,
--- at most 30 times (CoverBrowser has no completion event and polls the same way,
--- covermenu.lua:164-175). Each check calls on_arrival(records) with those that arrived since the
--- last, and stops when alive() is false. One request is in flight at a time: extractInBackground
--- terminates the one before (bookinfomanager.lua:695), so a new request, or the 30th check, forgets
--- the files that hadn't arrived and a later request asks for them again.
+-- Asks CoverBrowser to extract, in one batch, the covers of the records that want one, once per
+-- file per process for a box no bigger than one asked unless its row has gone since it arrived,
+-- then checks each second while the extraction runs, at most 30 times (CoverBrowser has no
+-- completion event and polls the same way, covermenu.lua:164-175). Each check calls
+-- on_arrival(records) with those that arrived since the last, and stops when alive() is false. One
+-- request is in flight at a time: extractInBackground terminates the one before
+-- (bookinfomanager.lua:695), so a new request, or the 30th check, forgets the files that hadn't
+-- arrived and a later request asks for them again.
 function BookCovers.request(records, specs, on_arrival, alive)
     local bim = manager()
     if not bim then
@@ -206,6 +214,7 @@ function BookCovers.request(records, specs, on_arrival, alive)
             for _, record in ipairs(pending) do
                 if has_fitting_cover(bim, book_info(bim, record.path, false), specs) then
                     arrived[#arrived + 1] = record
+                    came[record.path] = true
                 else
                     still[#still + 1] = record
                 end
@@ -230,6 +239,7 @@ function BookCovers.request(records, specs, on_arrival, alive)
                 end
                 if usable then
                     arrived[#arrived + 1] = record
+                    came[record.path] = true
                 elseif runs >= MAX_CHECKS then
                     asked[record.path] = nil
                 end
@@ -277,6 +287,7 @@ function BookCovers.forget(paths)
         if ok then
             BookList.resetBookInfoCache(path)
             asked[path] = nil
+            came[path] = nil
             forgotten[path] = true
         else
             logger.err("KoPanda: CoverBrowser could not delete the row of", path, ":", err)
@@ -295,6 +306,7 @@ end
 function BookCovers.reset()
     BookCovers.cancel()
     asked = {}
+    came = {}
     pending = {}
     launches = 0
 end
