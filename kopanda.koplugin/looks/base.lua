@@ -537,6 +537,7 @@ return {
         row_gap = 0,
         icon_size = 22,
         icon_gap = false, -- false: the icon above the label, not beside it
+        label_gap = 0, -- in a tile, the least between the icon and the label
         padding = { x = 0, y = 11 },
         tile_height = 84,
         accent_1_color = false, -- false: every tile alike

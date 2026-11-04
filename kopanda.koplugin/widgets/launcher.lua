@@ -192,7 +192,8 @@ local function make(width, ctx)
 
     local entry_h
     if box then
-        entry_h = math.max(scale(tokens.tile_height), 2 * (outline + pad_y) + icon_px + block_h)
+        local content_h = icon_px + scale(tokens.label_gap) + block_h
+        entry_h = math.max(scale(tokens.tile_height), 2 * (outline + pad_y) + content_h)
     else
         entry_h = 2 * pad_y + math.max(icon_px, block_h) + rule
     end

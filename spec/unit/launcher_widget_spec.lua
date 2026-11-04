@@ -308,17 +308,23 @@ describe("the launcher widget", function()
             built:free()
         end)
 
-        it("holds a Frosted tile's content at Extra large, the icon above the label", function()
-            local built = Launcher.build(1184, ctx_for("frosted", "day", "extra_large"))
-            assert.equals(4, #entries_of(built))
-            for i, entry in ipairs(entries_of(built)) do
-                local icon = icons_of(entry)[1]
-                local label = lines(entry)[1].widget
-                assert.is_true(place_in(entry, icon).y + icon:getSize().h <= place_in(entry, label).y, "tile " .. i)
-                assert.is_true(place_in(entry, label).y + label:getSize().h <= entry:getSize().h, "tile " .. i)
-            end
-            built:free()
-        end)
+        for _, size in ipairs({ "large", "extra_large" }) do
+            it("holds a Frosted tile's content at " .. size .. ", a gap between the icon and the label", function()
+                local ctx = ctx_for("frosted", "day", size)
+                local gap = scale(ctx.look.launcher.label_gap)
+                assert.is_true(gap > 0)
+                local built = Launcher.build(1184, ctx)
+                assert.equals(4, #entries_of(built))
+                for i, entry in ipairs(entries_of(built)) do
+                    local icon = icons_of(entry)[1]
+                    local label = lines(entry)[1].widget
+                    local icon_foot = place_in(entry, icon).y + icon:getSize().h
+                    assert.is_true(icon_foot + gap <= place_in(entry, label).y, "tile " .. i)
+                    assert.is_true(place_in(entry, label).y + label:getSize().h <= entry:getSize().h, "tile " .. i)
+                end
+                built:free()
+            end)
+        end
 
         it("keeps a Diner tile at tile_height at Small, where its content is well under that", function()
             local ctx = ctx_for("diner", "day", "small")

@@ -203,6 +203,7 @@ return {
         column_gap = 12,
         row_gap = 12,
         icon_size = 24,
+        label_gap = 4,
         padding = { x = 13 },
         tile_height = 74,
         suffix_below = true,
