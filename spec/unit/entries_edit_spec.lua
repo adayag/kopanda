@@ -170,6 +170,8 @@ describe("EntriesEdit", function()
             assert.equals("KOReader · history", EntriesEdit.kind_line(HISTORY))
             assert.equals("Plugin · terminal", EntriesEdit.kind_line({ kind = "plugin", plugin = "terminal",
                 action = "x", label = "Terminal", icon = "terminal" }))
+            assert.equals("Plugin · stub", EntriesEdit.kind_line({ kind = "plugin_menu", plugin = "stub",
+                item = "stub", label = "Stub", icon = "action" }))
             assert.equals("Action · screenshot", EntriesEdit.kind_line({ kind = "action", action = "screenshot",
                 label = "Screenshot", icon = "screenshot" }))
             assert.equals("Folder on disk · /mnt/us/books", EntriesEdit.kind_line({ kind = "directory",

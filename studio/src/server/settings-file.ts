@@ -17,7 +17,7 @@ import { validate } from "../core/validators.js";
 import { schema, type Key } from "../schema.js";
 
 // A profile's settings/kopanda/settings.lua, read and written as the plugin's Settings does
-// (kopanda.koplugin/settings.lua:204-299): a stored value its validator refuses reads as the
+// (kopanda.koplugin/settings.lua:205-300): a stored value its validator refuses reads as the
 // default, a key outside the schema is kept, a file from a newer schema is read but not written.
 
 export type SettingsState = "writable" | "read_only" | "unreadable";

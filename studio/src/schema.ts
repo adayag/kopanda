@@ -15,6 +15,13 @@ const Plugin = z.strictObject({
   label: z.string(),
   icon: z.string(),
 });
+const PluginMenu = z.strictObject({
+  kind: z.literal("plugin_menu"),
+  plugin: z.string(),
+  item: z.string(),
+  label: z.string(),
+  icon: z.string(),
+});
 const Action = z.strictObject({
   kind: z.literal("action"),
   action: z.string(),
@@ -22,13 +29,13 @@ const Action = z.strictObject({
   icon: z.string(),
 });
 const Directory = z.strictObject({ kind: z.literal("directory"), path: z.string(), label: z.string() });
-const FolderEntry = z.union([Target, Plugin, Action, Directory]);
+const FolderEntry = z.union([Target, Plugin, PluginMenu, Action, Directory]);
 const Folder = z.strictObject({
   kind: z.literal("folder"),
   label: z.string(),
   entries: z.array(FolderEntry),
 });
-// The launcher entry kinds and their fields, kopanda.koplugin/settings.lua:58-65.
+// The launcher entry kinds and their fields, kopanda.koplugin/settings.lua:58-66.
 const LauncherEntry = z.union([FolderEntry, Folder]);
 
 const Key = z.discriminatedUnion("type", [

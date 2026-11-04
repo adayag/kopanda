@@ -265,6 +265,11 @@ return {
         result = "Plugin · calibre",
     },
     {
+        op = "kind_line", why = "a plugin's menu item",
+        args = { { kind = "plugin_menu", plugin = "stub", item = "stub", label = "Stub", icon = "action" } },
+        result = "Plugin · stub",
+    },
+    {
         op = "kind_line", why = "an action",
         args = { { kind = "action", action = "history", label = "History", icon = "action" } },
         result = "Action · history",

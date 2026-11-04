@@ -125,6 +125,14 @@ describe("the list", () => {
     expect(screen.getByText("The fifth entry and beyond go into a folder.")).toBeInTheDocument();
   });
 
+  it("shows a plugin menu item with its own label, icon and kind line", async () => {
+    await open(settings([{ kind: "plugin_menu", plugin: "rakuyomi", item: "rakuyomi", label: "Manga", icon: "calibre" }]));
+
+    expect(within(row("Manga")).getByText("Plugin · rakuyomi")).toBeInTheDocument();
+    expect(within(row("Manga")).getByText("calibre")).toBeInTheDocument();
+    expect(within(row("Manga")).getByRole("button", { name: "Icon of Manga" })).toBeInTheDocument();
+  });
+
   it("shows an icon id the catalog lacks as the id", async () => {
     await open(settings([{ ...HISTORY, icon: "calibre" }]));
 

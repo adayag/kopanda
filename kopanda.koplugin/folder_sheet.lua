@@ -15,6 +15,7 @@ local KINDS = {
     kopanda = "KoPanda",
     koreader = "KOReader",
     plugin = "Plugin",
+    plugin_menu = "Plugin",
     action = "Action",
     directory = "Folder on disk",
 }

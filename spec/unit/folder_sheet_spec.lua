@@ -232,6 +232,34 @@ describe("the folder sheet", function()
             assert.equals(1, plugin.n)
         end)
 
+        it("on a plugin's menu item, named by its kind and not built to open, runs its callback once", function()
+            local fm = fm_with_home()
+            local ran = 0
+            local plugin = { built = 0 }
+            function plugin:addToMainMenu(menu_items)
+                self.built = self.built + 1
+                menu_items.stub = { text = "Stub", callback = function()
+                    ran = ran + 1
+                end }
+            end
+            fm.stub = plugin
+            local loaded = stub(PluginLoader, "isPluginLoaded", function(_, name)
+                return name == "stub"
+            end)
+            cleanup(function()
+                loaded:revert()
+            end)
+            local sheet = open({ kind = "folder", label = "Tools", entries = {
+                { kind = "plugin_menu", plugin = "stub", item = "stub", label = "Stub", icon = "action" },
+            } })
+            assert.same({ "Stub", "Plugin" }, { sheet.rows[1].row.label, sheet.rows[1].row.detail })
+            assert.equals(0, plugin.built)
+            tap_row(sheet, 1)
+            assert.equals(1, ran)
+            assert.is_nil(Sheet.shown)
+            assert.equals(Home.shown, harness.top())
+        end)
+
         it("on the folder on disk closes the sheet and the home and leaves the file browser there", function()
             local fm = fm_with_home()
             local dir = temp_dir("folder-sheet-dir")

@@ -1339,6 +1339,19 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   enabled plugin (`frontend/apps/reader/readerui.lua:464-465`). A plugin whose `main.lua`
   returned `{ disabled = true }` is never instantiated (`plugins/SSH.koplugin/main.lua:21-23`),
   so its entry reads "plugin missing". Read at call time from `launcher_entries.lua`.
+- A `plugin_menu` entry reaches a plugin's main-menu items, for an app with no dispatcher action.
+  `FileManager:registerModule(name, ui_module)` sets `fm[name]` (`filemanager.lua:379-383`), and
+  the file manager passes `plugin_module.name` (`:424`), which is the plugin's folder name without
+  `.koplugin` (`frontend/pluginloader.lua:210`, `:249`; a `name` in `_meta.lua` is ignored,
+  `:256-259`). `addToMainMenu(menu_items)` is what `FileManagerMenu` calls on each registered widget
+  (`frontend/apps/filemanager/filemanagermenu.lua:851-852`, `registerToMainMenu` `:1136-1142`); the
+  launcher calls it on the instance into an empty table only on a tap, and in the picker, through
+  `pcall`, never in a home build, so a plugin that adds its items only in the reader still offers
+  them here. `resolve` reads only that `fm[name]` has the method. The tap calls `item.callback()`
+  with no argument, where `TouchMenu:onMenuSelect` passes the menu (`frontend/ui/widget/touchmenu.lua:913-919`):
+  a callback that uses it raises, which is logged and gives a note. `sendEvent` offers an event to the
+  topmost widget (`frontend/ui/uimanager.lua:962`, `:1006-1031`), and a callback runs under KOReader's
+  open menu the same way (`filemanagermenu.lua:1043-1045`), so a callback needs no dispatch bridge.
 - `dispatcher`: `Dispatcher.getDisplayList(settings)` (`frontend/dispatcher.lua:866-890`) lists
   an id only when `isAvailable(settingsList[id])` (`:689-696`); it calls `getNameFromItem`
   (`:751-758`), which reads `settingsList`. An entry is available when
@@ -1915,7 +1928,10 @@ row, the sidecar and the Statistics database is in the book records' and the Sta
   after the first call; its first list is the enabled plugins), `isPluginLoaded` (`:567-569`),
   `is_doc_only` (the file manager skips such a plugin, `frontend/apps/filemanager/filemanager.lua:419`),
   `fullname or name` as the plugin manager labels it (`pluginloader.lua:104-109`). `kopanda` is
-  left out.
+  left out. A plugin is listed whatever it registers with the dispatcher, so one with main-menu items
+  and no actions appears. Its items are read through `LauncherEntries.menu_items` (the launcher's
+  entries above); `text_func` before `text`, as `Menu.getMenuText` (`frontend/ui/widget/menu.lua:1610-1616`),
+  and an item with `keep_menu_open` (`touchmenu.lua:924`) or no `callback` isn't offered.
 - `ui/widget/inputdialog`: `frontend/ui/widget/inputdialog.lua:124-167` (`title`, `input`,
   `buttons`), `:357` (`is_enter_default`), `:774-784` (`onCloseDialog` presses the button with
   `id = "close"`, Cancel here), `:583` (`getInputText`), `:596` (`setInputText`, the spec's),

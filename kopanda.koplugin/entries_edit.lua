@@ -86,6 +86,7 @@ local KINDS = {
     kopanda = { name = "KoPanda", detail = "target" },
     koreader = { name = "KOReader", detail = "target" },
     plugin = { name = "Plugin", detail = "plugin" },
+    plugin_menu = { name = "Plugin", detail = "plugin" },
     action = { name = "Action", detail = "action" },
     directory = { name = "Folder on disk", detail = "path" },
 }

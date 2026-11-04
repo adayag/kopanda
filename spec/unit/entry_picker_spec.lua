@@ -472,6 +472,99 @@ describe("the entry picker", function()
             end)
         end)
 
+        describe("with main-menu items", function()
+            -- A plugin loaded under the name app, its fullname App, with no dispatcher action, on fm: add
+            -- fills its menu_items. A file manager with its home comes first; then the plugin's row is tapped.
+            local function choose_app(add)
+                local fm = fm_with_home()
+                fm.app = { addToMainMenu = add }
+                plugins({ { name = "app", fullname = "App" } }, {}, { app = true })
+                EntryPicker.pick("plugin", Home.shown.ctx, on_entry)
+                assert.equals("Plugin", Sheet.shown.spec.header.heading)
+                assert.equals("App", Sheet.shown.rows[1].row.label)
+                tap_row(Sheet.shown, 1)
+            end
+
+            local function callback() end
+
+            local function labels(sheet)
+                local list = {}
+                for i, view in ipairs(row_views(sheet)) do
+                    list[i] = view.label
+                end
+                return list
+            end
+
+            it("lists the items a tap can run, by text, then an action row", function()
+                choose_app(function(_, menu_items)
+                    menu_items.zebra = { text = "Zebra", callback = callback }
+                    menu_items.alpha = { text_func = function() return "Alpha" end, callback = callback }
+                    menu_items.submenu = { text = "Submenu", sub_item_table = { { text = "Inner" } } }
+                    menu_items.toggle = { text = "Toggle", callback = callback, keep_menu_open = true }
+                    menu_items.raises = { text_func = function() error("kopanda-test: no text") end,
+                        callback = callback }
+                    menu_items.nameless = { callback = callback }
+                end)
+                assert.equals("App", Sheet.shown.spec.header.heading)
+                assert.equals("picker", Sheet.shown.spec.name)
+                assert.same({ "Alpha", "Zebra", "Other action" }, labels(Sheet.shown))
+            end)
+
+            it("adds the item chosen under the label given, its text the default", function()
+                choose_app(function(_, menu_items)
+                    menu_items.reader = { text = "Open reader", callback = callback }
+                end)
+                tap_row(Sheet.shown, 1)
+                assert.is_nil(Sheet.shown)
+                local dialog = shown(InputDialog)
+                assert.equals("Open reader", dialog:getInputText())
+                dialog:setInputText("Manga")
+                press(dialog, "Add")
+                assert.same({ kind = "plugin_menu", plugin = "app", item = "reader", label = "Manga",
+                    icon = "action" }, the_entry())
+            end)
+
+            it("takes the action tree from the action row, for a plugin entry", function()
+                choose_app(function(_, menu_items)
+                    menu_items.reader = { text = "Open reader", callback = callback }
+                end)
+                tap_row(Sheet.shown, 2)
+                local menu = action_menu()
+                tick(menu, "General", { "History" })
+                menu:onClose()
+                press(shown(InputDialog), "Add")
+                assert.same({ kind = "plugin", plugin = "app", action = "history", label = "History",
+                    icon = "action" }, the_entry())
+            end)
+
+            it("goes straight to the action tree when no item is offered", function()
+                choose_app(function(_, menu_items)
+                    menu_items.submenu = { text = "Submenu", sub_item_table = { { text = "Inner" } } }
+                end)
+                assert.is_nil(Sheet.shown)
+                assert.is_not_nil(action_menu())
+            end)
+
+            it("goes straight to the action tree for a plugin with no addToMainMenu", function()
+                choose_app(nil)
+                assert.is_nil(Sheet.shown)
+                assert.is_not_nil(action_menu())
+            end)
+
+            it("logs and goes straight to the action tree when addToMainMenu raises", function()
+                local err = spy.on(logger, "err")
+                cleanup(function()
+                    err:revert()
+                end)
+                choose_app(function()
+                    error("kopanda-test: addToMainMenu failed")
+                end)
+                assert.is_nil(Sheet.shown)
+                assert.is_not_nil(action_menu())
+                assert.spy(err).was.called()
+            end)
+        end)
+
         it("says so when no plugin is loaded", function()
             fm_with_home()
             plugins({ { name = "kopanda", fullname = "KoPanda" } }, {}, { kopanda = true })

@@ -169,6 +169,50 @@ return {
     },
     {
         key = "launcher.entries",
+        value = { { kind = "plugin_menu", plugin = "stub", item = "stub", label = "Stub", icon = "action" } },
+        valid = true,
+        why = "a plugin menu entry",
+    },
+    {
+        key = "launcher.entries",
+        value = { { kind = "folder", label = "Tools", entries = {
+            { kind = "plugin_menu", plugin = "stub", item = "stub", label = "Stub", icon = "action" },
+        } } },
+        valid = true,
+        why = "a plugin menu entry in a folder",
+    },
+    {
+        key = "launcher.entries",
+        value = { { kind = "plugin_menu", plugin = "stub", label = "Stub", icon = "action" } },
+        valid = false,
+        why = "a plugin menu entry with no item",
+    },
+    {
+        key = "launcher.entries",
+        value = { { kind = "plugin_menu", item = "stub", label = "Stub", icon = "action" } },
+        valid = false,
+        why = "a plugin menu entry with no plugin",
+    },
+    {
+        key = "launcher.entries",
+        value = { { kind = "plugin_menu", plugin = "stub", item = "stub", icon = "action" } },
+        valid = false,
+        why = "a plugin menu entry with no label",
+    },
+    {
+        key = "launcher.entries",
+        value = { { kind = "plugin_menu", plugin = "stub", item = "stub", label = "Stub" } },
+        valid = false,
+        why = "a plugin menu entry with no icon",
+    },
+    {
+        key = "launcher.entries",
+        value = { { kind = "plugin_menu", plugin = "stub", item = "", label = "Stub", icon = "action" } },
+        valid = false,
+        why = "a plugin menu entry with an empty item",
+    },
+    {
+        key = "launcher.entries",
         value = { { kind = "action", action = "wifi_toggle", label = "Wi-Fi", icon = "action" } },
         valid = true,
         why = "an action entry",

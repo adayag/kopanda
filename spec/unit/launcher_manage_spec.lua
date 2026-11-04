@@ -9,6 +9,7 @@ describe("launcher management", function()
     local Dispatcher = require("dispatcher")
     local Event = require("ui/event")
     local InfoMessage = require("ui/widget/infomessage")
+    local PluginLoader = require("pluginloader")
     local UIManager = require("ui/uimanager")
     local Screen = require("device").screen
     local Editor, EntryPicker, Home, LauncherManage, Looks, Settings
@@ -275,6 +276,25 @@ describe("launcher management", function()
             local row = rows()[2]
             assert.same({ "plugin_missing", "Gone", "Plugin · plugin missing", true },
                 { row.icon, row.label, row.line, row.muted })
+        end)
+
+        it("shows a plugin menu item with its own label and icon, and removes it", function()
+            assert.is_true(Settings.set("launcher.entries", { LIBRARY, { kind = "plugin_menu", plugin = "stub",
+                item = "stub", label = "Stub", icon = "terminal" } }))
+            local fm = harness.show_fm()
+            harness.tick(2)
+            fm.stub = { addToMainMenu = function() end }
+            local loaded = stub(PluginLoader, "isPluginLoaded", function(_, name)
+                return name == "stub"
+            end)
+            cleanup(function()
+                loaded:revert()
+            end)
+            LauncherManage.open({})
+            local row = rows()[2]
+            assert.same({ "terminal", "Stub", "Plugin · stub", false }, { row.icon, row.label, row.line, row.muted })
+            tap("remove", 2)
+            assert.same({ LIBRARY }, stored())
         end)
 
         it("draws an available row's text in ink and an unavailable one's in none, and greyed arrows", function()

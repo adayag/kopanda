@@ -28,6 +28,7 @@ const data = table([
         label: "Tools",
         entries: [
           { kind: "plugin", plugin: "calibre", action: "search", label: "Calibre", icon: "calibre" },
+          { kind: "plugin_menu", plugin: "rakuyomi", item: "rakuyomi", label: "Manga", icon: "action" },
           { kind: "action", action: "wifi_toggle", label: "Wi-Fi", icon: "action" },
           { kind: "koreader", target: "collections" },
           { kind: "kopanda", target: "settings" },

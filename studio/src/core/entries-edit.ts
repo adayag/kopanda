@@ -6,7 +6,7 @@ import { schema, type Key } from "../schema.js";
 
 type LauncherKey = Extract<Key, { type: "launcher" }>;
 
-/** A launcher entry, of one of the kinds kopanda.koplugin/settings.lua:58-65 lists. */
+/** A launcher entry, of one of the kinds kopanda.koplugin/settings.lua:58-66 lists. */
 export type Entry = LauncherKey["default"][number];
 /** A folder's entry: any kind but a folder, since folders don't nest. */
 export type FolderEntry = Exclude<Entry, { kind: "folder" }>;
@@ -99,6 +99,7 @@ export function kindLine(entry: Entry): string {
     case "koreader":
       return `KOReader · ${entry.target}`;
     case "plugin":
+    case "plugin_menu":
       return `Plugin · ${entry.plugin}`;
     case "action":
       return `Action · ${entry.action}`;
@@ -111,14 +112,14 @@ export function kindLine(entry: Entry): string {
   }
 }
 
-/** Whether the entry has a label of its own: plugin, action, directory and folder entries do. */
+/** Whether the entry has a label of its own: all but the screens' do. */
 export function hasLabel(entry: Entry): entry is Extract<Entry, { label: string }> {
   return entry.kind !== "kopanda" && entry.kind !== "koreader";
 }
 
-/** Whether the entry's icon is its own: plugin and action entries; the others draw a fixed one. */
+/** Whether the entry's icon is its own: plugin, plugin_menu and action entries; the others draw a fixed one. */
 export function hasIcon(entry: Entry): entry is Extract<Entry, { icon: string }> {
-  return entry.kind === "plugin" || entry.kind === "action";
+  return entry.kind === "plugin" || entry.kind === "plugin_menu" || entry.kind === "action";
 }
 
 /**
@@ -143,7 +144,7 @@ export function setLabel(entries: readonly Entry[], pos: Pos, label: string): En
   return copy;
 }
 
-/** entries with the icon of the action or plugin entry at pos replaced; null for any other kind. */
+/** entries with the icon of the action, plugin or plugin_menu entry at pos replaced; null for any other kind. */
 export function setIcon(entries: readonly Entry[], pos: Pos, icon: string): Entry[] | null {
   const { copy, list, at } = locate(entries, pos);
   const entry = list[at]!;

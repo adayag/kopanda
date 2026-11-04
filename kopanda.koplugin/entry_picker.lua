@@ -168,6 +168,55 @@ local function action_tree(pick, done)
     show(pick, container)
 end
 
+local function by_label(a, b)
+    return a.label < b.label
+end
+
+-- The item's text as a menu shows it (frontend/ui/widget/menu.lua:1610-1616), or nil for no string.
+local function item_text(item)
+    local text = item.text
+    if item.text_func then
+        local ok, value = pcall(item.text_func)
+        text = ok and value or text
+    end
+    return type(text) == "string" and text or nil
+end
+
+-- A row for each of the plugin's main-menu items a launcher slot can run, by label; an item that needs its
+-- menu (no callback, or keep_menu_open) has none. A failure, a plugin's own included, is logged and gives none.
+local function menu_rows(pick, name)
+    local rows = {}
+    local ok, err = pcall(function()
+        for id, item in pairs(require("launcher_entries").menu_items(name) or {}) do
+            local text = item_text(item)
+            if text and item.callback and not item.keep_menu_open then
+                rows[#rows + 1] = {
+                    label = text,
+                    run = function()
+                        ask_label(pick, text, function(label)
+                            pick.on_entry({ kind = "plugin_menu", plugin = name, item = id, label = label,
+                                icon = "action" })
+                        end)
+                    end,
+                }
+            end
+        end
+    end)
+    if not ok then
+        logger.err("KoPanda: the entry picker could not read the menu of", name, err)
+        return {}
+    end
+    table.sort(rows, by_label)
+    return rows
+end
+
+-- The action tree for the plugin name: its one action becomes a plugin entry.
+local function action_row(pick, name)
+    action_tree(pick, function(id, label)
+        pick.on_entry({ kind = "plugin", plugin = name, action = id, label = label, icon = "action" })
+    end)
+end
+
 -- Where the folder chooser opens: the file browser's folder, or the reader's last one.
 local function start_path()
     local FileManager = package.loaded["apps/filemanager/filemanager"]
@@ -223,10 +272,15 @@ local PICKERS = {
                 rows[#rows + 1] = {
                     label = plugin.fullname or name,
                     run = function()
-                        action_tree(pick, function(id, label)
-                            pick.on_entry({ kind = "plugin", plugin = name, action = id, label = label,
-                                icon = "action" })
-                        end)
+                        local items = menu_rows(pick, name)
+                        if #items == 0 then
+                            action_row(pick, name)
+                            return
+                        end
+                        items[#items + 1] = { label = "Other action", run = function()
+                            action_row(pick, name)
+                        end }
+                        sheet(pick, ctx, plugin.fullname or name, items)
                     end,
                 }
             end
@@ -235,9 +289,7 @@ local PICKERS = {
             Helpers.note("No plugins are loaded.")
             return
         end
-        table.sort(rows, function(a, b)
-            return a.label < b.label
-        end)
+        table.sort(rows, by_label)
         sheet(pick, ctx, "Plugin", rows)
     end,
 }

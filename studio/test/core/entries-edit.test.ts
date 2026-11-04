@@ -96,6 +96,7 @@ describe("the entry operations on the shared corpus", () => {
 });
 
 const PLUGIN: Entry = { kind: "plugin", plugin: "calibre", action: "search", label: "Calibre", icon: "action" };
+const PLUGIN_MENU: Entry = { kind: "plugin_menu", plugin: "stub", item: "stub", label: "Stub", icon: "action" };
 const ACTION: Entry = { kind: "action", action: "history", label: "History", icon: "action" };
 const DIRECTORY: Entry = { kind: "directory", path: "/mnt/us/books", label: "books" };
 const KOPANDA: Entry = { kind: "kopanda", target: "library" };
@@ -111,7 +112,7 @@ function unchanged<T>(entries: Entry[], op: (entries: Entry[]) => T): T {
 }
 
 describe("setLabel", () => {
-  it.each([PLUGIN, ACTION, DIRECTORY, FOLDER])("changes only the label of a $kind entry", (entry) => {
+  it.each([PLUGIN, PLUGIN_MENU, ACTION, DIRECTORY, FOLDER])("changes only the label of a $kind entry", (entry) => {
     const entries = [KOPANDA, entry];
 
     const result = unchanged(entries, (e) => setLabel(e, [2], "Renamed"));
@@ -149,7 +150,7 @@ describe("setLabel", () => {
 });
 
 describe("setIcon", () => {
-  it.each([PLUGIN, ACTION])("changes only the icon of a $kind entry", (entry) => {
+  it.each([PLUGIN, PLUGIN_MENU, ACTION])("changes only the icon of a $kind entry", (entry) => {
     const entries = [KOPANDA, entry];
 
     const result = unchanged(entries, (e) => setIcon(e, [2], "sun"));

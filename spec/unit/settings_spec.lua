@@ -436,6 +436,9 @@ describe("Settings", function()
         local function plugin(name)
             return { kind = "plugin", plugin = name, action = "terminal", label = "Terminal", icon = "terminal" }
         end
+        local function plugin_menu(name)
+            return { kind = "plugin_menu", plugin = name, item = name, label = "Manga", icon = "action" }
+        end
         local function directory(path)
             return { kind = "directory", path = path, label = "Downloads" }
         end
@@ -465,6 +468,8 @@ describe("Settings", function()
             ["a missing label"] = { { kind = "action", action = "file_search", icon = "search" } },
             ["an empty-string label"] = { { kind = "action", action = "file_search", label = "", icon = "search" } },
             ["a number for action"] = { { kind = "action", action = 5, label = "Search", icon = "search" } },
+            ["a plugin menu item with no item"] = { { kind = "plugin_menu", plugin = "rakuyomi", label = "Manga",
+                icon = "action" } },
             ["a relative path"] = { directory("mnt/us/downloads") },
             ["the root as a path"] = { directory("/") },
             ["a folder inside a folder"] = { folder({ folder({ kopanda("library") }) }) },
@@ -479,6 +484,8 @@ describe("Settings", function()
             ["four entries, one of each kind, two of them in the folder"] = one_of_each,
             ["a folder of three"] = { folder({ kopanda("library"), plugin("terminal"), directory("/mnt/us") }) },
             ["a plugin that doesn't exist"] = { plugin("no-such-plugin") },
+            ["a plugin's menu item, alone and in a folder"] = { plugin_menu("rakuyomi"),
+                folder({ plugin_menu("rakuyomi") }) },
         }
 
         it("accepts the default, an empty list, one of each kind, a folder of three and an unknown plugin, "

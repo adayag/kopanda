@@ -27,16 +27,23 @@ then\9Café “quoted”",
                     ["plugin"] = "calibre",
                 },
                 [2] = {
+                    ["icon"] = "action",
+                    ["item"] = "rakuyomi",
+                    ["kind"] = "plugin_menu",
+                    ["label"] = "Manga",
+                    ["plugin"] = "rakuyomi",
+                },
+                [3] = {
                     ["action"] = "wifi_toggle",
                     ["icon"] = "action",
                     ["kind"] = "action",
                     ["label"] = "Wi-Fi",
                 },
-                [3] = {
+                [4] = {
                     ["kind"] = "koreader",
                     ["target"] = "collections",
                 },
-                [4] = {
+                [5] = {
                     ["kind"] = "kopanda",
                     ["target"] = "settings",
                 },

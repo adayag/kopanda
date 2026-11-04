@@ -19,7 +19,7 @@ export type Apply = (next: Entry[] | null, folderRemoved?: boolean) => Promise<b
 
 /**
  * What the entry shows: a screen entry its catalog label and icon, a folder or directory entry its
- * label and the folder icon, any other its own (kopanda.koplugin/launcher_entries.lua:95-101).
+ * label and the folder icon, any other its own (kopanda.koplugin/launcher_entries.lua:125-131).
  */
 export function entryView(entry: Entry): { label: string; icon: string } {
   if (entry.kind === "folder" || entry.kind === "directory") return { label: entry.label, icon: "folder" };

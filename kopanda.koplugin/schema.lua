@@ -72,8 +72,9 @@ return {
         },
         {
             -- The home's launcher, in order: KoPanda and KOReader screens, plugin and dispatcher
-            -- actions, folders on disk and folders of entries. max_entries is the most the
-            -- launcher holds; targets lists the screens a kopanda or koreader entry may name.
+            -- actions, plugin_menu entries (a plugin's main-menu item), folders on disk and folders
+            -- of entries. max_entries is the most the launcher holds; targets lists the screens a
+            -- kopanda or koreader entry may name.
             id = "launcher.entries",
             type = "launcher",
             max_entries = 4,

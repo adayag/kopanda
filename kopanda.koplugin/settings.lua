@@ -59,6 +59,7 @@ local ENTRY_FIELDS = {
     kopanda = { "kind", "target" },
     koreader = { "kind", "target" },
     plugin = { "kind", "plugin", "action", "label", "icon" },
+    plugin_menu = { "kind", "plugin", "item", "label", "icon" },
     action = { "kind", "action", "label", "icon" },
     directory = { "kind", "path", "label" },
     folder = { "kind", "label", "entries" },

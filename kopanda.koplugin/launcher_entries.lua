@@ -57,11 +57,40 @@ local function registered(id)
     return #Dispatcher.getDisplayList({ [id] = true }) == 1
 end
 
+local function file_manager()
+    local FileManager = package.loaded["apps/filemanager/filemanager"]
+    return FileManager and FileManager.instance
+end
+
+-- The plugin's instance on the file manager (frontend/apps/filemanager/filemanager.lua:424, :381), or nil
+-- when it isn't loaded or has no main-menu items to give.
+local function plugin_instance(name)
+    local fm = file_manager()
+    local plugin = fm and require("pluginloader"):isPluginLoaded(name) and fm[name]
+    return plugin and plugin.addToMainMenu and plugin or nil
+end
+
+-- The plugin's main-menu items, as FileManagerMenu builds them (filemanagermenu.lua:851-852), or nil. It
+-- runs plugin code, so it raises what the plugin raises, and no home build calls it.
+function LauncherEntries.menu_items(name)
+    local plugin = plugin_instance(name)
+    if not plugin then
+        return nil
+    end
+    local items = {}
+    plugin:addToMainMenu(items)
+    return items
+end
+
 -- True, or false and the suffix saying why the entry can't run here.
 function LauncherEntries.available(entry)
     local kind = entry.kind
     if kind == "plugin" then
         if not (require("pluginloader"):isPluginLoaded(entry.plugin) and registered(entry.action)) then
+            return false, "plugin missing"
+        end
+    elseif kind == "plugin_menu" then
+        if not plugin_instance(entry.plugin) then
             return false, "plugin missing"
         end
     elseif kind == "action" then
@@ -107,11 +136,6 @@ function LauncherEntries.resolve(entry)
         return { label = label_of(entry), icon = "plugin_missing", state = "unavailable", suffix = "not available" }
     end
     return view
-end
-
-local function file_manager()
-    local FileManager = package.loaded["apps/filemanager/filemanager"]
-    return FileManager and FileManager.instance
 end
 
 local KOPANDA_RUN = {
@@ -190,9 +214,9 @@ local function unavailable_note(entry, suffix)
     end
 end
 
--- What a tap on the entry does under ctx: a folder opens its sheet. Availability is checked again now,
--- so what has gone since the home was built gives its note; a check that raises reads as not
--- available. Any other error raises to the caller, so Home:onGesture's pcall logs it and closes the home.
+-- What a tap on the entry does under ctx. Availability is checked again now, so what has gone since the home
+-- was built gives its note; a check that raises reads as not available. A plugin menu item's error is logged
+-- and gives a note; any other error raises to the caller, so Home:onGesture's pcall logs it and closes the home.
 function LauncherEntries.run(entry, ctx)
     local kind = entry.kind
     if kind == "kopanda" then
@@ -220,6 +244,18 @@ function LauncherEntries.run(entry, ctx)
         local fm = file_manager()
         if fm then
             fm.file_chooser:changeToPath(entry.path)
+        end
+        return
+    end
+    if kind == "plugin_menu" then
+        local ok, err = pcall(function()
+            local item = LauncherEntries.menu_items(entry.plugin)[entry.item]
+            assert(item and item.callback, "no such menu item")
+            item.callback()
+        end)
+        if not ok then
+            logger.err("KoPanda: the launcher could not open", entry.plugin, err)
+            Helpers.note(T("%1 couldn't open.", label_of(entry)))
         end
         return
     end

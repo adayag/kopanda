@@ -75,6 +75,23 @@ describe("LauncherEntries", function()
         end)
     end
 
+    local function menu_entry(item)
+        return { kind = "plugin_menu", plugin = "stub", item = item or "stub", label = "Stub", icon = "action" }
+    end
+
+    -- A plugin named stub on fm, loaded, whose addToMainMenu adds item as menu_items.stub; built counts
+    -- its calls.
+    local function stub_plugin(fm, item)
+        local plugin = { built = 0 }
+        function plugin:addToMainMenu(menu_items)
+            self.built = self.built + 1
+            menu_items.stub = item
+        end
+        fm.stub = plugin
+        plugins_loaded({ stub = true })
+        return plugin
+    end
+
     -- A fresh, real folder under KO_HOME.
     local function temp_dir(name)
         local dir = os.getenv("KO_HOME") .. "/" .. name
@@ -423,6 +440,93 @@ describe("LauncherEntries", function()
             assert.equals(sheet, harness.top())
             assert.equals(home, harness.top(2))
             assert.equals(home, Home.shown)
+        end)
+    end)
+
+    describe("a plugin menu item", function()
+        it("reads as ready with its own label and icon, and runs no plugin code to do so", function()
+            local plugin = stub_plugin(fm_with_home(), { text = "Stub", callback = function() end })
+            assert.same({ label = "Stub", icon = "action", state = "ready" }, LauncherEntries.resolve(menu_entry()))
+            assert.equals(0, plugin.built)
+        end)
+
+        it("reads as plugin missing, each way a plugin can be away", function()
+            local fm = fm_with_home()
+            stub_plugin(fm, {})
+            plugins_loaded({})
+            assert.same(unavailable("Stub", "plugin missing"), LauncherEntries.resolve(menu_entry()))
+            plugins_loaded({ stub = true })
+            fm.stub = {}
+            assert.same(unavailable("Stub", "plugin missing"), LauncherEntries.resolve(menu_entry()))
+            fm.stub = nil
+            assert.same(unavailable("Stub", "plugin missing"), LauncherEntries.resolve(menu_entry()))
+        end)
+
+        it("reads as plugin missing with no file manager", function()
+            plugins_loaded({ stub = true })
+            assert.same(unavailable("Stub", "plugin missing"), LauncherEntries.resolve(menu_entry()))
+        end)
+
+        it("runs the item's callback once on a tap, the home left up and no note shown", function()
+            local ran = 0
+            stub_plugin(fm_with_home(), { text = "Stub", callback = function()
+                ran = ran + 1
+            end })
+            local shown = notes()
+            LauncherEntries.run(menu_entry(), {})
+            assert.equals(1, ran)
+            assert.same({}, shown)
+            assert.is_not_nil(Home.shown)
+        end)
+
+        it("gives the plugin's note on a tap when the plugin isn't loaded, running nothing", function()
+            local plugin = stub_plugin(fm_with_home(), { text = "Stub", callback = function() end })
+            plugins_loaded({})
+            local shown = notes()
+            LauncherEntries.run(menu_entry(), {})
+            assert.same({ { text = "Stub: the stub plugin isn't loaded." } }, shown)
+            assert.equals(0, plugin.built)
+        end)
+
+        -- Runs entry on a tap, expecting no raise, its failure logged, its one note and the home still up.
+        local function fails_with_note(entry)
+            local err = spy.on(logger, "err")
+            cleanup(function()
+                err:revert()
+            end)
+            local shown = notes()
+            assert.has_no.errors(function()
+                LauncherEntries.run(entry, {})
+            end)
+            assert.same({ { text = "Stub couldn't open." } }, shown)
+            assert.spy(err).was.called()
+            assert.is_not_nil(Home.shown)
+        end
+
+        it("logs and gives a note on a tap on an item that's gone", function()
+            stub_plugin(fm_with_home(), { text = "Stub", callback = function() end })
+            fails_with_note(menu_entry("gone"))
+        end)
+
+        it("logs and gives a note on a tap on an item with no callback", function()
+            stub_plugin(fm_with_home(), { text = "Stub", sub_item_table = {} })
+            fails_with_note(menu_entry())
+        end)
+
+        it("logs and gives a note when the callback raises", function()
+            stub_plugin(fm_with_home(), { text = "Stub", callback = function()
+                error("spec: the callback failed")
+            end })
+            fails_with_note(menu_entry())
+        end)
+
+        it("logs and gives a note when the plugin's addToMainMenu raises", function()
+            local fm = fm_with_home()
+            stub_plugin(fm, {})
+            fm.stub.addToMainMenu = function()
+                error("spec: addToMainMenu failed")
+            end
+            fails_with_note(menu_entry())
         end)
     end)
 

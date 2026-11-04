@@ -17,7 +17,7 @@ local SettingsMenu = {}
 -- The plugin folder, as fonts.lua finds it: as require found this file.
 local PLUGIN_DIR = debug.getinfo(1, "S").source:match("^@(.*)/[^/]*$")
 
--- Storefront's dispatcher action, as the launcher runs a plugin's (launcher_entries.lua:61-80).
+-- Storefront's dispatcher action, as the launcher runs a plugin's (launcher_entries.lua:86-110).
 local STOREFRONT = { kind = "plugin", plugin = "storefront", action = "storefront_open", label = "Storefront" }
 
 -- The Updates section: actions, not settings, after the last setting and a separator. KOReader menu opens
