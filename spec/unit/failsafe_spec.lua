@@ -264,7 +264,7 @@ describe("KoPanda failing safe", function()
             now = os.time(),
             screen = Screen,
         }
-        local arranged = Layout.arrange(Settings.get("layout.rows"), ctx)
+        local arranged = Layout.arrange(Layout.rows, ctx)
         assert.equals(0, arranged.nav.h)
         assert.equals(Layout.screen:getHeight(), arranged.nav.y)
     end)
@@ -424,21 +424,26 @@ describe("KoPanda failing safe", function()
     end)
 
     describe("the quick-settings sheet", function()
-        local QuickSettings, Sheet
+        local QuickSettings, Sheet, home_rows
 
         before_each(function()
             QuickSettings = require("quick_settings")
             Sheet = require("sheet")
+            home_rows = require("layout").rows
+        end)
+
+        after_each(function()
+            require("layout").rows = home_rows
         end)
 
         it("closes the home onto the file browser when its open raises from a launcher tap", function()
             -- The launcher in a row of its own, clear of KOReader's top menu zones
             -- (launcher_widget_spec.lua, "taps through the real home").
-            assert.is_true(require("settings").set("layout.rows", {
+            require("layout").rows = {
                 { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
                 { { widget = "quote", share = 1 } },
                 { { widget = "launcher", share = 1 } },
-            }))
+            }
             QuickSettings.open = function()
                 error("kopanda-test: quick settings open failed")
             end
@@ -531,11 +536,11 @@ describe("KoPanda failing safe", function()
             assert.equals(FileManager.instance, harness.top())
             Editor = require("editor")
             Editor.show({
-                screen = "edit_layout",
+                screen = "launcher",
                 aside = "Home",
-                title = "Edit layout",
+                title = "Launcher",
                 body = function(_, width)
-                    local control = { kind = "card", rect = { x = 0, y = 0, w = width, h = 100 },
+                    local control = { kind = "row", rect = { x = 0, y = 0, w = width, h = 100 },
                         draw = function() end, run = function() end }
                     if card then
                         card(control)
@@ -574,27 +579,6 @@ describe("KoPanda failing safe", function()
             no_editor()
             file_manager_usable()
             assert.is_true(logged_error("kopanda-test: editor paint failed"))
-        end)
-
-        it("logs and leaves no editor when edit layout's read of the settings throws", function()
-            harness.show_fm()
-            harness.tick(2)
-            Editor = require("editor")
-            local Settings = require("settings")
-            local get = Settings.get
-            Settings.get = function(key)
-                if key == "layout.rows" then
-                    error("kopanda-test: layout read failed")
-                end
-                return get(key)
-            end
-            local ok = pcall(require("edit_layout").open)
-            Settings.get = get
-            assert.is_true(ok)
-            no_editor()
-            assert.is_true(logged_error("kopanda-test: layout read failed"))
-            Home.close()
-            file_manager_usable()
         end)
 
         it("closes itself when a control's run throws", function()

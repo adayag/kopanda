@@ -376,7 +376,7 @@ describe("the sheet", function()
 
     -- The boxes four sheets had before the pickers' additions, at the Colorsoft's
     -- size: panel, header, hint, then each row's rect, label and detail, "-" for none. The
-    -- iconless rows are the editor's picker sheets (edit_layout.lua:153-212), which keep the indent.
+    -- iconless rows are the editor's picker sheets (entry_picker.lua:90), which keep the indent.
     describe("a sheet with none of the pickers' additions", function()
         local SPECS = {
             plain = three_rows(),

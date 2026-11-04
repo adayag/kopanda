@@ -9,7 +9,7 @@ export function screenFacts(profile: Profile): string {
 }
 
 /** The hash of the profile with this id: its form, or the view after it. */
-export function profileHref(id: string, view?: "layout" | "launcher"): string {
+export function profileHref(id: string, view?: "launcher"): string {
   const href = `#/profiles/${encodeURIComponent(id)}`;
   return view === undefined ? href : `${href}/${view}`;
 }

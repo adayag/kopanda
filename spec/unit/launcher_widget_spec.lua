@@ -9,7 +9,7 @@ describe("the launcher widget", function()
     local Screen = require("device").screen
     local logger = require("logger")
     local util = require("util")
-    local Launcher, LauncherEntries, Settings, Looks, Icons, Widgets, Home
+    local Launcher, LauncherEntries, Settings, Looks, Icons, Widgets, Home, home_layout, home_rows
 
     -- The default four's views and Wi-Fi's, by target, as resolve gives them with Wi-Fi on.
     local VIEWS = {
@@ -61,6 +61,8 @@ describe("the launcher widget", function()
         Icons = package.loaded["icons"]
         Widgets = package.loaded["widgets"]
         Home = package.loaded["home"]
+        home_layout = package.loaded["layout"]
+        home_rows = home_layout.rows
         resolved, ran = 0, {}
         stub_resolve()
         LauncherEntries.run = function(entry, ctx)
@@ -69,6 +71,7 @@ describe("the launcher widget", function()
     end)
 
     after_each(function()
+        home_layout.rows = home_rows
         harness.teardown()
     end)
 
@@ -736,7 +739,7 @@ describe("the launcher widget", function()
         for _, look in ipairs({ "editorial", "diner" }) do
             it("runs the entry under a tap at each entry's centre, with the home's ctx, in " .. look, function()
                 assert.is_true(Settings.set("look", look))
-                assert.is_true(Settings.set("layout.rows", ROWS))
+                home_layout.rows = ROWS
                 local _, home = show_home()
                 local built = launcher_slot(home).built
                 assert.is_table(built.painted_at)
@@ -761,7 +764,7 @@ describe("the launcher widget", function()
                     function()
                 assert.is_true(Settings.set("focused.on", false))
                 assert.is_true(Settings.set("look", look))
-                assert.is_true(Settings.set("layout.rows", ROWS))
+                home_layout.rows = ROWS
                 local fm, home = show_home()
                 local built = launcher_slot(home).built
                 local a, b = built.rects[1], built.rects[2]
@@ -782,7 +785,7 @@ describe("the launcher widget", function()
             finally(function()
                 logger.err:revert()
             end)
-            assert.is_true(Settings.set("layout.rows", ROWS))
+            home_layout.rows = ROWS
             local fm, home = show_home()
             local built = launcher_slot(home).built
             local rect = built.rects[1]
@@ -809,10 +812,10 @@ describe("the launcher widget", function()
         end)
 
         local function show_home()
-            assert.is_true(Settings.set("layout.rows", {
+            home_layout.rows = {
                 { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
                 { { widget = "launcher", share = 1 } },
-            }))
+            }
             harness.show_fm()
             harness.tick(2)
             assert.equals(Home.shown, harness.top())

@@ -1220,17 +1220,6 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   `ultimatejimmy/storefront.koplugin` the plugin is named `storefront` and registers that action
   (`storefront.koplugin/main.lua:12032`), unchecked on the devices.
 
-### Edit layout: `util.tableDeepCopy` and its notes
-
-- `util`: `frontend/util.lua:184-203` (`tableDeepCopy`). `Settings.get` hands back the stored
-  table itself, so `edit_layout.lua` copies `layout.rows` when it opens, and every
-  `rows_edit.lua` operation copies the rows it is given before changing them.
-- `ui/widget/infomessage`: a refused change ("That won't fit on the home.", "Couldn't save the
-  layout." and `rows_edit.lua`'s notes) shows a note with no timeout, so no timer
-  (`frontend/ui/widget/infomessage.lua:52-53`, `:283-290`).
-- Its pickers are `sheet.lua`'s sheets over the editor frame; the frame is the editor entries
-  above.
-
 ### The featured cover: CoverBrowser's `bookinfomanager`, `ImageWidget` and the bounded check
 
 - `bookinfomanager` (`plugins/coverbrowser.koplugin/bookinfomanager.lua`), reached by
@@ -1776,8 +1765,7 @@ touch lock still holds.
   suspend (`frontend/device/sdl/device.lua:165`) by simulation: its `Suspend` handler
   (`:417-428`) shows the screensaver (`simulateSuspend`, `:462-468`). The Kindle can
   (`frontend/device/kindle/device.lua:402`).
-- Its Wi-Fi row is the launcher's Wi-Fi entry (the launcher's entries above); its Edit layout note
-  is an `InfoMessage` with no timeout, as the launcher's notes are.
+- Its Wi-Fi row is the launcher's Wi-Fi entry (the launcher's entries above).
 - "Wi-Fi" takes a plain hyphen: Diner's row face, `fonts/bricolage-grotesque/BricolageGrotesque-Bold.ttf`,
   has no U+2011 (`face.ftsize:hasGlyph(0x2011)` false, `base/ffi/freetype.lua:75`), so the
   boards' non-breaking hyphen would come from a fallback font.

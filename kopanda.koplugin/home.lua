@@ -1,4 +1,4 @@
--- The KoPanda home: a full-screen widget over the file browser, built from layout.rows as rows of
+-- The KoPanda home: a full-screen widget over the file browser, built from Layout.rows as rows of
 -- widgets (home_rows.lua builds them), drawn in the active look with its header and footer; its
 -- gestures are routed by home_gestures.lua.
 -- Module state: Home.shown, the home on screen or nil; Home.just_closed, true when a book closed

@@ -192,7 +192,7 @@ afterEach(() => {
 });
 
 describe("the preview pane", () => {
-  it("names the profile, its device and resolution, on the form and both editors", async () => {
+  it("names the profile, its device and resolution, on the form and the launcher editor", async () => {
     await open();
     expect(within(pane()).getByText("Colorsoft")).toBeInTheDocument();
     expect(within(pane()).getByText("Kindle Colorsoft SE · 1264×1680")).toBeInTheDocument();
@@ -200,14 +200,12 @@ describe("the preview pane", () => {
     expect(within(pane()).getByRole("checkbox", { name: "Night" })).not.toBeChecked();
     expect(rerender()).toBeInTheDocument();
 
-    for (const view of ["layout", "launcher"]) {
-      history.replaceState(null, "", `/#/profiles/colorsoft/${view}`);
-      await act(async () => {
-        window.dispatchEvent(new HashChangeEvent("hashchange"));
-        await vi.advanceTimersByTimeAsync(0);
-      });
-      expect(within(pane()).getByText("Kindle Colorsoft SE · 1264×1680")).toBeInTheDocument();
-    }
+    history.replaceState(null, "", "/#/profiles/colorsoft/launcher");
+    await act(async () => {
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(within(pane()).getByText("Kindle Colorsoft SE · 1264×1680")).toBeInTheDocument();
   });
 
   it("renders the profile's look at once, then shows the image and how long it took", async () => {

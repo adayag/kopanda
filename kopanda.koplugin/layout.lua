@@ -179,8 +179,9 @@ end
 
 -- The whole home for rows under ctx ({ look, screen, ... }): measured heights, the rows that fit with slots placed, the
 -- dropped row indexes and the chrome, in device pixels. The quote's row drops first, staying as an empty row, then rows
--- from the end. A slot that fails to measure reads 0 (slot.error); plates go round row 1 and plate.slots' widgets.
-local function arrange(rows, ctx, placer)
+-- from the end, each drop logged once. A slot that fails to measure reads 0 (slot.error); plates go round row 1 and
+-- plate.slots' widgets.
+function Layout.arrange(rows, ctx)
     local home = ctx.look.home
     local header = home.header
     local width, height = Layout.screen:getWidth(), Layout.screen:getHeight()
@@ -245,6 +246,7 @@ local function arrange(rows, ctx, placer)
     local function fit(placement)
         return placement(spans, above, home.margin, home.row_gap, home.free_space, footer_height(home), first_gap)
     end
+    -- Unlogged: a row that only overflows with the quote in place isn't dropped, so it mustn't be logged.
     local _, overflowing = fit(place)
     local quote_row
     if #overflowing > 0 then
@@ -257,13 +259,11 @@ local function arrange(rows, ctx, placer)
             end
         end
     end
-    local ys, dropped = fit(placer)
+    local ys, dropped = fit(Layout.place)
     -- The quote's row sits among the kept rows, so it comes before any row still dropped.
     if quote_row and not (dropped[1] and dropped[1] <= quote_row) then
         table.insert(dropped, 1, quote_row)
-        if placer == Layout.place then
-            logger.warn("KoPanda: the quote doesn't fit the screen and is left out")
-        end
+        logger.warn("KoPanda: the quote doesn't fit the screen and is left out")
     end
     local arranged = {
         width = width,
@@ -326,23 +326,6 @@ local function arrange(rows, ctx, placer)
         }
     end
     return arranged
-end
-
--- The home for rows under ctx, each dropped row logged. See arrange above.
-function Layout.arrange(rows, ctx)
-    return arrange(rows, ctx, Layout.place)
-end
-
--- Whether every row of rows fits ctx's screen: true exactly when the placement drops nothing.
--- The edit-layout screen asks Layout.overflow instead.
-function Layout.fits(rows, ctx)
-    return #arrange(rows, ctx, place).dropped == 0
-end
-
--- How many rows of rows the placement leaves out on ctx's screen, unlogged: what the
--- edit-layout screen compares before and after a change.
-function Layout.overflow(rows, ctx)
-    return #arrange(rows, ctx, place).dropped
 end
 
 local TEXT_SCALE = { small = 0.85, medium = 1, large = 1.15, extra_large = 1.3 }

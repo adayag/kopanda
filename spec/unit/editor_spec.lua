@@ -1,5 +1,5 @@
--- The editor frame: the full-screen frame edit layout and launcher management
--- draw in, over a shown home. Its header, body and foot in each look, its taps, keys and Back,
+-- The editor frame: the full-screen frame launcher management draws in, over a shown
+-- home. Its header, body and foot in each look, its taps, keys and Back,
 -- one paint per show or refresh, its settled signal and a body too tall for the screen. Every
 -- stub of Device.hasKeys, the screen and night_mode is restored where it is made.
 describe("the editor frame", function()
@@ -94,17 +94,19 @@ describe("the editor frame", function()
         return n
     end
 
-    -- A card that paints itself on paper inside its outline, as a screen's card would.
+    -- The space a body row keeps above itself, in board pixels.
+    local CARD_GAP = 10
+
+    -- A card that paints itself on paper inside an ink outline.
     local function card(ctx, w, h, run)
-        local tokens = ctx.look.editor
         local palette = Looks.palette(ctx.look, ctx.variant)
-        local outline = ctx.screen:scaleBySize(tokens.card_outline_width)
+        local outline = ctx.screen:scaleBySize(2)
         return {
-            kind = "card",
+            kind = "row",
             rect = { x = 0, y = 0, w = w, h = h },
             draw = function(bb, x, y)
                 Paint.fill(bb, x, y, w, h, Looks.color(palette.paper))
-                Paint.border(bb, x, y, w, h, outline, Looks.color(palette[tokens.card_outline_color]))
+                Paint.border(bb, x, y, w, h, outline, Looks.color(palette.ink))
             end,
             run = run,
         }
@@ -120,12 +122,12 @@ describe("the editor frame", function()
             end
         end
         return {
-            screen = "edit_layout",
+            screen = "launcher",
             aside = "Home",
-            title = "Edit layout",
+            title = "Launcher",
             body = function(ctx, width)
                 built[1] = (built[1] or 0) + 1
-                local h, gap = ctx.screen:scaleBySize(80), ctx.screen:scaleBySize(ctx.look.editor.card_gap)
+                local h, gap = ctx.screen:scaleBySize(80), ctx.screen:scaleBySize(CARD_GAP)
                 local rows = {}
                 for i = 1, n or 2 do
                     local c = card(ctx, width, h, counter("card" .. i))
@@ -240,7 +242,7 @@ describe("the editor frame", function()
                 local side = scale(tokens.padding.side)
                 assert.same({ side, editor.rule.y + editor.rule.h + scale(tokens.body_gap) }, { first.x, first.y }, id)
                 assert.equals(Screen:getWidth() - 2 * side, first.w)
-                assert.equals(first.y + first.h + scale(tokens.card_gap), second.y)
+                assert.equals(first.y + first.h + scale(CARD_GAP), second.y)
                 local foot = editor.places[#editor.places].rect
                 assert.equals(Screen:getHeight() - scale(tokens.padding.bottom), foot.y + foot.h, id)
                 assert.equals(side, foot.x, id)
@@ -250,26 +252,6 @@ describe("the editor frame", function()
             end
         end)
 
-        it("casts Diner's 2 px card shadow under a card and Editorial's none", function()
-            local editor, _, palette = painted("diner")
-            local rect = body_place(editor, 1).rect
-            local right, bottom = rect.x + rect.w, rect.y + rect.h
-            local mid_x, mid_y = rect.x + math.floor(rect.w / 2), rect.y + math.floor(rect.h / 2)
-            assert.is_true(near(rgb(palette.shadow), pixel(bb, right + scale(1) - 1, mid_y), 1), "right shadow")
-            assert.is_true(near(rgb(palette.shadow), pixel(bb, mid_x, bottom + scale(1) - 1), 1), "bottom shadow")
-            assert.is_true(near(rgb(palette.paper), pixel(bb, right + scale(3) - 1, mid_y), 1), "past the right shadow")
-            assert.is_true(near(rgb(palette.paper), pixel(bb, mid_x, bottom + scale(3) - 1), 1),
-                "past the bottom shadow")
-            assert.is_true(near(rgb(palette.paper), pixel(bb, centre(rect)), 1), "the card over its shadow")
-            Editor.close()
-            bb:free()
-
-            local look
-            editor, look, palette = painted("editorial")
-            assert.is_false(look.editor.card_shadow.color)
-            rect = body_place(editor, 1).rect
-            assert.is_true(near(rgb(palette.paper), pixel(bb, rect.x + rect.w + 1, rect.y + rect.h + 1), 1))
-        end)
     end)
 
     describe("taps", function()
@@ -570,7 +552,7 @@ describe("the editor frame", function()
             Editor.show(screen_spec(), { started = { wall = time.monotonic() - time.ms(200), cpu = os.clock() } })
             harness.tick(3)
             assert.equals(1, #signals)
-            assert.equals("edit_layout", signals[1].screen)
+            assert.equals("launcher", signals[1].screen)
             assert.is_number(signals[1].paint_ms)
             assert.truthy(signals[1].paint_ms >= 200, signals[1].paint_ms)
             harness.tick(3)
@@ -669,7 +651,7 @@ describe("the editor frame", function()
             local last = body_place(editor, kept).rect
             assert.truthy(last.y + last.h <= foot.y, id)
             -- One more card and its gap would not have fit.
-            local more = last.h + Screen:scaleBySize(Looks.get(id).editor.card_gap)
+            local more = last.h + Screen:scaleBySize(CARD_GAP)
             assert.truthy(last.y + last.h + more > foot.y, id)
             assert.equals(1, logged(warned, "leaves out"), id)
             Editor.close()

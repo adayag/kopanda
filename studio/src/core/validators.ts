@@ -1,22 +1,11 @@
 // A port of the plugin's Settings.validators and their helpers (kopanda.koplugin/settings.lua:
-// 16-204) over the reader's value model, so a list, a keyed table and a sparse table are judged as
+// 16-156) over the reader's value model, so a list, a keyed table and a sparse table are judged as
 // Lua judges them. spec/fixtures/studio/validator_cases.lua holds both sides to the same verdicts.
 import type { Key } from "../schema.js";
 import { get, listLength, LuaTable, type LuaValue } from "./lua.js";
 
 type EntryOf<T extends Key["type"]> = Extract<Key, { type: T }>;
 type LauncherEntry = EntryOf<"launcher">;
-
-function isSlot(entry: EntryOf<"rows">, slot: LuaValue | undefined, seen: Set<string>): boolean {
-  if (!(slot instanceof LuaTable)) return false;
-  const widget = get(slot, "widget");
-  const share = get(slot, "share");
-  if (slot.fields.size !== 2 || typeof widget !== "string" || seen.has(widget)) return false;
-  if (typeof share !== "number" || !Number.isInteger(share) || share < 1 || share > 3) return false;
-  if (!entry.widgets.includes(widget)) return false;
-  seen.add(widget);
-  return true;
-}
 
 /** Whether t is a table whose keys are exactly names. */
 function hasExactly(t: LuaTable, names: readonly string[]): boolean {
@@ -75,23 +64,6 @@ export const validators: { [T in Key["type"]]: (entry: EntryOf<T>, value: LuaVal
   boolean: (_entry, value) => typeof value === "boolean",
 
   choice: (entry, value) => entry.choices.some((choice) => choice.value === value),
-
-  // One or more rows; a row is one to max_columns slots; a slot is exactly { widget, share },
-  // widget one of the schema's widgets and named once in the layout, share an integer from 1 to 3.
-  rows: (entry, value) => {
-    const rows = listLength(value);
-    if (!rows) return false;
-    const seen = new Set<string>();
-    for (let r = 1; r <= rows; r++) {
-      const row = get(value as LuaTable, r);
-      const slots = listLength(row);
-      if (!slots || slots > entry.max_columns) return false;
-      for (let s = 1; s <= slots; s++) {
-        if (!isSlot(entry, get(row as LuaTable, s), seen)) return false;
-      }
-    }
-    return true;
-  },
 
   // Exactly { name, latitude, longitude }: a non-empty name, a latitude from -90 to 90 and a
   // longitude from -180 to 180.

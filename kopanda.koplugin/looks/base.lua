@@ -444,9 +444,6 @@ return {
         editor_box = {
             face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
         },
-        editor_share = {
-            face = "strong", size = 15, uppercase = false, tracking = 0, line_height = 0.3, color = "muted",
-        },
         editor_label = {
             face = "strong", size = 16, uppercase = false, tracking = 0, line_height = 0.3, color = "ink",
         },
@@ -583,7 +580,7 @@ return {
         button_outline_color = "outline",
     },
 
-    -- The editor screens, edit layout and launcher management: a header over a rule, then cards or rows.
+    -- The editor screen, launcher management: a header over a rule, then rows.
     editor = {
         padding = { top = 40, side = 40, bottom = 28 },
         header_band_color = false,
@@ -596,18 +593,8 @@ return {
         button_outline_width = 2,
         button_fill_color = "paper",
         button_padding = { x = 14, y = 8 },
-        card_gap = 10,
-        card_padding = { x = 14, y = 12 },
-        card_outline_color = "outline",
-        card_outline_width = 3,
-        card_shadow = { x = 0, y = 0, color = false },
-        selected_outline_color = "outline",
-        selected_fill_color = "hairline_light",
-        arrow_size = 28,
-        arrow_gap = 14,
         disabled_color = "muted",
         box_padding = { x = 12, y = 10 },
-        box_gap = 8,
         row_padding = { y = 14 },
         row_rule_color = "hairline_light",
         row_rule_width = 2,

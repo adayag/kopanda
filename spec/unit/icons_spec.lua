@@ -85,7 +85,7 @@ describe("icons", function()
         assert.same({
             "action", "authors", "back", "bookmark", "check", "chevron_down", "chevron_up", "close",
             "download", "eye_off", "filter", "folder", "folder_open", "forward", "history", "home",
-            "home_plus", "info", "layout", "library", "list", "moon", "open_book", "plugin_missing", "plus",
+            "home_plus", "info", "library", "list", "moon", "open_book", "plugin_missing", "plus",
             "power", "quick_settings", "refresh", "rotation_lock", "screenshot", "search", "series", "settings",
             "sort", "stats", "subjects", "sun", "sync", "terminal", "trash", "wifi", "wifi_off",
         }, ids)

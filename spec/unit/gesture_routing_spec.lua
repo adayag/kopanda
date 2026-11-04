@@ -51,7 +51,7 @@ describe("gestures on the KoPanda home", function()
     before_each(function()
         harness.load()
         Home = require("home")
-        gestures.store_weather_row()
+        gestures.use_weather_row()
     end)
 
     -- Focused mode off, for the cases that keep today's home: the top zone's menu and the closing tap.
@@ -66,6 +66,7 @@ describe("gestures on the KoPanda home", function()
     end
 
     after_each(function()
+        gestures.restore_rows()
         harness.teardown()
     end)
 
@@ -510,7 +511,7 @@ describe("gestures on the KoPanda home", function()
         end)
     end)
 
-    -- Registers a stub widget with tap for every id of the stored layout, each slot height
+    -- Registers a stub widget with tap for every id of Layout.rows, each slot height
     -- tall[id] (60 when unset) as the table holds it at each build, and returns a function giving
     -- the taps so far.
     local function tappable_stubs(tall)
@@ -634,11 +635,11 @@ describe("gestures on the KoPanda home", function()
         mode_off()
         -- A layout with no featured row, so the file chooser's items lie under no slot that acts
         -- on a tap: the featured book under one would open.
-        assert.is_true(package.loaded["settings"].set("layout.rows", {
+        package.loaded["layout"].rows = {
             { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
             { { widget = "quote", share = 1 } },
             { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
-        }))
+        }
         local fm = fm_with_home()
         local size = Screen:getSize()
         -- Close the home and paint the file chooser, so its items have their places, then

@@ -1,20 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import type { Key } from "../schema";
-import { entryFor } from "../core/rows-edit";
 import type { ProfileWithPath } from "../server/profiles.js";
 import { ApiError, fetchProfile, fetchSettings, putSetting, type Settings } from "./api";
-import { LayoutEditor } from "./layout/LayoutEditor";
 import { LauncherEditor } from "./launcher/LauncherEditor";
 import { PreviewPane } from "./preview/PreviewPane";
 import { screenFacts } from "./ProfileList";
 import { PushStatus } from "./PushStatus";
 import { SettingsForm } from "./settings/SettingsForm";
 
-/** What the profile's screen shows under its facts: the form or one of the editors. */
-export type ProfileView = "form" | "layout" | "launcher";
-
-/** The rows key the layout editor edits. */
-const LAYOUT = entryFor("layout.rows");
+/** What the profile's screen shows under its facts: the form or the launcher editor. */
+export type ProfileView = "form" | "launcher";
 
 type State =
   | { status: "loading" }
@@ -119,15 +114,6 @@ export function ProfileScreen({ id, view = "form" }: { id: string; view?: Profil
                   settings={state.settings}
                   pending={pending}
                   errors={errors}
-                  onWrite={write}
-                />
-              ) : view === "layout" ? (
-                <LayoutEditor
-                  entry={LAYOUT}
-                  profileId={id}
-                  settings={state.settings}
-                  pending={pending.has(LAYOUT.id)}
-                  error={errors[LAYOUT.id]}
                   onWrite={write}
                 />
               ) : (

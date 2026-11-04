@@ -15,22 +15,6 @@ const data = table([
   ["look", "editorial"],
   ["text_size", "large"],
   ["wallpaper.file", "/mnt/us/images/flowers.png"],
-  [
-    "layout.rows",
-    fromJson([
-      [
-        { widget: "clock", share: 2 },
-        { widget: "date", share: 1 },
-      ],
-      [{ widget: "featured", share: 1 }],
-      [{ widget: "launcher", share: 3 }],
-      [
-        { widget: "weather", share: 1 },
-        { widget: "quote", share: 1 },
-        { widget: "stats", share: 1 },
-      ],
-    ]),
-  ],
   ["weather.location", fromJson({ name: "Seattle, Washington", latitude: 47.60621, longitude: -122.33207 })],
   ["weather.units", "celsius"],
   ["quote.source", "builtin"],

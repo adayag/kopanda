@@ -112,8 +112,14 @@ describe("the settings menu's rows", function()
                 ids[i] = entry.id
             end
             assert.same(ids, keys)
-            assert.same({ "wallpaper.file", "layout.rows", "weather.units", "quote.source", "stats.show",
+            assert.same({ "wallpaper.file", "weather.units", "quote.source", "stats.show",
                 "featured.pinned", "launcher.entries" }, separated)
+        end)
+
+        it("has no layout.rows row", function()
+            for _, item in ipairs(SchemaMenu.items()) do
+                assert.is_not.equals("layout.rows", item.kopanda_key)
+            end
         end)
 
         it("cuts to a group's keys, with no separator", function()
@@ -528,24 +534,11 @@ describe("the settings menu's rows", function()
         end)
     end)
 
-    describe("the Layout and Launcher rows", function()
+    describe("the Launcher row", function()
         local Editor
 
         before_each(function()
             Editor = require("editor")
-        end)
-
-        it("opens edit layout from the next tick", function()
-            gestures.fm_with_home()
-            local layout = row(SchemaMenu.items(), "layout.rows")
-            assert.equals("Layout", layout.text or layout.text_func())
-            assert.is_nil(layout.checked_func)
-            assert.is_falsy(layout.keep_menu_open)
-            layout.callback()
-            assert.is_nil(Editor.shown)
-            harness.tick()
-            assert.is_not_nil(Editor.shown)
-            assert.equals("edit_layout", Editor.shown.spec.screen)
         end)
 
         it("opens launcher management from the next tick", function()

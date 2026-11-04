@@ -1,6 +1,6 @@
 -- The row engine's maths: column widths by share, rows stacked from the top margin with the
 -- free height where the look puts it, the quote's row leaving first and then rows from the end when
--- they overflow, Layout.fits in agreement with the placement, and the text size scale.
+-- they overflow, and the text size scale.
 describe("Layout", function()
     require("plugin_harness")
     local Screen = require("device").screen
@@ -198,7 +198,7 @@ describe("Layout", function()
         end)
     end)
 
-    describe("arrange and fits", function()
+    describe("arrange", function()
         local heights
         -- The bar's height in device pixels, whatever the look and screen.
         local BAR = 180
@@ -313,10 +313,8 @@ describe("Layout", function()
                 heights.weather = 1680 - s(home.margin.bottom) - ys[3] - s(home.row_gap)
                 local _, full = Layout.place(Layout.arrange(default, c).heights, 1680, home.margin, home.row_gap,
                     home.free_space, 0, first_gap)
-                assert.same({}, full, "the layout fits the full height")
+                assert.same({}, full, "the rows fit the full height")
                 assert.same({ 2 }, Layout.arrange(default, c).dropped)
-                assert.equals(1, Layout.overflow(default, c))
-                assert.is_false(Layout.fits(default, c))
             end
         end)
 
@@ -472,7 +470,7 @@ describe("Layout", function()
             assert.same({ 0, 40 }, arranged.heights)
         end)
 
-        it("is true exactly when the placement drops nothing", function()
+        it("drops the quote exactly when the placement of the measured heights drops a row", function()
             local flipped = false
             for _, look in ipairs({ editorial, diner }) do
                 local previous
@@ -485,9 +483,8 @@ describe("Layout", function()
                     local first_gap = home.header.rule_color and 0 or nil
                     local _, dropped = Layout.place(arranged.heights, 1680 - BAR, home.margin, home.row_gap,
                         home.free_space, footer, first_gap)
-                    local fits = Layout.fits(default, c)
-                    assert.equals(#dropped == 0, fits, quote)
-                    assert.same(#dropped == 0 and {} or { 2 }, arranged.dropped, quote)
+                    local fits = #dropped == 0
+                    assert.same(fits and {} or { 2 }, arranged.dropped, quote)
                     if previous ~= nil and previous ~= fits then
                         flipped = true
                     end
@@ -497,40 +494,12 @@ describe("Layout", function()
             assert.is_true(flipped)
         end)
 
-        it("counts no row left out on the Colorsoft and one for a layout one row too tall, logging nothing", function()
-            local warned = spy.on(logger, "warn")
-            heights = { date = 60, clock = 60, quote = 100, weather = 20, stats = 20 }
-            local fitting = Layout.overflow(default, ctx(diner, 1264, 1680))
-            heights = { date = 60, clock = 60, quote = 700, weather = 300, stats = 20 }
-            local too_tall = Layout.overflow(default, ctx(diner, 1680, 1264))
-            warned:revert()
-            assert.equals(0, fitting)
-            assert.equals(1, too_tall)
-            assert.spy(warned).was_not_called()
-        end)
-
-        it("counts exactly the rows the placement drops, zero exactly when fits is true", function()
-            local counted = {}
-            for _, look in ipairs({ editorial, diner }) do
-                for quote = 400, 2400, 40 do
-                    heights = { date = 60, clock = 60, quote = quote, weather = quote, stats = 20 }
-                    local c = ctx(look, 1264, 1680)
-                    local overflow = Layout.overflow(default, c)
-                    assert.equals(#Layout.arrange(default, c).dropped, overflow, quote)
-                    assert.equals(overflow == 0, Layout.fits(default, c), quote)
-                    counted[overflow] = true
-                end
-            end
-            assert.is_true(counted[0] and counted[1] and counted[2], "the sweep reaches 0, 1 and 2")
-        end)
-
         it("lays out a landscape screen, dropping what doesn't fit", function()
             heights = { date = 60, clock = 60, quote = 700, weather = 300, stats = 20 }
             local c = ctx(diner, 1680, 1264)
             local ok, arranged = pcall(Layout.arrange, default, c)
             assert.is_true(ok, tostring(arranged))
             assert.same({ 2 }, arranged.dropped)
-            assert.is_false(Layout.fits(default, c))
             local s = function(px) return Layout.screen:scaleBySize(px) end
             for _, i in ipairs({ 1, 3 }) do
                 local slots = arranged.rows[i].slots
@@ -600,7 +569,6 @@ describe("Layout", function()
                     assert.same({}, arranged.dropped)
                     assert.equals("quote", arranged.rows[3].slots[1].widget)
                     assert.equals("launcher", arranged.rows[4].slots[1].widget)
-                    assert.is_true(Layout.fits(Layout.rows, c))
                     assert.equals(0, warnings("doesn't fit"))
                 end)
             end)
@@ -619,16 +587,6 @@ describe("Layout", function()
                     end
                     assert.equals(1, warnings("the quote doesn't fit"))
                     assert.equals(0, warnings("home row"))
-                end)
-            end)
-
-            it("counts the dropped quote as left out, unlogged", function()
-                in_both_looks(function(_, c, exact)
-                    warned:clear()
-                    heights.quote = exact + 1
-                    assert.equals(1, Layout.overflow(Layout.rows, c))
-                    assert.is_false(Layout.fits(Layout.rows, c))
-                    assert.equals(0, warnings("doesn't fit"))
                 end)
             end)
 
@@ -656,7 +614,6 @@ describe("Layout", function()
                     warned:clear()
                     local arranged = Layout.arrange(Layout.rows, c)
                     assert.same({ 3, 4 }, arranged.dropped)
-                    assert.equals(2, Layout.overflow(Layout.rows, c))
                     assert.equals(1, warnings("the quote doesn't fit"))
                     assert.equals(1, warnings("home row 4 "))
                     assert.equals(0, warnings("home row 3 "))
@@ -668,7 +625,6 @@ describe("Layout", function()
                     warned:clear()
                     heights.quote, heights.featured = 100, 2000
                     assert.same({ 2, 3, 4 }, Layout.arrange(Layout.rows, c).dropped)
-                    assert.equals(3, Layout.overflow(Layout.rows, c))
                     assert.equals(1, warnings("home row 2 "))
                     assert.equals(1, warnings("home row 3 "))
                     assert.equals(1, warnings("home row 4 "))
@@ -730,7 +686,7 @@ describe("Layout", function()
         end)
     end)
 
-    -- The schema's default rows with the real widgets and the real bar, in both looks at each text size, on the
+    -- Layout.rows with the real widgets and the real bar, in both looks at each text size, on the
     -- Colorsoft and the Paperwhite, with the home fixture's content (2-scenario-home-fixture.lua): populated (a
     -- featured book with its chapter, a weather reading, the quote of the day) and empty (none of them, the fixture's
     -- four launcher entries). Text is measured by Font:getFace at the device screen's scale
@@ -803,13 +759,15 @@ describe("Layout", function()
             },
         }
 
+        -- Each case takes the module harness.load made as Loaded, which reaches the widgets its stubs replace.
         before_each(function()
             harness.load()
         end)
 
-        -- "profile look content text_size" to the rows Layout.overflow leaves out.
+        -- "profile look content text_size" to the rows Layout.arrange leaves out.
         local function overflows()
             local FeaturedBook = require("featured_book")
+            local Loaded = require("layout")
             local Looks = require("looks")
             local Schema = require("schema")
             local Settings = require("settings")
@@ -819,7 +777,6 @@ describe("Layout", function()
             for _, key in ipairs(Schema.keys) do
                 defaults[key.id] = key.default
             end
-            local rows = defaults["layout.rows"]
             local counts = {}
             local function count(profile)
                 for _, content in ipairs({ "populated", "empty" }) do
@@ -837,7 +794,7 @@ describe("Layout", function()
                                 screen = Screen,
                             }
                             counts[table.concat({ profile, look, content, size }, " ")] =
-                                require("layout").overflow(rows, ctx)
+                                #Loaded.arrange(Loaded.rows, ctx).dropped
                         end
                     end
                 end
@@ -865,25 +822,20 @@ describe("Layout", function()
         end)
 
         -- The home with the populated and the empty content, on every day of the builtin quotes, whose length sets the
-        -- quote's height. Its default at a size is the one Settings falls back to: the key's default at that size when
-        -- it has one, its plain default otherwise.
-        it("fits the home's default at every text size on every profile and look, every quote's day", function()
+        -- quote's height.
+        it("fits Layout.rows at every text size on every profile and look, every quote's day", function()
             local FeaturedBook = require("featured_book")
             local Fonts = require("fonts")
+            local Loaded = require("layout")
             local Looks = require("looks")
             local ReadingStats = require("reading_stats")
             local Schema = require("schema")
             local Settings = require("settings")
             local Weather = require("weather")
             local SIZES = { "small", "medium", "large", "extra_large" }
-            local pages, entries = {}, nil
+            local entries
             for _, key in ipairs(Schema.keys) do
-                if key.id == "layout.rows" then
-                    for _, size in ipairs(SIZES) do
-                        local by_size = key.defaults_by_text_size
-                        pages[size .. " " .. key.id] = by_size and by_size[size] or key.default
-                    end
-                elseif key.id == "launcher.entries" then
+                if key.id == "launcher.entries" then
                     entries = key.default
                 end
             end
@@ -905,19 +857,11 @@ describe("Layout", function()
                 names[rel] = names[rel] or real_face_name(rel)
                 return names[rel]
             end
-            -- rows with every row but the quote's left empty, or nil when no row holds the quote. Layout measures
-            -- each row on its own, so the quote's row is as high here as in rows.
-            local function quote_rows(rows)
-                local only, found = {}, false
-                for i, row in ipairs(rows) do
-                    only[i] = {}
-                    for _, slot in ipairs(row) do
-                        if slot.widget == "quote" then
-                            only[i], found = row, true
-                        end
-                    end
-                end
-                return found and only or nil
+            -- Layout.rows with every row but the quote's left empty. Layout measures each row on its own, so the
+            -- quote's row is as high here as in Layout.rows.
+            local only = {}
+            for i, row in ipairs(Loaded.rows) do
+                only[i] = row[1].widget == "quote" and row or {}
             end
             local counts, expected, cases = {}, {}, 0
             local function count(profile)
@@ -927,31 +871,35 @@ describe("Layout", function()
                     Weather.reading = function() return c.reading end
                     assert.is_true(Settings.set("launcher.entries", c.entries or entries))
                     for _, id in ipairs(Looks.ids()) do
-                        for key, rows in pairs(pages) do
-                            local case = table.concat({ profile, id, content, key }, " ")
+                        for _, size in ipairs(SIZES) do
+                            local case = table.concat({ profile, id, content, size }, " ")
                             -- A fresh ctx a day: a widget keeps what it measured for one ctx (Typeset.measured).
                             local function on(day)
                                 return {
                                     look = Looks.get(id),
                                     variant = "day",
-                                    text_size = key:match("^%S+"),
+                                    text_size = size,
                                     now = NOW + day * 86400,
                                     screen = Screen,
                                 }
                             end
-                            -- The page on the day of its tallest quote: a row only grows with its widget and the
+                            -- The home on the day of its tallest quote: a row only grows with its widget and the
                             -- placement drops rows only as rows grow, and no other row's height changes with the day.
-                            local worst, only = 0, quote_rows(rows)
-                            if only then
-                                local tallest = -1
-                                for day = 0, #require("quotes") - 1 do
-                                    local h = math.max(unpack(Layout.arrange(only, on(day)).heights))
-                                    if h > tallest then
-                                        worst, tallest = day, h
-                                    end
+                            local worst, tallest = 0, -1
+                            for day = 0, #require("quotes") - 1 do
+                                local h = math.max(unpack(Loaded.arrange(only, on(day)).heights))
+                                if h > tallest then
+                                    worst, tallest = day, h
                                 end
                             end
-                            counts[case] = Layout.overflow(rows, on(worst))
+                            local arranged = Loaded.arrange(Loaded.rows, on(worst))
+                            -- A slot that fails to measure reads 0, which would fit a home that doesn't.
+                            for _, row in ipairs(arranged.rows) do
+                                for _, slot in ipairs(row.slots) do
+                                    assert(slot.error == nil and slot.h > 0, case .. " " .. slot.widget)
+                                end
+                            end
+                            counts[case] = #arranged.dropped
                             expected[case] = 0
                             cases = cases + 1
                         end

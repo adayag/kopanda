@@ -42,32 +42,6 @@ return {
             group = "appearance",
         },
         {
-            -- The home's rows, top to bottom; each row's slots, left to right, take the row's
-            -- width by share. widgets lists the ids a slot may name, max_columns the slots a row
-            -- may hold. defaults_by_text_size is the default at a text size that has one, when
-            -- nothing is stored.
-            id = "layout.rows",
-            type = "rows",
-            widgets = { "date", "clock", "weather", "quote", "stats", "featured", "launcher",
-                "reading", "streak", "forecast", "hours", "records" },
-            max_columns = 3,
-            default = {
-                { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
-                { { widget = "featured", share = 1 } },
-                { { widget = "quote", share = 1 } },
-                { { widget = "launcher", share = 1 } },
-            },
-            defaults_by_text_size = {
-                extra_large = {
-                    { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
-                    { { widget = "featured", share = 1 } },
-                    { { widget = "launcher", share = 1 } },
-                },
-            },
-            label = "Layout",
-            group = "home",
-        },
-        {
             -- Where the weather is for, as coordinates; the device menus and the studio geocode a
             -- typed place into them.
             id = "weather.location",

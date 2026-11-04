@@ -31,7 +31,7 @@ export function EditorLink({
   );
 }
 
-/** The length of a list value with its noun, "1 row" or "5 rows". */
+/** The length of a list value with its noun, "1 entry" or "4 entries". */
 export function count(value: unknown, one: string, many: string): string {
   const n = Array.isArray(value) ? value.length : 0;
   return `${n} ${n === 1 ? one : many}`;

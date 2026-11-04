@@ -124,7 +124,6 @@ describe("the form's controls", () => {
     expect(keyIds()[0]).toBe("look");
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
       "Appearance",
-      "Home",
       "Weather",
       "Quote",
       "Stats",
@@ -200,28 +199,18 @@ describe("the form's controls", () => {
     expect(place.getByText("47.60621, -122.33207")).toBeInTheDocument();
   });
 
-  it("counts the layout's rows and the launcher's entries, the layout linking to its editor", () => {
-    const rows = [[{ widget: "clock", share: 1 }], [{ widget: "quote", share: 2 }]];
-    const entries = [{ kind: "kopanda", target: "library" }];
-    render(
-      <SettingsForm
-        profileId="colorsoft"
-        settings={settings({}, { "layout.rows": rows, "launcher.entries": entries })}
-        {...idle}
-      />,
-    );
+  it("shows no layout control", () => {
+    render(<SettingsForm profileId="colorsoft" settings={settings()} {...idle} />);
 
-    expect(within(control("layout.rows")).getByRole("link")).toHaveTextContent("Layout · 2 rows");
-    expect(within(control("layout.rows")).getByRole("link")).toHaveAttribute("href", "#/profiles/colorsoft/layout");
-    expect(within(control("launcher.entries")).getByRole("link")).toHaveTextContent("Launcher · 1 entry");
+    expect(screen.queryByText(/^Layout/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Layout/ })).not.toBeInTheDocument();
   });
 
-  it("counts the layout's default at the extra_large text size when the values hold no rows", () => {
-    const answer = settings({}, { text_size: "extra_large" });
-    delete answer.values["layout.rows"];
-    render(<SettingsForm profileId="colorsoft" settings={answer} {...idle} />);
+  it("counts the launcher's entries", () => {
+    const entries = [{ kind: "kopanda", target: "library" }];
+    render(<SettingsForm profileId="colorsoft" settings={settings({}, { "launcher.entries": entries })} {...idle} />);
 
-    expect(within(control("layout.rows")).getByRole("link")).toHaveTextContent("Layout · 3 rows");
+    expect(within(control("launcher.entries")).getByRole("link")).toHaveTextContent("Launcher · 1 entry");
   });
 });
 
@@ -405,7 +394,7 @@ describe("writing a key", () => {
 
     fireEvent.click(within(control("look")).getByRole("button", { name: "Editorial" }));
     await waitFor(() => expect(puts()).toHaveLength(1));
-    fireEvent.click(screen.getByRole("link", { name: /Layout ·/ }));
+    fireEvent.click(screen.getByRole("link", { name: /Launcher ·/ }));
     expect(await screen.findByRole("link", { name: "Done" })).toBeInTheDocument();
     answer.resolve(json(settings({}, { look: "editorial" })));
     await answer.promise;
@@ -425,7 +414,7 @@ describe("writing a key", () => {
 
     fireEvent.click(within(control("look")).getByRole("button", { name: "Editorial" }));
     await waitFor(() => expect(puts()).toHaveLength(1));
-    fireEvent.click(screen.getByRole("link", { name: /Layout ·/ }));
+    fireEvent.click(screen.getByRole("link", { name: /Launcher ·/ }));
     fireEvent.click(await screen.findByRole("link", { name: "Done" }));
 
     const look = within(await waitFor(() => control("look")));
@@ -531,17 +520,14 @@ describe("the reports", () => {
 });
 
 describe("the editors", () => {
-  it.each([
-    ["Layout · 4 rows", "#/profiles/colorsoft/layout", "Layout"],
-    ["Launcher · 4 entries", "#/profiles/colorsoft/launcher", "Launcher"],
-  ])("opens %s at its route, and Done returns to the form", async (link, hash, heading) => {
+  it("opens Launcher · 4 entries at its route, and Done returns to the form", async () => {
     await open(settings());
 
-    fireEvent.click(screen.getByRole("link", { name: link }));
+    fireEvent.click(screen.getByRole("link", { name: "Launcher · 4 entries" }));
 
-    await waitFor(() => expect(location.hash).toBe(hash));
+    await waitFor(() => expect(location.hash).toBe("#/profiles/colorsoft/launcher"));
     expect(await screen.findByRole("link", { name: "Done" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Launcher" })).toBeInTheDocument();
     expect(document.querySelector("[data-key]")).toBeNull();
 
     fireEvent.click(screen.getByRole("link", { name: "Done" }));
@@ -551,14 +537,11 @@ describe("the editors", () => {
     expect(gets(SETTINGS_URL)).toBe(1);
   });
 
-  it.each([
-    ["#/profiles/colorsoft/layout", "Layout"],
-    ["#/profiles/colorsoft/launcher", "Launcher"],
-  ])("shows the editor slot when loaded at %s", async (hash, heading) => {
-    await open(settings(), {}, hash);
+  it("shows the editor slot when loaded at #/profiles/colorsoft/launcher", async () => {
+    await open(settings(), {}, "#/profiles/colorsoft/launcher");
 
     expect(await screen.findByRole("link", { name: "Done" })).toHaveAttribute("href", "#/profiles/colorsoft");
-    expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Launcher" })).toBeInTheDocument();
     expect(document.querySelector("[data-key]")).toBeNull();
   });
 

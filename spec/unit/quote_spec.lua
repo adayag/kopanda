@@ -7,7 +7,6 @@ describe("the quote of the day", function()
     local ffi = require("ffi")
     require("ffi/posix_h")
     local Blitbuffer = require("ffi/blitbuffer")
-    local Schema = require("schema")
     local Screen = require("device").screen
     local Settings = require("settings")
     local Layout = require("layout")
@@ -19,15 +18,6 @@ describe("the quote of the day", function()
     local real_get = Settings.get
 
     pcall(ffi.cdef, "void tzset(void);")
-
-    -- The default layout, as a home with nothing stored lays it out.
-    local function default_rows()
-        for _, entry in ipairs(Schema.keys) do
-            if entry.id == "layout.rows" then
-                return entry.default
-            end
-        end
-    end
 
     -- fn run with the local time zone set to tz, the previous zone restored after.
     local function in_zone(tz, fn)
@@ -72,7 +62,7 @@ describe("the quote of the day", function()
 
     -- The width of the quote's slot in the default layout on the current screen.
     local function full_row_width(ctx)
-        for _, row in ipairs(Layout.arrange(default_rows(), ctx).rows) do
+        for _, row in ipairs(Layout.arrange(Layout.rows, ctx).rows) do
             for _, slot in ipairs(row.slots) do
                 if slot.widget == "quote" then
                     return slot.w

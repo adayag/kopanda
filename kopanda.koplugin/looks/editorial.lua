@@ -160,7 +160,6 @@ return {
         sheet_sublabel = { size = 12 },
         quick_label = { face = "text" },
         quick_button = { face = "text" },
-        -- Every editor part takes a line height of 0.3, so the default layout's five rows fit above the foot.
         editor_aside = { face = "text", tracking = 0.14 },
         editor_caption = { face = "text" },
         editor_kind = { face = "text" },
@@ -218,17 +217,12 @@ return {
         button_outline_color = "ink",
     },
 
-    -- Cards cast card_shadow, none here.
     editor = {
         header_rule_color = "ink",
         header_rule_width = 1,
         button_outline_color = "ink",
         button_outline_width = 1,
         button_fill_color = false,
-        card_gap = 12,
-        card_outline_color = "hairline",
-        card_outline_width = 1,
-        selected_outline_color = "ink",
         disabled_color = "hairline",
         row_rule_color = "hairline",
         row_rule_width = 1,

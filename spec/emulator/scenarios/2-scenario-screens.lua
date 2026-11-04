@@ -2,8 +2,6 @@
 -- by spec/emulator/screens_capture_spec.lua after the home fixture patch, whose name sorts first
 -- (frontend/userpatch.lua:60-61), so the fixture's settings are written before this one runs.
 -- KOPANDA_SCREEN says what it opens:
---   - layout: on the first home's settled signal, from the next tick, edit layout with row 2
---     selected; it writes nothing.
 --   - launcher: at patch time, before any plugin loads (reader.lua:190), it stores
 --     launcher.entries in settings/kopanda/settings.lua, keeping what the fixture stored there:
 --     Library, Series, a folder "Tools" of three dispatcher actions (frontend/dispatcher.lua:86,
@@ -11,11 +9,10 @@
 --     On the first home's settled signal, from the next tick, it checks that list against the
 --     plugin's own launcher validator, then opens launcher management.
 -- Any failure is reported as a KoPandaSettled signal with error, on the screen the capture
--- shoots (edit_layout or launcher; both when KOPANDA_SCREEN is neither), so the spec fails with
--- the message.
+-- shoots, so the spec fails with the message.
 local logger = require("logger")
 
-local SHOT_SCREENS = { layout = "edit_layout", launcher = "launcher" }
+local SHOT_SCREENS = { launcher = "launcher" }
 
 local TOOLS = {
     { kind = "action", action = "screenshot", label = "Screenshot", icon = "action" },
@@ -40,15 +37,12 @@ local ok, err = pcall(function()
 
     local function report_error(message)
         logger.warn("KOPANDA_SCENARIO: " .. message)
-        local screens = SHOT_SCREENS[target] and { SHOT_SCREENS[target] } or { "edit_layout", "launcher" }
-        for _, screen in ipairs(screens) do
-            UIManager.event_hook:execute("KoPandaSettled", { screen = screen, error = message })
-        end
+        UIManager.event_hook:execute("KoPandaSettled", { screen = "launcher", error = message })
     end
 
     if not SHOT_SCREENS[target] then
         UIManager:nextTick(function()
-            report_error("KOPANDA_SCREEN must be layout or launcher, not " .. tostring(target))
+            report_error("KOPANDA_SCREEN must be launcher, not " .. tostring(target))
         end)
         return
     end
@@ -76,11 +70,6 @@ local ok, err = pcall(function()
 
     local open = function()
         local run_ok, run_err = pcall(function()
-            if target == "layout" then
-                logger.info("KOPANDA_SCENARIO: open edit layout with row 2 selected")
-                require("edit_layout").open{ selected = 2 }
-                return
-            end
             -- The plugin's modules join package.path once PluginLoader has loaded it.
             local Settings = require("settings")
             local entry

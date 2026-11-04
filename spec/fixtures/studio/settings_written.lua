@@ -45,44 +45,6 @@ then\9Café “quoted”",
             ["label"] = "Tools",
         },
     },
-    ["layout.rows"] = {
-        [1] = {
-            [1] = {
-                ["share"] = 2,
-                ["widget"] = "clock",
-            },
-            [2] = {
-                ["share"] = 1,
-                ["widget"] = "date",
-            },
-        },
-        [2] = {
-            [1] = {
-                ["share"] = 1,
-                ["widget"] = "featured",
-            },
-        },
-        [3] = {
-            [1] = {
-                ["share"] = 3,
-                ["widget"] = "launcher",
-            },
-        },
-        [4] = {
-            [1] = {
-                ["share"] = 1,
-                ["widget"] = "weather",
-            },
-            [2] = {
-                ["share"] = 1,
-                ["widget"] = "quote",
-            },
-            [3] = {
-                ["share"] = 1,
-                ["widget"] = "stats",
-            },
-        },
-    },
     ["look"] = "editorial",
     ["quote.source"] = "builtin",
     ["schema_version"] = 1,

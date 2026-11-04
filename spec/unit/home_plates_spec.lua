@@ -7,7 +7,7 @@ describe("the home on plates", function()
     local Blitbuffer = require("ffi/blitbuffer")
     local Screen = require("device").screen
     local fixture = harness.root .. "/spec/fixtures/wallpaper.png"
-    local Home, Settings, Wallpaper
+    local Home, Settings, Wallpaper, Layout, home_rows
     local had_color, color_rendering, night_mode
 
     local PAPER = { 0xfb, 0xfa, 0xf6 }
@@ -48,6 +48,8 @@ describe("the home on plates", function()
         Home = require("home")
         Settings = require("settings")
         Wallpaper = require("wallpaper")
+        Layout = require("layout")
+        home_rows = Layout.rows
         had_color = G_reader_settings:has("color_rendering")
         color_rendering = G_reader_settings:readSetting("color_rendering")
         night_mode = rawget(Screen, "night_mode")
@@ -57,6 +59,7 @@ describe("the home on plates", function()
     end)
 
     after_each(function()
+        Layout.rows = home_rows
         Screen.night_mode = night_mode
         if had_color then
             G_reader_settings:saveSetting("color_rendering", color_rendering)
@@ -109,10 +112,10 @@ describe("the home on plates", function()
 
     it("lightens the wallpaper under each plate by 0.82 inside its solid ink keyline", function()
         Settings.set("wallpaper.file", fixture)
-        -- The stats' pill under the featured book and the quote; the default has none.
+        -- The stats' pill under the featured book and the quote; the home's own rows have none.
         local slot = function(widget) return { widget = widget, share = 1 } end
-        assert.is_true(Settings.set("layout.rows", { { slot("date"), slot("clock") }, { slot("featured") },
-            { slot("quote") }, { slot("weather"), slot("stats") } }))
+        Layout.rows = { { slot("date"), slot("clock") }, { slot("featured") }, { slot("quote") },
+            { slot("weather"), slot("stats") } }
         painted(false, function(home, bb, image)
             local keyline = Screen:scaleBySize(2)
             for _, id in ipairs({ "featured", "quote", "stats" }) do

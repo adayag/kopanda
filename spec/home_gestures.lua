@@ -38,14 +38,21 @@ function M.settings_keys()
     return keys
 end
 
--- Stores page 1 as the header, the quote and a last row of the weather and the stats, so a spec can hold or tap
--- them; the default has neither.
-function M.store_weather_row()
+local home_rows
+
+-- Puts the header, the quote and a last row of the weather and the stats in Layout.rows, so a spec can hold or tap
+-- them; the home's own rows have neither. M.restore_rows puts Layout.rows back.
+function M.use_weather_row()
     local function slot(widget)
         return { widget = widget, share = 1 }
     end
-    assert.is_true(package.loaded["settings"].set("layout.rows", { { slot("date"), slot("clock") },
-        { slot("quote") }, { slot("weather"), slot("stats") } }))
+    local Layout = package.loaded["layout"]
+    home_rows = Layout.rows
+    Layout.rows = { { slot("date"), slot("clock") }, { slot("quote") }, { slot("weather"), slot("stats") } }
+end
+
+function M.restore_rows()
+    package.loaded["layout"].rows = home_rows
 end
 
 -- A file manager with its home up.

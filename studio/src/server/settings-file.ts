@@ -13,12 +13,11 @@ import {
   type LuaKey,
   type LuaValue,
 } from "../core/lua.js";
-import { defaultRows } from "../core/rows-edit.js";
 import { validate } from "../core/validators.js";
 import { schema, type Key } from "../schema.js";
 
 // A profile's settings/kopanda/settings.lua, read and written as the plugin's Settings does
-// (kopanda.koplugin/settings.lua:256-350): a stored value its validator refuses reads as the
+// (kopanda.koplugin/settings.lua:204-299): a stored value its validator refuses reads as the
 // default, a key outside the schema is kept, a file from a newer schema is read but not written.
 
 export type SettingsState = "writable" | "read_only" | "unreadable";
@@ -104,20 +103,14 @@ export async function readSettings(file: string): Promise<SettingsRead> {
 
   const values = defaults();
   const invalid: { key: string }[] = [];
-  const kept = new Set<string>();
   for (const entry of schema.keys) {
     const value = get(stored, entry.id);
     if (value === undefined) continue;
     if (validate(entry, value)) {
       values[entry.id] = toJson(value);
-      kept.add(entry.id);
     } else {
       invalid.push({ key: entry.id });
     }
-  }
-  // A rows key's default depends on the text size the file holds.
-  for (const entry of schema.keys) {
-    if (entry.type === "rows" && !kept.has(entry.id)) values[entry.id] = defaultRows(entry, values);
   }
   const unknown: { key: LuaKey; text: string }[] = [];
   for (const key of orderedKeys(stored)) {

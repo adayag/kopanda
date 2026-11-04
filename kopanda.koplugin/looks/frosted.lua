@@ -222,8 +222,6 @@ return {
     },
 
     editor = {
-        card_outline_width = 2,
-        selected_fill_color = "yellow",
         row_rule_width = 1,
     },
 

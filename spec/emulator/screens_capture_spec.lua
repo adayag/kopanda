@@ -1,8 +1,8 @@
--- The device-menu screens: edit layout with row 2 selected, and launcher management over a launcher with a Tools
--- folder, each opened over the populated home in Diner on the Colorsoft, at 2026-10-13 08:42 in Chicago. The home
--- fixture patch freezes the clock and writes the scenario; the screens patch opens the screen KOPANDA_SCREEN names
--- once the home settles; the capture is taken on the screen's own settled signal. The look is passed empty so a
--- KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
+-- The device-menu screens: launcher management over a launcher with a Tools folder, opened over the populated home
+-- in Diner on the Colorsoft, at 2026-10-13 08:42 in Chicago. The home fixture patch freezes the clock and writes the
+-- scenario; the screens patch opens the screen KOPANDA_SCREEN names once the home settles; the capture is taken on the
+-- screen's own settled signal. The look is passed empty so a KOPANDA_HOME_LOOK in the caller's environment cannot leak
+-- in.
 describe("the device-menu screens", function()
     require("commonrequire")
     local driver = require("emulator.driver")
@@ -12,7 +12,6 @@ describe("the device-menu screens", function()
     local scenario = root .. "/spec/emulator/scenarios/2-scenario-screens.lua"
 
     local scenarios = {
-        { screen = "layout", shot_screen = "edit_layout" },
         { screen = "launcher", shot_screen = "launcher" },
     }
 

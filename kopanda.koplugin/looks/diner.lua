@@ -191,7 +191,7 @@ return {
         -- sheet_chip's style.
         quick_cell = { face = "display", tracking = 0.08 },
         -- The editor screens: the header's aside and title on the band as the home's date and clock are, the rest in
-        -- the look's label style; Editorial's line height, so the default layout's five rows fit above the foot.
+        -- the look's label style.
         editor_aside = { color = "on_band" },
         editor_title = { size = 30, color = "on_band" },
         editor_button = { face = "display", tracking = 0.1 },
@@ -256,8 +256,6 @@ return {
         header_band_color = "band",
         header_text_color = "on_band",
         button_outline_width = 3,
-        card_shadow = { x = 2, y = 2, color = "shadow" }, -- half the home tiles' 4, so the screens read lighter
-        selected_fill_color = "mustard",
         row_rule_color = "outline",
     },
 

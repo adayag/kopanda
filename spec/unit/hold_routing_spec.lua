@@ -18,7 +18,7 @@ describe("gestures on the KoPanda home", function()
     before_each(function()
         harness.load()
         Home = require("home")
-        gestures.store_weather_row()
+        gestures.use_weather_row()
     end)
 
     -- Focused mode off, for the cases whose holds land in the top menu zones, where with it on a hold opens the file
@@ -28,6 +28,7 @@ describe("gestures on the KoPanda home", function()
     end
 
     after_each(function()
+        gestures.restore_rows()
         harness.teardown()
     end)
 

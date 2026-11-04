@@ -6,7 +6,7 @@ describe("closing a book shows the home at the file manager's Show", function()
     local harness = require("plugin_harness")
     local Event = require("ui/event")
     local UIManager = require("ui/uimanager")
-    local Home, Plugin, new_spy
+    local Home, Plugin, Layout, home_rows, new_spy
 
     -- The home's constructor: Home:new{} resolves Widget:new through Home's metatable, so the
     -- spy sits on Home itself and sees every build.
@@ -18,9 +18,12 @@ describe("closing a book shows the home at the file manager's Show", function()
     before_each(function()
         Plugin = harness.load()
         Home = require("home")
+        Layout = require("layout")
+        home_rows = Layout.rows
     end)
 
     after_each(function()
+        Layout.rows = home_rows
         if new_spy then
             new_spy:revert()
             new_spy = nil
@@ -57,9 +60,8 @@ describe("closing a book shows the home at the file manager's Show", function()
     end)
 
     it("reads the reading stats once across a close and the Show after it", function()
-        local Settings = package.loaded["settings"]
         local ReadingStats = package.loaded["reading_stats"]
-        assert.is_true(Settings.set("layout.rows", { { { widget = "stats", share = 1 } } }))
+        Layout.rows = { { { widget = "stats", share = 1 } } }
         local reader = harness.open_reader()
         harness.tick(2)
         local reads = spy.on(ReadingStats, "read")
@@ -118,7 +120,7 @@ describe("closing a book shows the home at the file manager's Show", function()
         local FeaturedBook = package.loaded["featured_book"]
         local DocSettings = require("docsettings")
         local book = harness.library .. "/frankenstein.epub"
-        assert.is_true(Settings.set("layout.rows", { { { widget = "featured", share = 1 } } }))
+        Layout.rows = { { { widget = "featured", share = 1 } } }
         assert.is_true(Settings.set("featured.pinned", book))
         local reader = harness.open_reader()
         harness.tick(2)

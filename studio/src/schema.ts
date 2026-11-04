@@ -7,8 +7,6 @@ import schemaJson from "./schema.json" with { type: "json" };
 
 const common = { id: z.string(), label: z.string(), group: z.string() };
 
-const Slot = z.strictObject({ widget: z.string(), share: z.number() });
-
 const Target = z.strictObject({ kind: z.enum(["kopanda", "koreader"]), target: z.string() });
 const Plugin = z.strictObject({
   kind: z.literal("plugin"),
@@ -30,7 +28,7 @@ const Folder = z.strictObject({
   label: z.string(),
   entries: z.array(FolderEntry),
 });
-// The launcher entry kinds and their fields, kopanda.koplugin/settings.lua:84-91.
+// The launcher entry kinds and their fields, kopanda.koplugin/settings.lua:58-65.
 const LauncherEntry = z.union([FolderEntry, Folder]);
 
 const Key = z.discriminatedUnion("type", [
@@ -39,15 +37,6 @@ const Key = z.discriminatedUnion("type", [
     type: z.literal("choice"),
     choices: z.array(z.strictObject({ value: z.string(), label: z.string() })),
     default: z.string(),
-  }),
-  z.strictObject({
-    ...common,
-    type: z.literal("rows"),
-    widgets: z.array(z.string()),
-    max_columns: z.number(),
-    default: z.array(z.array(Slot)),
-    // The default at a text size that has one, by text_size value, when nothing is stored.
-    defaults_by_text_size: z.record(z.string(), z.array(z.array(Slot))).optional(),
   }),
   z.strictObject({
     ...common,

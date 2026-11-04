@@ -6,7 +6,7 @@ import { schema, type Key } from "../schema.js";
 
 type LauncherKey = Extract<Key, { type: "launcher" }>;
 
-/** A launcher entry, of one of the kinds kopanda.koplugin/settings.lua:84-91 lists. */
+/** A launcher entry, of one of the kinds kopanda.koplugin/settings.lua:58-65 lists. */
 export type Entry = LauncherKey["default"][number];
 /** A folder's entry: any kind but a folder, since folders don't nest. */
 export type FolderEntry = Exclude<Entry, { kind: "folder" }>;

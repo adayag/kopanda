@@ -1,8 +1,8 @@
--- The editor frame: the full-screen screen edit layout and launcher management draw in, over whatever
--- is shown, in the active look. Its opener hands Editor.show a spec { screen, aside, title, body, foot,
+-- The editor frame: the full-screen screen launcher management draws in, over whatever is shown, in the
+-- active look. Its opener hands Editor.show a spec { screen, aside, title, body, foot,
 -- done }: screen is what the settled signal reports; body and foot are functions (ctx, width) returning
--- rows, each a list of controls { kind, rect, draw, run, disabled } (kind: card, button, arrow, box,
--- kind_button, caption, note or row); run is called on a tap unless disabled. Editor.shown is the one
+-- rows, each a list of controls { kind, rect, draw, run, disabled } (kind: button, arrow, kind_button,
+-- caption, note or row); run is called on a tap unless disabled. Editor.shown is the one
 -- editor on screen; showing one closes the other.
 local Device = require("device")
 local Geom = require("ui/geometry")
@@ -18,9 +18,8 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
 local Screen = Device.screen
 
--- The built frame: its fills and borders, then its text widgets, then the cards' shadows and
--- every control's own draw, each at its screen place. The text widgets are its array part, so
--- free() reaches them.
+-- The built frame: its fills and borders, then its text widgets, then every control's own draw,
+-- each at its screen place. The text widgets are its array part, so free() reaches them.
 local Frame = WidgetContainer:extend{
     name = "kopanda_editor_frame",
 }
@@ -35,9 +34,6 @@ function Frame:paintTo(bb, x, y)
     end
     for i, widget in ipairs(self) do
         widget:paintTo(bb, x + self.places[i].x, y + self.places[i].y)
-    end
-    for _, shadow in ipairs(self.shadows) do
-        Paint.fill(bb, x + shadow.x, y + shadow.y, shadow.w, shadow.h, shadow.color)
     end
     for _, place in ipairs(self.drawn) do
         place.control.draw(bb, x + place.rect.x, y + place.rect.y)
@@ -97,7 +93,7 @@ local function lay_out(editor, ctx)
         return px and ctx.screen:scaleBySize(px) or 0
     end
     local size = ctx.screen:getSize()
-    local frame = Frame:new{ fills = {}, places = {}, shadows = {}, drawn = {} }
+    local frame = Frame:new{ fills = {}, places = {}, drawn = {} }
     local fills = frame.fills
     local function add_fill(x, y, w, h, role)
         local c = color(role)
@@ -198,20 +194,6 @@ local function lay_out(editor, ctx)
     for _, row in ipairs(foot_rows) do
         place_row(row, y)
         y = y + row_height(row)
-    end
-
-    -- A card casts the editor's card shadow, under every control.
-    local shadow = tokens.card_shadow
-    local shadow_color = color(shadow.color)
-    if shadow_color then
-        local sx, sy = scale(shadow.x), scale(shadow.y)
-        for _, place in ipairs(places) do
-            if place.control.kind == "card" then
-                local rect = place.rect
-                frame.shadows[#frame.shadows + 1] = { x = rect.x + sx, y = rect.y + sy, w = rect.w, h = rect.h,
-                    color = shadow_color }
-            end
-        end
     end
 
     frame.dimen = Geom:new{ x = 0, y = 0, w = size.w, h = size.h }

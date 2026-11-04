@@ -81,22 +81,6 @@ export async function putSetting(id: string, key: string, value: unknown): Promi
   });
 }
 
-/**
- * The fit check's answer: how many rows the home leaves out for the profile's current layout and for
- * the proposed one, or why that couldn't be checked.
- */
-export type FitAnswer = { checked: true; current: number; proposed: number } | { checked: false; reason: string };
-
-/** Asks how the proposed rows of the rows key `key` fit on the profile's screen against its current ones. */
-export async function checkFit(id: string, rows: unknown, key: string, signal?: AbortSignal): Promise<FitAnswer> {
-  return requestJson(`${profileUrl(id)}/layout-fit`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ rows, key }),
-    signal,
-  });
-}
-
 /** A render that gave no image: the HTTP status (0 when the server can't be reached), its error and log lines. */
 export class PreviewError extends Error {
   readonly status: number;

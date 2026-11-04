@@ -29,30 +29,6 @@ local function list_length(t)
     return count
 end
 
-local function is_slot(entry, slot, seen)
-    if type(slot) ~= "table" then
-        return false
-    end
-    local fields = 0
-    for _ in pairs(slot) do
-        fields = fields + 1
-    end
-    local widget, share = slot.widget, slot.share
-    if fields ~= 2 or type(widget) ~= "string" or seen[widget] then
-        return false
-    end
-    if type(share) ~= "number" or share ~= math.floor(share) or share < 1 or share > 3 then
-        return false
-    end
-    for _, id in ipairs(entry.widgets) do
-        if id == widget then
-            seen[widget] = true
-            return true
-        end
-    end
-    return false
-end
-
 -- Whether t is a table whose keys are exactly names.
 local function has_exactly(t, names)
     if type(t) ~= "table" then
@@ -141,28 +117,6 @@ Settings.validators = {
             end
         end
         return false
-    end,
-    -- One or more rows; a row is one to entry.max_columns slots; a slot is exactly
-    -- { widget, share }, widget one of entry.widgets and named once in the layout, share an
-    -- integer from 1 to 3.
-    rows = function(entry, value)
-        local rows = list_length(value)
-        if not rows or rows == 0 then
-            return false
-        end
-        local seen = {}
-        for _, row in ipairs(value) do
-            local slots = list_length(row)
-            if not slots or slots == 0 or slots > entry.max_columns then
-                return false
-            end
-            for _, slot in ipairs(row) do
-                if not is_slot(entry, slot, seen) then
-                    return false
-                end
-            end
-        end
-        return true
     end,
     -- Exactly { name, latitude, longitude }: a non-empty name, a latitude from -90 to 90 and a
     -- longitude from -180 to 180.
@@ -272,9 +226,8 @@ local function open()
     return settings
 end
 
--- The value of key: the stored one when its type allows it, otherwise the schema default, or the
--- entry's defaults_by_text_size at the text size when it has one. nil, logged, for a key the schema
--- doesn't define.
+-- The value of key: the stored one when its type allows it, otherwise the schema default. nil, logged, for
+-- a key the schema doesn't define.
 function Settings.get(key)
     local entry = entries[key]
     if not entry then
@@ -292,8 +245,7 @@ function Settings.get(key)
         value = nil
     end
     if value == nil then
-        local by_text_size = entry.defaults_by_text_size
-        return by_text_size and by_text_size[Settings.get("text_size")] or entry.default
+        return entry.default
     end
     return value
 end

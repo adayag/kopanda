@@ -219,13 +219,7 @@ describe("the date and clock widgets", function()
     -- Each look's header row on each profile at large and extra_large: every day of a year's date and the
     -- widest times, 23:58 and, on the 12-hour clock, 12:58.
     it("fits every date of the year and the widest times whole in the header row", function()
-        local Schema = require("schema")
-        local header
-        for _, key in ipairs(Schema.keys) do
-            if key.id == "layout.rows" then
-                header = key.default[1]
-            end
-        end
+        local header = Layout.rows[1]
         local cut = {}
         local function check(profile)
             for _, id in ipairs(Looks.ids()) do

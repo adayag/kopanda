@@ -1,4 +1,4 @@
--- The home built from layout.rows: one slot per entry at its column width,
+-- The home built from Layout.rows: one slot per entry at its column width,
 -- blank slots for a missing or failing widget, taps routed to a slot's widget, rebuilds on
 -- Resume and TimeFormatChanged and on a network change a widget's stale reports, and nothing
 -- left in UIManager's task queue. The widgets are stubs registered for the spec.
@@ -9,8 +9,9 @@ describe("the home's rows", function()
     local Widget = require("ui/widget/widget")
     local Geom = require("ui/geometry")
     local Screen = require("device").screen
+    local lfs = require("libs/libkoreader-lfs")
     local logger = require("logger")
-    local Home, Widgets, Looks, Schema, stubs, builds, widths, contexts, taps, warned, errored
+    local Home, Widgets, Looks, Layout, home_rows, stubs, builds, widths, contexts, taps, warned, errored
 
     -- A stub widget module: height h at any width, a build that counts and records its width
     -- and ctx, and the given tap.
@@ -84,7 +85,8 @@ describe("the home's rows", function()
         Home = require("home")
         Widgets = package.loaded["widgets"]
         Looks = package.loaded["looks"]
-        Schema = package.loaded["schema"]
+        Layout = package.loaded["layout"]
+        home_rows = Layout.rows
         builds, widths, contexts, taps = {}, {}, {}, 0
         stubs = {
             date = stub("date", 60),
@@ -100,25 +102,26 @@ describe("the home's rows", function()
         Widgets.get = function(id)
             return stubs[id]
         end
-        -- Five rows, the last two half-width widgets with no tap, stored so the cases don't follow the default.
-        assert.is_true(package.loaded["settings"].set("layout.rows", {
+        -- Five rows, the last two half-width widgets with no tap, so the cases don't follow the home's own.
+        Layout.rows = {
             { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
             { { widget = "featured", share = 1 } },
             { { widget = "quote", share = 1 } },
             { { widget = "launcher", share = 1 } },
             { { widget = "weather", share = 1 }, { widget = "stats", share = 1 } },
-        }))
+        }
         warned = spy.on(logger, "warn")
         errored = spy.on(logger, "err")
     end)
 
     after_each(function()
+        Layout.rows = home_rows
         logger.warn:revert()
         logger.err:revert()
         harness.teardown()
     end)
 
-    it("builds one slot per entry of the stored layout at its column width", function()
+    it("builds one slot per entry of the rows at its column width", function()
         local _, home = show_home()
         -- Diner on the harness's 600 px screen at scale 1: the band's padding and the side
         -- margin are both 40, so each row is 520 wide; two columns share it less a 14 px gap.
@@ -128,6 +131,21 @@ describe("the home's rows", function()
             stats = 253 }, widths)
         assert.same({ date = 1, clock = 1, featured = 1, quote = 1, launcher = 1, weather = 1, stats = 1 }, builds)
         assert.equals(7, #home.slots)
+    end)
+
+    it("builds Layout.rows with other rows stored in the settings file", function()
+        Layout.rows = { { { widget = "quote", share = 1 } }, { { widget = "launcher", share = 1 } } }
+        lfs.mkdir(harness.state_dir)
+        local f = assert(io.open(harness.settings_file, "wb"))
+        f:write('return { ["layout.rows"] = { { { widget = "date", share = 1 } } } }\n')
+        f:close()
+        package.loaded["settings"]._reset()
+        local _, home = show_home()
+        local built = {}
+        for i, slot in ipairs(home.slots) do
+            built[i] = slot.widget
+        end
+        assert.same({ "quote", "launcher" }, built)
     end)
 
     it("passes each build the look, variant, text size, time, screen and home", function()
@@ -142,19 +160,11 @@ describe("the home's rows", function()
         assert.equals(home, ctx.home)
     end)
 
-    it("leaves the schema default layout unchanged", function()
-        local entry
-        for _, e in ipairs(Schema.keys) do
-            if e.id == "layout.rows" then
-                entry = e
-            end
-        end
-        -- With nothing stored, the home reads the default.
-        os.remove(harness.settings_file)
-        package.loaded["settings"]._reset()
-        local before = copy(entry.default)
+    it("leaves Layout.rows unchanged", function()
+        Layout.rows = home_rows
+        local before = copy(home_rows)
         show_home()
-        assert.same(before, entry.default)
+        assert.same(before, home_rows)
     end)
 
     -- The header row aligns its slots to the bottom: the clock's baseline level with the date's last line.

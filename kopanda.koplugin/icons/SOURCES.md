@@ -38,7 +38,6 @@ as shipped here, not the pack's.
 | home | `assets/bold/house-bold.svg` | 76e786eea8f49d69b735b195aba3411dfdeaedf5d2afb9a1290fe954b9ae3885 |
 | home_plus | `assets/bold/push-pin-bold.svg` | e02e54767dc3af374e0154e01bc2bf2782e622697dba549835912ea61c456dce |
 | info | `assets/bold/info-bold.svg` | b4121261e2e7397235b4c590852fc9b2e05279e68b5bfb59c2affc9c76979ff9 |
-| layout | `assets/bold/layout-bold.svg` | 84e9c90c3197fbdf70dca244a286444c5e6bbeb661b4bf21478d104a2cf682ba |
 | library | `assets/bold/books-bold.svg` | 88ede18953e74243191a15bc4477e3d34d38b3581b3a29f5848f2a39a50fec8c |
 | list | `assets/bold/list-bullets-bold.svg` | 5ba18bf500ab3d9bbce4ca6567531a05e97e33166592ee5df97d300e9a6ec43b |
 | moon | `assets/bold/moon-bold.svg` | b6016b0b4fa9c668b7b331b655204030aedefc4a52de8f3c596ad442cdfae79c |
