@@ -196,7 +196,7 @@ local function toggle_wifi()
 end
 
 -- A close-first action running the launcher's entry, which checks availability again and
--- shows the launcher's note when it can't run (launcher_entries.lua:221-265).
+-- shows the launcher's note when it can't run (LauncherEntries.run).
 local function run(entry)
     return { close_first = true, tap = function() LauncherEntries.run(entry) end }
 end

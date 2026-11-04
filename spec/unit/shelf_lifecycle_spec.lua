@@ -602,7 +602,7 @@ describe("the Series and Authors windows' routing", function()
     local Event = require("ui/event")
     local ffiutil = require("ffi/util")
     local library_fixture = require("library_fixture")
-    local AuthorsScreen, Home, LauncherEntries, Library, NavBar, SeriesScreen
+    local Home, LauncherEntries, Library, NavBar, SeriesScreen
     local util, real_open, opened, progress, records, signals, listener
 
     local BOOK = harness.library .. "/frankenstein.epub"
@@ -662,7 +662,6 @@ describe("the Series and Authors windows' routing", function()
 
     before_each(function()
         load()
-        AuthorsScreen = package.loaded["authors_screen"]
         Home = package.loaded["home"]
         LauncherEntries = package.loaded["launcher_entries"]
         Library = package.loaded["library"]
@@ -775,19 +774,6 @@ describe("the Series and Authors windows' routing", function()
                     end)
             end
         end
-
-        it("the launcher's Authors entry on one author goes to the list's first page in place", function()
-            local screen, fm = fixture.show_authors({ kind = "author", name = "Mary Shelley" }, 2)
-            assert.equals(2, screen.page)
-            local shows = spy.on(UIManager, "show")
-            LauncherEntries.run({ kind = "kopanda", target = "authors" }, {})
-            UIManager.show:revert()
-            assert.spy(shows).was_not_called()
-            assert.equals(screen, AuthorsScreen.shown)
-            assert.equals(screen, harness.top())
-            assert.equals(fm, harness.top(2))
-            assert.same({ LIST, 1 }, { screen.showing, screen.page })
-        end)
 
         it("the Library tab on the Series window shows the library in its place", function()
             local screen, fm = fixture.show()

@@ -60,8 +60,7 @@ function FmNav.Frame:init()
 end
 
 -- Paints the bar, rebuilt first when the variant changed since it was built: night mode reaches
--- widgets before the screen flips and then repaints everything, as the home relies on
--- (home.lua:282-291).
+-- widgets before the screen flips and then repaints everything, as the home relies on.
 local function paint_bar(frame, bb, x, y)
     local variant = Looks.variant()
     if variant ~= frame.variant then

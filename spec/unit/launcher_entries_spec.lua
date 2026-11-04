@@ -366,28 +366,8 @@ describe("LauncherEntries", function()
             assert.spy(on_home).was_not_called()
         end)
 
-        -- subjects_screen stubbed as the window shown, or none, for the rest of the test.
-        local function subjects_shown(shown)
-            local real = package.loaded["subjects_screen"]
-            package.loaded["subjects_screen"] = { shown = shown }
-            cleanup(function()
-                package.loaded["subjects_screen"] = real
-            end)
-        end
-
-        it("goes to the Subjects list's first page in place on the Subjects window", function()
-            fm_with_home()
-            local home = Home.shown
-            local went = {}
-            subjects_shown({ go = function(_, view, page) went[#went + 1] = { view, page } end })
-            LauncherEntries.run({ kind = "kopanda", target = "subjects" }, {})
-            assert.same({ { { kind = "list" }, 1 } }, went)
-            assert.equals(home, Home.shown)
-        end)
-
         it("opens Subjects: closes the home and shows the Subjects window through the file manager", function()
             local fm = fm_with_home()
-            subjects_shown(nil)
             local shows = {}
             local real = rawget(fm.kopanda, "showSubjects")
             fm.kopanda.showSubjects = function(_, opts) shows[#shows + 1] = opts end
