@@ -62,7 +62,8 @@ Lands after the stats window merges (`docs/plans/2026-11-03-stats-window-design.
 - **Long labels.** A label that still doesn't fit ends in an ellipsis.
 - **A slot holding a plugin.** A tap runs the plugin's menu item over the home. A plugin that's gone shows greyed with
   "plugin missing", as a plugin entry does today.
-- **Swipe up from the bottom edge.** Quick settings, on the home and every chrome window.
+- **Swipe up from the bottom edge.** Quick settings, on the home and every chrome window with a file manager up. The
+  reader's go-to screen keeps its own way in.
 - **Swipe down or tap at the top edge, with Focused mode on.** Full settings, on the home and every chrome window.
   With Focused mode off, the top edge opens KOReader's own menu as it does today.
 - **A hold on the quote.** Opens the home's sheet, since the quote no longer has settings.
@@ -101,18 +102,19 @@ fixture proves the two sides agree.
 
 - `edit_layout.lua`, `rows_edit.lua`, the `rows` type, its row builder and validator, `layout.rows`, and the two
   Edit rows on the home's sheet.
-- `Layout.overflow` and `Layout.fits` if nothing else calls them.
+- `Layout.overflow` and `Layout.fits`, which nothing else calls.
 - The studio's `LayoutEditor.tsx`, `rows-edit.ts`, the layout-fit route and client, their tests and fixtures, and
   `bin/layout-fit`.
 - `quote.source`, with `Quote.sources` reduced to the built-in list.
 - `stats.show` and `widgets/stats.lua`.
-- Any home widget that neither the fixed home nor the Stats window uses. `widgets/weather.lua` is the one to check.
+- The weather widget's slot code. `widgets/weather.lua` stays for `header_line`, which the header draws through.
 - Look tokens only the removed screens read.
 - The Studio submenu's address, profile and Pull rows, and the `studio_address` and `studio_profile` state. Pull code
   goes only where Check for update doesn't share it; the implementation plan traces that split.
 
-The rows live in one table in `home_rows.lua`. Stored `layout.rows`, `quote.source` and `stats.show` values stay in
-the file, unread, as the stats window's design found for `layout.rows_2`. `schema.version` stays 1.
+The rows live in one table, `Layout.rows`, which the arrangement and its specs reach without the nav bar. Stored
+`layout.rows`, `quote.source` and `stats.show` values stay in the file, unread, as the stats window's design found for
+`layout.rows_2`. `schema.version` stays 1.
 
 ## Failure
 
