@@ -12,8 +12,8 @@
 --     at 90 s a page with "Letter IV" as its chapter, its cover extracted into CoverBrowser's cache
 --     before the home is built; "typecover" is the same with CoverBrowser disabled, so the
 --     featured book has its typographic cover; "empty" writes none of it, and stores
---     launcher.entries as the default five without Settings and a sixth entry for a plugin
---     named kopanda_absent, which no profile has, so it shows greyed as "plugin missing";
+--     launcher.entries as the default with Favorites replaced by an entry for a plugin named
+--     kopanda_absent, which no profile has, so it shows greyed as "plugin missing";
 --   - KOPANDA_HOME_LOOK, when set, is stored as the look (Diner is the default), into the
 --     settings file already there (a capture's settings_file) if any, its other keys kept; a
 --     file whose chunk returns a non-table is taken as {}, as the plugin reads it;
@@ -105,14 +105,12 @@ local ok, err = pcall(function()
         stored.look = look
     end
     if fixture == "empty" then
-        -- The schema's default five without Settings, then a plugin entry no plugin answers to,
+        -- The schema's default with a plugin entry no plugin answers to in Favorites' place,
         -- so it is missing on every profile: the EmptyStates board's launcher.
         stored["launcher.entries"] = {
-            { kind = "kopanda", target = "library" },
             { kind = "kopanda", target = "series" },
             { kind = "kopanda", target = "authors" },
             { kind = "kopanda", target = "subjects" },
-            { kind = "koreader", target = "history" },
             { kind = "plugin", plugin = "kopanda_absent", action = "terminal", label = "Terminal", icon = "terminal" },
         }
     end

@@ -12,31 +12,31 @@ return {
             ["target"] = "library",
         },
         [3] = {
-            ["action"] = "search",
-            ["icon"] = "calibre",
-            ["kind"] = "plugin",
-            ["label"] = "Calibre",
-            ["plugin"] = "calibre",
-        },
-        [4] = {
-            ["action"] = "wifi_toggle",
-            ["icon"] = "action",
-            ["kind"] = "action",
-            ["label"] = "Wi-Fi",
-        },
-        [5] = {
             ["kind"] = "directory",
             ["label"] = "Say \"hi\" \\ back\
 then\9Café “quoted”",
             ["path"] = "/mnt/us/documents/Café",
         },
-        [6] = {
+        [4] = {
             ["entries"] = {
                 [1] = {
+                    ["action"] = "search",
+                    ["icon"] = "calibre",
+                    ["kind"] = "plugin",
+                    ["label"] = "Calibre",
+                    ["plugin"] = "calibre",
+                },
+                [2] = {
+                    ["action"] = "wifi_toggle",
+                    ["icon"] = "action",
+                    ["kind"] = "action",
+                    ["label"] = "Wi-Fi",
+                },
+                [3] = {
                     ["kind"] = "koreader",
                     ["target"] = "collections",
                 },
-                [2] = {
+                [4] = {
                     ["kind"] = "kopanda",
                     ["target"] = "settings",
                 },

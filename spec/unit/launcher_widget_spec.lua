@@ -11,17 +11,15 @@ describe("the launcher widget", function()
     local util = require("util")
     local Launcher, LauncherEntries, Settings, Looks, Icons, Widgets, Home
 
-    -- The default six's views and Wi-Fi's, by target, as resolve gives them with Wi-Fi on.
+    -- The default four's views and Wi-Fi's, by target, as resolve gives them with Wi-Fi on.
     local VIEWS = {
-        library = { label = "Library", icon = "library", state = "ready" },
         series = { label = "Series", icon = "series", state = "ready" },
         authors = { label = "Authors", icon = "authors", state = "ready" },
         subjects = { label = "Subjects", icon = "subjects", state = "ready" },
-        history = { label = "History", icon = "history", state = "ready" },
+        favorites = { label = "Favorites", icon = "bookmark", state = "ready" },
         wifi = { label = "Wi-Fi", icon = "wifi", state = "ready" },
-        settings = { label = "Settings", icon = "settings", state = "ready" },
     }
-    local LABELS = { "Library", "Series", "Authors", "Subjects", "History", "Settings" }
+    local LABELS = { "Series", "Authors", "Subjects", "Favorites" }
 
     local resolved, ran
 
@@ -47,7 +45,7 @@ describe("the launcher widget", function()
         assert.is_true(Settings.set("launcher.entries", entries))
     end
 
-    -- The default six with Wi-Fi in Subjects' place.
+    -- The default four with Wi-Fi in Favorites' place.
     local function with_wifi()
         local entries = default_entries()
         entries[4] = { kind = "koreader", target = "wifi" }
@@ -74,11 +72,11 @@ describe("the launcher widget", function()
         harness.teardown()
     end)
 
-    local function ctx_for(id, variant)
+    local function ctx_for(id, variant, text_size)
         return {
             look = Looks.get(id),
             variant = variant or "day",
-            text_size = "medium",
+            text_size = text_size or "medium",
             now = 1000000,
             screen = Screen,
         }
@@ -233,11 +231,12 @@ describe("the launcher widget", function()
             local ctx = ctx_for("diner")
             Launcher.height(1184, ctx)
             Launcher.build(1184, ctx):free()
-            assert.equals(6, resolved)
+            assert.equals(4, resolved)
         end)
 
-        it("lays six entries out 2×3 in Editorial and 3×2 in Diner, columns and gaps filling the width", function()
-            for id, grid in pairs({ editorial = { 2, 3 }, diner = { 3, 2 } }) do
+        it("lays four entries out in two rows of two in Editorial and one row in Diner and Frosted, columns and "
+            .. "gaps filling the width", function()
+            for id, grid in pairs({ editorial = { 2, 2 }, diner = { 4, 1 }, frosted = { 4, 1 } }) do
                 for _, width in ipairs(widths(id)) do
                     local ctx = ctx_for(id)
                     local look = ctx.look
@@ -245,7 +244,7 @@ describe("the launcher widget", function()
                     local rects = built.rects
                     local columns, rows = grid[1], grid[2]
                     local where = id .. " " .. width
-                    assert.equals(6, #rects, where)
+                    assert.equals(4, #rects, where)
                     local shadow_x, shadow_y = 0, 0
                     if look.tile.box and look.shadow.tile.color then
                         shadow_x, shadow_y = scale(look.shadow.tile.x), scale(look.shadow.tile.y)
@@ -271,27 +270,58 @@ describe("the launcher widget", function()
                         local above, here = rects[(row - 2) * columns + 1], rects[(row - 1) * columns + 1]
                         assert.equals(above.y + above.h + scale(look.launcher.row_gap), here.y, where)
                     end
-                    local last = rects[6]
+                    local last = rects[4]
                     assert.equals(last.y + last.h + shadow_y, built:getSize().h, where)
                     built:free()
                 end
             end
         end)
 
-        it("lays four entries out in two rows in either look", function()
-            local entries = default_entries()
-            set_entries({ entries[1], entries[2], entries[3], entries[4] })
-            for _, id in ipairs({ "editorial", "diner" }) do
-                local built = Launcher.build(widths(id)[1], ctx_for(id))
-                local ys = {}
-                for _, rect in ipairs(built.rects) do
-                    ys[rect.y] = true
-                end
-                assert.equals(4, #built.rects, id)
-                assert.equals(2, util.tableSize(ys), id)
-                assert.same({ "Library", "Series", "Authors", "Subjects" }, texts(built), id)
+        it("measures one tile and its shadow high in Diner and Frosted", function()
+            for _, id in ipairs({ "diner", "frosted" }) do
+                local ctx = ctx_for(id)
+                local h = Launcher.height(1184, ctx)
+                assert.is_true(h > 0, id)
+                local built = Launcher.build(1184, ctx)
+                local shadow = ctx.look.shadow.tile
+                assert.equals(built.rects[1].h + (shadow.color and scale(shadow.y) or 0), h, id)
                 built:free()
             end
+        end)
+
+        it("lays a short list out by whole rows: three entries are two rows in Editorial, one in Diner", function()
+            local entries = default_entries()
+            set_entries({ entries[1], entries[2], entries[3] })
+            local ctx = ctx_for("editorial")
+            local built = Launcher.build(1184, ctx)
+            local below = built.rects[1].h + scale(ctx.look.launcher.row_gap)
+            assert.equals(below, built.rects[3].y)
+            assert.equals(below + built.rects[3].h, built:getSize().h)
+            built:free()
+            ctx = ctx_for("diner")
+            built = Launcher.build(1184, ctx)
+            assert.equals(0, built.rects[3].y)
+            assert.equals(built.rects[1].h + scale(ctx.look.shadow.tile.y), built:getSize().h)
+            built:free()
+        end)
+
+        it("holds a Frosted tile's content at Extra large, the icon above the label", function()
+            local built = Launcher.build(1184, ctx_for("frosted", "day", "extra_large"))
+            assert.equals(4, #entries_of(built))
+            for i, entry in ipairs(entries_of(built)) do
+                local icon = icons_of(entry)[1]
+                local label = lines(entry)[1].widget
+                assert.is_true(place_in(entry, icon).y + icon:getSize().h <= place_in(entry, label).y, "tile " .. i)
+                assert.is_true(place_in(entry, label).y + label:getSize().h <= entry:getSize().h, "tile " .. i)
+            end
+            built:free()
+        end)
+
+        it("keeps a Diner tile at tile_height at Small, where its content is well under that", function()
+            local ctx = ctx_for("diner", "day", "small")
+            local built = Launcher.build(1184, ctx)
+            assert.equals(scale(ctx.look.launcher.tile_height), built.rects[1].h)
+            built:free()
         end)
 
         it("is 0 high with no entries", function()
@@ -305,12 +335,11 @@ describe("the launcher widget", function()
             end
         end)
 
-        it("adds the tile shadow's y to Diner's height so the last row's shadow isn't cut", function()
+        it("adds the tile shadow's y to Diner's height so the row's shadow isn't cut", function()
             local ctx = ctx_for("diner")
             local look = ctx.look
             local built = Launcher.build(1184, ctx)
-            assert.equals(2 * scale(look.launcher.tile_height) + scale(look.launcher.row_gap)
-                + scale(look.shadow.tile.y), built:getSize().h)
+            assert.equals(scale(look.launcher.tile_height) + scale(look.shadow.tile.y), built:getSize().h)
             built:free()
         end)
 
@@ -318,7 +347,7 @@ describe("the launcher widget", function()
             local ctx = ctx_for("editorial")
             local look = ctx.look
             local built = Launcher.build(1184, ctx)
-            local label = line_of(built, "Library").widget
+            local label = line_of(built, "Series").widget
             local content = math.max(scale(look.launcher.icon_size), label:getSize().h)
             assert.equals(2 * scale(look.launcher.padding.y) + content + scale(look.stroke.hairline), built.rects[1].h)
             built:free()
@@ -339,8 +368,8 @@ describe("the launcher widget", function()
                 local ctx = ctx_for(id)
                 local built = Launcher.build(1184, ctx)
                 local entries = entries_of(built)
-                assert.equals(6, #entries, id)
-                local targets = { "library", "series", "authors", "subjects", "history", "settings" }
+                assert.equals(4, #entries, id)
+                local targets = { "series", "authors", "subjects", "favorites" }
                 for i, entry in ipairs(entries) do
                     local icons = icons_of(entry)
                     assert.equals(1, #icons, id .. " " .. i)
@@ -370,13 +399,28 @@ describe("the launcher widget", function()
             end
         end)
 
+        it("sets each label at Large's size at Extra large and at its own size at Large", function()
+            local Layout = require("layout")
+            for _, id in ipairs({ "editorial", "diner", "frosted" }) do
+                local function label_size(text_size)
+                    local built = Launcher.build(1184, ctx_for(id, "day", text_size))
+                    local size = line_of(built, "Series").glyphs[1].face.orig_size
+                    built:free()
+                    return size
+                end
+                local large = Layout.font_size(Looks.get(id).type.launcher_label.size, "large")
+                assert.equals(large, label_size("large"), id)
+                assert.equals(large, label_size("extra_large"), id)
+            end
+        end)
+
         it("fills Diner's tiles mustard, pink, teal, then paper, outlined with the hard shadow, by day and in grey",
             function()
                 for _, variant in ipairs({ "day", "grey" }) do
                     local ctx = ctx_for("diner", variant)
                     local look = ctx.look
                     local built = Launcher.build(1184, ctx)
-                    local fills = { "mustard", "pink", "teal", "paper", "paper", "paper" }
+                    local fills = { "mustard", "pink", "teal", "paper" }
                     for i, entry in ipairs(entries_of(built)) do
                         local where = variant .. " tile " .. i
                         assert.is_true(same_color(role(ctx, fills[i]), entry.fill_color), where)
@@ -398,7 +442,7 @@ describe("the launcher widget", function()
                 local ctx = ctx_for("editorial", variant)
                 local built = Launcher.build(1184, ctx)
                 local entries = entries_of(built)
-                assert.equals(6, #entries)
+                assert.equals(4, #entries)
                 for i, entry in ipairs(entries) do
                     local where = variant .. " row " .. i
                     assert.is_true(same_color(role(ctx, "hairline_light"), entry.rule_color), where)
@@ -462,12 +506,12 @@ describe("the launcher widget", function()
         end)
 
         it("draws an unavailable entry with the plugin_missing icon, its label and PLUGIN MISSING in muted", function()
-            stub_resolve({ settings = MISSING })
+            stub_resolve({ favorites = MISSING })
             for _, variant in ipairs({ "day", "grey" }) do
                 for _, id in ipairs({ "editorial", "diner" }) do
                     local ctx = ctx_for(id, variant)
                     local built = Launcher.build(1184, ctx)
-                    local entry = entries_of(built)[6]
+                    local entry = entries_of(built)[4]
                     local where = id .. " " .. variant
                     local icons = icons_of(entry)
                     assert.equals(Icons.path("plugin_missing"), icons[1].file, where)
@@ -487,10 +531,10 @@ describe("the launcher widget", function()
         end)
 
         it("puts the suffix on the label's line in Editorial and on the line below in Diner", function()
-            stub_resolve({ settings = MISSING })
+            stub_resolve({ favorites = MISSING })
             for _, id in ipairs({ "editorial", "diner" }) do
                 local built = Launcher.build(1184, ctx_for(id))
-                local entry = entries_of(built)[6]
+                local entry = entries_of(built)[4]
                 local label, suffix = line_of(entry, "Terminal").widget, line_of(entry, "PLUGIN MISSING").widget
                 local at, below = place_in(entry, label), place_in(entry, suffix)
                 assert.is_table(at, id)
@@ -508,6 +552,29 @@ describe("the launcher widget", function()
                 built:free()
             end
         end)
+
+        -- The tile and its type both scale with the screen, so the narrowest profile stands for the others.
+        for _, text_size in ipairs({ "small", "medium", "large", "extra_large" }) do
+            it("keeps a long suffix inside a Frosted tile and leaves its label more than an ellipsis at " .. text_size,
+                    function()
+                stub_resolve({ favorites = MISSING })
+                local Layout = require("layout")
+                local Typeset = package.loaded["typeset"]
+                harness.at_screen(1072, 1448, function()
+                    local ctx = ctx_for("frosted", "day", text_size)
+                    local built = Launcher.build(1072 - 2 * scale(ctx.look.home.margin.side), ctx)
+                    local entry = entries_of(built)[4]
+                    local label, suffix = entry[2], entry[3]
+                    local ellipsis = Typeset.line(ctx.look.type.launcher_label, "…", math.huge,
+                        ctx_for("frosted", "day", Layout.label_size(text_size)))
+                    local right = place_in(entry, suffix).x + suffix:getSize().w
+                    assert.is_true(right <= entry:getSize().w, right .. " past " .. entry:getSize().w)
+                    assert.is_true(label:getSize().w > ellipsis:getSize().w, "the label is an ellipsis alone")
+                    ellipsis:free()
+                    built:free()
+                end)
+            end)
+        end
 
         it("cuts a 60-character label with an ellipsis inside its column, Diner at 560 px too", function()
             local long = string.rep("MW", 30)
@@ -549,8 +616,8 @@ describe("the launcher widget", function()
             Launcher.height(1184, ctx)
             local built = Launcher.build(1184, ctx)
             local entries = entries_of(built)
-            assert.equals(0, #icons_of(entries[2]))
-            assert.equals(1, #icons_of(entries[1]))
+            assert.equals(0, #icons_of(entries[1]))
+            assert.equals(1, #icons_of(entries[2]))
             assert.same(LABELS, texts(built))
             local count = 0
             for _, call in ipairs(warned.calls) do
@@ -581,10 +648,10 @@ describe("the launcher widget", function()
                 assert.is_true(Launcher.tap(ctx, ges, built), "far corner of entry " .. i)
                 assert.same(entries[i], ran[#ran].entry, "far corner of entry " .. i)
             end
-            assert.equals(12, #ran)
+            assert.equals(8, #ran)
             -- The grid's own coordinates, unpainted there, are above and left of it.
             assert.is_false(Launcher.tap(ctx, harness.gesture("tap", 5, 5), built))
-            assert.equals(12, #ran)
+            assert.equals(8, #ran)
             -- Just past each tile's right and bottom edges (Geom:contains counts the edge itself)
             -- lies the gap or the Diner shadow band: a point there outside every entry runs nothing.
             local function in_any(x, y)
@@ -609,7 +676,7 @@ describe("the launcher widget", function()
                 end
             end
             assert.is_true(gaps >= 6)
-            assert.equals(12, #ran)
+            assert.equals(8, #ran)
             bb:free()
             built:free()
         end)
@@ -679,7 +746,7 @@ describe("the launcher widget", function()
                     assert.is_false(in_menu_zone(x, y))
                     tap_at(x, y)
                 end
-                assert.equals(6, #ran)
+                assert.equals(4, #ran)
                 local entries = default_entries()
                 for i, call in ipairs(ran) do
                     assert.same(entries[i], call.entry, "entry " .. i)

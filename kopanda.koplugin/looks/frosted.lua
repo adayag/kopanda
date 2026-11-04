@@ -208,7 +208,7 @@ return {
         icon_size = 24,
         padding = { x = 13 },
         tile_height = 74,
-        suffix_gap = 8,
+        suffix_below = true,
     },
 
     -- The quote plain on its plate, no rules; the plate's padding is plate.slots.quote.

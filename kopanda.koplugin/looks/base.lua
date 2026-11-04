@@ -542,7 +542,7 @@ return {
 
     -- The launcher: a grid of tiles or text rows, its gaps, icons, accents and suffix.
     launcher = {
-        columns = 3,
+        columns = 4,
         column_gap = 16,
         row_gap = 0,
         icon_size = 22,

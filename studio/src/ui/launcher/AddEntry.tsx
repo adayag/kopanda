@@ -113,7 +113,7 @@ export function AddEntry({
                 </button>
               ))}
             </div>
-            {!inFolder && <p className="note">The seventh entry and beyond go into a folder.</p>}
+            {!inFolder && <p className="note">The fifth entry and beyond go into a folder.</p>}
           </>
         );
       case "screen": {

@@ -336,6 +336,12 @@ function Layout.size_at(px, text_size)
     return math.floor(px * TEXT_SCALE.extra_large + 0.5)
 end
 
+-- The text size a bar's or tile's label is set at for text_size: Large's at Extra large, so labels side by side
+-- still fit with space between them while their icons grow.
+function Layout.label_size(text_size)
+    return text_size == "extra_large" and "large" or text_size
+end
+
 -- Outside the home's rows, only Extra large changes the type; the other steps keep today's shell.
 function Layout.shell_text_size(text_size)
     if text_size == "extra_large" then

@@ -583,16 +583,17 @@ describe("Settings", function()
             kopanda("subjects"),
             { kind = "koreader", target = "wifi" },
             plugin("terminal"),
-            { kind = "action", action = "file_search", label = "Search", icon = "search" },
-            directory("/mnt/us/downloads"),
-            folder({ kopanda("series") }),
+            folder({
+                { kind = "action", action = "file_search", label = "Search", icon = "search" },
+                directory("/mnt/us/downloads"),
+            }),
         }
 
         -- Every list the launcher type refuses, by what is wrong with it.
         local refused = {
-            ["seven top-level entries"] = {
+            ["five top-level entries"] = {
                 kopanda("library"), kopanda("series"), kopanda("authors"), kopanda("settings"),
-                kopanda("library"), kopanda("series"), kopanda("authors"),
+                kopanda("library"),
             },
             ["an unknown kind"] = { { kind = "shortcut", target = "library" } },
             ["a kopanda target outside targets"] = { kopanda("history") },
@@ -611,7 +612,7 @@ describe("Settings", function()
         local accepted = {
             ["the default"] = entry.default,
             ["an empty list"] = {},
-            ["six entries, one of each kind"] = one_of_each,
+            ["four entries, one of each kind, two of them in the folder"] = one_of_each,
             ["a folder of three"] = { folder({ kopanda("library"), plugin("terminal"), directory("/mnt/us") }) },
             ["a plugin that doesn't exist"] = { plugin("no-such-plugin") },
         }
@@ -656,9 +657,12 @@ describe("Settings", function()
             end
         end)
 
-        it("reads a stored invalid list as the default six without raising", function()
+        it("reads a stored invalid list as the default four without raising", function()
             local stored = {
                 ["a string"] = '"library"',
+                ["five entries"] = '{ { kind = "kopanda", target = "library" }, '
+                    .. '{ kind = "kopanda", target = "series" }, { kind = "kopanda", target = "authors" }, '
+                    .. '{ kind = "kopanda", target = "subjects" }, { kind = "koreader", target = "history" } }',
                 ["an unknown kind"] = '{ { kind = "shortcut", target = "library" } }',
                 ["a nested folder"] = '{ { kind = "folder", label = "A", entries = { { kind = "folder", '
                     .. 'label = "B", entries = { { kind = "kopanda", target = "library" } } } } } }',
@@ -670,6 +674,14 @@ describe("Settings", function()
                 assert.is_true(ok, what .. ": " .. tostring(value))
                 assert.equals(entry.default, value, what)
             end
+        end)
+
+        it("reads a stored list of four as stored", function()
+            store('return { ["launcher.entries"] = { { kind = "kopanda", target = "library" }, '
+                .. '{ kind = "kopanda", target = "settings" }, { kind = "koreader", target = "history" }, '
+                .. '{ kind = "koreader", target = "wifi" } } }')
+            assert.same({ kopanda("library"), kopanda("settings"), { kind = "koreader", target = "history" },
+                { kind = "koreader", target = "wifi" } }, Settings.get("launcher.entries"))
         end)
     end)
 

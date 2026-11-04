@@ -64,7 +64,7 @@ describe("bin/layout-fit", function()
         os.execute("rm -rf '" .. scratch .. "'")
     end)
 
-    it("counts what Layout.overflow counts in this process on the unit screen", function()
+    it("counts what Layout.overflow counts in this process on a screen too short for every widget", function()
         harness.load()
         local Layout = require("layout")
         local Looks = require("looks")
@@ -77,12 +77,15 @@ describe("bin/layout-fit", function()
             now = os.time(),
             screen = Screen,
         }
-        local expected = { Layout.overflow(default, ctx), Layout.overflow(every_widget, ctx) }
-        local answer = fit("600 800 160", { default, every_widget })
-        assert.same({ width = 600, height = 800 }, answer.screen)
+        local expected
+        harness.at_screen(600, 700, function()
+            expected = { Layout.overflow(default, ctx), Layout.overflow(every_widget, ctx) }
+        end)
+        local answer = fit("600 700 160", { default, every_widget })
+        assert.same({ width = 600, height = 700 }, answer.screen)
         assert.same(expected, answer.overflow)
-        assert.truthy(expected[1] > 0 or expected[2] > 0, "one of the layouts overflows the unit screen")
-        assert.same(answer.overflow, fit("600 800 160 '" .. scratch .. "/absent.lua'", { default, every_widget })
+        assert.truthy(expected[1] > 0 or expected[2] > 0, "one of the layouts overflows the screen")
+        assert.same(answer.overflow, fit("600 700 160 '" .. scratch .. "/absent.lua'", { default, every_widget })
             .overflow, "a settings path that doesn't exist reads as no file")
     end)
 

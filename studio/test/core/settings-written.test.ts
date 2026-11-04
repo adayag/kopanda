@@ -41,13 +41,13 @@ const data = table([
     fromJson([
       { kind: "koreader", target: "favorites" },
       { kind: "kopanda", target: "library" },
-      { kind: "plugin", plugin: "calibre", action: "search", label: "Calibre", icon: "calibre" },
-      { kind: "action", action: "wifi_toggle", label: "Wi-Fi", icon: "action" },
       { kind: "directory", path: "/mnt/us/documents/Café", label: 'Say "hi" \\ back\nthen\tCafé “quoted”' },
       {
         kind: "folder",
         label: "Tools",
         entries: [
+          { kind: "plugin", plugin: "calibre", action: "search", label: "Calibre", icon: "calibre" },
+          { kind: "action", action: "wifi_toggle", label: "Wi-Fi", icon: "action" },
           { kind: "koreader", target: "collections" },
           { kind: "kopanda", target: "settings" },
         ],

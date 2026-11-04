@@ -194,10 +194,6 @@
             "default": [
                 {
                     "kind": "kopanda",
-                    "target": "library"
-                },
-                {
-                    "kind": "kopanda",
                     "target": "series"
                 },
                 {
@@ -210,17 +206,13 @@
                 },
                 {
                     "kind": "koreader",
-                    "target": "history"
-                },
-                {
-                    "kind": "kopanda",
-                    "target": "settings"
+                    "target": "favorites"
                 }
             ],
             "group": "launcher",
             "id": "launcher.entries",
             "label": "Launcher",
-            "max_entries": 6,
+            "max_entries": 4,
             "targets": {
                 "kopanda": [
                     "library",

@@ -1,5 +1,5 @@
 -- Launcher management: launcher.entries as a list in the editor frame (editor.lua), its top level headed
--- "N of 6 on the home screen" over "Launcher", or one folder's own list headed "Folder · N". The body is
+-- "N of 4 on the home screen" over "Launcher", or one folder's own list headed "Folder · N". The body is
 -- a row per entry (icon, label, kind line, up, down, remove); the foot adds an entry by kind through the
 -- entry picker. Every change writes launcher.entries once through Settings.set and repaints once; a
 -- refused write shows a note and changes nothing.
@@ -350,7 +350,7 @@ local function foot_rows(screen, ctx, width, made, in_folder)
         }
     end
     if not in_folder then
-        rows[#rows + 1] = text_control("note", look.type.editor_note, "The seventh entry and beyond go into a folder.",
+        rows[#rows + 1] = text_control("note", look.type.editor_note, "The fifth entry and beyond go into a folder.",
             gap)
     end
     return rows

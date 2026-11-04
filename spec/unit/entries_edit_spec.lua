@@ -16,7 +16,6 @@ describe("EntriesEdit", function()
 
     local LIBRARY = { kind = "kopanda", target = "library" }
     local SERIES = { kind = "kopanda", target = "series" }
-    local AUTHORS = { kind = "kopanda", target = "authors" }
     local HISTORY = { kind = "koreader", target = "history" }
     local SETTINGS = { kind = "kopanda", target = "settings" }
     local WIFI = { kind = "koreader", target = "wifi" }
@@ -29,10 +28,9 @@ describe("EntriesEdit", function()
         return { kind = "folder", label = label, entries = entries }
     end
 
-    -- Six entries: Library, Series, Authors, History, a Tools folder of three, Settings.
+    -- Four entries: Library, Series, a Tools folder of three, Settings.
     local function board()
-        return { LIBRARY, SERIES, AUTHORS, HISTORY, folder("Tools", { action("a"), action("b"), action("c") }),
-            SETTINGS }
+        return { LIBRARY, SERIES, folder("Tools", { action("a"), action("b"), action("c") }), SETTINGS }
     end
 
     -- Runs op on a deep copy of input, then checks the input unchanged and, when op returned a
@@ -48,32 +46,32 @@ describe("EntriesEdit", function()
     end
 
     it("reads the schema's max_entries", function()
-        assert.equals(6, EntriesEdit.max_entries)
+        assert.equals(4, EntriesEdit.max_entries)
     end)
 
     describe("move", function()
         it("moves a top-level entry by delta within the top level", function()
             local entries = board()
-            assert.same({ SERIES, LIBRARY, AUTHORS, HISTORY, entries[5], SETTINGS },
+            assert.same({ SERIES, LIBRARY, entries[3], SETTINGS },
                 run(entries, function(e) return EntriesEdit.move(e, { 1 }, 1) end))
-            assert.same({ LIBRARY, SERIES, AUTHORS, HISTORY, SETTINGS, entries[5] },
-                run(entries, function(e) return EntriesEdit.move(e, { 6 }, -1) end))
+            assert.same({ LIBRARY, SERIES, SETTINGS, entries[3] },
+                run(entries, function(e) return EntriesEdit.move(e, { 4 }, -1) end))
         end)
 
         it("moves a folder's entry within the folder", function()
             local entries = board()
-            local moved = run(entries, function(e) return EntriesEdit.move(e, { 5, 3 }, -1) end)
-            assert.same({ action("a"), action("c"), action("b") }, moved[5].entries)
-            assert.same({ LIBRARY, SERIES, AUTHORS, HISTORY }, { moved[1], moved[2], moved[3], moved[4] })
-            assert.same(SETTINGS, moved[6])
+            local moved = run(entries, function(e) return EntriesEdit.move(e, { 3, 3 }, -1) end)
+            assert.same({ action("a"), action("c"), action("b") }, moved[3].entries)
+            assert.same({ LIBRARY, SERIES }, { moved[1], moved[2] })
+            assert.same(SETTINGS, moved[4])
         end)
 
         it("returns nil past either end of the top level or a folder", function()
             local entries = board()
             assert.is_nil(run(entries, function(e) return EntriesEdit.move(e, { 1 }, -1) end))
-            assert.is_nil(run(entries, function(e) return EntriesEdit.move(e, { 6 }, 1) end))
-            assert.is_nil(run(entries, function(e) return EntriesEdit.move(e, { 5, 1 }, -1) end))
-            assert.is_nil(run(entries, function(e) return EntriesEdit.move(e, { 5, 3 }, 1) end))
+            assert.is_nil(run(entries, function(e) return EntriesEdit.move(e, { 4 }, 1) end))
+            assert.is_nil(run(entries, function(e) return EntriesEdit.move(e, { 3, 1 }, -1) end))
+            assert.is_nil(run(entries, function(e) return EntriesEdit.move(e, { 3, 3 }, 1) end))
         end)
     end)
 
@@ -81,22 +79,22 @@ describe("EntriesEdit", function()
         it("removes a top-level entry", function()
             local entries = board()
             local removed, folder_removed = run(entries, function(e) return EntriesEdit.remove(e, { 2 }) end)
-            assert.same({ LIBRARY, AUTHORS, HISTORY, entries[5], SETTINGS }, removed)
+            assert.same({ LIBRARY, entries[3], SETTINGS }, removed)
             assert.is_false(folder_removed)
         end)
 
         it("removes a folder with its entries", function()
             local entries = board()
-            local removed, folder_removed = run(entries, function(e) return EntriesEdit.remove(e, { 5 }) end)
-            assert.same({ LIBRARY, SERIES, AUTHORS, HISTORY, SETTINGS }, removed)
+            local removed, folder_removed = run(entries, function(e) return EntriesEdit.remove(e, { 3 }) end)
+            assert.same({ LIBRARY, SERIES, SETTINGS }, removed)
             assert.is_false(folder_removed)
         end)
 
         it("removes a folder's entry and keeps the folder", function()
             local entries = board()
-            local removed, folder_removed = run(entries, function(e) return EntriesEdit.remove(e, { 5, 2 }) end)
-            assert.same(folder("Tools", { action("a"), action("c") }), removed[5])
-            assert.equals(6, #removed)
+            local removed, folder_removed = run(entries, function(e) return EntriesEdit.remove(e, { 3, 2 }) end)
+            assert.same(folder("Tools", { action("a"), action("c") }), removed[3])
+            assert.equals(4, #removed)
             assert.is_false(folder_removed)
         end)
 
@@ -123,25 +121,24 @@ describe("EntriesEdit", function()
             assert.equals(2, #added)
         end)
 
-        it("adds a sixth at the end of a top level of five", function()
-            local entries = { LIBRARY, SERIES, AUTHORS, HISTORY, SETTINGS }
-            assert.same({ LIBRARY, SERIES, AUTHORS, HISTORY, SETTINGS, WIFI },
+        it("adds a fourth at the end of a top level of three", function()
+            local entries = { LIBRARY, SERIES, SETTINGS }
+            assert.same({ LIBRARY, SERIES, SETTINGS, WIFI },
                 run(entries, function(e) return EntriesEdit.add(e, WIFI) end))
         end)
 
         it("adds to the end of the first top-level folder of a full top level", function()
-            local entries = { LIBRARY, SERIES, folder("First", { action("a") }), HISTORY,
-                folder("Second", { action("b") }), SETTINGS }
+            local entries = { LIBRARY, folder("First", { action("a") }), folder("Second", { action("b") }), SETTINGS }
             local added = run(entries, function(e) return EntriesEdit.add(e, WIFI) end)
-            assert.equals(6, #added)
-            assert.same(folder("First", { action("a"), WIFI }), added[3])
-            assert.same(folder("Second", { action("b") }), added[5])
+            assert.equals(4, #added)
+            assert.same(folder("First", { action("a"), WIFI }), added[2])
+            assert.same(folder("Second", { action("b") }), added[3])
         end)
 
-        it("makes the sixth and the new entry a folder labelled More in slot six, with no folder", function()
-            local entries = { LIBRARY, SERIES, AUTHORS, HISTORY, WIFI, SETTINGS }
+        it("makes the fourth and the new entry a folder labelled More in slot four, with no folder", function()
+            local entries = { LIBRARY, SERIES, WIFI, SETTINGS }
             local added = run(entries, function(e) return EntriesEdit.add(e, action("x")) end)
-            assert.same({ LIBRARY, SERIES, AUTHORS, HISTORY, WIFI,
+            assert.same({ LIBRARY, SERIES, WIFI,
                 { kind = "folder", label = "More", entries = { SETTINGS, action("x") } } }, added)
         end)
 
@@ -163,7 +160,7 @@ describe("EntriesEdit", function()
     end)
 
     it("counts the top level", function()
-        assert.equals(6, EntriesEdit.count(board()))
+        assert.equals(4, EntriesEdit.count(board()))
         assert.equals(0, EntriesEdit.count({}))
     end)
 
@@ -180,7 +177,7 @@ describe("EntriesEdit", function()
         end)
 
         it("counts a folder's entries, one in the singular", function()
-            assert.equals("Folder · 3 entries ›", EntriesEdit.kind_line(board()[5]))
+            assert.equals("Folder · 3 entries ›", EntriesEdit.kind_line(board()[3]))
             assert.equals("Folder · 1 entry ›", EntriesEdit.kind_line(folder("Solo", { action("a") })))
         end)
 

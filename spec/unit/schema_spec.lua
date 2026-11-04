@@ -147,18 +147,16 @@ describe("schema.lua", function()
             {
                 id = "launcher.entries",
                 type = "launcher",
-                max_entries = 6,
+                max_entries = 4,
                 targets = {
                     kopanda = { "library", "series", "authors", "subjects", "settings", "quick_settings" },
                     koreader = { "history", "favorites", "collections", "wifi" },
                 },
                 default = {
-                    { kind = "kopanda", target = "library" },
                     { kind = "kopanda", target = "series" },
                     { kind = "kopanda", target = "authors" },
                     { kind = "kopanda", target = "subjects" },
-                    { kind = "koreader", target = "history" },
-                    { kind = "kopanda", target = "settings" },
+                    { kind = "koreader", target = "favorites" },
                 },
                 label = "Launcher",
                 group = "launcher",
@@ -196,7 +194,7 @@ describe("schema.lua", function()
         assert.is_false(Settings.validators.path(wallpaper, "wallpaper.png"))
     end)
 
-    it("validates the launcher type, whose default six are allowed", function()
+    it("validates the launcher type, whose default four are allowed", function()
         local Settings = require("settings")
         assert.is_function(Settings.validators.launcher)
         local launcher = key_entry("launcher.entries")

@@ -584,7 +584,7 @@ describe("Layout", function()
     -- The schema's default rows with the real widgets and the real bar, in both looks at each text size, on the
     -- Colorsoft and the Paperwhite, with the home fixture's content (2-scenario-home-fixture.lua): populated (a
     -- featured book with its chapter, a weather reading, the quote of the day) and empty (none of them, the fixture's
-    -- six launcher entries). Text is measured by Font:getFace at the device screen's scale
+    -- four launcher entries). Text is measured by Font:getFace at the device screen's scale
     -- (frontend/ui/font.lua:276), so the device screen itself answers as each profile's, as harness.at_colorsoft
     -- makes it the Colorsoft's.
     describe("the default home above the bar", function()
@@ -645,11 +645,9 @@ describe("Layout", function()
             },
             empty = {
                 entries = {
-                    { kind = "kopanda", target = "library" },
                     { kind = "kopanda", target = "series" },
                     { kind = "kopanda", target = "authors" },
                     { kind = "kopanda", target = "subjects" },
-                    { kind = "koreader", target = "history" },
                     { kind = "plugin", plugin = "kopanda_absent", action = "terminal", label = "Terminal",
                         icon = "terminal" },
                 },

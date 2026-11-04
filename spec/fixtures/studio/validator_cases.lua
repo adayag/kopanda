@@ -183,12 +183,10 @@ return {
     {
         key = "launcher.entries",
         value = {
-            { kind = "kopanda", target = "library" },
             { kind = "kopanda", target = "series" },
             { kind = "kopanda", target = "authors" },
             { kind = "kopanda", target = "subjects" },
-            { kind = "koreader", target = "history" },
-            { kind = "kopanda", target = "settings" },
+            { kind = "koreader", target = "favorites" },
         },
         valid = true,
         why = "the default",
@@ -202,11 +200,9 @@ return {
             { kind = "kopanda", target = "authors" },
             { kind = "kopanda", target = "subjects" },
             { kind = "koreader", target = "history" },
-            { kind = "kopanda", target = "settings" },
-            { kind = "koreader", target = "wifi" },
         },
         valid = false,
-        why = "seven entries",
+        why = "five entries",
     },
     {
         key = "launcher.entries",

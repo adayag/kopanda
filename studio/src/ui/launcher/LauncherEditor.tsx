@@ -25,7 +25,7 @@ export interface LauncherEditorProps {
 }
 
 /**
- * The launcher editor (kopanda.koplugin/launcher_manage.lua's screen): the top level headed "N of 6
+ * The launcher editor (kopanda.koplugin/launcher_manage.lua's screen): the top level headed "N of 4
  * on the home screen" over "Launcher", or one folder's list headed "Folder · N" over its label, a row
  * per entry and the add flows. Every change is one write of launcher.entries, whose answer the editor
  * shows; a read-only or unreadable file disables every control.

@@ -77,13 +77,13 @@ function Grid:paintTo(bb, x, y)
     end
 end
 
--- part with its colour role replaced.
-local function recolored(part, role)
+-- A shallow copy of t with key set to value.
+local function with(t, key, value)
     local copy = {}
-    for k, v in pairs(part) do
+    for k, v in pairs(t) do
         copy[k] = v
     end
-    copy.color = role
+    copy[key] = value
     return copy
 end
 
@@ -95,7 +95,7 @@ local function text_block(view, width, ctx)
     local tokens = look.launcher
     local label_part, suffix_part = look.type.launcher_label, look.type.launcher_suffix
     if view.state == "unavailable" then
-        label_part, suffix_part = recolored(label_part, "muted"), recolored(suffix_part, "muted")
+        label_part, suffix_part = with(label_part, "color", "muted"), with(suffix_part, "color", "muted")
     end
     if not view.suffix then
         local label = Typeset.line(label_part, view.label, width, ctx)
@@ -173,6 +173,7 @@ local function make(width, ctx)
     local outline = box and (plate and plate.keyline or scale(look.stroke.outline)) or 0
     local rule = box and 0 or scale(look.stroke.hairline)
     local unknown = {}
+    local label_ctx = with(ctx, "text_size", Layout.label_size(ctx.text_size))
 
     -- Each entry's icon and text block, laid out in its column.
     local parts, block_h = {}, 0
@@ -184,14 +185,14 @@ local function make(width, ctx)
         else
             inner_w = col.w - 2 * pad_x - icon_px - scale(tokens.icon_gap)
         end
-        local placed, h = text_block(view, math.max(1, inner_w), ctx)
+        local placed, h = text_block(view, math.max(1, inner_w), label_ctx)
         parts[i] = { icon = icon_of(view, icon_px, ctx, unknown), placed = placed, h = h }
         block_h = math.max(block_h, h)
     end
 
     local entry_h
     if box then
-        entry_h = scale(tokens.tile_height)
+        entry_h = math.max(scale(tokens.tile_height), 2 * (outline + pad_y) + icon_px + block_h)
     else
         entry_h = 2 * pad_y + math.max(icon_px, block_h) + rule
     end

@@ -208,18 +208,16 @@ describe("LauncherEntries", function()
                 LauncherEntries.resolve(folder_entry(3)))
         end)
 
-        it("reads the default six as Library, Series, Authors, Subjects, History and Settings", function()
+        it("reads the default four as Series, Authors, Subjects and Favorites", function()
             local views = {}
             for i, entry in ipairs(launcher_entry().default) do
                 views[i] = LauncherEntries.resolve(entry)
             end
             assert.same({
-                { label = "Library", icon = "library", state = "ready" },
                 { label = "Series", icon = "series", state = "ready" },
                 { label = "Authors", icon = "authors", state = "ready" },
                 { label = "Subjects", icon = "subjects", state = "ready" },
-                { label = "History", icon = "history", state = "ready" },
-                { label = "Settings", icon = "settings", state = "ready" },
+                { label = "Favorites", icon = "bookmark", state = "ready" },
             }, views)
         end)
 

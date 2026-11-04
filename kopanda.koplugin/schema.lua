@@ -120,18 +120,16 @@ return {
             -- launcher holds; targets lists the screens a kopanda or koreader entry may name.
             id = "launcher.entries",
             type = "launcher",
-            max_entries = 6,
+            max_entries = 4,
             targets = {
                 kopanda = { "library", "series", "authors", "subjects", "settings", "quick_settings" },
                 koreader = { "history", "favorites", "collections", "wifi" },
             },
             default = {
-                { kind = "kopanda", target = "library" },
                 { kind = "kopanda", target = "series" },
                 { kind = "kopanda", target = "authors" },
                 { kind = "kopanda", target = "subjects" },
-                { kind = "koreader", target = "history" },
-                { kind = "kopanda", target = "settings" },
+                { kind = "koreader", target = "favorites" },
             },
             label = "Launcher",
             group = "launcher",

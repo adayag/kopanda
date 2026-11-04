@@ -79,7 +79,6 @@ const L = { kind: "kopanda", target: "library" };
 const S = { kind: "kopanda", target: "series" };
 const A = { kind: "kopanda", target: "authors" };
 const SU = { kind: "kopanda", target: "subjects" };
-const H = { kind: "koreader", target: "history" };
 const W = { kind: "koreader", target: "wifi" };
 const ST = { kind: "kopanda", target: "settings" };
 const HISTORY = { kind: "action", action: "history", label: "History", icon: "action" };
@@ -97,21 +96,19 @@ afterEach(() => {
 });
 
 describe("the list", () => {
-  it("shows the default six with their catalog labels, icons and kind lines, arrows disabled at the ends", async () => {
+  it("shows the default four with their catalog labels, icons and kind lines, arrows disabled at the ends", async () => {
     await open(settings(schema.keys.find((k) => k.type === "launcher")!.default));
 
-    expect(screen.getByText("6 of 6 on the home screen")).toBeInTheDocument();
-    const labels = ["Library", "Series", "Authors", "Subjects", "History", "Settings"];
+    expect(screen.getByText("4 of 4 on the home screen")).toBeInTheDocument();
+    const labels = ["Series", "Authors", "Subjects", "Favorites"];
     expect(rows()).toEqual(labels.map(row));
     expect(rows().map((r) => within(r).getByText(/ · /).textContent)).toEqual([
-      "KoPanda · library",
       "KoPanda · series",
       "KoPanda · authors",
       "KoPanda · subjects",
-      "KOReader · history",
-      "KoPanda · settings",
+      "KOReader · favorites",
     ]);
-    const icons = ["library", "series", "authors", "subjects", "history", "settings"];
+    const icons = ["series", "authors", "subjects", "bookmark"];
     labels.forEach((label, i) => {
       const img = row(label).querySelector("img")!;
       const prefix = "data:image/svg+xml,";
@@ -121,11 +118,11 @@ describe("the list", () => {
       );
       expect(img.closest(".icon-tile")).not.toBeNull();
     });
-    expect(button("Move Library up")).toBeDisabled();
-    expect(button("Move Library down")).toBeEnabled();
-    expect(button("Move Settings up")).toBeEnabled();
-    expect(button("Move Settings down")).toBeDisabled();
-    expect(screen.getByText("The seventh entry and beyond go into a folder.")).toBeInTheDocument();
+    expect(button("Move Series up")).toBeDisabled();
+    expect(button("Move Series down")).toBeEnabled();
+    expect(button("Move Favorites up")).toBeEnabled();
+    expect(button("Move Favorites down")).toBeDisabled();
+    expect(screen.getByText("The fifth entry and beyond go into a folder.")).toBeInTheDocument();
   });
 
   it("shows an icon id the catalog lacks as the id", async () => {
@@ -148,7 +145,7 @@ describe("the list", () => {
   it("shows an empty launcher, whose Add works", async () => {
     await open(settings([]));
 
-    expect(screen.getByText("0 of 6 on the home screen")).toBeInTheDocument();
+    expect(screen.getByText("0 of 4 on the home screen")).toBeInTheDocument();
     expect(rows()).toEqual([]);
     fireEvent.click(adding().getByRole("button", { name: "KoPanda screen" }));
     fireEvent.click(adding().getByRole("button", { name: "Library" }));
@@ -160,9 +157,9 @@ describe("the list", () => {
     await open(settings(defaults["launcher.entries"], { invalid: [{ key: "launcher.entries" }] }));
 
     expect(screen.getByText("The stored value isn't allowed, so this shows the default.")).toBeInTheDocument();
-    fireEvent.click(button("Remove Settings"));
+    fireEvent.click(button("Remove Favorites"));
 
-    await waitFor(() => expect(puts()).toEqual([[L, S, A, SU, H]]));
+    await waitFor(() => expect(puts()).toEqual([[S, A, SU]]));
   });
 });
 
@@ -301,7 +298,7 @@ describe("a folder's list", () => {
     expect(screen.getByText("Folder · 3")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Tools" })).toBeInTheDocument();
     expect(rows().map((r) => within(r).getByText(/^Action ·/).textContent)).toEqual(["Action · a", "Action · b", "Action · c"]);
-    expect(screen.queryByText("The seventh entry and beyond go into a folder.")).not.toBeInTheDocument();
+    expect(screen.queryByText("The fifth entry and beyond go into a folder.")).not.toBeInTheDocument();
     fireEvent.click(adding().getByRole("button", { name: "Action" }));
     fireEvent.click(adding().getByRole("button", { name: "History" }));
     fireEvent.click(adding().getByRole("button", { name: "Add" }));
@@ -310,7 +307,7 @@ describe("a folder's list", () => {
     expect(await screen.findByText("Folder · 4")).toBeInTheDocument();
     fireEvent.click(button("Done"));
     expect(screen.getByRole("heading", { name: "Launcher" })).toBeInTheDocument();
-    expect(screen.getByText("2 of 6 on the home screen")).toBeInTheDocument();
+    expect(screen.getByText("2 of 4 on the home screen")).toBeInTheDocument();
   });
 
   it("returns to the top level when its only entry is removed, not to the folder after it", async () => {
@@ -322,7 +319,7 @@ describe("a folder's list", () => {
 
     await waitFor(() => expect(puts()).toEqual([[L, games]]));
     expect(await screen.findByRole("heading", { name: "Launcher" })).toBeInTheDocument();
-    expect(screen.getByText("2 of 6 on the home screen")).toBeInTheDocument();
+    expect(screen.getByText("2 of 4 on the home screen")).toBeInTheDocument();
   });
 });
 
@@ -400,22 +397,22 @@ describe("adding", () => {
     );
   });
 
-  it("makes More in slot six when the seventh goes onto a top level without a folder (D3)", async () => {
-    await open(settings([L, S, A, H, W, ST]));
+  it("makes More in slot four when the fifth goes onto a top level without a folder (D3)", async () => {
+    await open(settings([L, S, W, ST]));
 
     fireEvent.click(adding().getByRole("button", { name: "KoPanda screen" }));
     fireEvent.click(adding().getByRole("button", { name: "Series" }));
 
-    await waitFor(() => expect(puts()).toEqual([[L, S, A, H, W, { kind: "folder", label: "More", entries: [ST, S] }]]));
+    await waitFor(() => expect(puts()).toEqual([[L, S, W, { kind: "folder", label: "More", entries: [ST, S] }]]));
   });
 
-  it("puts the seventh into the first folder when there is one (D3)", async () => {
-    await open(settings([L, S, A, H, TOOLS, ST]));
+  it("puts the fifth into the first folder when there is one (D3)", async () => {
+    await open(settings([L, S, TOOLS, ST]));
 
     fireEvent.click(adding().getByRole("button", { name: "KOReader screen" }));
     fireEvent.click(adding().getByRole("button", { name: "Wi-Fi" }));
 
-    await waitFor(() => expect(puts()).toEqual([[L, S, A, H, { ...TOOLS, entries: [...TOOLS.entries, W] }, ST]]));
+    await waitFor(() => expect(puts()).toEqual([[L, S, { ...TOOLS, entries: [...TOOLS.entries, W] }, ST]]));
   });
 
   it("keeps Add disabled for a label empty after trimming", async () => {

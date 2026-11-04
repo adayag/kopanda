@@ -533,7 +533,7 @@ describe("the reports", () => {
 describe("the editors", () => {
   it.each([
     ["Layout · 4 rows", "#/profiles/colorsoft/layout", "Layout"],
-    ["Launcher · 6 entries", "#/profiles/colorsoft/launcher", "Launcher"],
+    ["Launcher · 4 entries", "#/profiles/colorsoft/launcher", "Launcher"],
   ])("opens %s at its route, and Done returns to the form", async (link, hash, heading) => {
     await open(settings());
 

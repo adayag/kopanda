@@ -154,7 +154,6 @@ return {
         op = "add", why = "into a folder already holding six, past six inside it",
         args = {
             { { kind = "kopanda", target = "library" }, { kind = "kopanda", target = "series" },
-                { kind = "kopanda", target = "authors" }, { kind = "koreader", target = "history" },
                 { kind = "koreader", target = "wifi" },
                 { kind = "folder", label = "Tools", entries = {
                     { kind = "action", action = "a", label = "A", icon = "action" },
@@ -164,10 +163,9 @@ return {
                     { kind = "action", action = "e", label = "E", icon = "action" },
                     { kind = "action", action = "f", label = "F", icon = "action" } } } },
             { kind = "plugin", plugin = "calibre", action = "search", label = "Calibre", icon = "action" },
-            6,
+            4,
         },
         result = { { kind = "kopanda", target = "library" }, { kind = "kopanda", target = "series" },
-            { kind = "kopanda", target = "authors" }, { kind = "koreader", target = "history" },
             { kind = "koreader", target = "wifi" },
             { kind = "folder", label = "Tools", entries = {
                 { kind = "action", action = "a", label = "A", icon = "action" },
@@ -179,15 +177,13 @@ return {
                 { kind = "plugin", plugin = "calibre", action = "search", label = "Calibre", icon = "action" } } } },
     },
     {
-        op = "add", why = "at the end of a top level of five",
+        op = "add", why = "at the end of a top level of three",
         args = {
             { { kind = "kopanda", target = "library" }, { kind = "kopanda", target = "series" },
-                { kind = "kopanda", target = "authors" }, { kind = "koreader", target = "history" },
                 { kind = "koreader", target = "wifi" } },
             { kind = "directory", path = "/mnt/us/books", label = "books" },
         },
         result = { { kind = "kopanda", target = "library" }, { kind = "kopanda", target = "series" },
-            { kind = "kopanda", target = "authors" }, { kind = "koreader", target = "history" },
             { kind = "koreader", target = "wifi" }, { kind = "directory", path = "/mnt/us/books", label = "books" } },
     },
     {
@@ -196,36 +192,32 @@ return {
         result = { { kind = "kopanda", target = "library" } },
     },
     {
-        op = "add", why = "at a top level of six with folders at 3 and 5: into the one at 3",
+        op = "add", why = "at a top level of four with folders at 2 and 3: into the one at 2",
         args = {
-            { { kind = "kopanda", target = "library" }, { kind = "kopanda", target = "series" },
+            { { kind = "kopanda", target = "library" },
                 { kind = "folder", label = "Tools", entries = {
                     { kind = "action", action = "a", label = "A", icon = "action" } } },
-                { kind = "koreader", target = "history" },
                 { kind = "folder", label = "Games", entries = {
                     { kind = "action", action = "b", label = "B", icon = "action" } } },
                 { kind = "kopanda", target = "settings" } },
             { kind = "directory", path = "/mnt/us/books", label = "books" },
         },
-        result = { { kind = "kopanda", target = "library" }, { kind = "kopanda", target = "series" },
+        result = { { kind = "kopanda", target = "library" },
             { kind = "folder", label = "Tools", entries = {
                 { kind = "action", action = "a", label = "A", icon = "action" },
                 { kind = "directory", path = "/mnt/us/books", label = "books" } } },
-            { kind = "koreader", target = "history" },
             { kind = "folder", label = "Games", entries = {
                 { kind = "action", action = "b", label = "B", icon = "action" } } },
             { kind = "kopanda", target = "settings" } },
     },
     {
-        op = "add", why = "at a top level of six with no folder: the sixth and the new one become More",
+        op = "add", why = "at a top level of four with no folder: the fourth and the new one become More",
         args = {
             { { kind = "kopanda", target = "library" }, { kind = "kopanda", target = "series" },
-                { kind = "kopanda", target = "authors" }, { kind = "koreader", target = "history" },
                 { kind = "koreader", target = "wifi" }, { kind = "kopanda", target = "settings" } },
             { kind = "plugin", plugin = "calibre", action = "search", label = "Calibre", icon = "action" },
         },
         result = { { kind = "kopanda", target = "library" }, { kind = "kopanda", target = "series" },
-            { kind = "kopanda", target = "authors" }, { kind = "koreader", target = "history" },
             { kind = "koreader", target = "wifi" },
             { kind = "folder", label = "More", entries = {
                 { kind = "kopanda", target = "settings" },
@@ -254,13 +246,12 @@ return {
         result = 2,
     },
     {
-        op = "count", why = "the default six",
+        op = "count", why = "the default four",
         args = {
-            { { kind = "kopanda", target = "library" }, { kind = "kopanda", target = "series" },
-                { kind = "kopanda", target = "authors" }, { kind = "kopanda", target = "subjects" },
-                { kind = "koreader", target = "history" }, { kind = "kopanda", target = "settings" } },
+            { { kind = "kopanda", target = "series" }, { kind = "kopanda", target = "authors" },
+                { kind = "kopanda", target = "subjects" }, { kind = "koreader", target = "favorites" } },
         },
-        result = 6,
+        result = 4,
     },
 
     -- kind_line
