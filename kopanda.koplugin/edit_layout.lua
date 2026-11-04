@@ -1,7 +1,6 @@
--- Edit layout: the screen that edits a rows key (layout.rows, or layout.rows_2 as Edit page 2), in the
--- editor frame (editor.lua): a card per row with its arrows, caption and a box per column. Each change is a
--- rows_edit operation, checked against the home's fit, written once through Settings.set; the shown home
--- refreshes once the editor closes.
+-- Edit layout: the screen that edits layout.rows, in the editor frame (editor.lua): a card per row with its arrows,
+-- caption and a box per column. Each change is a rows_edit operation, checked against the home's fit, written once
+-- through Settings.set; the shown home refreshes once the editor closes.
 local Editor = require("editor")
 local Helpers = require("helpers")
 local Home = require("home")
@@ -394,7 +393,7 @@ local function spec(state)
     return {
         screen = "edit_layout",
         aside = "Home",
-        title = state.key == "layout.rows_2" and "Edit page 2" or "Edit layout",
+        title = "Edit layout",
         body = function(ctx, width)
             release(state.body_widgets)
             local k = kit(ctx, state.body_widgets)
@@ -440,16 +439,15 @@ local function spec(state)
     }
 end
 
--- Opens edit layout on the stored opts.key, layout.rows when nil. opts.started is the PaintClock stamp
+-- Opens edit layout on the stored layout.rows. opts.started is the PaintClock stamp
 -- the opening tap took; opts.selected a row to start selected. A failure is logged and leaves no screen.
 function EditLayout.open(opts)
     opts = opts or {}
     local ok, err = pcall(function()
         -- Settings.get hands back the stored table itself, so the screen works on a copy.
-        local key = opts.key or "layout.rows"
         local state = {
-            key = key,
-            rows = util.tableDeepCopy(Settings.get(key)),
+            key = "layout.rows",
+            rows = util.tableDeepCopy(Settings.get("layout.rows")),
             body_widgets = {},
             foot_widgets = {},
         }

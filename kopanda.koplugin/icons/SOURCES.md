@@ -54,6 +54,7 @@ as shipped here, not the pack's.
 | series | `assets/bold/stack-bold.svg` | 26d72b817b11fb398c857c4780128c51a3a664d0d8a1ce48c4aa2e0aea7926df |
 | settings | `assets/bold/gear-six-bold.svg` | 11f4c359cd45d67e8f4721593199a6f3f9f7c5749ab47e0219a17e93fa450ada |
 | sort | `assets/bold/sort-ascending-bold.svg` | 5187954195c65154d345fd01ac670bce637858efec066ba98fccff33d11646e3 |
+| stats | `assets/bold/chart-bar-bold.svg` | 6c9fe23a7e831fc2adc6be9fa03615f31bf73765adf85e0ac07c890585187147 |
 | subjects | `assets/bold/tag-bold.svg` | 6ef3a3af0b3d96a7d168dfa24f4bfc1b1811fe9d0b1670e2d626d07d9a4c77af |
 | sun | `assets/bold/sun-bold.svg` | 62578d5184297e7b5ed04b59a549aade5bc814d9364413cb5d3e23c47094e13f |
 | sync | `assets/bold/cloud-arrow-down-bold.svg` | 320a93def6d327981f52ac87ace22b338e42a4e48b321738a957a7305512be54 |

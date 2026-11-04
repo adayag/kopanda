@@ -22,11 +22,13 @@ Icons.entries = {
       file = "icons/library.svg" },
     { id = "series", label = "Series", used_in = { "launcher", "launcher management" },
       file = "icons/series.svg" },
-    { id = "authors", label = "Authors", used_in = { "launcher", "nav", "book sheet", "launcher management" },
+    { id = "authors", label = "Authors", used_in = { "launcher", "book sheet", "launcher management" },
       file = "icons/authors.svg" },
     -- Lucide's `tag` icon (ISC; see icons/LICENSE-lucide.txt).
     { id = "subjects", label = "Subjects", used_in = { "launcher", "launcher management" },
       file = "icons/subjects.svg" },
+    -- Lucide's `chart-column` icon (ISC; see icons/LICENSE-lucide.txt).
+    { id = "stats", label = "Stats", used_in = { "nav" }, file = "icons/stats.svg" },
     { id = "history", label = "History", used_in = { "launcher", "nav", "launcher management" },
       file = "icons/history.svg" },
     { id = "wifi", label = "Wi-Fi", used_in = { "launcher", "home sheet", "quick settings" },

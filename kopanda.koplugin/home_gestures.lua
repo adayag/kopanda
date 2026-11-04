@@ -1,8 +1,7 @@
--- The home's gestures: its own touch zones and the order a gesture on the home runs in, a page
--- swipe, one of its own zones, turning the home's page. The home's onGesture (home.lua) calls route
--- through a pcall. With focused mode on, a hold in the top zone opens FileManagerMenu:onShowMenu
+-- The home's gestures: its own touch zones and the order a gesture on the home runs in, a page swipe, one of its own
+-- zones, consumed so it can't page the file chooser under the home. The home's onGesture (home.lua) calls route through
+-- a pcall. With focused mode on, a hold in the top zone opens FileManagerMenu:onShowMenu
 -- (frontend/apps/filemanager/filemanagermenu.lua:1006); a tap or swipe there reads its activation_menu (:51).
-local BD = require("ui/bidi")
 local Focused = require("focused")
 local Geom = require("ui/geometry")
 local InputContainer = require("ui/widget/container/inputcontainer")
@@ -182,9 +181,8 @@ function HomeGestures.forward(ges)
 end
 
 -- The home's gestures, in order, each step stopping at the first that consumes: its own swipe up; a
--- tap or hold in the nav bar's band; its own page swipe, turning the home's page, mirrored as
--- FileManager:onSwipeFM reads it (filemanager.lua:475); the top-edge step (focused_top); the forward
--- step, so a hold corner bound on the file manager wins over the hold (gestures main.lua:1124-1139);
+-- tap or hold in the nav bar's band; its own page swipe, consumed; the top-edge step (focused_top); the
+-- forward step, so a hold corner bound on the file manager wins over the hold (gestures main.lua:1124-1139);
 -- the hold step; a tap outside the top menu zones runs the tapped slot's widget, and otherwise, or on
 -- false, closes the home onto the file browser via close(home), or with focused mode on is consumed.
 function HomeGestures.route(home, ges, close)
@@ -201,7 +199,6 @@ function HomeGestures.route(home, ges, close)
         return true
     end
     if own_step == "page" then
-        home:turn(BD.flipDirectionIfMirroredUILayout(ges.direction) == "west" and 1 or -1)
         return true
     end
     if (own_step == "top" or own_step == "hold") and HomeGestures.focused_top(ges, "home") then

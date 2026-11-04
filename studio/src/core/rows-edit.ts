@@ -1,5 +1,5 @@
 // A port of the plugin's row operations (kopanda.koplugin/rows_edit.lua) over a rows key's value
-// (layout.rows, layout.rows_2), with the labels, shares and captions the layout editor shows. Pure:
+// (layout.rows), with the labels, shares and captions the layout editor shows. Pure:
 // every operation copies the rows it is given and answers new rows, or the note it refuses with (null
 // for none); none changes its input. Row and column indices count from 1, as the plugin's do, so
 // spec/fixtures/studio/rows_edit_cases.lua holds both sides to the same cases.
@@ -15,7 +15,7 @@ export type Rows = Row[];
 /** An operation's answer: the new rows, or its refusal with the note to show, null for none. */
 export type Edit = { rows: Rows } | { refused: string | null };
 
-/** A key of the schema's rows type: layout.rows or layout.rows_2. */
+/** A key of the schema's rows type: layout.rows. */
 export type RowsEntry = Extract<Key, { type: "rows" }>;
 
 /** The schema's entry for the rows key with this id; throws for any other id. */

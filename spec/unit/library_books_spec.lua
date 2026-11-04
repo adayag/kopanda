@@ -33,7 +33,7 @@ describe("the library's books", function()
         return records
     end
 
-    -- The window shown after the tab id is tapped on the bar of where, painted; a window's, that tab's.
+    -- The window shown after NavBar.run(id, where), painted.
     local function tab(id, where)
         NavBar.run(id, where)
         harness.tick(2)

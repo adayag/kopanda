@@ -724,68 +724,6 @@ describe("edit layout", function()
         end)
     end)
 
-    describe("on page 2's key", function()
-        local function page_2_default()
-            for _, key in ipairs(Schema.keys) do
-                if key.id == "layout.rows_2" then
-                    return key.default
-                end
-            end
-        end
-
-        local function stored_2()
-            return dofile(harness.settings_file)["layout.rows_2"]
-        end
-
-        -- Stores four_rows as page 1 and rows, when given, as page 2, then opens the editor on page 2.
-        local function open_2(rows)
-            assert.is_true(Settings.set("layout.rows", four_rows()))
-            if rows then
-                assert.is_true(Settings.set("layout.rows_2", rows))
-            end
-            return open(nil, { key = "layout.rows_2" })
-        end
-
-        it("is headed Home over Edit page 2", function()
-            local editor = open_2()
-            assert.same({ "edit_layout", "Home", "Edit page 2" },
-                { editor.spec.screen, editor.spec.aside, editor.spec.title })
-        end)
-
-        it("shows page 2's rows", function()
-            open_2()
-            assert.equals(#page_2_default(), #find({ kind = "card" }))
-            assert.equals("Reading", one({ kind = "box", row = 2, column = 1 }).control.label)
-            assert.same({ "Streak", "Finish by" }, {
-                one({ kind = "box", row = 3, column = 1 }).control.label,
-                one({ kind = "box", row = 3, column = 2 }).control.label,
-            })
-        end)
-
-        it("writes a change to page 2, leaving page 1 as it was", function()
-            open_2()
-            tap_card(4)
-            tap_button("Remove row")
-            local wanted = { unpack(page_2_default(), 1, 3) }
-            assert.same(wanted, stored_2())
-            assert.same(four_rows(), stored())
-            assert.is_nil(message())
-        end)
-
-        it("resets to page 2's default", function()
-            open_2({ { slot("records") }, { slot("weather") } })
-            tap_button("Reset to the look's default")
-            assert.same(page_2_default(), stored_2())
-            assert.same(four_rows(), stored())
-        end)
-
-        it("lists page 2's unused widgets to add a row", function()
-            open_2()
-            tap_button("Add row")
-            assert.same({ "Weather", "Quote", "Reading stats", "Featured book", "Launcher" }, sheet_rows())
-        end)
-    end)
-
     it("closes on Done onto the home", function()
         local editor = open()
         tap(editor.done)

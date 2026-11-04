@@ -20,6 +20,15 @@ describe("Settings", function()
         return text
     end
 
+    -- The schema's entry for id.
+    local function key_entry(id)
+        for _, entry in ipairs(require("schema").keys) do
+            if entry.id == id then
+                return entry
+            end
+        end
+    end
+
     -- Writes the settings file with text, making its directory first.
     local function store(text)
         lfs.mkdir(dir)
@@ -246,23 +255,19 @@ describe("Settings", function()
         end)
     end)
 
-    describe("layout.rows_2", function()
-        it("is its schema default with no file, and holds a widget layout.rows holds too", function()
-            local default
-            for _, entry in ipairs(require("schema").keys) do
-                if entry.id == "layout.rows_2" then
-                    default = entry.default
-                end
-            end
-            assert.is_table(default)
-            assert.same(default, Settings.get("layout.rows_2"))
-            local first = { { { widget = "date", share = 1 } }, { { widget = "quote", share = 1 } } }
-            local second = { { { widget = "date", share = 1 }, { widget = "reading", share = 2 } } }
-            assert.is_true(Settings.set("layout.rows", first))
-            assert.is_true(Settings.set("layout.rows_2", second))
+    describe("a file that still holds layout.rows_2", function()
+        it("opens, reads layout.rows, and keeps the old key through a write to another", function()
+            local rows = { { { widget = "date", share = 1 } }, { { widget = "quote", share = 1 } } }
+            store([[return {
+                ["layout.rows"] = { { { widget = "date", share = 1 } }, { { widget = "quote", share = 1 } } },
+                ["layout.rows_2"] = { { { widget = "reading", share = 1 } } },
+            }]])
+            assert.same(rows, Settings.get("layout.rows"))
+            assert.is_true(Settings.set("weather.units", "celsius"))
             Settings._reset()
-            assert.same(first, Settings.get("layout.rows"))
-            assert.same(second, Settings.get("layout.rows_2"))
+            assert.same(rows, Settings.get("layout.rows"))
+            assert.equals("celsius", Settings.get("weather.units"))
+            assert.same({ { { widget = "reading", share = 1 } } }, dofile(file)["layout.rows_2"])
         end)
     end)
 
@@ -374,22 +379,17 @@ describe("Settings", function()
         end
 
         local PAGE_1 = { { slot("date"), slot("clock") }, { slot("featured") }, { slot("launcher") } }
-        local PAGE_2 = { { slot("date"), slot("clock") }, { slot("quote") }, { slot("reading") },
-            { slot("streak"), slot("forecast") } }
 
-        it("reads page 1 without the quote at extra_large with no rows stored, the quote on page 2", function()
+        it("reads the home without the quote at extra_large with no rows stored", function()
             Settings._reset()
             store('return { text_size = "extra_large" }')
             assert.same(PAGE_1, Settings.get("layout.rows"))
-            assert.same(PAGE_2, Settings.get("layout.rows_2"))
         end)
 
-        it("reads page 1's plain default at large with no rows stored, and page 2 without the quote", function()
+        it("reads the plain default at large with no rows stored", function()
             Settings._reset()
             store('return { text_size = "large" }')
             assert.equals(entries["layout.rows"].default, Settings.get("layout.rows"))
-            assert.same({ { slot("date"), slot("clock") }, { slot("reading") }, { slot("streak"), slot("forecast") } },
-                Settings.get("layout.rows_2"))
         end)
 
         it("reads the plain default at medium, with no text size stored and with an invalid one", function()
@@ -398,7 +398,6 @@ describe("Settings", function()
                 Settings._reset()
                 store(text)
                 assert.equals(entries["layout.rows"].default, Settings.get("layout.rows"), text)
-                assert.equals(entries["layout.rows_2"].default, Settings.get("layout.rows_2"), text)
             end
         end)
 
@@ -413,7 +412,6 @@ describe("Settings", function()
             assert.is_true(Settings.set("layout.rows", value))
             Settings._reset()
             assert.same(value, Settings.get("layout.rows"))
-            assert.same(PAGE_2, Settings.get("layout.rows_2"))
         end)
     end)
 
@@ -469,7 +467,7 @@ describe("Settings", function()
     end)
 
     describe("featured.pinned", function()
-        local entry = require("schema").keys[10]
+        local entry = key_entry("featured.pinned")
 
         it("is false by default", function()
             assert.equals("featured.pinned", entry.id)
@@ -566,7 +564,7 @@ describe("Settings", function()
     end)
 
     describe("launcher.entries", function()
-        local entry = require("schema").keys[11]
+        local entry = key_entry("launcher.entries")
 
         local function kopanda(target)
             return { kind = "kopanda", target = target }

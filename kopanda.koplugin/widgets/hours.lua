@@ -2,13 +2,9 @@
 -- KOReader's clock format, read as frontend/datetime.lua:298-300 reads it (unset is 24-hour).
 local InsightTile = require("insight_tile")
 local Looks = require("looks")
-local Math = require("optmath")
 local Paint = require("paint")
 local ReadingStats = require("reading_stats")
 local Typeset = require("typeset")
-
-local HIGH = 0.6 -- of the busiest hour, the share at which a bar takes the high colour
-local MIN_BAR = 2 -- the height of a bar for any reading at all
 
 local Hours = {
     id = "hours",
@@ -21,20 +17,6 @@ function Hours.captions()
         return { "Midnight", "6 am", "Noon", "6 pm" }
     end
     return { "00:00", "06:00", "12:00", "18:00" }
-end
-
--- The bars for hours (24 seconds, hour h at index h + 1) in a chart chart tall: each { h, high }, h 0 for none.
-local function bars(hours, chart)
-    local busiest = math.max(unpack(hours))
-    local list = {}
-    for i, seconds in ipairs(hours) do
-        local h = 0
-        if seconds > 0 then
-            h = math.max(MIN_BAR, Math.round(chart * seconds / busiest))
-        end
-        list[i] = { h = h, high = seconds >= HIGH * busiest }
-    end
-    return list
 end
 
 local function compose(width, ctx)
@@ -56,7 +38,7 @@ local function compose(width, ctx)
     local inner_w = InsightTile.inner_width(width, ctx)
     local bar_w = math.floor((inner_w - 23 * gap) / 24)
     local step = bar_w + gap
-    local list = bars(insights.hours, chart)
+    local list = InsightTile.bars(insights.hours, chart)
     local nothing = math.max(unpack(insights.hours)) == 0
 
     local part = look.type.insight_caption

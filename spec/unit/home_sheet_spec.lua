@@ -1,5 +1,5 @@
--- The home sheet, on a shown home over a real file manager: its header, its seven
--- rows in order with their icons and details (six with focused mode on, Open the file browser left out), and what
+-- The home sheet, on a shown home over a real file manager: its header, its six
+-- rows in order with their icons and details (five with focused mode on, Open the file browser left out), and what
 -- a tap on each does. Only the cases that turn the mode off write the settings file. Each row is tapped where the
 -- sheet laid it out.
 describe("the home sheet", function()
@@ -114,7 +114,7 @@ describe("the home sheet", function()
         end
     end)
 
-    it("is headed Home with KoPanda aside, in the home's band, and lists its seven rows in order, with focused mode "
+    it("is headed Home with KoPanda aside, in the home's band, and lists its six rows in order, with focused mode "
         .. "off", function()
         mode_off()
         open_sheet()
@@ -129,7 +129,6 @@ describe("the home sheet", function()
         end
         assert.same({
             { "Edit layout", "layout" },
-            { "Edit page 2", "layout" },
             { "Open the file browser", "folder" },
             { "Refresh weather", "sun" },
             { "Wi-Fi", "wifi_off" },
@@ -137,22 +136,21 @@ describe("the home sheet", function()
             { "Sleep", "moon" },
         }, rows)
         -- Every row was laid out.
-        assert.equals(7, #Sheet.shown.rows)
+        assert.equals(6, #Sheet.shown.rows)
         -- Only Refresh weather and Wi-Fi carry a detail while every action is available.
-        for _, label in ipairs({ "Edit layout", "Edit page 2", "Open the file browser", "KoPanda settings",
-            "Sleep" }) do
+        for _, label in ipairs({ "Edit layout", "Open the file browser", "KoPanda settings", "Sleep" }) do
             assert.is_nil(row(label).detail, label)
         end
     end)
 
-    it("leaves out Open the file browser with focused mode on, listing the other six in order", function()
+    it("leaves out Open the file browser with focused mode on, listing the other five in order", function()
         open_sheet()
         local rows = {}
         for i, r in ipairs(Sheet.shown.spec.rows) do
             rows[i] = r.label
         end
-        assert.same({ "Edit layout", "Edit page 2", "Refresh weather", "Wi-Fi", "KoPanda settings", "Sleep" }, rows)
-        assert.equals(6, #Sheet.shown.rows)
+        assert.same({ "Edit layout", "Refresh weather", "Wi-Fi", "KoPanda settings", "Sleep" }, rows)
+        assert.equals(5, #Sheet.shown.rows)
     end)
 
     describe("Edit layout", function()
@@ -167,25 +165,6 @@ describe("the home sheet", function()
             assert.equals(home, harness.top(2))
             assert.equals(home, Home.shown)
             assert.is_nil(message())
-            assert.is_nil(Sheet.shown)
-        end)
-    end)
-
-    describe("Edit page 2", function()
-        it("opens edit layout on page 2's key, from a stamped tap", function()
-            local EditLayout = require("edit_layout")
-            local opened = spy.on(EditLayout, "open")
-            cleanup(function()
-                opened:revert()
-            end)
-            open_sheet()
-            tap("Edit page 2")
-            assert.spy(opened).was.called(1)
-            local opts = opened.calls[1].vals[1]
-            assert.equals("layout.rows_2", opts.key)
-            assert.is_not_nil(opts.started)
-            local Editor = require("editor")
-            assert.equals("Edit page 2", Editor.shown.spec.title)
             assert.is_nil(Sheet.shown)
         end)
     end)

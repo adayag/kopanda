@@ -1,4 +1,4 @@
--- The home's own sheet, opened by a hold on empty space (home_gestures.lua): Edit layout, Edit page 2, Open
+-- The home's own sheet, opened by a hold on empty space (home_gestures.lua): Edit layout, Open
 -- the file browser (left out with focused mode on), Refresh weather, Wi-Fi, KoPanda settings and Sleep. Wi-Fi and
 -- Sleep are launcher entries, resolved and run as the launcher runs them. Each row's detail is read when the sheet
 -- opens.
@@ -56,13 +56,6 @@ local function spec(ctx)
             end,
         },
         {
-            icon = "layout",
-            label = "Edit page 2",
-            run = function()
-                EditLayout.open{ key = "layout.rows_2", started = PaintClock.now() }
-            end,
-        },
-        {
             icon = "sun",
             label = "Refresh weather",
             -- os.time() rather than ctx.now, the home's build time, so an old home shows the
@@ -83,7 +76,7 @@ local function spec(ctx)
         (entry_row(SLEEP, "Sleep", ctx)),
     }
     if not Focused.on() then
-        table.insert(rows, 3, {
+        table.insert(rows, 2, {
             icon = "folder",
             label = "Open the file browser",
             run = function()

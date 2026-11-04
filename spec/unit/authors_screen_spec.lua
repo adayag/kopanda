@@ -115,7 +115,7 @@ describe("the Authors window", function()
         },
         -- A shelf of at least pages pages.
         paged = { n = 38, pages = 2 },
-        nav = { says = "Authors lit, in the list and one author", lit = "authors", views = { LIST, ANN } },
+        nav = { says = "no tab lit, in the list and one author", views = { LIST, ANN } },
         empty = { note = "no authors yet", lists = { "groups", "rows" } },
         relist = {
             fixture.book("New", { authors = { "Bo B02" } }),

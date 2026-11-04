@@ -213,39 +213,10 @@ describe("RowsEdit", function()
         assert.same({ "weather", "stats", unpack(insights) }, RowsEdit.unused(four_rows()))
     end)
 
-    describe("on page 2's key", function()
-        local page_2
-        for _, key in ipairs(Schema.keys) do
-            if key.id == "layout.rows_2" then
-                page_2 = key
-            end
-        end
-
-        it("finds each key's schema entry, layout.rows when none is named", function()
-            assert.equals(entry, RowsEdit.entry())
-            assert.equals(page_2, RowsEdit.entry("layout.rows_2"))
-            assert.equals("layout.rows_2", RowsEdit.entry("layout.rows_2").id)
-        end)
-
-        it("holds both keys to the same most columns", function()
-            assert.equals(page_2.max_columns, entry.max_columns)
-            assert.equals(entry.max_columns, RowsEdit.max_columns)
-        end)
-
-        it("resets to a copy of that key's default", function()
-            local before = copy(page_2.default)
-            local result = RowsEdit.reset("layout.rows_2")
-            assert.same(page_2.default, result)
-            assert.is_true(Settings.validators.rows(page_2, result))
-            result[1][1].share = 3
-            assert.same(before, page_2.default)
-            assert.same(page_2.defaults_by_text_size.extra_large, RowsEdit.reset("layout.rows_2", "extra_large"))
-        end)
-
-        it("lists that key's widgets not on its default, in schema order", function()
-            assert.same({ "weather", "quote", "stats", "featured", "launcher" },
-                RowsEdit.unused(page_2.default, "layout.rows_2"))
-        end)
+    it("finds the key's schema entry, layout.rows when none is named", function()
+        assert.equals(entry, RowsEdit.entry())
+        assert.equals(entry, RowsEdit.entry("layout.rows"))
+        assert.equals(entry.max_columns, RowsEdit.max_columns)
     end)
 
     it("labels every widget, and an unknown id as itself", function()

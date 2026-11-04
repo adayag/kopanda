@@ -251,15 +251,14 @@ describe("the file browser's nav bar", function()
             assert.equals(Home.shown, harness.top())
         end)
 
-        it("runs Authors, History and Settings through the launcher's entries", function()
+        it("runs History and Settings through the launcher's entries", function()
             assert.is_true(package.loaded["settings"].set("focused.on", false))
             local fm = fm_on_top()
             local runs = record_runs()
-            for i = 3, 5 do
+            for i = 4, 5 do
                 send(harness.gesture("tap", tab_centre(fm[1].bar, i)))
             end
             assert.same({
-                { kind = "kopanda", target = "authors" },
                 { kind = "koreader", target = "history" },
                 { kind = "kopanda", target = "settings" },
             }, runs)
@@ -279,17 +278,14 @@ describe("the file browser's nav bar", function()
             assert.equals(fm, harness.top(2))
         end)
 
-        -- Authors' entry shows the Authors list over the file browser.
-        it("shows the Authors list over the file browser from Authors", function()
-            local fixture = require("shelf_fixture")
-            fixture.install({ fixture.book("Earthsea", { authors = { "Ursula K. Le Guin" } }) })
+        it("shows the Stats window over the file browser from Stats", function()
             local fm = fm_on_top()
             send(harness.gesture("tap", tab_centre(fm[1].bar, 3)))
-            local screen = package.loaded["authors_screen"].shown
+            local screen = package.loaded["stats_screen"].shown
             assert.is_not_nil(screen)
             assert.equals(screen, harness.top())
             assert.equals(fm, harness.top(2))
-            assert.same({ { kind = "list" }, 1 }, { screen:view(), screen.page })
+            assert.equals(1, screen.page)
         end)
 
         it("runs Settings and not a corner zone bound on the file manager", function()

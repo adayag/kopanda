@@ -97,6 +97,67 @@ describe("the insight tile", function()
         tile:free()
     end)
 
+    it("draws a box in the plate's keyline, colour, width and radius, for a boxed tile on a look with plates",
+        function()
+        local ctx = ctx_for("frosted")
+        ctx.boxed = true
+        local color = Looks.colorer(ctx)
+        local scale = Paint.scaler(ctx)
+        local keyline, radius = scale(ctx.look.plate.keyline), scale(ctx.look.plate.radius)
+        local tile = InsightTile.compose(520, ctx, "Reading this year", nil, 40, function() end)
+        local pad = scale(ctx.look.insights.padding)
+        local label_h = Typeset.line_height(ctx.look.type.insight_label, ctx)
+        assert.equals(2 * (keyline + pad) + label_h + scale(ctx.look.insights.label_gap) + 40, tile:getSize().h)
+        assert.equals(520 - 2 * (keyline + pad), InsightTile.inner_width(520, ctx))
+        local bb = painted_bb(tile)
+        local ink = color(ctx.look.plate.keyline_color)
+        local h = tile:getSize().h
+        assert.is_true(same_color(bb, 260, 0, ink))
+        assert.is_true(same_color(bb, 260, keyline - 1, ink))
+        assert.is_false(same_color(bb, 260, keyline, ink))
+        assert.is_true(same_color(bb, 260, h - 1, ink))
+        assert.is_true(same_color(bb, 0, math.floor(h / 2), ink))
+        assert.is_true(same_color(bb, 260, keyline + 1, color(ctx.look.tile.fill_color)))
+        -- Rounded: the very corner stays the ground under the tile.
+        assert.is_true(radius > 1)
+        assert.is_true(same_color(bb, 0, 0, Blitbuffer.ColorRGB32(0, 255, 0, 0xFF)))
+        tile:free()
+    end)
+
+    it("takes a boxed tile's keyline from the plate's tokens, not the tile's", function()
+        local ctx = ctx_for("frosted")
+        ctx.boxed = true
+        local plate = setmetatable({ keyline = 5, keyline_color = "muted" }, { __index = ctx.look.plate })
+        ctx.look = setmetatable({ plate = plate }, { __index = ctx.look })
+        local keyline = Paint.scaler(ctx)(5)
+        local ink = Looks.colorer(ctx)("muted")
+        local tile = InsightTile.compose(520, ctx, "Reading this year", nil, 40, function() end)
+        local bb = painted_bb(tile)
+        assert.is_true(same_color(bb, 260, 0, ink))
+        assert.is_true(same_color(bb, 260, keyline - 1, ink))
+        assert.is_false(same_color(bb, 260, keyline, ink))
+        tile:free()
+    end)
+
+    it("changes nothing for a boxed tile in a look without plates", function()
+        for _, id in ipairs({ "diner", "editorial" }) do
+            local plain, boxed = ctx_for(id), ctx_for(id)
+            boxed.boxed = true
+            local tile_plain = InsightTile.compose(520, plain, "Reading this year", nil, 40, function() end)
+            local tile_boxed = InsightTile.compose(520, boxed, "Reading this year", nil, 40, function() end)
+            assert.same(tile_plain:getSize(), tile_boxed:getSize(), id)
+            assert.equals(InsightTile.inner_width(520, plain), InsightTile.inner_width(520, boxed), id)
+            assert.is_nil(tile_boxed.chrome.radius, id)
+            local bb_plain, bb_boxed = painted_bb(tile_plain), painted_bb(tile_boxed)
+            local h = tile_plain:getSize().h
+            for _, at in ipairs({ { 0, 0 }, { 260, 0 }, { 0, math.floor(h / 2) }, { 519, h - 1 } }) do
+                assert.is_true(same_color(bb_boxed, at[1], at[2], bb_plain:getPixel(at[1], at[2])), id)
+            end
+            tile_plain:free()
+            tile_boxed:free()
+        end
+    end)
+
     it("draws no chrome on a plate, only the padding above and below", function()
         local ctx = ctx_for("frosted")
         assert.is_true(Typeset.on_plate(ctx))

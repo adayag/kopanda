@@ -1,7 +1,7 @@
--- The home's widget registry: a widget id from layout.rows to its module under widgets/, { id, settings_prefix,
--- height(width, ctx), build(width, ctx), baseline?, tap?, hold?, after_show?, stale? }. A tap or hold that returns
--- false falls through to the home's own rule (a widget without hold opens its settings). Each module is also
--- required from main.lua, so it loads while the plugin root is on package.path.
+-- The home's widget registry: a widget id from layout.rows or the Stats window's rows to its module under widgets/,
+-- { id, settings_prefix, height(width, ctx), build(width, ctx), baseline?, tap?, hold?, after_show?, stale? }. A tap
+-- or hold that returns false falls through to the home's own rule (a widget without hold opens its settings). Each
+-- module is also required from main.lua, so it loads while the plugin root is on package.path.
 local Widgets = {}
 
 -- Module names by id, required when first asked for: a widget module reaches layout.lua, which
@@ -19,6 +19,7 @@ local modules = {
     forecast = "widgets/forecast",
     hours = "widgets/hours",
     records = "widgets/records",
+    months = "widgets/months",
 }
 
 -- The module for id, or nil when this plugin has none.

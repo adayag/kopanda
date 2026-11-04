@@ -22,6 +22,7 @@ local SchemaMenu = require("menu")
 local SearchScreen = require("search_screen")
 local SeriesScreen = require("series_screen")
 local State = require("state")
+local StatsScreen = require("stats_screen")
 local StudioMenu = require("studio_menu")
 local SubjectsScreen = require("subjects_screen")
 local Swatch = require("swatch")
@@ -103,6 +104,7 @@ require("widgets/featured")
 require("widgets/forecast")
 require("widgets/hours")
 require("widgets/launcher")
+require("widgets/months")
 require("widgets/quote")
 require("widgets/reading")
 require("widgets/records")
@@ -228,9 +230,9 @@ end
 -- The Series, Authors and Subjects windows, by the screen a return names.
 local SHELVES = { series = SeriesScreen, authors = AuthorsScreen, subjects = SubjectsScreen }
 
--- Shows a window of cls (SeriesScreen, AuthorsScreen, SubjectsScreen or SearchScreen) with opts unless the file
--- manager has gone since the show was asked for; the window's show closes the home. Like the library's, it takes
--- no part in the boot guard; one that fails to build is logged by the chrome and the file browser left up.
+-- Shows a window of cls (SeriesScreen, AuthorsScreen, SubjectsScreen, SearchScreen or StatsScreen) with opts unless
+-- the file manager has gone since the show was asked for; the window's show closes the home. Like the library's, it
+-- takes no part in the boot guard; one that fails to build is logged by the chrome and the file browser left up.
 local function show_shelf(cls, opts)
     local FileManager = package.loaded["apps/filemanager/filemanager"]
     if FileManager and FileManager.instance then
@@ -251,6 +253,11 @@ end
 -- The Subjects window with opts (SubjectsScreen.show's), as show_shelf.
 function KoPanda:showSubjects(opts)
     show_shelf(SubjectsScreen, opts)
+end
+
+-- The Stats window with opts (StatsScreen.show's), as show_shelf.
+function KoPanda:showStats(opts)
+    show_shelf(StatsScreen, opts)
 end
 
 -- The library search's results with opts (SearchScreen.show's), as show_shelf.

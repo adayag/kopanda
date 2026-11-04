@@ -11,6 +11,15 @@ describe("schema.lua", function()
     end
 
     -- The paths of every function value reachable from value.
+    -- The bare schema's entry for id.
+    local function key_entry(id)
+        for _, entry in ipairs(load_bare().keys) do
+            if entry.id == id then
+                return entry
+            end
+        end
+    end
+
     local function functions_in(value, at, found)
         found = found or {}
         if type(value) == "function" then
@@ -34,7 +43,7 @@ describe("schema.lua", function()
         assert.same({ "schema.keys.1.check" }, functions_in({ keys = { { check = print } } }, "schema"))
     end)
 
-    it("is version 1 with the twelve keys of the Keys tables, in order", function()
+    it("is version 1 with the eleven keys of the Keys tables, in order", function()
         local schema = load_bare()
         assert.equals(1, schema.version)
         assert.same({
@@ -91,34 +100,6 @@ describe("schema.lua", function()
                     },
                 },
                 label = "Layout",
-                group = "home",
-            },
-            {
-                id = "layout.rows_2",
-                type = "rows",
-                widgets = { "date", "clock", "weather", "quote", "stats", "featured", "launcher",
-                    "reading", "streak", "forecast", "hours", "records" },
-                max_columns = 3,
-                default = {
-                    { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
-                    { { widget = "reading", share = 1 } },
-                    { { widget = "streak", share = 1 }, { widget = "forecast", share = 1 } },
-                    { { widget = "hours", share = 1 }, { widget = "records", share = 1 } },
-                },
-                defaults_by_text_size = {
-                    large = {
-                        { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
-                        { { widget = "reading", share = 1 } },
-                        { { widget = "streak", share = 1 }, { widget = "forecast", share = 1 } },
-                    },
-                    extra_large = {
-                        { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
-                        { { widget = "quote", share = 1 } },
-                        { { widget = "reading", share = 1 } },
-                        { { widget = "streak", share = 1 }, { widget = "forecast", share = 1 } },
-                    },
-                },
-                label = "Page 2",
                 group = "home",
             },
             {
@@ -195,7 +176,7 @@ describe("schema.lua", function()
     it("validates the path type, whose default false is allowed", function()
         local Settings = require("settings")
         assert.is_function(Settings.validators.path)
-        local pinned = load_bare().keys[10]
+        local pinned = key_entry("featured.pinned")
         assert.equals("featured.pinned", pinned.id)
         assert.is_true(Settings.validators.path(pinned, pinned.default))
     end)
@@ -218,7 +199,7 @@ describe("schema.lua", function()
     it("validates the launcher type, whose default six are allowed", function()
         local Settings = require("settings")
         assert.is_function(Settings.validators.launcher)
-        local launcher = load_bare().keys[11]
+        local launcher = key_entry("launcher.entries")
         assert.equals("launcher.entries", launcher.id)
         assert.is_true(Settings.validators.launcher(launcher, launcher.default))
     end)
@@ -264,7 +245,7 @@ describe("schema.lua", function()
                     entry.id .. "'s " .. tostring(step) .. " default is not allowed")
             end
         end
-        assert.equals(3, found)
+        assert.equals(1, found)
     end)
 
     it("lists each choice with a value and a label, and the default among the values", function()

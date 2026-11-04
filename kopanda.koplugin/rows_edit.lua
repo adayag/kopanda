@@ -1,6 +1,6 @@
--- The row operations edit layout applies to a value of a rows key (layout.rows or layout.rows_2,
--- schema.lua), with the labels, shares and captions its cards show. Pure: every operation deep-copies
--- the rows it is given and returns new rows, or nil and the note to show; none changes its input.
+-- The row operations edit layout applies to a value of a rows key (layout.rows, schema.lua), with the labels, shares
+-- and captions its cards show. Pure: every operation deep-copies the rows it is given and returns new rows, or nil and
+-- the note to show; none changes its input.
 local Schema = require("schema")
 local util = require("util")
 

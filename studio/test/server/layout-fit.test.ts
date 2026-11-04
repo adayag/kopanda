@@ -202,26 +202,13 @@ describe("POST /api/profiles/:id/layout-fit", () => {
     ]);
   });
 
-  it("measures layout.rows_2's default as current for that key", async () => {
-    const { app, record } = setup("answers.sh");
-    const page2 = schema.keys.find((key) => key.id === "layout.rows_2")!.default;
-
-    const res = await request(app).post("/api/profiles/kobo/layout-fit").send({ rows: proposed, key: "layout.rows_2" });
-
-    expect(res.status).toBe(200);
-    expect(JSON.parse(fs.readFileSync(path.join(record, "stdin"), "utf8"))).toEqual([page2, proposed]);
-  });
-
-  it("measures layout.rows_2's stored rows as current for that key, not layout.rows's", async () => {
+  it("measures the named key's stored rows as current", async () => {
     const { app, record, settingsFile } = setup("answers.sh");
     fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
     fs.writeFileSync(
       settingsFile,
       `return {
     ["layout.rows"] = {
-        { { widget = "quote", share = 1 } },
-    },
-    ["layout.rows_2"] = {
         { { widget = "reading", share = 1 } },
         { { widget = "hours", share = 2 }, { widget = "records", share = 1 } },
     },
@@ -230,7 +217,7 @@ describe("POST /api/profiles/:id/layout-fit", () => {
 `,
     );
 
-    const res = await request(app).post("/api/profiles/kobo/layout-fit").send({ rows: proposed, key: "layout.rows_2" });
+    const res = await request(app).post("/api/profiles/kobo/layout-fit").send({ rows: proposed, key: "layout.rows" });
 
     expect(res.status).toBe(200);
     expect(JSON.parse(fs.readFileSync(path.join(record, "stdin"), "utf8"))).toEqual([

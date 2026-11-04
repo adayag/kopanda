@@ -776,11 +776,11 @@ describe("the Series and Authors windows' routing", function()
             end
         end
 
-        it("the Authors tab on one author goes to the list's first page in place", function()
+        it("the launcher's Authors entry on one author goes to the list's first page in place", function()
             local screen, fm = fixture.show_authors({ kind = "author", name = "Mary Shelley" }, 2)
             assert.equals(2, screen.page)
             local shows = spy.on(UIManager, "show")
-            NavBar.run("authors", "authors")
+            LauncherEntries.run({ kind = "kopanda", target = "authors" }, {})
             UIManager.show:revert()
             assert.spy(shows).was_not_called()
             assert.equals(screen, AuthorsScreen.shown)

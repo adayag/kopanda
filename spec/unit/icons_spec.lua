@@ -87,7 +87,7 @@ describe("icons", function()
             "download", "eye_off", "filter", "folder", "folder_open", "forward", "history", "home",
             "home_plus", "info", "layout", "library", "list", "moon", "open_book", "plugin_missing", "plus",
             "power", "quick_settings", "refresh", "rotation_lock", "screenshot", "search", "series", "settings",
-            "sort", "subjects", "sun", "sync", "terminal", "trash", "wifi", "wifi_off",
+            "sort", "stats", "subjects", "sun", "sync", "terminal", "trash", "wifi", "wifi_off",
         }, ids)
     end)
 
@@ -154,6 +154,19 @@ describe("icons", function()
             assert.is_true(places[id] and places[id].launcher, id .. " in launcher")
             assert.is_true(places[id] and places[id]["launcher management"], id .. " in launcher management")
         end
+    end)
+
+    -- The nav bar's Stats tab took the place of its Authors tab; Authors stays on the launcher.
+    it("uses stats and not authors in the nav bar", function()
+        local places = {}
+        for _, entry in ipairs(Icons.entries) do
+            places[entry.id] = {}
+            for _, place in ipairs(entry.used_in) do
+                places[entry.id][place] = true
+            end
+        end
+        assert.is_true(places.stats.nav)
+        assert.is_nil(places.authors.nav)
     end)
 
     -- The library draws forward and back as the pager's arrows and back as the folder's back mark, chevron_down after

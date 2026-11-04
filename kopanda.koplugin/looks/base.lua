@@ -303,6 +303,8 @@ return {
         gap = 1, -- between hour bars
         today_outline_width = 2,
         chart_height = 60,
+        month_chart_height = 120,
+        month_gap = 8, -- between month bars
         chart_area_color = "muted", -- under the reading chart's line
         chart_line_color = "ink",
         chart_line_width = 3,

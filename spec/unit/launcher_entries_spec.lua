@@ -23,6 +23,15 @@ describe("LauncherEntries", function()
     local SPEC_ACTION = "kopanda_spec_launcher_action"
     local SPEC_EVENT = "KoPandaSpecLauncherAction"
 
+    -- The schema's launcher.entries key.
+    local function launcher_entry()
+        for _, entry in ipairs(require("schema").keys) do
+            if entry.id == "launcher.entries" then
+                return entry
+            end
+        end
+    end
+
     local function plugin_entry(name, action)
         return { kind = "plugin", plugin = name, action = action or SPEC_ACTION, label = "Terminal", icon = "terminal" }
     end
@@ -142,7 +151,7 @@ describe("LauncherEntries", function()
 
     describe("fixed tables", function()
         it("hold exactly the schema's kopanda and koreader targets", function()
-            local entry = require("schema").keys[11]
+            local entry = launcher_entry()
             assert.equals("launcher.entries", entry.id)
             assert.same(sorted(entry.targets.kopanda), sorted_keys(LauncherEntries.KOPANDA))
             assert.same(sorted(entry.targets.koreader), sorted_keys(LauncherEntries.KOREADER))
@@ -201,7 +210,7 @@ describe("LauncherEntries", function()
 
         it("reads the default six as Library, Series, Authors, Subjects, History and Settings", function()
             local views = {}
-            for i, entry in ipairs(require("schema").keys[11].default) do
+            for i, entry in ipairs(launcher_entry().default) do
                 views[i] = LauncherEntries.resolve(entry)
             end
             assert.same({

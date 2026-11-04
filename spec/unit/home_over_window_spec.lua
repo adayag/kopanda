@@ -11,7 +11,8 @@ describe("the home brought up over a chrome window", function()
     local AuthorsScreen, Home, LauncherEntries, Library, NavBar, SeriesScreen
 
     local LIST = { kind = "list" }
-    local NAMES = { kopanda_home = true, kopanda_library = true, kopanda_series = true, kopanda_authors = true }
+    local NAMES = { kopanda_home = true, kopanda_library = true, kopanda_series = true, kopanda_authors = true,
+        kopanda_stats = true }
 
     before_each(function()
         harness.load()
@@ -106,8 +107,8 @@ describe("the home brought up over a chrome window", function()
         { name = "nav bar's Library tab", module = "library", run = function()
             NavBar.run("library", "home")
         end },
-        { name = "nav bar's Authors tab", module = "authors_screen", run = function()
-            NavBar.run("authors", "home")
+        { name = "nav bar's Stats tab", module = "stats_screen", first = { { kind = "stats" }, 1 }, run = function()
+            NavBar.run("stats", "home")
         end },
     }
 
@@ -132,7 +133,7 @@ describe("the home brought up over a chrome window", function()
                     assert.equals(fm, harness.top(2))
                     assert.same({ shown }, kopanda_windows())
                     local first = target.module == "library" and { library_fixture.ROOT, 1 } or { LIST, 1 }
-                    assert.same(first, at(shown))
+                    assert.same(target.first or first, at(shown))
                 end)
         end
     end

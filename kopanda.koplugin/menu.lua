@@ -265,7 +265,7 @@ function BUILDERS.location(entry)
 end
 
 function BUILDERS.rows(entry)
-    return { text = entry.label, callback = open_screen(entry, "edit_layout", { key = entry.id }) }
+    return { text = entry.label, callback = open_screen(entry, "edit_layout") }
 end
 
 function BUILDERS.launcher(entry)

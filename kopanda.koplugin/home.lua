@@ -1,9 +1,8 @@
--- The KoPanda home: a full-screen widget over the file browser, built from its page's layout key
--- as rows of widgets (home_rows.lua builds them), drawn in the active look with its header and
--- footer; its gestures are routed by home_gestures.lua.
+-- The KoPanda home: a full-screen widget over the file browser, built from layout.rows as rows of
+-- widgets (home_rows.lua builds them), drawn in the active look with its header and footer; its
+-- gestures are routed by home_gestures.lua.
 -- Module state: Home.shown, the home on screen or nil; Home.just_closed, true when a book closed
--- in this process and no file-manager Show has consumed that close yet. Each home's page, 1 at its
--- show, picks its key in HomeRows.keys.
+-- in this process and no file-manager Show has consumed that close yet.
 local FeaturedCover = require("featured_cover")
 local HomeGestures = require("home_gestures")
 local HomeRows = require("home_rows")
@@ -27,7 +26,6 @@ Home.shown = nil
 Home.just_closed = false
 
 function Home:init()
-    self.page = 1
     self.dimen = Screen:getSize()
     self:registerTouchZones(HomeGestures.own_zones(self))
     self:build()
@@ -72,24 +70,6 @@ function Home:refresh()
     end)
     if not ok then
         logger.err("KoPanda: could not rebuild the home:", err)
-        close_home(self)
-    end
-end
-
--- Turns delta pages (-1 or 1) within HomeRows.keys, rebuilding and repainting; at either end nothing
--- changes. A failed rebuild closes the home, as refresh does.
-function Home:turn(delta)
-    local page = math.max(1, math.min(#HomeRows.keys, self.page + delta))
-    if page == self.page then
-        return
-    end
-    self.page = page
-    local ok, err = pcall(function()
-        rebuild(self)
-        UIManager:setDirty(self, "ui")
-    end)
-    if not ok then
-        logger.err("KoPanda: could not turn the home's page:", err)
         close_home(self)
     end
 end

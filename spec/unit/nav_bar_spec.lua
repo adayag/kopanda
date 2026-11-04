@@ -100,7 +100,7 @@ describe("the nav bar", function()
     end
 
     describe("tabs", function()
-        it("are Home, Library, Authors, History and Settings in order, each with a registry icon", function()
+        it("are Home, Library, Stats, History and Settings in order, each with a registry icon", function()
             local ids, labels, icons = {}, {}, {}
             for i, tab in ipairs(NavBar.TABS) do
                 ids[i], labels[i], icons[i] = tab.id, tab.label, tab.icon
@@ -108,9 +108,9 @@ describe("the nav bar", function()
                 assert.is_string(path, tab.id)
                 assert.equals("file", lfs.attributes(path, "mode"), path)
             end
-            assert.same({ "home", "library", "authors", "history", "settings" }, ids)
-            assert.same({ "Home", "Library", "Authors", "History", "Settings" }, labels)
-            assert.same({ "home", "library", "authors", "history", "settings" }, icons)
+            assert.same({ "home", "library", "stats", "history", "settings" }, ids)
+            assert.same({ "Home", "Library", "Stats", "History", "Settings" }, labels)
+            assert.same({ "home", "library", "stats", "history", "settings" }, icons)
         end)
     end)
 
@@ -489,7 +489,7 @@ describe("the nav bar", function()
                     assert.is_true(bar:handle(harness.gesture("tap", centre(bar, 5))))
                     local after = time.monotonic()
                     local label = id .. " " .. where
-                    assert.same({ { "home", where }, { "library", where }, { "authors", where }, { "history", where } },
+                    assert.same({ { "home", where }, { "library", where }, { "stats", where }, { "history", where } },
                         calls, label)
                     assert.equals(1, #opens, label)
                     local started = opens[1][1].started
@@ -535,12 +535,11 @@ describe("the nav bar", function()
     end)
 
     describe("a tab's run", function()
-        it("sends Library, Authors and Settings to KoPanda's entries and History to KOReader's", function()
+        it("sends Library and Settings to KoPanda's entries and History to KOReader's", function()
             local entries = package.loaded["launcher_entries"]
             for _, where in ipairs({ "home", "file_browser" }) do
                 local calls = spy(entries, "run")
                 NavBar.run("library", where)
-                NavBar.run("authors", where)
                 NavBar.run("history", where)
                 NavBar.run("settings", where)
                 local passed = {}
@@ -549,7 +548,6 @@ describe("the nav bar", function()
                 end
                 assert.same({
                     { kind = "kopanda", target = "library" },
-                    { kind = "kopanda", target = "authors" },
                     { kind = "koreader", target = "history" },
                     { kind = "kopanda", target = "settings" },
                 }, passed, where)
@@ -568,25 +566,50 @@ describe("the nav bar", function()
             assert.equals(fm.kopanda, home_calls[1][1])
             assert.same({}, entry_calls)
         end)
-        -- Authors shows the Authors list at its first page.
-        it("Authors from the home and from the file browser shows the Authors list at its first page", function()
-            local fixture = require("shelf_fixture")
-            fixture.install({ fixture.book("Earthsea", { authors = { "Ursula K. Le Guin" } }) })
-            local Home, AuthorsScreen = package.loaded["home"], package.loaded["authors_screen"]
+        -- Stats shows the Stats window at its first page, in place of the screen the tab was tapped on.
+        it("Stats from the home and from the file browser shows the Stats window at its first page", function()
+            local Home, StatsScreen = package.loaded["home"], package.loaded["stats_screen"]
             local fm = harness.show_fm()
             harness.tick(2)
             assert.is_not_nil(Home.shown)
             for _, where in ipairs({ "home", "file_browser" }) do
-                NavBar.run("authors", where)
-                local screen = AuthorsScreen.shown
+                NavBar.run("stats", where)
+                local screen = StatsScreen.shown
                 assert.is_not_nil(screen, where)
                 assert.equals(screen, harness.top(), where)
                 assert.equals(fm, harness.top(2), where)
                 assert.is_nil(Home.shown, where)
-                assert.same({ { kind = "list" }, 1 }, { screen:view(), screen.page }, where)
-                AuthorsScreen.close()
+                assert.equals(1, screen.page, where)
+                StatsScreen.close()
                 assert.equals(fm, harness.top(), where)
             end
+        end)
+
+        it("Stats from the library shows the Stats window in the library's place", function()
+            local fixture = require("library_fixture")
+            fixture.install({ [fixture.ROOT] = { books = fixture.books(2) } })
+            finally(fixture.restore)
+            local Library, StatsScreen = package.loaded["library"], package.loaded["stats_screen"]
+            local library, fm = fixture.show()
+            NavBar.run("stats", "library")
+            assert.is_nil(Library.shown)
+            assert.is_false(require("ui/uimanager"):isWidgetShown(library))
+            assert.equals(StatsScreen.shown, harness.top())
+            assert.equals(fm, harness.top(2))
+        end)
+
+        it("Stats on the Stats window's page 2 goes to page 1 with no new window", function()
+            local StatsScreen = package.loaded["stats_screen"]
+            harness.show_fm()
+            harness.tick(2)
+            local screen = StatsScreen.show{ page = 2 }
+            assert.equals(2, screen.page)
+            local shows = spy(require("ui/uimanager"), "show")
+            NavBar.run("stats", "stats")
+            assert.same({}, shows)
+            assert.equals(screen, StatsScreen.shown)
+            assert.equals(screen, harness.top())
+            assert.equals(1, screen.page)
         end)
     end)
 
@@ -653,12 +676,50 @@ describe("the nav bar", function()
         end)
     end)
 
-    -- The Authors window carries the bar with Authors lit.
+    -- The Stats window carries the bar with Stats lit.
+    describe("on the Stats window", function()
+        it("lights Stats", function()
+            for _, id in ipairs(Looks.ids()) do
+                local bar = bar_for(id, "stats")
+                assert.equals("stats", NavBar.TABS[bar.active].id, id)
+                bar:free()
+            end
+        end)
+
+        it("runs Home by closing the window and showing the home", function()
+            local Home, StatsScreen = package.loaded["home"], package.loaded["stats_screen"]
+            harness.show_fm()
+            harness.tick(2)
+            local screen = StatsScreen.show{}
+            NavBar.run("home", "stats")
+            assert.is_nil(StatsScreen.shown)
+            assert.is_false(require("ui/uimanager"):isWidgetShown(screen))
+            assert.is_not_nil(Home.shown)
+            assert.equals(Home.shown, harness.top())
+        end)
+
+        it("runs Library by swapping the window for the library's, above the file manager", function()
+            local Library, StatsScreen = package.loaded["library"], package.loaded["stats_screen"]
+            local fixture = require("library_fixture")
+            fixture.install({ [fixture.ROOT] = { books = fixture.books(2) } })
+            finally(fixture.restore)
+            local fm = harness.show_fm()
+            harness.tick(2)
+            local screen = StatsScreen.show{}
+            NavBar.run("library", "stats")
+            assert.is_nil(StatsScreen.shown)
+            assert.is_false(require("ui/uimanager"):isWidgetShown(screen))
+            assert.equals(Library.shown, harness.top())
+            assert.equals(fm, harness.top(2))
+        end)
+    end)
+
+    -- The Authors window carries the bar with no tab lit.
     describe("on the Authors window", function()
-        it("lights Authors", function()
+        it("lights no tab", function()
             for _, id in ipairs(Looks.ids()) do
                 local bar = bar_for(id, "authors")
-                assert.equals("authors", NavBar.TABS[bar.active].id, id)
+                assert.is_nil(bar.active, id)
                 bar:free()
             end
         end)
@@ -720,7 +781,7 @@ describe("the nav bar", function()
         end)
 
         -- Every other hold on the bar is consumed and runs nothing.
-        it("a hold on Home, Library, Authors or History, or in Editorial's side padding, runs nothing", function()
+        it("a hold on Home, Library, Stats or History, or in Editorial's side padding, runs nothing", function()
             local QuickSettings = require("quick_settings")
             for _, id in ipairs(Looks.ids()) do
                 for _, where in ipairs({ "home", "file_browser" }) do

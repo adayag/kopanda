@@ -1,8 +1,8 @@
--- The nav bar: five tabs in a band across a screen's bottom, Home, Library, Authors, History and Settings,
+-- The nav bar: five tabs in a band across a screen's bottom, Home, Library, Stats, History and Settings,
 -- from the look's nav tokens. The home, the file browser and the library each build one with their own tab
 -- active. A tap runs the tab, a hold on Settings opens the quick-settings sheet (with focused mode on, the two
 -- swapped on Settings), any other hold is consumed, and every other gesture passes through. launcher_entries,
--- quick_settings, library, series_screen, authors_screen and subjects_screen are required at call time:
+-- quick_settings, library, series_screen, authors_screen, subjects_screen and stats_screen are required at call time:
 -- launcher_entries requires home (launcher_entries.lua:6), which reaches this module through home_rows.
 local Focused = require("focused")
 local Geom = require("ui/geometry")
@@ -25,14 +25,14 @@ local NavBar = {}
 NavBar.TABS = {
     { id = "home", label = "Home", icon = "home" },
     { id = "library", label = "Library", icon = "library" },
-    { id = "authors", label = "Authors", icon = "authors" },
+    { id = "stats", label = "Stats", icon = "stats" },
     { id = "history", label = "History", icon = "history" },
     { id = "settings", label = "Settings", icon = "settings" },
 }
 
--- The active tab's id, by where the bar is: the Authors window lights Authors; the Series and Subjects
+-- The active tab's id, by where the bar is: the Stats window lights Stats; the Series, Subjects and Authors
 -- windows light none, and no screen of History or Settings carries the bar.
-local ACTIVE = { home = "home", file_browser = "library", library = "library", authors = "authors" }
+local ACTIVE = { home = "home", file_browser = "library", library = "library", stats = "stats" }
 
 -- The y of a tab's content from the bar's top: below the edge, or below the active rule where
 -- the rule is the longer, so every tab's content starts at one top; then the tab's padding.
@@ -72,10 +72,10 @@ end
 
 -- The window module each chrome window's bar closes on Home, by where.
 local WINDOWS = { library = "library", series = "series_screen", authors = "authors_screen",
-    subjects = "subjects_screen" }
+    subjects = "subjects_screen", stats = "stats_screen" }
 
--- Runs the tab id from where, "home", "file_browser", "library", "series", "authors" or "subjects". An error is
--- logged with the tab's name and goes no further, so the screen under the bar stays as it was.
+-- Runs the tab id from where, "home", "file_browser", "library", "series", "authors", "subjects" or "stats". An error
+-- is logged with the tab's name and goes no further, so the screen under the bar stays as it was.
 function NavBar.run(id, where)
     local ok, err = pcall(function()
         -- A screen that isn't the library's leaves its books to be walked again: History and Settings open over
@@ -93,6 +93,14 @@ function NavBar.run(id, where)
             end
             if where == "file_browser" or WINDOWS[where] then
                 package.loaded["apps/filemanager/filemanager"].instance.kopanda:goHome()
+            end
+        elseif id == "stats" then
+            -- On the Stats window, its first page; from anywhere else, the window shown through the plugin.
+            local StatsScreen = require("stats_screen")
+            if StatsScreen.shown then
+                StatsScreen.shown:go(StatsScreen.shown:view(), 1)
+            else
+                package.loaded["apps/filemanager/filemanager"].instance.kopanda:showStats{}
             end
         elseif id == "history" then
             require("launcher_entries").run{ kind = "koreader", target = "history" }

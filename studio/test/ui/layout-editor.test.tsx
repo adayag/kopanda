@@ -46,14 +46,6 @@ const EVERY: Rows = [
   [s("weather"), s("stats"), s("records")],
 ];
 
-/** Page 2's default layout. */
-const PAGE_2: Rows = [
-  [s("date"), s("clock")],
-  [s("reading")],
-  [s("streak"), s("forecast")],
-  [s("hours"), s("records")],
-];
-
 /** The five insight widgets' labels, in the schema's order. */
 const INSIGHTS = ["Reading", "Streak", "Finish by", "Reading hours", "Sessions"];
 
@@ -108,10 +100,8 @@ function sent(method: string): [string, unknown][] {
 
 const FIT_URL = "/api/profiles/colorsoft/layout-fit";
 const PUT_URL = "/api/profiles/colorsoft/settings/layout.rows";
-const PUT_2_URL = "/api/profiles/colorsoft/settings/layout.rows_2";
 const FIT = `POST ${FIT_URL}`;
 const PUT = `PUT ${PUT_URL}`;
-const PUT_2 = `PUT ${PUT_2_URL}`;
 
 /** The fit requests' bodies; the preview pane's renders are not fit requests. */
 function fitBodies(): unknown[] {
@@ -125,44 +115,39 @@ function fits(): unknown[] {
   return fitBodies().map((body) => (body as { rows: unknown }).rows);
 }
 
-/** The PUTs, every one to url, as their values. */
-function puts(url = PUT_URL): unknown[] {
+/** The PUTs, every one to PUT_URL, as their values. */
+function puts(): unknown[] {
   return sent("PUT").map(([to, body]) => {
-    expect(to).toBe(url);
+    expect(to).toBe(PUT_URL);
     return (body as { value: unknown }).value;
   });
 }
 
-/** A PUT of key that answers the file holding the rows written. */
-const writes =
-  (key: string): Answer =>
-  (body) =>
-    json(settings({}, { [key]: (body as { value: unknown }).value }));
-const written = writes("layout.rows");
+/** A PUT that answers the file holding the rows written. */
+const written: Answer = (body) => json(settings({}, { "layout.rows": (body as { value: unknown }).value }));
 const fits0: Answer = () => json({ checked: true, current: 0, proposed: 0 });
 
 /**
- * Opens the colorsoft profile's layout editor for page 1, or page 2's at view "layout-2", with the
- * settings answer, fit answering "fits" and every PUT written unless routes say otherwise.
+ * Opens the colorsoft profile's layout editor with the settings answer, fit answering "fits" and
+ * every PUT written unless routes say otherwise.
  */
-async function open(answer: Settings, routes: Record<string, Answer> = {}, view = "layout") {
-  history.replaceState(null, "", `/#/profiles/colorsoft/${view}`);
+async function open(answer: Settings, routes: Record<string, Answer> = {}) {
+  history.replaceState(null, "", "/#/profiles/colorsoft/layout");
   route({
     "GET /api/profiles/colorsoft": () => json(colorsoft),
     "GET /api/profiles/colorsoft/settings": () => json(answer),
     [FIT]: fits0,
     [PUT]: written,
-    [PUT_2]: writes("layout.rows_2"),
     ...routes,
   });
   render(<App />);
-  await screen.findByRole("heading", { name: view === "layout" ? "Layout" : "Page 2" });
+  await screen.findByRole("heading", { name: "Layout" });
 }
 
 const withRows = (rows: Rows) => settings({}, { "layout.rows": rows });
 
 function editor(): HTMLElement {
-  return screen.getByRole("region", { name: /^(Layout|Page 2)$/ });
+  return screen.getByRole("region", { name: "Layout" });
 }
 
 function cards(): HTMLElement[] {
@@ -560,63 +545,6 @@ describe("a change", () => {
     click("Move row 2 up");
 
     await waitFor(() => expect(puts()).toEqual([[DEFAULT[1], DEFAULT[0], ...DEFAULT.slice(2)]]));
-  });
-});
-
-describe("page 2", () => {
-  const withPage2 = (rows: Rows) => settings({}, { "layout.rows_2": rows });
-
-  it("opens at /layout-2 with Page 2 over Home and a card per row of page 2's default", async () => {
-    await open(settings(), {}, "layout-2");
-
-    expect(within(editor()).getByText("Home")).toBeInTheDocument();
-    expect(cards()).toHaveLength(4);
-    expect(card(1).getByRole("button", { name: "Date 1/2" })).toBeInTheDocument();
-    expect(card(2).getByRole("button", { name: "Reading full" })).toBeInTheDocument();
-    expect(card(3).getByRole("button", { name: "Streak 1/2" })).toBeInTheDocument();
-    expect(card(3).getByRole("button", { name: "Finish by 1/2" })).toBeInTheDocument();
-    expect(card(4).getByRole("button", { name: "Reading hours 1/2" })).toBeInTheDocument();
-    expect(card(4).getByRole("button", { name: "Sessions 1/2" })).toBeInTheDocument();
-  });
-
-  it("shows page 2's stored rows, not layout.rows's", async () => {
-    await open(settings({}, { "layout.rows": FOUR, "layout.rows_2": [[s("records")]] }), {}, "layout-2");
-
-    expect(cards()).toHaveLength(1);
-    expect(card(1).getByRole("button", { name: "Sessions full" })).toBeInTheDocument();
-  });
-
-  it("checks fit for layout.rows_2, then writes layout.rows_2 and shows it", async () => {
-    await open(settings(), {}, "layout-2");
-
-    click("Move row 2 up");
-
-    const expected = [PAGE_2[1], PAGE_2[0], ...PAGE_2.slice(2)];
-    await waitFor(() => expect(puts(PUT_2_URL)).toEqual([expected]));
-    expect(fitBodies()).toEqual([{ rows: expected, key: "layout.rows_2" }]);
-    await waitFor(() => expect(card(1).getByRole("button", { name: "Reading full" })).toBeInTheDocument());
-  });
-
-  it("resets to page 2's default", async () => {
-    await open(withPage2([[s("records")]]), {}, "layout-2");
-
-    click("Reset to the look's default");
-
-    await waitFor(() => expect(puts(PUT_2_URL)).toEqual([PAGE_2]));
-    await waitFor(() => expect(cards()).toHaveLength(4));
-  });
-
-  it("shows a failed write of layout.rows_2 by its label", async () => {
-    await open(settings(), { [PUT_2]: () => json({ error: "layout.rows_2: not allowed" }, 400) }, "layout-2");
-
-    click("Move row 2 up");
-
-    expect(await screen.findByText("Couldn't save Page 2: layout.rows_2: not allowed.")).toBeInTheDocument();
-  });
-
-  it("notes a refused stored value of layout.rows_2, not of layout.rows", async () => {
-    await open(settings({ invalid: [{ key: "layout.rows" }] }), {}, "layout-2");
-    expect(screen.queryByText("The stored value isn't allowed, so this shows the default.")).not.toBeInTheDocument();
   });
 });
 

@@ -1,4 +1,4 @@
--- The home's rows: the widget tree a home draws, built from its page's layout key as rows of
+-- The home's rows: the widget tree a home draws, built from layout.rows as rows of
 -- widgets (layout.lua places them, widgets.lua finds them) in the active look, with its header
 -- and footer chrome filled beneath them and the nav bar in the band below them. A look that draws
 -- a wallpaper (wallpaper.lua) has it over the paper, under everything else; a look with plates
@@ -17,9 +17,6 @@ local logger = require("logger")
 local Screen = require("device").screen
 
 local HomeRows = {}
-
--- The layout key of each page, page 1 first.
-HomeRows.keys = { "layout.rows", "layout.rows_2" }
 
 -- A filled rectangle at (x, y) offset by rect's own. KOReader's paintRect greys any colour by
 -- luminance (base/ffi/blitbuffer.lua:1704-1724), so a colour goes through paintRectRGB32
@@ -102,7 +99,7 @@ local function wallpaper_of(home, look, variant)
     return image and key
 end
 
--- Builds home's rows from its page's key at home.dimen and returns them, the slots (each { widget, rect,
+-- Builds home's rows from layout.rows at home.dimen and returns them, the slots (each { widget, rect,
 -- module, built }), the context every widget got and the nav bar, in the band layout.lua leaves below the
 -- rows, or nil.
 -- A slot whose widget has no module, or whose height or build raises, is left blank and logged; a bar
@@ -124,7 +121,7 @@ function HomeRows.build(home)
             return Screen:scaleBySize(px)
         end),
     }
-    local arranged = Layout.arrange(Settings.get(HomeRows.keys[home.page or 1]), ctx)
+    local arranged = Layout.arrange(Settings.get("layout.rows"), ctx)
     local paper = { x = 0, y = 0, w = home.dimen.w, h = home.dimen.h, color = color("paper") }
     local fills = { paper }
     for _, part in ipairs(chrome(arranged, look, color)) do

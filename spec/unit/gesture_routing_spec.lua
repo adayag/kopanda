@@ -1,7 +1,7 @@
 -- The home's gestures: its own swipe up from the bottom edge, the top zone (with focused mode on, the
 -- quick-settings sheet on a tap or swipe down and the file manager's menu on a hold; with it off, that menu on a
--- tap or swipe down), its page turned with nothing paged under it, and every other gesture passed to the zones
--- registered on the file manager; none of it in the file browser or the reader. Holds elsewhere are in
+-- tap or swipe down), a west or east swipe consumed with nothing paged under it, and every other gesture passed to the
+-- zones registered on the file manager; none of it in the file browser or the reader. Holds elsewhere are in
 -- hold_routing_spec.lua.
 describe("gestures on the KoPanda home", function()
     local harness = require("plugin_harness")
@@ -283,21 +283,20 @@ describe("gestures on the KoPanda home", function()
         end)
     end)
 
-    it("turns the page on a west or east swipe mid-screen, leaving the file chooser's page", function()
+    it("consumes a west or east swipe mid-screen, rebuilding nothing and leaving the file chooser's page", function()
         local fm = fm_with_home(long_library())
         local home = Home.shown
         assert.truthy(fm.file_chooser.page_num > 1)
         local page = fm.file_chooser.page
+        local rows = home[1]
         local size = Screen:getSize()
-        assert.equals(1, home.page)
-        send(swipe(size.w / 2, size.h / 2, "west"))
-        assert.equals(2, home.page)
-        assert.equals(page, fm.file_chooser.page)
-        send(swipe(size.w / 2, size.h / 2, "east"))
-        assert.equals(1, home.page)
-        assert.equals(page, fm.file_chooser.page)
-        assert.equals(home, harness.top())
-        assert.equals(home, Home.shown)
+        for _, direction in ipairs({ "west", "east" }) do
+            send(swipe(size.w / 2, size.h / 2, direction))
+            assert.equals(page, fm.file_chooser.page, direction)
+            assert.equals(rows, home[1], direction)
+            assert.equals(home, harness.top(), direction)
+            assert.equals(home, Home.shown, direction)
+        end
     end)
 
     it("passes a west swipe in the bottom edge band to a zone registered there", function()

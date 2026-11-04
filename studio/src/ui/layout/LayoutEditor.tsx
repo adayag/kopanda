@@ -73,7 +73,7 @@ function PickerMenu({
 }
 
 export interface LayoutEditorProps {
-  /** The rows key the editor edits: layout.rows, or layout.rows_2 for page 2. */
+  /** The rows key the editor edits: layout.rows. */
   entry: RowsEntry;
   profileId: string;
   /** The profile's settings file as the API last answered it; its value of the key is what the editor shows. */

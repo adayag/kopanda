@@ -1,11 +1,15 @@
 -- The chrome the insight widgets share: the quote's tile (a box with its outline and shadow, rules in a look
--- without a tile box, nothing on a plate) around a label line, with an optional right-aligned aside, and the
--- content each widget paints beneath it.
+-- without a tile box, nothing on a plate unless ctx.boxed, which draws a box in the plate's keyline) around a label
+-- line, with an optional right-aligned aside, and the content each widget paints beneath it.
 local Geom = require("ui/geometry")
 local Looks = require("looks")
+local Math = require("optmath")
 local Paint = require("paint")
 local Typeset = require("typeset")
 local Widget = require("ui/widget/widget")
+
+local HIGH = 0.6 -- of the busiest value, the share at which a bar takes the high colour
+local MIN_BAR = 2 -- the height of a bar for any reading at all
 
 local InsightTile = {}
 
@@ -15,16 +19,20 @@ local function chrome_of(width, ctx)
     local color = Looks.colorer(ctx)
     local scale = Paint.scaler(ctx)
     local padding = scale(look.insights.padding)
-    if Typeset.on_plate(ctx) then
+    local on_plate = Typeset.on_plate(ctx)
+    if on_plate and not ctx.boxed then
         return { plain = true }, 0, padding, width, 2 * padding
     end
     if look.tile.box then
         local shadow = look.shadow.tile
-        local outline = scale(look.stroke.outline)
+        local outline = scale(on_plate and look.plate.keyline or look.stroke.outline)
+        local radius = on_plate and scale(look.plate.radius) or nil
         local chrome = {
             outline = outline,
-            outline_color = color(look.tile.outline_color),
+            outline_color = color(on_plate and look.plate.keyline_color or look.tile.outline_color),
             fill_color = color(look.tile.fill_color),
+            radius = radius,
+            fill_radius = radius,
             shadow_color = color(shadow.color),
             shadow_x = shadow.color and scale(shadow.x) or 0,
             shadow_y = shadow.color and scale(shadow.y) or 0,
@@ -121,6 +129,21 @@ function InsightTile.compose(width, ctx, label, aside, content_h, paint)
         content_h = content_h,
         paint = paint,
     }, { w = inner_w, label_h = label_h }
+end
+
+-- The bars for values in a chart chart tall, scaled to the busiest: each { h, high }, h 0 for none, high at or above
+-- high_share of the busiest (default HIGH).
+function InsightTile.bars(values, chart, high_share)
+    local busiest = math.max(unpack(values))
+    local list = {}
+    for i, value in ipairs(values) do
+        local h = 0
+        if value > 0 then
+            h = math.max(MIN_BAR, Math.round(chart * value / busiest))
+        end
+        list[i] = { h = h, high = value >= (high_share or HIGH) * busiest }
+    end
+    return list
 end
 
 return InsightTile

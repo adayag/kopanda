@@ -529,6 +529,20 @@ describe("the home's rows", function()
         assert.equals(2, builds.stats)
     end)
 
+    it("frees the old rows on refresh and takes a new frame", function()
+        local _, home = show_home()
+        local frame = home[1]
+        local free = frame.free
+        local freed = 0
+        frame.free = function(self, ...)
+            freed = freed + 1
+            return free(self, ...)
+        end
+        home:refresh()
+        assert.equals(1, freed)
+        assert.are_not.equal(frame, home[1])
+    end)
+
     it("neither rebuilds nor repaints on refresh once closed", function()
         -- A tap's fetch runs once online, which may be after the home has closed.
         local _, home = show_home()

@@ -1,7 +1,8 @@
 -- The paint budget (paint_budget.lua) on the screens it holds to it, one capture each, in Diner on the Colorsoft at
 -- 2026-10-13 08:42 in Chicago: the populated home, the library at its root over the capture library
--- (capture_library.lua), the Series list over the shelf library (shelf_library.lua) and the book status page opened
--- from a library hold; and, held to 100 ms, the home's share of a book's close (book_close_spec.lua's scenario).
+-- (capture_library.lua), the Series list over the shelf library (shelf_library.lua), the book status page opened
+-- from a library hold and the Stats window; and, held to 100 ms, the home's share of a book's close
+-- (book_close_spec.lua's scenario).
 -- Each screen's own spec judges what it shows; this one judges only its time, so bin/check runs it alone, after the
 -- others, on a settled host. The look is passed empty so a KOPANDA_HOME_LOOK in the caller's environment cannot leak
 -- in.
@@ -92,6 +93,13 @@ describe("the paint budget on the emulator", function()
             KOPANDA_BOOK_STATUS_STEP = "page1",
         })
         check_wall("book-status paint on colorsoft", sidecar)
+    end)
+
+    -- The window's first build measures every row, those of its later pages too.
+    it("paints the Stats window within the budget", function()
+        local sidecar = settled("stats", nil, { scenarios_dir .. "2-scenario-stats-screen.lua" },
+            { KOPANDA_HOME_FIXTURE = "populated" })
+        check_wall("stats paint on colorsoft", sidecar)
     end)
 
     -- Opening a book writes its .sdr sidecar beside it (document_metadata_folder defaults to "doc",

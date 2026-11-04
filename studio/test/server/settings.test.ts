@@ -85,7 +85,27 @@ return {
     });
   });
 
-  it("answers each rows key with nothing valid stored at its default for the stored text size", async () => {
+  it("loads a file still holding layout.rows_2, the key answered as unknown", async () => {
+    const { app, store } = setup();
+    store(`return {
+    ["look"] = "editorial",
+    ["layout.rows_2"] = {
+        { { widget = "reading", share = 1 } },
+    },
+    ["schema_version"] = 1,
+}
+`);
+
+    const res = await request(app).get("/api/profiles/kobo/settings");
+
+    expect(res.status).toBe(200);
+    expect(res.body.state).toBe("writable");
+    expect(res.body.values).toEqual(withValues({ look: "editorial" }));
+    expect(res.body.invalid).toEqual([]);
+    expect(res.body.unknown.map((entry: { key: string }) => entry.key)).toEqual(["layout.rows_2"]);
+  });
+
+  it("answers layout.rows with nothing valid stored at its default for the stored text size", async () => {
     const { app, store } = setup();
     const s = (widget: string) => ({ widget, share: 1 });
     const stored = [[s("quote")], [s("weather"), s("stats")]];
@@ -99,12 +119,6 @@ return {
     const res = await request(app).get("/api/profiles/kobo/settings");
 
     expect(res.body.values["layout.rows"]).toEqual([[s("date"), s("clock")], [s("featured")], [s("launcher")]]);
-    expect(res.body.values["layout.rows_2"]).toEqual([
-      [s("date"), s("clock")],
-      [s("quote")],
-      [s("reading")],
-      [s("streak"), s("forecast")],
-    ]);
     expect(res.body.invalid).toEqual([{ key: "layout.rows" }]);
 
     store(`return {

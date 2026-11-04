@@ -11,10 +11,10 @@ import { PushStatus } from "./PushStatus";
 import { SettingsForm } from "./settings/SettingsForm";
 
 /** What the profile's screen shows under its facts: the form or one of the editors. */
-export type ProfileView = "form" | "layout" | "layout-2" | "launcher";
+export type ProfileView = "form" | "layout" | "launcher";
 
-/** The rows key each layout editor view edits. */
-const PAGES = { layout: entryFor("layout.rows"), "layout-2": entryFor("layout.rows_2") };
+/** The rows key the layout editor edits. */
+const LAYOUT = entryFor("layout.rows");
 
 type State =
   | { status: "loading" }
@@ -121,13 +121,13 @@ export function ProfileScreen({ id, view = "form" }: { id: string; view?: Profil
                   errors={errors}
                   onWrite={write}
                 />
-              ) : view === "layout" || view === "layout-2" ? (
+              ) : view === "layout" ? (
                 <LayoutEditor
-                  entry={PAGES[view]}
+                  entry={LAYOUT}
                   profileId={id}
                   settings={state.settings}
-                  pending={pending.has(PAGES[view].id)}
-                  error={errors[PAGES[view].id]}
+                  pending={pending.has(LAYOUT.id)}
+                  error={errors[LAYOUT.id]}
                   onWrite={write}
                 />
               ) : (
