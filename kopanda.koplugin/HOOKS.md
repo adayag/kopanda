@@ -970,8 +970,8 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
 
 ### Book records: the home folder, the file browser's filters, CoverBrowser's rows and the sidecar
 
-`books.lua` lists the library and builds one record per book. It requires each KOReader module
-below at call time, so a spec's stub or a toggled field is read as it is now.
+`books.lua` lists the library and builds one record per book, `folder_scan.lua` listing each folder for it. Both
+require each KOReader module below at call time, so a spec's stub or a toggled field is read as it is now.
 
 - `apps/filemanager/filemanagerutil`: `getHomeFolder()`
   (`frontend/apps/filemanager/filemanagerutil.lua:25-27`, `home_dir`, else `Device.home_dir`, else
@@ -982,11 +982,11 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
     only while it is on (`:120`);
   - `exclude_dirs` (`:28-54`, `%.sdr$` among them) through `FileChooser:show_dir` (`:81-86`), called
     on the class;
-  - `exclude_files` (`:55-72`), matched against the name by `books.lua` itself, since `show_file`
+  - `exclude_files` (`:55-72`), matched against the name by `folder_scan.lua` itself, since `show_file`
     (`:88-97`) also applies the status filter and `file_filter`, which the library doesn't; the
     patterns are unanchored at the end where written so (`^BookReader%.sqlite`, `:57`);
   - `getPathList` reads a folder with `pcall(lfs.dir, path)` (`:116`), so a folder that can't be read
-    lists nothing; `books.lua` does the same and logs it. A `._` file is never listed (`:135`).
+    lists nothing; `folder_scan.lua` does the same and logs it. A `._` file is never listed (`:135`).
 - `document/documentregistry`: `DocumentRegistry:hasProvider(file)`
   (`frontend/document/documentregistry.lua:63-85`), asked with the file's name, as the file
   manager's own `file_filter` asks (`frontend/apps/filemanager/filemanager.lua:143`). For a suffix
@@ -2000,7 +2000,8 @@ row, the sidecar and the Statistics database is in the book records' and the Sta
   Series', Authors', Subjects' and the search's own, passes the file manager as `ui` and a callback
   running the window's `on_open(view, page)`. The module is required at call time, as `books.lua` requires it.
 - The page keys, the swipes and the metadata events below are the chrome's
-  (`library_chrome.lua`'s `LibraryChrome.Window`, which the library extends).
+  (`library_chrome.lua`'s `LibraryChrome.Window`, which the library extends; its gesture route is
+  `library_chrome_gestures.lua`).
 - The page keys, as `Menu:registerKeyEvents` sets them (`frontend/ui/widget/menu.lua:984-992`):
   only when `Device:hasKeys()` (`:985`), `NextPage` on `Input.group.PgFwd` and `PrevPage` on
   `Input.group.PgBack` (`:991-992`; the groups at `frontend/device/input.lua:119-120`), read from
@@ -2180,7 +2181,7 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
   test `openLibraryPlaceholder` makes before it takes a file over (`:999-1009`). So whatever is
   badged, cwngsync's open downloads. `isLibraryPlaceholder` itself is not called: it walks every
   record per path. cwngsync records `join(root, book.filename)` (`cwng_library.lua:41-43`, `:187`)
-  and KoPanda lists `join(dir, name)` under `home_dir` (`books.lua`'s scan), so the strings match
+  and KoPanda lists `join(dir, name)` under `home_dir` (`folder_scan.lua`), so the strings match
   only when `home_dir` names the CWNG root, or a parent of it, the same way; given another way (a
   symlink, another mount name) nothing is badged and the book reads as downloaded, and cwngsync's
   open hook would miss that path too, so the badge never claims what the download can't do. The

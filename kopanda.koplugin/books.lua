@@ -1,13 +1,16 @@
 -- The book records: every book KoPanda knows, by an id rather than a path. Books with a file are
--- listed from KOReader's home folder with the file browser's own filters, their metadata from
+-- listed from KOReader's home folder with the file browser's own filters (folder_scan.lua), their metadata from
 -- CoverBrowser's cache, then the sidecar, then the file name, and flagged placeholder when cwngsync
 -- records the file as not downloaded (cloud_books.lua); books without one come from the sources added
 -- here. Only reads; a failed read is logged and reads as absent. State: the sources, the progress memo.
 local CloudBooks = require("cloud_books")
 local DocSettings = require("docsettings")
+local FolderScan = require("folder_scan")
 local ffiutil = require("ffi/util")
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
+
+local scan, trimmed, same_dir = FolderScan.scan, FolderScan.trimmed, FolderScan.same_dir
 
 local Books = {}
 
@@ -188,71 +191,6 @@ end
 
 local function home_folder()
     return require("apps/filemanager/filemanagerutil").getHomeFolder()
-end
-
-local function trimmed(dir)
-    local stripped = dir:gsub("/+$", "")
-    return stripped == "" and "/" or stripped
-end
-
-local function join(dir, name)
-    return dir == "/" and "/" .. name or dir .. "/" .. name
-end
-
-local function same_dir(a, b)
-    if a == b then
-        return true
-    end
-    local real_a = ffiutil.realpath(a)
-    return real_a ~= nil and real_a == ffiutil.realpath(b)
-end
-
--- dir's entries the file browser would list (frontend/ui/widget/filechooser.lua:114-143): the folders
--- show_dir keeps, and the files no exclude_files pattern or "._" rule drops that
--- DocumentRegistry:hasProvider accepts, asked as the file manager's filter asks
--- (frontend/apps/filemanager/filemanager.lua:143). Dot names only with FileChooser.show_hidden.
-local function scan(dir)
-    local FileChooser = require("ui/widget/filechooser")
-    local DocumentRegistry = require("document/documentregistry")
-    local folders, files = {}, {}
-    local ok, iter, dir_obj = pcall(lfs.dir, dir)
-    if not ok then
-        logger.err("KoPanda: could not read the folder", dir, ":", iter)
-        return folders, files
-    end
-    local listed, err = pcall(function()
-        for name in iter, dir_obj do
-            if name ~= "." and name ~= ".." and (FileChooser.show_hidden or name:sub(1, 1) ~= ".") then
-                local path = join(dir, name)
-                local mode = lfs.attributes(path, "mode")
-                if mode == "directory" then
-                    if FileChooser:show_dir(name) then
-                        folders[#folders + 1] = { name = name, path = path }
-                    end
-                elseif mode == "file" and name:sub(1, 2) ~= "._" then
-                    local excluded = false
-                    for _, pattern in ipairs(FileChooser.exclude_files) do
-                        if name:match(pattern) then
-                            excluded = true
-                            break
-                        end
-                    end
-                    if not excluded and DocumentRegistry:hasProvider(name) then
-                        files[#files + 1] = { name = name, path = path }
-                    end
-                end
-            end
-        end
-    end)
-    if not listed then
-        logger.err("KoPanda: could not list the folder", dir, ":", err)
-    end
-    local function by_name(a, b)
-        return a.name < b.name
-    end
-    table.sort(folders, by_name)
-    table.sort(files, by_name)
-    return folders, files
 end
 
 -- { books, folders }: the records of the files directly in dir and a { name, path } per sub-folder

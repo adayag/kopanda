@@ -16,7 +16,7 @@
 --   - empty: the page's sixth cell, past its five tiles, which opens the empty-space sheet.
 -- The point is checked with Library.hit (library.lua) for the kind the target names, and against
 -- every DTAP_ZONE_* corner (defaults.lua:66-69), since a hold corner bound on the file manager
--- wins over the hold (library_chrome.lua, Window:routeGesture). No hold_release follows: the
+-- wins over the hold (library_chrome_gestures.lua, routeGesture). No hold_release follows: the
 -- capture is taken on the sheet's own settled signal. Any failure is reported as a "sheet"
 -- KoPandaSettled signal with error, the screen the capture shoots on, so the spec fails with the
 -- message; a failure before the UI runs exits with status 4, as the library scenario does.

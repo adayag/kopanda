@@ -1,4 +1,4 @@
--- The hold's dispatch on the library's windows: the chrome's hold step (library_chrome.lua) hands it the
+-- The hold's dispatch on the library's windows: the chrome's hold step (library_chrome_gestures.lua) hands it the
 -- window held on and what lies under the hold (the window's hit(x, y)), and it opens that thing's sheet
 -- over the window. A book opens the book sheet; a folder tile, on the library alone, the folder sheet;
 -- anywhere else on the library, the header and pager included but not the search chip, the empty-space

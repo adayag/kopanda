@@ -23,7 +23,7 @@ local STATUS_LABELS = { reading = "Reading", finished = "Finished", all = "All" 
 -- The notes for a folder with nothing to show under each status.
 local EMPTY_NOTES = { all = "No books here", finished = "No finished books here", reading = "No books being read here" }
 
--- KOReader's home folder, the library's root, as Books.folder reads it (books.lua:171-173).
+-- KOReader's home folder, the library's root, as Books.folder reads it (books.lua's home_folder).
 function LibraryView.root()
     return require("apps/filemanager/filemanagerutil").getHomeFolder()
 end

@@ -116,7 +116,7 @@ end
 
 -- A hold on the home: inside a slot whose widget has hold, that hold, unless it returns false; else the
 -- settings of its group; outside every slot or in a blank one, the home's sheet. home_sheet is required
--- here: it reaches launcher_entries, which requires home (launcher_entries.lua:5), which requires this.
+-- here: it reaches launcher_entries, which requires home (launcher_entries.lua:6), which requires this.
 local function hold(home, ges)
     local started = PaintClock.now()
     local slot = home:slotAt(ges.pos)
@@ -134,7 +134,7 @@ local function hold(home, ges)
     return true
 end
 
--- The bottom-edge step, shared by the home and the chrome windows (library_chrome.lua): with a file manager up, a
+-- The bottom-edge step, shared by the home and the chrome (library_chrome_gestures.lua): with a file manager up, a
 -- swipe up from the bottom edge opens the quick-settings sheet over where (a nav bar's where, or a bar-less window's
 -- screen). Whether one consumed ges.
 function HomeGestures.bottom_swipe(ges, where)
@@ -146,7 +146,7 @@ function HomeGestures.bottom_swipe(ges, where)
     return true
 end
 
--- The top-edge step, shared by the home and the library (library_chrome.lua): with focused mode on and a file
+-- The top-edge step, shared by the home and the library (library_chrome_gestures.lua): with focused mode on and a file
 -- manager up, a tap or a swipe down in the top menu zones opens the settings menu, each only as KOReader's
 -- activate_menu lets the file manager's menu open on it (filemanagermenu.lua:1102-1114), and a hold there opens
 -- that menu. Whether one consumed ges.
@@ -175,7 +175,7 @@ function HomeGestures.focused_top(ges)
     return false
 end
 
--- The forward step, shared by the home and the library (library_chrome.lua): the file manager's menu
+-- The forward step, shared by the home and the library (library_chrome_gestures.lua): the file manager's menu
 -- zones (filemanagermenu.lua:71-124, :1102-1114); a page swipe, consumed; then the zones on the file
 -- manager itself, the Gestures plugin's among them (gestures main.lua:1287-1288). With a KoPanda window
 -- on top, UIManager:sendEvent offers the file manager nothing but its screenshot module

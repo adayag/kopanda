@@ -4,7 +4,6 @@
 -- prepends the plugin root to package.path only while it dofile()s this file (frontend/pluginloader.lua:242,
 -- :269-270), so a later require could resolve to another plugin's same-named file (:283-286).
 local AuthorsScreen = require("authors_screen")
-local BookStatusScreen = require("book_status_screen")
 local DispatchBridge = require("dispatch_bridge")
 local Dispatcher = require("dispatcher")
 local FmNav = require("fm_nav")
@@ -19,6 +18,7 @@ local MenuEntries = require("menu_entries")
 local PaintClock = require("paint_clock")
 local PushNotice = require("push_notice")
 local SchemaMenu = require("menu")
+local ScreenRoutes = require("screen_routes")
 local SearchScreen = require("search_screen")
 local SeriesScreen = require("series_screen")
 local State = require("state")
@@ -29,7 +29,6 @@ local UIManager = require("ui/uimanager")
 local UpdateMenu = require("update_menu")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
-local time = require("ui/time")
 -- Required here only so they load while the plugin root is on package.path; the modules that
 -- use them get them from the require cache.
 require("book_covers")
@@ -37,6 +36,7 @@ require("book_index")
 require("book_search")
 require("book_sheet")
 require("book_status")
+require("book_status_screen")
 require("books")
 require("cloud_books")
 require("editor")
@@ -46,6 +46,7 @@ require("featured_book")
 require("featured_cover")
 require("focused")
 require("focused_panel")
+require("folder_scan")
 require("folder_sheet")
 require("goto_list")
 require("goto_rows")
@@ -59,6 +60,8 @@ require("insight_tile")
 require("launcher_entries")
 require("launcher_manage")
 require("layout")
+require("library_chrome_frame")
+require("library_chrome_gestures")
 require("library_covers")
 require("library_order")
 require("library_pickers")
@@ -108,6 +111,8 @@ require("widgets/reading")
 require("widgets/records")
 require("widgets/streak")
 require("widgets/weather")
+
+local show_shelf = ScreenRoutes.show_shelf
 
 -- The boot guard covers only the first show of a process.
 local first_show_done = false
@@ -225,19 +230,6 @@ function KoPanda:showLibrary(opts)
     fm.file_chooser:changeToPath(opts.dir or require("library_view").root())
 end
 
--- The Series, Authors and Subjects windows, by the screen a return names.
-local SHELVES = { series = SeriesScreen, authors = AuthorsScreen, subjects = SubjectsScreen }
-
--- Shows a window of cls (SeriesScreen, AuthorsScreen, SubjectsScreen, SearchScreen or StatsScreen) with opts unless
--- the file manager has gone since the show was asked for; the window's show closes the home. Like the library's, it
--- takes no part in the boot guard; one that fails to build is logged by the chrome and the file browser left up.
-local function show_shelf(cls, opts)
-    local FileManager = package.loaded["apps/filemanager/filemanager"]
-    if FileManager and FileManager.instance then
-        cls.show(opts)
-    end
-end
-
 -- The Series window with opts (SeriesScreen.show's), as show_shelf.
 function KoPanda:showSeries(opts)
     show_shelf(SeriesScreen, opts)
@@ -263,71 +255,14 @@ function KoPanda:showSearch(opts)
     show_shelf(SearchScreen, opts)
 end
 
--- The screen opener names shown again: the home for { screen = "home" }; the library at its folder (view) and
--- page; the Series, Authors or Subjects window at its view and page; the search's results for its query and
--- start (from) at their page.
-local function show_opener(kopanda, opener)
-    local screen = opener and opener.screen
-    if screen == "library" then
-        kopanda:showLibrary{ dir = opener.view, page = opener.page }
-    elseif screen == "search" then
-        show_shelf(SearchScreen, { query = opener.view.query, from = opener.from, page = opener.page })
-    elseif SHELVES[screen] then
-        show_shelf(SHELVES[screen], { view = opener.view, page = opener.page })
-    else
-        kopanda:showHome()
-    end
-end
-
--- The book status page with opts (BookStatusScreen.show's) unless the file manager has gone; like the library's,
--- it takes no part in the boot guard. One that fails to show is logged by the chrome, which closed the screen it
--- was opened from, so that is shown again. Returns the window shown, or nil.
+-- The book status page with opts, as ScreenRoutes.show_book_status. Returns the window shown, or nil.
 function KoPanda:showBookStatus(opts)
-    local FileManager = package.loaded["apps/filemanager/filemanager"]
-    if not (FileManager and FileManager.instance) then
-        return nil
-    end
-    local screen = BookStatusScreen.show(opts)
-    if not screen then
-        show_opener(self, opts.opener)
-    end
-    return screen
+    return ScreenRoutes.show_book_status(self, opts)
 end
 
 -- The screen a book status page was opened from (its opener), shown again by the page's back control.
 function KoPanda:showOpener(opener)
-    show_opener(self, opener)
-end
-
--- The window a book's close returns to and the fields it is built with: the library at the folder and page
--- a book was opened from, or the Series, Authors or Subjects window at the view and page; nil with no return
--- recorded.
-local function return_window()
-    local back = Library.return_to
-    if back then
-        return Library, { dir = back.dir, page = back.page }
-    end
-    back = LibraryChrome.return_to
-    if back then
-        return SHELVES[back.screen], { showing = back.view, page = back.page }
-    end
-    return nil
-end
-
--- The return after a book opened from a chrome window, cleared as it is taken: the window built and shown
--- now, inside the file manager's Show, so it reads the progress, status and counts the reader saved on its
--- close (frontend/apps/reader/readerui.lua:893, UIManager:close's FlushSettings, frontend/ui/uimanager.lua:298),
--- at the screen's size after showFiles reset the rotation (frontend/apps/filemanager/filemanager.lua:1322).
--- A view gone by then shows the list, which the window's build does itself.
-local function show_return(kopanda)
-    local cls, fields = return_window()
-    Library.return_to, LibraryChrome.return_to = nil, nil
-    local started = time.monotonic()
-    if cls == Library then
-        kopanda:showLibrary{ dir = fields.dir, page = fields.page, started = started }
-    else
-        show_shelf(cls, { view = fields.showing, page = fields.page, started = started })
-    end
+    ScreenRoutes.show_opener(self, opener)
 end
 
 -- The file manager's Show. With a return to a chrome window recorded, that window goes up at once. Otherwise,
@@ -345,8 +280,8 @@ function KoPanda:onShow()
     if not self.in_fm then
         return
     end
-    if return_window() then
-        local show_ok, show_err = pcall(show_return, self)
+    if ScreenRoutes.return_window() then
+        local show_ok, show_err = pcall(ScreenRoutes.show_return, self)
         if not show_ok then
             logger.err("KoPanda: could not show the window returned to:", show_err)
         end
@@ -417,7 +352,7 @@ function KoPanda:onCloseDocument()
     if self.in_fm then
         return
     end
-    if return_window() then
+    if ScreenRoutes.return_window() then
         return
     end
     if self.ui and self.ui.tearing_down then
@@ -439,7 +374,7 @@ function KoPanda:onCloseWidget()
             Library.return_to = nil
         end
         local back = LibraryChrome.return_to
-        if back and not SHELVES[back.screen].shown then
+        if back and not ScreenRoutes.SHELVES[back.screen].shown then
             LibraryChrome.return_to = nil
         end
         Home.close()

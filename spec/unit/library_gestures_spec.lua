@@ -252,7 +252,7 @@ describe("gestures on the library", function()
             assert.equals(library, Library.shown)
         end)
 
-        -- Books.folder gives a folder that went since it was listed empty lists (books.lua:202-206).
+        -- Books.folder gives a folder that went since it was listed empty lists (folder_scan.lua).
         it("on the title of a folder that went shows its note and still goes up", function()
             install()
             local gone = fixture.folder("Gone")
