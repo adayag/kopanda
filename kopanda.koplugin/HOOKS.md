@@ -1202,6 +1202,12 @@ below at call time, so a spec's stub or a toggled field is read as it is now.
   Back key (`:531`) or the up arrow at the top level (`:798-814`); `onCloseWidget` asks for a
   full-screen `flashui` (`:987-998`). It saves no tab index, unlike `FileManagerMenu`'s close
   (`filemanagermenu.lua:1051-1052`).
+- The whole menu's KOReader menu row calls `FileManagerMenu:onShowMenu()`
+  (`frontend/apps/filemanager/filemanagermenu.lua:1006`) from the tick after the settings menu closes, with no
+  arguments, as `HomeGestures.focused_top` does: it opens on the tab it was last closed on (`:1021`), and
+  `UIManager:show` puts it over the home or a window, none of them modal (`frontend/ui/uimanager.lua:241-255`). The
+  row is left out with `FileManager.instance` nil, as in the reader
+  (`frontend/apps/filemanager/filemanager.lua:834-839`).
 - `util`: `frontend/util.lua:146` (`tableEquals`), so a tap on the value already stored, a place
   table included, writes nothing.
 - `ui/network/manager`: `isConnected` as the weather entry above, before the one weather fetch

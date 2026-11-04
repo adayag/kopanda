@@ -20,8 +20,10 @@ local PLUGIN_DIR = debug.getinfo(1, "S").source:match("^@(.*)/[^/]*$")
 -- Storefront's dispatcher action, as the launcher runs a plugin's (launcher_entries.lua:61-80).
 local STOREFRONT = { kind = "plugin", plugin = "storefront", action = "storefront_open", label = "Storefront" }
 
--- The Updates section: actions, not settings, after the last setting and a separator. Apps (Storefront) shows
--- only while the launcher could run it; a check that raises reads as no.
+-- The Updates section: actions, not settings, after the last setting and a separator. KOReader menu opens
+-- FileManagerMenu:onShowMenu (filemanagermenu.lua:1006) and shows only with a file manager up: opening a book closes it
+-- (filemanager.lua:834-839). Apps (Storefront) shows only while the launcher could run it; a check that raises reads
+-- as no.
 local function updates(items)
     -- launcher_entries requires this module, so it is required here, at call time.
     local LauncherEntries = require("launcher_entries")
@@ -35,6 +37,15 @@ local function updates(items)
             StudioMenu.check_for_update({ path = PLUGIN_DIR }, check)
         end),
     }
+    local FileManager = package.loaded["apps/filemanager/filemanager"]
+    if FileManager and FileManager.instance and FileManager.instance.menu then
+        items[#items + 1] = {
+            text = "KOReader menu",
+            callback = Guards.after_menu("Settings › KOReader menu", function()
+                FileManager.instance.menu:onShowMenu()
+            end),
+        }
+    end
     local ok, available = pcall(LauncherEntries.available, STOREFRONT)
     if ok and available then
         items[#items + 1] = {

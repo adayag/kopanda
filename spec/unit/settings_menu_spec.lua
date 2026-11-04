@@ -140,8 +140,9 @@ describe("the settings menu", function()
         end
         assert.is_true(found)
     end)
-    -- KoPanda's settings end with an Updates section: Check for KoPanda update, then Apps (Storefront) while
-    -- Storefront is loaded with its storefront_open action registered; a group's view has neither.
+    -- KoPanda's settings end with an Updates section: Check for KoPanda update, KOReader menu with a file manager up,
+    -- then Apps (Storefront) while Storefront is loaded with its storefront_open action registered; a group's view has
+    -- none of them.
     describe("the Updates section", function()
         local Dispatcher = require("dispatcher")
         local PluginLoader = require("pluginloader")
@@ -175,6 +176,15 @@ describe("the settings menu", function()
             return shown_menu()[1].item_table
         end
 
+        -- The item in items reading text.
+        local function reading(items, text)
+            for _, item in ipairs(items) do
+                if item.text == text then
+                    return item
+                end
+            end
+        end
+
         local function settings_count()
             local n = 0
             for _ in ipairs(SchemaMenu.items()) do
@@ -183,19 +193,41 @@ describe("the settings menu", function()
             return n
         end
 
-        it("ends the settings with Check for KoPanda update and Apps (Storefront), set apart from them", function()
+        it("ends the settings with Check for KoPanda update, KOReader menu and Apps (Storefront), set apart", function()
             storefront()
             local items = items_shown()
             local n = #items
-            assert.equals(settings_count() + 2, n)
-            assert.is_true(items[n - 2].separator)
-            assert.equals("Check for KoPanda update", items[n - 1].text)
+            assert.equals(settings_count() + 3, n)
+            assert.is_true(items[n - 3].separator)
+            assert.equals("Check for KoPanda update", items[n - 2].text)
+            assert.equals("KOReader menu", items[n - 1].text)
             assert.equals("Apps (Storefront)", items[n].text)
         end)
 
         it("leaves Apps (Storefront) out while Storefront isn't loaded", function()
             local items = items_shown()
-            assert.equals(settings_count() + 1, #items)
+            assert.equals(settings_count() + 2, #items)
+            assert.equals("KOReader menu", items[#items].text)
+        end)
+
+        it("opens KOReader's menu over the home from the tick after the settings menu closes", function()
+            local items = items_shown()
+            local fm = require("apps/filemanager/filemanager").instance
+            local home = Home.shown
+            shown_menu()[1]:onMenuSelect(reading(items, "KOReader menu"))
+            assert.is_nil(shown_menu())
+            assert.is_nil(fm.menu.menu_container)
+            harness.tick()
+            assert.is_not_nil(fm.menu.menu_container)
+            assert.equals(fm.menu.menu_container, harness.top())
+            assert.equals(home, harness.top(2))
+        end)
+
+        it("leaves KOReader menu out with no file manager up", function()
+            assert.is_nil(require("apps/filemanager/filemanager").instance)
+            SettingsMenu.open()
+            local items = shown_menu()[1].item_table
+            assert.is_nil(reading(items, "KOReader menu"))
             assert.equals("Check for KoPanda update", items[#items].text)
         end)
 
@@ -206,6 +238,12 @@ describe("the settings menu", function()
             assert.equals("weather.units", items[2].kopanda_key)
         end)
 
+        it("leaves KOReader menu out of the featured group", function()
+            local items = items_shown("featured")
+            assert.equals(1, #items)
+            assert.equals("featured.pinned", items[1].kopanda_key)
+        end)
+
         it("checks for an update of the plugin's own folder, from the tick after the tap", function()
             local checked = {}
             local s = stub(StudioMenu, "check_for_update", function(plugin)
@@ -214,8 +252,7 @@ describe("the settings menu", function()
             finally(function()
                 s:revert()
             end)
-            local items = items_shown()
-            items[#items].callback()
+            reading(items_shown(), "Check for KoPanda update").callback()
             assert.equals(0, #checked)
             harness.tick()
             assert.equals(1, #checked)
@@ -242,8 +279,7 @@ describe("the settings menu", function()
                     s:revert()
                 end
             end)
-            local items = items_shown()
-            items[#items].callback()
+            reading(items_shown(), "Check for KoPanda update").callback()
             harness.tick()
             local failure
             for _, line in ipairs(logged) do

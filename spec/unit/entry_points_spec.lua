@@ -206,10 +206,13 @@ describe("KoPanda's entry points", function()
             return keys
         end
 
+        -- The schema's keys but the wallpaper's: the default look draws none.
         local function all_keys()
             local keys = {}
-            for i, entry in ipairs(require("schema").keys) do
-                keys[i] = entry.id
+            for _, entry in ipairs(require("schema").keys) do
+                if entry.id ~= "wallpaper.file" then
+                    keys[#keys + 1] = entry.id
+                end
             end
             return keys
         end

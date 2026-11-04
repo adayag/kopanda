@@ -98,6 +98,11 @@ describe("the settings menu's rows", function()
     end
 
     describe("the list", function()
+        -- Every key has a row in Frosted, the look that draws a wallpaper.
+        before_each(function()
+            Settings.set("look", "frosted")
+        end)
+
         it("has one row per schema key, in schema order, a separator ending each group but the last", function()
             local items = SchemaMenu.items()
             local keys, separated = {}, {}
@@ -308,6 +313,10 @@ describe("the settings menu's rows", function()
     describe("the wallpaper row", function()
         local PathChooser = require("ui/widget/pathchooser")
 
+        before_each(function()
+            Settings.set("look", "frosted")
+        end)
+
         -- The PathChooser the choose item shows, taken off the stack, or nil.
         local function chooser_shown()
             for _, widget in ipairs(harness.stack()) do
@@ -316,6 +325,34 @@ describe("the settings menu's rows", function()
                 end
             end
         end
+
+        it("shows only in a look that draws a wallpaper", function()
+            for look, shown in pairs({ frosted = true, diner = false, editorial = false }) do
+                assert.is_true(Settings.set("look", look))
+                assert.equals(shown, row(SchemaMenu.items(), "wallpaper.file") ~= nil, look)
+            end
+        end)
+
+        it("ends the appearance group at Text size in a look without it", function()
+            assert.is_true(Settings.set("look", "diner"))
+            assert.is_true(row(SchemaMenu.items(), "text_size").separator)
+        end)
+
+        it("leaves a group of only this row empty in another look, not every row", function()
+            assert.is_true(Settings.set("look", "diner"))
+            local entry
+            for _, candidate in ipairs(Schema.keys) do
+                if candidate.id == "wallpaper.file" then
+                    entry = candidate
+                end
+            end
+            local group = entry.group
+            entry.group = "wallpaper"
+            finally(function()
+                entry.group = group
+            end)
+            assert.same({}, SchemaMenu.items("wallpaper"))
+        end)
 
         it("reads None with nothing stored, None checked", function()
             local wallpaper = row(SchemaMenu.items(), "wallpaper.file")

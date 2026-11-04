@@ -1,11 +1,12 @@
--- The settings menu's rows, generated from schema.lua: one TouchMenu item per key, in schema order, for
--- KOReader's own menu (Tools › KoPanda › Settings) and settings_menu.lua. Each type has one row builder; a
--- row's text is read on every redraw. A tap that changes a value writes it through Settings.set, then
+-- The settings menu's rows, generated from schema.lua: one TouchMenu item per key the active look has a use for,
+-- in schema order, for KOReader's own menu (Tools › KoPanda › Settings) and settings_menu.lua. Each type has one
+-- row builder; a row's text is read on every redraw. A tap that changes a value writes it through Settings.set, then
 -- refreshes a shown home once, after one weather fetch when the write makes the cached reading stale. Every
 -- function TouchMenu calls is guarded: an error is logged and nothing is written after it.
 -- Module state: the types already logged as having no row builder, so each is logged once.
 local FeaturedBook = require("featured_book")
 local Helpers = require("helpers")
+local Looks = require("looks")
 local Schema = require("schema")
 local Settings = require("settings")
 local UIManager = require("ui/uimanager")
@@ -268,9 +269,15 @@ function BUILDERS.launcher(entry)
     return { text = entry.label, callback = open_screen(entry, "launcher_manage") }
 end
 
+-- Whether entry has a row in the active look: the wallpaper's only where the look draws one (looks/base.lua:124).
+-- A look that can't be read leaves the row in.
+local shown = guarded("look check", true, function(entry)
+    return entry.id ~= "wallpaper.file" or Looks.active().wallpaper.enabled
+end)
+
 -- The rows for group: its keys when any key has that group, else every key; in schema order,
 -- each group's last row but the list's last carrying a separator, drawn as a line before the next
--- (frontend/ui/widget/touchmenu.lua:715). A key of a type with no builder is left out.
+-- (frontend/ui/widget/touchmenu.lua:715). A key the look doesn't show, or of a type with no builder, is left out.
 function SchemaMenu.items(group)
     local cut = false
     for _, entry in ipairs(Schema.keys) do
@@ -280,7 +287,7 @@ function SchemaMenu.items(group)
     end
     local items, groups = {}, {}
     for _, entry in ipairs(Schema.keys) do
-        if not cut or entry.group == group then
+        if (not cut or entry.group == group) and shown(entry) then
             local build = BUILDERS[entry.type]
             if build then
                 local item = build(entry)

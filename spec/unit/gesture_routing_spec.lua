@@ -70,11 +70,13 @@ describe("gestures on the KoPanda home", function()
         harness.teardown()
     end)
 
-    -- Every schema key, in order: the full settings list.
+    -- Every schema key, in order, but the wallpaper's, which the default look draws none of: the full settings list.
     local function all_keys()
         local keys = {}
-        for i, entry in ipairs(require("schema").keys) do
-            keys[i] = entry.id
+        for _, entry in ipairs(require("schema").keys) do
+            if entry.id ~= "wallpaper.file" then
+                keys[#keys + 1] = entry.id
+            end
         end
         return keys
     end
