@@ -1,5 +1,5 @@
--- Served bundles for push_server.lua, written by a spec under a root: <root>/profiles.json, <root>/<id>/tree/plugin/...
--- (the plugin folder, with the spec's own files over it), <root>/<id>/tree/settings.lua and <root>/<id>/manifest.json
+-- Served bundles for push_server.lua, written by a spec under a root: <root>/<id>/tree/plugin/... (the plugin folder,
+-- with the spec's own files over it), <root>/<id>/tree/settings.lua and <root>/<id>/manifest.json
 -- ({ format, profile, hash, files = { { path, size, sha256 } } }). The manifest's hashes come from the plugin's own
 -- push_bundle.lua. The format is pinned against the studio by the shared vectors (spec/fixtures/push/,
 -- push_bundle_spec.lua and the studio's bundle test), so hashing here with the device's code only drives the flow.
@@ -39,8 +39,7 @@ local function list_files(dir, prefix, found)
 end
 
 -- Writes bundle { id, plugin_dir, settings, files } under root, files mapping paths under
--- plugin/ to the bytes that replace or join the plugin folder's, and profiles.json listing it.
--- Returns the manifest.
+-- plugin/ to the bytes that replace or join the plugin folder's. Returns the manifest.
 function M.write(root, bundle)
     local base = root .. "/" .. bundle.id
     local tree = base .. "/tree"
@@ -71,9 +70,6 @@ function M.write(root, bundle)
         files = files,
     }
     write_file(base .. "/manifest.json", rapidjson.encode(manifest))
-    write_file(root .. "/profiles.json", rapidjson.encode({
-        profiles = { { id = bundle.id, name = bundle.id, device = bundle.id } },
-    }))
     return manifest
 end
 

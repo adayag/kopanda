@@ -588,8 +588,9 @@ end
 
 Open it with a comment naming what it is. Delete `edit_address`, `choose_profile`, `pull` and the `studio_address` and
 `studio_profile` constants with `studio_menu.lua`. In `main.lua`, swap the require and the `studio` local, and reword
-the comment at `:488`: the row sits in both menus, so a device where KoPanda refused to start can still take a release.
-Swap `StudioMenu` in `settings_menu.lua`.
+the comment at `:488`: the row sits in both menus. A refused start can't end probation, so a release installed here
+rolls back at the next start unless the other shell is off before the restart that applies it. Swap `StudioMenu` in
+`settings_menu.lua`.
 
 Remove `PushPull.fetch_profiles` and its `push_pull_spec` cases. Remove `Guards.enabled_shell_names` and its
 `guards_spec` cases, and have `2-scenario-push-pull.lua:49` pass its own list. Update `HOOKS.md` at the lines above.

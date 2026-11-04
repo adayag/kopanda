@@ -699,30 +699,4 @@ describe("the pull", function()
             assert.is_false(PushPull.host_matches("github.com", {}))
         end)
     end)
-
-    describe("fetch_profiles", function()
-        it("lists the studio's profiles", function()
-            routes[BASE .. "/api/push/profiles"] = { 200,
-                '{"profiles":[{"id":"colorsoft","name":"Colorsoft","device":"kindle"},'
-                .. '{"id":"vector","name":"Vector"}]}' }
-            local profiles = assert(PushPull.fetch_profiles(ADDRESS))
-            assert.same({ { id = "colorsoft", name = "Colorsoft" }, { id = "vector", name = "Vector" } }, profiles)
-            assert.equals(BASE .. "/api/push/profiles", requests[1].url)
-        end)
-
-        it("says why when the studio can't be read", function()
-            routes[BASE .. "/api/push/profiles"] = function()
-                return nil, "connection refused"
-            end
-            local ok, message = PushPull.fetch_profiles(ADDRESS)
-            assert.is_nil(ok)
-            assert.truthy(message:find("connection refused", 1, true))
-            routes[BASE .. "/api/push/profiles"] = { 200, '{"profiles":"none"}' }
-            assert.is_nil((PushPull.fetch_profiles(ADDRESS)))
-            routes[BASE .. "/api/push/profiles"] = { 403, '{"error":"loopback only"}' }
-            ok, message = PushPull.fetch_profiles(ADDRESS)
-            assert.is_nil(ok)
-            assert.truthy(message:find("loopback only", 1, true))
-        end)
-    end)
 end)

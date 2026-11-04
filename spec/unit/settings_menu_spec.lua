@@ -146,10 +146,10 @@ describe("the settings menu", function()
     describe("the Updates section", function()
         local Dispatcher = require("dispatcher")
         local PluginLoader = require("pluginloader")
-        local StudioMenu
+        local UpdateMenu
 
         before_each(function()
-            StudioMenu = require("studio_menu")
+            UpdateMenu = require("update_menu")
         end)
 
         -- Storefront loaded with its action registered, for the rest of the test.
@@ -246,7 +246,7 @@ describe("the settings menu", function()
 
         it("checks for an update of the plugin's own folder, from the tick after the tap", function()
             local checked = {}
-            local s = stub(StudioMenu, "check_for_update", function(plugin)
+            local s = stub(UpdateMenu, "check_for_update", function(plugin)
                 checked[#checked + 1] = plugin
             end)
             finally(function()
@@ -259,7 +259,7 @@ describe("the settings menu", function()
             assert.truthy(checked[1].path:match("kopanda%.koplugin$"), checked[1].path)
         end)
 
-        it("names Settings, not the Studio menu, for a check that fails", function()
+        it("names Settings, not Tools, for a check that fails", function()
             local NetworkMgr = require("ui/network/manager")
             local ReleaseSource = require("release_source")
             local logged = {}

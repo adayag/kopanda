@@ -52,18 +52,6 @@ function Guards.conflicts()
     return conflicts
 end
 
--- The runtime names (folder names, case kept) of the enabled shell plugins, read afresh: what a
--- pull adds to plugins_disabled, matched there by exact name (frontend/pluginloader.lua:212).
--- {} when the list can't be read, logged.
-function Guards.enabled_shell_names()
-    local ok, names = pcall(enabled_shells)
-    if not ok then
-        logger.err("KoPanda: could not list the enabled shell plugins:", names)
-        return {}
-    end
-    return names
-end
-
 function Guards.refused()
     return #Guards.conflicts() > 0
 end

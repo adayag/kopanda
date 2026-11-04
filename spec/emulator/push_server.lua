@@ -6,7 +6,6 @@
 --
 -- Binds 127.0.0.1 on a port the system picks (common/socket.lua:27-40), writes the port to port_file once it
 -- listens, and answers one connection at a time, GET only, from what push_bundles.lua wrote under root:
---   /api/push/profiles                   <root>/profiles.json
 --   /api/push/<id>/manifest              <root>/<id>/manifest.json
 --   /api/push/<id>/files/<hash>/<path>   <root>/<id>/tree/<path>, for a path the manifest lists;
 --                                        409 { error, hash } when <hash> is not the manifest's
@@ -52,13 +51,6 @@ end
 
 -- status, content type and body for a GET of target.
 local function route(target)
-    if target == "/api/push/profiles" then
-        local text = read_file(root .. "/profiles.json")
-        if not text then
-            return not_found()
-        end
-        return 200, "application/json", text
-    end
     local id = target:match("^/api/push/([^/]+)/manifest$")
     if id then
         local found = bundle(id)

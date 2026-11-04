@@ -6,9 +6,9 @@
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Guards = require("guards")
 local SchemaMenu = require("menu")
-local StudioMenu = require("studio_menu")
 local TouchMenu = require("ui/widget/touchmenu")
 local UIManager = require("ui/uimanager")
+local UpdateMenu = require("update_menu")
 local logger = require("logger")
 local Screen = require("device").screen
 
@@ -34,7 +34,7 @@ local function updates(items)
     items[#items + 1] = {
         text = "Check for KoPanda update",
         callback = Guards.after_menu(check, function()
-            StudioMenu.check_for_update({ path = PLUGIN_DIR }, check)
+            UpdateMenu.check_for_update({ path = PLUGIN_DIR }, check)
         end),
     }
     local FileManager = package.loaded["apps/filemanager/filemanager"]

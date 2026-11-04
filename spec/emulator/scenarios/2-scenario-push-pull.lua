@@ -1,11 +1,11 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile
 -- by spec/emulator/push_spec.lua. Active when KOPANDA_PUSH_ADDRESS is set: once the file
 -- manager and KoPanda's modules are up it pulls KOPANDA_PUSH_PROFILE from the studio at that
--- address through the plugin's own pull (push_pull.lua), as Tools › KoPanda › Studio › Pull does
--- after its confirm, in the normal menu and in the refused one alike, then broadcasts Restart as
--- the restart offer does, which quits with 85. The emulator's Wi-Fi is off (driver.lua), so the
--- pull is called directly rather than through NetworkMgr:runWhenConnected. A failed pull logs
--- KOPANDA_SCENARIO: <message> and quits with status 5.
+-- address through the plugin's own pull (push_pull.lua), in a normal start and a refused one
+-- alike, then broadcasts Restart as the restart offer does, which quits with 85. The emulator's
+-- Wi-Fi is off (driver.lua), so the pull is called directly rather than through
+-- NetworkMgr:runWhenConnected. A failed pull logs KOPANDA_SCENARIO: <message> and quits with
+-- status 5.
 local address = os.getenv("KOPANDA_PUSH_ADDRESS")
 if not address or address == "" then
     return
@@ -38,15 +38,24 @@ local ok, err = pcall(function()
         error("KoPanda is not among the loaded plugins")
     end
 
+    -- The pull's disable list: the fixture shell, when this start has it enabled.
+    local function enabled_shell()
+        for _, plugin in ipairs(PluginLoader:loadPlugins()) do
+            if plugin.name == "ennui" then
+                return { plugin.name }
+            end
+        end
+        return {}
+    end
+
     local function pull()
         local PushPull = package.loaded.push_pull
-        local Guards = package.loaded.guards
         local pulled, why = PushPull.pull{
             address = address,
             profile = os.getenv("KOPANDA_PUSH_PROFILE"),
             data_dir = DataStorage:getDataDir(),
             plugin_dir = kopanda_path(),
-            disable = Guards.enabled_shell_names(),
+            disable = enabled_shell(),
         }
         if not pulled then
             error(why, 0)
@@ -58,7 +67,7 @@ local ok, err = pcall(function()
     local tries = 0
     local function wait_for_kopanda()
         tries = tries + 1
-        if FileManager.instance and package.loaded.push_pull and package.loaded.guards then
+        if FileManager.instance and package.loaded.push_pull then
             local run_ok, run_err = pcall(pull)
             if not run_ok then
                 fail(run_err)

@@ -23,10 +23,10 @@ local SearchScreen = require("search_screen")
 local SeriesScreen = require("series_screen")
 local State = require("state")
 local StatsScreen = require("stats_screen")
-local StudioMenu = require("studio_menu")
 local SubjectsScreen = require("subjects_screen")
 local Swatch = require("swatch")
 local UIManager = require("ui/uimanager")
+local UpdateMenu = require("update_menu")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
 local time = require("ui/time")
@@ -122,7 +122,8 @@ function KoPanda:init()
         -- The file manager makes instances with { ui = self }; the reader adds `document`.
         local in_fm = self.ui ~= nil and self.ui.document == nil
         -- With another shell enabled this instance does nothing but offer Tools › KoPanda ›
-        -- Swatches, a test pattern rather than part of the shell; every handler checks it first.
+        -- Check for update and Swatches, a test pattern rather than part of the shell; every
+        -- handler checks it first.
         if Guards.refused() then
             self.refused = true
             if in_fm then
@@ -482,14 +483,15 @@ function KoPanda:addToMainMenu(menu_items)
         text = "Swatches",
         callback = Guards.after_menu("Tools › KoPanda › Swatches", Swatch.show),
     }
-    -- The Studio's pull works from both menus: the first pull onto a device runs while another
-    -- shell is still enabled.
-    local studio = StudioMenu.item(self)
+    -- The row sits in both menus. A refused start can't end probation, so a release installed
+    -- here rolls back at the next start unless the other shell is off before the restart that
+    -- applies it.
+    local update = UpdateMenu.item(self)
     if self.refused then
         menu_items.kopanda = {
             text = "KoPanda",
             sorting_hint = "tools",
-            sub_item_table = { studio, swatches },
+            sub_item_table = { update, swatches },
         }
         return
     end
@@ -550,7 +552,7 @@ function KoPanda:addToMainMenu(menu_items)
                     return items
                 end,
             },
-            studio,
+            update,
             swatches,
         },
     }

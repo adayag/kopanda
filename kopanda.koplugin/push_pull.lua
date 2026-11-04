@@ -155,27 +155,6 @@ function PushPull.fetch_file(url, path)
     return ok, why, code
 end
 
--- The studio's profiles as { id, name } in its order, or nil and why.
-function PushPull.fetch_profiles(address)
-    local doc, why = PushPull.fetch_json(PushPull.base_url(address) .. "/api/push/profiles")
-    if not doc then
-        return nil, "Couldn't get the studio's profiles: " .. why
-    end
-    if type(doc) ~= "table" or type(doc.profiles) ~= "table" then
-        return nil, "The studio's answer lists no profiles."
-    end
-    local profiles = {}
-    for _, profile in ipairs(doc.profiles) do
-        if type(profile) == "table" and type(profile.id) == "string" then
-            profiles[#profiles + 1] = {
-                id = profile.id,
-                name = type(profile.name) == "string" and profile.name or profile.id,
-            }
-        end
-    end
-    return profiles
-end
-
 -- The running plugin's folder made absolute (on the Kindle the loader's path is relative,
 -- frontend/pluginloader.lua:24, :204), with doubled slashes collapsed (under KO_HOME it is
 -- <KO_HOME>/plugins//kopanda.koplugin, :196, :204) and trailing ones dropped.

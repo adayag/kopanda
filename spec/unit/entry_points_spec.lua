@@ -172,7 +172,7 @@ describe("KoPanda's entry points", function()
             return find(tools, "kopanda")
         end
 
-        it("is in the file manager's Tools with Home, Settings, Studio and Swatches", function()
+        it("is in the file manager's Tools with Home, Settings, Check for update and Swatches", function()
             local fm = harness.show_fm()
             fm.menu:onShowMenu()
             local item = kopanda_item(fm.menu.tab_item_table)
@@ -181,7 +181,7 @@ describe("KoPanda's entry points", function()
             assert.equals(4, #item.sub_item_table)
             assert.equals("Home", item.sub_item_table[1].text)
             assert.equals("Settings", item.sub_item_table[2].text)
-            assert.equals("Studio", item.sub_item_table[3].text)
+            assert.equals("Check for update", item.sub_item_table[3].text)
             assert.equals("Swatches", item.sub_item_table[4].text)
         end)
 
