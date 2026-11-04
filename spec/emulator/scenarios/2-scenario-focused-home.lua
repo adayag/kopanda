@@ -3,13 +3,13 @@
 -- keeps its default, on. On the first home's settled signal it runs the step KOPANDA_FOCUSED_STEP
 -- names, from the next tick:
 --   - "top" taps the top centre, inside KOReader's top menu zone (DTAP_ZONE_MENU, defaults.lua:59);
---     the capture is taken on the quick-settings sheet's own "sheet" settled signal;
 --   - "empty" taps the first point, scanned for in 10 px steps below the top menu zones
 --     (DTAP_ZONE_MENU_EXT, defaults.lua:60) and above the nav bar's band, outside the corner
---     eighths, that no tappable slot holds, waits two ticks and reports, as a "scenario" signal,
---     whether the home is still shown and on top, and the point.
+--     eighths, that no tappable slot holds.
+-- Each then waits two ticks and reports, as a "scenario" signal, whether the home is still shown and
+-- on top, whether the settings menu is on top, and the point: the settings menu emits no settled signal.
 -- Each tap carries the fields GestureRange:match reads (frontend/ui/gesturerange.lua:21-51). Any
--- failure is reported as a signal with error on the step's screen, so the spec fails with the message.
+-- failure is reported as a "scenario" signal with error, so the spec fails with the message.
 local logger = require("logger")
 
 local ok, err = pcall(function()
@@ -17,13 +17,13 @@ local ok, err = pcall(function()
     local Geom = require("ui/geometry")
     local UIManager = require("ui/uimanager")
     local Screen = require("device").screen
+    local TouchMenu = require("ui/widget/touchmenu")
     local time = require("ui/time")
 
     local step = os.getenv("KOPANDA_FOCUSED_STEP")
-    local screen = step == "top" and "sheet" or "scenario"
 
     local function report(args)
-        args.screen = screen
+        args.screen = "scenario"
         UIManager.event_hook:execute("KoPandaSettled", args)
     end
 
@@ -73,12 +73,22 @@ local ok, err = pcall(function()
         return guarded(function()
             local Home = package.loaded["home"]
             local top = UIManager:topdown_widgets_iter()()
+            local menu = top[1]
             report{
                 home_shown = Home.shown == shown,
                 home_on_top = top == shown,
+                -- The container holding a TouchMenu of one tab, which KOReader's own menus never are.
+                settings_on_top = getmetatable(menu) == TouchMenu and #menu.tab_item_table == 1,
                 tapped_x = x,
                 tapped_y = y,
             }
+        end)
+    end
+
+    local function tap_and_measure(shown, x, y)
+        tap(x, y)
+        UIManager:nextTick(function()
+            UIManager:nextTick(measure(shown, x, y))
         end)
     end
 
@@ -87,14 +97,11 @@ local ok, err = pcall(function()
         if step == "top" then
             local size = Screen:getSize()
             logger.info("KOPANDA_SCENARIO: tap the top centre")
-            tap(math.floor(size.w / 2), math.floor(size.h / 16))
+            tap_and_measure(shown, math.floor(size.w / 2), math.floor(size.h / 16))
         elseif step == "empty" then
             local x, y = empty_point(shown)
             logger.info("KOPANDA_SCENARIO: tap an empty spot at", x, y)
-            tap(x, y)
-            UIManager:nextTick(function()
-                UIManager:nextTick(measure(shown, x, y))
-            end)
+            tap_and_measure(shown, x, y)
         else
             error("unknown KOPANDA_FOCUSED_STEP " .. tostring(step))
         end

@@ -1,8 +1,8 @@
--- The library's gestures: the nav bar's band; a tap on a book, a folder, the title, a picker or a pager arrow; a west
--- or east swipe, but not one in the top or bottom edge band; the page keys; with focused mode on, the top zone's tap
--- or swipe down (the quick-settings sheet) and hold (the file manager's menu); a hold; and everything else to the file
--- manager's menu zones and the zones on the file manager, the rest consumed. Library.hit names what lies under a
--- point. KOReader's touch lock filters the library's own zones.
+-- The library's gestures: the nav bar's band; a tap on a book, a folder, the title, a picker or a pager arrow; a swipe
+-- up from the bottom edge (the quick-settings sheet); a west or east swipe, but not one in the top or bottom edge band;
+-- the page keys; with focused mode on, the top zone's tap or swipe down (the settings menu) and hold (the file
+-- manager's menu); a hold; and everything else to the file manager's menu zones and the zones on the file manager, the
+-- rest consumed. Library.hit names what lies under a point. KOReader's touch lock filters the library's own zones.
 describe("gestures on the library", function()
     local harness = require("plugin_harness")
     local fixture = require("library_fixture")
@@ -341,23 +341,32 @@ describe("gestures on the library", function()
             Sheet = package.loaded["sheet"]
         end)
 
-        it("opens the quick-settings sheet over the library on a tap or a swipe down at the top centre", function()
+        it("opens the settings menu with no group on a tap or a swipe down at the top centre", function()
             install()
             local library, fm = fixture.show()
+            local opened = spy(package.loaded["settings_menu"], "open")
             local x = Screen:getWidth() / 2
             send(harness.gesture("tap", x, 2))
-            assert.equals("quick_settings", Sheet.shown and Sheet.shown.spec.name)
-            assert.equals(Sheet.shown, harness.top())
-            assert.equals(library, harness.top(2))
-            -- Over the library, the sheet's failure closes the library (nav_bar.lua's quick settings opener).
-            assert.equals(Library, Sheet.shown.beneath)
-            assert.is_nil(fm.menu.menu_container)
-            Sheet.close()
             send(swipe(x, 2, "south"))
-            assert.equals("quick_settings", Sheet.shown and Sheet.shown.spec.name)
-            assert.equals(library, harness.top(2))
+            assert.same({ {}, {} }, opened)
+            assert.is_nil(Sheet.shown)
             assert.is_nil(fm.menu.menu_container)
-            assert.equals(library, Library.shown)
+            assert.equals(library, harness.top())
+        end)
+
+        it("drops the library's walked books before a top tap opens the settings menu over the window", function()
+            install()
+            fixture.show()
+            local order = {}
+            local forgotten = spy(package.loaded["library_chrome"], "forget_books", function()
+                order[#order + 1] = "forget"
+            end)
+            spy(package.loaded["settings_menu"], "open", function()
+                order[#order + 1] = "open"
+            end)
+            send(harness.gesture("tap", Screen:getWidth() / 2, 2))
+            assert.equals(1, #forgotten)
+            assert.same({ "forget", "open" }, order)
         end)
 
         it("opens the file manager's menu over the library on a hold at the top centre, and no sheet", function()
@@ -438,6 +447,30 @@ describe("gestures on the library", function()
             send(top)
             assert.equals(1, library.page)
             assert.same({ bottom, top }, got)
+        end)
+
+        it("up from the bottom edge opens the quick-settings sheet over the library", function()
+            install()
+            local library = fixture.show()
+            local size = Screen:getSize()
+            send(swipe(size.w / 2, size.h * 15 / 16, "north"))
+            local Sheet = package.loaded["sheet"]
+            assert.equals("quick_settings", Sheet.shown and Sheet.shown.spec.name)
+            assert.equals(Sheet.shown, harness.top())
+            assert.equals(library, harness.top(2))
+            -- Over the library, the sheet's failure closes the library (nav_bar.lua's quick settings opener).
+            assert.equals(Library, Sheet.shown.beneath)
+        end)
+
+        it("up from mid-screen or inside a side band opens no sheet", function()
+            install()
+            local library = fixture.show()
+            local size = Screen:getSize()
+            send(swipe(size.w / 2, size.h / 2, "north"))
+            send(swipe(size.w / 16, size.h * 15 / 16, "north"))
+            send(swipe(size.w * 15 / 16, size.h * 15 / 16, "north"))
+            assert.is_nil(package.loaded["sheet"].shown)
+            assert.equals(library, harness.top())
         end)
     end)
 
@@ -601,8 +634,10 @@ describe("gestures on the library", function()
             send(harness.gesture("tap", bar.dimen.x + bar.dimen.w - 5, bar.dimen.y + 5))
             local size = Screen:getSize()
             send(swipe(size.w / 2, size.h / 2, "west"))
+            send(swipe(size.w / 2, size.h * 15 / 16, "north"))
             assert.same({}, opened)
             assert.same({}, runs)
+            assert.is_nil(package.loaded["sheet"].shown)
             assert.same({ ROOT, 1 }, { library.dir, library.page })
             assert.equals(library, harness.top())
         end)

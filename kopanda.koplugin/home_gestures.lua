@@ -64,7 +64,7 @@ function HomeGestures.own_zones(home)
             screen_zone = FULL_SCREEN,
             handler = function(ges)
                 if is_swipe_up_from_bottom(ges) then
-                    home.own_step = "settings"
+                    home.own_step = "quick"
                     return true
                 end
             end,
@@ -134,11 +134,23 @@ local function hold(home, ges)
     return true
 end
 
+-- The bottom-edge step, shared by the home and the chrome windows (library_chrome.lua): with a file manager up, a
+-- swipe up from the bottom edge opens the quick-settings sheet over where (a nav bar's where, or a bar-less window's
+-- screen). Whether one consumed ges.
+function HomeGestures.bottom_swipe(ges, where)
+    local FileManager = package.loaded["apps/filemanager/filemanager"]
+    if not (FileManager and FileManager.instance) or not is_swipe_up_from_bottom(ges) then
+        return false
+    end
+    NavBar.open_quick_settings(where, "the bottom edge")
+    return true
+end
+
 -- The top-edge step, shared by the home and the library (library_chrome.lua): with focused mode on and a file
--- manager up, a tap or a swipe down in the top menu zones opens the quick-settings sheet over where (a nav bar's
--- where), each only as KOReader's activate_menu lets the file manager's menu open on it
--- (filemanagermenu.lua:1102-1114), and a hold there opens that menu. Whether one consumed ges.
-function HomeGestures.focused_top(ges, where)
+-- manager up, a tap or a swipe down in the top menu zones opens the settings menu, each only as KOReader's
+-- activate_menu lets the file manager's menu open on it (filemanagermenu.lua:1102-1114), and a hold there opens
+-- that menu. Whether one consumed ges.
+function HomeGestures.focused_top(ges)
     if not in_menu_zone(ges.pos) or not Focused.on() then
         return false
     end
@@ -154,7 +166,10 @@ function HomeGestures.focused_top(ges, where)
     local activation = menu.activation_menu
     if (ges.ges == "tap" and activation ~= "swipe")
         or (ges.ges == "swipe" and ges.direction == "south" and activation ~= "tap") then
-        NavBar.open_quick_settings(where, "the top edge")
+        -- Settings opens over the window, so its books are left to be walked again, as NavBar.run leaves them. Required
+        -- now, as it requires this module.
+        require("library_chrome").forget_books()
+        SettingsMenu.open()
         return true
     end
     return false
@@ -191,8 +206,7 @@ function HomeGestures.route(home, ges, close)
     InputContainer.onGesture(home, ges)
     local own_step = home.own_step
     home.own_step = nil
-    if own_step == "settings" then
-        SettingsMenu.open()
+    if own_step == "quick" and HomeGestures.bottom_swipe(ges, "home") then
         return true
     end
     if (own_step == "tap" or own_step == "hold") and home.nav and home.nav:handle(ges) then
@@ -201,7 +215,7 @@ function HomeGestures.route(home, ges, close)
     if own_step == "page" then
         return true
     end
-    if (own_step == "top" or own_step == "hold") and HomeGestures.focused_top(ges, "home") then
+    if (own_step == "top" or own_step == "hold") and HomeGestures.focused_top(ges) then
         return true
     end
     if HomeGestures.forward(ges) then

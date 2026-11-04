@@ -1,7 +1,8 @@
 -- The Series and Authors windows' gestures, in the chrome's order: the nav bar's band; a tap on a series or author row,
 -- a book row or tile, the back control or a pager arrow; "Under way first" and "By surname" inert, so their taps reach
--- the file manager's menu zones; a west or east swipe, but not one in the top or bottom edge band; the page keys; a
--- hold consumed; and everything else to the zones on the file manager. SeriesScreen.hit and AuthorsScreen.hit name
+-- the file manager's menu zones; a swipe up from the bottom edge (the quick-settings sheet); a west or east swipe, but
+-- not one in the top or bottom edge band; the page keys; a hold consumed; and everything else to the zones on the file
+-- manager. SeriesScreen.hit and AuthorsScreen.hit name
 -- what lies under a point. KOReader's touch lock filters the windows' own zones.
 local harness = require("plugin_harness")
 local fixture = require("shelf_fixture")
@@ -216,6 +217,21 @@ for _, w in ipairs(SHELVES) do
             assert.equals(screen, harness.top())
         end)
 
+        it("opens quick settings with where " .. w.where .. " on a swipe up from the bottom edge, and on no other "
+            .. "swipe up", function()
+            w.install()
+            local screen = w.show()
+            local opened = spy(NavBar, "open_quick_settings")
+            local size = Screen:getSize()
+            send(swipe(size.w / 2, size.h / 2, "north"))
+            send(swipe(size.w / 16, size.h * 15 / 16, "north"))
+            send(swipe(size.w * 15 / 16, size.h * 15 / 16, "north"))
+            assert.same({}, opened)
+            send(swipe(size.w / 2, size.h * 15 / 16, "north"))
+            assert.same({ { w.where, "the bottom edge" } }, opened)
+            assert.equals(screen, harness.top())
+        end)
+
         describe("a tap", function()
             it("on " .. w.a_row .. " shows that " .. w.one .. " at " .. w.its .. " first page", function()
                 w.install()
@@ -285,16 +301,17 @@ for _, w in ipairs(SHELVES) do
                 assert.equals(screen, harness.top(2))
             end)
 
-            it("on " .. w.label .. " is the header's empty space and opens the quick-settings sheet, with focused "
-                .. "mode on", function()
+            it("on " .. w.label .. " is the header's empty space and opens the settings menu with no group, with "
+                .. "focused mode on", function()
                 w.install()
                 local screen, fm = w.show()
+                local opened = spy(package.loaded["settings_menu"], "open")
                 tap_on(screen.header.right[1])
-                local Sheet = package.loaded["sheet"]
                 assert.same(LIST, screen.showing)
-                assert.equals("quick_settings", Sheet.shown and Sheet.shown.spec.name)
-                assert.equals(screen, harness.top(2))
+                assert.same({ {} }, opened)
+                assert.is_nil(package.loaded["sheet"].shown)
                 assert.is_nil(fm.menu.menu_container)
+                assert.equals(screen, harness.top())
             end)
 
             it("on a live pager arrow turns the page" .. (w.detail_pages and ", in the list and one " .. w.one or "")

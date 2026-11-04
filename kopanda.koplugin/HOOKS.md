@@ -191,10 +191,11 @@ Upgrading KOReader walks this list.
   at gesture time, in `home_gestures.lua`. The home's own zones (touch lock entry below) cover
   the screen at the home's build size and test these bands in their handlers.
 - Screen ratios. A tap inside the top menu zones leaves the home up. The swipe up that
-  opens the settings menu starts in the bottom edge band and outside the left and right bands,
-  where Gestures binds frontlight and warmth swipes by default
+  opens the quick-settings sheet, on the home and on a chrome window, starts in the bottom edge
+  band and outside the left and right bands, where Gestures binds frontlight and warmth swipes by default
   (`plugins/gestures.koplugin/defaults.lua:14-17`; it binds nothing to a bottom-edge swipe up,
-  `:20-21`). A west or east swipe outside the top and bottom bands is consumed.
+  `:20-21`), and it takes nothing with no `FileManager.instance`, so the Go to screen over the
+  reader opens no sheet. A west or east swipe outside the top and bottom bands is consumed.
 
 ### `PluginLoader:loadPlugins()` and plugin names, the coexistence check
 
@@ -515,7 +516,7 @@ The LuaSocket, LuaSec and archiver files below are the emulator build's own copi
   its comment at `:311-321` notes that a subclass overriding `onGesture` escapes the swap);
   `frontend/ui/uimanager.lua:142-145` (`UIManager:setIgnoreTouchInput`), `:268-271` (`show`
   lifts the lock for the widget shown).
-- The home overrides `onGesture`, so its own steps, the swipe up to the settings menu, the
+- The home overrides `onGesture`, so its own steps, the swipe up to the quick-settings sheet, the
   closing tap, the top zone and the hold, are touch zones on the home (`kopanda_home_swipe_up`,
   `kopanda_home_tap`, `kopanda_home_top_swipe`, `kopanda_home_hold`, made in `home_gestures.lua`) run through
   `InputContainer.onGesture(home, ges)`: under the lock they match nothing and the settings
@@ -1725,7 +1726,7 @@ touch lock still holds.
   zones calls `fm.menu:onShowMenu()` with no tab index, so the menu opens on the tab it was last closed on
   (`filemanagermenu_tab_index`, `:1021`); the location-to-tab helper (`:1083-1100`) is private and not called.
 - `activation_menu` (`filemanagermenu.lua:51`, `G_reader_settings`' `activate_menu` or `"swipe_tap"`, kept current
-  by `frontend/ui/elements/menu_activate.lua:16`, `:30`): a top tap opens the quick-settings sheet unless it is
+  by `frontend/ui/elements/menu_activate.lua:16`, `:30`): a top tap opens the settings menu unless it is
   `"swipe"`, a top swipe south unless it is `"tap"`, as `onTapShowMenu` and `onSwipeShowMenu` open the file
   manager's menu (`:1102-1114`); what it rules out passes on to the forward step.
 - With no file manager the rule takes nothing: opening a book closes it (`frontend/apps/reader/readerui.lua:793-794`,

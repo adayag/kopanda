@@ -2,7 +2,7 @@
 -- the current chapter, the top level shown and the current chapter's parents open, or on Bookmarks without chapters,
 -- with a note for an empty tab; a chip switches the tab; a parent's toggle opens or closes it in place; a tap
 -- elsewhere on a row closes the screen, then jumps; a hold on a bookmark offers Remove bookmark, and nothing on a
--- chapter; its top edge opens nothing; and it never builds a nav bar.
+-- chapter; its top and bottom edges open nothing; and it never builds a nav bar.
 describe("the Go to screen", function()
     local harness = require("plugin_harness")
     local text_of = require("library_fixture").text
@@ -409,6 +409,22 @@ describe("the Go to screen", function()
         swipe.distance = Screen:scaleBySize(300)
         UIManager:sendEvent(Event:new("Gesture", swipe))
         send("hold", x, 2)
+        harness.tick(2)
+        assert.is_nil(Sheet.shown)
+        assert.equals(screen, GotoScreen.shown)
+        assert.equals(screen, harness.top())
+        assert.same({}, ui.calls)
+    end)
+
+    -- With no file manager the bottom-edge step takes nothing either; quick settings has its own door here.
+    it("opens no sheet on a swipe up from the bottom edge", function()
+        assert.is_nil(require("apps/filemanager/filemanager").instance)
+        local ui = fake_ui(5, 1)
+        local screen = show(ui)
+        local swipe = harness.gesture("swipe", Screen:getWidth() / 2, Screen:getHeight() * 15 / 16)
+        swipe.direction = "north"
+        swipe.distance = Screen:scaleBySize(300)
+        UIManager:sendEvent(Event:new("Gesture", swipe))
         harness.tick(2)
         assert.is_nil(Sheet.shown)
         assert.equals(screen, GotoScreen.shown)
