@@ -10,6 +10,14 @@ local Layout = {}
 -- The screen lengths are scaled for; a spec puts a screen of another size here.
 Layout.screen = require("device").screen
 
+-- The home's rows, top to bottom; each row's slots, left to right, take its width by share.
+Layout.rows = {
+    { { widget = "date", share = 1 }, { widget = "clock", share = 1 } },
+    { { widget = "featured", share = 1 } },
+    { { widget = "quote", share = 1 } },
+    { { widget = "launcher", share = 1 } },
+}
+
 local function scale(px)
     return Layout.screen:scaleBySize(px)
 end
@@ -169,10 +177,9 @@ local function align_bottom(slots, content_h, ctx)
     return content_h
 end
 
--- The whole home for layout rows under ctx ({ look, screen, ... }): every row's height, the rows that fit with their
--- slots measured and placed, the dropped row indexes, and the header and footer chrome, in device pixels. A slot
--- whose widget has no module or whose height raises measures 0 (slot.error); a look with plates puts row 1 and
--- each widget whose plate.slots entry is a table on a plate, the widget drawn pad_x and pad_y inside it.
+-- The whole home for rows under ctx ({ look, screen, ... }): measured heights, the rows that fit with slots placed, the
+-- dropped row indexes and the chrome, in device pixels. The quote's row drops first, staying as an empty row, then rows
+-- from the end. A slot that fails to measure reads 0 (slot.error); plates go round row 1 and plate.slots' widgets.
 local function arrange(rows, ctx, placer)
     local home = ctx.look.home
     local header = home.header
@@ -234,8 +241,30 @@ local function arrange(rows, ctx, placer)
     end
 
     local first_gap = header.rule_color and 0 or nil
-    local ys, dropped = placer(heights, above, home.margin, home.row_gap, home.free_space, footer_height(home),
-        first_gap)
+    local spans = { unpack(heights) }
+    local function fit(placement)
+        return placement(spans, above, home.margin, home.row_gap, home.free_space, footer_height(home), first_gap)
+    end
+    local _, overflowing = fit(place)
+    local quote_row
+    if #overflowing > 0 then
+        for i, row in ipairs(measured) do
+            if row.h > 0 and row.slots[1] and row.slots[1].widget == "quote" then
+                quote_row = i
+                measured[i] = { slots = {}, h = 0, content_top = 0, content_h = 0 }
+                spans[i] = 0
+                break
+            end
+        end
+    end
+    local ys, dropped = fit(placer)
+    -- The quote's row sits among the kept rows, so it comes before any row still dropped.
+    if quote_row and not (dropped[1] and dropped[1] <= quote_row) then
+        table.insert(dropped, 1, quote_row)
+        if placer == Layout.place then
+            logger.warn("KoPanda: the quote doesn't fit the screen and is left out")
+        end
+    end
     local arranged = {
         width = width,
         height = height,

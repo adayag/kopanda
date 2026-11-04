@@ -1,6 +1,6 @@
 -- The row engine's maths: column widths by share, rows stacked from the top margin with the
--- free height where the look puts it, rows dropped from the end when they overflow, Layout.fits
--- in agreement with the placement, and the text size scale.
+-- free height where the look puts it, the quote's row leaving first and then rows from the end when
+-- they overflow, Layout.fits in agreement with the placement, and the text size scale.
 describe("Layout", function()
     require("plugin_harness")
     local Screen = require("device").screen
@@ -207,7 +207,7 @@ describe("Layout", function()
         local function stub_widgets()
             heights = {}
             local stubs = {}
-            for _, id in ipairs({ "date", "clock", "weather", "quote", "stats" }) do
+            for _, id in ipairs({ "date", "clock", "weather", "quote", "stats", "featured", "launcher" }) do
                 stubs[id] = {
                     id = id,
                     height = function()
@@ -298,12 +298,12 @@ describe("Layout", function()
             end
         end)
 
-        it("drops the last row of a layout that fits the full height but not the height less the band", function()
+        it("drops the quote from a layout that fits the full height but not the height less the band", function()
             for _, look in ipairs({ editorial, diner }) do
                 local c = ctx(look, 1264, 1680)
                 local home = look.home
                 local first_gap = home.header.rule_color and 0 or nil
-                heights = { date = 60, clock = 60, quote = 100, weather = 20, stats = 20 }
+                heights = { date = 60, clock = 60, quote = 300, weather = 20, stats = 20 }
                 local fixed = Layout.arrange(default, c).heights
                 -- The weather row's height that fills the full height exactly, and so overflows
                 -- the height less the band.
@@ -314,7 +314,7 @@ describe("Layout", function()
                 local _, full = Layout.place(Layout.arrange(default, c).heights, 1680, home.margin, home.row_gap,
                     home.free_space, 0, first_gap)
                 assert.same({}, full, "the layout fits the full height")
-                assert.same({ 3 }, Layout.arrange(default, c).dropped)
+                assert.same({ 2 }, Layout.arrange(default, c).dropped)
                 assert.equals(1, Layout.overflow(default, c))
                 assert.is_false(Layout.fits(default, c))
             end
@@ -487,7 +487,7 @@ describe("Layout", function()
                         home.free_space, footer, first_gap)
                     local fits = Layout.fits(default, c)
                     assert.equals(#dropped == 0, fits, quote)
-                    assert.same(dropped, arranged.dropped, quote)
+                    assert.same(#dropped == 0 and {} or { 2 }, arranged.dropped, quote)
                     if previous ~= nil and previous ~= fits then
                         flipped = true
                     end
@@ -529,14 +529,163 @@ describe("Layout", function()
             local c = ctx(diner, 1680, 1264)
             local ok, arranged = pcall(Layout.arrange, default, c)
             assert.is_true(ok, tostring(arranged))
-            assert.same({ 3 }, arranged.dropped)
+            assert.same({ 2 }, arranged.dropped)
             assert.is_false(Layout.fits(default, c))
             local s = function(px) return Layout.screen:scaleBySize(px) end
-            for i, row in ipairs(arranged.rows) do
-                local last = row.slots[#row.slots]
+            for _, i in ipairs({ 1, 3 }) do
+                local slots = arranged.rows[i].slots
+                local last = slots[#slots]
                 local inset = i == 1 and s(diner.home.header.padding.side) or s(diner.home.margin.side)
                 assert.equals(1680 - inset, last.x + last.w)
             end
+        end)
+
+        -- Layout.rows under stub heights, in Editorial, which spreads the free height over the gaps, and in Diner,
+        -- which leaves it at the foot.
+        describe("the home's rows on a screen too short for them", function()
+            local warned
+
+            before_each(function()
+                warned = spy.on(logger, "warn")
+            end)
+
+            after_each(function()
+                warned:revert()
+            end)
+
+            -- How many warnings hold text.
+            local function warnings(text)
+                local count = 0
+                for _, call in ipairs(warned.calls) do
+                    if tostring(call.vals[1]):find(text, 1, true) then
+                        count = count + 1
+                    end
+                end
+                return count
+            end
+
+            local function gap(look)
+                return Layout.screen:scaleBySize(look.home.row_gap)
+            end
+
+            -- The bottom edge the last row sits on, above the footer and the bar.
+            local function floor_y(look)
+                local home = look.home
+                local footer = home.footer.height > 0 and home.footer.height + home.footer.edge_width or 0
+                return 1680 - BAR - Layout.screen:scaleBySize(home.margin.bottom)
+                    - Layout.screen:scaleBySize(footer)
+            end
+
+            -- The quote's height that fills the space above the bar exactly, under heights without a quote.
+            local function exact_quote(look, c)
+                local home = look.home
+                local measured = Layout.arrange(Layout.rows, c).heights
+                local ys = Layout.place(measured, 1680, home.margin, home.row_gap, "before_footer", 0,
+                    home.header.rule_color and 0 or nil)
+                return floor_y(look) - (ys[4] + measured[4]) - gap(look)
+            end
+
+            local function in_both_looks(fn)
+                for _, look in ipairs({ editorial, diner }) do
+                    heights = { date = 60, clock = 60, featured = 200, launcher = 150 }
+                    local c = ctx(look, 1264, 1680)
+                    fn(look, c, exact_quote(look, c))
+                end
+            end
+
+            it("keeps all four rows where they fill the screen exactly", function()
+                in_both_looks(function(_, c, exact)
+                    heights.quote = exact
+                    local arranged = Layout.arrange(Layout.rows, c)
+                    assert.same({}, arranged.dropped)
+                    assert.equals("quote", arranged.rows[3].slots[1].widget)
+                    assert.equals("launcher", arranged.rows[4].slots[1].widget)
+                    assert.is_true(Layout.fits(Layout.rows, c))
+                    assert.equals(0, warnings("doesn't fit"))
+                end)
+            end)
+
+            it("drops the quote's row one pixel past that, the launcher staying, logged once", function()
+                in_both_looks(function(look, c, exact)
+                    warned:clear()
+                    heights.quote = exact + 1
+                    local arranged = Layout.arrange(Layout.rows, c)
+                    assert.same({ 3 }, arranged.dropped)
+                    assert.same({}, arranged.rows[3].slots)
+                    assert.equals(0, arranged.rows[3].h)
+                    assert.equals("launcher", arranged.rows[4].slots[1].widget)
+                    if look.home.free_space == "between_rows" then
+                        assert.equals(floor_y(look), arranged.rows[4].y + arranged.rows[4].h)
+                    end
+                    assert.equals(1, warnings("the quote doesn't fit"))
+                    assert.equals(0, warnings("home row"))
+                end)
+            end)
+
+            it("counts the dropped quote as left out, unlogged", function()
+                in_both_looks(function(_, c, exact)
+                    warned:clear()
+                    heights.quote = exact + 1
+                    assert.equals(1, Layout.overflow(Layout.rows, c))
+                    assert.is_false(Layout.fits(Layout.rows, c))
+                    assert.equals(0, warnings("doesn't fit"))
+                end)
+            end)
+
+            it("moves the launcher up under the featured book where the look leaves the free height at the foot",
+                function()
+                heights = { date = 60, clock = 60, featured = 200, quote = 2000, launcher = 150 }
+                local rows = Layout.arrange(Layout.rows, ctx(diner, 1264, 1680)).rows
+                assert.equals(rows[2].y + rows[2].h + gap(diner), rows[4].y)
+            end)
+
+            it("keeps the quote's measured height in heights once it drops", function()
+                in_both_looks(function(_, c, exact)
+                    heights.quote = exact + 1
+                    assert.equals(exact + 1, Layout.arrange(Layout.rows, c).heights[3])
+                end)
+            end)
+
+            it("drops the last row as well only where the rows are too tall without the quote", function()
+                in_both_looks(function(look, c, exact)
+                    warned:clear()
+                    heights.quote = 100
+                    heights.launcher = heights.launcher + exact + gap(look)
+                    assert.same({ 3 }, Layout.arrange(Layout.rows, c).dropped)
+                    heights.launcher = heights.launcher + 1
+                    warned:clear()
+                    local arranged = Layout.arrange(Layout.rows, c)
+                    assert.same({ 3, 4 }, arranged.dropped)
+                    assert.equals(2, Layout.overflow(Layout.rows, c))
+                    assert.equals(1, warnings("the quote doesn't fit"))
+                    assert.equals(1, warnings("home row 4 "))
+                    assert.equals(0, warnings("home row 3 "))
+                end)
+            end)
+
+            it("lists and logs each row once where rows 1 and 2 alone overflow", function()
+                in_both_looks(function(_, c)
+                    warned:clear()
+                    heights.quote, heights.featured = 100, 2000
+                    assert.same({ 2, 3, 4 }, Layout.arrange(Layout.rows, c).dropped)
+                    assert.equals(3, Layout.overflow(Layout.rows, c))
+                    assert.equals(1, warnings("home row 2 "))
+                    assert.equals(1, warnings("home row 3 "))
+                    assert.equals(1, warnings("home row 4 "))
+                    assert.equals(0, warnings("the quote doesn't fit"))
+                end)
+            end)
+
+            it("leaves a quote that measures 0 in its row, dropping the last row alone", function()
+                in_both_looks(function(_, c)
+                    warned:clear()
+                    heights.quote, heights.launcher = 0, 2000
+                    local arranged = Layout.arrange(Layout.rows, c)
+                    assert.same({ 4 }, arranged.dropped)
+                    assert.equals("quote", arranged.rows[3].slots[1].widget)
+                    assert.equals(0, warnings("the quote doesn't fit"))
+                end)
+            end)
         end)
 
         it("leaves margins and gaps alone at every text size", function()
