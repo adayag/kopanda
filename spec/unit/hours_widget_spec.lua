@@ -1,5 +1,5 @@
--- The hours widget: 24 bars of the last 12 weeks' reading per hour of day, scaled to the busiest hour, the busy
--- ones in the high colour, captioned at midnight, 6, noon and 18 in KOReader's clock format.
+-- The hours widget: the busiest part of the day over 24 bars of the last 12 weeks' reading per hour of day, scaled to
+-- the busiest hour, the busy ones in the high colour, captioned at midnight, 6, noon and 18 in KOReader's clock format.
 describe("the hours widget", function()
     require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
@@ -60,6 +60,14 @@ describe("the hours widget", function()
         return c.r == want.r and c.g == want.g and c.b == want.b
     end
 
+    -- The height the headline adds above the chart, its value at the part's size.
+    local function headline_height(ctx)
+        local scale = Paint.scaler(ctx)
+        local look = ctx.look
+        return Typeset.line_height(look.type.insight_value, ctx) + scale(look.insights.value_gap)
+            + Typeset.line_height(look.type.insight_caption, ctx) + scale(look.insights.label_gap)
+    end
+
     -- The widget built at width under ctx, painted on a fresh buffer, and its chart's geometry in that buffer:
     -- x of hour h's bar, its width, the chart's bottom (one past its last row) and height.
     local function painted(width, ctx)
@@ -74,6 +82,7 @@ describe("the hours widget", function()
         local inner_w = InsightTile.inner_width(width, ctx)
         local bar_w = math.floor((inner_w - 23 * gap) / 24)
         local top = inset + Typeset.line_height(look.type.insight_label, ctx) + scale(look.insights.label_gap)
+            + (widget.headline and headline_height(ctx) or 0)
         local chart = scale(look.insights.chart_height)
         local geometry = {
             bar_w = bar_w,
@@ -186,7 +195,7 @@ describe("the hours widget", function()
         widget:free()
     end)
 
-    it("is the chrome, the label line, the chart, the gap and a caption line tall", function()
+    it("is the chrome, the label line, the headline, the chart, the gap and a caption line tall", function()
         local ctx = ctx_for("diner")
         local scale = Paint.scaler(ctx)
         assert.equals(10, scale(10))
@@ -196,11 +205,18 @@ describe("the hours widget", function()
         local chrome = 2 * (scale(look.stroke.outline) + scale(look.insights.padding)) + scale(look.shadow.tile.y)
         local expected = chrome + label_h + scale(look.insights.label_gap) + scale(look.insights.chart_height)
             + scale(look.insights.label_gap) + caption_h
-        assert.equals(expected, Hours.height(520, ctx))
+        assert.equals(expected + headline_height(ctx), Hours.height(520, ctx))
         local widget = Hours.build(520, ctx)
-        assert.equals(expected, widget:getSize().h)
+        assert.equals(expected + headline_height(ctx), widget:getSize().h)
         assert.equals(520, widget:getSize().w)
         widget:free()
+
+        fixture = insights_with({})
+        assert.equals(expected, Hours.height(520, ctx))
+        local empty = Hours.build(520, ctx)
+        assert.is_nil(empty.headline)
+        assert.equals(expected, empty:getSize().h)
+        empty:free()
     end)
 
     it("reads the last 12 weeks in its aside, or that nothing is read yet", function()
@@ -236,22 +252,105 @@ describe("the hours widget", function()
         widget:free()
     end)
 
-    it("frees its caption lines once, on free or on close", function()
+    it("frees its headline and caption lines once, on free or on close", function()
         local ctx = ctx_for("diner")
         for _, close in ipairs({ "free", "onCloseWidget" }) do
             local widget = Hours.build(520, ctx)
-            local freed = 0
+            local lines = { widget.headline.value, widget.headline.caption }
             for _, caption in ipairs(widget.captions) do
-                local free = caption.line.free
-                caption.line.free = function(self)
+                lines[#lines + 1] = caption.line
+            end
+            local freed = 0
+            for _, line in ipairs(lines) do
+                local free = line.free
+                line.free = function(self)
                     freed = freed + 1
                     return free(self)
                 end
             end
             widget[close](widget)
             widget:free()
-            assert.equals(4, freed)
+            assert.equals(6, freed)
         end
+    end)
+
+    describe("the headline", function()
+        local function headline(seconds)
+            return Hours.headline(insights_with(seconds).hours)
+        end
+
+        it("names the busiest part of the day, its share of the reading and the busiest hour", function()
+            assert.same({ part = "Evenings", share = 62, peak = 20 }, headline({
+                [7] = 190, [8] = 190, [17] = 100, [18] = 100, [19] = 100, [20] = 220, [21] = 100,
+            }))
+        end)
+
+        it("divides the day at 5, 12, 17 and 22", function()
+            local parts = { [4] = "Nights", [5] = "Mornings", [11] = "Mornings", [12] = "Afternoons",
+                [16] = "Afternoons", [17] = "Evenings", [21] = "Evenings", [22] = "Nights" }
+            for hour, part in pairs(parts) do
+                assert.equals(part, headline({ [hour] = 600 }).part, hour)
+            end
+        end)
+
+        it("gives a tie to the earlier part", function()
+            assert.equals("Mornings", headline({ [8] = 600, [19] = 600 }).part)
+        end)
+
+        it("is nil with no reading", function()
+            assert.is_nil(headline({}))
+        end)
+
+        it("reads an hour in KOReader's clock format", function()
+            assert.equals("20:00", Hours.clock(20))
+            assert.equals("08:00", Hours.clock(8))
+            G_reader_settings:saveSetting("twelve_hour_clock", true)
+            assert.equals("8 pm", Hours.clock(20))
+            assert.equals("8 am", Hours.clock(8))
+            assert.equals("Midnight", Hours.clock(0))
+            assert.equals("Noon", Hours.clock(12))
+        end)
+
+        it("sets the part over its share and peak, above the bars", function()
+            fixture = insights_with({
+                [7] = 190, [8] = 190, [17] = 100, [18] = 100, [19] = 100, [20] = 220, [21] = 100,
+            })
+            local ctx = ctx_for("diner")
+            local widget = Hours.build(520, ctx)
+            assert.equals("Evenings", widget.headline.value.text)
+            assert.equals("62% of your reading, peak 20:00", widget.headline.caption.text)
+            local bb, g, again = painted(520, ctx)
+            local paper = Looks.colorer(ctx)(ctx.look.tile.fill_color)
+            local ink = false
+            for x = g.x(0), g.x(0) + 60 do
+                for y = g.bottom - g.chart - headline_height(ctx), g.bottom - g.chart - 1 do
+                    ink = ink or not same_color(bb, x, y, paper)
+                end
+            end
+            assert.is_true(ink)
+            widget:free()
+            again:free()
+        end)
+
+        it("sets a long part smaller until it fits", function()
+            local ctx = ctx_for("diner")
+            fixture = insights_with({ [14] = 600 })
+            local part = ctx.look.type.insight_value
+            local width = 520
+            while width > 60 do
+                local line = Typeset.line(part, "Afternoons", InsightTile.inner_width(width, ctx), ctx)
+                local whole = Typeset.whole(line)
+                line:free()
+                if not whole then
+                    break
+                end
+                width = width - 10
+            end
+            local widget = Hours.build(width, ctx)
+            assert.is_true(widget.value_size < part.size)
+            assert.is_true(Typeset.whole(widget.headline.value))
+            widget:free()
+        end)
     end)
 
     it("is the registry's hours", function()
