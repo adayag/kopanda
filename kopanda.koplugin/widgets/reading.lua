@@ -1,6 +1,7 @@
--- This month's hours and days read beside an area chart of the last 12 weeks' hours in an insight tile, from
--- ReadingStats.insights, the months' abbreviations from KOReader's translation table (frontend/datetime.lua:14-27).
--- Each figure's caption sits under its value, or at Extra large on its value's line.
+-- This month's hours and days read beside an area chart of the last 12 weeks' hours in an insight tile, with this
+-- week's daily average against last week's under a rule, from ReadingStats.insights, the months' abbreviations from
+-- KOReader's translation table (frontend/datetime.lua:14-27). Each figure's caption sits under its value, or at
+-- Extra large on its value's line.
 local Helpers = require("helpers")
 local InsightTile = require("insight_tile")
 local Looks = require("looks")
@@ -42,6 +43,44 @@ function Reading.figures(insights, now)
         { value = Helpers.duration(total), caption = "this month" },
         { value = tostring(read), caption = read == 1 and "day read" or "days read" },
     }
+end
+
+-- The line comparing this week's daily average with last week's, for days (seconds per local day, today last) at
+-- now. This week counts the days gone by, and today once it lifts their average. Under an hour the two figures share
+-- one "min".
+function Reading.week(days, now)
+    local today = days[#days]
+    local monday = #days - row_of(now) + 1
+    local past, past_days = 0, #days - monday
+    for i = monday, #days - 1 do
+        past = past + days[i]
+    end
+    local last = 0
+    for i = monday - 7, monday - 1 do
+        last = last + (days[i] or 0)
+    end
+    local seconds, counted = past, past_days
+    if today > 0 and (past_days == 0 or today > past / past_days) then
+        seconds, counted = past + today, past_days + 1
+    end
+    if seconds == 0 and last == 0 then
+        return "Nothing read this week or last"
+    end
+    local was = last / 7
+    if counted == 0 then
+        return Helpers.duration(was) .. " a day last week"
+    end
+    local is = seconds / counted
+    if last == 0 then
+        return Helpers.duration(is) .. " a day, nothing last week"
+    end
+    local is_min, was_min = Math.round(is / 60), Math.round(was / 60)
+    if is_min == was_min then
+        return Helpers.duration(is) .. " a day, same as last week"
+    end
+    local from = is_min < 60 and was_min < 60 and tostring(was_min) or Helpers.duration(was)
+    return Helpers.duration(is) .. " a day, " .. (is_min > was_min and "up" or "down") .. " from " .. from
+        .. " last week"
 end
 
 -- The seconds read in each of the last WEEKS Monday-to-Sunday weeks to now, oldest first, this week's to today.
@@ -105,6 +144,10 @@ local function free_lines(self)
         caption.line:free()
     end
     self.figures, self.captions = {}, {}
+    if self.week then
+        self.week:free()
+        self.week = nil
+    end
 end
 
 local function compose(width, ctx)
@@ -173,7 +216,13 @@ local function compose(width, ctx)
     local captions = month_captions(ctx.now, xs, chart_w, ctx)
     local line_color, area_color, paper = color(tokens.chart_line_color), color(tokens.chart_area_color),
         color("paper")
-    local content_h = math.max(2 * figure_h + record_gap, chart + label_gap + caption_h)
+    local rule, rule_color = scale(look.stroke.outline), color(look.tile.outline_color)
+    local week_gap = scale(tokens.week_rule_gap)
+    local week_lines, week_part = Typeset.fitted(look.type.insight_week, { Reading.week(insights.days, ctx.now) },
+        inner_w, ctx)
+    local rule_y = math.max(2 * figure_h + record_gap, chart + label_gap + caption_h) + week_gap
+    local week_y = rule_y + rule + week_gap
+    local content_h = week_y + Typeset.line_height(week_part, ctx)
 
     local function paint(bb, x, y)
         for i, figure in ipairs(figures) do
@@ -205,10 +254,13 @@ local function compose(width, ctx)
         for _, caption in ipairs(captions) do
             caption.line:paintTo(bb, left + caption.x, bottom + label_gap)
         end
+        Paint.fill(bb, x, y + rule_y, inner_w, rule, rule_color)
+        week_lines[1]:paintTo(bb, x, y + week_y)
     end
 
     local tile = InsightTile.compose(width, ctx, "Reading", "hours a week, last 12 weeks", content_h, paint)
     tile.figures, tile.captions, tile.value_size = figures, captions, value_part.size
+    tile.week, tile.week_size = week_lines[1], week_part.size
     local free_tile = tile.free
     function tile:free()
         free_lines(self)

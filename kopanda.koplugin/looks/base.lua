@@ -317,6 +317,7 @@ return {
         bar_outline_width = 0,
         value_gap = 2, -- between a record's value and its caption
         record_gap = 10, -- between the two record rows
+        week_rule_gap = 8, -- either side of the rule above the reading tile's week line
     },
 
     -- The text, per part: a face role, a size in board pixels (before text_size), case, tracking in
@@ -340,6 +341,9 @@ return {
         },
         insight_note = {
             face = "text", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "muted",
+        },
+        insight_week = {
+            face = "text", size = 15, uppercase = false, tracking = 0, line_height = 0, color = "ink",
         },
         cover_title = {
             face = "display", size = 24, uppercase = true, tracking = 0.04, line_height = 0.05, color = "on_cover",

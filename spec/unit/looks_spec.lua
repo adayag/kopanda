@@ -271,12 +271,13 @@ describe("looks", function()
         it("give every look the insight parts and tokens, Diner's chart and today in its accents", function()
             for _, id in ipairs(ids) do
                 local look = looks[id]
-                for _, part in ipairs({ "insight_label", "insight_caption", "insight_value", "insight_note" }) do
+                for _, part in ipairs({ "insight_label", "insight_caption", "insight_value", "insight_note",
+                    "insight_week" }) do
                     assert.is_table(look.type[part], id .. " " .. part)
                 end
                 local i = look.insights
                 for _, size in ipairs({ "padding", "chart_height", "chart_line_width", "today_ring", "reading_column",
-                    "streak_scale", "dot", "dot_gap" }) do
+                    "streak_scale", "dot", "dot_gap", "week_rule_gap" }) do
                     assert.is_number(i[size], id .. " " .. size)
                 end
                 for _, role in ipairs({ "bar_fill_color", "chart_area_color", "chart_line_color", "today_ring_color",

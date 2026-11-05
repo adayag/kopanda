@@ -1,6 +1,6 @@
 -- The reading widget: this month's hours and days read over their captions, beside an area chart of the last 12
 -- weeks' hours, one point a Monday-to-Sunday week scaled to the busiest, ringed at this week, captioned at each
--- month change.
+-- month change, over the week line comparing this week's daily average with last week's.
 describe("the reading widget", function()
     require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
@@ -58,6 +58,14 @@ describe("the reading widget", function()
         local c = bb:getPixel(x, y):getColorRGB32()
         local want = color:getColorRGB32()
         return c.r == want.r and c.g == want.g and c.b == want.b
+    end
+
+    -- The height the week line and the rule above it add, the line at its part's size.
+    local function week_height(ctx)
+        local scale = Paint.scaler(ctx)
+        local look = ctx.look
+        return 2 * scale(look.insights.week_rule_gap) + scale(look.stroke.outline)
+            + Typeset.line_height(look.type.insight_week, ctx)
     end
 
     -- The widget built at width under ctx (a boxed look), painted on a fresh buffer, and its chart's geometry
@@ -233,7 +241,8 @@ describe("the reading widget", function()
         end)
     end)
 
-    it("is the chrome, the label line and the taller of the figures and the captioned chart tall", function()
+    it("is the chrome, the label line, the taller of the figures and the captioned chart, and the week line tall",
+        function()
         local ctx = ctx_for("diner")
         local scale = Paint.scaler(ctx)
         local look = ctx.look
@@ -248,7 +257,7 @@ describe("the reading widget", function()
             + scale(look.insights.record_gap)
         local chart = scale(look.insights.chart_height) + scale(look.insights.label_gap) + caption_h
         local tile = InsightTile.compose(520, ctx, "Reading", "hours a week, last 12 weeks",
-            math.max(figures, chart), function() end)
+            math.max(figures, chart) + week_height(ctx), function() end)
         assert.equals(tile:getSize().h, widget:getSize().h)
         assert.equals(tile:getSize().h, Reading.height(520, ctx))
         assert.equals(520, widget:getSize().w)
@@ -257,7 +266,8 @@ describe("the reading widget", function()
     end)
 
     -- A tile across the Colorsoft's full home width, where the figures and captions fit at their size.
-    it("sets each caption on its value's line at extra_large, the captioned chart setting the height", function()
+    it("sets each caption on its value's line at extra_large, the captioned chart and week line setting the height",
+        function()
         fixture = insights_with({ ["10-1"] = 6480, ["10-2"] = 37800 })
         require("plugin_harness").at_colorsoft(function()
             for _, look_id in ipairs(Looks.ids()) do
@@ -270,8 +280,8 @@ describe("the reading widget", function()
                 assert.equals(look.type.insight_value.size, widget.value_size, look_id)
                 local caption_h = Typeset.line_height(look.type.insight_caption, ctx)
                 local chart = scale(look.insights.chart_height) + scale(look.insights.label_gap) + caption_h
-                local tile = InsightTile.compose(width, ctx, "Reading", "hours a week, last 12 weeks", chart,
-                    function() end)
+                local tile = InsightTile.compose(width, ctx, "Reading", "hours a week, last 12 weeks",
+                    chart + week_height(ctx), function() end)
                 assert.equals(tile:getSize().h, widget:getSize().h, look_id)
                 for _, figure in ipairs(widget.figures) do
                     assert.is_false(figure.value.isTruncated and figure.value:isTruncated() or false, look_id)
@@ -309,7 +319,7 @@ describe("the reading widget", function()
         end
     end)
 
-    it("frees its figure and caption lines once, on free or on close", function()
+    it("frees its figure, caption and week lines once, on free or on close", function()
         local ctx = ctx_for("diner")
         for _, close in ipairs({ "free", "onCloseWidget" }) do
             local widget = Reading.build(520, ctx)
@@ -321,6 +331,7 @@ describe("the reading widget", function()
             for _, caption in ipairs(widget.captions) do
                 lines[#lines + 1] = caption.line
             end
+            lines[#lines + 1] = widget.week
             local freed = 0
             for _, line in ipairs(lines) do
                 local free = line.free
@@ -331,8 +342,112 @@ describe("the reading widget", function()
             end
             widget[close](widget)
             widget:free()
-            assert.equals(7, freed)
+            assert.equals(8, freed)
         end
+    end)
+
+    describe("the week line", function()
+        it("sets Reading.week's text under a rule across the tile, in the tile's outline colour", function()
+            local ctx = ctx_for("diner")
+            local scale = Paint.scaler(ctx)
+            local look = ctx.look
+            local color = Looks.colorer(ctx)
+            local bb, _, widget = painted(520, ctx)
+            assert.equals(Reading.week(fixture.days, NOW), widget.week.text)
+            local inset = scale(look.stroke.outline) + scale(look.insights.padding)
+            local rule = scale(look.stroke.outline)
+            local rule_y = widget:getSize().h - inset - scale(look.shadow.tile.y)
+                - Typeset.line_height(look.type.insight_week, ctx) - scale(look.insights.week_rule_gap) - rule
+            local outline, paper = color(look.tile.outline_color), color(look.tile.fill_color)
+            for _, x in ipairs({ inset, 260, inset + InsightTile.inner_width(520, ctx) - 1 }) do
+                assert.is_true(same_color(bb, x, rule_y, outline))
+                assert.is_true(same_color(bb, x, rule_y - 1, paper))
+                assert.is_true(same_color(bb, x, rule_y + rule - 1, outline))
+                assert.is_true(same_color(bb, x, rule_y + rule, paper))
+            end
+            widget:free()
+        end)
+
+        it("steps a long line down to fit, the tile that much shorter, rather than cutting it", function()
+            local ctx = ctx_for("diner")
+            local look = ctx.look
+            local wide = Reading.build(520, ctx)
+            assert.equals(look.type.insight_week.size, wide.week_size)
+            local narrow_width = 520
+            while narrow_width > 100 do
+                local line = Typeset.line(look.type.insight_week, wide.week.text,
+                    InsightTile.inner_width(narrow_width, ctx), ctx)
+                local whole = Typeset.whole(line)
+                line:free()
+                if not whole then
+                    break
+                end
+                narrow_width = narrow_width - 10
+            end
+            local narrow = Reading.build(narrow_width, ctx)
+            assert.is_true(narrow.week_size < wide.week_size)
+            assert.is_true(Typeset.whole(narrow.week))
+            local sized = {}
+            for k, v in pairs(look.type.insight_week) do
+                sized[k] = v
+            end
+            sized.size = narrow.week_size
+            assert.is_true(Typeset.line_height(sized, ctx) < Typeset.line_height(look.type.insight_week, ctx))
+            narrow:free()
+            wide:free()
+        end)
+
+        local MONDAY = os.time{ year = 2026, month = 10, day = 12, hour = 12 }
+        local WEDNESDAY = os.time{ year = 2026, month = 10, day = 14, hour = 12 }
+
+        -- Three weeks of days ending with today: last week at last seconds a day, this week's days gone by at past,
+        -- today at today. weekday is 1 for a Monday.
+        local function week_days(weekday, last, past, today)
+            local days = {}
+            for _ = 1, 7 do
+                days[#days + 1] = 0
+            end
+            for _ = 1, 7 do
+                days[#days + 1] = last
+            end
+            for _ = 1, weekday - 1 do
+                days[#days + 1] = past
+            end
+            days[#days + 1] = today
+            return days
+        end
+
+        it("compares this week's daily average with last week's, up or down", function()
+            assert.equals("16 min a day, up from 9 last week", Reading.week(week_days(3, 540, 960, 0), WEDNESDAY))
+            assert.equals("9 min a day, down from 16 last week", Reading.week(week_days(3, 960, 540, 0), WEDNESDAY))
+        end)
+
+        it("calls two averages the same in whole minutes though not in seconds", function()
+            assert.equals("16 min a day, same as last week", Reading.week(week_days(3, 975, 960, 0), WEDNESDAY))
+        end)
+
+        it("counts today once it lifts the average, and not before", function()
+            assert.equals("21 min a day, up from 9 last week", Reading.week(week_days(3, 540, 960, 1800), WEDNESDAY))
+            assert.equals("16 min a day, up from 9 last week", Reading.week(week_days(3, 540, 960, 60), WEDNESDAY))
+        end)
+
+        it("reads last week's alone on a Monday with no reading yet, and today's once there is some", function()
+            assert.equals("9 min a day last week", Reading.week(week_days(1, 540, 0, 0), MONDAY))
+            assert.equals("12 min a day, up from 9 last week", Reading.week(week_days(1, 540, 0, 720), MONDAY))
+        end)
+
+        it("says so when neither week was read, or only this one", function()
+            assert.equals("Nothing read this week or last", Reading.week(week_days(3, 0, 0, 0), WEDNESDAY))
+            assert.equals("16 min a day, nothing last week", Reading.week(week_days(3, 0, 960, 0), WEDNESDAY))
+        end)
+
+        it("shares the minutes when both averages are under an hour, and keeps each unit otherwise", function()
+            assert.equals("59 min a day, up from 9 last week", Reading.week(week_days(3, 540, 3540, 0), WEDNESDAY))
+            assert.equals("1 h 5 min a day, up from 9 min last week",
+                Reading.week(week_days(3, 540, 3900, 0), WEDNESDAY))
+            assert.equals("9 min a day, down from 1 h 5 min last week",
+                Reading.week(week_days(3, 3900, 540, 0), WEDNESDAY))
+        end)
     end)
 
     it("is the registry's reading", function()
