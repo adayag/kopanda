@@ -80,18 +80,33 @@ local function flow(rows, room, width, gaps, ctx)
         end
         local page = pages[#pages]
         page[#page + 1] = row
+        row.h = h
         y = y + h + gaps.row
     end
     return pages, failed
 end
 
+-- ctx for row's tiles: a row of several holds them to its height.
+local function row_ctx(row, ctx)
+    if #row < 2 then
+        return ctx
+    end
+    local copy = {}
+    for key, value in pairs(ctx) do
+        copy[key] = value
+    end
+    copy.row_h = row.h
+    return copy
+end
+
 local function add_row(row, frame, x, y, width, gaps, ctx, failed)
     local w = tile_width(row, width, gaps)
     local bottom = y
+    local tile_ctx = row_ctx(row, ctx)
     for i, id in ipairs(row) do
         if not failed[id] then
             local ok, tile = pcall(function()
-                return Widgets.get(id).build(w, ctx)
+                return Widgets.get(id).build(w, tile_ctx)
             end)
             if ok and tile then
                 LibraryChrome.add(frame, tile, x + (i - 1) * (w + gaps.column), y)

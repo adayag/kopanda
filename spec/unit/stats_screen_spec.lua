@@ -58,10 +58,11 @@ describe("the Stats window", function()
             return {
                 height = widget.height,
                 build = function(width, ctx)
+                    local tile = widget.build(width, ctx)
                     if HEIGHTS[id] then
-                        seen.built[#seen.built + 1] = { id = id, width = width, ctx = ctx }
+                        seen.built[#seen.built + 1] = { id = id, width = width, ctx = ctx, h = tile:getSize().h }
                     end
-                    return widget.build(width, ctx)
+                    return tile
                 end,
             }
         end
@@ -239,6 +240,34 @@ describe("the Stats window", function()
             local gap = Screen:scaleBySize(look.home.row_gap)
             assert.equals(tiles[1].y + HEIGHTS.reading + gap, left.y)
             assert.equals(left.y + HEIGHTS.streak + gap, tiles[4].y)
+        end)
+
+        it("builds a row's tiles at the taller's height, and a one-tile row as it was", function()
+            use_stubs({ streak = 30, forecast = 50 })
+            show()
+            local ctxs = {}
+            for _, tile in ipairs(seen.built) do
+                ctxs[tile.id] = tile.ctx
+            end
+            assert.equals(50, ctxs.streak.row_h)
+            assert.equals(50, ctxs.forecast.row_h)
+            assert.is_nil(ctxs.reading.row_h)
+        end)
+
+        it("brings the real tiles in a row to one height", function()
+            populate()
+            use_real_tiles()
+            harness.at_colorsoft(function()
+                show()
+                swipe("west")
+                swipe("west")
+                local heights = {}
+                for _, tile in ipairs(seen.built) do
+                    heights[tile.id] = tile.h
+                end
+                assert.equals(heights.streak, heights.forecast)
+                assert.equals(heights.hours, heights.records)
+            end)
         end)
 
         it("names a page by its first row", function()

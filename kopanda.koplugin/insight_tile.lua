@@ -93,13 +93,15 @@ end
 
 -- A tile width wide holding label (and aside, right-aligned on its line, when given) above content_h of content,
 -- which paint(bb, x, y, inner_w, content_h, ctx) draws at its top-left; and inner, { w, label_h }. The label is
--- cut to the room the aside leaves it, label_gap short of it.
+-- cut to the room the aside leaves it, label_gap short of it. Under ctx.row_h, the content grows for the tile to be
+-- that tall.
 function InsightTile.compose(width, ctx, label, aside, content_h, paint)
     local look = ctx.look
     local chrome, inner_x, inner_y, inner_w, extra_h = chrome_of(width, ctx)
     local label_part = look.type.insight_label
     local label_h = Typeset.line_height(label_part, ctx)
     local gap = Paint.scaler(ctx)(look.insights.label_gap)
+    content_h = math.max(content_h, (ctx.row_h or 0) - extra_h - label_h - gap)
 
     local aside_line, aside_x, aside_y
     local label_room = inner_w

@@ -58,6 +58,20 @@ describe("the insight tile", function()
         end)
     end)
 
+    it("grows its content to a taller ctx.row_h, and keeps its own height under a shorter one or none", function()
+        local ctx = ctx_for("diner")
+        local own = InsightTile.compose(520, ctx, "Reading", nil, 100, function() end)
+        local h = own:getSize().h
+        own:free()
+        for row_h, expected in pairs({ [h + 1] = h + 1, [h + 40] = h + 40, [h] = h, [h - 1] = h, [10] = h }) do
+            ctx.row_h = row_h
+            local tile = InsightTile.compose(520, ctx, "Reading", nil, 100, function() end)
+            assert.equals(expected, tile:getSize().h, row_h)
+            assert.equals(100 + expected - h, tile.content_h, row_h)
+            tile:free()
+        end
+    end)
+
     it("draws its box's outline and shadow in a look with a tile box", function()
         local ctx = ctx_for("diner")
         local color = Looks.colorer(ctx)
