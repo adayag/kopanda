@@ -44,7 +44,7 @@ screen. KOReader's own stay available behind one setting.
 
 ## Design
 
-**`sleep_screen.lua`, about 200 lines.** Wraps `Screensaver.setup` once per process. The wrapper runs the original
+**`kopanda_sleep_screen.lua`, about 200 lines** (first named `sleep_screen`, which cwngsync.koplugin also has; see the end). Wraps `Screensaver.setup` once per process. The wrapper runs the original
 first, so KOReader's state is whole, then with `sleep.on` set and no event it tries to build the image. On success it
 frees any `self.image` the original made, clears `self.image_file`, and sets `self.image`,
 `screensaver_type = "cover"` and the image background (`:443-447`, which the flash reads, `:488-492`). On anything else KOReader's result stands.
@@ -163,3 +163,11 @@ bottom margin counted, drops that row.
   it takes the full review. Charging, under an hour on record, or 90 days or more left shows the percent alone.
 
 **Out of scope, still:** a daily goal, highlights, hidden-flow page numbers, the rest of the first list.
+
+## Fix after the first Kindle sleep (2026-11-05)
+
+The owner's art showed in place of the card. The Kindle's log held `KoPanda: init failed: main.lua:160: attempt to call
+field 'install' (a nil value)`: cwngsync.koplugin's `main.lua:36` requires its own `sleep_screen`, cwngsync loads before
+KoPanda, and `require` caches by name across plugins. The module is now `kopanda_sleep_screen`, and `SleepScreen.install`
+runs last in init, since that failure had also skipped `FmNav.install` and `FocusedHooks.install`. The emulator has no
+cwngsync, so `spec/unit/main_requires_spec.lua` stands in for it.

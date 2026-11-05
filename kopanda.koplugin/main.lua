@@ -21,7 +21,7 @@ local SchemaMenu = require("menu")
 local ScreenRoutes = require("screen_routes")
 local SearchScreen = require("search_screen")
 local SeriesScreen = require("series_screen")
-local SleepScreen = require("sleep_screen")
+local SleepScreen = require("kopanda_sleep_screen")
 local State = require("state")
 local StatsScreen = require("stats_screen")
 local SubjectsScreen = require("subjects_screen")
@@ -156,8 +156,6 @@ function KoPanda:init()
         self.ui.menu:registerToMainMenu(self)
         -- Once per process; it acts only while a home is shown.
         DispatchBridge.install()
-        -- Once per process; each sleep reads sleep.on.
-        SleepScreen.install()
         -- Once per process, before the file manager's first layout (filemanager.lua:418-431).
         if self.in_fm then
             FmNav.install()
@@ -165,6 +163,8 @@ function KoPanda:init()
             -- Once per process; each gesture reads focused.on.
             FocusedHooks.install()
         end
+        -- Once per process; each sleep reads sleep.on. Last, so a failure here leaves the bar and the reader's hooks.
+        SleepScreen.install()
     end)
     if not ok then
         logger.err("KoPanda: init failed:", err)

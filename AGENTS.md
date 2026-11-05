@@ -42,6 +42,7 @@ The owner's own interface for KOReader e-readers: a plugin that replaces the she
 
 - Lua: KOReader's style (4-space indent, `local` everything, modules return a table). Widgets are small tables: `id`, `build(width, ctx)`, `height(ctx)`, settings prefix.
 - The schema is pure data, no functions, so a LuaJIT one-liner can dump it to JSON for the studio.
+- `require` caches by name across every plugin, and plugins load sorted by path (`frontend/pluginloader.lua:289`), so a KoPanda module named as one in a plugin that loads first gets that plugin's module. cwngsync has `sleep_screen`, which broke KoPanda's init on the Kindle. Name a new module for KoPanda (`kopanda_sleep_screen`) when the name is generic.
 - Settings live in `settings/kopanda/settings.lua` through KOReader's `LuaSettings`; reads fall back to the schema default, writes to undefined keys are refused.
 - Runtime state (the boot guard flag, one-time migration markers) lives in `settings/kopanda/state.lua` through `LuaSettings`, and a pull's stage, rollback set, probation and result live in `settings/kopanda/push/`; neither is a setting, neither has a schema entry, and the studio never reads or writes them.
 - The home is one page, `Layout.rows`, a table in `layout.lua`; a west or east swipe on it does nothing. The Stats window (`stats_screen.lua`, the nav bar's Stats tab) flows rows of insight tiles onto pages turned by a swipe. `bin/preview` and the studio's preview pane render the home.

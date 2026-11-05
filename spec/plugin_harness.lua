@@ -57,7 +57,7 @@ end
 M.dispatcher_execute = require("dispatcher").execute
 -- FileManager.setupLayout as KOReader defines it, before fm_nav.lua wraps it.
 M.fm_setup_layout = require("apps/filemanager/filemanager").setupLayout
--- Screensaver.setup as KOReader defines it, before sleep_screen.lua wraps it.
+-- Screensaver.setup as KOReader defines it, before kopanda_sleep_screen.lua wraps it.
 M.screensaver_setup = require("ui/screensaver").setup
 -- The reader's menu, config and footer handlers as KOReader defines them, before focused_hooks.lua wraps them.
 M.reader_handlers = {}

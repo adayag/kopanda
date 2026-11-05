@@ -31,6 +31,38 @@ describe("kopanda.koplugin/main.lua", function()
         assert.are.same({}, missing, "main.lua does not require: " .. table.concat(missing, ", "))
     end)
 
+    -- require caches by name across every plugin, and one that loads first keeps the name
+    -- (frontend/pluginloader.lua:289, plugins load sorted by path). cwngsync.koplugin's main.lua requires its own
+    -- "sleep_screen", which has no install.
+    it("starts beside another plugin's sleep_screen module", function()
+        local Screensaver = require("ui/screensaver")
+        local FileManager = require("apps/filemanager/filemanager")
+        package.preload["sleep_screen"] = function()
+            return {}
+        end
+        local ok, err = pcall(function()
+            harness.load()
+            local fm = harness.show_fm()
+            fm:onClose()
+            assert.is_not.equals(harness.screensaver_setup, Screensaver.setup)
+            assert.is_not.equals(harness.fm_setup_layout, FileManager.setupLayout)
+        end)
+        package.preload["sleep_screen"] = nil
+        package.loaded["sleep_screen"] = nil
+        assert(ok, err)
+    end)
+
+    it("still installs the file browser's bar when the sleep screen can't install", function()
+        local FileManager = require("apps/filemanager/filemanager")
+        harness.load()
+        require("kopanda_sleep_screen").install = function()
+            error("no sleep screen")
+        end
+        local fm = harness.show_fm()
+        fm:onClose()
+        assert.is_not.equals(harness.fm_setup_layout, FileManager.setupLayout)
+    end)
+
     it("loads every KoPanda module when the plugin loads", function()
         local modules = harness.module_names()
         assert.is_true(#modules > 0, "module_names() listed no modules")

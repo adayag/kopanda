@@ -2314,7 +2314,8 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
 
 ### The sleep screen: `Screensaver.setup`, the cover image and night
 
-- `ui/screensaver`: `sleep_screen.lua` wraps `Screensaver.setup`
+- `ui/screensaver`: `kopanda_sleep_screen.lua` (not `sleep_screen`: cwngsync.koplugin's `main.lua:36` loads a module of
+  that name first, and `require` caches by name across plugins) wraps `Screensaver.setup`
   (`frontend/ui/screensaver.lua:346`), once per process, and lets KOReader's run first. It runs
   before `:show` on every sleep (`frontend/device/kindle/device.lua:762-763`,
   `frontend/device/generic/device.lua:467-468`, `frontend/device/sdl/device.lua:464-465`). Only
