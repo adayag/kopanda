@@ -368,6 +368,25 @@ describe("the reading widget", function()
             widget:free()
         end)
 
+        it("draws the rule in the tile's rule colour in a look with no tile outline", function()
+            local ctx = ctx_for("editorial")
+            local scale = Paint.scaler(ctx)
+            local look = ctx.look
+            assert.is_false(look.tile.outline_color)
+            local ruled = Looks.colorer(ctx)(look.tile.rule_color)
+            local bb, _, widget = painted(520, ctx)
+            local rule = scale(look.stroke.outline)
+            local rule_y = widget:getSize().h - scale(look.stroke.hairline) - scale(look.insights.padding)
+                - Typeset.line_height(look.type.insight_week, ctx) - scale(look.insights.week_rule_gap) - rule
+            for _, x in ipairs({ 0, 260, InsightTile.inner_width(520, ctx) - 1 }) do
+                assert.is_true(same_color(bb, x, rule_y, ruled))
+                assert.is_false(same_color(bb, x, rule_y - 1, ruled))
+                assert.is_true(same_color(bb, x, rule_y + rule - 1, ruled))
+                assert.is_false(same_color(bb, x, rule_y + rule, ruled))
+            end
+            widget:free()
+        end)
+
         it("steps a long line down to fit, the tile that much shorter, rather than cutting it", function()
             local ctx = ctx_for("diner")
             local look = ctx.look
@@ -426,6 +445,10 @@ describe("the reading widget", function()
             assert.equals("16 min a day, same as last week", Reading.week(week_days(3, 975, 960, 0), WEDNESDAY))
         end)
 
+        it("calls two averages different once their whole minutes differ", function()
+            assert.equals("17 min a day, up from 16 last week", Reading.week(week_days(3, 960, 1000, 0), WEDNESDAY))
+        end)
+
         it("counts today once it lifts the average, and not before", function()
             assert.equals("21 min a day, up from 9 last week", Reading.week(week_days(3, 540, 960, 1800), WEDNESDAY))
             assert.equals("16 min a day, up from 9 last week", Reading.week(week_days(3, 540, 960, 60), WEDNESDAY))
@@ -443,6 +466,7 @@ describe("the reading widget", function()
 
         it("shares the minutes when both averages are under an hour, and keeps each unit otherwise", function()
             assert.equals("59 min a day, up from 9 last week", Reading.week(week_days(3, 540, 3540, 0), WEDNESDAY))
+            assert.equals("1 h a day, up from 9 min last week", Reading.week(week_days(3, 540, 3600, 0), WEDNESDAY))
             assert.equals("1 h 5 min a day, up from 9 min last week",
                 Reading.week(week_days(3, 540, 3900, 0), WEDNESDAY))
             assert.equals("9 min a day, down from 1 h 5 min last week",

@@ -285,6 +285,10 @@ describe("the hours widget", function()
             }))
         end)
 
+        it("rounds the share to a whole percent", function()
+            assert.equals(67, headline({ [8] = 400, [19] = 200 }).share)
+        end)
+
         it("divides the day at 5, 12, 17 and 22", function()
             local parts = { [4] = "Nights", [5] = "Mornings", [11] = "Mornings", [12] = "Afternoons",
                 [16] = "Afternoons", [17] = "Evenings", [21] = "Evenings", [22] = "Nights" }
@@ -293,8 +297,14 @@ describe("the hours widget", function()
             end
         end)
 
-        it("gives a tie to the earlier part", function()
-            assert.equals("Mornings", headline({ [8] = 600, [19] = 600 }).part)
+        it("gives a tie to the earlier part and the earlier hour", function()
+            local tied = headline({ [8] = 600, [19] = 600 })
+            assert.equals("Mornings", tied.part)
+            assert.equals(8, tied.peak)
+        end)
+
+        it("can peak at hour 0", function()
+            assert.equals(0, headline({ [0] = 600 }).peak)
         end)
 
         it("is nil with no reading", function()

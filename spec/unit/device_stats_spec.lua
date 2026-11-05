@@ -140,6 +140,7 @@ describe("DeviceStats", function()
         it("reads nil from text without the line, and from nil", function()
             assert.is_nil(DeviceStats.rss("Name:\tluajit\n"))
             assert.is_nil(DeviceStats.rss(nil))
+            assert.is_nil(DeviceStats.rss("VmRSS:\t98304 MB\n"))
         end)
     end)
 

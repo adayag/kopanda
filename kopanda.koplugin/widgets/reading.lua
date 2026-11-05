@@ -216,7 +216,7 @@ local function compose(width, ctx)
     local captions = month_captions(ctx.now, xs, chart_w, ctx)
     local line_color, area_color, paper = color(tokens.chart_line_color), color(tokens.chart_area_color),
         color("paper")
-    local rule, rule_color = scale(look.stroke.outline), color(look.tile.outline_color)
+    local rule, rule_color = scale(look.stroke.outline), color(look.tile.outline_color or look.tile.rule_color)
     local week_gap = scale(tokens.week_rule_gap)
     local week_lines, week_part = Typeset.fitted(look.type.insight_week, { Reading.week(insights.days, ctx.now) },
         inner_w, ctx)
