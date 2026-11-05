@@ -1,7 +1,7 @@
 -- The hours widget: the busiest part of the day over 24 bars of the last 12 weeks' reading per hour of day, scaled to
 -- the busiest hour, the busy ones in the high colour, captioned at midnight, 6, noon and 18 in KOReader's clock format.
 describe("the hours widget", function()
-    require("plugin_harness")
+    local harness = require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
     local Screen = require("device").screen
     local Looks = require("looks")
@@ -283,6 +283,22 @@ describe("the hours widget", function()
             assert.same({ part = "Evenings", share = 62, peak = 20 }, headline({
                 [7] = 190, [8] = 190, [17] = 100, [18] = 100, [19] = 100, [20] = 220, [21] = 100,
             }))
+        end)
+
+        it("drops the words before the peak when the whole caption won't fit a half-width tile at Large", function()
+            G_reader_settings:saveSetting("twelve_hour_clock", true)
+            fixture = insights_with({ [0] = 600, [14] = 12 })
+            harness.at_colorsoft(function()
+                local ctx = ctx_for("diner")
+                ctx.text_size = "large"
+                local scale = Paint.scaler(ctx)
+                local look = ctx.look
+                local room = Screen:getWidth() - 2 * scale(look.shelf.list.side) - scale(look.home.column_gap)
+                local widget = Hours.build(math.floor(room / 2), ctx)
+                assert.equals("98%, peak Midnight", widget.headline.caption.text)
+                assert.is_true(Typeset.whole(widget.headline.caption))
+                widget:free()
+            end)
         end)
 
         it("rounds the share to a whole percent", function()

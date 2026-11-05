@@ -66,6 +66,18 @@ function Hours.clock(hour)
     return hour % 12 .. (hour < 12 and " am" or " pm")
 end
 
+-- The caption line for headline in inner_w: its share and peak, in fewer words when the sentence won't fit whole.
+local function caption_line(headline, inner_w, ctx)
+    local part = ctx.look.type.insight_caption
+    local clock = Hours.clock(headline.peak)
+    local line = Typeset.line(part, string.format("%d%% of your reading, peak %s", headline.share, clock), inner_w, ctx)
+    if Typeset.whole(line) then
+        return line
+    end
+    line:free()
+    return Typeset.line(part, string.format("%d%%, peak %s", headline.share, clock), inner_w, ctx)
+end
+
 -- The lines for headline (Hours.headline's) in inner_w, their height above the chart and the value's size.
 local function headline_lines(headline, inner_w, ctx)
     local look = ctx.look
@@ -75,10 +87,9 @@ local function headline_lines(headline, inner_w, ctx)
     local values, value_part = Typeset.fitted(look.type.insight_value, { headline.part }, inner_w, ctx)
     local value_h = Typeset.line_height(value_part, ctx)
     local value_gap = scale(tokens.value_gap)
-    local text = string.format("%d%% of your reading, peak %s", headline.share, Hours.clock(headline.peak))
     return {
         value = values[1],
-        caption = Typeset.line(caption, text, inner_w, ctx),
+        caption = caption_line(headline, inner_w, ctx),
         caption_y = value_h + value_gap,
         height = value_h + value_gap + Typeset.line_height(caption, ctx) + scale(tokens.label_gap),
         value_size = value_part.size,
