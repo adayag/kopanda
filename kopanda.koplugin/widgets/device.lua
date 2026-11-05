@@ -1,9 +1,11 @@
--- The device's own readings in an insight tile, read at each build: the storage free and the memory KOReader uses, each
--- value over its caption in equal columns, from DeviceStats. A reading the device can't give drops out and the rest
--- fill the row.
+-- The device's own readings in an insight tile, read at each build: the battery with its time left, the storage free
+-- and the memory KOReader uses, each value over its caption in equal columns, from DeviceStats, QuickSettings.battery
+-- and frontend/device/generic/powerd.lua:272. A reading the device can't give drops out and the rest fill the row.
 local DeviceStats = require("device_stats")
 local InsightTile = require("insight_tile")
+local KoDevice = require("device")
 local Paint = require("paint")
+local QuickSettings = require("quick_settings")
 local Typeset = require("typeset")
 local util = require("util")
 
@@ -13,8 +15,16 @@ local Device = {
     id = "device",
 }
 
+-- What the tile shows now: battery a percent, left its seconds, a failed charging read taken as charging.
 function Device.readings()
+    local ok, charging = pcall(function()
+        return KoDevice:getPowerDevice():isCharging()
+    end)
+    local battery = QuickSettings.battery()
     return {
+        battery = battery,
+        charging = not ok or charging,
+        left = battery and DeviceStats.time_left(battery, DeviceStats.battery_totals()),
         storage = DeviceStats.storage(),
         memory = DeviceStats.memory(),
     }
@@ -23,6 +33,13 @@ end
 -- The { value, caption } cells in reading order for readings (Device.readings's shape), each nil reading left out.
 function Device.cells(readings)
     local cells = {}
+    if readings.battery then
+        local left = not readings.charging and readings.left
+        cells[#cells + 1] = {
+            value = readings.battery .. "%",
+            caption = left and DeviceStats.left_text(left) or "battery",
+        }
+    end
     if readings.storage then
         cells[#cells + 1] = { value = util.getFriendlySize(readings.storage), caption = "storage free" }
     end

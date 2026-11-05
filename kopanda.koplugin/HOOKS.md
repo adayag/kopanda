@@ -2365,6 +2365,7 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
   dropped from 90 days up, which no record means.
 - The percent is `QuickSettings.battery` (`quick_settings.lua:47`) and charging is
   `Device:getPowerDevice():isCharging()` (`frontend/device/generic/powerd.lua:272`).
+- `widgets/device.lua` reads the same way for the Stats window's Device tile, a failed charging read taken as charging.
 
 ### The Device tile: storage and memory
 

@@ -1,5 +1,5 @@
--- The Device tile: the storage free and the memory KOReader uses, each value over its caption in equal columns; a
--- reading the device can't give drops its cell, and the rest fill the row.
+-- The Device tile: the battery with its time left, the storage free and the memory KOReader uses, each value over its
+-- caption in equal columns; a reading the device can't give drops its cell, and the rest fill the row.
 describe("the device widget", function()
     require("plugin_harness")
     local Blitbuffer = require("ffi/blitbuffer")
@@ -50,6 +50,100 @@ describe("the device widget", function()
         it("is empty with no readings", function()
             assert.same({}, Device.cells({}))
         end)
+
+        it("opens with the battery over its time left", function()
+            local cells = Device.cells({ battery = 74, left = 259200, storage = 1, memory = 1 })
+            assert.equals(3, #cells)
+            assert.same({ value = "74%", caption = "about 3 days left" }, cells[1])
+        end)
+
+        it("captions the battery plainly with no time left", function()
+            assert.same({ value = "74%", caption = "battery" }, Device.cells({ battery = 74 })[1])
+        end)
+
+        it("captions the battery plainly while charging, whatever the time left", function()
+            assert.same({ value = "74%", caption = "battery" },
+                Device.cells({ battery = 74, charging = true, left = 259200 })[1])
+        end)
+
+        it("drops the battery's cell without a reading, whatever the time left", function()
+            assert.same({}, Device.cells({ left = 259200 }))
+        end)
+    end)
+
+    describe("readings", function()
+        local DeviceStats = require("device_stats")
+        local KoDevice = require("device")
+        local QuickSettings = require("quick_settings")
+        local stubs
+
+        -- The real read with the battery at percent, the charging read's own function, and totals on record.
+        local function read_with(percent, is_charging, totals)
+            stubs = {
+                stub(QuickSettings, "battery", function()
+                    return percent
+                end),
+                stub(KoDevice, "getPowerDevice", function()
+                    return { isCharging = is_charging }
+                end),
+                stub(DeviceStats, "battery_totals", function()
+                    return totals
+                end),
+                stub(DeviceStats, "storage", function()
+                    return 11800000000
+                end),
+                stub(DeviceStats, "memory", function()
+                    return 96000000
+                end),
+            }
+            finally(function()
+                for _, s in ipairs(stubs) do
+                    s:revert()
+                end
+            end)
+            return real_readings()
+        end
+
+        local TOTALS = { discharging = { percentage = 37, time = 10 * 3600 * 1000000 } }
+
+        local function not_charging()
+            return false
+        end
+
+        it("reads the battery, its time left at the rate on record, the storage and the memory", function()
+            assert.same({ battery = 74, charging = false, left = 20 * 3600, storage = 11800000000, memory = 96000000 },
+                read_with(74, not_charging, TOTALS))
+        end)
+
+        it("reads charging as the device says", function()
+            local readings = read_with(74, function()
+                return true
+            end, TOTALS)
+            assert.is_true(readings.charging)
+            assert.equals("battery", Device.cells(readings)[1].caption)
+        end)
+
+        it("takes a failed charging read as charging", function()
+            local readings = read_with(74, function()
+                error("no power device")
+            end, TOTALS)
+            assert.is_true(readings.charging)
+            assert.equals("battery", Device.cells(readings)[1].caption)
+        end)
+
+        it("reads no time left from no totals, or from no battery", function()
+            local unread = read_with(74, not_charging, nil)
+            assert.is_nil(unread.left)
+            assert.equals("battery", Device.cells(unread)[1].caption)
+            for _, s in ipairs(stubs) do
+                s:revert()
+            end
+
+            local none = read_with(nil, not_charging, TOTALS)
+            assert.is_nil(none.battery)
+            assert.is_nil(none.left)
+            assert.equals("storage free", Device.cells(none)[1].caption)
+        end)
     end)
 
     it("is the tile with the label, its aside and a value over a caption tall", function()
@@ -65,6 +159,19 @@ describe("the device widget", function()
         assert.equals(520, widget:getSize().w)
         assert.equals("when you opened Stats", widget.aside.text)
         tile:free()
+        widget:free()
+    end)
+
+    it("sets the battery first of three columns", function()
+        fixture = { battery = 74, left = 259200, storage = 11800000000, memory = 96000000 }
+        local ctx = ctx_for("diner")
+        local inner_w = InsightTile.inner_width(520, ctx)
+        local gap = Paint.scaler(ctx)(ctx.look.home.column_gap)
+        local widget = Device.build(520, ctx)
+        assert.equals(3, #widget.cells)
+        assert.equals("74%", widget.cells[1].value.text)
+        assert.equals("about 3 days left", widget.cells[1].caption.text)
+        assert.equals(2 * (math.floor((inner_w - 2 * gap) / 3) + gap), widget.cells[3].x)
         widget:free()
     end)
 
