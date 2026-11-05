@@ -122,6 +122,17 @@ local function step_contrast(ui, delta)
     ui:handleEvent(Event:new(c.event, value))
 end
 
+-- Shows ui's list, else sends KOReader's own event for it, so the reader always gets one.
+local function show_list(ui, list, fallback)
+    local ok, shown = pcall(GotoScreen.show, { ui = ui, list = list })
+    if not ok then
+        logger.err("KoPanda: the focused panel could not show the", list, "list:", shown)
+    end
+    if not (ok and shown) then
+        ui:handleEvent(Event:new(fallback))
+    end
+end
+
 -- The panel's actions for ui, by control: each sends KOReader's own event as its own menus send it.
 function FocusedPanel.actions(ui)
     return {
@@ -150,15 +161,11 @@ function FocusedPanel.actions(ui)
             ui:onClose()
             ui:showFileManager(file)
         end,
-        -- The Go to screen, else KOReader's own table of contents, so the reader always gets a contents list.
-        go_to = function()
-            local ok, shown = pcall(GotoScreen.show, { ui = ui })
-            if not ok then
-                logger.err("KoPanda: the focused panel could not show the Go to screen:", shown)
-            end
-            if not (ok and shown) then
-                ui:handleEvent(Event:new("ShowToc"))
-            end
+        contents = function()
+            show_list(ui, "chapters", "ShowToc")
+        end,
+        bookmark_list = function()
+            show_list(ui, "bookmarks", "ShowBookmark")
         end,
         -- As ReaderMenu:onTapShowMenu does, without its tab from the tap's place (readermenu.lua:495-503).
         admin = function()
@@ -176,8 +183,8 @@ local function cell_area(id, rect, tap, stays_open)
 end
 
 -- The sheet's body under bctx (the sheet's build ctx, with the reader as bctx.ui) content_w wide: { widget, areas }.
--- Night, Bookmark and Go to first, then the steppers (Text size for a rolling document, Contrast, the light's), then
--- Home on a row of its own. Areas are { id, rect, tap, close_first }, with no holds, so a hold on them runs nothing.
+-- Night and Bookmark first, then the steppers (Text size for a rolling document, Contrast, the light's), then Contents,
+-- Bookmarks and Home. Areas are { id, rect, tap, close_first }, with no holds, so a hold on them runs nothing.
 -- repaged, when given, runs after each Text size step.
 function FocusedPanel.body(bctx, content_w, repaged)
     local ui = bctx.ui
@@ -193,11 +200,9 @@ function FocusedPanel.body(bctx, content_w, repaged)
     y, rects = Steppers.cells(body, bctx, content_w, y, {
         { label = state.night and "Night on" or "Night off", icon = "moon", on = state.night },
         { label = state.bookmarked and "Remove bookmark" or "Bookmark", icon = "bookmark", on = state.bookmarked },
-        { label = "Go to", icon = "list" },
     })
     areas[1] = cell_area("night", rects[1], actions.night, true)
     areas[2] = cell_area("bookmark", rects[2], actions.bookmark)
-    areas[3] = cell_area("go_to", rects[3], actions.go_to)
 
     local bars = {}
     if state.text_size then
@@ -232,8 +237,14 @@ function FocusedPanel.body(bctx, content_w, repaged)
     end
 
     y = y + scale(qs.grid_padding.top)
-    y, rects = Steppers.cells(body, bctx, content_w, y, { { label = "Home", icon = "home" } })
-    areas[#areas + 1] = cell_area("home", rects[1], actions.home)
+    y, rects = Steppers.cells(body, bctx, content_w, y, {
+        { label = "Contents", icon = "list" },
+        { label = "Bookmarks", icon = "bookmark" },
+        { label = "Home", icon = "home" },
+    })
+    areas[#areas + 1] = cell_area("contents", rects[1], actions.contents)
+    areas[#areas + 1] = cell_area("bookmark_list", rects[2], actions.bookmark_list)
+    areas[#areas + 1] = cell_area("home", rects[3], actions.home)
     y = y + scale(qs.grid_padding.bottom)
 
     body.dimen = Geom:new{ w = content_w, h = y }

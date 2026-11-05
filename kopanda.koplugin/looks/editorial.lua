@@ -187,6 +187,8 @@ return {
         book_row_note = { size = 12 },
         author_letter = { size = 24, color = "ink" },
         author_name = { size = 15 },
+        reader_list_row = { size = 15 },
+        reader_list_current = { size = 15 },
         shelf_empty = { face = "text", size = 11, tracking = 0.14 },
         shelf_label = { color = "text" },
     },

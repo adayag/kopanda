@@ -3,10 +3,10 @@
 -- a probe sheet paints over the reader, closes and leaves the reader up; the focused panel fits whole on the
 -- Paperwhite 7th gen with Extra large set and stays open across a tap on Text size's plus; with focused.on, a bottom
 -- swipe up and a top tap in the reader each open the panel and no KOReader menu, and a hold on its header opens
--- KOReader's reader menu; with it off, the same swipe and tap open KOReader's menus and no panel. The panel's Go to
--- opens the Go to screen on Chapters with the current chapter marked and no nav bar, on the Paperwhite 7th gen at
--- Extra large and on the Colorsoft; Remove bookmark there leaves one of two bookmarks, and a chapter tap closes the
--- screen and moves the page.
+-- KOReader's reader menu; with it off, the same swipe and tap open KOReader's menus and no panel. The panel's Bookmarks
+-- and Contents open their lists, on the Paperwhite 7th gen at Extra large and on the Colorsoft: Remove bookmark leaves
+-- one of two bookmarks; Contents has the current chapter marked and no nav bar, and a chapter tap closes the screen
+-- and moves the page.
 describe("a sheet over a book on the emulator", function()
     require("commonrequire")
     local lfs = require("libs/libkoreader-lfs")
@@ -71,7 +71,7 @@ describe("a sheet over a book on the emulator", function()
         }
         local sidecar = result.sidecar
         assert.is_nil(sidecar.error)
-        assert.equals(12, sidecar.areas)
+        assert.equals(13, sidecar.areas)
         assert.is_true(sidecar.panel_top > 0, "the panel is taller than the screen")
         assert.is_true(sidecar.panel_bottom <= sidecar.screen_h)
         assert.is_true(sidecar.panel_shown)
@@ -120,12 +120,13 @@ describe("a sheet over a book on the emulator", function()
         { "the Paperwhite 7th gen at Extra large", "paperwhite7", "goto-pw7", { text_size = "extra_large" } },
         { "the Colorsoft at the default size", "colorsoft", "goto-colorsoft", {} },
     }) do
-        it("opens the Go to screen from the panel on " .. case[1] .. ": Chapters with the current chapter marked, no "
-            .. "nav bar; Remove bookmark leaves one, a parent's toggle opens it in place, and a chapter tap closes "
-            .. "the screen and moves the page", function()
+        it("opens both lists from the panel on " .. case[1] .. ": Remove bookmark leaves one, back returns to the "
+            .. "book; Contents has the current chapter marked, no nav bar, a parent's toggle opens it in place, and a "
+            .. "chapter tap closes the screen and moves the page", function()
             local sidecar = go_to(case[2], case[3], case[4])
             assert.is_nil(sidecar.error)
-            assert.equals("chapters", sidecar.tab)
+            assert.equals("bookmarks", sidecar.bookmarks_list)
+            assert.equals("chapters", sidecar.list)
             assert.is_true(sidecar.rows > 0)
             assert.is_true(sidecar.has_current)
             assert.is_false(sidecar.has_nav)
@@ -133,7 +134,8 @@ describe("a sheet over a book on the emulator", function()
             assert.equals(2, sidecar.bookmarks_before)
             assert.equals(1, sidecar.bookmarks_after)
             assert.is_true(sidecar.sheet_closed)
-            assert.equals("bookmarks", sidecar.tab_after_remove)
+            assert.equals("bookmarks", sidecar.list_after_remove)
+            assert.is_true(sidecar.back_closed)
             assert.is_true(sidecar.visible_after > sidecar.visible_before)
             assert.is_true(sidecar.toggle_kept)
             assert.is_true(sidecar.goto_closed)

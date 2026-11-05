@@ -1,7 +1,7 @@
--- The Go to screen's model: a reader's TOC flattened in order with depths from the shallowest and the current
--- chapter found by KOReader's own lookup, its bookmarks newest first without the highlights, and the jumps and the
--- removal sent through KOReader's own calls, here to a fake reader that records them.
-describe("the Go to list", function()
+-- The Contents and Bookmarks lists' model: a reader's TOC flattened in order with depths from the shallowest and the
+-- current chapter found by KOReader's own lookup, its bookmarks newest first without the highlights, and the jumps and
+-- the removal sent through KOReader's own calls, here to a fake reader that records them.
+describe("the Contents and Bookmarks lists' model", function()
     local harness = require("plugin_harness")
     local ReaderToc = require("apps/reader/modules/readertoc")
     local GotoList

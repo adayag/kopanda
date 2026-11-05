@@ -1,9 +1,9 @@
--- The Go to screen over a book, here a fake reader that records its jumps: it opens on Chapters at the page holding
--- the current chapter, the top level shown and the current chapter's parents open, or on Bookmarks without chapters,
--- with a note for an empty tab; a chip switches the tab; a parent's toggle opens or closes it in place; a tap
--- elsewhere on a row closes the screen, then jumps; a hold on a bookmark offers Remove bookmark, and nothing on a
+-- The Contents and Bookmarks lists over a book, here a fake reader that records its jumps: Contents opens at the page
+-- holding the current chapter, the top level shown and the current chapter's parents open, Bookmarks at its first
+-- page, each with a note when it's empty, under a one-row header; a parent's toggle opens or closes it in place; a
+-- tap elsewhere on a row closes the screen, then jumps; a hold on a bookmark offers Remove bookmark, and nothing on a
 -- chapter; its top and bottom edges open nothing; and it never builds a nav bar.
-describe("the Go to screen", function()
+describe("the reader's lists", function()
     local harness = require("plugin_harness")
     local text_of = require("library_fixture").text
     local centre = require("library_fixture").centre
@@ -23,10 +23,9 @@ describe("the Go to screen", function()
         harness.teardown()
     end)
 
-    -- A rolling reader of "Frankenstein" with n chapters ("Chapter 1" on page 1, then a page apart, every third a
-    -- level deeper, or at depths[i] where given), at chapter current, and bookmarks, each { page, chapter, datetime }.
-    -- Its calls record, in order, each jump as { "stack", shown } (whether a Go to screen was shown then), then the
-    -- event or the goto.
+    -- A rolling reader with n chapters ("Chapter 1" on page 1, then a page apart, every third a level deeper, or at
+    -- depths[i] where given), at chapter current, and bookmarks, each { page, chapter, datetime }. Its calls record, in
+    -- order, each jump as { "stack", shown } (whether a list was shown then), then the event or the goto.
     local function fake_ui(n, current, bookmarks, depths)
         local calls = {}
         local toc = {}
@@ -42,7 +41,6 @@ describe("the Go to screen", function()
                     return "/body/here"
                 end,
             },
-            doc_props = { display_title = "Frankenstein" },
             toc = {
                 cleanUpTocTitle = ReaderToc.cleanUpTocTitle,
                 fillToc = function(self)
@@ -91,8 +89,9 @@ describe("the Go to screen", function()
         return { page = "/body/x" .. i, chapter = "Chapter " .. i, datetime = ("2026-10-%02d 09:00:00"):format(i) }
     end
 
-    local function show(ui)
-        local screen = GotoScreen.show{ ui = ui }
+    -- Shows ui's list, Contents unless named.
+    local function show(ui, list)
+        local screen = GotoScreen.show{ ui = ui, list = list or "chapters" }
         assert.is_not_nil(screen)
         harness.tick(2)
         return screen
@@ -119,9 +118,9 @@ describe("the Go to screen", function()
         return out
     end
 
-    it("opens on Chapters at the page holding the current chapter, that row marked", function()
+    it("opens Contents at the page holding the current chapter, that row marked", function()
         local screen = show(fake_ui(80, 61))
-        assert.equals("chapters", screen.tab)
+        assert.equals("chapters", screen.list)
         assert.is_true(screen.pages > 1)
         assert.is_true(screen.page > 1)
         local marked = {}
@@ -134,7 +133,7 @@ describe("the Go to screen", function()
     end)
 
     it("labels each chapter row's page as the reader's footer does", function()
-        local ui = fake_ui(3, 3)
+        local ui = fake_ui(3, nil, nil, { 1, 1, 1 })
         ui.bookmark.getBookmarkPageString = function(_, page)
             return "label " .. page
         end
@@ -148,111 +147,114 @@ describe("the Go to screen", function()
 
     it("opens on page 1 with no current chapter", function()
         local screen = show(fake_ui(80, nil))
-        assert.equals("chapters", screen.tab)
+        assert.equals("chapters", screen.list)
         assert.equals(1, screen.page)
         assert.equals("Chapter 1", row_texts(screen)[1])
     end)
 
-    it("heads the screen with the back control, Go to, the book's title and the two chips", function()
-        local screen = show(fake_ui(5, 1))
-        assert.equals("book", text_of(screen.header.back_label):lower())
-        assert.equals("Go to", text_of(screen.header.title))
-        assert.equals("Frankenstein", text_of(screen.header.aside))
-        assert.is_not_nil(screen.chips.chapters)
-        assert.is_not_nil(screen.chips.bookmarks)
-        assert.is_true(screen.chips.chapters.x < screen.chips.bookmarks.x)
+    it("heads each list with the back control and its name on one row, shorter than a detail header", function()
+        for list, title in pairs({ chapters = "Contents", bookmarks = "Bookmarks" }) do
+            local screen = show(fake_ui(5, 1), list)
+            local back = screen.header.back_rect
+            assert.equals("book", text_of(screen.header.back_label):lower())
+            assert.equals(title, text_of(screen.header.title))
+            assert.is_nil(screen.header.aside)
+            assert.is_true(back.y + back.h <= screen.header.rect.h)
+            assert.is_true(screen.header.rect.h < package.loaded["library_chrome"].detail_header_height(screen.ctx))
+            GotoScreen.close()
+        end
     end)
 
-    it("cuts a long book title short of the chips", function()
-        local ui = fake_ui(5, 1)
-        ui.doc_props.display_title = ("Frankenstein, or the Modern Prometheus "):rep(8):sub(1, 300)
-        local screen = show(ui)
-        local side = Screen:scaleBySize(screen.ctx.look.shelf.detail.padding.side)
-        assert.is_true(side + screen.header.aside:getSize().w <= screen.chips.chapters.x)
-    end)
-
-    it("marks the active tab's chip in ink with a paper label, the other on the sort fill, in every look", function()
+    it("keeps the back control clear of the list's name at Extra large on the Paperwhite 7th gen, in every look",
+        function()
         local Looks = package.loaded["looks"]
         local Settings = package.loaded["settings"]
-        local function rgb(color)
-            if not color then
-                return nil
+        assert.is_true(Settings.set("text_size", "extra_large"))
+        harness.at_screen(1072, 1448, function()
+            for _, id in ipairs(Looks.ids()) do
+                assert.is_true(Settings.set("look", id))
+                local screen = show(fake_ui(5, 1), "bookmarks")
+                local back, title = screen.header.back_rect, screen.header.title_place
+                assert.is_true(back.x + back.w < title.x, id)
+                assert.is_true(title.x + screen.header.title:getSize().w <= screen.dimen.w, id)
+                GotoScreen.close()
             end
-            local c = color:getColorRGB32()
-            return ("%d,%d,%d"):format(c.r, c.g, c.b)
+        end)
+    end)
+
+    it("fits at least 14 rows on a page of either list on the Colorsoft at the default size, in every look", function()
+        local Looks = package.loaded["looks"]
+        local Settings = package.loaded["settings"]
+        local bookmarks = {}
+        for i = 1, 60 do
+            bookmarks[i] = bookmark(i)
         end
-        local function line_color(line)
-            return line.fgcolor or line_color(line[1])
+        local depths = {}
+        for i = 1, 60 do
+            depths[i] = 1
         end
-        -- The chip box drawn at rect in the header, the frame's first child.
-        local function chip_at(screen, rect)
-            local header = screen[1][1]
-            for i, child in ipairs(header) do
-                if header.places[i].x == rect.x and header.places[i].y == rect.y then
-                    return child
-                end
-            end
-        end
-        local ok, err = pcall(function()
-            for _, night in ipairs({ false, true }) do
-                Screen.night_mode = night
-                for _, id in ipairs(Looks.ids()) do
-                    assert.is_true(Settings.set("look", id))
-                    local screen = show(fake_ui(5, 1))
-                    local color = Looks.colorer(screen.ctx)
-                    local where = id .. " " .. screen.ctx.variant
-                    assert.equals(night and "night" or "day", screen.ctx.variant)
-                    local active, inactive = chip_at(screen, screen.chips.chapters),
-                        chip_at(screen, screen.chips.bookmarks)
-                    assert.equals(rgb(color("ink")), rgb(active.fill_color), where)
-                    assert.equals(rgb(color("paper")), rgb(line_color(active[1])), where)
-                    assert.equals(rgb(color(screen.ctx.look.library.header.sort_fill_color)),
-                        rgb(inactive.fill_color), where)
-                    assert.not_equals(rgb(active.fill_color), rgb(inactive.fill_color), where)
-                    for _, box in ipairs({ active, inactive }) do
-                        local left = box.places[1].x
-                        local right = box:getSize().w - (left + box[1]:getSize().w)
-                        assert.is_true(left > 0 and right > 0, where .. ": the label touches its chip's edge")
-                    end
+        harness.at_screen(1264, 1680, function()
+            for _, id in ipairs(Looks.ids()) do
+                assert.is_true(Settings.set("look", id))
+                for _, list in ipairs({ "chapters", "bookmarks" }) do
+                    local screen = show(fake_ui(60, 1, bookmarks, depths), list)
+                    assert.is_true(#screen.rows >= 14, id .. " " .. list .. ": " .. #screen.rows .. " rows")
                     GotoScreen.close()
                 end
             end
         end)
-        Screen.night_mode = false
-        assert(ok, err)
     end)
 
-    it("opens on Bookmarks, newest first, when the book has no chapters", function()
-        local screen = show(fake_ui(0, nil, { bookmark(3), bookmark(9) }))
-        assert.equals("bookmarks", screen.tab)
+    it("opens Bookmarks, newest first, at its first page, whether or not the book has chapters", function()
+        for _, chapters in ipairs({ 0, 80 }) do
+            local screen = show(fake_ui(chapters, chapters > 0 and 61 or nil, { bookmark(3), bookmark(9) }),
+                "bookmarks")
+            assert.equals("bookmarks", screen.list)
+            assert.equals(1, screen.page)
+            assert.same({ "Chapter 9", "Chapter 3" }, row_texts(screen))
+            assert.is_nil(screen.note)
+            GotoScreen.close()
+        end
+    end)
+
+    it("opens and refreshes Bookmarks without reading the TOC", function()
+        local ui = fake_ui(5, 1, { bookmark(3), bookmark(9) })
+        ui.toc.fillToc = function()
+            error("the TOC failed")
+        end
+        local screen = show(ui, "bookmarks")
         assert.same({ "Chapter 9", "Chapter 3" }, row_texts(screen))
-        assert.is_nil(screen.note)
+        screen:refresh()
+        assert.same({ "Chapter 9", "Chapter 3" }, row_texts(screen))
     end)
 
-    it("opens on Bookmarks with its note when the book has neither", function()
-        local screen = show(fake_ui(0, nil))
-        assert.equals("bookmarks", screen.tab)
+    it("turns a page of either list and stays on it", function()
+        local bookmarks, depths = {}, {}
+        for i = 1, 60 do
+            bookmarks[i], depths[i] = bookmark(i), 1
+        end
+        for list, title in pairs({ chapters = "Contents", bookmarks = "Bookmarks" }) do
+            local screen = show(fake_ui(60, 1, bookmarks, depths), list)
+            assert.equals(1, screen.page)
+            send("tap", centre(screen.pager.next.rect))
+            assert.equals(list, screen.list)
+            assert.equals(2, screen.page)
+            assert.equals(title, text_of(screen.header.title))
+            GotoScreen.close()
+        end
+    end)
+
+    it("notes a book with no bookmarks on Bookmarks", function()
+        local screen = show(fake_ui(5, 1), "bookmarks")
         assert.same({}, screen.rows)
         assert.equals("no bookmarks yet", text_of(screen.note):lower())
     end)
 
-    it("notes a book with no chapters on the Chapters tab", function()
+    it("notes a book with no chapters on Contents", function()
         local screen = show(fake_ui(0, nil, { bookmark(3) }))
-        send("tap", centre(screen.chips.chapters))
-        assert.equals("chapters", screen.tab)
+        assert.equals("chapters", screen.list)
+        assert.same({}, screen.rows)
         assert.equals("no chapters in this book", text_of(screen.note):lower())
-    end)
-
-    it("switches the tab on a chip tap: Bookmarks at page 1, Chapters back at the current chapter's page", function()
-        local screen = show(fake_ui(80, 61, { bookmark(3) }))
-        local current_page = screen.page
-        send("tap", centre(screen.chips.bookmarks))
-        assert.equals("bookmarks", screen.tab)
-        assert.equals(1, screen.page)
-        assert.same({ "Chapter 3" }, row_texts(screen))
-        send("tap", centre(screen.chips.chapters))
-        assert.equals("chapters", screen.tab)
-        assert.equals(current_page, screen.page)
     end)
 
     it("closes the screen on a chapter row tap, then jumps to the chapter", function()
@@ -300,7 +302,7 @@ describe("the Go to screen", function()
         assert.same({}, ui.calls)
     end)
 
-    it("keeps the page holding a toggled parent, and the open parents across a tab switch", function()
+    it("keeps the page holding a toggled parent", function()
         local screen = show(fake_ui(80, 61, { bookmark(3) }))
         local page = screen.page
         local parent
@@ -314,10 +316,6 @@ describe("the Go to screen", function()
         assert.is_not_nil(parent)
         assert.equals(page, screen.page)
         assert.is_truthy(table.concat(indices(screen), ","):find(parent .. "," .. parent + 1, 1, true))
-        local count = screen.count
-        send("tap", centre(screen.chips.bookmarks))
-        send("tap", centre(screen.chips.chapters))
-        assert.equals(count, screen.count)
     end)
 
     it("jumps on a tap on a parent row's title, the screen closed first", function()
@@ -352,7 +350,7 @@ describe("the Go to screen", function()
 
     it("closes the screen on a bookmark row tap, then jumps to the bookmark", function()
         local ui = fake_ui(0, nil, { bookmark(3), bookmark(9) })
-        local screen = show(ui)
+        local screen = show(ui, "bookmarks")
         send("tap", centre(screen.rows[2].rect))
         assert.is_nil(GotoScreen.shown)
         assert.same({ { "stack", false }, { "goto_bookmark", "/body/x3" } }, ui.calls)
@@ -368,8 +366,7 @@ describe("the Go to screen", function()
 
     it("offers Remove bookmark on a hold on a bookmark, which removes it and stays on Bookmarks", function()
         local ui = fake_ui(5, 1, { bookmark(3), bookmark(9) })
-        local screen = show(ui)
-        send("tap", centre(screen.chips.bookmarks))
+        local screen = show(ui, "bookmarks")
         send("hold", centre(screen.rows[1].rect))
         harness.tick(2)
         local sheet = Sheet.shown
@@ -378,11 +375,12 @@ describe("the Go to screen", function()
         assert.equals(1, #sheet.spec.rows)
         assert.equals("Remove bookmark", sheet.spec.rows[1].label)
         assert.equals("Chapter 9", sheet.spec.header.heading)
+        assert.equals("Bookmarks", sheet.spec.header.label)
         send("tap", centre(sheet.rows[1].rect))
         harness.tick(2)
         assert.is_nil(Sheet.shown)
         assert.equals(screen, GotoScreen.shown)
-        assert.equals("bookmarks", screen.tab)
+        assert.equals("bookmarks", screen.list)
         assert.same({ "Chapter 3" }, row_texts(screen))
         assert.equals(1, #ui.annotation.annotations)
         assert.same({}, ui.calls)
@@ -433,11 +431,12 @@ describe("the Go to screen", function()
     end)
 
     it("never builds a nav bar", function()
-        local screen = show(fake_ui(80, 61, { bookmark(3) }))
-        assert.is_nil(screen.nav)
-        send("tap", centre(screen.chips.bookmarks))
-        assert.is_nil(screen.nav)
-        local foot = screen.pager.prev.rect
-        assert.is_true(foot.y + foot.h <= screen.dimen.h)
+        for _, list in ipairs({ "chapters", "bookmarks" }) do
+            local screen = show(fake_ui(80, 61, { bookmark(3) }), list)
+            assert.is_nil(screen.nav)
+            local foot = screen.pager.prev.rect
+            assert.is_true(foot.y + foot.h <= screen.dimen.h)
+            GotoScreen.close()
+        end
     end)
 end)

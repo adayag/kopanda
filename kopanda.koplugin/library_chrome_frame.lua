@@ -95,15 +95,15 @@ local function back_control(ctx, text)
     return box, label
 end
 
--- A header chip: widgets side by side, top-aligned, inside the header's picker padding (its side padding
--- pad_x where given) and outline, on fill, rounded by the header's picker radius where it has one (Frosted's pills).
-function ChromeFrame.chip(widgets, fill, ctx, pad_x)
+-- A header chip: widgets side by side, top-aligned, inside the header's picker padding and outline, on fill, rounded
+-- by the header's picker radius where it has one (Frosted's pills).
+function ChromeFrame.chip(widgets, fill, ctx)
     local scale, color = tools(ctx)
     local tokens = ctx.look.library.header
     local outline_color = color(tokens.picker_outline_color)
     local outline = outline_color and scale(tokens.picker_outline_width) or 0
     local pad_y = outline + scale(tokens.picker_padding.y)
-    pad_x = outline + scale(pad_x or tokens.picker_padding.x)
+    local pad_x = outline + scale(tokens.picker_padding.x)
     local w, h = 0, 0
     for _, widget in ipairs(widgets) do
         local size = widget:getSize()
@@ -175,6 +175,41 @@ function ChromeFrame.header(ctx, w, spec)
     if parts.back then
         parts.title_rect = Geom:new{ x = side, y = title_y, w = title_x - side + parts.title:getSize().w, h = title_h }
     end
+    local edge_color = color(tokens.edge_color)
+    if edge > 0 and edge_color then
+        add(box, Paint.Fill:new{ dimen = Geom:new{ w = w, h = edge }, color = edge_color }, 0, h - edge)
+    end
+    return box, parts
+end
+
+-- The reader list header's height under ctx: the taller of the back control and the title, its padding and the edge.
+function ChromeFrame.list_header_height(ctx)
+    local scale, _, line_height = tools(ctx)
+    local header = ctx.look.library.header
+    local _, back_h = back_metrics(ctx)
+    return 2 * scale(ctx.look.shelf.reader_list.header_padding_y)
+        + math.max(back_h, line_height(ctx.look.type.reader_list_title)) + scale(header.edge_width)
+end
+
+-- The reader list header under ctx, w wide and h tall: the back control at the left and title at the right, both
+-- centred on one row, then the edge. Returns the header and its parts: rect, title, title_place, back_rect and
+-- back_label.
+function ChromeFrame.list_header(ctx, w, h, title)
+    local scale, color = tools(ctx)
+    local tokens = ctx.look.library.header
+    local side = scale(ctx.look.shelf.detail.padding.side)
+    local edge = scale(tokens.edge_width)
+    local box = new_box(w, h, color(tokens.fill_color))
+    local parts = { rect = Geom:new{ x = 0, y = 0, w = w, h = h } }
+    local control
+    control, parts.back_label = back_control(ctx, "Book")
+    local size = control:getSize()
+    parts.back_rect = Geom:new{ x = side, y = math.floor((h - edge - size.h) / 2), w = size.w, h = size.h }
+    add(box, control, side, parts.back_rect.y)
+    parts.title = Typeset.line(ctx.look.type.reader_list_title, title, math.max(1, w - 2 * side), ctx)
+    local title_size = parts.title:getSize()
+    parts.title_place = { x = w - side - title_size.w, y = math.floor((h - edge - title_size.h) / 2) }
+    add(box, parts.title, parts.title_place.x, parts.title_place.y)
     local edge_color = color(tokens.edge_color)
     if edge > 0 and edge_color then
         add(box, Paint.Fill:new{ dimen = Geom:new{ w = w, h = edge }, color = edge_color }, 0, h - edge)

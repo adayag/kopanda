@@ -17,13 +17,14 @@
 --                        its settled signal holds its header and on the next tick reports menu_after_hold and
 --                        panel_after_hold.
 --   goto                 bookmarks the page shown and the next through ui.bookmark:onToggleBookmark(), opens the
---                        panel and on its settled signal taps Go to; on the Go to screen's settled signal records
---                        tab, rows, has_current, has_nav, page and pages; taps the Bookmarks chip, holds the first
---                        bookmark row and on the sheet's settled signal taps Remove bookmark, recording
---                        bookmarks_before and bookmarks_after; then taps the Chapters chip and the first closed
---                        parent's toggle on the page, recording visible_before and visible_after (the rows
---                        listed) and toggle_kept (the screen still shown), then the page's last chapter row that
---                        starts off the current page, and on the next tick reports goto_closed and page_changed.
+--                        panel and on its settled signal taps Bookmarks; on the list's settled signal records
+--                        bookmarks_list and bookmarks_before, holds the first row and on the sheet's settled signal
+--                        taps Remove bookmark, recording bookmarks_after, sheet_closed and list_after_remove; taps
+--                        the back control, recording back_closed, opens the panel again and taps Contents; on the
+--                        list's settled signal records list, rows, has_current, has_nav, page and pages; taps the
+--                        first closed parent's toggle on the page, recording visible_before and visible_after (the
+--                        rows listed) and toggle_kept (the screen still shown), then the page's last chapter row
+--                        that starts off the current page, and on the next tick reports goto_closed and page_changed.
 local logger = require("logger")
 
 local POLL_S = 0.5
@@ -243,6 +244,7 @@ local ok, err = pcall(function()
     end
 
     local GotoScreen
+    local goto_list = "bookmark_list"
     local goto_opened = false
     local goto_removing = false
     local goto_window, page_before_jump
@@ -256,7 +258,6 @@ local ok, err = pcall(function()
 
     local jump = guarded(function()
         local screen = GotoScreen.shown
-        gesture("tap", screen.chips.chapters)
         local parent
         for _, row in ipairs(screen.rows) do
             if row.toggle and not screen.expanded[row.chapter.index] then
@@ -264,7 +265,7 @@ local ok, err = pcall(function()
             end
         end
         if not parent then
-            error("the Go to screen's Chapters page has no closed parent")
+            error("the Contents page has no closed parent")
         end
         result.visible_before = screen.count
         gesture("tap", parent.toggle)
@@ -272,7 +273,7 @@ local ok, err = pcall(function()
         result.toggle_kept = GotoScreen.shown == screen
         local rows = screen.rows
         if #rows == 0 then
-            error("the Go to screen's Chapters tab has no rows")
+            error("the Contents list has no rows")
         end
         goto_window = screen
         page_before_jump = ReaderUI.instance:getCurrentPage()
@@ -283,17 +284,25 @@ local ok, err = pcall(function()
             end
         end
         if not target then
-            error("every chapter row on the Go to screen's page starts on the current page")
+            error("every chapter row on the Contents page starts on the current page")
         end
         gesture("tap", target.rect)
         UIManager:nextTick(check_jump)
     end)
 
+    -- Back from Bookmarks to the book, then the panel again for Contents.
+    local open_contents = guarded(function()
+        result.back_closed = GotoScreen.shown == nil
+        goto_list = "contents"
+        loaded("focused_panel").open(ReaderUI.instance)
+    end)
+
     local check_removed = guarded(function()
         result.bookmarks_after = bookmark_count()
         result.sheet_closed = Sheet.shown == nil
-        result.tab_after_remove = GotoScreen.shown and GotoScreen.shown.tab
-        UIManager:nextTick(jump)
+        result.list_after_remove = GotoScreen.shown and GotoScreen.shown.list
+        gesture("tap", GotoScreen.shown.header.back_rect)
+        UIManager:nextTick(open_contents)
     end)
 
     local remove_bookmark = guarded(function()
@@ -305,12 +314,26 @@ local ok, err = pcall(function()
         UIManager:nextTick(check_removed)
     end)
 
-    local measure_goto = guarded(function()
+    local measure_bookmarks = guarded(function()
         local screen = GotoScreen.shown
         if not screen then
-            error("the Go to screen is not shown at its settled signal")
+            error("the Bookmarks list is not shown at its settled signal")
         end
-        result.tab = screen.tab
+        result.bookmarks_list = screen.list
+        result.bookmarks_before = bookmark_count()
+        if #screen.rows == 0 then
+            error("the Bookmarks list has no rows")
+        end
+        goto_removing = true
+        gesture("hold", screen.rows[1].rect)
+    end)
+
+    local measure_contents = guarded(function()
+        local screen = GotoScreen.shown
+        if not screen then
+            error("the Contents list is not shown at its settled signal")
+        end
+        result.list = screen.list
         result.rows = #screen.rows
         result.has_current = false
         for _, row in ipairs(screen.rows) do
@@ -319,22 +342,16 @@ local ok, err = pcall(function()
         result.has_nav = screen.nav ~= nil
         result.page = screen.page
         result.pages = screen.pages
-        result.bookmarks_before = bookmark_count()
-        gesture("tap", screen.chips.bookmarks)
-        if screen.tab ~= "bookmarks" or #screen.rows == 0 then
-            error("the Bookmarks chip did not show the bookmarks")
-        end
-        goto_removing = true
-        gesture("hold", screen.rows[1].rect)
+        UIManager:nextTick(jump)
     end)
 
-    local tap_go_to = guarded(function()
+    local tap_list = guarded(function()
         local sheet = Sheet.shown
         if not sheet or sheet.spec.name ~= "focused_panel" then
             error("the focused panel is not shown at its settled signal")
         end
         goto_opened = true
-        gesture("tap", area("go_to").rect)
+        gesture("tap", area(goto_list).rect)
     end)
 
     local open_goto = guarded(function()
@@ -405,10 +422,10 @@ local ok, err = pcall(function()
         elseif args.screen == "sheet" and args.name == "probe" and probe_shown then
             UIManager:nextTick(tap_row)
         elseif args.screen == "sheet" and args.name == "focused_panel" and panel_opened then
-            local next_step = { hooks = hold_header, ["goto"] = tap_go_to }
+            local next_step = { hooks = hold_header, ["goto"] = tap_list }
             UIManager:nextTick(next_step[STEP] or measure_panel)
         elseif args.screen == "goto" and goto_opened then
-            UIManager:nextTick(measure_goto)
+            UIManager:nextTick(goto_list == "bookmark_list" and measure_bookmarks or measure_contents)
         elseif args.screen == "sheet" and args.name == "goto_bookmark" and goto_removing then
             UIManager:nextTick(remove_bookmark)
         end

@@ -121,7 +121,7 @@ describe("the steppers", function()
             local cells = {
                 { label = "Night", icon = "moon" },
                 { label = "Bookmark", icon = "bookmark", on = true },
-                { label = "Go to", icon = "list" },
+                { label = "Contents", icon = "list" },
             }
             local body, under, rects = draw_cells(id, cells, 40)
             assert.equals(3, #rects, id)

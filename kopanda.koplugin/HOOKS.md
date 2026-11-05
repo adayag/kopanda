@@ -194,8 +194,8 @@ Upgrading KOReader walks this list.
   opens the quick-settings sheet, on the home and on a chrome window, starts in the bottom edge
   band and outside the left and right bands, where Gestures binds frontlight and warmth swipes by default
   (`plugins/gestures.koplugin/defaults.lua:14-17`; it binds nothing to a bottom-edge swipe up,
-  `:20-21`), and it takes nothing with no `FileManager.instance`, so the Go to screen over the
-  reader opens no sheet. A west or east swipe outside the top and bottom bands is consumed.
+  `:20-21`), and it takes nothing with no `FileManager.instance`, so the reader's lists
+  open no sheet. A west or east swipe outside the top and bottom bands is consumed.
 
 ### `PluginLoader:loadPlugins()` and plugin names, the coexistence check
 
@@ -1624,12 +1624,13 @@ its own `pcall`, and acts through the reader's own events below, each inside the
   own `DeviceListener` (`readerui.lua:452`).
 - Bookmark: `ReaderBookmark:isPageBookmarked()` for the current page (`readerbookmark.lua:403-406`);
   `ToggleBookmark` to `ReaderBookmark:onToggleBookmark` (`:347-359`), which toggles the dogear too.
-- Go to opens KoPanda's Go to screen (`goto_screen.lua`); when that isn't shown or raises, the fallback is
-  `ShowToc` to `ReaderToc:onShowToc` (`readertoc.lua:807`), so the reader always gets a contents list.
+- Contents and Bookmarks open KoPanda's lists (`goto_screen.lua`); when one isn't shown or raises, the fallback is
+  `ShowToc` to `ReaderToc:onShowToc` (`readertoc.lua:807`) or `ShowBookmark` to `ReaderBookmark:onShowBookmark`
+  (`readerbookmark.lua:657`), so the reader always gets a list.
   The screen is a library window over the reader: the reader closes the file manager as it shows
   (`readerui.lua:792-795`), so the window's forward step has no `FileManager.instance` to offer a gesture to and
   takes only page swipes (`home_gestures.lua`), and the chrome's close of the home finds none shown.
-- The Go to screen's chapters (`goto_list.lua`): `ReaderToc:fillToc()` (`readertoc.lua:160-175`) fills
+- The Contents list's chapters (`goto_list.lua`): `ReaderToc:fillToc()` (`readertoc.lua:160-175`) fills
   `ui.toc.toc`, items `{ title, page, depth, xpointer }` with depth from 1 and the xpointer only in a rolling
   document, ordered and fixed by `validateAndFixToc` (`:176-213`); KOReader's own TOC list mutates the items
   (`:1097-1145`), so the screen copies them. An item has children when the next item is deeper, as KOReader's TOC
@@ -1642,7 +1643,7 @@ its own `pcall`, and acts through the reader's own events below, each inside the
   and hidden flows, as the TOC list's does (`readertoc.lua:1130-1143`). A tap goes as the TOC list's does: `ui.link:addCurrentLocationToStack()`
   (`frontend/apps/reader/modules/readerlink.lua:793-797`), then `GotoXPointer(xp, xp)` or `GotoPage(page)`
   (`readertoc.lua:940-948`).
-- The Go to screen's bookmarks: the items of `ui.annotation.annotations` with no `drawer`, as
+- The Bookmarks list: the items of `ui.annotation.annotations` with no `drawer`, as
   `ReaderBookmark:getDogearBookmarkIndex` tells them (`readerbookmark.lua:417-440`); `chapter` is nil outside any
   chapter (`:378-381`); `datetime` is `"YYYY-MM-DD HH:MM:SS"` (`readerannotation.lua:519-520`), so newest first is a
   descending string compare, as `getLatestBookmark` compares them (`readerbookmark.lua:604`). The page label is
@@ -1726,8 +1727,8 @@ touch lock still holds.
   `"swipe"`, a top swipe south unless it is `"tap"`, as `onTapShowMenu` and `onSwipeShowMenu` open the file
   manager's menu (`:1102-1114`); what it rules out passes on to the forward step.
 - With no file manager the rule takes nothing: opening a book closes it (`frontend/apps/reader/readerui.lua:793-794`,
-  `FileManager.instance` cleared at `frontend/apps/filemanager/filemanager.lua:834-839`), so the Go to screen over
-  the reader keeps its top edge.
+  `FileManager.instance` cleared at `frontend/apps/filemanager/filemanager.lua:834-839`), so the reader's lists
+  keep their top edge.
 
 ### The hold on the home: the `hold` gesture, Gestures' hold corners and the home sheet's rows
 

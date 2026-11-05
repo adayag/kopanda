@@ -1,8 +1,8 @@
--- The Go to screen's rows: a chapter row indented by its depth with its page at the right, its title right of the
--- toggle column in a nested list, a parent's toggle in it; the current one a line taller with "You are here" under its
--- title; and a bookmark row, its chapter at the left and its page at the right; each row as tall as GotoRows.height
--- says, and nothing past the row's width at Extra large on the Paperwhite 7th gen, in every look.
-describe("the Go to rows", function()
+-- The Contents and Bookmarks rows: a chapter row indented by its depth with its page at the right, its title right of
+-- the toggle column in a nested list, a parent's toggle in it; the current one filled in ink with its text in paper;
+-- and a bookmark row, its chapter at the left and its page at the right; every row as tall as GotoRows.height says,
+-- and nothing past the row's width at Extra large on the Paperwhite 7th gen, in every look.
+describe("the Contents and Bookmarks rows", function()
     local harness = require("plugin_harness")
     local Screen = require("device").screen
     local text_of = require("library_fixture").text
@@ -85,7 +85,7 @@ describe("the Go to rows", function()
         for _, id in ipairs(Looks.ids()) do
             local ctx = ctx_for(id)
             local column = GotoRows.toggle_width(ctx)
-            assert.is_true(column >= GotoRows.height("chapter", true, ctx), id)
+            assert.is_true(column >= GotoRows.height(ctx), id)
             local indent = Screen:scaleBySize(ctx.look.shelf.list.side)
             local pad = Screen:scaleBySize(ctx.look.shelf.author.padding.x)
             local parent = chapter("One", 1, 3)
@@ -113,28 +113,43 @@ describe("the Go to rows", function()
         end
     end)
 
-    it("makes the current row taller, with you are here under its title", function()
-        for _, id in ipairs(Looks.ids()) do
-            local ctx = ctx_for(id)
-            local plain, plain_h = GotoRows.chapter(chapter("One", 1, 3), false, 800, ctx)
-            local here, here_h = GotoRows.chapter(chapter("One", 1, 3), true, 800, ctx)
-            assert.is_true(here_h > plain_h, id)
-            assert.equals(plain_h, GotoRows.height("chapter", false, ctx), id)
-            assert.equals(here_h, GotoRows.height("chapter", true, ctx), id)
-            assert.equals(plain_h, plain:getSize().h, id)
-            assert.equals(here_h, here:getSize().h, id)
-            assert.is_falsy(table.concat(texts(plain), "|"):find("you are here", 1, true), id)
-            local found
-            for _, text in ipairs(texts(here)) do
-                found = found or text == "you are here"
+    local function rgb(color)
+        local c = color:getColorRGB32()
+        return ("%d,%d,%d"):format(c.r, c.g, c.b)
+    end
+
+    -- The colour a line of text is drawn in.
+    local function line_color(line)
+        return line.fgcolor or line_color(line[1])
+    end
+
+    it("keeps the current row the height of any other, filled in ink with its text and open toggle in paper", function()
+        for _, variant in ipairs({ "day", "night" }) do
+            for _, id in ipairs(Looks.ids()) do
+                local ctx = ctx_for(id)
+                ctx.variant = variant
+                local color = Looks.colorer(ctx)
+                local where = id .. " " .. variant
+                local parent = chapter("One", 0, 3)
+                parent.has_children = true
+                local plain, plain_h = GotoRows.chapter(parent, false, 800, ctx, true, true)
+                local here, here_h = GotoRows.chapter(parent, true, 800, ctx, true, true)
+                assert.equals(GotoRows.height(ctx), plain_h, where)
+                assert.equals(plain_h, here_h, where)
+                assert.equals(here_h, here:getSize().h, where)
+                assert.same({ "one", "3" }, texts(here), where)
+                assert.is_nil(plain[1].color, where)
+                assert.equals(rgb(color("ink")), rgb(here[1].color), where)
+                assert.equals(800, here[1]:getSize().w, where)
+                local _, title = place_of(here, "One")
+                local _, page = place_of(here, "3")
+                assert.equals(rgb(color("paper")), rgb(line_color(title)), where)
+                assert.equals(rgb(color("paper")), rgb(line_color(page)), where)
+                assert.equals(rgb(color("paper")), rgb(toggle_of(here).color), where)
+                assert.not_equals(rgb(color("paper")), rgb(toggle_of(plain).color), where)
+                plain:free()
+                here:free()
             end
-            assert.is_true(found, id)
-            local title_place = place_of(here, "One")
-            local note_place = place_of(here, "You are here")
-            assert.equals(title_place.x, note_place.x, id)
-            assert.is_true(note_place.y > title_place.y, id)
-            plain:free()
-            here:free()
         end
     end)
 
@@ -142,8 +157,7 @@ describe("the Go to rows", function()
         local ctx = ctx_for("diner")
         local row, h = GotoRows.bookmark({ chapter = "Letter 1", page_label = "12" }, 800, ctx)
         assert.same({ "letter 1", "12" }, texts(row))
-        assert.equals(GotoRows.height("bookmark", false, ctx), h)
-        assert.equals(GotoRows.height("chapter", false, ctx), h)
+        assert.equals(GotoRows.height(ctx), h)
         row:free()
     end)
 

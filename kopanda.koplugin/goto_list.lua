@@ -1,6 +1,7 @@
--- The Go to screen's model: the reader's TOC (frontend/apps/reader/modules/readertoc.lua:160-175, :383-406) and its
--- bookmarks, the annotations with no drawer (readerbookmark.lua:417-440), read as lists; the jumps and the removal go
--- through KOReader's own calls, as its TOC and bookmark lists make them (HOOKS.md, "The focused panel").
+-- The Contents and Bookmarks lists' model: the reader's TOC (frontend/apps/reader/modules/readertoc.lua:160-175,
+-- :383-406) and its bookmarks, the annotations with no drawer (readerbookmark.lua:417-440), read as lists; the jumps
+-- and the removal go through KOReader's own calls, as its TOC and bookmark lists make them (HOOKS.md, "The focused
+-- panel").
 local Event = require("ui/event")
 
 local GotoList = {}

@@ -1,4 +1,4 @@
--- The chrome the library's windows share: a full-screen KoPanda window over the file manager (the Go to screen's over
+-- The chrome the library's windows share: a full-screen KoPanda window over the file manager (the reader's lists' over
 -- the reader), its paint and settled signal and the library's books the windows share while one is up, with the
 -- drawing (library_chrome_frame.lua, re-exported here) and the gesture route (library_chrome_gestures.lua) beside it.
 -- A window module extends LibraryChrome.Window and supplies the fields and functions library.lua shows;
@@ -24,6 +24,8 @@ LibraryChrome.box = ChromeFrame.box
 LibraryChrome.add = ChromeFrame.add
 LibraryChrome.tools = ChromeFrame.tools
 LibraryChrome.detail_header_height = ChromeFrame.detail_header_height
+LibraryChrome.list_header_height = ChromeFrame.list_header_height
+LibraryChrome.list_header = ChromeFrame.list_header
 LibraryChrome.chip = ChromeFrame.chip
 LibraryChrome.header = ChromeFrame.header
 LibraryChrome.foot = ChromeFrame.foot

@@ -214,6 +214,7 @@ return {
         pager_label = { face = "display", size = 12 },
         -- Text on the mustard, pink and teal fills is on_accent.
         shelf_detail_title = { tracking = -0.01, color = "on_accent" },
+        reader_list_title = { color = "on_accent" },
         shelf_back = { face = "display" },
         series_sub = { color = "ink" },
         shelf_chip = { face = "display" },

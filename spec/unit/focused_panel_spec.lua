@@ -223,36 +223,42 @@ describe("the focused panel", function()
             assert.same({ { "close" }, { "showFileManager", "/books/frankenstein.epub" } }, ui.calls)
         end)
 
-        it("shows the Go to screen over the book for Go to", function()
-            local ui = fake_ui()
-            local shown = {}
-            set(require("goto_screen"), "show", function(opts)
-                shown[#shown + 1] = opts
-                return {}
-            end)
-            FocusedPanel.actions(ui).go_to()
-            assert.equals(1, #shown)
-            assert.equals(ui, shown[1].ui)
-            assert.same({}, ui.calls)
-        end)
+        for _, case in ipairs({ { "contents", "chapters", "ShowToc", "table of contents" },
+            { "bookmark_list", "bookmarks", "ShowBookmark", "bookmark list" } }) do
+            local action, list, event, name = case[1], case[2], case[3], case[4]
 
-        it("opens KOReader's table of contents for Go to when the Go to screen isn't shown", function()
-            local ui = fake_ui()
-            set(require("goto_screen"), "show", function()
-                return nil
+            it("shows the " .. list .. " list over the book for " .. action, function()
+                local ui = fake_ui()
+                local shown = {}
+                set(require("goto_screen"), "show", function(opts)
+                    shown[#shown + 1] = opts
+                    return {}
+                end)
+                FocusedPanel.actions(ui)[action]()
+                assert.equals(1, #shown)
+                assert.equals(ui, shown[1].ui)
+                assert.equals(list, shown[1].list)
+                assert.same({}, ui.calls)
             end)
-            FocusedPanel.actions(ui).go_to()
-            assert.same({ { "ShowToc" } }, ui.calls)
-        end)
 
-        it("opens KOReader's table of contents for Go to when the Go to screen raises", function()
-            local ui = fake_ui()
-            set(require("goto_screen"), "show", function()
-                error("no screen")
+            it("opens KOReader's " .. name .. " for " .. action .. " when the list isn't shown", function()
+                local ui = fake_ui()
+                set(require("goto_screen"), "show", function()
+                    return nil
+                end)
+                FocusedPanel.actions(ui)[action]()
+                assert.same({ { event } }, ui.calls)
             end)
-            FocusedPanel.actions(ui).go_to()
-            assert.same({ { "ShowToc" } }, ui.calls)
-        end)
+
+            it("opens KOReader's " .. name .. " for " .. action .. " when the list raises", function()
+                local ui = fake_ui()
+                set(require("goto_screen"), "show", function()
+                    error("no screen")
+                end)
+                FocusedPanel.actions(ui)[action]()
+                assert.same({ { event } }, ui.calls)
+            end)
+        end
 
         it("opens KOReader's reader menu with its config panel, as a top tap does, for the admin hold", function()
             local ui = fake_ui()
@@ -294,10 +300,12 @@ describe("the focused panel", function()
             end
         end
 
-        it("lays out Night, Bookmark and Go to, then the steppers, then Home, inside the body", function()
+        it("lays out Night and Bookmark, then the steppers, then Contents, Bookmarks and Home, inside the body",
+            function()
             local made = FocusedPanel.body(bctx_for(fake_ui()), CONTENT_W)
-            assert.same({ "night", "bookmark", "go_to", "text_minus", "text_plus", "contrast_minus", "contrast_plus",
-                "brightness_minus", "brightness_plus", "warmth_minus", "warmth_plus", "home" }, ids(made.areas))
+            assert.same({ "night", "bookmark", "text_minus", "text_plus", "contrast_minus", "contrast_plus",
+                "brightness_minus", "brightness_plus", "warmth_minus", "warmth_plus", "contents", "bookmark_list",
+                "home" }, ids(made.areas))
             local size = made.widget:getSize()
             for _, a in ipairs(made.areas) do
                 local r = a.rect
@@ -315,10 +323,11 @@ describe("the focused panel", function()
             made.widget:free()
         end)
 
-        it("closes the panel before Home, Bookmark and Go to, and keeps it open for Night and the steppers", function()
+        it("closes the panel before Home, Bookmark and the lists, and keeps it open for Night and the steppers",
+            function()
             local made = FocusedPanel.body(bctx_for(fake_ui()), CONTENT_W)
             for _, a in ipairs(made.areas) do
-                local closes = a.id == "home" or a.id == "bookmark" or a.id == "go_to"
+                local closes = a.id == "home" or a.id == "bookmark" or a.id == "contents" or a.id == "bookmark_list"
                 assert.equals(closes, a.close_first == true, a.id)
                 assert.is_function(a.tap, a.id)
                 assert.is_nil(a.hold, a.id)
@@ -335,11 +344,12 @@ describe("the focused panel", function()
             area(made.areas, "text_plus").tap()
             area(made.areas, "contrast_minus").tap()
             area(made.areas, "bookmark").tap()
-            area(made.areas, "go_to").tap()
+            area(made.areas, "contents").tap()
+            area(made.areas, "bookmark_list").tap()
             area(made.areas, "home").tap()
             assert.same({ { "IncreaseFontSize", 1 }, { "ConfigChange", "font_gamma", 10 }, { "SetFontGamma", 10 },
-                { "ToggleBookmark" }, { "ShowToc" }, { "close" }, { "showFileManager", "/books/frankenstein.epub" } },
-                ui.calls)
+                { "ToggleBookmark" }, { "ShowToc" }, { "ShowBookmark" }, { "close" },
+                { "showFileManager", "/books/frankenstein.epub" } }, ui.calls)
             made.widget:free()
         end)
 

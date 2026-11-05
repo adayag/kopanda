@@ -518,6 +518,14 @@ return {
         author_count = {
             face = "strong", size = 11, uppercase = true, tracking = 0.12, line_height = 0, color = "muted",
         },
+        -- The reader's Contents and Bookmarks lists: plain rows, the current chapter's on an ink fill.
+        reader_list_title = {
+            face = "strong", size = 22, uppercase = false, tracking = 0, line_height = 0, color = "ink",
+        },
+        reader_list_row = { face = "text", size = 17, uppercase = false, tracking = 0, line_height = 0, color = "ink" },
+        reader_list_current = {
+            face = "strong", size = 17, uppercase = false, tracking = 0, line_height = 0, color = "paper",
+        },
         shelf_empty = {
             face = "strong", size = 12, uppercase = true, tracking = 0.08, line_height = 0, color = "muted",
         },
@@ -648,7 +656,6 @@ return {
             line_gap = 4,
             picker_gap = 8,
             picker_padding = { x = 10, y = 7 },
-            tab_padding_x = 10, -- the Go to screen's tab chips' side padding
             picker_outline_width = 2,
             picker_outline_color = "outline",
             sort_fill_color = "paper",
@@ -743,6 +750,13 @@ return {
             side = 40,
             row_gap = 16,
             pager_gap = 14,
+        },
+        -- The reader's Contents and Bookmarks lists, tight so a page holds more; the rule takes shelf.author's colour.
+        reader_list = {
+            header_padding_y = 12,
+            padding_top = 8,
+            row_padding_y = 6,
+            rule_width = 1,
         },
         row = {
             padding = { x = 16, y = 9 },
