@@ -114,6 +114,7 @@ require("widgets/quote")
 require("widgets/reading")
 require("widgets/records")
 require("widgets/streak")
+require("widgets/wall")
 require("widgets/weather")
 
 local show_shelf = ScreenRoutes.show_shelf

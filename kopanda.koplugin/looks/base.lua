@@ -318,6 +318,9 @@ return {
         value_gap = 2, -- between a record's value and its caption
         record_gap = 10, -- between the two record rows
         week_rule_gap = 8, -- either side of the rule above the reading tile's week line
+        wall_columns = 7, -- covers across the wall
+        wall_columns_extra_large = 5,
+        wall_gap = 8, -- between the wall's covers and its rows
     },
 
     -- The text, per part: a face role, a size in board pixels (before text_size), case, tracking in

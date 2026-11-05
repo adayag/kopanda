@@ -91,6 +91,14 @@ function InsightTile.inner_width(width, ctx)
     return inner_w
 end
 
+-- The content height of a tile width wide and height tall under ctx.
+function InsightTile.content_room(width, ctx, height)
+    local _, _, _, _, extra_h = chrome_of(width, ctx)
+    local look = ctx.look
+    return height - extra_h - Typeset.line_height(look.type.insight_label, ctx)
+        - Paint.scaler(ctx)(look.insights.label_gap)
+end
+
 -- A tile width wide holding label (and aside, right-aligned on its line, when given) above content_h of content,
 -- which paint(bb, x, y, inner_w, content_h, ctx) draws at its top-left; and inner, { w, label_h }. The label is
 -- cut to the room the aside leaves it, label_gap short of it. Under ctx.row_h, the content grows for the tile to be

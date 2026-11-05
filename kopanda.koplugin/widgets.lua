@@ -19,6 +19,7 @@ local modules = {
     records = "widgets/records",
     months = "widgets/months",
     device = "widgets/device",
+    wall = "widgets/wall",
 }
 
 -- The module for id, or nil when this plugin has none.

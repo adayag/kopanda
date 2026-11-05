@@ -119,7 +119,7 @@ local function new_tile(box)
 end
 
 -- The book's cover box: FeaturedCover.framed in the grid's cover tokens and placeholder title.
-local function cover_frame(look)
+function LibraryTiles.cover_frame(look)
     local cover = look.library.cover
     return {
         outline_color = cover.outline_color,
@@ -252,7 +252,8 @@ end
 function LibraryTiles.book(record, progress, box, ctx, chip_spec)
     local look = ctx.look
     local tile = new_tile(box)
-    tile.cover = add(tile, FeaturedCover.framed(record, box.cover_w, box.cover_h, ctx, cover_frame(look)), 0, 0)
+    tile.cover = add(tile, FeaturedCover.framed(record, box.cover_w, box.cover_h, ctx,
+        LibraryTiles.cover_frame(look)), 0, 0)
     if record.path and progress.percent and progress.status ~= "new" and progress.status ~= "complete" then
         local outline_width = look.library.strip.outline_width
         local outline = Looks.colorer(ctx)(look.progress.outline_color) and Paint.scaler(ctx)(outline_width) or 0
