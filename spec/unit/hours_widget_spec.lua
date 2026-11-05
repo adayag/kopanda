@@ -1,4 +1,4 @@
--- The hours widget: 24 bars of the last 90 days' reading per hour of day, scaled to the busiest hour, the busy
+-- The hours widget: 24 bars of the last 12 weeks' reading per hour of day, scaled to the busiest hour, the busy
 -- ones in the high colour, captioned at midnight, 6, noon and 18 in KOReader's clock format.
 describe("the hours widget", function()
     require("plugin_harness")
@@ -203,10 +203,10 @@ describe("the hours widget", function()
         widget:free()
     end)
 
-    it("reads the last 90 days in its aside, or that nothing is read yet", function()
+    it("reads the last 12 weeks in its aside, or that nothing is read yet", function()
         local ctx = ctx_for("diner")
         local widget = Hours.build(520, ctx)
-        assert.equals("last 90 days", widget.aside.text)
+        assert.equals("last 12 weeks", widget.aside.text)
         widget:free()
 
         fixture = insights_with({})

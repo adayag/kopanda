@@ -576,13 +576,13 @@ describe("reading stats", function()
             assert.equals(300, days[#days - 1])
         end)
 
-        it("sums each hour of the day over the last 90 days", function()
+        it("sums each hour of the day over the last 84 days", function()
             local t = os.date("*t", NOW)
             make_db({
                 { 1, at(t.year, t.month, t.day, 7, 10), 600 },
                 { 1, at(t.year, t.month, t.day - 1, 7, 50), 300 },
-                { 1, at(t.year, t.month, t.day - 89, 22, 0), 120 },
-                { 1, at(t.year, t.month, t.day - 90, 22, 0), 120 },
+                { 1, at(t.year, t.month, t.day - 83, 22, 0), 120 },
+                { 1, at(t.year, t.month, t.day - 84, 22, 0), 120 },
             })
             local hours = ReadingStats.insights(NOW).hours
             assert.equals(24, #hours)
@@ -592,13 +592,13 @@ describe("reading stats", function()
             assert.equals(600 + 300 + 120, total(hours))
         end)
 
-        it("starts the 90 days on a calendar date across a change of the clocks", function()
-            -- Chicago's clocks went forward on 8 March 2026, so 89 days back from 15 March is 89 days less an hour.
+        it("starts the 84 days on a calendar date across a change of the clocks", function()
+            -- Chicago's clocks went forward on 8 March 2026, so 83 days back from 15 March is 83 days less an hour.
             local at_ = at(2026, 3, 15, 12)
             local t = os.date("*t", at_)
             make_db({
-                { 1, at(t.year, t.month, t.day - 89, 0, 30), 300 },
-                { 1, at(t.year, t.month, t.day - 90, 23, 30), 120 },
+                { 1, at(t.year, t.month, t.day - 83, 0, 30), 300 },
+                { 1, at(t.year, t.month, t.day - 84, 23, 30), 120 },
             })
             assert.equals(300, total(ReadingStats.insights(at_).hours))
         end)

@@ -1,4 +1,4 @@
--- When you read: the last 90 days' reading per hour of day as 24 bars scaled to the busiest hour, captioned in
+-- When you read: the last 12 weeks' reading per hour of day as 24 bars scaled to the busiest hour, captioned in
 -- KOReader's clock format, read as frontend/datetime.lua:298-300 reads it (unset is 24-hour).
 local InsightTile = require("insight_tile")
 local Looks = require("looks")
@@ -64,7 +64,7 @@ local function compose(width, ctx)
         end
     end
 
-    local tile = InsightTile.compose(width, ctx, "When you read", nothing and "Nothing read yet" or "last 90 days",
+    local tile = InsightTile.compose(width, ctx, "When you read", nothing and "Nothing read yet" or "last 12 weeks",
         content_h, paint)
     tile.captions = captions
     local free_tile = tile.free

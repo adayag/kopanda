@@ -84,7 +84,7 @@ local function compose(width, ctx)
             cell.caption:paintTo(bb, cell_x, cell_y + value_h + value_gap)
         end
     end
-    local tile = InsightTile.compose(width, ctx, "Sessions", "last year", 2 * cell_h + record_gap, paint)
+    local tile = InsightTile.compose(width, ctx, "Sessions", "last 12 months", 2 * cell_h + record_gap, paint)
     return RecordsTile:new{
         dimen = Geom:new{ w = width, h = tile:getSize().h },
         tile = tile,

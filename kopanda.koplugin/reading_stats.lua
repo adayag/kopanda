@@ -85,7 +85,7 @@ local function with_db(path, f)
 end
 
 ReadingStats.INSIGHT_DAYS = 371
-local HOUR_DAYS = 90
+local HOUR_DAYS = 84
 local SESSION_DAYS = 365
 local SESSION_GAP = 1800
 
