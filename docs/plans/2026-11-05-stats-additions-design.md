@@ -29,7 +29,9 @@ Mockup: <https://claude.ai/artifact/SmCdGg5yWYgSwWiHFqngnZ>. Approved for layout
 - **Page 3, This year.** The wall under the label "Finished" with the count aside, 7 covers across on the Colorsoft.
   A month's name sits over its first cover, oldest first. A cover not yet cached shows the library's placeholder.
 - **Fit.** Rows still flow by fit. Habits takes no `page` mark, so a small screen or a large text size keeps Device
-  with Habits instead of alone on a page. Only the wall always starts a page.
+  with Habits instead of alone on a page. Only the wall always starts a page. Medium is 3 pages, Large 4 and Extra
+  large 5, on the Colorsoft and the Paperwhite. A page's header names its first row, so the page Device starts at
+  Large reads "Now" above When you read.
 
 ## The rules
 
@@ -47,6 +49,8 @@ Mockup: <https://claude.ai/artifact/SmCdGg5yWYgSwWiHFqngnZ>. Approved for layout
   12–17, Evening 17–22, Night 22–05.
 - "Evenings" over "62% of your reading, peak 20:00", the hour in the captions' clock format.
 - A tie goes to the earlier part. With no reading, the tile stays as it is today.
+- When the caption won't fit whole it reads "98%, peak Midnight". `Typeset.fitted` can't step it down: the caption's
+  size is already under its floor.
 - `HOUR_DAYS` goes from 90 to 84, so the tile reads "last 12 weeks".
 
 ### Finish dates (`reading_stats.lua`, a new `finished_books.lua`)
@@ -88,7 +92,9 @@ a row. The paint budget judges whether that matters.
 
 - Reads covers with `BookCovers.read`. Missing ones go through `BookCovers.request`, with the window repainting on
   arrival as the library does (`library_covers.lua`).
-- `stats_screen.lua` asks the wall how many pages it needs, and repeats its row once per page.
+- `stats_screen.lua` asks the wall how many pages it needs, and repeats its row once per page. Wall rows aren't
+  measured, since each has a page to itself: measuring would read every page's covers on the first paint of page 1.
+- The finished list is read once per flow, and again on wake. On the Colorsoft a wall page holds 3 rows of 7.
 - Stats' window holds the bitmaps and frees them, as the home's featured cover does.
 
 ## Failure

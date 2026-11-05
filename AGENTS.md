@@ -20,7 +20,7 @@ The owner's own interface for KOReader e-readers: a plugin that replaces the she
 - Headless capture: `~/Projects/kodev/capture.sh <out.png> [library] [delay]`, 1264×1680 in ~10 s. Screen env vars, `KO_HOME` profiles, the Retina window quirk and the fonts path are in the handoff §3. Don't rediscover them.
 - A plugin folder present in both the emulator's `plugins/` and `<KO_HOME>/plugins/` loads twice. Tests copy the plugin into a scratch profile, so the emulator's own `plugins/` must not hold `kopanda.koplugin`.
 - Primary device: Kindle Colorsoft SE, 1264×1680 @ 300 DPI, colour. USB is MTP-only and single-session; see handoff §4 before pushing.
-- Reference plugins are read-only and cloned into a scratch folder, never committed: ennUI (no licence: read, don't copy), SimpleUI (MIT: pieces may be lifted with their notice), ZenOS (GPL-3.0: read, don't copy; copying makes KoPanda GPL), customisablesleepscreen (AGPL-3.0: read, don't copy). KOReader is AGPL-3.0.
+- Reference plugins are read-only and cloned into a scratch folder, never committed: ennUI (no licence: read, don't copy), SimpleUI (MIT: pieces may be lifted with their notice), ZenOS (GPL-3.0: read, don't copy; copying makes KoPanda GPL), customisablesleepscreen (AGPL-3.0: read, don't copy), Reading Log (AGPL-3.0: read, don't copy). KOReader is AGPL-3.0.
 - `kopanda.koplugin/HOOKS.md` lists every KOReader internal the plugin reads or patches with the `file:line` it was read from.
 
 ## Commands
