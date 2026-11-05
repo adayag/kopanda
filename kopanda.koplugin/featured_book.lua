@@ -110,22 +110,19 @@ local function recorded_chapter(file)
     end
 end
 
--- The featured book, or nil with none: { file, title, authors, percent, status, pages,
--- seconds_left, chapter }. percent is 0 to 1, 0 when unread; status is reading, abandoned or
--- complete; authors, pages, seconds_left and chapter may be nil. Never raises.
-function FeaturedBook.current()
+-- The record of file, or nil when it can't be read: { file, title, authors, series, series_index, percent, status,
+-- pages, seconds_left, chapter }. percent is 0 to 1, 0 when unread; status is reading, abandoned or complete; authors,
+-- series, series_index, pages, seconds_left and chapter may be nil. live ({ title, percent, chapter }), the open
+-- book's own, beats the saved. Never raises.
+function FeaturedBook.for_file(file, live)
     local ok, result = pcall(function()
-        local file = featured_file()
-        if not file then
-            return nil
-        end
         -- One sidecar open for the record and the progress both, none while it is unchanged.
         local book, progress = Books.with_progress(file)
         if not book then
             book = named(file)
             progress = Books.progress(book)
         end
-        local percent = progress.percent
+        local percent = live and live.percent or progress.percent
         local has_percent = percent ~= nil
         percent = percent or 0
 
@@ -141,21 +138,31 @@ function FeaturedBook.current()
 
         return {
             file = file,
-            title = book.title,
+            title = live and text(live.title) or book.title,
             authors = joined(book.authors),
+            series = book.series,
+            series_index = book.series_index,
             percent = percent,
             -- "new" is a book never opened; the featured book shows one from the history.
             status = progress.status == "new" and "reading" or progress.status,
             pages = progress.pages,
             seconds_left = seconds_left,
-            chapter = try("the recorded chapter", recorded_chapter, file),
+            chapter = live and text(live.chapter)
+                or (not live and try("the recorded chapter", recorded_chapter, file)) or nil,
         }
     end)
     if not ok then
-        logger.err("KoPanda: could not read the featured book:", result)
+        logger.err("KoPanda: could not read the book:", result)
         return nil
     end
     return result
+end
+
+-- The featured book, as for_file describes it, or nil with none. Never raises: featured_file's reads catch
+-- their own failures.
+function FeaturedBook.current()
+    local file = featured_file()
+    return file and FeaturedBook.for_file(file) or nil
 end
 
 -- One book for the picker: { file, title, authors }, read as current() reads them, a raising

@@ -1,5 +1,6 @@
 -- The finish-by forecast: the day the featured book ends at the last fourteen days' pace, its title and, but at
--- Extra large, the time left, in an insight tile, or what is missing for it. Weekday and month names from
+-- Extra large, the time left, in an insight tile, or what is missing for it; ctx.forecast_book, which the sleep
+-- screen's card sets, stands in for the featured book and shows the day and date alone. Weekday and month names from
 -- KOReader's translation tables (frontend/datetime.lua:29-42 month names, :54-62 long day names).
 local FeaturedBook = require("featured_book")
 local Helpers = require("helpers")
@@ -55,12 +56,25 @@ function Forecast.lines(book, insights, now)
     }
 end
 
+-- A forecast_book's date line, without the words after the date when they would cut it.
+local function date_line(part, text, width, ctx)
+    local line = Typeset.line(part, text, width, ctx)
+    if Typeset.whole(line) then
+        return line
+    end
+    line:free()
+    return Typeset.line(part, text:match("^[^,]+"), width, ctx)
+end
+
 local function compose(width, ctx)
     local look = ctx.look
     local scale = Paint.scaler(ctx)
     local inner_w = InsightTile.inner_width(width, ctx)
-    local texts = Forecast.lines(FeaturedBook.current(), ReadingStats.insights(ctx.now), ctx.now)
-    if ctx.text_size == "extra_large" then
+    local book = ctx.forecast_book
+    local texts = Forecast.lines(book or FeaturedBook.current(), ReadingStats.insights(ctx.now), ctx.now)
+    if book then
+        texts[3], texts[4] = nil, nil
+    elseif ctx.text_size == "extra_large" then
         texts[4] = nil
     end
     local lines, ys = {}, {}
@@ -69,7 +83,7 @@ local function compose(width, ctx)
         if GAPS[i] then
             content_h = content_h + scale(look.insights[GAPS[i]])
         end
-        lines[i] = Typeset.line(look.type[PARTS[i]], text, inner_w, ctx)
+        lines[i] = (book and i == 2 and date_line or Typeset.line)(look.type[PARTS[i]], text, inner_w, ctx)
         ys[i] = content_h
         content_h = content_h + lines[i]:getSize().h
     end

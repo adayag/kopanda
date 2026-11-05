@@ -563,6 +563,19 @@ return {
         rule_color = false,
     },
 
+    -- The sleep screen's card over the cover: its inset from the screen's edges, padding, gap between lines, gap
+    -- between its tiles, fill, outline and corners.
+    sleep = {
+        margin = 30,
+        padding = { x = 24, y = 20 },
+        gap = 8,
+        tile_gap = 20,
+        fill_color = "paper",
+        outline_color = "outline",
+        outline_width = 2,
+        radius = 12,
+    },
+
     -- The featured book's cover box, its text column, chip and first-run button.
     featured = {
         cover_w = 150,

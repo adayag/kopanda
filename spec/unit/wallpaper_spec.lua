@@ -469,6 +469,27 @@ describe("wallpaper", function()
         end)
     end)
 
+    describe("fill_box", function()
+        it("fills a box with an image, cropped at the centre", function()
+            local image = Blitbuffer.new(100, 300, Blitbuffer.TYPE_BB8)
+            image:fill(Blitbuffer.COLOR_WHITE)
+            image:paintRect(0, 100, 100, 100, Blitbuffer.COLOR_BLACK) -- the middle third
+            local bb = Wallpaper.fill_box(image, 200, 200, Blitbuffer.TYPE_BB8)
+            assert.equals(200, bb:getWidth())
+            assert.equals(200, bb:getHeight())
+            assert.equals(0, bb:getPixel(100, 100):getColor8().a) -- only the black middle third is left
+            bb:free()
+        end)
+
+        it("takes an image already the box's size, consuming it", function()
+            local image = Blitbuffer.new(50, 50, Blitbuffer.TYPE_BB8)
+            image:fill(Blitbuffer.COLOR_BLACK)
+            local bb = Wallpaper.fill_box(image, 50, 50, Blitbuffer.TYPE_BB8)
+            assert.equals(0, bb:getPixel(25, 25):getColor8().a)
+            bb:free()
+        end)
+    end)
+
     describe("paint", function()
         it("copies the image onto the screen", function()
             Settings.set("wallpaper.file", wide_png("paint.png"))

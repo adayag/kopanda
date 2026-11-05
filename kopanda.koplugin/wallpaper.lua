@@ -104,14 +104,10 @@ local function refuse_large(path)
     end
 end
 
--- The file at path rendered for a w by h screen into a buffer of bbtype: RenderImage:renderImageFile at the file's
--- own size (frontend/ui/renderimage.lua:28-37), scaled to cover by RenderImage:scaleBlitBuffer (:303-328, which
--- frees the render it scales), centred and cropped into a new buffer. Raises when it won't render.
-local function render(path, w, h, bbtype)
-    local image = RenderImage:renderImageFile(path, false)
-    if not image then
-        error("it didn't render", 0)
-    end
+-- image scaled to cover a w by h box, centred and cropped, in a new buffer of bbtype. image is consumed:
+-- RenderImage:scaleBlitBuffer frees it, or returns it when it is already that size
+-- (frontend/ui/renderimage.lua:303-328).
+function Wallpaper.fill_box(image, w, h, bbtype)
     local iw, ih = image:getWidth(), image:getHeight()
     local scale = math.max(w / iw, h / ih)
     local sw, sh = math.max(w, math.ceil(iw * scale)), math.max(h, math.ceil(ih * scale))
@@ -120,6 +116,16 @@ local function render(path, w, h, bbtype)
     bb:blitFrom(scaled, 0, 0, math.floor((sw - w) / 2), math.floor((sh - h) / 2), w, h)
     scaled:free()
     return bb
+end
+
+-- The file at path rendered for a w by h screen into a buffer of bbtype: RenderImage:renderImageFile at the file's
+-- own size (frontend/ui/renderimage.lua:28-37), then fill_box. Raises when it won't render.
+local function render(path, w, h, bbtype)
+    local image = RenderImage:renderImageFile(path, false)
+    if not image then
+        error("it didn't render", 0)
+    end
+    return Wallpaper.fill_box(image, w, h, bbtype)
 end
 
 -- The image the cache holds for key, w by h in bbtype, or nil when there is none or it holds another key.

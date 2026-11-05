@@ -29,6 +29,12 @@ return {
     { key = "focused.on", value = 0, valid = false, why = "a number" },
     { key = "focused.on", value = "false", valid = false, why = "a string" },
 
+    -- sleep.on
+    { key = "sleep.on", value = true, valid = true, why = "true" },
+    { key = "sleep.on", value = false, valid = true, why = "false" },
+    { key = "sleep.on", value = 0, valid = false, why = "a number" },
+    { key = "sleep.on", value = "false", valid = false, why = "a string" },
+
     -- weather.location
     {
         key = "weather.location",

@@ -129,3 +129,5 @@ Seen on the canvas but not promised by any stage: a greeting with the owner's na
 
 The reader (status bars, page browser, dictionary and highlight menus) and sleep screens. KOReader's
 own stay as they are.
+One exception, decided 2026-11-05: KoPanda's sleep screen
+(`docs/plans/2026-11-05-sleep-screen-design.md`).

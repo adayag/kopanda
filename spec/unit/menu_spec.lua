@@ -117,7 +117,8 @@ describe("the settings menu's rows", function()
                 ids[i] = entry.id
             end
             assert.same(ids, keys)
-            assert.same({ "wallpaper.file", "weather.units", "featured.pinned", "launcher.entries" }, separated)
+            assert.same({ "wallpaper.file", "weather.units", "featured.pinned", "launcher.entries", "focused.on" },
+                separated)
         end)
 
         it("has no layout.rows row", function()
@@ -305,6 +306,23 @@ describe("the settings menu's rows", function()
             focused.callback()
             assert.is_true(focused.checked_func())
             assert.same({ { "focused.on", false }, { "focused.on", true } }, sets)
+        end)
+
+        it("shows the sleep screen as a toggle under Focused mode, on by default", function()
+            local items = SchemaMenu.items()
+            local focused, sleep
+            for i, item in ipairs(items) do
+                if item == row(items, "focused.on") then
+                    focused = i
+                end
+                if item == row(items, "sleep.on") then
+                    sleep = i
+                end
+            end
+            assert.equals(focused + 1, sleep)
+            assert.is_true(Settings.get("sleep.on"))
+            row(items, "sleep.on").callback()
+            assert.is_false(Settings.get("sleep.on"))
         end)
     end)
 

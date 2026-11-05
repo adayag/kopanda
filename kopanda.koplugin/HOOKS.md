@@ -2293,6 +2293,79 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
 - The row keeps the menu open (`keep_menu_open`, `frontend/ui/widget/touchmenu.lua:885`, `:924`)
   and redraws it with `updateItems` (`:671`) once a file is chosen.
 
+### The sleep screen: `Screensaver.setup`, the cover image and night
+
+- `ui/screensaver`: `sleep_screen.lua` wraps `Screensaver.setup`
+  (`frontend/ui/screensaver.lua:346`), once per process, and lets KOReader's run first. It runs
+  before `:show` on every sleep (`frontend/device/kindle/device.lua:762-763`,
+  `frontend/device/generic/device.lua:467-468`, `frontend/device/sdl/device.lua:464-465`). Only
+  poweroff and reboot pass an event (`frontend/ui/uimanager.lua:84`, `:109`), and those keep
+  their own screens. A Special Offers Kindle never gets here
+  (`frontend/device/kindle/device.lua:527-533`).
+- The fields it writes are the ones `:show` reads: with `screensaver_type` `cover` and
+  `self.image` set, `:show` builds an `ImageWidget` at the screen's size and owns the bitmap
+  through `image_disposable` (`frontend/ui/screensaver.lua:506-515`). A `self.image` KOReader's
+  own cover mode made is freed first, and `self.image_file` from its art mode cleared.
+  `self.screensaver_background` is set to `screensaver_img_background`, as `setup` picks it for
+  an image mode (`:443-447`), since `:show`'s flash skips `Screen:clear()` on `none` (`:488-492`).
+- `:show` rotates a landscape screen to portrait and flashes the panel (`:469-499`), so at setup
+  a landscape screen still reports landscape sizes (the swap is `:481`) and the bitmap is built
+  at portrait sizes. The gesture lock (`:653-658`, `:684-689`), `:close` and `:cleanup` (`:724-781`)
+  don't depend on what the image is.
+- `Screensaver.isExcluded(ui)` (`frontend/ui/screensaver.lua:200-208`) is what KOReader's
+  sleep-screen menu asks (`frontend/ui/elements/screensaver_menu.lua:24`); a book it excludes
+  keeps KOReader's screen. `setup` reads the key itself (`:389`) and also applies its finished,
+  on-hold and file-manager options (`:386-399`), which KoPanda's screen overrides.
+- `screensaver_show_message` is KOReader's and stands: `:show` lays its message over any widget
+  (`frontend/ui/screensaver.lua:564-643`), and it defaults to true where `screensaver_type` was
+  never set (`:29-35`).
+- The cover: `ui.bookinfo:getCoverImage(ui.document, file)`, as `frontend/ui/screensaver.lua:410`
+  reads it (`frontend/apps/filemanager/filemanagerbookinfo.lua:475-507`), a bitmap the caller
+  owns; `nil` with no cover.
+  The cover goes through `RenderImage:scaleBlitBuffer` (`frontend/ui/renderimage.lua:303-328`),
+  which frees the bitmap it scales or returns it when it is already that size.
+- `lastfile` in `G_reader_settings` is the last book when none is open; it is what
+  `frontend/ui/screensaver.lua:373` reads too.
+- With a book open, `ui.doc_props.display_title` (`frontend/apps/reader/readerui.lua:495`),
+  `ui:getCurrentPage()` (`:1007-1009`) and `ui.toc:getTocTitleByPage`
+  (`frontend/apps/reader/modules/readertoc.lua:446-453`, `""` when no entry covers the page)
+  stand in for the sidecar, which can lag the reader or not exist yet.
+- Today's reading is `ui.statistics:getTodayBookStats()` (`plugins/statistics.koplugin/main.lua:1452`), asked only
+  while `ReadingStats.insights` reads `ok`, so its unconditional open never meets a database with no rows to find.
+  It counts what the database holds, and `setup` runs before the flush: the Kindle's `intoScreenSaver` calls `Screensaver:setup()`,
+  `:show()` and only then `powerd:beforeSuspend()` (`frontend/device/kindle/device.lua:756-778`), which
+  reaches `_beforeSuspend` (`frontend/device/kindle/powerd.lua:325-327`) and its `Suspend` broadcast
+  (`frontend/device/generic/device.lua:1100-1102`), the one Statistics flushes on (`main.lua:2694-2697`). So the
+  reading since the last `CloseDocument`, `SaveSettings`, `Suspend` or 50th page turn (`main.lua:2627`) isn't in the
+  database yet. Today's line adds it from `mem_read_time` and `mem_read_pages` (`main.lua:69-70`, `:2606-2617`, which
+  `insertDB` zeroes through `resetVolatileStats`, `:253-254`, `:996`), read only: no flush, no `insertDB`. A page read
+  earlier today and again since the flush counts twice until it lands. The streak reads the database alone, so that
+  reading is in the next card's streak. The emulator's order is the same (`frontend/device/sdl/device.lua:462-468`).
+- The time left in the chapter, on a page with a chapter title, is `ui.toc:getChapterPagesLeft(page, true)`
+  (`frontend/apps/reader/modules/readertoc.lua:715`), whose `true` counts screen pages, as `avg_time` does, where
+  reference page labels would count reference pages (`:716-724`); nil in the last chapter, or
+  `ui.document:getTotalPagesLeft(page)` (`frontend/document/document.lua:234`), as the footer's chapter time reads
+  both (`frontend/apps/reader/modules/readerfooter.lua:345`), times `ui.statistics.avg_time`, taken only as
+  `getTimeForPages` takes it, with `settings.is_enabled` and not nil or nan (`main.lua:3025-3026`).
+- Night: `ImageWidget.original_in_nightmode` defaults to true, so it inverts a bitmap at night
+  and the panel's inversion puts it back (`frontend/ui/widget/imagewidget.lua:77`, `:591-593`).
+  The bitmap shows at night exactly as drawn, unlike everything else KoPanda paints, so the card
+  is painted between two inversions of the whole bitmap.
+- The bitmap is in the screen's own type (`Screen.bb:getType()`, `base/ffi/blitbuffer.lua:707`).
+
+### Battery statistics, `settings/battery_stats.lua`
+
+- `device_stats.lua` reads KOReader's Battery statistics file (`plugins/batterystat.koplugin/main.lua:17`) through
+  `LuaSettings:open` and never writes it. A missing file reads as `{}` and isn't made, and a malformed one reads as
+  `{}` or its `.old` (`frontend/luasettings.lua:21-48`), so `DeviceStats.time_left` takes any shape.
+- The totals are the plugin's `Usage` tables (`main.lua:44-47`), flushed by `onFlushSettings` (`main.lua:138-147`), so
+  the file holds what was last flushed: a sleep's own totals land after the card is drawn. `discharging.time` is in
+  fts, since `Usage:append` adds `boottime_or_realtime_coarse` stamps (`main.lua:51-55`), and `time.to_s`
+  (`frontend/ui/time.lua:140`) makes it seconds. The time left is `Usage:remainingTime`'s sum (`main.lua:69-73`),
+  dropped from 90 days up, which no record means.
+- The percent is `QuickSettings.battery` (`quick_settings.lua:47`) and charging is
+  `Device:getPowerDevice():isCharging()` (`frontend/device/generic/powerd.lua:272`).
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`
@@ -2372,6 +2445,7 @@ One row per harness entry or scenario patch. A scenario is a `2-` userpatch unde
 | Userpatches | `2-kopanda-capture.lua` registers its listener before any plugin code runs. A capture's extra patches (`capture{ patches }`) must also start with `2-`; late patches run in natural-sort order. | `frontend/userpatch.lua:13` (`late` is prefix `2`), `:38` (`<KO_HOME>/patches`), `:73` (name match), `frontend/userpatch.lua:82` (order), `:89-99` (a failing patch shows an InfoMessage); `reader.lua:190`, `:250` | the driver |
 | Book close (`2-scenario-book-close.lua`) | Wraps `FileManager.paintTo` with a counter armed from the close to the home's settled signal; takes its one book from the file chooser's path; opens it, polls `ReaderUI.instance` with its `document`, and calls `ReaderUI:onHome()` from a scheduled task. A fresh profile has no archived sidecar, so no restore prompt; an unsupported file returns to the file manager, which the 10 s poll reports as an error. `document_metadata_folder` defaults to `doc`, so the spec opens a copy of a fixture book outside `spec/fixtures/library/`. | `FileManager.paintTo` inherited from `frontend/ui/widget/container/inputcontainer.lua:73`; `frontend/apps/filemanager/filemanager.lua:138-155` (`path = self.root_path`); `frontend/apps/reader/readerui.lua:616` (`showReader`), `:643-667`, `:668-672`, `readerui.lua:546` (`ReaderUI.instance` set), `:900-908` (cleared), `readerui.lua:935-940` (`onHome`); `frontend/apps/reader/modules/readerstatus.lua:144-148` (the end-of-book action runs from `nextTick`); `frontend/docsettings.lua:102` | `book_close_spec.lua`, `paint_budget_spec.lua` |
 | Gesture forward (`2-scenario-gesture-forward.lua`) | Writes the Gestures settings with `LuaSettings` before any plugin loads, binding `tap_right_bottom_corner` to `history` (event `ShowHist`); sends a `Gesture` tap with `UIManager:sendEvent` inside `DTAP_ZONE_BOTTOM_RIGHT`, 10 px above the nav bar's band, with the fields `GestureRange:match` reads; checks the history list with `UIManager:isWidgetShown` and the home with `topdown_widgets_iter`. | `plugins/gestures.koplugin/main.lua:32` (`settings/gestures.lua`), `:227-252` (`loadSettings`: one table per mode, `gesture_fm`, `custom_multiswipes`; a non-empty file is used as it is, `:231`); `frontend/luasettings.lua:21-48`, `:102`; `frontend/dispatcher.lua:68`; `defaults.lua:69`; `frontend/ui/gesturerange.lua:21-51`; `frontend/apps/filemanager/filemanagerhistory.lua:59-61` (`booklist_menu`); `frontend/ui/uimanager.lua:881-888`, `:846` | `gesture_forward_spec.lua` |
+| Sleep screen (`2-scenario-sleep-screen.lua`) | Sleeps through `Device:simulateSuspend()`, from the reader or the home, with `lastfile` saved for the home. Reports from the next tick after the `ScreenSaverWidget`'s first `paintTo`, so the capture holds the sleep screen. `SetRotationMode` turns the reader for the landscape step. `Streak.build` is wrapped so the signal says where the tile painted. | `frontend/device/sdl/device.lua:462-468`; `frontend/ui/screensaver.lua:661-669` (`screensaver_widget` shown); `frontend/ui/uimanager.lua:447-456`; `frontend/ui/screensaver.lua:32-35` (`screensaver_type` defaults to `disable`) | `sleep_screen_spec.lua` |
 | Swatch (`2-scenario-swatch.lua`) | On the first home's settled signal opens Tools › KoPanda › Swatches as the menu does: `FileManager.instance.menu:onShowMenu()` builds `tab_item_table`, then the item's `callback`, then `onCloseFileManagerMenu`. The capture is taken on the swatch's own signal (`shot_screen = "swatch"`); a failure is sent as a `"swatch"` signal with `error`. | `frontend/apps/filemanager/filemanagermenu.lua:1006-1032` (`tab_item_table` at `:1007-1009`, `:862`), `:1049` (`onCloseFileManagerMenu`); `frontend/ui/widget/touchmenu.lua:913-926` (the order they run in) | `swatch_capture_spec.lua` |
 | Night toggle (`2-scenario-night-toggle.lua`) | Wraps the home module's `paintTo` (`package.loaded["home"]`) to count paints and toggles night mode from `nextTick` by `KOPANDA_NIGHT_ROUTE`: `menu` broadcasts `ToggleNightMode`, what the menu item runs; `dispatcher` runs `Dispatcher:execute({ night_mode = true })` through the plugin's dispatch bridge. Either reaches the file manager's `DeviceListener`, which toggles the screen and calls `setDirty("all", "full")`. Reports from `tickAfterNext` a `"scenario"` signal with `home_paints` and `night_mode`. | `frontend/ui/uimanager.lua:1042`; `frontend/ui/elements/common_settings_menu_table.lua:266-271`; `frontend/dispatcher.lua:138`, `:1549-1598`; `frontend/apps/filemanager/filemanager.lua:414` (`DeviceListener`); `frontend/device/devicelistener.lua:14-27`; `base/ffi/framebuffer.lua:22` | `night_toggle_spec.lua` |
 | Stats window (`2-scenario-stats-screen.lua`) | Run after the home fixture; writes nothing. On the first home's settled signal, from `nextTick`, opens the window with `FileManager.instance.kopanda:showStats{}`, as the nav bar does, with `ReadingStats.insights` taken from `package.loaded` and wrapped to a year of days when `KOPANDA_STATS_YEAR` is 1. On the window's settled signal sends, from `nextTick`, `KOPANDA_STATS_TURNS` `Gesture`s with `sendEvent`: `ges = "swipe"`, `direction = "west"`, `pos` a zero-size `Geom` at the screen's centre, outside the top and bottom `DSWIPE_ZONE_*` bands, and `time` from `ui/time`, the fields `GestureRange:match` reads. Reports from `tickAfterNext` a `"scenario"` signal with `page`, `pages` (`package.loaded["library_chrome"].shown`) and the window's `paint_ms`; a failure is a `"scenario"` signal with `error`. | `frontend/apps/filemanager/filemanager.lua:447`; `frontend/ui/uimanager.lua:962-1035` (`sendEvent`), `:431-433`, `:447-456`; `frontend/ui/gesturerange.lua:21-51`; `frontend/ui/time.lua:300`; `defaults.lua:74-75` | `stats_screen_capture_spec.lua`, `paint_budget_spec.lua` |

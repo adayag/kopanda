@@ -140,6 +140,13 @@
             "id": "focused.on",
             "label": "Focused mode",
             "type": "boolean"
+        },
+        {
+            "default": true,
+            "group": "sleep",
+            "id": "sleep.on",
+            "label": "Sleep screen",
+            "type": "boolean"
         }
     ],
     "version": 1

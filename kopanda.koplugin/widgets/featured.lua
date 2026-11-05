@@ -130,7 +130,7 @@ end
 -- text in the type part named part_name, wrapped at width in at most max_lines lines, the last ending in an
 -- ellipsis when it runs over; a single line is one line high (frontend/ui/widget/textboxwidget.lua:54,
 -- :256-260). Printed through Typeset.printed, so on a plate its ground shows between the glyphs.
-local function text_box(part_name, text, width, max_lines, ctx)
+function Featured.text_box(part_name, text, width, max_lines, ctx)
     local part, face, line_px = face_of(part_name, ctx)
     return Typeset.printed(part, width, ctx, function(box_w, fgcolor, bgcolor)
         return TextBoxWidget:new{
@@ -316,7 +316,7 @@ local function book_column(book, w, h, ctx)
     local pad = scale(look.featured.column_padding_y)
     local top = {
         { label(w, ctx), 0 },
-        { text_box("featured_title", book.title or "", w, TITLE_LINES, ctx), scale(look.featured.title_gap) },
+        { Featured.text_box("featured_title", book.title or "", w, TITLE_LINES, ctx), scale(look.featured.title_gap) },
     }
     if details_joined(ctx) then
         local joined = {}
@@ -351,7 +351,7 @@ local function book_column(book, w, h, ctx)
     end
     if stacked_height(top) > room then
         top[2][1]:free()
-        top[2][1] = text_box("featured_title", book.title or "", w, 1, ctx)
+        top[2][1] = Featured.text_box("featured_title", book.title or "", w, 1, ctx)
     end
     local free = math.max(0, room - stacked_height(top))
     return column(VerticalGroup:new{
@@ -374,7 +374,7 @@ local function empty_column(w, h, ctx)
     local title = "Nothing open yet."
     local items = {
         { label(w, ctx), 0 },
-        { text_box("featured_empty_title", title, w, TITLE_LINES, ctx), scale(EMPTY_GAP) },
+        { Featured.text_box("featured_empty_title", title, w, TITLE_LINES, ctx), scale(EMPTY_GAP) },
     }
     local function room()
         return h - 2 * pad - stacked_height(items) - scale(BUTTON_GAP) - the_button:getSize().h
@@ -384,12 +384,12 @@ local function empty_column(w, h, ctx)
     end
     if room() < 0 then
         items[2][1]:free()
-        items[2][1] = text_box("featured_empty_title", title, w, 1, ctx)
+        items[2][1] = Featured.text_box("featured_empty_title", title, w, 1, ctx)
     end
     local _, _, body_line = face_of("featured_empty_body", ctx)
     local lines = math.floor((room() - scale(EMPTY_GAP)) / body_line)
     if lines >= 1 then
-        items[#items + 1] = { text_box("featured_empty_body",
+        items[#items + 1] = { Featured.text_box("featured_empty_body",
             "Open a book from the Library and it will wait for you here.", w, lines, ctx), scale(EMPTY_GAP) }
     end
     items[#items + 1] = { the_button, scale(BUTTON_GAP) }

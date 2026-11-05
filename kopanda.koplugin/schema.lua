@@ -100,5 +100,13 @@ return {
             label = "Focused mode",
             group = "focused",
         },
+        {
+            -- The book's cover and reading state on the sleep screen, in place of KOReader's own.
+            id = "sleep.on",
+            type = "boolean",
+            default = true,
+            label = "Sleep screen",
+            group = "sleep",
+        },
     },
 }

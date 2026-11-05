@@ -142,6 +142,8 @@ rules), the CWNG library folder, the Xteink X4 Pro. Also out: publishing the plu
 (status bars, page browser, reader menus) and sleep screens; KOReader's own stay as they are. One
 exception, decided 2026-10-18: a quick-settings tab in the reader's top menu, opening the sheet
 (`docs/plans/2026-10-18-menu-quick-settings-design.md`).
+One exception, decided 2026-11-05: KoPanda's sleep screen
+(`docs/plans/2026-11-05-sleep-screen-design.md`).
 
 Noted for after the MVP, not scheduled: Calibre-Web-NextGen as a library source (books not yet
 downloaded, with covers and metadata cached by book id, download on tap), consuming icon packs through

@@ -37,6 +37,7 @@ const data = table([
     ]),
   ],
   ["focused.on", false],
+  ["sleep.on", false],
   [
     "studio.note",
     table([

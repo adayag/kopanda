@@ -643,4 +643,85 @@ describe("FeaturedBook", function()
             assert.is_nil(FeaturedBook.current().chapter)
         end)
     end)
+
+    describe("for_file", function()
+        it("reads the file it is given, not the pinned one", function()
+            local pinned, other = book("pinned.epub"), book("other.epub")
+            assert.is_true(Settings.set("featured.pinned", pinned))
+            assert.equals(other, FeaturedBook.for_file(other).file)
+        end)
+
+        it("takes live percent and chapter over the saved ones", function()
+            local file = book("live.epub")
+            sidecar(file, "{ percent_finished = 0.1 }")
+            assert.is_true(State.set("featured_chapter_file", file))
+            assert.is_true(State.set("featured_chapter", "Saved"))
+            local got = FeaturedBook.for_file(file, { percent = 0.5, chapter = "Letter 4" })
+            assert.equals(0.5, got.percent)
+            assert.equals("Letter 4", got.chapter)
+        end)
+
+        it("takes a live title over the record's", function()
+            assert.equals("Live", FeaturedBook.for_file(book("titled.epub"), { title = "Live" }).title)
+        end)
+
+        it("keeps the record's title over an empty live one", function()
+            assert.equals("titled", FeaturedBook.for_file(book("titled.epub"), { title = "" }).title)
+        end)
+
+        it("works out the time left from the live percent", function()
+            local file = book("rate.epub")
+            sidecar(file, '{ percent_finished = 0.1, partial_md5_checksum = "abc" }')
+            ReadingStats.seconds_per_page = function()
+                return 60, 100
+            end
+            assert.equals(1800, FeaturedBook.for_file(file, { percent = 0.7 }).seconds_left)
+        end)
+
+        it("reads the saved chapter when no live one is given", function()
+            local file = book("saved.epub")
+            assert.is_true(State.set("featured_chapter", "Saved"))
+            assert.is_true(State.set("featured_chapter_file", file))
+            assert.equals("Saved", FeaturedBook.for_file(file).chapter)
+        end)
+
+        it("reads no chapter for a live book with none", function()
+            local file = book("nochapter.epub")
+            assert.is_true(State.set("featured_chapter", "Saved"))
+            assert.is_true(State.set("featured_chapter_file", file))
+            assert.is_nil(FeaturedBook.for_file(file, { percent = 0.5 }).chapter)
+        end)
+
+        it("carries the record's series and its index", function()
+            local file = book("series.epub")
+            local with_progress = package.loaded["books"].with_progress
+            package.loaded["books"].with_progress = function()
+                return { path = file, title = "T", authors = {}, series = "Barsoom", series_index = 2 },
+                    { percent = 0.1, status = "reading" }
+            end
+            local got = FeaturedBook.for_file(file)
+            package.loaded["books"].with_progress = with_progress
+            assert.equals("Barsoom", got.series)
+            assert.equals(2, got.series_index)
+        end)
+
+        it("reads no series for a book with none", function()
+            local got = FeaturedBook.for_file(book("noseries.epub"))
+            assert.is_nil(got.series)
+            assert.is_nil(got.series_index)
+        end)
+
+        it("logs a read that raises and returns nil", function()
+            local logged = spy.on(logger, "err")
+            local with_progress = package.loaded["books"].with_progress
+            package.loaded["books"].with_progress = function()
+                error("sidecar broke on purpose")
+            end
+            local got = FeaturedBook.for_file(book("broken.epub"))
+            package.loaded["books"].with_progress = with_progress
+            assert.is_nil(got)
+            assert.spy(logged).was_called()
+            logged:revert()
+        end)
+    end)
 end)

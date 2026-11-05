@@ -54,6 +54,7 @@ then\9Café “quoted”",
     },
     ["look"] = "editorial",
     ["schema_version"] = 1,
+    ["sleep.on"] = false,
     ["studio.note"] = {
         [1] = 3,
         [10] = true,
