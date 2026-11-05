@@ -13,11 +13,15 @@ describe("the Stats window", function()
     local UIManager = require("ui/uimanager")
     local Widget = require("ui/widget/widget")
     local logger = require("logger")
-    local Home, LibraryChrome, LibraryTiles, Looks, Paint, Settings, Sheet, StatsScreen, Widgets
-    local real_get, stubs, seen, errored
+    local BookCovers, FinishedBooks, Home, LibraryChrome, LibraryTiles, Looks, Paint, Settings, Sheet, StatsScreen
+    local Widgets
+    local real_get, stubs, seen, errored, wall_pages
 
-    -- Each stub's height when none is chosen: all five fit a page of any test screen.
-    local HEIGHTS = { reading = 40, streak = 30, forecast = 30, hours = 20, records = 20, months = 20 }
+    -- Each stub's height when none is chosen: all but the wall fit a page of any test screen.
+    local HEIGHTS = { reading = 40, streak = 30, forecast = 30, device = 20, hours = 20, records = 20, months = 20,
+        wall = 20 }
+    -- What a measure asks of every row but the wall's.
+    local MEASURED = 7
 
     -- A stub tile: its height comes from heights[id], its calls land in seen.
     local function stub(id, heights)
@@ -30,7 +34,10 @@ describe("the Stats window", function()
             build = function(width, ctx)
                 seen.built[#seen.built + 1] = { id = id, width = width, ctx = ctx }
                 local dimen = Geom:new{ w = width, h = heights[id] }
-                return Widget:new{ name = "kopanda_spec_tile", stub = id, dimen = dimen }
+                return Widget:new{ name = "kopanda_spec_tile", stub = id, dimen = dimen, covers = seen.covers[id] }
+            end,
+            page_count = function()
+                return wall_pages
             end,
         }
     end
@@ -57,6 +64,7 @@ describe("the Stats window", function()
             local widget = real_get(id)
             return {
                 height = widget.height,
+                page_count = widget.page_count,
                 build = function(width, ctx)
                     local tile = widget.build(width, ctx)
                     if HEIGHTS[id] then
@@ -90,6 +98,8 @@ describe("the Stats window", function()
 
     before_each(function()
         harness.load()
+        BookCovers = package.loaded["book_covers"]
+        FinishedBooks = package.loaded["finished_books"]
         Home = package.loaded["home"]
         LibraryChrome = package.loaded["library_chrome"]
         LibraryTiles = package.loaded["library_tiles"]
@@ -100,7 +110,8 @@ describe("the Stats window", function()
         StatsScreen = package.loaded["stats_screen"]
         Widgets = package.loaded["widgets"]
         real_get = Widgets.get
-        seen = { measured = {}, built = {} }
+        seen = { measured = {}, built = {}, covers = {} }
+        wall_pages = 1
         errored = spy.on(logger, "err")
     end)
 
@@ -228,7 +239,7 @@ describe("the Stats window", function()
             local screen = show()
             local look = screen.ctx.look
             local tiles = drawn(screen)
-            assert.same({ "reading", "streak", "forecast", "hours", "records" }, ids(screen))
+            assert.same({ "reading", "streak", "forecast", "device", "hours", "records", "months" }, ids(screen))
             local left, right = tiles[2], tiles[3]
             assert.equals(left.y, right.y)
             assert.equals(left.w, right.w)
@@ -277,34 +288,105 @@ describe("the Stats window", function()
             local room = room_of(screen)
             heights.hours = room
             screen = show()
-            assert.same({ "reading", "streak", "forecast" }, ids(screen))
+            assert.same({ "reading", "streak", "forecast", "device" }, ids(screen))
             swipe("west")
             assert.equals("habits", page_name(screen))
             assert.same({ "hours", "records" }, ids(screen))
         end)
 
-        it("starts the month row's own page however much room is left, named Over time", function()
-            use_stubs{ reading = 1, streak = 1, forecast = 1, hours = 1, records = 1, months = 1 }
+        it("keeps Device with Habits, not alone on a page, when it doesn't fit Now", function()
+            local heights = use_stubs()
+            local screen = show()
+            local room, gap = room_of(screen)
+            heights.device = room - HEIGHTS.reading - gap - HEIGHTS.streak - gap + 1
+            screen = show()
+            assert.same({ "reading", "streak", "forecast" }, ids(screen))
+            swipe("west")
+            assert.same({ "device", "hours", "records", "months" }, ids(screen))
+        end)
+
+        it("starts the wall's own page however much room is left, named This year", function()
+            use_stubs{ reading = 1, streak = 1, forecast = 1, device = 1, hours = 1, records = 1, months = 1 }
             local screen = show()
             assert.equals(2, screen.pages)
             swipe("west")
-            assert.equals("over time", page_name(screen))
-            assert.same({ "months" }, ids(screen))
+            assert.equals("this year", page_name(screen))
+            assert.same({ "wall" }, ids(screen))
+        end)
+
+        it("gives each page of the wall a This year page, its number in the tile's ctx", function()
+            use_stubs()
+            wall_pages = 2
+            local screen = show()
+            assert.equals(3, screen.pages)
+            swipe("west")
+            assert.equals("this year", page_name(screen))
+            assert.equals(1, seen.built[#seen.built].ctx.wall_page)
+            swipe("west")
+            assert.equals("this year", page_name(screen))
+            assert.same({ "wall" }, ids(screen))
+            assert.equals(2, seen.built[#seen.built].ctx.wall_page)
+        end)
+
+        it("tells the wall the room its page has", function()
+            use_stubs()
+            local room_seen
+            stubs.wall.page_count = function(_, ctx)
+                room_seen = ctx.room
+                return 1
+            end
+            local screen = show()
+            assert.equals(room_of(screen), room_seen)
+        end)
+
+        it("builds a wall page only when it is shown, and never measures one", function()
+            use_stubs()
+            show()
+            for _, list in ipairs({ seen.measured, seen.built }) do
+                for _, tile in ipairs(list) do
+                    assert.are_not.equal("wall", tile.id)
+                end
+            end
+            swipe("west")
+            assert.equals("wall", seen.built[#seen.built].id)
+            for _, tile in ipairs(seen.measured) do
+                assert.are_not.equal("wall", tile.id)
+            end
+        end)
+
+        it("draws the wall as one page, logged, when its page count fails", function()
+            use_stubs()
+            stubs.wall.page_count = function()
+                error("no count")
+            end
+            local screen = show()
+            assert.equals(2, screen.pages)
+            assert.is_true(logged("wall", "no count"))
+        end)
+
+        it("keeps a flow's row heights to its own window", function()
+            local heights = use_stubs{ streak = 30, forecast = 50 }
+            local first = show()
+            local kept = first.kept
+            assert.equals(50, kept.pages[1][2].h)
+            heights.forecast = 70
+            show()
+            assert.equals(50, kept.pages[1][2].h)
         end)
 
         it("keeps a row ending exactly at the room on the page, and moves one a pixel taller", function()
             local heights = use_stubs()
             local screen = show()
             local room, gap = room_of(screen)
-            heights.hours = room - HEIGHTS.reading - gap - HEIGHTS.streak - gap
+            heights.months = room - HEIGHTS.reading - HEIGHTS.streak - HEIGHTS.device - HEIGHTS.hours - 4 * gap
             screen = show()
             assert.equals(2, screen.pages)
-            assert.same({ "reading", "streak", "forecast", "hours", "records" }, ids(screen))
+            assert.same({ "reading", "streak", "forecast", "device", "hours", "records", "months" }, ids(screen))
 
-            heights.hours = heights.hours + 1
+            heights.months = heights.months + 1
             screen = show()
             assert.equals(3, screen.pages)
-            assert.same({ "reading", "streak", "forecast" }, ids(screen))
+            assert.same({ "reading", "streak", "forecast", "device", "hours", "records" }, ids(screen))
         end)
 
         it("sits a row taller than a page alone on its page, the rows around it still drawn", function()
@@ -317,9 +399,9 @@ describe("the Stats window", function()
             swipe("west")
             assert.same({ "streak", "forecast" }, ids(screen))
             swipe("west")
-            assert.same({ "hours", "records" }, ids(screen))
+            assert.same({ "device", "hours", "records", "months" }, ids(screen))
             swipe("west")
-            assert.same({ "months" }, ids(screen))
+            assert.same({ "wall" }, ids(screen))
         end)
 
         it("sits a first row taller than a page alone on page 1, with no empty page before it", function()
@@ -340,7 +422,7 @@ describe("the Stats window", function()
             assert.equals(3, screen.pages)
             assert.same({ "reading" }, ids(screen))
             swipe("west")
-            assert.same({ "streak", "forecast", "hours", "records" }, ids(screen))
+            assert.same({ "streak", "forecast", "device", "hours", "records", "months" }, ids(screen))
         end)
 
         it("gives a window at another text size its own flow", function()
@@ -348,32 +430,41 @@ describe("the Stats window", function()
             assert.equals(2, show().pages)
             assert.is_true(Settings.set("text_size", "extra_large"))
             local screen = show()
-            assert.same({ "reading", "streak", "forecast", "hours", "records" }, ids(screen))
-            assert.equals(screen.dimen.w - 2 * Screen:scaleBySize(screen.ctx.look.shelf.list.side), drawn(screen)[4].w)
+            assert.same({ "reading", "streak", "forecast", "device", "hours", "records", "months" }, ids(screen))
+            assert.equals(screen.dimen.w - 2 * Screen:scaleBySize(screen.ctx.look.shelf.list.side), drawn(screen)[5].w)
         end)
 
         it("flows again on a rotation, the page kept in range", function()
             local tall = 500
-            use_stubs{ reading = tall, streak = tall, forecast = tall, hours = tall, records = tall, months = tall }
+            use_stubs{ reading = tall, streak = tall, forecast = tall, device = tall, hours = tall, records = tall,
+                months = tall }
             harness.at_colorsoft(function()
                 local screen
                 harness.at_screen(1680, 1264, function()
                     screen = show()
-                    assert.equals(4, screen.pages)
-                    screen:go(screen:view(), 4)
-                    assert.equals(4, screen.page)
+                    assert.equals(6, screen.pages)
+                    screen:go(screen:view(), 6)
+                    assert.equals(6, screen.page)
                 end)
                 screen:paintTo(Blitbuffer.new(1264, 1680, Blitbuffer.TYPE_BBRGB32), 0, 0)
                 assert.equals(1264, screen.dimen.w)
-                assert.equals(3, screen.pages)
-                assert.equals(3, screen.page)
-                assert.same({ "months" }, ids(screen))
+                assert.equals(4, screen.pages)
+                assert.equals(4, screen.page)
+                assert.same({ "wall" }, ids(screen))
             end)
         end)
 
-        it("holds three rows on page 1 and the months on page 2 for each look at each size, at Medium", function()
+        it("holds Now, Habits and the wall on three pages for each look at each size, at Medium", function()
             populate()
             use_real_tiles()
+            local function built_ids()
+                local list = {}
+                for i, tile in ipairs(seen.built) do
+                    list[i] = tile.id
+                end
+                seen.built = {}
+                return list
+            end
             for _, size in ipairs({ "at_colorsoft", "at_paperwhite" }) do
                 harness[size](function()
                     for _, id in ipairs(Looks.ids()) do
@@ -381,14 +472,15 @@ describe("the Stats window", function()
                         seen.built = {}
                         local screen = show()
                         local where = id .. " " .. size
-                        assert.equals(2, screen.pages, where)
-                        assert.equals(5, #seen.built, where)
+                        assert.equals(3, screen.pages, where)
+                        assert.same({ "reading", "streak", "forecast", "device" }, built_ids(), where)
                         assert.equals("now", page_name(screen), where)
-                        seen.built = {}
                         swipe("west")
-                        assert.equals("over time", page_name(screen), where)
-                        assert.equals("months", seen.built[1].id, where)
-                        assert.equals(1, #seen.built, where)
+                        assert.equals("habits", page_name(screen), where)
+                        assert.same({ "hours", "records", "months" }, built_ids(), where)
+                        swipe("west")
+                        assert.equals("this year", page_name(screen), where)
+                        assert.same({ "wall" }, built_ids(), where)
                         assert.is_false(logged("failed to"), where)
                     end
                 end)
@@ -401,21 +493,21 @@ describe("the Stats window", function()
             use_stubs()
             local screen = show()
             local tiles = drawn(screen)
-            assert.equals(tiles[4].y, tiles[5].y)
-            assert.is_true(tiles[4].w < tiles[1].w)
+            assert.equals(tiles[5].y, tiles[6].y)
+            assert.is_true(tiles[5].w < tiles[1].w)
 
             assert.is_true(Settings.set("text_size", "extra_large"))
             screen = show()
             tiles = drawn(screen)
-            assert.same({ "reading", "streak", "forecast", "hours", "records" }, ids(screen))
+            assert.same({ "reading", "streak", "forecast", "device", "hours", "records", "months" }, ids(screen))
             assert.equals(tiles[2].y, tiles[3].y)
             assert.is_true(tiles[2].w < tiles[1].w)
-            assert.equals(tiles[1].w, tiles[4].w)
             assert.equals(tiles[1].w, tiles[5].w)
-            assert.is_true(tiles[5].y > tiles[4].y)
+            assert.equals(tiles[1].w, tiles[6].w)
+            assert.is_true(tiles[6].y > tiles[5].y)
         end)
 
-        it("keeps streak and forecast side by side at Extra large, on Now above hours and records on Habits", function()
+        it("keeps streak and forecast side by side at Extra large, Device running on into hours and records", function()
             populate()
             use_real_tiles()
             assert.is_true(Settings.set("text_size", "extra_large"))
@@ -429,15 +521,18 @@ describe("the Stats window", function()
                     return list
                 end
                 local screen = show()
-                assert.equals(3, screen.pages)
+                assert.equals(4, screen.pages)
                 assert.equals("now", page_name(screen))
                 assert.same({ "reading", "streak", "forecast" }, built_ids())
                 swipe("west")
-                assert.equals("habits", page_name(screen))
-                assert.same({ "hours", "records" }, built_ids())
+                assert.equals("now", page_name(screen))
+                assert.same({ "device", "hours" }, built_ids())
                 swipe("west")
-                assert.equals("over time", page_name(screen))
-                assert.same({ "months" }, built_ids())
+                assert.equals("habits", page_name(screen))
+                assert.same({ "records", "months" }, built_ids())
+                swipe("west")
+                assert.equals("this year", page_name(screen))
+                assert.same({ "wall" }, built_ids())
             end)
         end)
 
@@ -514,8 +609,8 @@ describe("the Stats window", function()
             UIManager:broadcastEvent(Event:new("Resume"))
             assert.equals(screen, LibraryChrome.shown)
             assert.equals(2, screen.page)
-            assert.same({ "months" }, ids(screen))
-            assert.equals(6, #seen.measured)
+            assert.same({ "wall" }, ids(screen))
+            assert.equals(MEASURED, #seen.measured)
             assert.equals(at + 86400, seen.measured[1].ctx.now)
             assert.equals(at + 86400, seen.built[1].ctx.now)
             assert.is_true(record.repainted)
@@ -524,10 +619,29 @@ describe("the Stats window", function()
         it("measures once across turns, while the screen and the text size hold", function()
             use_stubs()
             show()
-            assert.equals(6, #seen.measured)
+            assert.equals(MEASURED, #seen.measured)
             swipe("west")
             swipe("east")
-            assert.equals(6, #seen.measured)
+            assert.equals(MEASURED, #seen.measured)
+        end)
+
+        it("reads the finished books once across turns, and again on wake", function()
+            populate()
+            use_real_tiles()
+            local list = spy.on(FinishedBooks, "list")
+            finally(function()
+                list:revert()
+            end)
+            harness.at_colorsoft(function()
+                show()
+                swipe("west")
+                swipe("west")
+                swipe("east")
+                swipe("west")
+                assert.spy(list).was.called(1)
+                UIManager:broadcastEvent(Event:new("Resume"))
+                assert.spy(list).was.called(2)
+            end)
         end)
 
         it("does not repaint for a book's metadata", function()
@@ -561,6 +675,105 @@ describe("the Stats window", function()
             assert.equals(kept, screen.kept)
             assert.equals("night", screen.ctx.variant)
         end)
+
+        it("builds a wall page in the new variant, the flow kept", function()
+            use_stubs()
+            local screen = show()
+            swipe("west")
+            assert.equals("day", seen.built[#seen.built].ctx.variant)
+            local variant = Looks.variant
+            Looks.variant = function()
+                return "night"
+            end
+            finally(function()
+                Looks.variant = variant
+            end)
+            local bb = Blitbuffer.new(screen.dimen.w, screen.dimen.h, Blitbuffer.TYPE_BBRGB32)
+            screen:paintTo(bb, 0, 0)
+            bb:free()
+            assert.equals("night", seen.built[#seen.built].ctx.variant)
+        end)
+    end)
+
+    describe("the wall's covers", function()
+        local real_request, asked
+
+        before_each(function()
+            real_request = BookCovers.request
+            asked = {}
+            BookCovers.request = function(records, specs, on_arrival, alive)
+                asked[#asked + 1] = { records = records, specs = specs, on_arrival = on_arrival, alive = alive }
+            end
+        end)
+
+        after_each(function()
+            BookCovers.request = real_request
+        end)
+
+        -- The window on the wall page, painted so its covers are asked for.
+        local function on_the_wall()
+            use_stubs()
+            seen.covers.wall = { records = { { path = "/books/a.epub" } }, box = { max_cover_w = 7, max_cover_h = 10 } }
+            local screen = show()
+            local bb = Blitbuffer.new(screen.dimen.w, screen.dimen.h, Blitbuffer.TYPE_BBRGB32)
+            finally(function()
+                bb:free()
+            end)
+            swipe("west")
+            screen:paintTo(bb, 0, 0)
+            harness.tick(2)
+            return screen
+        end
+
+        it("asks for the page's records at the wall's box", function()
+            on_the_wall()
+            assert.equals(1, #asked)
+            assert.equals(seen.covers.wall.records, asked[1].records)
+            assert.equals(seen.covers.wall.box, asked[1].specs)
+            assert.is_true(asked[1].alive())
+        end)
+
+        it("asks for nothing on a page with no wall", function()
+            use_stubs()
+            local screen = show()
+            screen:paintTo(Blitbuffer.new(screen.dimen.w, screen.dimen.h, Blitbuffer.TYPE_BBRGB32), 0, 0)
+            harness.tick(2)
+            assert.same({}, asked)
+        end)
+
+        it("rebuilds the wall page on an arrival, without a new flow", function()
+            local screen = on_the_wall()
+            local frame, kept = screen[1], screen.kept
+            local record = record_repaint(screen)
+            asked[1].on_arrival({})
+            assert.are_not.equal(frame, screen[1])
+            assert.equals(kept, screen.kept)
+            assert.equals(2, screen.page)
+            assert.is_true(record.repainted)
+        end)
+
+        it("drops an arrival once the page is turned", function()
+            local screen = on_the_wall()
+            swipe("east")
+            local frame = screen[1]
+            asked[1].on_arrival({})
+            assert.equals(frame, screen[1])
+        end)
+
+        it("stops being alive when the window closes", function()
+            on_the_wall()
+            StatsScreen.close()
+            assert.is_false(asked[1].alive())
+        end)
+
+        it("logs a request that fails", function()
+            BookCovers.request = function()
+                error("kopanda-test: request")
+            end
+            local screen = on_the_wall()
+            assert.equals(screen, LibraryChrome.shown)
+            assert.is_true(logged("cover request failed"))
+        end)
     end)
 
     describe("a failing tile", function()
@@ -570,10 +783,10 @@ describe("the Stats window", function()
                 error("no streak")
             end
             local screen = show()
-            assert.same({ "reading", "forecast", "hours", "records" }, ids(screen))
+            assert.same({ "reading", "forecast", "device", "hours", "records", "months" }, ids(screen))
             assert.is_true(logged("streak", "failed to measure"))
             local tiles = drawn(screen)
-            assert.equals(tiles[4].x, tiles[2].x)
+            assert.equals(tiles[5].x, tiles[2].x)
             assert.is_true(tiles[2].x > tiles[1].x)
         end)
 
@@ -583,7 +796,7 @@ describe("the Stats window", function()
                 error("no forecast")
             end
             local screen = show()
-            assert.same({ "reading", "streak", "hours", "records" }, ids(screen))
+            assert.same({ "reading", "streak", "device", "hours", "records", "months" }, ids(screen))
             assert.is_true(logged("forecast", "failed to build"))
             assert.equals(screen, LibraryChrome.shown)
         end)

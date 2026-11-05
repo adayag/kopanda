@@ -1,6 +1,7 @@
 -- The Stats window on the emulator, opened through the plugin from the populated home at 2026-10-13 08:42 in Chicago:
--- page 1 on the Colorsoft and the Paperwhite at Medium, at the sizes that add pages, and the month bars on page 2, each
--- shot on the scenario's signal. The look is passed empty so the caller's KOPANDA_HOME_LOOK cannot leak in.
+-- page 1 on the Colorsoft and the Paperwhite at Medium, at the sizes that add pages, Habits on page 2 and the wall of
+-- finished covers, each shot on the scenario's signal. The look is passed empty so the caller's KOPANDA_HOME_LOOK
+-- cannot leak in.
 describe("the Stats window", function()
     require("commonrequire")
     local driver = require("emulator.driver")
@@ -66,6 +67,7 @@ describe("the Stats window", function()
                 KOPANDA_HOME_LOOK = "",
                 KOPANDA_STATS_TURNS = tostring(opts.turns or 0),
                 KOPANDA_STATS_YEAR = opts.year and "1" or "",
+                KOPANDA_STATS_FINISHED = opts.finished and tostring(opts.finished) or "",
             },
         }
         local where = "\npng " .. result.png .. "\nlog " .. result.log
@@ -81,15 +83,15 @@ describe("the Stats window", function()
         return result.sidecar, where
     end
 
-    it("fits two pages on the Colorsoft", function()
+    it("fits three pages on the Colorsoft", function()
         local signal, where = capture("colorsoft", "colorsoft")
         assert.equals(1, signal.page, where)
-        assert.equals(2, signal.pages, where)
+        assert.equals(3, signal.pages, where)
     end)
 
-    it("fits two pages on the Paperwhite", function()
+    it("fits three pages on the Paperwhite", function()
         local signal, where = capture("paperwhite", "paperwhite")
-        assert.equals(2, signal.pages, where)
+        assert.equals(3, signal.pages, where)
     end)
 
     it("runs to more pages at Extra large on the Colorsoft", function()
@@ -102,8 +104,24 @@ describe("the Stats window", function()
         assert.truthy(signal.pages > 1, where)
     end)
 
-    it("turns to the month bars by a west swipe over a year of reading", function()
+    it("turns to Habits by a west swipe over a year of reading", function()
         local signal, where = capture("colorsoft-page2", "colorsoft", { turns = 1, year = true })
         assert.equals(2, signal.page, where)
+    end)
+
+    it("runs thirty covers to two wall pages", function()
+        local signal, where = capture("colorsoft-wall", "colorsoft", { turns = 2, finished = 30 })
+        assert.equals(3, signal.page, where)
+        assert.equals(4, signal.pages, where)
+    end)
+
+    it("turns to the wall's second page", function()
+        local signal, where = capture("colorsoft-wall-2", "colorsoft", { turns = 3, finished = 30 })
+        assert.equals(4, signal.page, where)
+    end)
+
+    it("reads an empty wall with nothing finished", function()
+        local signal, where = capture("colorsoft-wall-empty", "colorsoft", { turns = 2 })
+        assert.equals(3, signal.page, where)
     end)
 end)

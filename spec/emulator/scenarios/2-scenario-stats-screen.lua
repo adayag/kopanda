@@ -1,11 +1,12 @@
 -- KOReader userpatch (late priority, frontend/userpatch.lua:13), copied into a scratch profile by
 -- spec/emulator/stats_screen_capture_spec.lua and paint_budget_spec.lua after the home fixture patch. It writes
 -- nothing. On the first home's settled signal, from the next tick, it opens the Stats window through the plugin, as the
--- nav bar does, with ReadingStats.insights first stubbed to a year of steady reading when KOPANDA_STATS_YEAR is 1. On
--- the window's own settled signal it sends KOPANDA_STATS_TURNS mid-screen west swipes and, past the next repaint
--- (UIManager:tickAfterNext), a "scenario" signal with the page shown, the page count and the window's paint_ms; the
--- window's settled signal carries only screen and paint_ms. Any failure is reported as a "scenario" signal with error,
--- so the spec fails with the message.
+-- nav bar does, with ReadingStats.insights first stubbed to a year of steady reading when KOPANDA_STATS_YEAR is 1, and
+-- FinishedBooks.list to the fixture library's books repeated to KOPANDA_STATS_FINISHED when that is set, at the page
+-- KOPANDA_STATS_PAGE when that is. On the window's own settled signal it sends KOPANDA_STATS_TURNS mid-screen west
+-- swipes and, past the next repaint (UIManager:tickAfterNext), a "scenario" signal with the page shown, the page count
+-- and the window's paint_ms; the window's settled signal carries only screen and paint_ms. Any failure is reported as
+-- a "scenario" signal with error, so the spec fails with the message.
 local logger = require("logger")
 
 local ok, err = pcall(function()
@@ -16,6 +17,8 @@ local ok, err = pcall(function()
     local time = require("ui/time")
 
     local turns = tonumber(os.getenv("KOPANDA_STATS_TURNS")) or 0
+    local finished = tonumber(os.getenv("KOPANDA_STATS_FINISHED"))
+    local page = tonumber(os.getenv("KOPANDA_STATS_PAGE"))
 
     local function report(args)
         args.screen = "scenario"
@@ -48,6 +51,23 @@ local ok, err = pcall(function()
         end
     end
 
+    -- FinishedBooks.list as count finished books, a few a month from January, the fixture's three in turn.
+    local function stub_finished(count)
+        local root = os.getenv("KOPANDA_ROOT") .. "/spec/fixtures/library/"
+        local files = { "a-christmas-carol.epub", "frankenstein.epub", "the-time-machine.epub" }
+        local books = {}
+        for i = 1, count do
+            local path = root .. files[(i - 1) % #files + 1]
+            books[i] = {
+                record = package.loaded["books"].for_path(path),
+                day = string.format("2026-%02d-%02d", math.floor((i - 1) / 4) % 9 + 1, (i - 1) % 4 + 1),
+            }
+        end
+        package.loaded["finished_books"].list = function()
+            return books
+        end
+    end
+
     local function west_swipe()
         UIManager:sendEvent(Event:new("Gesture", {
             ges = "swipe",
@@ -74,7 +94,10 @@ local ok, err = pcall(function()
                     if os.getenv("KOPANDA_STATS_YEAR") == "1" then
                         stub_a_year()
                     end
-                    require("apps/filemanager/filemanager").instance.kopanda:showStats{}
+                    if finished then
+                        stub_finished(finished)
+                    end
+                    require("apps/filemanager/filemanager").instance.kopanda:showStats{ page = page }
                 end)
             end)
         elseif args.screen == "stats" and not turned then
