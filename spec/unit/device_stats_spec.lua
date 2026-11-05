@@ -146,9 +146,13 @@ describe("DeviceStats", function()
     describe("memory", function()
         local real_open = io.open
 
-        after_each(function()
-            io.open = real_open
-        end)
+        -- io.open answering as open does, until the test ends.
+        local function open_with(open)
+            local opened = stub(io, "open", open)
+            finally(function()
+                opened:revert()
+            end)
+        end
 
         it("reads VmRSS from this process's status", function()
             local status = DataStorage:getSettingsDir() .. "/fake_status"
@@ -156,16 +160,16 @@ describe("DeviceStats", function()
             finally(function()
                 os.remove(status)
             end)
-            io.open = function(path, mode)
+            open_with(function(path, mode)
                 return real_open(path == "/proc/self/status" and status or path, mode)
-            end
+            end)
             assert.equals(2048 * 1024, DeviceStats.memory())
         end)
 
         it("reads nil without /proc", function()
-            io.open = function()
+            open_with(function()
                 return nil, "no such file"
-            end
+            end)
             assert.is_nil(DeviceStats.memory())
         end)
     end)
