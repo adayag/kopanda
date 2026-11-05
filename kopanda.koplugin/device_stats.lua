@@ -1,10 +1,15 @@
--- The battery's time left, from KOReader's Battery statistics file, settings/battery_stats.lua
--- (plugins/batterystat.koplugin/main.lua:17), read and never written: its totals are in that plugin's shape (:138-147)
--- and its times in fts (:51-55).
+-- The device's own numbers. The battery's time left, from KOReader's Battery statistics file,
+-- settings/battery_stats.lua (plugins/batterystat.koplugin/main.lua:17), read and never written: its totals are in that
+-- plugin's shape (:138-147) and its times in fts (:51-55). The storage free on the home folder's disk
+-- (frontend/util.lua:925, frontend/apps/filemanager/filemanagerutil.lua:25) and the memory KOReader uses, from
+-- /proc/self/status (as frontend/document/document.lua:618 reads it), which only Linux has; a read that can't be had is
+-- nil.
 local DataStorage = require("datastorage")
 local LuaSettings = require("luasettings")
+local filemanagerutil = require("apps/filemanager/filemanagerutil")
 local logger = require("logger")
 local time = require("ui/time")
+local util = require("util")
 
 local DeviceStats = {}
 
@@ -54,6 +59,33 @@ function DeviceStats.battery_totals()
         return nil
     end
     return settings.data
+end
+
+-- The bytes in VmRSS in text, /proc/self/status's contents, or nil without that line.
+function DeviceStats.rss(text)
+    local kb = type(text) == "string" and text:match("VmRSS:%s+(%d+)%s+kB")
+    return kb and tonumber(kb) * 1024 or nil
+end
+
+function DeviceStats.memory()
+    local f = io.open("/proc/self/status", "r")
+    if not f then
+        return nil
+    end
+    local text = f:read("*a")
+    f:close()
+    return DeviceStats.rss(text)
+end
+
+function DeviceStats.storage()
+    local ok, usage = pcall(function()
+        return util.diskUsage(filemanagerutil.getHomeFolder())
+    end)
+    if not ok then
+        logger.err("KoPanda: could not read the storage:", usage)
+        return nil
+    end
+    return usage.available
 end
 
 return DeviceStats

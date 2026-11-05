@@ -2366,6 +2366,16 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
 - The percent is `QuickSettings.battery` (`quick_settings.lua:47`) and charging is
   `Device:getPowerDevice():isCharging()` (`frontend/device/generic/powerd.lua:272`).
 
+### The Device tile: storage and memory
+
+- `device_stats.lua` takes the storage free from `util.diskUsage` (`frontend/util.lua:925-934`, its `available`, nil
+  when `ffiUtil.df` can't say, `base/ffi/util.lua:114-123`) on `filemanagerutil.getHomeFolder()`
+  (`frontend/apps/filemanager/filemanagerutil.lua:25-27`). `widgets/device.lua` writes sizes with
+  `util.getFriendlySize` (`frontend/util.lua:1057-1073`), which counts in thousands.
+- The memory is `VmRSS` in `/proc/self/status`, the file `Document:logMemoryUsage` reads for `VmData`
+  (`frontend/document/document.lua:617-625`). macOS has no `/proc`, so in the emulator the read is nil and the cell
+  drops out. That the Kindle's kernel writes `VmRSS` in kB is an assumption until the owner's manual check.
+
 ### Widget and support modules
 
 - `ui/widget/container/widgetcontainer`: `frontend/ui/widget/container/widgetcontainer.lua:19`

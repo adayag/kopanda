@@ -1,5 +1,6 @@
--- The battery's time left from KOReader's Battery statistics file: the rate its totals work out to, the words it
--- reads in, and the read of a file the plugin didn't write.
+-- The device's own numbers: the battery's time left from KOReader's Battery statistics file (the rate its totals work
+-- out to, the words it reads in and the read of a file the plugin didn't write), the memory KOReader uses and the
+-- storage free.
 describe("DeviceStats", function()
     local harness = require("plugin_harness")
     local DataStorage = require("datastorage")
@@ -125,6 +126,84 @@ describe("DeviceStats", function()
             local err = spy.on(logger, "err")
             local got = DeviceStats.battery_totals()
             open:revert()
+            assert.spy(err).was_called()
+            err:revert()
+            assert.is_nil(got)
+        end)
+    end)
+
+    describe("rss", function()
+        it("reads VmRSS in bytes", function()
+            assert.equals(98304 * 1024, DeviceStats.rss("Name:\tluajit\nVmRSS:\t   98304 kB\nThreads:\t1\n"))
+        end)
+
+        it("reads nil from text without the line, and from nil", function()
+            assert.is_nil(DeviceStats.rss("Name:\tluajit\n"))
+            assert.is_nil(DeviceStats.rss(nil))
+        end)
+    end)
+
+    describe("memory", function()
+        local real_open = io.open
+
+        after_each(function()
+            io.open = real_open
+        end)
+
+        it("reads VmRSS from this process's status", function()
+            local status = DataStorage:getSettingsDir() .. "/fake_status"
+            write(status, "VmRSS:\t  2048 kB\n")
+            finally(function()
+                os.remove(status)
+            end)
+            io.open = function(path, mode)
+                return real_open(path == "/proc/self/status" and status or path, mode)
+            end
+            assert.equals(2048 * 1024, DeviceStats.memory())
+        end)
+
+        it("reads nil without /proc", function()
+            io.open = function()
+                return nil, "no such file"
+            end
+            assert.is_nil(DeviceStats.memory())
+        end)
+    end)
+
+    describe("storage", function()
+        local util = require("util")
+        local filemanagerutil = require("apps/filemanager/filemanagerutil")
+
+        it("reads what is available on the home folder's disk", function()
+            local home = stub(filemanagerutil, "getHomeFolder", function()
+                return "/mnt/us/books"
+            end)
+            local asked
+            local usage = stub(util, "diskUsage", function(path)
+                asked = path
+                return { total = 16000000000, used = 4000000000, available = 11800000000 }
+            end)
+            local got = DeviceStats.storage()
+            home:revert()
+            usage:revert()
+            assert.equals("/mnt/us/books", asked)
+            assert.equals(11800000000, got)
+        end)
+
+        it("reads nil when the disk can't say", function()
+            local usage = stub(util, "diskUsage", function()
+                return { total = nil, used = nil, available = nil }
+            end)
+            local got = DeviceStats.storage()
+            usage:revert()
+            assert.is_nil(got)
+        end)
+
+        it("logs a read that raises and reads nil", function()
+            local usage = stub(util, "diskUsage", function() error("no") end)
+            local err = spy.on(logger, "err")
+            local got = DeviceStats.storage()
+            usage:revert()
             assert.spy(err).was_called()
             err:revert()
             assert.is_nil(got)
