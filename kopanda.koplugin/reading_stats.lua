@@ -17,8 +17,8 @@ end
 local last_insights
 
 -- The last reads, each valid while the files' stamp is key: rate, seconds_per_page's for md5 under the cap (nil when
--- none is found); history, book_history's for md5; insights, the result of insights for the local date of now, and
--- for now itself while the stamp is nil.
+-- none is found); history, book_history's for md5; days, reading_days's for a year; insights, the result of insights
+-- for the local date of now, and for now itself while the stamp is nil.
 local memo = {}
 
 -- The size and modification time of the database and of its WAL file, the two files Statistics writes, as one
@@ -211,6 +211,27 @@ local function history(conn, md5)
     }
 end
 
+-- The local days each book md5 was read on from 1 January of the year before now's, sorted: a finish corrected to its
+-- last reading day may fall just before New Year.
+local function days_query(conn, now)
+    local year = os.date("*t", now).year
+    local stmt = conn:prepare("SELECT book.md5, strftime('%Y-%m-%d', start_time, 'unixepoch', 'localtime')"
+        .. " FROM page_stat_data JOIN book ON book.id = id_book WHERE start_time >= ?"
+        .. " GROUP BY 1, 2 ORDER BY 1, 2")
+    local days = {}
+    local row = stmt:bind(os.time{ year = year - 1, month = 1, day = 1, hour = 0 }):step()
+    while row do
+        local md5 = row[1]
+        if md5 then
+            days[md5] = days[md5] or {}
+            table.insert(days[md5], row[2])
+        end
+        row = stmt:step()
+    end
+    stmt:close()
+    return days
+end
+
 local function empty_insights()
     local days, hours = {}, {}
     for i = 1, ReadingStats.INSIGHT_DAYS do
@@ -341,6 +362,42 @@ function ReadingStats.book_history(md5)
     if not ok then
         logger.err("KoPanda: could not read the book's reading history:", result)
         return nil
+    end
+    return result
+end
+
+-- The local days the books were read on from 1 January of the year before now's, as { [md5] = { "YYYY-MM-DD", ... } }
+-- sorted; {} when Statistics doesn't record, there is no database, or the read fails (logged). Opened read-only and
+-- only when the database exists. Kept for now's year while the files' stamp holds. Never raises.
+function ReadingStats.reading_days(now)
+    local ok, result = pcall(function()
+        if off() then
+            return {}
+        end
+        local path = db_path()
+        if not util.fileExists(path) then
+            return {}
+        end
+        local key = stamp(path)
+        local year = os.date("%Y", now)
+        local held = memo.days
+        if key and held and held.key == key and held.year == year then
+            return held.value
+        end
+        local read_ok, found = with_db(path, function(conn)
+            return days_query(conn, now)
+        end)
+        if not read_ok then
+            return {}
+        end
+        if key then
+            memo.days = { key = key, year = year, value = found }
+        end
+        return found
+    end)
+    if not ok then
+        logger.err("KoPanda: could not read the reading days:", result)
+        return {}
     end
     return result
 end

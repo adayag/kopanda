@@ -1896,6 +1896,24 @@ row, the sidecar and the Statistics database is in the book records' and the Sta
 - The Recent sort is this time, not the file's access time, which KOReader's own "last read date"
   sort reads (`frontend/ui/widget/booklist.lua:43-55`; `addItem` touches it, `readhistory.lua:324`).
 
+### The year's finished books: `ReadHistory.hist` and `summary.modified`
+
+- `finished_books.lua` walks `ReadHistory.hist` (`frontend/readhistory.lua:15-18`), required at call time, most recent
+  first, and stops at the first `time` before 1 January of `now`'s year. Each entry is built at `:25-36`; `dim` is true
+  for a file that is gone, kept in the history, so a book leaves the list with its file. The history holds
+  `history_size` books, 500 by default (`:81-86`). A book marked finished without being opened has no entry and isn't
+  listed. Never written.
+- `summary.status` and `summary.modified`, through `Books.with_progress` and `Books.details`. `modified` is a
+  `%Y-%m-%d` date, not only a finish date: `ReaderStatus:markBook` writes it (`frontend/apps/reader/modules/readerstatus.lua:212-215`),
+  and so does every `filemanagerutil.saveSummary` (`frontend/apps/filemanager/filemanagerutil.lua:106-115`), the rating
+  and review dialog's among them (`frontend/apps/filemanager/filemanagerbookinfo.lua:748`, `:778`). The list takes a
+  book's finish day as its last Statistics reading day on or before that date, `ReadingStats.reading_days`, or the date
+  when Statistics has none. A value that isn't such a date reads as none, the book not listed.
+- `ReadingStats.reading_days` reads `page_stat_data` joined to `book` on `id_book`
+  (`plugins/statistics.koplugin/main.lua:405-419`, `:462-477`), grouped by `book.md5` and the local date as
+  `book_history` counts days (SQLite's `'localtime'`, the C library's zone), from 1 January of the year before `now`'s.
+  Kept while the files' stamp holds, for that year.
+
 ### The entry picker: `PathChooser`, the action tree, the plugin list and the label dialog
 
 - `ui/widget/pathchooser`: `frontend/ui/widget/pathchooser.lua:13-21` (`select_directory`,

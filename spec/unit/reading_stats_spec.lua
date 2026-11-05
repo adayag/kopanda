@@ -400,6 +400,50 @@ describe("reading stats", function()
         end)
     end)
 
+    describe("reading_days", function()
+        it("gives each md5's reading days from 1 January of last year, sorted, one entry per day", function()
+            make_books_db({
+                { 1, "abc", 100, 100, 60 },
+                { 2, "def", 100, 100, 60 },
+            }, {
+                { 1, 1, at(2026, 2, 1), 60, 100 },
+                { 1, 2, at(2026, 1, 3, 9), 60, 100 },
+                { 1, 3, at(2026, 1, 3, 21), 60, 100 },
+                { 2, 1, at(2025, 1, 1, 0, 0), 60, 100 },
+                { 2, 2, at(2024, 12, 31, 23, 59), 60, 100 },
+            })
+            assert.same({
+                abc = { "2026-01-03", "2026-02-01" },
+                def = { "2025-01-01" },
+            }, ReadingStats.reading_days(NOW))
+        end)
+
+        it("leaves out a book row with no md5", function()
+            make_books_db({ { 1, nil, 100, 100, 60 } }, { { 1, 1, at(2026, 2, 1), 60, 100 } })
+            assert.same({}, ReadingStats.reading_days(NOW))
+        end)
+
+        it("gives nothing with no database, without creating it or logging an error", function()
+            assert.same({}, ReadingStats.reading_days(NOW))
+            assert.is_nil(lfs.attributes(db_path, "mode"))
+            assert.is_false(logged_error())
+        end)
+
+        it("gives nothing with the plugin not recording", function()
+            make_books_db({ { 1, "abc", 100, 100, 60 } }, { { 1, 1, at(2026, 2, 1), 60, 100 } })
+            G_reader_settings:saveSetting("statistics", { is_enabled = false })
+            assert.same({}, ReadingStats.reading_days(NOW))
+        end)
+
+        it("gives nothing for a file that isn't a database, logged", function()
+            local f = assert(io.open(db_path, "w"))
+            f:write("not a database, but long enough to be read as a header by sqlite3 at all")
+            f:close()
+            assert.same({}, ReadingStats.reading_days(NOW))
+            assert.is_true(logged_error())
+        end)
+    end)
+
     describe("the memo", function()
         local real_open, opened
         local real_time = os.time
@@ -518,6 +562,23 @@ describe("reading stats", function()
             assert.equals(4, opened)
             date_back(db_path, 30)
             assert.equals(10, (ReadingStats.seconds_per_page("def")))
+            assert.equals(5, opened)
+        end)
+
+        it("reads the reading days again only when the files or the year change, and every time unsettled", function()
+            make_books_db({ { 1, "abc", 100, 100, 60 } }, { { 1, 1, at(2026, 2, 1), 60, 100 } })
+            settle()
+            assert.same({ "2026-02-01" }, ReadingStats.reading_days(NOW).abc)
+            ReadingStats.reading_days(NOW + 86400)
+            assert.equals(1, opened)
+            ReadingStats.reading_days(at(2027, 1, 2))
+            assert.equals(2, opened)
+            date_back(db_path, 30)
+            ReadingStats.reading_days(at(2027, 1, 2))
+            assert.equals(3, opened)
+            date_back(db_path, 0)
+            ReadingStats.reading_days(NOW)
+            ReadingStats.reading_days(NOW)
             assert.equals(5, opened)
         end)
 
