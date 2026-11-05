@@ -577,9 +577,33 @@ describe("reading stats", function()
             ReadingStats.reading_days(at(2027, 1, 2))
             assert.equals(3, opened)
             date_back(db_path, 0)
-            ReadingStats.reading_days(NOW)
-            ReadingStats.reading_days(NOW)
+            ReadingStats.reading_days(at(2027, 1, 2))
+            ReadingStats.reading_days(at(2027, 1, 2))
             assert.equals(5, opened)
+        end)
+
+        it("keeps no failed read of the reading days", function()
+            make_books_db({ { 1, "abc", 100, 100, 60 } }, { { 1, 1, at(2026, 2, 1), 60, 100 } })
+            settle()
+            local counting = SQ3.open
+            SQ3.open = function(path, mode)
+                if mode == "ro" then
+                    SQ3.open = counting
+                    error("kopanda-test: open")
+                end
+                return counting(path, mode)
+            end
+            assert.same({}, ReadingStats.reading_days(NOW))
+            assert.same({ "2026-02-01" }, ReadingStats.reading_days(NOW).abc)
+        end)
+
+        it("gives no reading days once Statistics stops recording, whatever the memo holds", function()
+            make_books_db({ { 1, "abc", 100, 100, 60 } }, { { 1, 1, at(2026, 2, 1), 60, 100 } })
+            settle()
+            assert.same({ "2026-02-01" }, ReadingStats.reading_days(NOW).abc)
+            G_reader_settings:saveSetting("statistics", { is_enabled = false })
+            assert.same({}, ReadingStats.reading_days(NOW))
+            assert.equals(1, opened)
         end)
 
         it("reads a book's history again only when the files or the md5 change, and every time unsettled", function()

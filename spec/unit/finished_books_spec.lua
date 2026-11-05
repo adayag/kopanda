@@ -123,6 +123,16 @@ describe("finished books", function()
             assert.same({ "/books/b.epub" }, read)
         end)
 
+        it("skips an entry with no time and lists those after it", function()
+            book("a.epub", "complete", "2026-02-01")
+            book("b.epub", "complete", "2026-02-02")
+            book("c.epub", "complete", "2026-02-03")
+            local undated = opened("b.epub")
+            undated.time = nil
+            history({ opened("a.epub"), undated, opened("c.epub") })
+            assert.same({ "a.epub", "c.epub" }, titles(FinishedBooks.list(NOW)))
+        end)
+
         it("lists a file seen twice once", function()
             book("a.epub", "complete", "2026-02-01")
             history({ opened("a.epub", 2000), opened("a.epub", 1000) })

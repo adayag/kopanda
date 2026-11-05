@@ -282,11 +282,13 @@ end
 
 -- Paints the window, rebuilt first when the variant or the screen's size changed since its build
 -- (night mode marks every window dirty, frontend/device/devicelistener.lua:14-27; a rotation), as
--- the editor does (editor.lua:343-349), with no repaint of its own.
+-- the editor does (editor.lua:343-349), with no repaint of its own. The rebuild's covers are asked
+-- for after the paint, since a rotation changes their box.
 local function paint(window, bb, x, y)
     local size = Screen:getSize()
     if window.ctx.variant ~= Looks.variant() or size.w ~= window.dimen.w or size.h ~= window.dimen.h then
         apply(window, window:build(window:view(), window.page))
+        window.covers_due = true
     end
     InputContainer.paintTo(window, bb, x, y)
 end

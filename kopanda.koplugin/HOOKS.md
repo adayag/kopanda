@@ -1899,7 +1899,8 @@ row, the sidecar and the Statistics database is in the book records' and the Sta
 ### The year's finished books: `ReadHistory.hist` and `summary.modified`
 
 - `finished_books.lua` walks `ReadHistory.hist` (`frontend/readhistory.lua:15-18`), required at call time, most recent
-  first, and stops at the first `time` before 1 January of `now`'s year. Each entry is built at `:25-36`; `dim` is true
+  first, and stops at the first `time` before 1 January of `now`'s year. Each entry is built at `:25-36`, which takes a
+  nil `time` unchecked (its date defaults at `frontend/datetime.lua:297`), so such an entry is skipped; `dim` is true
   for a file that is gone, kept in the history, so a book leaves the list with its file. The history holds
   `history_size` books, 500 by default (`:81-86`). A book marked finished without being opened has no entry and isn't
   listed. Never written.

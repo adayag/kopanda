@@ -1,8 +1,8 @@
 -- The Stats window: rows of insight tiles on the chrome (library_chrome.lua), flowed onto pages by fit and turned by a
--- swipe or the pager, read-only, with the nav bar. Tiles take the stored text size and a box of their own; the chrome
--- stays at the shell's size. A tile that fails to measure or build is logged and its slot stays blank; like the home,
--- the window reads the stats again on wake. The wall of finished covers repeats its row once per page it needs, and
--- is built only when shown, its covers asked of CoverBrowser after the paint (book_covers.lua).
+-- swipe or the pager, read-only, with the nav bar. Tiles take the stored text size and a box of their own while the
+-- chrome stays at the shell's size, and one that fails to measure or build is logged and leaves its slot blank. The
+-- wall of finished covers repeats its row once per page it needs and is built only when shown, its covers asked of
+-- CoverBrowser after the paint (book_covers.lua); like the home, the window reads the stats again on wake.
 local BookCovers = require("book_covers")
 local LibraryChrome = require("library_chrome")
 local LibraryTiles = require("library_tiles")
@@ -218,7 +218,7 @@ function StatsScreen.action_at()
     return nil
 end
 
--- Nothing here changes with a book's metadata, which the chrome's events would otherwise repaint.
+-- A book's metadata events repaint nothing here: the window is read-only and its next build reads the cover cache.
 function StatsScreen:refresh() end
 
 -- Broadcast to every window on wake (frontend/device/generic/device.lua:1125). Returns nothing, so the event reaches

@@ -42,10 +42,12 @@ local function collect(now)
     local days = ReadingStats.reading_days(now)
     local list, seen = {}, {}
     for _, entry in ipairs(require("readhistory").hist) do
-        if entry.time < start then
+        -- KOReader lets a nil time through (frontend/readhistory.lua:25-36, frontend/datetime.lua:297).
+        local dated = type(entry.time) == "number"
+        if dated and entry.time < start then
             break
         end
-        if not entry.dim and not seen[entry.file] then
+        if dated and not entry.dim and not seen[entry.file] then
             seen[entry.file] = true
             local ok, book = pcall(finished, entry.file, year, days)
             if not ok then
