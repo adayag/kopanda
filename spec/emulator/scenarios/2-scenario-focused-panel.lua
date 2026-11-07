@@ -25,6 +25,11 @@
 --                        first closed parent's toggle on the page, recording visible_before and visible_after (the
 --                        rows listed) and toggle_kept (the screen still shown), then the page's last chapter row
 --                        that starts off the current page, and on the next tick reports goto_closed and page_changed.
+--   dialogs              opens the panel, on its settled signal taps Go to page and presses Go on the page count plus
+--                        one, recording page_before, past_shown (the dialog still up) and past_page, then on page 7,
+--                        recording go_shown and go_page; opens the panel again, taps Find and searches a word in the
+--                        book, recording hits once findAllText returns, closes the results, and the same again for a
+--                        word it doesn't hold, reporting no_hits_message.
 local logger = require("logger")
 
 local POLL_S = 0.5
@@ -35,6 +40,8 @@ local ok, err = pcall(function()
     local Event = require("ui/event")
     local FileManager = require("apps/filemanager/filemanager")
     local Geom = require("ui/geometry")
+    local InfoMessage = require("ui/widget/infomessage")
+    local InputDialog = require("ui/widget/inputdialog")
     local ReaderUI = require("apps/reader/readerui")
     local UIManager = require("ui/uimanager")
     local lfs = require("libs/libkoreader-lfs")
@@ -371,6 +378,81 @@ local ok, err = pcall(function()
         loaded("focused_panel").open(ReaderUI.instance)
     end)
 
+    local search_words = { "Geneva", "zzqqxxnothing" }
+    local dialog_cell = "go_to"
+    local dialog_shown, message_shown
+
+    local function press(text)
+        for _, button in ipairs(dialog_shown.buttons[1]) do
+            if button.text == text then
+                return button.callback()
+            end
+        end
+        error("the dialog has no " .. text .. " button")
+    end
+
+    local go_past_the_end = guarded(function()
+        local reader = ReaderUI.instance
+        result.page_before = reader:getCurrentPage()
+        dialog_shown:setInputText(tostring(reader.document:getPageCount() + 1))
+        press("Go")
+        result.past_shown = UIManager:isWidgetShown(dialog_shown)
+        result.past_page = reader:getCurrentPage()
+        dialog_shown:setInputText("7")
+        press("Go")
+        result.go_shown = UIManager:isWidgetShown(dialog_shown)
+        result.go_page = reader:getCurrentPage()
+        dialog_cell = "find"
+        UIManager:nextTick(open_panel)
+    end)
+
+    local search = guarded(function()
+        dialog_shown:setInputText(table.remove(search_words, 1))
+        press("Find")
+    end)
+
+    local tap_cell = guarded(function()
+        gesture("tap", area(dialog_cell).rect)
+        UIManager:nextTick(dialog_cell == "go_to" and go_past_the_end or search)
+    end)
+
+    -- findAllText has shown its outcome: the results list (frontend/apps/reader/modules/readersearch.lua:842), or the
+    -- message (:757).
+    local check_search = guarded(function()
+        local reader_search = ReaderUI.instance.search
+        if #search_words > 0 then
+            result.hits = #reader_search.findall_results
+            reader_search.result_menu.close_callback()
+            UIManager:nextTick(open_panel)
+        else
+            result.no_hits_message = message_shown
+            reported = true
+            report(result)
+        end
+    end)
+
+    -- Keeps the dialog a cell opens and each message's text, and hears when a search has finished: it runs in a
+    -- subprocess under a Trapper coroutine (readersearch.lua:288-291).
+    local open_dialogs = guarded(function()
+        local show = UIManager.show
+        UIManager.show = function(self, widget, ...)
+            local class = getmetatable(widget)
+            if class == InputDialog then
+                dialog_shown = widget
+            elseif class == InfoMessage then
+                message_shown = widget.text
+            end
+            return show(self, widget, ...)
+        end
+        local reader_search = ReaderUI.instance.search
+        local find_all = reader_search.findAllText
+        reader_search.findAllText = function(self, text)
+            find_all(self, text)
+            UIManager:nextTick(check_search)
+        end
+        open_panel()
+    end)
+
     -- ctx as QuickSettings.open builds it (kopanda.koplugin/quick_settings.lua:429-436).
     local show_probe = guarded(function()
         Sheet = loaded("sheet")
@@ -395,7 +477,7 @@ local ok, err = pcall(function()
         tries = tries + 1
         local reader = ReaderUI.instance
         if reader and reader.document then
-            local steps = { panel = open_panel, hooks = swipe_up, ["goto"] = open_goto }
+            local steps = { panel = open_panel, hooks = swipe_up, ["goto"] = open_goto, dialogs = open_dialogs }
             UIManager:nextTick(steps[STEP] or show_probe)
         elseif tries >= POLL_TRIES then
             fail(string.format("the book did not open within %.0f s", POLL_S * POLL_TRIES))
@@ -422,7 +504,7 @@ local ok, err = pcall(function()
         elseif args.screen == "sheet" and args.name == "probe" and probe_shown then
             UIManager:nextTick(tap_row)
         elseif args.screen == "sheet" and args.name == "focused_panel" and panel_opened then
-            local next_step = { hooks = hold_header, ["goto"] = tap_list }
+            local next_step = { hooks = hold_header, ["goto"] = tap_list, dialogs = tap_cell }
             UIManager:nextTick(next_step[STEP] or measure_panel)
         elseif args.screen == "goto" and goto_opened then
             UIManager:nextTick(goto_list == "bookmark_list" and measure_bookmarks or measure_contents)

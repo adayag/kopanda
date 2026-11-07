@@ -4,6 +4,7 @@
 local Clock = require("widgets/clock")
 local Device = require("device")
 local Event = require("ui/event")
+local FocusedDialogs = require("focused_dialogs")
 local Geom = require("ui/geometry")
 local GotoScreen = require("goto_screen")
 local Looks = require("looks")
@@ -167,6 +168,12 @@ function FocusedPanel.actions(ui)
         bookmark_list = function()
             show_list(ui, "bookmarks", "ShowBookmark")
         end,
+        find = function()
+            FocusedDialogs.find(ui)
+        end,
+        go_to = function()
+            FocusedDialogs.go_to(ui)
+        end,
         -- As ReaderMenu:onTapShowMenu does, without its tab from the tap's place (readermenu.lua:495-503).
         admin = function()
             if G_reader_settings:nilOrTrue("show_bottom_menu") then
@@ -183,9 +190,7 @@ local function cell_area(id, rect, tap, stays_open)
 end
 
 -- The sheet's body under bctx (the sheet's build ctx, with the reader as bctx.ui) content_w wide: { widget, areas }.
--- Night and Bookmark first, then the steppers (Text size for a rolling document, Contrast, the light's), then Contents,
--- Bookmarks and Home. Areas are { id, rect, tap, close_first }, with no holds, so a hold on them runs nothing.
--- repaged, when given, runs after each Text size step.
+-- Its areas have no holds, so a hold on them runs nothing. repaged, when given, runs after each Text size step.
 function FocusedPanel.body(bctx, content_w, repaged)
     local ui = bctx.ui
     local qs = bctx.look.quick_settings
@@ -230,6 +235,11 @@ function FocusedPanel.body(bctx, content_w, repaged)
                 plus = { tap = buttons[bar.id .. "_plus"].tap } }
         end
     end
+    local last, before = bars[#bars], bars[#bars - 1]
+    if last.id == "warmth" and before.id == "brightness" then
+        before.beside = last
+        bars[#bars] = nil
+    end
     local bar_areas
     y, bar_areas = Steppers.draw(body, bctx, content_w, y, bars)
     for _, a in ipairs(bar_areas) do
@@ -237,6 +247,13 @@ function FocusedPanel.body(bctx, content_w, repaged)
     end
 
     y = y + scale(qs.grid_padding.top)
+    y, rects = Steppers.cells(body, bctx, content_w, y, {
+        { label = "Find", icon = "search" },
+        { label = "Go to page", icon = "open_book" },
+    })
+    areas[#areas + 1] = cell_area("find", rects[1], actions.find)
+    areas[#areas + 1] = cell_area("go_to", rects[2], actions.go_to)
+    y = y + scale(qs.grid_gap)
     y, rects = Steppers.cells(body, bctx, content_w, y, {
         { label = "Contents", icon = "list" },
         { label = "Bookmarks", icon = "bookmark" },

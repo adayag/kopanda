@@ -6,7 +6,9 @@
 -- KOReader's reader menu; with it off, the same swipe and tap open KOReader's menus and no panel. The panel's Bookmarks
 -- and Contents open their lists, on the Paperwhite 7th gen at Extra large and on the Colorsoft: Remove bookmark leaves
 -- one of two bookmarks; Contents has the current chapter marked and no nav bar, and a chapter tap closes the screen
--- and moves the page.
+-- and moves the page. The panel's Go to page and Find cells open their dialogs: on the page count plus one Go leaves
+-- the dialog open and the page alone, and on page 7 it lands there; Find shows a word's hits and KOReader's message for
+-- a word the book doesn't hold.
 describe("a sheet over a book on the emulator", function()
     require("commonrequire")
     local lfs = require("libs/libkoreader-lfs")
@@ -71,7 +73,7 @@ describe("a sheet over a book on the emulator", function()
         }
         local sidecar = result.sidecar
         assert.is_nil(sidecar.error)
-        assert.equals(13, sidecar.areas)
+        assert.equals(15, sidecar.areas)
         assert.is_true(sidecar.panel_top > 0, "the panel is taller than the screen")
         assert.is_true(sidecar.panel_bottom <= sidecar.screen_h)
         assert.is_true(sidecar.panel_shown)
@@ -142,6 +144,25 @@ describe("a sheet over a book on the emulator", function()
             assert.is_true(sidecar.page_changed)
         end)
     end
+
+    it("goes to a page and finds a word through the panel's cells, on a real book", function()
+        local sidecar = driver.capture{
+            profile = "colorsoft",
+            plugin_dir = plugin,
+            library_dir = library_with_one_book(),
+            patches = { scenario },
+            shot_screen = "scenario",
+            env = { KOPANDA_FOCUSED_STEP = "dialogs" },
+        }.sidecar
+        assert.is_nil(sidecar.error)
+        assert.is_not.equals(7, sidecar.page_before)
+        assert.is_true(sidecar.past_shown)
+        assert.equals(sidecar.page_before, sidecar.past_page)
+        assert.is_false(sidecar.go_shown)
+        assert.equals(7, sidecar.go_page)
+        assert.equals(38, sidecar.hits)
+        assert.equals("No results in the document", sidecar.no_hits_message)
+    end)
 
     it("opens KOReader's menus for a bottom swipe up and a top tap with focused mode off, and no panel", function()
         local sidecar = hooks("off", { ["focused.on"] = false })

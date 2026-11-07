@@ -131,16 +131,15 @@ function LibraryTiles.cover_frame(look)
     }
 end
 
--- The download badge: a circle of badge.size in fill_color with an outline, the download icon
--- centred in it.
-local function badge(ctx)
+-- The badge: a circle of badge.size in fill_color with an outline, the icon of id icon_id centred in it.
+local function badge(ctx, icon_id)
     local scale, color = Paint.scaler(ctx), Looks.colorer(ctx)
     local tokens = ctx.look.library.badge
     local size = Layout.size_at(scale(tokens.size), ctx.text_size)
     local radius = math.floor(size / 2)
     local outline_color = color(tokens.outline_color)
     local icon = TintedIcon:new{
-        file = Icons.path("download"),
+        file = Icons.path(icon_id),
         size = Layout.size_at(scale(tokens.icon_size), ctx.text_size),
         color = color(tokens.icon_color),
     }
@@ -204,10 +203,10 @@ local function badge_place(box, ctx)
     }
 end
 
--- Adds the caller's label, "Up next", as a chip on the cover's foot when given, and for a book not
--- downloaded (badged) the badge at its place, its one sign. The chip sits left of the badge's place:
--- beside it where both are on the foot, at the placeholder's padding where the badge is on top.
-local function foot(tile, box, ctx, badged, label)
+-- Adds the caller's label, "Up next", as a chip on the cover's foot when given, and the badge with
+-- icon_id, when given, at its place. The chip sits left of the badge's place: beside it where both are
+-- on the foot, at the placeholder's padding where the badge is on top.
+local function foot(tile, box, ctx, icon_id, label)
     local scale = Paint.scaler(ctx)
     local look = ctx.look
     local library = look.library
@@ -225,14 +224,14 @@ local function foot(tile, box, ctx, badged, label)
             or box.cover_h - edge - scale(pad.y) - chip_h
         tile.chip = add(tile, the_chip, chip_x, chip_y)
     end
-    if badged then
-        tile.badge = add(tile, badge(ctx), badge_x, badge_y)
+    if icon_id then
+        tile.badge = add(tile, badge(ctx, icon_id), badge_x, badge_y)
     end
 end
 
 -- How far past its box a book's tile in box paints under ctx, in device pixels: { top, right,
--- bottom }, none on the left. The cover's shadow reaches right and below, the download badge
--- past the corner it overhangs (badge_place). Counts both whether the tile draws them or not.
+-- bottom }, none on the left. The cover's shadow reaches right and below, the badge past the
+-- corner it overhangs (badge_place). Counts both whether the tile draws them or not.
 function LibraryTiles.overhang(box, ctx)
     local shadow = ctx.look.library.cover.shadow
     local scale = Paint.scaler(ctx)
@@ -246,9 +245,10 @@ end
 
 -- A book's tile for record ({ path, title, authors }) at progress (Books.progress's result) in box, a
 -- LibraryTiles.geometry: its cover or placeholder, the strip when the book has a file and a percent and is
--- neither new nor complete, its title in one line, and the download badge for a book not downloaded (no
--- path, or cwngsync's placeholder). chip, optional { label }, is drawn beside the badge. The tile keeps
--- cover, strip, title, badge and chip, the last three nil where not drawn.
+-- neither new nor complete, its title in one line, and the badge: the download icon for a book not
+-- downloaded (no path, or cwngsync's placeholder), its one sign, else the check for a finished one. chip,
+-- optional { label }, is drawn beside the badge. The tile keeps cover, strip, title, badge and chip, the
+-- last three nil where not drawn.
 function LibraryTiles.book(record, progress, box, ctx, chip_spec)
     local look = ctx.look
     local tile = new_tile(box)
@@ -262,8 +262,9 @@ function LibraryTiles.book(record, progress, box, ctx, chip_spec)
     end
     tile.title = add(tile, Typeset.line(look.type.tile_title, record.title or "", box.cover_w, ctx), 0, box.title_y)
     local not_downloaded = not record.path or record.placeholder == true
-    if chip_spec or not_downloaded then
-        foot(tile, box, ctx, not_downloaded, chip_spec and chip_spec.label)
+    local icon_id = not_downloaded and "download" or progress.status == "complete" and "check" or nil
+    if chip_spec or icon_id then
+        foot(tile, box, ctx, icon_id, chip_spec and chip_spec.label)
     end
     return tile
 end

@@ -51,7 +51,8 @@ Icons.entries = {
       file = "icons/sun.svg" },
     { id = "moon", label = "Moon (night weather, sleep, night mode)",
       used_in = { "weather", "launcher", "home sheet", "quick settings" }, file = "icons/moon.svg" },
-    { id = "open_book", label = "Open book", used_in = { "book sheet" }, file = "icons/open_book.svg" },
+    { id = "open_book", label = "Open book", used_in = { "book sheet", "focused panel" },
+      file = "icons/open_book.svg" },
     { id = "info", label = "Book details", used_in = { "book sheet" }, file = "icons/info.svg" },
     { id = "bookmark", label = "Read status", used_in = { "book sheet", "launcher" }, file = "icons/bookmark.svg" },
     { id = "list", label = "Feature a different book", used_in = { "book sheet", "launcher" },
@@ -63,7 +64,8 @@ Icons.entries = {
       file = "icons/back.svg" },
     { id = "close", label = "Close", used_in = { "settings menu", "launcher management" },
       file = "icons/close.svg" },
-    { id = "check", label = "Checked", used_in = { "settings menu", "sheets", "title bar" },
+    { id = "check", label = "Checked",
+      used_in = { "settings menu", "sheets", "title bar", "library", "series", "authors" },
       file = "icons/check.svg" },
     -- Lucide's `chevron-up` icon (ISC; see icons/LICENSE-lucide.txt).
     { id = "chevron_up", label = "Move up", used_in = { "launcher management" },
@@ -84,7 +86,7 @@ Icons.entries = {
     { id = "download", label = "Not downloaded", used_in = { "library", "series", "authors" },
       file = "icons/download.svg" },
     -- Lucide's `search` icon (ISC; see icons/LICENSE-lucide.txt).
-    { id = "search", label = "Search", used_in = { "library" }, file = "icons/search.svg" },
+    { id = "search", label = "Search", used_in = { "library", "focused panel" }, file = "icons/search.svg" },
     -- Lucide's `sliders-horizontal` icon (ISC; see icons/LICENSE-lucide.txt).
     { id = "quick_settings", label = "Quick settings", used_in = { "launcher" }, file = "icons/quick_settings.svg" },
     { id = "home_plus", label = "Add to the home", used_in = { "book sheet" }, file = "icons/home_plus.svg" },

@@ -1,6 +1,6 @@
 -- LibraryTiles: the grid's geometry and the two-row fit at the Colorsoft and
 -- the Paperwhite, and one tile of each kind: a book's cover or placeholder, its progress strip, its
--- one-line title, the not-downloaded badge, and a folder's art and counts. Every case runs
+-- one-line title, the not-downloaded and finished badges, and a folder's art and counts. Every case runs
 -- at a device profile's size, as the screen will.
 describe("library tiles", function()
     local harness = require("plugin_harness")
@@ -631,8 +631,8 @@ describe("library tiles", function()
             end)
         end)
 
-        -- The badge is a book not downloaded's one sign: no Not downloaded chip on the cover's foot.
-        it("puts the badge on a path-less record's cover only, and no chip", function()
+        -- The download badge is a book not downloaded's one sign: no Not downloaded chip on the cover's foot.
+        it("puts the download badge on a path-less record's cover, and no chip", function()
             covers()
             harness.at_colorsoft(function()
                 for _, id in ipairs({ "diner", "editorial" }) do
@@ -681,6 +681,96 @@ describe("library tiles", function()
                     bb:free()
                     built:free()
                 end
+            end)
+        end)
+
+        describe("the finished mark", function()
+            local COMPLETE = { status = "complete", percent = 1 }
+
+            -- The badge built on record at progress with TintedIcon.new recording each file it is given.
+            local function badge_icons(book, progress, ctx, box)
+                local TintedIcon = require("tinted_icon")
+                local new = TintedIcon.new
+                local files = {}
+                TintedIcon.new = function(class, fields)
+                    files[#files + 1] = fields.file
+                    return new(class, fields)
+                end
+                local ok, built = pcall(LibraryTiles.book, book, progress, box, ctx)
+                TintedIcon.new = new
+                assert(ok, built)
+                return built, files
+            end
+
+            it("puts the check in the badge on a finished book, at the badge's place, in every look", function()
+                covers()
+                harness.at_colorsoft(function()
+                    for _, id in ipairs(Looks.ids()) do
+                        local ctx = ctx_for(id)
+                        local box = LibraryTiles.geometry(Screen:getWidth(), ctx)
+                        local built, files = badge_icons(record(), COMPLETE, ctx, box)
+                        assert.same({ package.loaded["icons"].path("check") }, files, id)
+                        assert.is_table(built.badge, id)
+                        local tokens = ctx.look.library.badge
+                        assert.equals(scale(tokens.size), built.badge:getSize().w, id)
+                        local other = LibraryTiles.book(remote(), { status = "new" }, box, ctx)
+                        assert.same(other:place(other.badge), built:place(built.badge), id)
+                        local at = built:place(built.badge)
+                        local size = built.badge:getSize().w
+                        local bb, read = paint(built)
+                        assert.same(role(ctx, tokens.fill_color), read(at.x + scale(tokens.outline_width) + 3,
+                            at.y + math.floor(size / 2)), id .. " the badge's fill")
+                        bb:free()
+                        other:free()
+                        built:free()
+                    end
+                end)
+            end)
+
+            it("keeps the download badge on a finished book without its file", function()
+                covers()
+                harness.at_colorsoft(function()
+                    local ctx = ctx_for("editorial")
+                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx)
+                    local Icons = package.loaded["icons"]
+                    for name, book in pairs({
+                        ["a path-less record"] = remote(),
+                        ["cwngsync's placeholder"] = record{ placeholder = true },
+                    }) do
+                        local built, files = badge_icons(book, COMPLETE, ctx, box)
+                        assert.same({ Icons.path("download") }, files, name)
+                        assert.is_table(built.badge, name)
+                        built:free()
+                    end
+                end)
+            end)
+
+            it("marks no book being read, on hold or new", function()
+                covers()
+                harness.at_colorsoft(function()
+                    local ctx = ctx_for("editorial")
+                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx)
+                    for _, progress in ipairs({ READING, { status = "abandoned", percent = 0.3 },
+                        { status = "new" } }) do
+                        local built = LibraryTiles.book(record(), progress, box, ctx)
+                        assert.is_nil(built.badge, progress.status)
+                        built:free()
+                    end
+                end)
+            end)
+
+            it("sits beside the Up next chip on a finished book", function()
+                covers()
+                harness.at_colorsoft(function()
+                    local ctx = ctx_for("editorial")
+                    local box = LibraryTiles.geometry(Screen:getWidth(), ctx)
+                    local built = LibraryTiles.book(record(), COMPLETE, box, ctx, { label = "Up next" })
+                    assert.is_table(built.badge)
+                    assert.is_table(built.chip)
+                    local chip_right = built:place(built.chip).x + built.chip:getSize().w
+                    assert.is_true(chip_right <= built:place(built.badge).x)
+                    built:free()
+                end)
             end)
         end)
 

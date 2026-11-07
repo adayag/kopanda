@@ -213,6 +213,7 @@ return {
         section_rule_width = 2,
         section_rule_color = "hairline_light",
         control_gap = 12,
+        pair_gap = 30,
         button_w = 44,
         button_h = 36,
         button_outline_width = 2,

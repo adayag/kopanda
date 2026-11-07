@@ -1,6 +1,6 @@
 -- The focused panel: what it shows for a reader (its header, text size, contrast, light, night and bookmark), each
 -- control's action, sent through KOReader's own events, here to a fake reader that records them, its body and its
--- opening as a sheet.
+-- opening as a sheet. The Find and Go to page dialogs themselves are spec/unit/focused_dialogs_spec.lua's.
 describe("the focused panel", function()
     local harness = require("plugin_harness")
     local Device = require("device")
@@ -260,6 +260,31 @@ describe("the focused panel", function()
             end)
         end
 
+        for _, case in ipairs({ { "find", "find", "ShowFulltextSearchInput" },
+            { "go_to", "go_to", "ShowGotoDialog" } }) do
+            local action, dialog, event = case[1], case[2], case[3]
+
+            it("opens the " .. dialog .. " dialog over the book for " .. action, function()
+                local ui = fake_ui()
+                local shown = {}
+                set(require("focused_dialogs"), dialog, function(given)
+                    shown[#shown + 1] = given
+                end)
+                FocusedPanel.actions(ui)[action]()
+                assert.same({ ui }, shown)
+                assert.same({}, ui.calls)
+            end)
+
+            it("sends KOReader's " .. event .. " for " .. action .. " when the dialog can't be shown", function()
+                local ui = fake_ui()
+                set(require("ui/widget/inputdialog"), "new", function()
+                    error("no dialog")
+                end)
+                FocusedPanel.actions(ui)[action]()
+                assert.same({ { event } }, ui.calls)
+            end)
+        end
+
         it("opens KOReader's reader menu with its config panel, as a top tap does, for the admin hold", function()
             local ui = fake_ui()
             FocusedPanel.actions(ui).admin()
@@ -300,17 +325,75 @@ describe("the focused panel", function()
             end
         end
 
-        it("lays out Night and Bookmark, then the steppers, then Contents, Bookmarks and Home, inside the body",
-            function()
+        -- The body's lines' texts, lower-cased: a TextWidget's, or a tracked line's glyphs joined.
+        local function texts(widget)
+            local out = {}
+            for _, child in ipairs(widget) do
+                if child.text then
+                    out[child.text:lower()] = true
+                elseif #child > 0 then
+                    local parts = {}
+                    for _, glyph in ipairs(child) do
+                        parts[#parts + 1] = glyph.text or ""
+                    end
+                    out[table.concat(parts):lower()] = true
+                end
+            end
+            return out
+        end
+
+        it("lays out Night and Bookmark, the steppers, Find and Go to page, then Contents, Bookmarks and Home, "
+            .. "inside the body", function()
             local made = FocusedPanel.body(bctx_for(fake_ui()), CONTENT_W)
             assert.same({ "night", "bookmark", "text_minus", "text_plus", "contrast_minus", "contrast_plus",
-                "brightness_minus", "brightness_plus", "warmth_minus", "warmth_plus", "contents", "bookmark_list",
-                "home" }, ids(made.areas))
+                "brightness_minus", "brightness_plus", "warmth_minus", "warmth_plus", "find", "go_to", "contents",
+                "bookmark_list", "home" }, ids(made.areas))
             local size = made.widget:getSize()
             for _, a in ipairs(made.areas) do
                 local r = a.rect
                 assert.is_true(r.x >= 0 and r.y >= 0 and r.x + r.w <= CONTENT_W and r.y + r.h <= size.h, a.id)
             end
+            made.widget:free()
+        end)
+
+        it("sets Brightness and Warmth side by side, Text size and Contrast at full width above them", function()
+            local made = FocusedPanel.body(bctx_for(fake_ui()), CONTENT_W)
+            local a = made.areas
+            local brightness_minus, brightness_plus = area(a, "brightness_minus").rect, area(a, "brightness_plus").rect
+            local warmth_minus, warmth_plus = area(a, "warmth_minus").rect, area(a, "warmth_plus").rect
+            local contrast_minus, contrast_plus = area(a, "contrast_minus").rect, area(a, "contrast_plus").rect
+            assert.equals(brightness_minus.y, warmth_plus.y)
+            assert.is_true(brightness_plus.x + brightness_plus.w < warmth_minus.x)
+            assert.equals(contrast_minus.x, brightness_minus.x)
+            assert.is_true(contrast_plus.x + contrast_plus.w - (warmth_plus.x + warmth_plus.w) <= 1)
+            assert.is_true(contrast_plus.y + contrast_plus.h <= brightness_minus.y)
+            made.widget:free()
+        end)
+
+        it("keeps Brightness at full width on a device without warmth", function()
+            local QuickSettings = require("quick_settings")
+            local light = QuickSettings.light()
+            light.warmth = nil
+            set(QuickSettings, "light", function()
+                return light
+            end)
+            local made = FocusedPanel.body(bctx_for(fake_ui()), CONTENT_W)
+            assert.is_nil(area(made.areas, "warmth_minus"))
+            local plus, contrast_plus = area(made.areas, "brightness_plus").rect, area(made.areas, "contrast_plus").rect
+            assert.equals(contrast_plus.x, plus.x)
+            made.widget:free()
+        end)
+
+        it("sets Find and Go to page in a row of their own above Contents, Bookmarks and Home", function()
+            local made = FocusedPanel.body(bctx_for(fake_ui()), CONTENT_W)
+            local find, go_to = area(made.areas, "find").rect, area(made.areas, "go_to").rect
+            local contents = area(made.areas, "contents").rect
+            assert.equals(find.y, go_to.y)
+            assert.is_true(find.x + find.w <= go_to.x)
+            assert.equals(find.y + find.h + Device.screen:scaleBySize(bctx_for(fake_ui()).look.quick_settings.grid_gap),
+                contents.y)
+            assert.is_true(texts(made.widget)["find"])
+            assert.is_true(texts(made.widget)["go to page"])
             made.widget:free()
         end)
 
@@ -323,11 +406,12 @@ describe("the focused panel", function()
             made.widget:free()
         end)
 
-        it("closes the panel before Home, Bookmark and the lists, and keeps it open for Night and the steppers",
-            function()
+        it("closes the panel before Home, Bookmark, the lists and the dialogs, and keeps it open for Night and the "
+            .. "steppers", function()
             local made = FocusedPanel.body(bctx_for(fake_ui()), CONTENT_W)
             for _, a in ipairs(made.areas) do
                 local closes = a.id == "home" or a.id == "bookmark" or a.id == "contents" or a.id == "bookmark_list"
+                    or a.id == "find" or a.id == "go_to"
                 assert.equals(closes, a.close_first == true, a.id)
                 assert.is_function(a.tap, a.id)
                 assert.is_nil(a.hold, a.id)
@@ -352,23 +436,6 @@ describe("the focused panel", function()
                 { "showFileManager", "/books/frankenstein.epub" } }, ui.calls)
             made.widget:free()
         end)
-
-        -- The body's lines' texts, lower-cased: a TextWidget's, or a tracked line's glyphs joined.
-        local function texts(widget)
-            local out = {}
-            for _, child in ipairs(widget) do
-                if child.text then
-                    out[child.text:lower()] = true
-                elseif #child > 0 then
-                    local parts = {}
-                    for _, glyph in ipairs(child) do
-                        parts[#parts + 1] = glyph.text or ""
-                    end
-                    out[table.concat(parts):lower()] = true
-                end
-            end
-            return out
-        end
 
         it("offers Bookmark on a plain page and Remove bookmark on a bookmarked one", function()
             local made = FocusedPanel.body(bctx_for(fake_ui()), CONTENT_W)

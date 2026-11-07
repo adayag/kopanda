@@ -1,7 +1,7 @@
--- The steppers: bars of a label and its value over a − / + pair, each closed by a section rule, and rows of
--- icon-over-label cells, drawn into a body in the look's quick_settings tokens as the quick-settings sheet draws its
--- light and toggles. The minus and plus are "−" (U+2212) and "+" in the quick_button part: U+2212 draws in every
--- look's face, where U+0378, an unassigned code point, draws the missing-glyph box.
+-- The steppers: bars of a label and its value over a − / + pair, one or two to a row, each row closed by a section
+-- rule, and rows of icon-over-label cells, drawn into a body in the look's quick_settings tokens as the quick-settings
+-- sheet draws its light and toggles. The minus and plus are "−" (U+2212) and "+" in the quick_button part: U+2212
+-- draws in every look's face, where U+0378, an unassigned code point, draws the missing-glyph box.
 local Icons = require("icons")
 local Layout = require("layout")
 local Looks = require("looks")
@@ -71,11 +71,9 @@ function Steppers.pen(body, bctx)
     return pen
 end
 
--- Draws bars into body from y down, content_w wide, under bctx (the sheet's build ctx). A bar is { id, label,
--- value_text, greyed, level, minus, plus }: level { value, min, max } draws the track between the buttons, nil
--- draws none; minus and plus are { tap, hold }, and a greyed bar's are inert. The label and value sit on a line
--- above the buttons. Returns the y under the last bar and the areas { id, rect, tap, hold }, each bar's
--- id .. "_minus" then id .. "_plus", rect from the body's top-left.
+-- Draws bars into body from y down, content_w wide, under bctx (the sheet's build ctx), a bar's beside sharing its row.
+-- Returns the y under the last bar and the areas { id, rect, tap, hold }, rect from the body's top-left, each bar's
+-- id .. "_minus" then id .. "_plus", a bar before the one beside it. A greyed bar's areas are inert.
 function Steppers.draw(body, bctx, content_w, y, bars)
     local look = bctx.look
     local qs = look.quick_settings
@@ -87,39 +85,40 @@ function Steppers.draw(body, bctx, content_w, y, bars)
     local bw = Layout.size_at(scale(qs.button_w), bctx.text_size)
     local bh = Layout.size_at(scale(qs.button_h), bctx.text_size)
     local gap = scale(qs.control_gap)
+    local pair_gap = scale(qs.pair_gap)
     local level_outline = qs.level_outline_color and scale(qs.level_outline_width) or 0
     local level_h = Layout.size_at(scale(qs.level_h), bctx.text_size) + 2 * level_outline
-    local mid_x, mid_w = pad_x + bw + gap, inner_w - 2 * (bw + gap)
     local areas = {}
-    for i, bar in ipairs(bars) do
-        local pad = i == 1 and qs.first_section_padding or qs.section_padding
-        y = y + scale(pad.top)
+
+    -- Draws bar at left, width wide, from top: returns the y under its buttons.
+    local function one(bar, left, width, top)
+        local mid_x, mid_w = left + bw + gap, width - 2 * (bw + gap)
         -- The label and value on one line.
-        local value = Typeset.line(label_part, bar.value_text, inner_w, bctx)
+        local value = Typeset.line(label_part, bar.value_text, width, bctx)
         local value_size = value:getSize()
-        local label = Typeset.line(label_part, bar.label, math.max(1, inner_w - value_size.w), bctx)
+        local label = Typeset.line(label_part, bar.label, math.max(1, width - value_size.w), bctx)
         local label_size = label:getSize()
         local row_h = math.max(label_size.h, value_size.h)
-        add(label, pad_x, y + row_h - label_size.h)
-        add(value, pad_x + inner_w - value_size.w, y + row_h - value_size.h)
-        y = y + row_h + scale(qs.section_gap)
+        add(label, left, top + row_h - label_size.h)
+        add(value, left + width - value_size.w, top + row_h - value_size.h)
+        local row_y = top + row_h + scale(qs.section_gap)
 
         -- The control row: minus, the level bar centred on the buttons, plus.
-        for _, button in ipairs({ { "minus", pad_x, MINUS }, { "plus", pad_x + inner_w - bw, PLUS } }) do
+        for _, button in ipairs({ { "minus", left, MINUS }, { "plus", left + width - bw, PLUS } }) do
             local x = button[2]
-            fill(x, y, bw, bh, qs.button_fill_color)
-            outline(x, y, bw, bh, qs.button_outline_width, qs.button_outline_color)
+            fill(x, row_y, bw, bh, qs.button_fill_color)
+            outline(x, row_y, bw, bh, qs.button_outline_width, qs.button_outline_color)
             local glyph = Typeset.line(button_part, button[3], bw, bctx)
             local size = glyph:getSize()
-            add(glyph, x + math.floor((bw - size.w) / 2), y + math.floor((bh - size.h) / 2))
+            add(glyph, x + math.floor((bw - size.w) / 2), row_y + math.floor((bh - size.h) / 2))
             -- A greyed bar's buttons are inert: their touch is consumed.
             local actions = not bar.greyed and bar[button[1]] or {}
-            areas[#areas + 1] = { id = bar.id .. "_" .. button[1], rect = { x = x, y = y, w = bw, h = bh },
+            areas[#areas + 1] = { id = bar.id .. "_" .. button[1], rect = { x = x, y = row_y, w = bw, h = bh },
                 tap = actions.tap, hold = actions.hold }
         end
         local level = bar.level
         if level then
-            local level_y = y + math.floor((bh - level_h) / 2)
+            local level_y = row_y + math.floor((bh - level_h) / 2)
             fill(mid_x, level_y, mid_w, level_h, qs.level_track_color)
             if not bar.greyed and level.max > level.min then
                 local share = math.min(1, math.max(0, (level.value - level.min) / (level.max - level.min)))
@@ -129,7 +128,20 @@ function Steppers.draw(body, bctx, content_w, y, bars)
             end
             outline(mid_x, level_y, mid_w, level_h, qs.level_outline_width, qs.level_outline_color)
         end
-        y = y + bh + scale(pad.bottom)
+        return row_y + bh
+    end
+
+    for i, bar in ipairs(bars) do
+        local pad = i == 1 and qs.first_section_padding or qs.section_padding
+        y = y + scale(pad.top)
+        if bar.beside then
+            local half = math.floor((inner_w - pair_gap) / 2)
+            one(bar, pad_x, half, y)
+            y = one(bar.beside, pad_x + half + pair_gap, half, y)
+        else
+            y = one(bar, pad_x, inner_w, y)
+        end
+        y = y + scale(pad.bottom)
         local rule = qs.section_rule_color and scale(qs.section_rule_width) or 0
         fill(0, y, content_w, rule, qs.section_rule_color)
         y = y + rule

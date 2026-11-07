@@ -1669,6 +1669,30 @@ its own `pcall`, and acts through the reader's own events below, each inside the
   `ReaderAnnotation:getItemIndex(item)` (`readerannotation.lua:479-503`), since `removeItem`'s own lookup without one
   reads the bookmark list's filters (`readerbookmark.lua:1118-1127`). With no index (the bookmark already gone), it
   removes nothing: `removeItemByIndex(nil)` would `table.remove` the last annotation (`readerbookmark.lua:456-457`).
+- Find opens KoPanda's dialog (`focused_dialogs.lua`), an `InputDialog` read by `getInputText`
+  (`frontend/ui/widget/inputdialog.lua:583`) with its keyboard from `onShowKeyboard` (`:640`). Find with text calls
+  `ui.search:searchCallback(nil, text)` (`frontend/apps/reader/modules/readersearch.lua:252`; the module is registered
+  for every document, `readerui.lua:410`). Passing the text sets a case-insensitive search of the default type
+  (`readersearch.lua:259-261`), past the dialog's checkboxes, and a nil `reverse` runs `findAllText` inside
+  `Trapper:wrap` (`:288-291`, `:733-759`), which shows "Searching… (tap to cancel)", the results list and "No results
+  in the document". Its `UIManager:close(self.input_dialog)` on the nil dialog logs and returns
+  (`frontend/ui/uimanager.lua:290-294`). That path also skips the dialog's `normalize_NFC` from `ffi/utf8proc`
+  (`readersearch.lua:266`, `base/ffi/utf8proc.lua:83`), and the default type doesn't ignore diacritics (`:51`), so
+  KoPanda composes the text first.
+- Go to page opens KoPanda's other dialog. `ui.pagemap` exists only for a rolling document (`readerui.lua:390`) and
+  labels are wanted when `wantsPageLabels()` says so (`frontend/apps/reader/modules/readerpagemap.lua:330`); the hint
+  then reads `getCurrentPageLabel(true)`, `getFirstPageLabel(true)` and `getLastPageLabel(true)` (`:334`, `:349`,
+  `:354`), as `ReaderGoto:onShowGotoDialog` does (`frontend/apps/reader/modules/readergoto.lua:35-41`), else the page and
+  count above. A label goes through `cleanPageLabel` (`readerpagemap.lua:176`) and `getPageLabelProps` (`:364`), whose
+  second value is the rendered page and which returns nothing for an unknown label. Go calls
+  `ui.link:addCurrentLocationToStack()` (`readerlink.lua:793-797`), then sends `GotoPage(page)`, as
+  `ReaderGoto:gotoPage` does (`readergoto.lua:139-159`), handled by `ReaderRolling:onGotoPage`
+  (`frontend/apps/reader/modules/readerrolling.lua:756`) or `ReaderPaging:onGotoPage`
+  (`frontend/apps/reader/modules/readerpaging.lua:1147`). `ReaderGoto:gotoPage` skips the stack for a label; KoPanda
+  keeps the place there too.
+- A dialog that can't be shown falls back to `ShowFulltextSearchInput` (`frontend/dispatcher.lua:205`) to
+  `ReaderSearch:onShowFulltextSearchInput` (`readersearch.lua:296`), or `ShowGotoDialog` (`dispatcher.lua:183`) to
+  `ReaderGoto:onShowGotoDialog` (`readergoto.lua:33`), so the reader always gets one.
 - Home: the reader menu's file browser icon's callback (`frontend/apps/reader/modules/readermenu.lua:65-73`):
   the file, then `ReaderUI:onClose()` (`readerui.lua:870-900`), then `showFileManager(file)` (`:581-596`).
 - KOReader's reader menu, the header's hold: `ShowConfigMenu`
@@ -2016,7 +2040,8 @@ row, the sidecar and the Statistics database is in the book records' and the Sta
   cuts past it with an ellipsis (`truncate_with_ellipsis`, `:37`; without xtext `:153-177`, with
   it `:201-238`).
   `spec/unit/library_tiles_spec.lua` reads `isTruncated` (`:307-310`).
-- The download badge is a circle: `paintRoundedRect` and `paintBorder` with a radius of half the
+- The badge, the download icon on a book not downloaded or the check on a finished one (`Books.progress`'s status
+  `complete`), is a circle: `paintRoundedRect` and `paintBorder` with a radius of half the
   badge's size (`base/ffi/blitbuffer.lua:2169-2197`, `:2096-2135`), which they cap at half the side
   (`:2105-2106`, `:2175-2176`), through `Paint`.
 - Freeing a tile frees its cover's bitmap and lets go of its icons: `WidgetContainer:free` frees
