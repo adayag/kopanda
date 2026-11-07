@@ -1574,6 +1574,22 @@ guard (`sheet.lua`).
   the Kindle `turnOnWifi` may show the network list over the sheet
   (`frontend/device/kindle/device.lua:424-447`; `manager.lua:1243-1251`), and `turnOffWifi` runs the
   callback after `scheduleIn(2)` (`kindle/device.lua:441-447`).
+- Wi-Fi's hold: the way to the network list, with the sheet left open beneath it. Radio off,
+  `toggleWifiOn(nil, true, true)`; on and not connected, `promptWifi(nil, true, true)`, whose Connect
+  hands `long_press` on (`manager.lua:506-513`): both as the menu item's `hold_callback`
+  (`:922-924`). `toggleWifiOn` stores `long_press` in `wifi_toggle_long_press` (`:440`), which on
+  the Kindle's `turnOnWifi` (`frontend/device/kindle/device.lua:427-430`) reaches
+  `reconnectOrShowNetworkMenu` (`manager.lua:1115-1266`): the list shows on a failure when
+  interactive (`:1243-1254`) and on a success with the flag set (`:1256-1262`). Connected, the menu
+  item's hold turns Wi-Fi off, so the sheet sets the flag and calls `reconnectOrShowNetworkMenu(nil,
+  true)` itself, without `toggleWifiOn`, whose `enableWifi` would broadcast `NetworkConnecting` and
+  `NetworkConnected` again (`:74`, `:109`). A network marked `connected` passes (`:1155-1165`),
+  so the backend isn't touched; `obtainIP` is a no-op on the Kindle (`:1217`, base `:199`). The
+  function clears the flag only at its end (`:1264`), not on a failed scan's return (`:1122-1125`),
+  so the sheet clears it. Picking a network runs `NetworkItem:connect`
+  (`frontend/ui/widget/networksetting.lua:227-250`), with no `connect_callback` on this path, so
+  no `NetworkConnected` follows a switch. The emulator's fake has no `getNetworkList`
+  (`frontend/ui/network/manager.lua:194`), so this list only shows on a device.
 - Close-first actions: the sheet's close takes it off the window stack at once and marks what is
   beneath dirty (`frontend/ui/uimanager.lua:290-313`); then `LauncherEntries.run` checks the entry
   again and runs it (the launcher's entries above), reaching the file manager over the bare file

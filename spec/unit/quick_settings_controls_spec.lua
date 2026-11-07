@@ -1,6 +1,7 @@
 -- The quick-settings sheet's controls: taps and holds on the brightness and warmth buttons step the power device on
 -- the Kindle's 0-24 scales through broadcast events the file manager's DeviceListener handles; Night, Rotation lock
--- and Wi-Fi act with the sheet open and redraw it; Sync books, Sleep and Screenshot close it first; a greyed cell
+-- and Wi-Fi act with the sheet open and redraw it; a hold on Wi-Fi reaches the network list; Sync books, Sleep and
+-- Screenshot close it first; a greyed cell
 -- closes it and shows the launcher's note; an action that raises is logged and the sheet stays. Each case reaching
 -- KOReader runs over the home and over the bare file browser. Every stub is put back after the test that makes it.
 describe("the quick-settings controls", function()
@@ -429,6 +430,89 @@ describe("the quick-settings controls", function()
                 assert.equals(true, prompted[1][4])
                 assert.spy(toggled_off).was_not_called()
                 assert.spy(toggled_on).was_not_called()
+                still_shown()
+            end)
+
+            it("turns Wi-Fi on as KOReader's long press does on a hold with the radio off", function()
+                setting("emulator_fake_wifi_connected", false)
+                local turned_on = {}
+                set(NetworkMgr, "toggleWifiOn", function(...)
+                    turned_on[#turned_on + 1] = { ... }
+                end)
+                open()
+                hold("wifi")
+                assert.equals(1, #turned_on)
+                assert.is_nil(turned_on[1][2])
+                assert.equals(true, turned_on[1][3])
+                assert.equals(true, turned_on[1][4])
+                still_shown()
+            end)
+
+            it("prompts as KOReader's long press does on a hold with Wi-Fi on and not connected", function()
+                setting("emulator_fake_wifi_connected", true)
+                set(NetworkMgr, "isConnected", function()
+                    return false
+                end)
+                local prompted = {}
+                set(NetworkMgr, "promptWifi", function(...)
+                    prompted[#prompted + 1] = { ... }
+                end)
+                open()
+                hold("wifi")
+                assert.equals(1, #prompted)
+                assert.is_nil(prompted[1][2])
+                assert.equals(true, prompted[1][3])
+                assert.equals(true, prompted[1][4])
+                still_shown()
+            end)
+
+            it("shows the network list on a hold while connected, the radio left alone", function()
+                setting("emulator_fake_wifi_connected", true)
+                local networks = { { ssid = "kopanda-test", connected = true, signal_quality = 81,
+                    signal_level = "4/5", flags = "WPA2" } }
+                set(NetworkMgr, "getNetworkList", function()
+                    return networks
+                end)
+                local toggled_off = watch(NetworkMgr, "toggleWifiOff")
+                local toggled_on = watch(NetworkMgr, "toggleWifiOn")
+                local shown_list
+                local show = UIManager.show
+                set(UIManager, "show", function(manager, widget, ...)
+                    if widget.network_list == networks then
+                        shown_list = widget
+                    end
+                    return show(manager, widget, ...)
+                end)
+                open()
+                hold("wifi")
+                assert.truthy(shown_list)
+                assert.spy(toggled_off).was_not_called()
+                assert.spy(toggled_on).was_not_called()
+                assert.truthy(Sheet.shown)
+                UIManager:close(shown_list)
+            end)
+
+            it("asks for no list on the next connection after a hold whose scan fails", function()
+                setting("emulator_fake_wifi_connected", true)
+                set(NetworkMgr, "getNetworkList", function()
+                    return nil, "kopanda-test: no scan"
+                end)
+                open()
+                hold("wifi")
+                assert.is_falsy(NetworkMgr.wifi_toggle_long_press)
+                assert.truthy(Sheet.shown)
+            end)
+
+            it("does nothing on a hold on a greyed Wi-Fi", function()
+                set(LauncherEntries, "available", function(entry)
+                    return entry.target ~= "wifi"
+                end)
+                local turned_on = watch(NetworkMgr, "toggleWifiOn")
+                local turned_off = watch(NetworkMgr, "toggleWifiOff")
+                open()
+                hold("wifi")
+                assert.spy(turned_on).was_not_called()
+                assert.spy(turned_off).was_not_called()
                 still_shown()
             end)
 

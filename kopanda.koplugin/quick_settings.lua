@@ -195,16 +195,33 @@ local function toggle_wifi()
     end
 end
 
+-- The way to the network list: KOReader's Wi-Fi menu item's long press (frontend/ui/network/manager.lua:922-924),
+-- except that connected, where that turns Wi-Fi off, it rescans and shows the list as the long press does once
+-- connected (:1256-1262). That scan's early return leaves the long-press flag set (:1122-1125, :1264), so it is cleared
+-- here, or a later connection would show the list unasked.
+local function show_networks()
+    NetworkMgr:queryNetworkState()
+    if NetworkMgr.is_wifi_on and NetworkMgr.is_connected then
+        NetworkMgr.wifi_toggle_long_press = true
+        NetworkMgr:reconnectOrShowNetworkMenu(nil, true)
+        NetworkMgr.wifi_toggle_long_press = nil
+    elseif NetworkMgr.is_wifi_on then
+        NetworkMgr:promptWifi(nil, true, true)
+    else
+        NetworkMgr:toggleWifiOn(nil, true, true)
+    end
+end
+
 -- A close-first action running the launcher's entry, which checks availability again and
 -- shows the launcher's note when it can't run (LauncherEntries.run).
 local function run(entry)
     return { close_first = true, tap = function() LauncherEntries.run(entry) end }
 end
 
--- The cells' taps, by area id; no cell has a hold. Wi-Fi, Night and Rotation lock act with the
+-- The cells' taps, by area id, and Wi-Fi's hold, the only cell's. Wi-Fi, Night and Rotation lock act with the
 -- sheet open; the rest close it first.
 local CELLS = {
-    wifi = { tap = toggle_wifi },
+    wifi = { tap = toggle_wifi, hold = show_networks },
     night = {
         tap = function()
             UIManager:broadcastEvent(Event:new("ToggleNightMode"))
@@ -238,7 +255,7 @@ local function cell_area(cell, rect)
         return { id = cell.id, rect = rect }
     end
     local actions = cell.greyed and GREYED[cell.id] or CELLS[cell.id]
-    return { id = cell.id, rect = rect, tap = actions.tap, close_first = actions.close_first }
+    return { id = cell.id, rect = rect, tap = actions.tap, hold = actions.hold, close_first = actions.close_first }
 end
 
 -- The sheet's body under bctx (the sheet's build ctx) content_w wide, from look.quick_settings: { widget,
