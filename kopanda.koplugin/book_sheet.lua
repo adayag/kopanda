@@ -1,11 +1,12 @@
 -- A book's sheet: a header of its small cover, title, author and meta line, then Open, Book details
 -- (KoPanda's book status page, KOReader's own details page when it fails), Read status and More by this
--- author. The featured book's (BookSheet.open, held on the home) adds Feature a different book and This
--- widget's settings; a library record's (BookSheet.open_record) adds Add to the home, Delete, and Download
--- for cwngsync's placeholder. Read status opens KOReader's own status buttons, which write the sidecar
+-- author, then Add to Favorites. The featured book's (BookSheet.open, held on the home) adds Feature a different
+-- book and This widget's settings; a library record's (BookSheet.open_record) adds Add to the home, Delete, and
+-- Download for cwngsync's placeholder. Read status opens KOReader's own status buttons, which write the sidecar
 -- themselves; only the picker and Add to the home write (featured.pinned).
 local BookCovers = require("book_covers")
 local BookList = require("ui/widget/booklist")
+local BookLists = require("book_lists")
 local Books = require("books")
 local DocSettings = require("docsettings")
 local Featured = require("widgets/featured")
@@ -275,6 +276,23 @@ local function book_rows(file, title, on, ctx, beneath)
     return rows
 end
 
+-- Add to Favorites, or In Favorites with the check for its icon, since a row with Sheet's tick doesn't run: a tap
+-- toggles the book at file, a placeholder included, then runs refresh. Greyed with no file.
+local function favorites_row(file, refresh)
+    if not file then
+        return { icon = "bookmark", label = "Add to Favorites", muted = true }
+    end
+    local held = BookLists.is_favorite(file)
+    return {
+        icon = held and "check" or "bookmark",
+        label = held and "In Favorites" or "Add to Favorites",
+        run = Guards.guarded("the favorites change", function()
+            BookLists.toggle_favorite(file)
+            refresh()
+        end),
+    }
+end
+
 -- Add to the home: pins the book at file by its realpath (history holds realpaths, readhistory.lua:26).
 -- The home, closed while a library window is up, builds afresh on its next show. Ticked as On the home
 -- when featured.pinned already names the book. Its run, like the delete's and download's, goes through
@@ -405,6 +423,9 @@ function BookSheet.open(ctx, built, opts)
         end,
         opener = { screen = "home" },
     }, ctx, nil)
+    rows[#rows + 1] = favorites_row(book.file, function()
+        ctx.home:refresh()
+    end)
     rows[#rows + 1] = {
         icon = "list",
         label = "Feature a different book",
@@ -428,6 +449,7 @@ end
 
 -- Shows the sheet of record (a Books record) held on window (the library or a shelf screen) under ctx,
 -- with opts passed on to Sheet.show. Open runs window:open(record); a status write re-lists the window.
+-- opts.extra_rows go after the sheet's own rows.
 -- A record whose file has gone re-lists the window and shows no sheet. The cover is the featured
 -- cover's frame round the record's cached cover (FeaturedCover.framed), never asking for an extraction.
 function BookSheet.open_record(record, window, ctx, opts)
@@ -455,8 +477,14 @@ function BookSheet.open_record(record, window, ctx, opts)
     if record.placeholder == true then
         table.insert(rows, 2, download_row(record, window))
     end
+    rows[#rows + 1] = favorites_row(file, function()
+        window:refresh()
+    end)
     rows[#rows + 1] = home_row(file)
     rows[#rows + 1] = delete_row(file, record.placeholder == true, window)
+    for _, row in ipairs(opts and opts.extra_rows or {}) do
+        rows[#rows + 1] = row
+    end
     local header = {
         title = record.title,
         author = #record.authors > 0 and table.concat(record.authors, ", ") or nil,

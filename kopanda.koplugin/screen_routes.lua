@@ -2,6 +2,7 @@
 -- frontend/apps/filemanager/filemanager.lua:447), the screen a book status page was opened from, and the window a
 -- book's close returns to. KoPanda's methods (main.lua) call these with the plugin instance.
 local AuthorsScreen = require("authors_screen")
+local BookListsScreen = require("book_lists_screen")
 local BookStatusScreen = require("book_status_screen")
 local Library = require("library")
 local LibraryChrome = require("library_chrome")
@@ -12,23 +13,25 @@ local time = require("ui/time")
 
 local ScreenRoutes = {}
 
--- The Series, Authors and Subjects windows, by the screen a return names.
-local SHELVES = { series = SeriesScreen, authors = AuthorsScreen, subjects = SubjectsScreen }
+-- The Series, Authors, Subjects and book list windows, by the screen a return names.
+local SHELVES = { series = SeriesScreen, authors = AuthorsScreen, subjects = SubjectsScreen,
+    book_list = BookListsScreen }
 ScreenRoutes.SHELVES = SHELVES
 
--- Shows a window of cls (SeriesScreen, AuthorsScreen, SubjectsScreen, SearchScreen or StatsScreen) with opts unless
--- the file manager has gone since the show was asked for; the window's show closes the home. Like the library's, it
--- takes no part in the boot guard; one that fails to build is logged by the chrome and the file browser left up.
+-- Shows a window of cls (a shelf's, SearchScreen or StatsScreen) with opts unless the file manager has gone since the
+-- show was asked for; the window's show closes the home. Like the library's, it takes no part in the boot guard; one
+-- that fails to build is logged by the chrome and the file browser left up. Returns the window shown, or nil.
 function ScreenRoutes.show_shelf(cls, opts)
     local FileManager = package.loaded["apps/filemanager/filemanager"]
     if FileManager and FileManager.instance then
-        cls.show(opts)
+        return cls.show(opts)
     end
+    return nil
 end
 
 -- The screen opener names shown again: the home for { screen = "home" }; the library at its folder (view) and
--- page; the Series, Authors or Subjects window at its view and page; the search's results for its query and
--- start (from) at their page.
+-- page; the Series, Authors, Subjects or book list window at its view and page; the search's results for its query
+-- and start (from) at their page.
 function ScreenRoutes.show_opener(kopanda, opener)
     local screen = opener and opener.screen
     if screen == "library" then
@@ -58,8 +61,8 @@ function ScreenRoutes.show_book_status(kopanda, opts)
 end
 
 -- The window a book's close returns to and the fields it is built with: the library at the folder and page
--- a book was opened from, or the Series, Authors or Subjects window at the view and page; nil with no return
--- recorded.
+-- a book was opened from, or the Series, Authors, Subjects or book list window at the view and page; nil with no
+-- return recorded.
 function ScreenRoutes.return_window()
     local back = Library.return_to
     if back then

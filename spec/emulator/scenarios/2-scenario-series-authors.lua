@@ -35,7 +35,8 @@
 --     prove the windows asked for no extraction and nothing arrived to repaint them.
 -- On the first home's settled signal, from the next tick, it shows, per KOPANDA_SHELF_VIEW, the
 -- window directly at its view through the plugin (KoPanda:showSeries, KoPanda:showAuthors,
--- KoPanda:showSubjects, KoPanda:showSearch), so that window's one settled signal is the capture's:
+-- KoPanda:showSubjects, KoPanda:showSearch, KoPanda:showBookList), so that window's one settled signal is the
+-- capture's:
 --   - series-list: the Series list at its first page;
 --   - series-books: the series SERIES at its first page;
 --   - authors-list: the Authors list at its first page;
@@ -43,7 +44,8 @@
 --   - subjects-list: the Subjects list at its first page;
 --   - subject-books: the subject SUBJECT at its first page;
 --   - search-books: the library search's results for QUERY at their first page, started from the
---     capture library.
+--     capture library;
+--   - history-books: the History window at its first page, READ put in the history first.
 -- A failure before the UI runs exits with status 4, as the home fixture does, since a half-made
 -- library would be captured as if it were the scenario's; one after is reported as a settled signal
 -- with error on the screen the view's capture shoots, so the spec fails with the message.
@@ -55,6 +57,8 @@ local SERIES = "Sherlock Holmes"
 local AUTHOR = "Arthur Conan Doyle"
 local SUBJECT = "Adventure"
 local QUERY = "the"
+-- The books the history holds in history-books, oldest first.
+local READ = { "frankenstein.epub", "a-study-in-scarlet.epub", "the-sign-of-the-four.epub", "a-christmas-carol.epub" }
 local VIEWS = {
     ["series-list"] = { screen = "series", module = "series_screen", show = "showSeries", view = { kind = "list" } },
     ["series-books"] = { screen = "series", module = "series_screen", show = "showSeries",
@@ -71,6 +75,8 @@ local VIEWS = {
         opts = function(root)
             return { query = QUERY, from = { dir = root }, page = 1 }
         end },
+    ["history-books"] = { screen = "book_list", module = "book_lists_screen", show = "showBookList",
+        view = { list = "history" }, read = READ },
 }
 
 -- The fixture books, kept under their own names, with their own metadata and covers.
@@ -161,7 +167,7 @@ local ok, err = pcall(function()
 
     if not VIEW then
         error("KOPANDA_SHELF_VIEW must be series-list, series-books, authors-list, author-books, subjects-list, "
-            .. "subject-books or search-books, not " .. tostring(view_name))
+            .. "subject-books, search-books or history-books, not " .. tostring(view_name))
     end
     local library_dir = os.getenv("KOPANDA_SHELF_DIR")
     local root = library_dir and library_dir ~= "" and ffiutil.realpath(library_dir)
@@ -282,6 +288,9 @@ local ok, err = pcall(function()
             local fm = FileManager.instance
             if not (fm and fm.kopanda) then
                 error("no file manager with the kopanda plugin")
+            end
+            for i, name in ipairs(VIEW.read or {}) do
+                require("readhistory"):addItem(root .. "/" .. name, os.time() + i)
             end
             logger.info("KOPANDA_SCENARIO: " .. VIEW.show .. " at " .. view_name)
             fm.kopanda[VIEW.show](fm.kopanda, VIEW.opts and VIEW.opts(root) or { view = VIEW.view, page = 1 })

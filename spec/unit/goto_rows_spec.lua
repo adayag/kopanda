@@ -1,7 +1,8 @@
 -- The Contents and Bookmarks rows: a chapter row indented by its depth with its page at the right, its title right of
 -- the toggle column in a nested list, a parent's toggle in it; the current one filled in ink with its text in paper;
--- and a bookmark row, its chapter at the left and its page at the right; every row as tall as GotoRows.height says,
--- and nothing past the row's width at Extra large on the Paperwhite 7th gen, in every look.
+-- and a bookmark row, its chapter at the left and its page at the right, a highlight's or note's text in its place;
+-- every row as tall as GotoRows.height says, and nothing past the row's width at Extra large on the Paperwhite 7th
+-- gen, in every look.
 describe("the Contents and Bookmarks rows", function()
     local harness = require("plugin_harness")
     local Screen = require("device").screen
@@ -155,10 +156,42 @@ describe("the Contents and Bookmarks rows", function()
 
     it("draws a bookmark's chapter at the left and its page at the right, one line", function()
         local ctx = ctx_for("diner")
-        local row, h = GotoRows.bookmark({ chapter = "Letter 1", page_label = "12" }, 800, ctx)
+        local row, h = GotoRows.bookmark({ kind = "bookmark", text = "", chapter = "Letter 1",
+            page_label = "12" }, 800, ctx)
         assert.same({ "letter 1", "12" }, texts(row))
         assert.equals(GotoRows.height(ctx), h)
         row:free()
+    end)
+
+    it("draws a highlight's text in curly quotes on one line, whitespace collapsed, at a bookmark's height", function()
+        local ctx = ctx_for("diner")
+        local row, h = GotoRows.bookmark({ kind = "highlight", text = "  It was\n\tthe  best\n", chapter = "Part",
+            page_label = "12" }, 800, ctx)
+        assert.same({ "\u{201C}it was the best\u{201D}", "12" }, texts(row))
+        assert.equals(GotoRows.height(ctx), h)
+        row:free()
+    end)
+
+    it("draws a note's text after Note, and keeps the page at the right", function()
+        local ctx = ctx_for("editorial")
+        local row = GotoRows.bookmark({ kind = "note", text = "of times", chapter = "Part", page_label = "12" }, 800,
+            ctx)
+        assert.same({ "note \u{B7} \u{201C}of times\u{201D}", "12" }, texts(row))
+        local page_place, page = place_of(row, "12")
+        assert.equals(800 - Screen:scaleBySize(ctx.look.shelf.author.padding.x), page_place.x + page:getSize().w)
+        row:free()
+    end)
+
+    it("reads the chapter on a highlight or note with no text", function()
+        local ctx = ctx_for("editorial")
+        local blank = "\n  "
+        local highlight = GotoRows.bookmark({ kind = "highlight", text = blank, chapter = "Part", page_label = "1" },
+            800, ctx)
+        local note = GotoRows.bookmark({ kind = "note", text = "", chapter = "Part", page_label = "1" }, 800, ctx)
+        assert.same({ "part", "1" }, texts(highlight))
+        assert.same({ "note \u{B7} part", "1" }, texts(note))
+        highlight:free()
+        note:free()
     end)
 
     it("keeps every text inside the row at Extra large on the Paperwhite 7th gen, in every look", function()
@@ -171,7 +204,10 @@ describe("the Contents and Bookmarks rows", function()
                 local rows = {
                     GotoRows.chapter(chapter(LONG, 0, 1234), false, width, ctx),
                     GotoRows.chapter(chapter(LONG, 2, 1234), true, width, ctx),
-                    (GotoRows.bookmark({ chapter = LONG, page_label = "1234" }, width, ctx)),
+                    (GotoRows.bookmark({ kind = "bookmark", text = "", chapter = LONG, page_label = "1234" }, width,
+                        ctx)),
+                    (GotoRows.bookmark({ kind = "note", text = LONG, chapter = "Part", page_label = "1234" }, width,
+                        ctx)),
                     GotoRows.chapter(parent, false, width, ctx, true, false),
                     GotoRows.chapter(parent, true, width, ctx, true, true),
                     (GotoRows.chapter(chapter(LONG, 2, 1234), true, width, ctx, true, false)),

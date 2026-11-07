@@ -1,7 +1,6 @@
 -- The Contents and Bookmarks lists' model: the reader's TOC (frontend/apps/reader/modules/readertoc.lua:160-175,
--- :383-406) and its bookmarks, the annotations with no drawer (readerbookmark.lua:417-440), read as lists; the jumps
--- and the removal go through KOReader's own calls, as its TOC and bookmark lists make them (HOOKS.md, "The focused
--- panel").
+-- :383-406) and its annotations (readerbookmark.lua:590-598), read as lists; the jumps and the removal go through
+-- KOReader's own calls, as its TOC and bookmark lists make them (HOOKS.md, "The focused panel").
 local Event = require("ui/event")
 
 local GotoList = {}
@@ -42,19 +41,26 @@ function GotoList.chapters(ui)
     return { rows = rows, current = toc:getTocIndexByPage(where) }
 end
 
--- The bookmarks of ui newest first, each { item, chapter, page_label }: item is KOReader's annotation, chapter
--- "No chapter" where it has none, page_label as KOReader's bookmark list labels the page.
+-- The kind of annotation item, as ReaderBookmark.getBookmarkType tells them (readerbookmark.lua:590-598).
+local function kind_of(item)
+    if not item.drawer then
+        return "bookmark"
+    end
+    return item.note and "note" or "highlight"
+end
+
+-- The annotations of ui newest first, each { item, kind, text, chapter, page_label }: item is KOReader's annotation,
+-- kind "bookmark", "highlight" or "note", text its text or "" (readerbookmark.lua:676), chapter "No chapter" where it
+-- has none, page_label as KOReader's bookmark list labels the page.
 function GotoList.bookmarks(ui)
     local entries = {}
     for i, item in ipairs(ui.annotation.annotations) do
-        if not item.drawer then
-            local chapter = item.chapter
-            if chapter == nil or chapter == "" then
-                chapter = "No chapter"
-            end
-            entries[#entries + 1] = { item = item, chapter = chapter,
-                page_label = ui.bookmark:getBookmarkPageString(item.page), order = i }
+        local chapter = item.chapter
+        if chapter == nil or chapter == "" then
+            chapter = "No chapter"
         end
+        entries[i] = { item = item, kind = kind_of(item), text = item.text or "", chapter = chapter,
+            page_label = ui.bookmark:getBookmarkPageString(item.page), order = i }
     end
     table.sort(entries, function(a, b)
         local ad, bd = a.item.datetime or "", b.item.datetime or ""

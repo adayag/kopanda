@@ -1,5 +1,5 @@
 -- The reader's Contents and Bookmarks lists: a window on the chrome (library_chrome.lua) over the reader, with no nav
--- bar, listing the book's chapters, a parent's under it only while it is open, or its bookmarks, a page at a time by
+-- bar, listing the book's chapters, a parent's under it only while it is open, or its annotations, a page at a time by
 -- whole rows between a one-row header and the pager. What the lists hold and how a tap jumps is goto_list.lua's; the
 -- rows are goto_rows.lua's. GotoScreen.shown is the chrome's slot.
 local Geom = require("ui/geometry")
@@ -21,7 +21,8 @@ local GotoScreen = LibraryChrome.Window:extend{
 }
 
 local TITLES = { chapters = "Contents", bookmarks = "Bookmarks" }
-local NOTES = { chapters = "No chapters in this book", bookmarks = "No bookmarks yet" }
+local NOTES = { chapters = "No chapters in this book", bookmarks = "No bookmarks or highlights yet" }
+local REMOVALS = { bookmark = "Remove bookmark", highlight = "Remove highlight", note = "Remove note" }
 
 local function scale(px)
     return Screen:scaleBySize(px)
@@ -189,8 +190,24 @@ function GotoScreen.hit(x, y)
     return { kind = "empty" }
 end
 
--- A hold on a bookmark shows a one-row sheet over the window, Remove bookmark, headed by the bookmark's chapter and
--- page; its row removes the bookmark and lists the bookmarks again. A hold anywhere else does nothing.
+-- The hold sheet's text block for entry: a highlight's or note's text, then a note's note; nil with neither.
+local function paragraphs(entry)
+    if entry.kind == "bookmark" then
+        return nil
+    end
+    local text = {}
+    if entry.text:find("%S") then
+        text[1] = { part = "quote", text = entry.text }
+    end
+    if entry.kind == "note" then
+        text[#text + 1] = { part = "book_description", text = entry.item.note }
+    end
+    return #text > 0 and text or nil
+end
+
+-- A hold on a bookmark, highlight or note shows a one-row sheet over the window that removes it, headed by its chapter
+-- and page, with a highlight's or note's words above the row; its row removes it and lists the rest again. A hold
+-- anywhere else does nothing.
 function GotoScreen:hold_sheet(hit, started)
     if not (hit and hit.kind == "bookmark") then
         return
@@ -201,8 +218,9 @@ function GotoScreen:hold_sheet(hit, started)
         band = "home",
         header = { heading = entry.chapter, aside = "Page " .. entry.page_label, aside_above = true,
             label = "Bookmarks" },
+        text = paragraphs(entry),
         rows = { {
-            label = "Remove bookmark",
+            label = REMOVALS[entry.kind],
             run = function()
                 GotoList.remove_bookmark(self.ui, entry)
                 self:refresh()

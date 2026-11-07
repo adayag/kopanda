@@ -1,7 +1,7 @@
 -- The Contents and Bookmarks rows, one height throughout: a chapter's title indented by its depth with its page at the
 -- right, right of the toggle column in a nested list, where a parent shows its toggle; the current chapter's on an ink
--- fill; and a bookmark's chapter with its page at the right. The indent step is the list's side; the text follows
--- ctx.text_size.
+-- fill; and a bookmark's chapter, or a highlight's or note's text, with its page at the right. The indent step is the
+-- list's side; the text follows ctx.text_size.
 local Geom = require("ui/geometry")
 local Icons = require("icons")
 local LibraryChrome = require("library_chrome")
@@ -87,11 +87,24 @@ function GotoRows.chapter(chapter, is_current, width, ctx, nested, open)
     return box, h
 end
 
--- entry's bookmark (GotoList.bookmarks' entry) width wide under ctx. Returns it and its height.
+-- entry's words on one line: a highlight's or note's text in curly quotes, the chapter for a bookmark or an entry with
+-- no text, after "Note · " for a note.
+local function words(entry)
+    local name = entry.chapter
+    if entry.kind ~= "bookmark" then
+        local text = entry.text:gsub("%s+", " "):match("^ ?(.-) ?$")
+        if text ~= "" then
+            name = "“" .. text .. "”"
+        end
+    end
+    return entry.kind == "note" and "Note · " .. name or name
+end
+
+-- entry (GotoList.bookmarks' entry) width wide under ctx. Returns it and its height.
 function GotoRows.bookmark(entry, width, ctx)
     local m = metrics(ctx)
     local h = GotoRows.height(ctx)
-    return row(entry.chapter, entry.page_label, m.pad_x, h, width, m, ctx, width - m.pad_x), h
+    return row(words(entry), entry.page_label, m.pad_x, h, width, m, ctx, width - m.pad_x), h
 end
 
 return GotoRows

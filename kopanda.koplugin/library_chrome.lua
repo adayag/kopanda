@@ -33,7 +33,7 @@ LibraryChrome.build = ChromeFrame.build
 
 LibraryChrome.shown = nil
 -- { screen, view, page }: where the next file manager's show returns to after a book opened from the Series,
--- Authors or Subjects window; in memory only.
+-- Authors, Subjects or book list window; in memory only.
 LibraryChrome.return_to = nil
 
 -- The library's books (LibraryChrome.books) while a window is up: { root, launched, running, records }, or nil until

@@ -97,6 +97,16 @@ describe("the paint budget on the emulator", function()
         check_wall("series-list paint on colorsoft", sidecar)
     end)
 
+    it("paints the History window within the budget", function()
+        local library = shelf_library.make()
+        local sidecar = settled("book_list", library, { scenarios_dir .. "2-scenario-series-authors.lua" }, {
+            KOPANDA_HOME_FIXTURE = "empty",
+            KOPANDA_SHELF_DIR = library,
+            KOPANDA_SHELF_VIEW = "history-books",
+        })
+        check_wall("history paint on colorsoft", sidecar)
+    end)
+
     it("paints the book status page within the budget", function()
         local library = capture_library.make()
         local sidecar = settled("book_status", library, {

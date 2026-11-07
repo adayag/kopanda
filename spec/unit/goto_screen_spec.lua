@@ -1,8 +1,9 @@
 -- The Contents and Bookmarks lists over a book, here a fake reader that records its jumps: Contents opens at the page
 -- holding the current chapter, the top level shown and the current chapter's parents open, Bookmarks at its first
 -- page, each with a note when it's empty, under a one-row header; a parent's toggle opens or closes it in place; a
--- tap elsewhere on a row closes the screen, then jumps; a hold on a bookmark offers Remove bookmark, and nothing on a
--- chapter; its top and bottom edges open nothing; and it never builds a nav bar.
+-- tap elsewhere on a row closes the screen, then jumps; a hold on a bookmark, highlight or note offers its removal, a
+-- highlight's and a note's words above the row, and nothing on a chapter; its top and bottom edges open nothing; and it
+-- never builds a nav bar.
 describe("the reader's lists", function()
     local harness = require("plugin_harness")
     local text_of = require("library_fixture").text
@@ -87,6 +88,13 @@ describe("the reader's lists", function()
 
     local function bookmark(i)
         return { page = "/body/x" .. i, chapter = "Chapter " .. i, datetime = ("2026-10-%02d 09:00:00"):format(i) }
+    end
+
+    local function highlight(i, text, note)
+        local item = bookmark(i)
+        item.drawer, item.text, item.note = "lighten", text, note
+        item.pos0 = "/body/x" .. i .. ".0"
+        return item
     end
 
     -- Shows ui's list, Contents unless named.
@@ -247,7 +255,7 @@ describe("the reader's lists", function()
     it("notes a book with no bookmarks on Bookmarks", function()
         local screen = show(fake_ui(5, 1), "bookmarks")
         assert.same({}, screen.rows)
-        assert.equals("no bookmarks yet", text_of(screen.note):lower())
+        assert.equals("no bookmarks or highlights yet", text_of(screen.note):lower())
     end)
 
     it("notes a book with no chapters on Contents", function()
@@ -384,6 +392,81 @@ describe("the reader's lists", function()
         assert.same({ "Chapter 3" }, row_texts(screen))
         assert.equals(1, #ui.annotation.annotations)
         assert.same({}, ui.calls)
+    end)
+
+    -- The sheet a hold on row i of screen shows.
+    local function held(screen, i)
+        send("hold", centre(screen.rows[i].rect))
+        harness.tick(2)
+        assert.is_not_nil(Sheet.shown)
+        return Sheet.shown
+    end
+
+    it("heads a highlight's hold sheet with its chapter and page, its text in the block over its row", function()
+        local ui = fake_ui(5, 1, { highlight(3, "It was\nthe best") })
+        local sheet = held(show(ui, "bookmarks"), 1)
+        assert.equals("Chapter 3", sheet.spec.header.heading)
+        assert.equals("Page 3", sheet.spec.header.aside)
+        assert.equals("Bookmarks", sheet.spec.header.label)
+        assert.same({ { part = "quote", text = "It was\nthe best" } }, sheet.spec.text)
+        assert.equals(1, #sheet.spec.rows)
+        assert.equals("Remove highlight", sheet.spec.rows[1].label)
+    end)
+
+    it("sets a note's hold sheet with its text, its note under it, over Remove note", function()
+        local ui = fake_ui(5, 1, { highlight(3, "of times", "Dickens") })
+        local sheet = held(show(ui, "bookmarks"), 1)
+        assert.same({ { part = "quote", text = "of times" }, { part = "book_description", text = "Dickens" } },
+            sheet.spec.text)
+        assert.equals(1, #sheet.spec.rows)
+        assert.equals("Remove note", sheet.spec.rows[1].label)
+    end)
+
+    it("gives a highlight with no text no block, and a note with none only its note", function()
+        local ui = fake_ui(5, 1, { highlight(3, nil), highlight(2, "  \n", "Dickens") })
+        local screen = show(ui, "bookmarks")
+        assert.is_nil(held(screen, 1).spec.text)
+        Sheet.close()
+        harness.tick(2)
+        assert.same({ { part = "book_description", text = "Dickens" } }, held(screen, 2).spec.text)
+    end)
+
+    it("gives a page bookmark no block, whatever text KOReader left on it", function()
+        local item = bookmark(3)
+        item.text = "Page 3"
+        local sheet = held(show(fake_ui(5, 1, { item }), "bookmarks"), 1)
+        assert.is_nil(sheet.spec.text)
+    end)
+
+    it("lists the rest again after Remove highlight, the screen kept", function()
+        local ui = fake_ui(5, 1, { bookmark(3), highlight(9, "gone") })
+        local screen = show(ui, "bookmarks")
+        local sheet = held(screen, 1)
+        send("tap", centre(sheet.rows[1].rect))
+        harness.tick(2)
+        assert.is_nil(Sheet.shown)
+        assert.equals(screen, GotoScreen.shown)
+        assert.same({ "Chapter 3" }, row_texts(screen))
+        assert.equals(1, #ui.annotation.annotations)
+    end)
+
+    it("notes the list once its last highlight is removed", function()
+        local ui = fake_ui(5, 1, { highlight(9, "gone") })
+        local screen = show(ui, "bookmarks")
+        local sheet = held(screen, 1)
+        send("tap", centre(sheet.rows[1].rect))
+        harness.tick(2)
+        assert.same({}, screen.rows)
+        assert.equals("no bookmarks or highlights yet", text_of(screen.note):lower())
+    end)
+
+    it("closes the screen on a highlight row tap, then jumps to it as a bookmark", function()
+        local ui = fake_ui(5, 1, { highlight(9, "there") })
+        local screen = show(ui, "bookmarks")
+        send("tap", centre(screen.rows[1].rect))
+        harness.tick(2)
+        assert.is_nil(GotoScreen.shown)
+        assert.same({ { "stack", false }, { "goto_bookmark", "/body/x9" } }, ui.calls)
     end)
 
     it("shows no sheet on a hold on a chapter", function()

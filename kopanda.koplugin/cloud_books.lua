@@ -1,18 +1,23 @@
 -- cwngsync's placeholders: the books cwngsync knows but the Kindle doesn't hold yet, each a small EPUB
--- at the book's real path. Read from the cwngsync plugin instance the file manager registers, through
--- its own isConfigured and getLibraryState, never by requiring its modules (HOOKS.md "cwngsync's
--- placeholders"). Only reads; each index is made from the state as it stands.
+-- at the book's real path. Read from the cwngsync plugin instance the file manager, or with a book open
+-- the reader, registers, through its own isConfigured and getLibraryState, never by requiring its modules
+-- (HOOKS.md "cwngsync's placeholders"). Only reads; each index is made from the state as it stands.
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
 
 local CloudBooks = {}
 
--- The cwngsync plugin instance on the file manager, or nil: with no file manager (in the reader)
--- or no cwngsync loaded.
+-- The cwngsync plugin instance on the file manager, else on the reader (frontend/apps/reader/readerui.lua:464-474,
+-- :94-96), or nil: with neither up or no cwngsync loaded.
 local function plugin()
     local FileManager = package.loaded["apps/filemanager/filemanager"]
     local fm = FileManager and FileManager.instance
-    return fm and fm.cwngsync
+    if fm and fm.cwngsync then
+        return fm.cwngsync
+    end
+    local ReaderUI = package.loaded["apps/reader/readerui"]
+    local reader = ReaderUI and ReaderUI.instance
+    return reader and reader.cwngsync
 end
 
 -- The index of a state's books: each recorded placeholder's path to its recorded size
@@ -48,8 +53,8 @@ local function read()
     return index_of(cwngsync:getLibraryState())
 end
 
--- { [path] = size } of cwngsync's recorded placeholders, or nil: silently with no file manager, no
--- cwngsync on it or cwngsync not configured; logged when a method is missing, a call raises or the
+-- { [path] = size } of cwngsync's recorded placeholders, or nil: silently with no file manager or
+-- reader, no cwngsync on it or cwngsync not configured; logged when a method is missing, a call raises or the
 -- state has no books table.
 function CloudBooks.index()
     local ok, result = pcall(read)

@@ -4,6 +4,7 @@
 -- prepends the plugin root to package.path only while it dofile()s this file (frontend/pluginloader.lua:242,
 -- :269-270), so a later require could resolve to another plugin's same-named file (:283-286).
 local AuthorsScreen = require("authors_screen")
+local BookListsScreen = require("book_lists_screen")
 local DispatchBridge = require("dispatch_bridge")
 local Dispatcher = require("dispatcher")
 local FmNav = require("fm_nav")
@@ -34,6 +35,7 @@ local logger = require("logger")
 -- use them get them from the require cache.
 require("book_covers")
 require("book_index")
+require("book_lists")
 require("book_search")
 require("book_sheet")
 require("book_status")
@@ -49,6 +51,7 @@ require("featured_cover")
 require("finished_books")
 require("focused")
 require("focused_dialogs")
+require("focused_end")
 require("focused_panel")
 require("folder_scan")
 require("folder_sheet")
@@ -94,6 +97,7 @@ require("settings")
 require("settings_menu")
 require("sheet")
 require("sheet_layout")
+require("sheet_text")
 require("shelf_order")
 require("shelf_rows")
 require("steppers")
@@ -256,6 +260,11 @@ end
 -- The Stats window with opts (StatsScreen.show's), as show_shelf.
 function KoPanda:showStats(opts)
     show_shelf(StatsScreen, opts)
+end
+
+-- The History or Favorites window with opts (BookListsScreen.show's), as show_shelf. Returns the window, or nil.
+function KoPanda:showBookList(opts)
+    return show_shelf(BookListsScreen, opts)
 end
 
 -- The library search's results with opts (SearchScreen.show's), as show_shelf.

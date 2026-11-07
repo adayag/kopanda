@@ -535,7 +535,7 @@ describe("the nav bar", function()
     end)
 
     describe("a tab's run", function()
-        it("sends Library and Settings to KoPanda's entries and History to KOReader's", function()
+        it("sends Library and Settings to KoPanda's entries and History to the koreader entry", function()
             local entries = package.loaded["launcher_entries"]
             for _, where in ipairs({ "home", "file_browser" }) do
                 local calls = spy(entries, "run")
@@ -566,6 +566,68 @@ describe("the nav bar", function()
             assert.equals(fm.kopanda, home_calls[1][1])
             assert.same({}, entry_calls)
         end)
+
+        it("History from the home shows the History window through the launcher's route", function()
+            require("shelf_fixture").install({})
+            local Home, BookListsScreen = package.loaded["home"], package.loaded["book_lists_screen"]
+            local fm = harness.show_fm()
+            harness.tick(2)
+            assert.is_not_nil(Home.shown)
+            NavBar.run("history", "home")
+            local screen = BookListsScreen.shown
+            assert.is_not_nil(screen)
+            assert.same({ list = "history" }, screen:view())
+            assert.equals(screen, harness.top())
+            assert.equals(fm, harness.top(2))
+            assert.is_nil(Home.shown)
+        end)
+
+        it("History on the History window's page 2 goes to page 1 with no new window", function()
+            local fixture = require("shelf_fixture")
+            local ReadHistory = require("readhistory")
+            local records = {}
+            local hist = {}
+            for i = 1, 8 do
+                records[i] = fixture.book("Book " .. i)
+                hist[i] = { file = records[i].path, time = i }
+            end
+            local saved = ReadHistory.hist
+            ReadHistory.hist = hist
+            finally(function()
+                ReadHistory.hist = saved
+            end)
+            fixture.install(records)
+            local BookListsScreen = package.loaded["book_lists_screen"]
+            harness.show_fm()
+            harness.tick(2)
+            local screen = BookListsScreen.show{ view = { list = "history" }, page = 2 }
+            assert.equals(2, screen.page)
+            local shows = spy(require("ui/uimanager"), "show")
+            NavBar.run("history", "history")
+            assert.same({}, shows)
+            assert.equals(screen, BookListsScreen.shown)
+            assert.equals(1, screen.page)
+        end)
+
+        it("History on the Favorites window shows History in its place", function()
+            require("shelf_fixture").install({})
+            local BookListsScreen = package.loaded["book_lists_screen"]
+            harness.show_fm()
+            harness.tick(2)
+            local favorites = BookListsScreen.show{ view = { list = "favorites" } }
+            NavBar.run("history", "favorites")
+            assert.is_not.equals(favorites, BookListsScreen.shown)
+            assert.same({ list = "history" }, BookListsScreen.shown:view())
+        end)
+
+        it("keeps the library's books on the way to History", function()
+            local chrome = package.loaded["library_chrome"]
+            local forgets = spy(chrome, "forget_books")
+            spy(package.loaded["launcher_entries"], "run")
+            NavBar.run("history", "library")
+            assert.same({}, forgets)
+        end)
+
         -- Stats shows the Stats window at its first page, in place of the screen the tab was tapped on.
         it("Stats from the home and from the file browser shows the Stats window at its first page", function()
             local Home, StatsScreen = package.loaded["home"], package.loaded["stats_screen"]
@@ -673,6 +735,35 @@ describe("the nav bar", function()
             assert.is_false(require("ui/uimanager"):isWidgetShown(screen))
             assert.is_not_nil(Home.shown)
             assert.equals(Home.shown, harness.top())
+        end)
+    end)
+
+    -- The book list window carries the bar with History lit on History and no tab on Favorites.
+    describe("on the book list window", function()
+        it("lights History, and no tab on Favorites", function()
+            for _, id in ipairs(Looks.ids()) do
+                local bar = bar_for(id, "history")
+                assert.equals("history", NavBar.TABS[bar.active].id, id)
+                bar:free()
+                bar = bar_for(id, "favorites")
+                assert.is_nil(bar.active, id)
+                bar:free()
+            end
+        end)
+
+        it("runs Home by closing the window and showing the home, from either list", function()
+            require("shelf_fixture").install({})
+            local Home, BookListsScreen = package.loaded["home"], package.loaded["book_lists_screen"]
+            for _, list in ipairs({ "history", "favorites" }) do
+                harness.show_fm()
+                harness.tick(2)
+                local screen = BookListsScreen.show{ view = { list = list } }
+                NavBar.run("home", list)
+                assert.is_nil(BookListsScreen.shown, list)
+                assert.is_false(require("ui/uimanager"):isWidgetShown(screen), list)
+                assert.equals(Home.shown, harness.top(), list)
+                harness.teardown()
+            end
         end)
     end)
 

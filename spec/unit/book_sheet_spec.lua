@@ -276,6 +276,23 @@ describe("the book sheet", function()
             assert.equals("Mary Shelley", spec.header.author)
         end)
 
+        it("toggles the featured book in Favorites and refreshes the home", function()
+            local ReadCollection = require("readcollection")
+            replace(ReadCollection, "coll", { favorites = {} })
+            sidecar(a, '{ percent_finished = 0.62, doc_props = { title = "Frankenstein" } }')
+            history({ { a } })
+            fm_with_home()
+            hold_book()
+            local refreshes = count_refreshes()
+            tap("Add to Favorites")
+            assert.is_true(ReadCollection:isFileInCollection(a, "favorites"))
+            assert.equals(1, refreshes.n)
+            hold_book()
+            tap("In Favorites")
+            assert.is_false(ReadCollection:isFileInCollection(a, "favorites"))
+            assert.equals(2, refreshes.n)
+        end)
+
         describe("meta line", function()
             before_each(function()
                 sidecar(a, "{ percent_finished = 0.62 }")
@@ -351,8 +368,8 @@ describe("the book sheet", function()
             end)
         end)
 
-        it("lists Open, Book details, Read status, More by this author, Feature a different book and "
-            .. "This widget's settings with their icons", function()
+        it("lists Open, Book details, Read status, More by this author, Add to Favorites, Feature a different book "
+            .. "and This widget's settings with their icons", function()
             history({ { a } })
             fm_with_home()
             hold_book()
@@ -365,10 +382,11 @@ describe("the book sheet", function()
                 { "Book details", "info" },
                 { "Read status", "bookmark" },
                 { "More by this author", "authors" },
+                { "Add to Favorites", "bookmark" },
                 { "Feature a different book", "list" },
                 { "This widget's settings", "settings" },
             }, got)
-            assert.equals(6, #Sheet.shown.rows)
+            assert.equals(7, #Sheet.shown.rows)
             local status, more = place_of("Read status").row, place_of("More by this author").row
             assert.equals("status", status.chip)
             assert.equals("›", more.detail)
@@ -1176,6 +1194,7 @@ describe("the book sheet", function()
                 { "Book details", "info", false, false },
                 { "Read status", "bookmark", false, false },
                 { "More by this author", "authors", false, false },
+                { "Add to Favorites", "bookmark", false, false },
                 { "Add to the home", "home_plus", false, false },
                 { "Delete…", "trash", false, false },
             }, got)
@@ -1387,7 +1406,7 @@ describe("the book sheet", function()
                 assert.is_true(Settings.set("featured.pinned", link_to_a()))
                 local before = bytes(harness.settings_file)
                 local w = open(Books.for_path(a))
-                local row = Sheet.shown.spec.rows[5]
+                local row = Sheet.shown.spec.rows[6]
                 assert.same({ "On the home", "home_plus", true }, { row.label, row.icon, row.tick })
                 local refreshes = count_refreshes()
                 tap("On the home")
@@ -1399,7 +1418,7 @@ describe("the book sheet", function()
             it("reads Add to the home, unticked, for a pin to a file that has gone", function()
                 assert.is_true(Settings.set("featured.pinned", books_dir .. "/gone.epub"))
                 open(Books.for_path(a))
-                local row = Sheet.shown.spec.rows[5]
+                local row = Sheet.shown.spec.rows[6]
                 assert.same({ "Add to the home", false }, { row.label, row.tick == true })
             end)
 
@@ -1417,6 +1436,81 @@ describe("the book sheet", function()
                 assert.equals(before, bytes(harness.settings_file))
                 assert.is_nil(Sheet.shown)
                 assert.same({ 0, 0, 0 }, { refreshes.n, w.refreshes, w.closes })
+            end)
+        end)
+
+        -- The row beside Add to the home, over KOReader's own favorites collection.
+        describe("on Add to Favorites", function()
+            local ReadCollection = require("readcollection")
+
+            before_each(function()
+                replace(ReadCollection, "coll", { favorites = {} })
+            end)
+
+            local function collection_file()
+                return dofile(DataStorage:getSettingsDir() .. "/collection.lua")
+            end
+
+            it("adds the book, writes the collection and re-lists the window", function()
+                local w = open(Books.for_path(a))
+                assert.equals("bookmark", place_of("Add to Favorites").row.icon)
+                tap("Add to Favorites")
+                assert.is_true(ReadCollection:isFileInCollection(a, "favorites"))
+                assert.equals(a, collection_file().favorites[1].file)
+                assert.is_nil(Sheet.shown)
+                assert.same({ 1, 0 }, { w.refreshes, w.closes })
+            end)
+
+            it("reads In Favorites with the check for a book in, and a tap takes it out", function()
+                ReadCollection:addItem(a, "favorites")
+                local w = open(Books.for_path(a))
+                local row = place_of("In Favorites").row
+                assert.equals("check", row.icon)
+                tap("In Favorites")
+                assert.is_false(ReadCollection:isFileInCollection(a, "favorites"))
+                assert.is_nil(collection_file().favorites[1])
+                assert.is_nil(Sheet.shown)
+                assert.same({ 1, 0 }, { w.refreshes, w.closes })
+            end)
+
+            it("may add cwngsync's placeholder, which is a file", function()
+                local record = Books.for_path(a)
+                record.placeholder = true
+                open(record)
+                tap("Add to Favorites")
+                assert.is_true(ReadCollection:isFileInCollection(a, "favorites"))
+            end)
+
+            it("is greyed for a book with no file, and a tap runs nothing", function()
+                local w = open(remote())
+                local row = place_of("Add to Favorites").row
+                assert.is_true(row.muted)
+                assert.is_nil(row.run)
+                tap("Add to Favorites")
+                assert.is_nil(Sheet.shown)
+                assert.equals(0, w.refreshes)
+            end)
+
+            it("logs a failed write and leaves the window as it was", function()
+                local w = open(Books.for_path(a))
+                replace(ReadCollection, "write", function()
+                    error("no write on purpose")
+                end)
+                local logged = spy_errors()
+                tap("Add to Favorites")
+                assert.is_true(logged("no write on purpose"))
+                assert.same({ 0, 0 }, { w.refreshes, w.closes })
+            end)
+
+            it("adds a window's extra rows after the sheet's own", function()
+                local fm = fm_with_home()
+                assert.is_not_nil(fm)
+                local w = window()
+                local extra = { icon = "history", label = "Extra" }
+                BookSheet.open_record(Books.for_path(a), w, w.ctx, { beneath = w, extra_rows = { extra } })
+                local given = Sheet.shown.spec.rows
+                assert.equals(extra, given[#given])
+                assert.equals("Delete…", given[#given - 1].label)
             end)
         end)
 
@@ -1570,6 +1664,7 @@ describe("the book sheet", function()
                     { "Book details", "info", true, false },
                     { "Read status", "bookmark", true, false },
                     { "More by this author", "authors", false, true },
+                    { "Add to Favorites", "bookmark", true, false },
                     { "Add to the home", "home_plus", true, false },
                     { "Delete…", "trash", true, false },
                 }, got)

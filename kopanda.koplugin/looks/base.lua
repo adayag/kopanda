@@ -186,6 +186,11 @@ return {
         selected_fill_color = false, -- the sort and status sheets' current choice
         aside_above_gap = 2,
         sublabel_gap = 2,
+        -- The text block under the header: its share of the screen's height, its padding and the gap between its
+        -- paragraphs.
+        text_max = 0.6,
+        text_padding = { top = 16, bottom = 16 },
+        text_gap = 12,
         -- The library's folder sheet: its band and its folder icon's box.
         library_folder_band_color = false,
         folder_box = {

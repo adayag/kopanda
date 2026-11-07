@@ -1,6 +1,6 @@
 -- The Contents and Bookmarks lists' model: a reader's TOC flattened in order with depths from the shallowest and the
--- current chapter found by KOReader's own lookup, its bookmarks newest first without the highlights, and the jumps and
--- the removal sent through KOReader's own calls, here to a fake reader that records them.
+-- current chapter found by KOReader's own lookup, its annotations newest first by kind, and the jumps and the removal
+-- sent through KOReader's own calls, here to a fake reader that records them.
 describe("the Contents and Bookmarks lists' model", function()
     local harness = require("plugin_harness")
     local ReaderToc = require("apps/reader/modules/readertoc")
@@ -154,18 +154,37 @@ describe("the Contents and Bookmarks lists' model", function()
     end)
 
     describe("bookmarks", function()
-        it("leaves out highlights and lists the bookmarks newest first, with their chapter and page", function()
+        it("lists bookmarks, highlights and notes newest first, each with its kind, text, chapter and page", function()
             local old = { page = "/body/x3", chapter = "Letter 1", datetime = "2026-10-01 09:00:00" }
             local new = { page = "/body/x50", chapter = "Chapter 2", datetime = "2026-11-01 21:30:00" }
             local mid = { page = "/body/x20", datetime = "2026-10-15 12:00:00" }
-            local highlight = { page = "/body/x30", drawer = "lighten", chapter = "Part",
+            local highlight = { page = "/body/x30", drawer = "lighten", chapter = "Part", text = "It was\nthe best",
                 datetime = "2026-11-02 08:00:00" }
-            local list = GotoList.bookmarks(fake_ui({}, { old, mid, highlight, new }))
+            local note = { page = "/body/x40", drawer = "lighten", chapter = "Part", text = "of times",
+                note = "Dickens", datetime = "2026-10-20 08:00:00" }
+            local list = GotoList.bookmarks(fake_ui({}, { old, mid, highlight, new, note }))
             assert.same({
-                { item = new, chapter = "Chapter 2", page_label = "p/body/x50" },
-                { item = mid, chapter = "No chapter", page_label = "p/body/x20" },
-                { item = old, chapter = "Letter 1", page_label = "p/body/x3" },
+                { item = highlight, kind = "highlight", text = "It was\nthe best", chapter = "Part",
+                    page_label = "p/body/x30" },
+                { item = new, kind = "bookmark", text = "", chapter = "Chapter 2", page_label = "p/body/x50" },
+                { item = note, kind = "note", text = "of times", chapter = "Part", page_label = "p/body/x40" },
+                { item = mid, kind = "bookmark", text = "", chapter = "No chapter", page_label = "p/body/x20" },
+                { item = old, kind = "bookmark", text = "", chapter = "Letter 1", page_label = "p/body/x3" },
             }, list)
+        end)
+
+        it("orders annotations of one time last made first, whatever their kind", function()
+            local at = "2026-10-01 09:00:00"
+            local first = { page = "/body/x3", datetime = at }
+            local second = { page = "/body/x4", drawer = "lighten", text = "Two", datetime = at }
+            local list = GotoList.bookmarks(fake_ui({}, { first, second }))
+            assert.same({ second, first }, { list[1].item, list[2].item })
+        end)
+
+        it("gives a highlight with no text an empty text, as KOReader's list does", function()
+            local item = { page = 3, drawer = "lighten", datetime = "2026-10-01 09:00:00" }
+            local list = GotoList.bookmarks(fake_ui({}, { item }))
+            assert.same({ "highlight", "" }, { list[1].kind, list[1].text })
         end)
 
         it("is empty with no bookmarks", function()
@@ -201,6 +220,15 @@ describe("the Contents and Bookmarks lists' model", function()
             local ui = fake_ui({}, { a, b })
             GotoList.remove_bookmark(ui, { item = b })
             assert.same({ { "remove", b, 2 } }, ui.calls)
+        end)
+
+        it("removes a highlight or a note at its own index, for KOReader to route by its drawer", function()
+            local a = { page = "/body/x3", drawer = "lighten", datetime = "2026-10-01 09:00:00" }
+            local b = { page = "/body/x20", drawer = "lighten", note = "N", datetime = "2026-10-15 12:00:00" }
+            local ui = fake_ui({}, { a, b })
+            GotoList.remove_bookmark(ui, { item = b })
+            GotoList.remove_bookmark(ui, { item = a })
+            assert.same({ { "remove", b, 2 }, { "remove", a, 1 } }, ui.calls)
         end)
 
         it("removes nothing when the bookmark is no longer among the annotations", function()

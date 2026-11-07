@@ -5,6 +5,7 @@ local Icons = require("icons")
 local Layout = require("layout")
 local Looks = require("looks")
 local Paint = require("paint")
+local SheetText = require("sheet_text")
 local TintedIcon = require("tinted_icon")
 local Typeset = require("typeset")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -220,6 +221,18 @@ function SheetLayout.build(spec, ctx, variant)
         local header_rule = scale(tokens.header_rule_width)
         add_fill(content_x, y, content_w, header_rule, tokens.header_rule_color)
         y = y + header_rule
+    end
+
+    -- The text block, freed with the panel, ruled off from what follows.
+    if spec.text then
+        y = y + scale(tokens.text_padding.top)
+        local side = scale(tokens.header_padding.side)
+        local block = SheetText.block(spec.text, content_w - 2 * side, math.floor(size.h * tokens.text_max),
+            scale(tokens.text_gap), bctx)
+        add(block, content_x + side, y)
+        y = y + block:getSize().h + scale(tokens.text_padding.bottom)
+        add_fill(content_x, y, content_w, scale(tokens.row_rule_width), tokens.row_rule_color)
+        y = y + scale(tokens.row_rule_width)
     end
 
     -- A body in place of rows, for a spec with no rows: its widget under the header at the

@@ -8,8 +8,9 @@ describe("the focused hooks", function()
     local ReaderConfig = require("apps/reader/modules/readerconfig")
     local ReaderFooter = require("apps/reader/modules/readerfooter")
     local ReaderMenu = require("apps/reader/modules/readermenu")
+    local ReaderStatus = require("apps/reader/modules/readerstatus")
     local logger = require("logger")
-    local FocusedHooks, FocusedPanel, Settings
+    local FocusedEnd, FocusedHooks, FocusedPanel, Settings
 
     local HANDLERS = {
         { ReaderMenu, "onTapShowMenu" },
@@ -18,6 +19,7 @@ describe("the focused hooks", function()
         { ReaderConfig, "onSwipeShowConfigMenu" },
         { ReaderFooter, "TapFooter" },
         { ReaderFooter, "onHoldFooter" },
+        { ReaderStatus, "onEndOfBook" },
     }
 
     -- Undo steps for the running test, run last first after it.
@@ -75,6 +77,7 @@ describe("the focused hooks", function()
         set(FocusedPanel, "open", function(ui)
             opened[#opened + 1] = ui
         end)
+        FocusedEnd = require("focused_end")
         FocusedHooks = require("focused_hooks")
         FocusedHooks.install()
     end)
@@ -174,6 +177,53 @@ describe("the focused hooks", function()
         calls.onHoldFooter = {}
         self:onHoldFooter(ges(nil, 600, 1620))
         assert.equals(1, #calls.onHoldFooter)
+    end)
+
+    describe("the end of a book", function()
+        it("leaves the end to the sheet, passing the reader, and the event on to other modules", function()
+            local taken = {}
+            set(FocusedEnd, "take", function(ui)
+                taken[#taken + 1] = ui
+                return true
+            end)
+            local self = instance(ReaderStatus)
+            assert.is_nil(self:onEndOfBook())
+            assert.same({ self.ui }, taken)
+            assert.equals(0, original_calls())
+        end)
+
+        it("runs KOReader's own when the sheet declines", function()
+            set(FocusedEnd, "take", function()
+                return false
+            end)
+            local self = instance(ReaderStatus)
+            assert.equals("original onEndOfBook", self:onEndOfBook())
+            assert.same({ { self } }, calls.onEndOfBook)
+        end)
+
+        it("runs KOReader's own with the mode off, asking nothing of the sheet", function()
+            Settings.set("focused.on", false)
+            set(FocusedEnd, "take", function()
+                error("kopanda-test: the sheet was asked")
+            end)
+            local self = instance(ReaderStatus)
+            assert.equals("original onEndOfBook", self:onEndOfBook())
+            assert.equals(1, #calls.onEndOfBook)
+        end)
+
+        it("logs a failure and runs KOReader's own", function()
+            local logged = {}
+            set(logger, "err", function(...)
+                logged[#logged + 1] = { ... }
+            end)
+            set(FocusedEnd, "take", function()
+                error("kopanda-test: the sheet failed")
+            end)
+            local self = instance(ReaderStatus)
+            assert.equals("original onEndOfBook", self:onEndOfBook())
+            assert.equals(1, #calls.onEndOfBook)
+            assert.equals(1, #logged)
+        end)
     end)
 
     it("wraps each handler once however often it is installed", function()

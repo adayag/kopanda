@@ -276,9 +276,44 @@ describe("LauncherEntries", function()
     end)
 
     describe("run", function()
-        it("shows History over the home, and closing it leaves the home on top", function()
+        it("shows the book list window for History and Favorites, the home closed, no dispatcher action run",
+            function()
+            require("shelf_fixture").install({})
+            local BookListsScreen = package.loaded["book_lists_screen"]
+            for _, target in ipairs({ "history", "favorites" }) do
+                local fm = fm_with_home()
+                local executes = spy.on(Dispatcher, "execute")
+                LauncherEntries.run({ kind = "koreader", target = target }, {})
+                local screen = BookListsScreen.shown
+                assert.is_not_nil(screen, target)
+                assert.same({ list = target }, screen:view(), target)
+                assert.equals(screen, harness.top(), target)
+                assert.is_nil(Home.shown, target)
+                assert.spy(executes).was_not_called()
+                Dispatcher.execute:revert()
+                assert.is_nil(fm.history.booklist_menu, target)
+                harness.teardown()
+            end
+        end)
+
+        it("leaves a stored entry as it is", function()
+            require("shelf_fixture").install({})
+            fm_with_home()
+            local entry = { kind = "koreader", target = "favorites" }
+            LauncherEntries.run(entry, {})
+            assert.same({ kind = "koreader", target = "favorites" }, entry)
+        end)
+
+        it("falls back to KOReader's History over the home when the window doesn't show, and closing it leaves "
+            .. "the home on top", function()
             local fm = fm_with_home()
             local home = Home.shown
+            local shows = stub(fm.kopanda, "showBookList", function()
+                return nil
+            end)
+            cleanup(function()
+                shows:revert()
+            end)
             LauncherEntries.run({ kind = "koreader", target = "history" }, {})
             local list = fm.history.booklist_menu
             assert.is_not_nil(list)
@@ -287,6 +322,20 @@ describe("LauncherEntries", function()
             list.close_callback()
             assert.equals(home, harness.top())
             assert.equals(home, Home.shown)
+        end)
+
+        it("falls back to KOReader's History when the window's build fails", function()
+            require("shelf_fixture").install({})
+            local fm = fm_with_home()
+            local build = stub(package.loaded["book_lists_screen"], "build", function()
+                error("no build on purpose")
+            end)
+            cleanup(function()
+                build:revert()
+            end)
+            LauncherEntries.run({ kind = "koreader", target = "history" }, {})
+            assert.is_nil(package.loaded["book_lists_screen"].shown)
+            assert.equals(fm.history.booklist_menu, harness.top())
         end)
 
         it("toggles Wi-Fi through the file manager's network listener once", function()

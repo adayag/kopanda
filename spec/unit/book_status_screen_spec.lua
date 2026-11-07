@@ -192,11 +192,19 @@ describe("the book status window", function()
         it("is headed by the back control to the screen beneath, the book's title and Book details", function()
             install(FULL)
             for screen_name, label in pairs({ home = "Home", library = "Library", series = "Series",
-                    authors = "Authors", subjects = "Subjects", search = "Search" }) do
+                    authors = "Authors", subjects = "Subjects", search = "Search", reader = "Book" }) do
                 local screen = show(nil, { screen = screen_name, view = {}, page = 1 })
                 assert.equals(label:lower(), fixture.text(screen.header.back_label):lower())
                 assert.equals("book details", fixture.text(screen.header.title):lower())
                 assert.equals("the time machine", fixture.text(screen.header.aside):lower())
+            end
+        end)
+
+        it("names the list it goes back to, from History or Favorites", function()
+            install(FULL)
+            for list, label in pairs({ history = "history", favorites = "favorites" }) do
+                local screen = show(nil, { screen = "book_list", view = { list = list }, page = 1 })
+                assert.equals(label, fixture.text(screen.header.back_label):lower())
             end
         end)
 

@@ -2,8 +2,9 @@
 -- from the look's nav tokens. The home, the file browser and the library each build one with their own tab
 -- active. A tap runs the tab, a hold on Settings opens the quick-settings sheet (with focused mode on, the two
 -- swapped on Settings), any other hold is consumed, and every other gesture passes through. launcher_entries,
--- quick_settings, library, series_screen, authors_screen, subjects_screen and stats_screen are required at call time:
--- launcher_entries requires home (launcher_entries.lua:6), which reaches this module through home_rows.
+-- quick_settings, library, series_screen, authors_screen, subjects_screen, stats_screen and book_lists_screen are
+-- required at call time: launcher_entries requires home (launcher_entries.lua:6), which reaches this module through
+-- home_rows.
 local Focused = require("focused")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
@@ -30,9 +31,9 @@ NavBar.TABS = {
     { id = "settings", label = "Settings", icon = "settings" },
 }
 
--- The active tab's id, by where the bar is: the Stats window lights Stats; the Series, Subjects and Authors
--- windows light none, and no screen of History or Settings carries the bar.
-local ACTIVE = { home = "home", file_browser = "library", library = "library", stats = "stats" }
+-- The active tab's id, by where the bar is: the Stats and History windows light their tabs; the Series, Subjects,
+-- Authors and Favorites windows light none, and no screen of Settings carries the bar.
+local ACTIVE = { home = "home", file_browser = "library", library = "library", stats = "stats", history = "history" }
 
 -- The y of a tab's content from the bar's top: below the edge, or below the active rule where
 -- the rule is the longer, so every tab's content starts at one top; then the tab's padding.
@@ -66,15 +67,15 @@ end
 
 -- The window module each chrome window's bar closes on Home, by where.
 local WINDOWS = { library = "library", series = "series_screen", authors = "authors_screen",
-    subjects = "subjects_screen", stats = "stats_screen" }
+    subjects = "subjects_screen", stats = "stats_screen", history = "book_lists_screen",
+    favorites = "book_lists_screen" }
 
--- Runs the tab id from where, "home", "file_browser", "library", "series", "authors", "subjects" or "stats". An error
--- is logged with the tab's name and goes no further, so the screen under the bar stays as it was.
+-- Runs the tab id from where, "home", "file_browser", "library", "series", "authors", "subjects", "stats", "history" or
+-- "favorites". An error is logged with the tab's name and goes no further, so the screen under the bar stays as it was.
 function NavBar.run(id, where)
     local ok, err = pcall(function()
-        -- A screen that isn't the library's leaves its books to be walked again: History and Settings open over
-        -- the window, and History's Delete tells nothing (filemanager.lua:1169-1192). Required now, as it requires
-        -- this module.
+        -- A screen that isn't the library's leaves its books to be walked again: Settings opens over the window.
+        -- Required now, as it requires this module.
         if not WINDOWS[id] then
             require("library_chrome").forget_books()
         end
@@ -97,7 +98,15 @@ function NavBar.run(id, where)
                 package.loaded["apps/filemanager/filemanager"].instance.kopanda:showStats{}
             end
         elseif id == "history" then
-            require("launcher_entries").run{ kind = "koreader", target = "history" }
+            -- On History, its first page; from anywhere else, the launcher's route to the window, which falls back
+            -- to KOReader's list.
+            local BookListsScreen = require("book_lists_screen")
+            local shown = BookListsScreen.shown
+            if shown and shown:view().list == "history" then
+                shown:go(shown:view(), 1)
+            else
+                require("launcher_entries").run{ kind = "koreader", target = "history" }
+            end
         else
             require("launcher_entries").run{ kind = "kopanda", target = id }
         end

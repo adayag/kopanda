@@ -326,27 +326,12 @@ describe("the library's books", function()
         assert.equals(3, calls.all)
     end)
 
-    it("walks again after History from the bar, whose Delete tells nothing", function()
+    it("keeps the books on the way to the History window, another window of theirs", function()
         local calls = fixture.install(library())
         fixture.show()
-        local entries = package.loaded["launcher_entries"]
-        local run = entries.run
-        local opened = {}
-        entries.run = function(entry, ...)
-            if entry.kind == "koreader" then
-                opened[#opened + 1] = entry.target
-                return
-            end
-            return run(entry, ...)
-        end
-        local ok, err = pcall(function()
-            NavBar.run("history", "series")
-            assert.same({ "history" }, opened)
-            tab("authors", "series")
-        end)
-        entries.run = run
-        assert(ok, err)
-        assert.equals(2, calls.all)
+        NavBar.run("history", "series")
+        assert.is_not_nil(package.loaded["book_lists_screen"].shown)
+        assert.equals(1, calls.all)
     end)
 
     it("walks again after a show that raised midway, and after the real close that follows", function()

@@ -1,14 +1,17 @@
 -- Focused mode's reader hooks: with focused.on, a top tap or swipe down, a bottom tap or swipe up and a tap on the
--- status bar open the focused panel in place of KOReader's menus, and a hold on the status bar runs nothing. Wraps
--- ReaderMenu:onTapShowMenu and :onSwipeShowMenu (frontend/apps/reader/modules/readermenu.lua:484-503),
--- ReaderConfig:onTapShowConfigMenu and :onSwipeShowConfigMenu (readerconfig.lua:154-166) and ReaderFooter:TapFooter
--- and :onHoldFooter (readerfooter.lua:2517-2530, :2647-2663); with the mode off, or on a failure, the original runs.
+-- status bar open the focused panel in place of KOReader's menus, a hold on the status bar runs nothing, and the end
+-- of a book shows KoPanda's sheet. Wraps ReaderMenu:onTapShowMenu and :onSwipeShowMenu
+-- (frontend/apps/reader/modules/readermenu.lua:484-503), ReaderConfig:onTapShowConfigMenu and :onSwipeShowConfigMenu
+-- (readerconfig.lua:154-166), ReaderFooter:TapFooter and :onHoldFooter (readerfooter.lua:2517-2530, :2647-2663) and
+-- ReaderStatus:onEndOfBook (readerstatus.lua:38); with the mode off, or on a failure, the original runs.
 local Event = require("ui/event")
 local Focused = require("focused")
+local FocusedEnd = require("focused_end")
 local FocusedPanel = require("focused_panel")
 local ReaderConfig = require("apps/reader/modules/readerconfig")
 local ReaderFooter = require("apps/reader/modules/readerfooter")
 local ReaderMenu = require("apps/reader/modules/readermenu")
+local ReaderStatus = require("apps/reader/modules/readerstatus")
 local logger = require("logger")
 
 local FocusedHooks = {}
@@ -91,7 +94,25 @@ local function wrap_hold_footer()
     end
 end
 
--- Wraps the six handlers on their classes, once per process; every reader's modules are instances of them.
+-- The sheet takes the end of a book when it wants it; the wrap returns nothing, as the original does, so the event
+-- goes on to the reader's other modules.
+local function wrap_end_of_book()
+    local original = ReaderStatus.onEndOfBook
+    ReaderStatus.onEndOfBook = function(self, ...)
+        if not Focused.on() then
+            return original(self, ...)
+        end
+        local ok, taken = pcall(FocusedEnd.take, self.ui)
+        if not ok then
+            logger.err("KoPanda: the end of book sheet failed:", taken)
+        end
+        if not ok or not taken then
+            return original(self, ...)
+        end
+    end
+end
+
+-- Wraps the seven handlers on their classes, once per process; every reader's modules are instances of them.
 function FocusedHooks.install()
     if installed then
         return
@@ -103,6 +124,7 @@ function FocusedHooks.install()
     wrap(ReaderConfig, "onSwipeShowConfigMenu", swipe_allowed("north"), handled_as_swipe)
     wrap(ReaderFooter, "TapFooter", always)
     wrap_hold_footer()
+    wrap_end_of_book()
 end
 
 return FocusedHooks

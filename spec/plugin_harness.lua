@@ -59,7 +59,8 @@ M.dispatcher_execute = require("dispatcher").execute
 M.fm_setup_layout = require("apps/filemanager/filemanager").setupLayout
 -- Screensaver.setup as KOReader defines it, before kopanda_sleep_screen.lua wraps it.
 M.screensaver_setup = require("ui/screensaver").setup
--- The reader's menu, config and footer handlers as KOReader defines them, before focused_hooks.lua wraps them.
+-- The reader's menu, config, footer and end-of-book handlers as KOReader defines them, before focused_hooks.lua
+-- wraps them.
 M.reader_handlers = {}
 for _, handler in ipairs({
     { "apps/reader/modules/readermenu", "onTapShowMenu" },
@@ -68,6 +69,7 @@ for _, handler in ipairs({
     { "apps/reader/modules/readerconfig", "onSwipeShowConfigMenu" },
     { "apps/reader/modules/readerfooter", "TapFooter" },
     { "apps/reader/modules/readerfooter", "onHoldFooter" },
+    { "apps/reader/modules/readerstatus", "onEndOfBook" },
 }) do
     M.reader_handlers[#M.reader_handlers + 1] = { require(handler[1]), handler[2], require(handler[1])[handler[2]] }
 end

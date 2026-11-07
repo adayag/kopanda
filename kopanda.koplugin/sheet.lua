@@ -5,6 +5,8 @@
 --   header      { heading, aside, aside_beside, aside_above, hint, hint_below, label } or a book's { cover, title,
 --               author, meta } (hint_below sets the hint on its own line under the heading's)
 --               (cover a built widget, the sheet's to free)
+--   text        paragraphs under the header, above the rows, each { part, text } with part a look.type name:
+--               wrapped, the block at most sheet.text_max of the screen's height, its end ellipsised beyond it
 --   rows        { icon, label, sublabel, detail, chip, muted, tick, selected, run } (selected fills the row)
 --   body        in place of rows: body(bctx, content_w) returns { widget, areas }
 --   refresh_on  events on which the sheet redraws

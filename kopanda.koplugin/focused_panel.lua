@@ -30,7 +30,7 @@ local NOOP = { close = function() end }
 -- The events of a screen turned under the panel, which is laid out for the old size: a G-sensor's rotation, sent to
 -- the top window (frontend/device/input.lua:1466-1471, frontend/ui/uimanager.lua:962-990), and a resize, broadcast
 -- (frontend/device/sdl/device.lua:313).
-local TURNED = { "SetRotationMode", "SetDimensions" }
+FocusedPanel.TURNED = { "SetRotationMode", "SetDimensions" }
 
 -- Contrast as KOReader's config panel steps it: an EPUB's font_gamma (frontend/ui/data/creoptions.lua:571-579),
 -- a PDF's or comic's contrast (frontend/ui/data/koptoptions.lua:489-498).
@@ -279,7 +279,7 @@ function FocusedPanel.spec(ui)
         header = FocusedPanel.state(ui).header,
         header_hold = true,
         hold = FocusedPanel.actions(ui).admin,
-        close_on = TURNED,
+        close_on = FocusedPanel.TURNED,
     }
     function spec.body(bctx, content_w)
         return FocusedPanel.body(bctx, content_w, function()
@@ -289,11 +289,10 @@ function FocusedPanel.spec(ui)
     return spec
 end
 
--- Shows the panel over ui's book, its ctx built as QuickSettings.open builds it but at the panel's own text size,
--- with the reader as ctx.ui. opts.started is the PaintClock stamp the opener took. Raises when the panel isn't
--- shown, which Sheet.show logs.
-function FocusedPanel.open(ui, opts)
-    local ctx = {
+-- The ctx of a sheet over ui's book, built as QuickSettings.open builds it but at the panel's own text size, with
+-- the reader as ctx.ui.
+function FocusedPanel.ctx(ui)
+    return {
         look = Looks.active(),
         variant = Looks.variant(),
         text_size = FocusedPanel.TEXT_SIZE,
@@ -301,7 +300,12 @@ function FocusedPanel.open(ui, opts)
         screen = Device.screen,
         ui = ui,
     }
-    Sheet.show(FocusedPanel.spec(ui), ctx, { started = opts and opts.started, beneath = NOOP })
+end
+
+-- Shows the panel over ui's book. opts.started is the PaintClock stamp the opener took. Raises when the panel isn't
+-- shown, which Sheet.show logs.
+function FocusedPanel.open(ui, opts)
+    Sheet.show(FocusedPanel.spec(ui), FocusedPanel.ctx(ui), { started = opts and opts.started, beneath = NOOP })
     if not Sheet.shown then
         error("the focused panel was not shown")
     end

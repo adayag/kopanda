@@ -123,8 +123,8 @@ function ChromeFrame.chip(widgets, fill, ctx)
 end
 
 -- The header frame under ctx, w wide and spec.height tall: the band in spec.band's colour; spec.right's
--- widgets laid right to left; the left column, spec.aside over spec.title, with the back mark before the
--- title when spec.back; then the edge. With spec.back_label, the detail header (ChromeFrame.detail_header_height
+-- widgets laid right to left; the left column, spec.aside, if any, over spec.title, with the back mark before
+-- the title when spec.back; then the edge. With spec.back_label, the detail header (ChromeFrame.detail_header_height
 -- tall) puts the back control on its own row at the top. Returns the header and its parts: rect, aside,
 -- title, back, back_place, title_place, title_rect, back_rect, back_label and right (each widget's rect).
 function ChromeFrame.header(ctx, w, spec)
@@ -154,13 +154,12 @@ function ChromeFrame.header(ctx, w, spec)
         add(box, spec.right[i], parts.right[i].x, parts.right[i].y)
     end
     local column_w = math.max(1, x - side)
-    local aside = Typeset.line(spec.aside.part, spec.aside.text, column_w, ctx)
     local title_h = line_height(spec.title.part)
-    local aside_h = aside:getSize().h
-    local top = bottom - (aside_h + scale(tokens.line_gap) + title_h)
-    add(box, aside, side, top)
-    parts.aside = aside
-    local title_y = top + aside_h + scale(tokens.line_gap)
+    local title_y = bottom - title_h
+    if spec.aside then
+        parts.aside = Typeset.line(spec.aside.part, spec.aside.text, column_w, ctx)
+        add(box, parts.aside, side, title_y - scale(tokens.line_gap) - parts.aside:getSize().h)
+    end
     local title_x = side
     if spec.back then
         -- Sized to the title's line, as LibraryTiles.header_height counts it.

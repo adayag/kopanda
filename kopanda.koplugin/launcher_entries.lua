@@ -24,13 +24,16 @@ LauncherEntries.KOPANDA = {
 }
 
 -- KOReader's screens, by target, each run by one dispatcher id (frontend/dispatcher.lua:68,
--- :70, :71, :124).
+-- :70, :71, :124). History and Favorites show KoPanda's window first (BOOK_LISTS).
 LauncherEntries.KOREADER = {
     history = { label = "History", icon = "history", action = "history" },
     favorites = { label = "Favorites", icon = "bookmark", action = "favorites" },
     collections = { label = "Collections", icon = "list", action = "collections" },
     wifi = { label = "Wi-Fi", icon = "wifi", action = "toggle_wifi" },
 }
+
+-- The koreader targets KoPanda's book list window shows.
+local BOOK_LISTS = { history = true, favorites = true }
 
 -- The fixed table row for a kopanda or koreader entry, or nil.
 local function fixed(entry)
@@ -205,6 +208,7 @@ end
 -- What a tap on the entry does under ctx. Availability is checked again now, so what has gone since the home
 -- was built gives its note; a check that raises reads as not available. A plugin menu item's error is logged
 -- and gives a note; any other error raises to the caller, so Home:onGesture's pcall logs it and closes the home.
+-- A book list window that didn't show leaves its dispatcher action to run, so the tap still reaches KOReader's list.
 function LauncherEntries.run(entry, ctx)
     local kind = entry.kind
     if kind == "kopanda" then
@@ -246,6 +250,12 @@ function LauncherEntries.run(entry, ctx)
             Helpers.note(T("%1 couldn't open.", label_of(entry)))
         end
         return
+    end
+    if kind == "koreader" and BOOK_LISTS[entry.target] then
+        local fm = file_manager()
+        if fm and fm.kopanda and fm.kopanda:showBookList{ view = { list = entry.target } } then
+            return
+        end
     end
     local id = kind == "koreader" and fixed(entry).action or entry.action
     Dispatcher:execute({ [id] = true })

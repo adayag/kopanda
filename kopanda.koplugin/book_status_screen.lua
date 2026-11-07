@@ -30,12 +30,18 @@ local BookStatusScreen = LibraryChrome.Window:extend{
 
 -- The back control's label, by the screen it shows again.
 local LABELS = { home = "Home", library = "Library", series = "Series", authors = "Authors", subjects = "Subjects",
-    search = "Search" }
+    search = "Search", reader = "Book", history = "History", favorites = "Favorites" }
 local VIEW = { kind = "book" }
 local TITLE_LINES, AUTHOR_LINES, CHIP_ROWS = 2, 2, 2
 
 local function scale(px)
     return Screen:scaleBySize(px)
+end
+
+-- The back control's label for opener: the book list's by its list, any other by its screen.
+local function back_label(opener)
+    local screen = opener and opener.screen
+    return LABELS[screen == "book_list" and opener.view.list or screen] or LABELS.home
 end
 
 -- f(...) caught: its result, or nil with the failure logged as what.
@@ -306,7 +312,7 @@ local function fill(self, built, frame, w, h)
     header_box, built.header = LibraryChrome.header(ctx, w, {
         height = header_h,
         band = look.library.header.fill_color,
-        back_label = LABELS[self.opener and self.opener.screen] or LABELS.home,
+        back_label = back_label(self.opener),
         right = {},
         aside = { part = look.type.library_count, text = self.record.title },
         title = { part = look.type.shelf_detail_title, text = "Book details" },

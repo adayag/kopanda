@@ -60,7 +60,7 @@ Upgrading KOReader walks this list.
   `frontend/apps/filemanager/filemanager.lua:819-826` (`onClose`, on quit), `:842-849`
   (`onShowingReader`, when a book opens).
 - Reaches the plugin instance as an array child; the instance closes the home and the chrome
-  window (the library, Series, Authors, Subjects or the search), either of which would otherwise keep
+  window (the library, Series, Authors, Subjects, the book list or the search), either of which would otherwise keep
   KOReader from quitting.
 
 ### `CloseDocument`, the mark on book close
@@ -1659,16 +1659,21 @@ its own `pcall`, and acts through the reader's own events below, each inside the
   and hidden flows, as the TOC list's does (`readertoc.lua:1130-1143`). A tap goes as the TOC list's does: `ui.link:addCurrentLocationToStack()`
   (`frontend/apps/reader/modules/readerlink.lua:793-797`), then `GotoXPointer(xp, xp)` or `GotoPage(page)`
   (`readertoc.lua:940-948`).
-- The Bookmarks list: the items of `ui.annotation.annotations` with no `drawer`, as
-  `ReaderBookmark:getDogearBookmarkIndex` tells them (`readerbookmark.lua:417-440`); `chapter` is nil outside any
+- The Bookmarks list: every item of `ui.annotation.annotations`, its kind as `ReaderBookmark.getBookmarkType` tells it
+  (`readerbookmark.lua:590-598`: a `drawer` makes a highlight, a `drawer` with a `note` a note), its words `item.text`,
+  which can be nil (`:676`, where `text_orig`, KOReader's own list's copy, is made); `chapter` is nil outside any
   chapter (`:378-381`); `datetime` is `"YYYY-MM-DD HH:MM:SS"` (`readerannotation.lua:519-520`), so newest first is a
   descending string compare, as `getLatestBookmark` compares them (`readerbookmark.lua:604`). The page label is
   `getBookmarkPageString(page)` (`:628-643`). A tap goes as the bookmark list's does:
-  `addCurrentLocationToStack()`, then `gotoBookmark(item.page, item.pos0)` (`:765-766`, `:487-492`). Remove bookmark
-  calls `removeItem(item, index)` (`:446-455`), which also resets the dogear, with the index from
+  `addCurrentLocationToStack()`, then `gotoBookmark(item.page, item.pos0)` (`:765-766`, `:487-492`). A hold's removal
+  calls `removeItem(item, index)` (`:446-455`), which hands a `drawer` to `ReaderHighlight:deleteHighlight`
+  (`readerhighlight.lua:2388-2394`) and otherwise also resets the dogear, with the index from
   `ReaderAnnotation:getItemIndex(item)` (`readerannotation.lua:479-503`), since `removeItem`'s own lookup without one
   reads the bookmark list's filters (`readerbookmark.lua:1118-1127`). With no index (the bookmark already gone), it
   removes nothing: `removeItemByIndex(nil)` would `table.remove` the last annotation (`readerbookmark.lua:456-457`).
+- The sheet's text block (`sheet_text.lua`), a hold's words: each paragraph a `TextBoxWidget` of a line count, `height`
+  as those lines at `(1 + line_height)` em (`frontend/ui/widget/textboxwidget.lua:151`), `height_adjust` shrinking it
+  to the lines it holds (`:53`, `:256-260`) and `height_overflow_show_ellipsis` ending it (`:54`).
 - Find opens KoPanda's dialog (`focused_dialogs.lua`), an `InputDialog` read by `getInputText`
   (`frontend/ui/widget/inputdialog.lua:583`) with its keyboard from `onShowKeyboard` (`:640`). Find with text calls
   `ui.search:searchCallback(nil, text)` (`frontend/apps/reader/modules/readersearch.lua:252`; the module is registered
@@ -1719,8 +1724,9 @@ its own `pcall`, and acts through the reader's own events below, each inside the
 
 ### Focused mode's reader hooks: the menu, config and status bar handlers
 
-`focused_hooks.lua` wraps six handlers on their classes, `apps/reader/modules/readermenu`,
-`apps/reader/modules/readerconfig` and `apps/reader/modules/readerfooter`, once per process, from the
+`focused_hooks.lua` wraps seven handlers on their classes, `apps/reader/modules/readermenu`,
+`apps/reader/modules/readerconfig`, `apps/reader/modules/readerfooter` and
+`apps/reader/modules/readerstatus`, once per process, from the
 first reader instance's `init`; each reader module is an instance of its class, and every touch
 zone's handler is a closure calling the method on `self` at gesture time, so the wrap reaches zones
 registered before it.
@@ -1748,7 +1754,20 @@ runs with the same arguments, so KOReader's menu opens.
 - A wrap that opens the panel returns true, which stops the zone walk; one that passes returns nil, as the
   original does for that gesture, so the next zone gets it
   (`frontend/ui/widget/container/inputcontainer.lua:266-271`).
-- The unit harness restores the six originals at each load (`spec/plugin_harness.lua`), as it restores
+- `ReaderStatus:onEndOfBook()` (`frontend/apps/reader/modules/readerstatus.lua:38`), fired by a page turn past
+  the last page (`readerrolling.lua:914`, `:943`, `readerpaging.lua:926`, `:1043`): `focused_end.lua` takes it,
+  with the mode on, while the `end_document_action` setting is unset or `"pop-up"` (`:57-59`) and `lastfile`
+  isn't `QuickStart.quickstart_filename` (`ui/quickstart`, required there as the original does, `:40-43`); any
+  other end, or a failure, runs the original. With its sheet already up it shows nothing new, as the original
+  tests `top_widget.name` (`:59`). It marks through `ReaderStatus:markBook(true)` (`:212-217`) unless
+  `summary.status` already reads `complete`, so `summary.modified` stays, then `doc_settings:flush()` as
+  `deleteFile` does (`:198`). The wrap returns nothing, as the original does, so the event goes on to the
+  reader's other modules. Its rows: `filemanagerutil.openFile(ui, file)` on the next tick (`:184-188`), since
+  the switch destroys the document; `ui.gotopage:onGoToBeginning()` (`readergoto.lua:200-207`); `ui:onClose()`
+  then `ui:showFileManager(file)` (`readerui.lua:581-596`), as `ReaderStatus:openFileBrowser` does (`:169-173`).
+  A next book that isn't downloaded clears `Library.return_to` as well as setting `LibraryChrome.return_to`,
+  since `ScreenRoutes.return_window` asks the library's first.
+- The unit harness restores the seven originals at each load (`spec/plugin_harness.lua`), as it restores
   `Dispatcher.execute`.
 
 ### Focused mode outside the reader: the top zone, the empty tap and the Settings tab
@@ -1921,6 +1940,22 @@ row, the sidecar and the Statistics database is in the book records' and the Sta
   row never shows), and a `featured.pinned` naming the file, which the featured book then reads as
   gone and features the last one opened. KOReader sends no event for a delete, so the window
   re-lists through the callback.
+
+### The History and Favorites lists: `ReadHistory` and `ReadCollection`
+
+- `book_lists.lua` reads `ReadHistory.hist` in order (`frontend/readhistory.lua:25-35`), skipping `dim` entries, and
+  removes one through `ReadHistory:removeItemByPath` (`:295`), which compares realpaths (`:26`, `:38`), so the
+  path is realpath'd first. `readhistory` is required at call time.
+- `readcollection`, required at call time: `ReadCollection.default_collection_name`, `"favorites"`
+  (`frontend/readcollection.lua:17`), always present (`:44-46`). `getOrderedCollection` (`:366`) gives the list;
+  under a sort set in KOReader's collection menu (`coll_settings.favorites.collate`, `:60`) items have no `order`
+  (`:137`, `:82-85`) and its sort raises with two items or more, so the list is `coll.favorites` (`:59`) sorted by
+  `item.text`, the file name (`:29`), not KOReader's sort.
+  `isFileInCollection` (`:108`) realpaths the file. `addItem` (`:149`) doesn't write, so `write({ favorites = true })`
+  (`:73`) follows; `removeItem(file, "favorites")` (`:188`) writes itself.
+- The `koreader` launcher entries `history` and `favorites`, and the nav bar's History tab through them, show
+  `book_lists_screen.lua`; a show that returns nil runs the dispatcher action as before. Gestures bound to `history` and
+  History inside the reader's menu stay KOReader's.
 
 ### The library's order: `ReadHistory.hist` and its times
 
@@ -2221,7 +2256,10 @@ but the badge or the Download row would quietly go. Re-check this entry when cwn
   under its name (`frontend/apps/filemanager/filemanager.lua:379-384`) and each plugin instance is
   registered by its plugin's name (`:424`); cwngsync's is `cwngsync` (cwngsync `main.lua:43`). Its
   runtime's functions are mixed into the plugin class as methods (cwngsync `main.lua:2555-2565`).
-  With no file manager (in the reader) or no `cwngsync` on it, nothing is a placeholder, silently.
+  With no file manager, or no `cwngsync` on it, it reads `ReaderUI.instance.cwngsync` through
+  `package.loaded`: `ReaderUI:init` creates every loaded plugin and registers it by the same name
+  (`frontend/apps/reader/readerui.lua:464-474`, `registerModule` `:94-99`), and `ReaderUI.instance` is
+  set at `:546`. With neither, or no `cwngsync` on either, nothing is a placeholder, silently.
 - `isConfigured` (cwngsync `cwng_library_runtime.lua:144-149`): a server, user name and password
   are set. False reads as no placeholders, silently. `libraryEnabled` (`:154-156`) is not asked,
   since cwngsync's own open asks only `isConfigured` (`:1000`).

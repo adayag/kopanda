@@ -1,11 +1,11 @@
--- The Series, Authors, Subjects and search views: each of the seven views (Series list, one series, Authors list,
--- one author, Subjects list, one subject, the search's results) in Diner on the Colorsoft, over the shelf library
--- (shelf_library.lua). The home fixture patch (at empty) freezes the clock and stores the look; the scenario patch
--- stores the shelf library as the home folder, writes the sidecars, adds one path-less book, extracts every book's
--- row and gives each copy its scripted metadata before any window shows, and shows the view's window directly once
--- the home settles, so the window's one settled signal is the shot. The look is passed empty so a KOPANDA_HOME_LOOK
--- in the caller's environment cannot leak in.
-describe("the series, authors, subjects and search views", function()
+-- The Series, Authors, Subjects, search and History views: each of the eight views (Series list, one series, Authors
+-- list, one author, Subjects list, one subject, the search's results, History) in Diner on the Colorsoft, over the
+-- shelf library (shelf_library.lua). The home fixture patch (at empty) freezes the clock and stores the look; the
+-- scenario patch stores the shelf library as the home folder, writes the sidecars, adds one path-less book, extracts
+-- every book's row and gives each copy its scripted metadata before any window shows, and shows the view's window
+-- directly once the home settles, so the window's one settled signal is the shot. The look is passed empty so a
+-- KOPANDA_HOME_LOOK in the caller's environment cannot leak in.
+describe("the series, authors, subjects, search and history views", function()
     require("commonrequire")
     local driver = require("emulator.driver")
     local shelf_library = require("emulator.shelf_library")
@@ -22,6 +22,7 @@ describe("the series, authors, subjects and search views", function()
         { view = "subjects-list", screen = "subjects" },
         { view = "subject-books", screen = "subjects" },
         { view = "search-books", screen = "search" },
+        { view = "history-books", screen = "book_list" },
     }
 
     local function capture(opts)

@@ -9,6 +9,7 @@ describe("cwngsync's placeholders", function()
     local Event = require("ui/event")
     local EventListener = require("ui/widget/eventlistener")
     local FileManager = require("apps/filemanager/filemanager")
+    local ReaderUI = require("apps/reader/readerui")
     local UIManager = require("ui/uimanager")
     local ffiutil = require("ffi/util")
     local lfs = require("libs/libkoreader-lfs")
@@ -173,6 +174,14 @@ describe("cwngsync's placeholders", function()
             assert.same({}, logged)
         end)
 
+        it("reads the reader's cwngsync with no file manager, a book being open", function()
+            local stub = cwngsync({ ["1"] = placeholder(a) })
+            replace(FileManager, "instance", nil)
+            replace(ReaderUI, "instance", { cwngsync = stub })
+            assert.is_true(Books.for_path(a).placeholder)
+            assert.is_nil(Books.for_path(b).placeholder)
+        end)
+
         it("reads the state afresh at each call, so a download or a changed file shows at once", function()
             local books = { ["1"] = placeholder(a) }
             cwngsync(books)
@@ -223,6 +232,11 @@ describe("cwngsync's placeholders", function()
             ["no file manager instance"] = function()
                 cwngsync({ ["1"] = placeholder(a) })
                 replace(FileManager, "instance", nil)
+            end,
+            ["a reader without cwngsync"] = function()
+                cwngsync({ ["1"] = placeholder(a) })
+                replace(FileManager, "instance", nil)
+                replace(ReaderUI, "instance", {})
             end,
         }
         for name, arrange in pairs(silent) do
@@ -546,6 +560,7 @@ describe("cwngsync's placeholders", function()
                     { "Book details", true, false },
                     { "Read status", false, true },
                     { "More by this author", false, true },
+                    { "Add to Favorites", false, true },
                     { "Add to the home", false, true },
                     { "Delete…", true, false },
                 }, rows())

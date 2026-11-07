@@ -322,7 +322,7 @@ describe("Download on a placeholder's sheet", function()
                 cwngsync()
                 hold(show_held(kind), kind)
                 assert.same({ "Open", "Download", "Book details", "Read status", "More by this author",
-                    "Add to the home", "Delete…" }, labels())
+                    "Add to Favorites", "Add to the home", "Delete…" }, labels())
                 local row = Sheet.shown.spec.rows[2]
                 assert.equals("download", row.icon)
                 assert.is_nil(row.muted)
@@ -339,8 +339,8 @@ describe("Download on a placeholder's sheet", function()
             local other = library.tiles[1]
             assert.is_not.equals(held, other.record.path)
             LibrarySheets.hold(library, Library.hit(centre(other.rect)), PaintClock.now())
-            assert.same({ "Open", "Book details", "Read status", "More by this author", "Add to the home",
-                "Delete…" }, labels())
+            assert.same({ "Open", "Book details", "Read status", "More by this author",
+                "Add to Favorites", "Add to the home", "Delete…" }, labels())
         end)
 
         it("is not on a path-less record's sheet", function()
@@ -348,14 +348,14 @@ describe("Download on a placeholder's sheet", function()
             local library = show_held("library")
             local remote = { id = "shelf:remote", source = "shelf", title = "Remote", authors = {} }
             package.loaded["book_sheet"].open_record(remote, library, library.ctx, { beneath = library })
-            assert.same({ "Open", "Book details", "Read status", "More by this author", "Add to the home",
-                "Delete…" }, labels())
+            assert.same({ "Open", "Book details", "Read status", "More by this author",
+                "Add to Favorites", "Add to the home", "Delete…" }, labels())
         end)
 
         it("is not on the held book's sheet without cwngsync", function()
             hold(show_held("library"), "library")
-            assert.same({ "Open", "Book details", "Read status", "More by this author", "Add to the home",
-                "Delete…" }, labels())
+            assert.same({ "Open", "Book details", "Read status", "More by this author",
+                "Add to Favorites", "Add to the home", "Delete…" }, labels())
         end)
 
         it("is greyed with no run when cwngsync has no openLibraryPlaceholder, and a tap runs nothing", function()
